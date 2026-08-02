@@ -70,11 +70,14 @@ pub(crate) fn collect_conditional_schemas(
     resolved_paths: &[ResolvedPathSchema],
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
+    subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> Vec<ConditionalResolvedSchema> {
     let mut synthesized_implications =
         crate::required_source_backprojection::synthesized_required_source_implications(
             contract_schema_signals,
+            values_yaml_doc,
+            subchart_defaults_doc,
             provider,
         );
     for (path, split_implications) in
@@ -92,6 +95,7 @@ pub(crate) fn collect_conditional_schemas(
         .chain(
             crate::required_source_backprojection::synthesized_ranged_member_required_implications(
                 contract_schema_signals,
+                subchart_defaults_doc,
                 provider,
             ),
         )
@@ -124,6 +128,34 @@ pub(crate) fn collect_conditional_schemas(
         }
     }
     let mut conditionals = Vec::new();
+
+    if let Some(root_implications) = synthesized_implications.get("") {
+        for implication in root_implications {
+            if !implication.outer_guards.is_empty()
+                && !implication_guards_supported(&implication.outer_guards, "", &resolved_by_path)
+            {
+                continue;
+            }
+            let target_schema =
+                crate::path_resolver::fail_requirement_schema(std::iter::once(implication));
+            if crate::schema_model::is_empty_schema(&target_schema) {
+                continue;
+            }
+            conditionals.push(ConditionalResolvedSchema {
+                target_value_path: String::new(),
+                relative_target_segments: Vec::new(),
+                ancestor_segments: Vec::new(),
+                guards: implication.outer_guards.clone(),
+                nested_guard_scopes: Vec::new(),
+                target_schema,
+                provider_schema_candidate: None,
+                base_effect: ConditionalBaseEffect::None,
+                fold_unconditional_object_host_into_base: false,
+                arm_only: true,
+                relax_untyped_host: false,
+            });
+        }
+    }
 
     for (target_value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let Some(resolved_target) = resolved_by_path.get(target_value_path.as_str()) else {
@@ -241,6 +273,7 @@ pub(crate) fn collect_conditional_schemas(
             if matches!(
                 &implication.target,
                 helm_schema_core::ContractRequirementTarget::Members { .. }
+                    | helm_schema_core::ContractRequirementTarget::MembersExceptKeys { .. }
                     | helm_schema_core::ContractRequirementTarget::MembersWhereEquals { .. }
             ) && let Some(member_schema) = member_descendant_projection(
                 target_segments.as_slice(),
@@ -283,11 +316,11 @@ pub(crate) fn collect_conditional_schemas(
                             | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(_)
                     )
                 }) && implication_has_self_presence_guard(implication, target_value_path);
-            let resolved_domain = if member_host_only {
-                &resolved_target.structural_schema
-            } else {
-                &resolved_target.schema
-            };
+            // Only runtime structural evidence can retain a base beside a
+            // guarded requirement. A compatible values.yaml sample does not
+            // constrain states where an unrelated caller gate keeps every
+            // consumer dormant.
+            let resolved_domain = &resolved_target.structural_schema;
             let preserve_base_schema = (member_host_only && !member_host_complete_domain)
                 || implication.outer_guards.is_empty()
                 || (!implication_has_self_truthy_guard(implication, target_value_path)
@@ -811,20 +844,63 @@ fn append_merge_shadow_arms(
                 (whole, None) | (None, whole) => whole,
             };
             if let Some(mut whole) = whole {
-                if merge.nil_scrubbed_layers.get(merge.position) == Some(&true) {
+                if merge.own_transform() == helm_schema_core::MergeLayerTransform::NilScrubbed {
                     null_relax_member_schemas(&mut whole);
                 }
-                let mut guards = vec![ConditionalGuard::Truthy {
-                    path: value_path.clone(),
-                }];
-                guards.extend(merge.shadowed_by().iter().map(|earlier| {
-                    ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                        path: earlier.clone(),
-                    }))
-                }));
+                let own_guard = match merge.own_transform() {
+                    helm_schema_core::MergeLayerTransform::ParsedMap => ConditionalGuard::TypeIs {
+                        path: value_path.clone(),
+                        schema_type: "object".to_string(),
+                    },
+                    helm_schema_core::MergeLayerTransform::Identity
+                    | helm_schema_core::MergeLayerTransform::NilScrubbed => {
+                        ConditionalGuard::Truthy {
+                            path: value_path.clone(),
+                        }
+                    }
+                };
+                let mut guards = vec![own_guard];
+                guards.extend(
+                    merge
+                        .shadowed_by()
+                        .iter()
+                        .enumerate()
+                        .map(|(position, earlier)| {
+                            let earlier_live = match merge
+                                .transforms
+                                .get(position)
+                                .copied()
+                                .unwrap_or(helm_schema_core::MergeLayerTransform::Identity)
+                            {
+                                helm_schema_core::MergeLayerTransform::ParsedMap => {
+                                    ConditionalGuard::AllOf(vec![
+                                        ConditionalGuard::TypeIs {
+                                            path: earlier.clone(),
+                                            schema_type: "object".to_string(),
+                                        },
+                                        ConditionalGuard::Truthy {
+                                            path: earlier.clone(),
+                                        },
+                                    ])
+                                }
+                                helm_schema_core::MergeLayerTransform::Identity
+                                | helm_schema_core::MergeLayerTransform::NilScrubbed => {
+                                    ConditionalGuard::Truthy {
+                                        path: earlier.clone(),
+                                    }
+                                }
+                            };
+                            ConditionalGuard::Not(Box::new(earlier_live))
+                        }),
+                );
                 guards.extend(provider_use.outer_guards.iter().cloned());
                 guards.sort();
                 guards.dedup();
+                let base_effect = if evidence.facts.has_unlayered_non_control_use {
+                    ConditionalBaseEffect::Preserve
+                } else {
+                    ConditionalBaseEffect::Own
+                };
                 conditionals.push(ConditionalResolvedSchema {
                     target_value_path: value_path.clone(),
                     relative_target_segments: target_segments.clone(),
@@ -833,7 +909,7 @@ fn append_merge_shadow_arms(
                     nested_guard_scopes: Vec::new(),
                     target_schema: whole,
                     provider_schema_candidate: None,
-                    base_effect: ConditionalBaseEffect::None,
+                    base_effect,
                     fold_unconditional_object_host_into_base: false,
                     relax_untyped_host: false,
                     arm_only: true,
@@ -854,7 +930,7 @@ fn append_merge_shadow_arms(
                 else {
                     continue;
                 };
-                if merge.nil_scrubbed_layers.get(merge.position) == Some(&true) {
+                if merge.own_transform() == helm_schema_core::MergeLayerTransform::NilScrubbed {
                     null_relax_member_schemas(&mut member_schema);
                     member_schema = serde_json::json!({
                         "anyOf": [member_schema, { "type": "null" }]
@@ -1113,6 +1189,7 @@ fn member_implication_covers_range_domain(
             && matches!(
                 &implication.target,
                 helm_schema_core::ContractRequirementTarget::Members { .. }
+                    | helm_schema_core::ContractRequirementTarget::MembersExceptKeys { .. }
                     | helm_schema_core::ContractRequirementTarget::MembersWhereEquals { .. }
             )
     })
@@ -1174,6 +1251,7 @@ fn fail_requirement_runtime_types(
     };
     match &implication.target {
         ContractRequirementTarget::Members { allow_integer }
+        | ContractRequirementTarget::MembersExceptKeys { allow_integer, .. }
         | ContractRequirementTarget::MembersAt { allow_integer, .. }
         | ContractRequirementTarget::MembersAtWhereTruthy { allow_integer, .. } => {
             let mut types = BTreeSet::from(["array", "null", "object"]);
@@ -1225,6 +1303,9 @@ fn requirement_admits_runtime_type(
         // inhabitants).
         | FailValueRequirement::QuotedSerializationSafe { .. }
         | FailValueRequirement::PlainScalarSafe { .. } => true,
+        FailValueRequirement::PrintfStringOperand => {
+            matches!(runtime_type, "object" | "string")
+        }
         FailValueRequirement::HelmTruthy => runtime_type != "null",
         FailValueRequirement::FieldEquals { .. }
         | FailValueRequirement::FieldPresentNotNull { .. }
@@ -1573,9 +1654,11 @@ fn guards_supported_with_self_path(
 pub(crate) fn append_terminal_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
+    values_default_sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
 ) {
+    append_values_default_source_absence_clauses(root_schema, clauses, values_default_sources);
     // A deleted dependency values root is not the document minus a key:
     // helm recreates the table from the SUBCHART's own values, so a clause
     // whose guards all hold against that refill terminates every document
@@ -1660,6 +1743,58 @@ pub(crate) fn append_terminal_clauses(
                 );
             }
         }
+    }
+}
+
+fn append_values_default_source_absence_clauses(
+    root_schema: &mut SchemaDocument,
+    clauses: &[Vec<ConditionalGuard>],
+    values_default_sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
+) {
+    for guards in clauses {
+        let [ConditionalGuard::Absent { path }] = guards.as_slice() else {
+            continue;
+        };
+        let Some(source_path) = unique_values_default_source_path(path, values_default_sources)
+        else {
+            continue;
+        };
+        let Some(target_absent) = crate::condition_encoding::input_path_absent_condition(path)
+        else {
+            continue;
+        };
+        let Some(source_absent) =
+            crate::condition_encoding::input_path_absent_condition(&source_path)
+        else {
+            continue;
+        };
+        root_schema.append_conditional(
+            &[],
+            SchemaNode::all_of(vec![target_absent, source_absent]),
+            SchemaNode::foreign(Value::Bool(false)),
+        );
+    }
+}
+
+fn unique_values_default_source_path(
+    effective_path: &str,
+    sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
+) -> Option<String> {
+    let effective_segments = split_value_path(effective_path);
+    let mut source_paths = sources
+        .iter()
+        .filter_map(|source| {
+            let target_segments = split_value_path(&source.target_path);
+            let suffix = effective_segments.strip_prefix(target_segments.as_slice())?;
+            let mut source_segments = split_value_path(&source.source_path);
+            source_segments.extend(suffix.iter().cloned());
+            Some(helm_schema_core::join_value_path(&source_segments))
+        })
+        .collect::<BTreeSet<_>>();
+    if source_paths.len() == 1 {
+        source_paths.pop_first()
+    } else {
+        None
     }
 }
 

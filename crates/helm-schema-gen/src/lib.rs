@@ -69,6 +69,10 @@ pub struct ValuesSchemaInput<'a> {
     /// back to the subchart's own defaults, and only the keys they miss
     /// stay gone.
     pub dependency_refill_values_yaml: Option<&'a str>,
+    /// Descendant `global.*` input paths hidden by an ancestor chart's
+    /// declared global value. Helm accepts these paths but never exposes
+    /// them to the descendant consumer.
+    pub shadowed_input_paths: Option<&'a BTreeSet<String>>,
     /// Documentation strings keyed by canonical values path.
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
     /// Amount of analyzed contract evidence emitted into the schema.
@@ -87,6 +91,7 @@ impl<'a> ValuesSchemaInput<'a> {
             values_yaml: None,
             dependency_values_yaml: None,
             dependency_refill_values_yaml: None,
+            shadowed_input_paths: None,
             values_descriptions: None,
             profile: SchemaProfile::Full,
         }
@@ -113,6 +118,13 @@ impl<'a> ValuesSchemaInput<'a> {
         dependency_refill_values_yaml: Option<&'a str>,
     ) -> Self {
         self.dependency_refill_values_yaml = dependency_refill_values_yaml;
+        self
+    }
+
+    /// Marks accepted values paths that Helm shadows before template evaluation.
+    #[must_use]
+    pub fn with_shadowed_input_paths(mut self, shadowed_input_paths: &'a BTreeSet<String>) -> Self {
+        self.shadowed_input_paths = Some(shadowed_input_paths);
         self
     }
 
@@ -160,6 +172,11 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         &mut values_yaml_doc,
         input.contract_schema_signals.values_default_sources(),
     );
+    let mut input_defaults_doc = values_yaml_doc.clone();
+    values_yaml::remove_values_paths(
+        &mut input_defaults_doc,
+        input.shadowed_input_paths.unwrap_or(&BTreeSet::new()),
+    );
     let mut subchart_defaults_doc = input
         .dependency_values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
@@ -186,9 +203,12 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 
     let root_schema = build_root_schema(
         input.contract_schema_signals,
-        &values_yaml_doc,
-        &subchart_defaults_doc,
-        &dependency_refill_doc,
+        RootValuesDocuments {
+            composed: &values_yaml_doc,
+            input_defaults: &input_defaults_doc,
+            subchart_defaults: &subchart_defaults_doc,
+            dependency_refill: &dependency_refill_doc,
+        },
         values_descriptions,
         input.provider,
         input.profile,
@@ -215,6 +235,14 @@ pub(crate) fn runtime_iterable_schema(allow_integer: bool) -> serde_json::Value 
     serde_json::json!({ "anyOf": arms })
 }
 
+#[derive(Clone, Copy)]
+struct RootValuesDocuments<'a> {
+    composed: &'a YamlValue,
+    input_defaults: &'a YamlValue,
+    subchart_defaults: &'a YamlValue,
+    dependency_refill: &'a YamlValue,
+}
+
 #[tracing::instrument(skip_all)]
 #[expect(
     clippy::too_many_lines,
@@ -222,20 +250,30 @@ pub(crate) fn runtime_iterable_schema(allow_integer: bool) -> serde_json::Value 
 )]
 fn build_root_schema(
     contract_schema_signals: &ContractSchemaSignals,
-    values_yaml_doc: &YamlValue,
-    subchart_defaults_doc: &YamlValue,
-    dependency_refill_doc: &YamlValue,
+    documents: RootValuesDocuments<'_>,
     values_descriptions: &BTreeMap<String, String>,
     provider: &dyn ResourceSchemaOracle,
     profile: SchemaProfile,
 ) -> Value {
+    let RootValuesDocuments {
+        composed: values_yaml_doc,
+        input_defaults: input_defaults_doc,
+        subchart_defaults: subchart_defaults_doc,
+        dependency_refill: dependency_refill_doc,
+    } = documents;
     let mut root_schema = SchemaDocument::new_root_object();
-    let path_resolver = PathSchemaResolver::new(contract_schema_signals, values_yaml_doc, provider);
+    let path_resolver = PathSchemaResolver::new(
+        contract_schema_signals,
+        input_defaults_doc,
+        subchart_defaults_doc,
+        provider,
+    );
     let mut resolved_paths = path_resolver.resolve_all();
     let mut conditional_schemas = collect_conditional_schemas(
         &resolved_paths,
         contract_schema_signals,
         values_yaml_doc,
+        subchart_defaults_doc,
         provider,
     );
     // Keep conditional targets in base classification even when their arms
@@ -320,7 +358,8 @@ fn build_root_schema(
         {
             continue;
         }
-        let Some(declared) = values_yaml::yaml_value_at_segments(values_yaml_doc, parent_segments)
+        let Some(declared) =
+            values_yaml::yaml_value_at_segments(input_defaults_doc, parent_segments)
         else {
             continue;
         };
@@ -346,6 +385,7 @@ fn build_root_schema(
         append_terminal_clauses(
             &mut root_schema,
             contract_schema_signals.terminal_clauses(),
+            contract_schema_signals.values_default_sources(),
             values_yaml_doc,
             absence,
         );
@@ -369,11 +409,17 @@ fn build_root_schema(
     for value_path in contract_schema_signals.direct_ranged_value_paths() {
         default_fill_skip_paths.insert(split_value_path(value_path));
     }
+    // A member omitted before every provider sink is governed by its own
+    // path evidence. Re-filling its declared default would restore the
+    // parent contract that omission removed.
+    for value_path in contract_schema_signals.unconditionally_omitted_value_paths() {
+        default_fill_skip_paths.insert(split_value_path(value_path));
+    }
     let fill_span = tracing::info_span!("default_fill_and_finish").entered();
     {
         let _span = tracing::info_span!("merge_missing_defaults").entered();
         root_schema.merge_missing_values_yaml_defaults_under_roots(
-            values_yaml_doc,
+            input_defaults_doc,
             &accepted_values_root_paths,
             &default_fill_skip_paths,
         );
@@ -381,7 +427,7 @@ fn build_root_schema(
     root_schema.open_helm_global_namespace();
 
     let mut root_schema = root_schema.into_value();
-    if let Ok(declared_defaults) = serde_json::to_value(values_yaml_doc)
+    if let Ok(declared_defaults) = serde_json::to_value(input_defaults_doc)
         && declared_defaults.is_object()
     {
         let _span = tracing::info_span!("preserve_declared_defaults").entered();

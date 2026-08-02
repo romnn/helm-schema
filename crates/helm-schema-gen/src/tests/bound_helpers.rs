@@ -388,7 +388,7 @@ fn helper_string_output_conflicts_collapse_to_plain_string() {
 }
 
 #[test]
-fn template_call_in_scalar_slot_propagates_helper_value_types() {
+fn template_call_stringifies_the_helper_value_before_provider_projection() {
     let helpers = indoc! {r#"
         {{- define "common.fullname" -}}
         {{- if .Values.fullnameOverride -}}
@@ -410,16 +410,70 @@ fn template_call_in_scalar_slot_propagates_helper_value_types() {
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
-    let fullname = schema
-        .pointer("/properties/fullnameOverride")
-        .expect("fullnameOverride present");
-    assert!(
-        permits_null(fullname),
-        "truthy-gated template helper output should still accept null, got {fullname}"
-    );
-    assert!(
-        permits_type(fullname, "string"),
-        "template calls in scalar slots should propagate helper string types, got {fullname}"
+    for (value, want, label) in [
+        (
+            serde_json::json!({ "safe": "value" }),
+            true,
+            "a safely formatted mapping",
+        ),
+        (serde_json::json!("custom"), true, "an ordinary string"),
+        (serde_json::json!(7), false, "a numeric YAML token"),
+        (serde_json::json!(["custom"]), false, "a flow sequence"),
+        (serde_json::json!(null), true, "the helper's falsy fallback"),
+    ] {
+        let instance = serde_json::json!({ "fullnameOverride": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "helper stringification preimage ({label}): instance={instance}; schema={schema}"
+        );
+    }
+
+    let mut ordinary_string_exclusions = plain_token_exclusions(true);
+    ordinary_string_exclusions.extend([
+        serde_json::json!({ "not": { "pattern": "^(|~|null|Null|NULL)$" } }),
+        serde_json::json!({
+            "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+            }
+        }),
+        serde_json::json!({
+            "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+            }
+        }),
+        serde_json::json!({
+            "not": {
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            }
+        }),
+        serde_json::json!({
+            "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+            }
+        }),
+    ]);
+
+    sim_assert_eq!(
+        have: schema,
+        want: expected_values_schema(
+            serde_json::Map::from_iter([(
+                "fullnameOverride".to_string(),
+                serde_json::json!({
+                    "anyOf": [
+                        crate::resolve_policy::printf_string_formattable_mapping_schema(),
+                        {
+                            "type": "string",
+                            "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                            "allOf": ordinary_string_exclusions
+                        },
+                        crate::resolve_policy::plain_scalar_safe_comment_string_schema(),
+                        { "not": { "$ref": "#/$defs/t" } },
+                    ]
+                }),
+            )]),
+            Vec::new(),
+            true,
+        )
     );
 }
 
@@ -539,15 +593,5 @@ fn assigned_capability_helper_dependency_does_not_inherit_api_version_schema() {
         .pointer("/properties/kubeVersion")
         .expect("kubeVersion present");
 
-    assert!(
-        schema_contains_type(kube_version, "string"),
-        "kubeVersion should stay a chart input string, got {kube_version}; ir={ir:?}"
-    );
-    assert!(
-        !kube_version
-            .get("enum")
-            .and_then(Value::as_array)
-            .is_some_and(|values| values.iter().any(|value| value == "autoscaling/v2")),
-        "kubeVersion must not inherit the rendered HPA apiVersion enum, got {kube_version}; ir={ir:?}"
-    );
+    sim_assert_eq!(have: kube_version, want: &serde_json::json!({}));
 }

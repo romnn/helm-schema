@@ -1,0 +1,131 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "_internal_defaults": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "global": {
+          "additionalProperties": {},
+          "properties": {
+            "resourceScope": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "_internal_defaults": {
+                  "properties": {
+                    "global": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "_internal_defaults"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "global": {
+            "enum": [
+              null
+            ]
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": false
+    }
+  ],
+  "properties": {
+    "_internal_defaults": {},
+    "global": {
+      "additionalProperties": {},
+      "properties": {
+        "resourceScope": {
+          "anyOf": [
+            {
+              "enum": [
+                "all"
+              ]
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

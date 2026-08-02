@@ -1,5 +1,6 @@
 use super::*;
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
 /// Go-template `eq`/`ne` against a STRING literal terminates on
 /// incomparable operand kinds — maps, lists, and mismatched scalars abort
@@ -441,6 +442,44 @@ fn ternary_selector_binds_boolean_operand_contract() {
         ),
         "the outer guard skips both strict calls: {schema}"
     );
+}
+
+/// KEDA selects a component `ServiceAccount` flag unless that value is absent,
+/// in which case it falls back to the legacy shared flag.
+#[test]
+fn invalid_kind_ternary_scopes_each_provider_operand() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: test
+        automountServiceAccountToken: {{ kindIs "invalid" .Values.component.automount | ternary .Values.fallback .Values.component.automount }}
+    "#};
+    let values_yaml = indoc! {"
+        component:
+          automount: true
+        fallback: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "component": { "automount": true }, "fallback": "ignored" }),
+        serde_json::json!({ "component": {}, "fallback": false }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the selected Boolean provider operand must validate: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "component": { "automount": "wrong" }, "fallback": false }),
+        serde_json::json!({ "component": {}, "fallback": "wrong" }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a selected non-Boolean provider operand must be rejected: instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// Go-template `or` returns the first truthy operand or its final operand;
@@ -1676,6 +1715,63 @@ fn helper_range_header_keeps_join_conversion_boundary() {
     }
 }
 
+/// A decoded helper list carries its exact nonempty predicate into the range
+/// body, so provider rows stay dormant when the helper returns `[]`.
+#[test]
+fn helper_json_array_range_scopes_body_rows_by_payload_liveness() {
+    let helpers = indoc! {r#"
+        {{- define "namespaces" -}}
+        {{- $items := list -}}
+        {{- if and .Values.rbac.create .Values.roleName -}}
+          {{- if .Values.namespaces -}}
+            {{- range $namespace := join "," .Values.namespaces | split "," -}}
+              {{- $items = append $items (tpl $namespace $) -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+        {{ mustToJson $items }}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        {{- range include "namespaces" . | fromJsonArray }}
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: test
+          namespace: {{ . }}
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: {{ $.Values.roleName }}
+        subjects: []
+        {{- end }}
+    "#};
+    let finalized = parse_ir_with_helpers(source, helpers).finalize();
+    let use_ = finalized
+        .uses()
+        .iter()
+        .find(|use_| {
+            use_.source_expr == "roleName"
+                && use_.path == YamlPath(vec!["roleRef".to_string(), "name".to_string()])
+        })
+        .expect("roleRef name provider row");
+
+    sim_assert_eq!(
+        have: &use_.condition,
+        want: &helm_schema_core::GuardDnf::from_guards([
+            Guard::Truthy {
+                path: "namespaces".to_string(),
+            },
+            Guard::Truthy {
+                path: "rbac.create".to_string(),
+            },
+            Guard::Truthy {
+                path: "roleName".to_string(),
+            },
+        ])
+    );
+}
+
 #[test]
 fn range_key_prefix_scopes_member_contract_to_matching_keys() {
     let src = indoc! {r#"
@@ -2128,6 +2224,36 @@ fn regex_match_over_type_of_dispatches_numeric_kinds() {
     }
 }
 
+/// A chart value spelled as a JSON integer can reach Helm as `float64`
+/// through a values file or `int64` through `--set`. A direct
+/// `typeIs "int64"` test therefore cannot make its live branch a
+/// schema-level consequence of `type: integer`.
+#[test]
+fn numeric_type_is_spelling_does_not_claim_transport_provenance() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if typeIs "int64" .Values.value }}
+          encoded: {{ b64enc .Values.payload }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        value: 1
+        payload: 7
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let instance = composed_instance(values_yaml, serde_json::json!({}));
+
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "values-file decoding can make the int64 branch dormant: \
+         instance={instance}; schema={schema}"
+    );
+}
+
 /// A `semverCompare` outer guard on a direct values path lowers to an exact
 /// version-range pattern arm, so a `tpl` string contract inside the guarded
 /// branch binds exactly when the comparison holds instead of abstaining
@@ -2249,6 +2375,57 @@ fn statically_true_flag_operands_keep_short_circuit_operand_contracts() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "the flag-guarded hasKey operand claim keeps its ambient guard: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A branch that turns an initially-true local off leaves it truthy only in
+/// the branch complement. The join must retain that condition instead of
+/// unioning the untouched entry `true` back into an unconditional fact.
+#[test]
+fn kill_switch_reassignment_scopes_later_short_circuit_operands() {
+    let src = indoc! {r#"
+        {{- $shouldContinue := hasKey .Values.gate "enabled" }}
+        {{- if .Values.stop }}
+        {{- $shouldContinue = false }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if $shouldContinue }}
+          encoded: {{ b64enc .Values.payload }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+
+    for (instance, want) in [
+        (
+            serde_json::json!({
+                "stop": false,
+                "gate": { "enabled": true },
+                "payload": 7
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "stop": true,
+                "gate": { "enabled": true },
+                "payload": 7
+            }),
+            true,
+        ),
+        (
+            serde_json::json!({ "stop": false, "gate": {}, "payload": 7 }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the b64enc call executes only before the kill switch: \
              instance={instance}; want={want}; schema={schema}"
         );
     }
@@ -2539,4 +2716,68 @@ fn non_nilable_parameters_require_a_present_operand_in_either_form() {
              instance={instance}; schema={schema}"
         );
     }
+}
+
+#[test]
+fn live_unset_requires_a_present_object_operand() {
+    let src = indoc! {r#"
+        {{- if semverCompare "<1.30.0" (printf "%d.%d.0" (semver .Capabilities.KubeVersion.Version).Major (semver .Capabilities.KubeVersion.Version).Minor) -}}
+          {{- $_ := unset .Values.context "appArmorProfile" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          context: {{ toYaml .Values.context | quote }}
+    "#};
+    let values_yaml = indoc! {"
+        context:
+          appArmorProfile: RuntimeDefault
+    "};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_kubernetes_version(src, "1.29.0"),
+        Some(values_yaml),
+    );
+
+    sim_assert_eq!(
+        have: schema,
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [
+                {
+                    "additionalProperties": {},
+                    "properties": {
+                        "context": { "type": "object" }
+                    }
+                },
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": { "context": {} },
+                                    "required": ["context"],
+                                    "type": "object"
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "context": { "enum": [null] }
+                                },
+                                "required": ["context"],
+                                "type": "object"
+                            }
+                        ]
+                    },
+                    "then": false
+                }
+            ],
+            "properties": {
+                "context": {}
+            },
+            "type": "object"
+        })
+    );
 }

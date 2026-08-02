@@ -28,6 +28,7 @@ mod emission_profiles;
 mod empty_collections;
 mod fail_validators;
 mod fallback_selection;
+mod file_template_contracts;
 mod fragment_projection;
 mod fragment_seeds;
 mod guard_lowering;
@@ -47,6 +48,7 @@ mod provider_evidence;
 mod range_collections;
 mod range_contracts;
 mod range_key_contracts;
+mod required_source_backprojection;
 mod resolve_policy;
 mod shape_alternatives;
 mod string_transform_contracts;
@@ -81,6 +83,14 @@ fn parse_ir(src: &str) -> ContractIr {
 
 fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
     parse_ir_with_helpers_and_kubernetes_version(src, helpers, None)
+}
+
+fn parse_ir_with_files(src: &str, files: &[(&str, &str)]) -> ContractIr {
+    let mut index = DefineIndex::new();
+    for (path, source) in files {
+        index.add_file_source(path, source);
+    }
+    SymbolicIrContext::new(&index).generate_contract_ir(src)
 }
 
 fn parse_ir_with_helpers_and_kubernetes_version(
@@ -214,7 +224,7 @@ fn expected_values_schema(
     }
     if uses_helm_truthy {
         schema["$defs"] = serde_json::json!({
-            "helm-truthy": {
+            "t": {
                 "anyOf": [
                     { "const": true },
                     { "not": { "const": 0 }, "type": "number" },
@@ -238,10 +248,7 @@ fn root_property_schema(path: &str, schema: Value) -> Value {
 
 fn helm_truthy_guard(path: &str) -> Value {
     let mut properties = serde_json::Map::new();
-    properties.insert(
-        path.to_string(),
-        serde_json::json!({ "$ref": "#/$defs/helm-truthy" }),
-    );
+    properties.insert(path.to_string(), serde_json::json!({ "$ref": "#/$defs/t" }));
     serde_json::json!({
         "properties": properties,
         "required": [path],
@@ -249,19 +256,25 @@ fn helm_truthy_guard(path: &str) -> Value {
     })
 }
 
-fn expected_range_key_string_schema(path: &str) -> Value {
+fn expected_range_key_string_schema(path: &str, includes_declared_map: bool) -> Value {
+    let mut variants = vec![serde_json::json!({ "type": "array" })];
+    if includes_declared_map {
+        variants.insert(
+            0,
+            serde_json::json!({ "additionalProperties": {}, "type": "object" }),
+        );
+        variants.extend([
+            serde_json::json!({ "type": "null" }),
+            serde_json::json!({ "type": "object" }),
+        ]);
+    } else {
+        variants.extend([
+            serde_json::json!({ "type": "object" }),
+            serde_json::json!({ "type": "null" }),
+        ]);
+    }
     let mut properties = serde_json::Map::new();
-    properties.insert(
-        path.to_string(),
-        serde_json::json!({
-            "anyOf": [
-                { "additionalProperties": {}, "type": "object" },
-                { "type": "array" },
-                { "type": "null" },
-                { "type": "object" },
-            ]
-        }),
-    );
+    properties.insert(path.to_string(), serde_json::json!({ "anyOf": variants }));
     expected_values_schema(
         properties,
         vec![
@@ -369,7 +382,7 @@ fn merge_composed_override(base: &mut Value, overrides: Value) {
 }
 
 fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
-    // Schema FRAGMENTS reference helm-truthy without carrying the document
+    // Schema fragments reference the truthiness definition without the document
     // root that defines it; supply the definition then. A full document
     // resolves its own `$defs`, and wrapping it would hide them from `#/…`
     // pointers, so existing definitions are preserved and the wrap only
@@ -488,6 +501,26 @@ fn schema_property_contains_type(schema: &Value, property: &str, schema_type: &s
             .into_iter()
             .filter_map(|key| schema.get(key))
             .any(|child| schema_property_contains_type(child, property, schema_type))
+}
+
+fn schema_contains_property(schema: &Value, property: &str) -> bool {
+    if schema
+        .get("properties")
+        .and_then(Value::as_object)
+        .is_some_and(|properties| properties.contains_key(property))
+    {
+        return true;
+    }
+
+    ["anyOf", "oneOf", "allOf"]
+        .into_iter()
+        .filter_map(|key| schema.get(key).and_then(Value::as_array))
+        .flatten()
+        .any(|child| schema_contains_property(child, property))
+        || ["then", "else"]
+            .into_iter()
+            .filter_map(|key| schema.get(key))
+            .any(|child| schema_contains_property(child, property))
 }
 
 fn property_schema_with_type_exists(schema: &Value, property: &str, schema_type: &str) -> bool {

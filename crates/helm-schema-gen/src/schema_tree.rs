@@ -292,6 +292,12 @@ fn conjoin_collection_member_schema(collection_schema: &mut Value, member_schema
             true
         }
         Some("object") if object.get("additionalProperties") != Some(&Value::Bool(false)) => {
+            if let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) {
+                for property in properties.values_mut() {
+                    let existing = std::mem::take(property);
+                    *property = conjoin_schema_values(existing, member_schema.clone());
+                }
+            }
             let existing = object
                 .remove("additionalProperties")
                 .unwrap_or_else(|| Value::Object(Map::new()));

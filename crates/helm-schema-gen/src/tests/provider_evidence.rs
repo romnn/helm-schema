@@ -7,6 +7,393 @@ use test_util::prelude::sim_assert_eq;
 use super::*;
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete schema equality fixture pins every projected and omitted helper member together"
+)]
+fn helper_range_keeps_omitted_members_out_of_provider_projection() {
+    #[derive(Debug)]
+    struct ConfigMapDataProvider;
+
+    impl ResourceSchemaOracle for ConfigMapDataProvider {
+        fn schema_fragment_for_use(
+            &self,
+            use_: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            match use_.path.0.as_slice() {
+                [data] if data == "data" => Some(ProviderSchemaFragment::new(serde_json::json!({
+                    "additionalProperties": { "type": "string" },
+                    "type": "object",
+                }))),
+                [data, member] if data == "data" && member == "{*}" => {
+                    Some(ProviderSchemaFragment::new(serde_json::json!({
+                        "type": "string",
+                    })))
+                }
+                _ => None,
+            }
+        }
+    }
+
+    let helpers = indoc! {r#"
+        {{- define "test.params" -}}
+        {{- $config := omit .Values.params "create" -}}
+        {{- range $key, $value := $config }}
+        {{ $key }}: {{ toString $value | toYaml }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.params.create }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: params
+        data:
+          {{- include "test.params" . | nindent 2 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        params:
+          create: true
+          value: example
+    "};
+    let ir = parse_ir_with_helpers(src, helpers);
+    let signals = schema_signals_for(ir);
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &ConfigMapDataProvider)
+            .with_values_yaml(Some(values_yaml)),
+    );
+
+    let expected = serde_json::json!({
+        "$defs": {
+            "t": {
+                "anyOf": [
+                    { "const": true },
+                    { "not": { "const": 0 }, "type": "number" },
+                    { "minLength": 1, "type": "string" },
+                    { "minItems": 1, "type": "array" },
+                    { "minProperties": 1, "type": "object" },
+                ],
+            },
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [
+            {
+                "if": {
+                    "properties": {
+                        "params": {
+                            "properties": {
+                                "create": { "$ref": "#/$defs/t" },
+                            },
+                            "required": ["create"],
+                            "type": "object",
+                        },
+                    },
+                    "required": ["params"],
+                    "type": "object",
+                },
+                "then": {
+                    "allOf": [
+                        {
+                            "additionalProperties": {},
+                            "properties": {
+                                "params": {
+                                    "anyOf": [
+                                        { "type": "array" },
+                                        { "type": "object" },
+                                        { "type": "null" },
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            "additionalProperties": {},
+                            "properties": {
+                                "params": { "type": "object" },
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                "if": {
+                    "allOf": [
+                        {
+                            "properties": {
+                                "params": {
+                                    "properties": {
+                                        "create": { "$ref": "#/$defs/t" },
+                                    },
+                                    "required": ["create"],
+                                    "type": "object",
+                                },
+                            },
+                            "required": ["params"],
+                            "type": "object",
+                        },
+                        {
+                            "anyOf": [
+                                {
+                                    "not": {
+                                        "properties": { "params": {} },
+                                        "required": ["params"],
+                                        "type": "object",
+                                    },
+                                },
+                                {
+                                    "properties": {
+                                        "params": { "enum": [null] },
+                                    },
+                                    "required": ["params"],
+                                    "type": "object",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "then": false,
+            },
+            {
+                "if": {
+                    "anyOf": [
+                        {
+                            "not": {
+                                "properties": { "params": {} },
+                                "required": ["params"],
+                                "type": "object",
+                            },
+                        },
+                        {
+                            "properties": {
+                                "params": { "enum": [null] },
+                            },
+                            "required": ["params"],
+                            "type": "object",
+                        },
+                    ],
+                },
+                "then": false,
+            },
+        ],
+        "properties": {
+            "params": {
+                "additionalProperties": {},
+                "allOf": [{
+                    "if": {
+                        "properties": {
+                            "create": { "$ref": "#/$defs/t" },
+                        },
+                        "required": ["create"],
+                        "type": "object",
+                    },
+                    "then": {
+                        "anyOf": [
+                            { "not": { "$ref": "#/$defs/t" } },
+                            { "type": "array" },
+                            { "type": "null" },
+                            { "type": "object" },
+                        ],
+                    },
+                }],
+                "properties": {
+                    "create": {},
+                },
+                "type": "object",
+            },
+        },
+        "type": "object",
+    });
+
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete schema equality fixture keeps the omitted-member host and leaf contracts correlated"
+)]
+fn always_omitted_provider_member_yields_declared_typing_to_its_leaf() {
+    #[derive(Debug)]
+    struct SecurityContextProvider;
+
+    impl ResourceSchemaOracle for SecurityContextProvider {
+        fn schema_fragment_for_use(
+            &self,
+            use_: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            (use_.path.0 == ["spec", "containers[*]", "securityContext"]).then(|| {
+                ProviderSchemaFragment::new(serde_json::json!({
+                    "additionalProperties": false,
+                    "properties": {
+                        "runAsNonRoot": { "type": "boolean" },
+                    },
+                    "type": "object",
+                }))
+            })
+        }
+    }
+
+    let helpers = indoc! {r#"
+        {{- define "test.securityContext" -}}
+        {{- omit .Values.securityContext "enabled" | toYaml -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.securityContext.enabled }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: test
+              securityContext: {{ include "test.securityContext" . | nindent 8 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        securityContext:
+          enabled: true
+          runAsNonRoot: true
+    "};
+    let ir = parse_ir_with_helpers(src, helpers);
+    let signals = schema_signals_for(ir);
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &SecurityContextProvider)
+            .with_values_yaml(Some(values_yaml)),
+    );
+
+    let expected = serde_json::json!({
+        "$defs": {
+            "t": {
+                "anyOf": [
+                    { "const": true },
+                    { "not": { "const": 0 }, "type": "number" },
+                    { "minLength": 1, "type": "string" },
+                    { "minItems": 1, "type": "array" },
+                    { "minProperties": 1, "type": "object" },
+                ],
+            },
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [
+            {
+                "if": {
+                    "properties": {
+                        "securityContext": {
+                            "properties": {
+                                "enabled": { "$ref": "#/$defs/t" },
+                            },
+                            "required": ["enabled"],
+                            "type": "object",
+                        },
+                    },
+                    "required": ["securityContext"],
+                    "type": "object",
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "securityContext": { "type": "object" },
+                    },
+                },
+            },
+            {
+                "if": {
+                    "allOf": [
+                        {
+                            "properties": {
+                                "securityContext": {
+                                    "properties": {
+                                        "enabled": { "$ref": "#/$defs/t" },
+                                    },
+                                    "required": ["enabled"],
+                                    "type": "object",
+                                },
+                            },
+                            "required": ["securityContext"],
+                            "type": "object",
+                        },
+                        {
+                            "anyOf": [
+                                {
+                                    "not": {
+                                        "properties": { "securityContext": {} },
+                                        "required": ["securityContext"],
+                                        "type": "object",
+                                    },
+                                },
+                                {
+                                    "properties": {
+                                        "securityContext": { "enum": [null] },
+                                    },
+                                    "required": ["securityContext"],
+                                    "type": "object",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "then": false,
+            },
+            {
+                "if": {
+                    "anyOf": [
+                        {
+                            "not": {
+                                "properties": { "securityContext": {} },
+                                "required": ["securityContext"],
+                                "type": "object",
+                            },
+                        },
+                        {
+                            "properties": {
+                                "securityContext": { "enum": [null] },
+                            },
+                            "required": ["securityContext"],
+                            "type": "object",
+                        },
+                    ],
+                },
+                "then": false,
+            },
+        ],
+        "properties": {
+            "securityContext": {
+                "additionalProperties": {},
+                "allOf": [{
+                    "if": {
+                        "properties": {
+                            "enabled": { "$ref": "#/$defs/t" },
+                        },
+                        "required": ["enabled"],
+                        "type": "object",
+                    },
+                    "then": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "enabled": {},
+                            "runAsNonRoot": { "type": "boolean" },
+                        },
+                        "type": "object",
+                    },
+                }],
+                "properties": {
+                    "enabled": {},
+                },
+                "type": "object",
+            },
+        },
+        "type": "object",
+    });
+
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+#[test]
 fn quoted_empty_membership_scopes_raw_provider_preimages() {
     let raw = indoc! {r#"
         apiVersion: apps/v1
@@ -61,16 +448,12 @@ fn quoted_empty_membership_scopes_raw_provider_preimages() {
     );
 }
 
-/// A COLLECTION spliced raw into a plain scalar slot keeps the slot typed by
-/// its own scalar domain. Go formats a mapping as `map[key:value]`, which
-/// reads back as a string, so JSON-Schema-level validation of the rendered
-/// manifest accepts it — but the slots this reaches are validated by the API
-/// server beyond their schema (a `mountPath` must be absolute and must not
-/// contain `:`, which is exactly what the formatted text carries), and a
-/// sequence's `[a b]` opens a flow sequence and stops being a string at all.
-/// The scalar domain is therefore kept as the chart's contract.
+/// A collection spliced raw into a plain scalar slot follows the YAML node
+/// kind produced after Go formatting. A safe mapping becomes a string such as
+/// `map[key:value]`, while a sequence spelling opens a flow sequence and
+/// remains outside the provider string domain.
 #[test]
-fn plain_scalar_slots_reject_go_formatted_collections() {
+fn plain_scalar_slots_accept_go_formatted_mappings() {
     let src = indoc! {r"
         apiVersion: v1
         kind: Pod
@@ -90,7 +473,7 @@ fn plain_scalar_slots_reject_go_formatted_collections() {
         (serde_json::json!({ "home": "/var/data" }), true, "a path"),
         (
             serde_json::json!({ "home": { "a": "b" } }),
-            false,
+            true,
             "a mapping",
         ),
         (
@@ -622,6 +1005,293 @@ fn helper_literal_or_override_return_applies_integer_preimage_to_the_override() 
     }
 }
 
+/// A typed ternary chooses between raw string output and a structural
+/// `toYaml` result. The selector must scope each output candidate so the
+/// string lane does not reject structured provider input.
+#[test]
+fn ternary_type_selector_partitions_helper_output_candidates() {
+    let helpers = indoc! {r#"
+        {{- define "repro.render" -}}
+        {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) -}}
+        {{- if contains "{{" (toJson .value) -}}
+          {{- tpl $value .context -}}
+        {{- else -}}
+          {{- $value -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+        spec:
+          containers:
+            - name: probe
+              image: busybox
+              env:
+                {{- include "repro.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 8 }}
+    "#};
+    let values_yaml = "extraEnvVars: []\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "extraEnvVars": [{ "name": "AUDIT", "value": "ok" }],
+            }),
+            true,
+            "structured provider input",
+        ),
+        (
+            serde_json::json!({
+                "extraEnvVars": [{ "name": "AUDIT", "value": 7 }],
+            }),
+            false,
+            "invalid structured provider input",
+        ),
+        (
+            serde_json::json!({
+                "extraEnvVars": "- name: AUDIT\n  value: ok",
+            }),
+            true,
+            "templated string input",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A helper's left-trimmed root output starts at column zero before the
+/// caller applies `nindent`. Source indentation inside the helper must not
+/// move an appended serialized list beneath the preceding item's last field.
+#[test]
+fn trimmed_helper_output_keeps_caller_sequence_item_placement() {
+    let helpers = indoc! {r#"
+        {{- define "repro.render" -}}
+          {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) -}}
+          {{- if contains "{{" (toJson .value) -}}
+            {{- tpl $value .context -}}
+          {{- else -}}
+            {{- $value -}}
+          {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+        spec:
+          containers:
+            - name: probe
+              image: busybox
+              env:
+                - name: STATIC
+                  value: present
+                {{- include "repro.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 8 }}
+    "#};
+    let values_yaml = "extraEnvVars: []\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "extraEnvVars": [{ "name": "AUDIT", "value": "ok" }],
+            }),
+            true,
+            "a valid appended EnvVar item",
+        ),
+        (
+            serde_json::json!({
+                "extraEnvVars": [{ "name": "AUDIT", "value": 7 }],
+            }),
+            false,
+            "an invalid appended EnvVar value",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A sound render-count subset may activate provider-backed rows, but an
+/// unresolved helper row has no sink contract and must not project the
+/// declared list sample as a string-only runtime restriction.
+#[test]
+fn provider_subset_does_not_activate_unresolved_helper_fallback_typing() {
+    let helpers = indoc! {r#"
+        {{- define "repro.render" -}}
+        {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) -}}
+        {{- if contains "{{" (toJson .value) -}}
+          {{- tpl $value .context -}}
+        {{- else -}}
+          {{- $value -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        {{- range $index := until (int .Values.count) }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe-{{ $index }}
+        spec:
+          containers:
+            - name: probe
+              image: busybox
+              env:
+                {{- include "repro.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 8 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        count: 1
+        extraEnvVars: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (override_, label) in [
+        (
+            serde_json::json!({
+                "extraEnvVars": [{ "name": "AUDIT", "value": "ok" }],
+            }),
+            "structured helper input",
+        ),
+        (
+            serde_json::json!({
+                "extraEnvVars": "- name: AUDIT\n  value: ok",
+            }),
+            "templated string input",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, override_);
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A rendered-map merge decodes every layer through Helm's map-only
+/// `fromYaml`. Non-mapping inputs contribute no members, while mapping
+/// inputs retain ordered provider typing.
+#[test]
+fn parsed_map_merge_layers_type_only_mapping_source_shapes() {
+    let helpers = bitnami_tplvalues_helpers();
+    let source = indoc! {r#"
+        {{- if and (gt (int64 .Values.count) 0) (or .Values.annotations .Values.commonAnnotations) }}
+        {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.annotations .Values.commonAnnotations) "context" .) }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+          annotations: {{- include "common.tplvalues.render" (dict "value" $annotations "context" .) | nindent 4 }}
+        spec:
+          selector:
+            app: probe
+          ports:
+            - name: http
+              port: 80
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        count: 1
+        annotations: {}
+        commonAnnotations: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (override_, want, label) in [
+        (
+            serde_json::json!({ "commonAnnotations": [] }),
+            true,
+            "a falsy array layer leaves the guarded document dormant",
+        ),
+        (
+            serde_json::json!({ "commonAnnotations": null }),
+            true,
+            "a null layer leaves the guarded document dormant",
+        ),
+        (
+            serde_json::json!({ "annotations": 7 }),
+            true,
+            "a scalar layer is discarded by the map decoder",
+        ),
+        (
+            serde_json::json!({ "annotations": [{ "audit": "ok" }] }),
+            true,
+            "an array layer is discarded by the map decoder",
+        ),
+        (
+            serde_json::json!({ "annotations": { "audit": 7 } }),
+            false,
+            "an unshadowed mapping member reaches the provider",
+        ),
+        (
+            serde_json::json!({ "annotations": { "audit": "ok" } }),
+            true,
+            "a provider-valid mapping member renders",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, override_);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A parsed-map layer may execute unconditionally, but its map decoder still
+/// discards Helm-falsy non-mappings before the provider sees the result.
+#[test]
+fn unconditionally_evaluated_parsed_map_layer_keeps_helm_falsy_shapes() {
+    let helpers = bitnami_tplvalues_helpers();
+    let source = indoc! {r#"
+        {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.commonAnnotations) "context" .) }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+          annotations: {{- include "common.tplvalues.render" (dict "value" $annotations "context" .) | nindent 4 }}
+        spec:
+          selector:
+            app: probe
+          ports:
+            - name: http
+              port: 80
+    "#};
+    let values_yaml = "commonAnnotations: {}\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (value, want, label) in [
+        (serde_json::json!([]), true, "an empty array"),
+        (serde_json::json!(false), true, "false"),
+        (serde_json::json!(0), true, "zero"),
+        (serde_json::json!(null), true, "null"),
+        (
+            serde_json::json!({ "audit": "ok" }),
+            true,
+            "a provider-valid mapping",
+        ),
+        (
+            serde_json::json!({ "audit": 7 }),
+            false,
+            "a provider-invalid mapping member",
+        ),
+    ] {
+        let instance = serde_json::json!({ "commonAnnotations": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "unconditional parsed-map layer ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
 #[test]
 fn guarded_named_port_sink_does_not_widen_unconditional_numeric_sink() -> eyre::Result<()> {
     let source = indoc! {r#"
@@ -719,6 +1389,79 @@ fn self_guarded_numeric_sink_keeps_helm_falsy_values_dormant() {
     }
 }
 
+/// A serialized sibling occurrence cannot erase the Helm-falsy complement of
+/// a self-guarded provider use. The helper substitutes a constant namespace
+/// for every falsy raw spelling before the provider sees it.
+#[test]
+fn serialized_sibling_keeps_self_guarded_provider_falsy_complement() {
+    let helpers = indoc! {r#"
+        {{- define "repro.namespace" -}}
+          {{- if .Values.namespaceOverride -}}
+            {{- .Values.namespaceOverride -}}
+          {{- else -}}
+            {{- "default" -}}
+          {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: repro
+          namespace: {{ include "repro.namespace" . }}
+        spec:
+          containers:
+            - name: repro
+              image: example.invalid/repro
+              {{- if .Values.emitArgument }}
+              args:
+                - --namespace={{ include "repro.namespace" . }}
+              {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        emitArgument: false
+        namespaceOverride: ''
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (override_value, want, label) in [
+        (
+            serde_json::json!({}),
+            true,
+            "an empty mapping takes the fallback",
+        ),
+        (
+            serde_json::json!([]),
+            true,
+            "an empty list takes the fallback",
+        ),
+        (
+            serde_json::json!("custom"),
+            true,
+            "a valid truthy namespace reaches the provider",
+        ),
+        (
+            serde_json::json!({ "member": "value" }),
+            true,
+            "a truthy mapping formats to a plain namespace string",
+        ),
+        (
+            serde_json::json!(7),
+            false,
+            "a number formats to a numeric YAML token",
+        ),
+    ] {
+        let instance = serde_json::json!({
+            "emitArgument": true,
+            "namespaceOverride": override_value,
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// A conditional branch rendering a DIRECT scalar hole into a
 /// provider-required field (a Service `port`) backprojects presence and
 /// non-nullability of the source leaf under the branch's guards: Helm
@@ -742,6 +1485,7 @@ fn provider_required_field_requires_direct_source_leaf() {
     let values_yaml = indoc! {"
         svc:
           enabled: false
+          port: 80
     "};
     let schema = schema_for_values_yaml(parse_ir(guarded), Some(values_yaml));
 
@@ -793,6 +1537,1038 @@ fn provider_required_field_requires_direct_source_leaf() {
     );
 }
 
+/// An unconditional direct hole has the same provider-required presence
+/// contract as a guarded one: deleting the source still renders an explicit
+/// null into the required slot.
+#[test]
+fn unconditional_provider_required_field_requires_direct_source_leaf() {
+    let source = indoc! {r"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          ports:
+            - name: http
+              port: {{ .Values.svc.port }}
+    "};
+    let schema = schema_for_values_yaml(
+        parse_ir(source),
+        Some(indoc! {"
+            svc:
+              port: 80
+        "}),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "svc": { "port": 80 } }),
+            true,
+            "present integer port renders a valid Service",
+        ),
+        (
+            serde_json::json!({ "svc": {} }),
+            false,
+            "missing port renders a provider-invalid null",
+        ),
+        (
+            serde_json::json!({ "svc": { "port": null } }),
+            false,
+            "explicit null port renders a provider-invalid null",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A chart may intentionally leave a provider input unset for the user to
+/// supply at install time. Presence backprojection must not make that shipped
+/// default document invalid.
+#[test]
+fn unset_unconditional_provider_source_preserves_chart_default() {
+    let source = indoc! {r"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          ports:
+            - name: http
+              port: {{ .Values.svc.port }}
+    "};
+    let schema = schema_for_values_yaml(
+        parse_ir(source),
+        Some(indoc! {"
+            svc:
+              port:
+        "}),
+    );
+    let instance = serde_json::json!({ "svc": {} });
+
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "an intentionally unset source remains valid in the shipped defaults: schema={schema}"
+    );
+}
+
+/// The same default-preservation rule applies when a provider-invalid render
+/// is live on the shipped document. A generated schema cannot require setup
+/// values that the chart itself deliberately leaves unset.
+#[test]
+fn live_guarded_unset_provider_source_preserves_chart_default() {
+    let source = indoc! {r"
+        {{- if .Values.svc.enabled }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          ports:
+            - name: http
+              port: {{ .Values.svc.port }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        svc:
+          enabled: true
+          port:
+    "};
+    let schema = schema_for_values_yaml(parse_ir(source), Some(values_yaml));
+    let instance = serde_json::json!({ "svc": { "enabled": true } });
+
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "a live intentionally unset source remains valid in the shipped defaults: schema={schema}"
+    );
+}
+
+/// A dependency-owned default is restored by Helm's subchart coalescing even
+/// when the parent document omits the leaf. It must therefore not become a
+/// parent-level presence requirement.
+#[test]
+fn dependency_default_suppresses_parent_provider_source_presence() {
+    let source = indoc! {r"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          ports:
+            - name: http
+              port: {{ .Values.child.port }}
+    "};
+    let values_yaml = indoc! {"
+        child:
+          port: 80
+    "};
+    let schema =
+        schema_for_dependency_values_yaml(parse_ir(source), values_yaml, values_yaml, values_yaml);
+    let instance = serde_json::json!({ "child": {} });
+
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the dependency refills its provider source before rendering: schema={schema}"
+    );
+}
+
+/// Layered maps refill leaves only for the dependency's named entries. A
+/// parent may omit `containerPort` from an overridden built-in port, while a
+/// newly added enabled port still renders null without that leaf.
+#[test]
+fn dependency_defaults_refill_named_ranged_provider_sources() {
+    let source = indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+                - name: test
+                  image: busybox
+                  ports:
+                  {{- range $name, $port := .Values.child.ports }}
+                  {{- if $port.enabled }}
+                    - name: {{ $name }}
+                      containerPort: {{ $port.containerPort }}
+                  {{- end }}
+                  {{- end }}
+    "};
+    let composed_values = indoc! {"
+        child:
+          ports:
+            otlp:
+              enabled: true
+              containerPort: 4317
+    "};
+    let deeper_stage_values = indoc! {"
+        child:
+          ports:
+            otlp:
+              containerPort: 4317
+    "};
+    let schema = schema_for_dependency_values_yaml(
+        parse_ir(source),
+        composed_values,
+        deeper_stage_values,
+        composed_values,
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "child": { "ports": {
+                "otlp": { "enabled": true },
+            } } }),
+            true,
+            "the dependency refills its named port",
+        ),
+        (
+            serde_json::json!({ "child": { "ports": {
+                "custom": { "enabled": true },
+            } } }),
+            false,
+            "a new port has no dependency default",
+        ),
+        (
+            serde_json::json!({ "child": { "ports": {
+                "custom": { "enabled": true, "containerPort": 9000 },
+            } } }),
+            true,
+            "a complete new port renders",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// An optional provider field still rejects an explicitly rendered null.
+/// Direct source deletion therefore requires presence even when the field
+/// itself is not listed in its parent's `required` array.
+#[test]
+fn optional_null_intolerant_provider_field_requires_direct_source_leaf() {
+    let source = indoc! {r"
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: probe
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .Values.storage.size }}
+    "};
+    let schema = schema_for_values_yaml(
+        parse_ir(source),
+        Some(indoc! {"
+            storage:
+              size: 1Gi
+        "}),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "storage": { "size": "1Gi" } }),
+            true,
+            "a quantity renders into the optional typed field",
+        ),
+        (
+            serde_json::json!({ "storage": {} }),
+            false,
+            "a missing size renders an invalid explicit null",
+        ),
+        (
+            serde_json::json!({ "storage": { "size": null } }),
+            false,
+            "an explicit null remains invalid",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A helper-computed root predicate remains the exact liveness guard for a
+/// later provider slot. Its source leaf is required only while the derived
+/// root field is true.
+#[test]
+fn helper_set_root_guard_scopes_provider_source_presence() {
+    let helpers = indoc! {r#"
+        {{- define "repro.enabled" -}}
+        {{- $_ := set . "enabled" (or
+          (eq (.Values.feature.enabled | toString) "true")
+          (and
+            (eq (.Values.feature.enabled | toString) "-")
+            (eq (.Values.global.enabled | toString) "true"))) -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        {{- template "repro.enabled" . -}}
+        {{- if .enabled }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+          annotations:
+            listen: {{ printf ":%v" .Values.feature.port | quote }}
+        spec:
+          ports:
+            - name: https
+              port: 443
+              targetPort: {{ .Values.feature.port }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        global:
+          enabled: true
+        feature:
+          enabled: "-"
+          port: 8080
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "the live default carries its port",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "feature": { "port": null } }),
+            ),
+            false,
+            "the live derived guard requires its source port",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({
+                    "feature": { "enabled": false, "port": null },
+                }),
+            ),
+            true,
+            "a disabled feature keeps the provider slot dormant",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Metadata emitted by a helper keeps its provider map type when the helper
+/// is gated by a root field assigned from a complete mode-selection chain.
+#[test]
+fn helper_splice_root_mode_guard_keeps_metadata_member_type() {
+    let helpers = indoc! {r#"
+        {{- define "repro.mode" -}}
+        {{- if .Values.external -}}
+          {{- $_ := set . "mode" "external" -}}
+        {{- else if .Values.dev -}}
+          {{- $_ := set . "mode" "dev" -}}
+        {{- else if .Values.ha -}}
+          {{- $_ := set . "mode" "ha" -}}
+        {{- else -}}
+          {{- $_ := set . "mode" "standalone" -}}
+        {{- end -}}
+        {{- end -}}
+        {{- define "repro.annotations" -}}
+        {{- if and (ne .mode "dev") .Values.annotations }}
+        annotations:
+          {{- toYaml .Values.annotations | nindent 2 }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        {{- template "repro.mode" . -}}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+          {{- template "repro.annotations" . }}
+        spec:
+          containers:
+            - name: probe
+              image: busybox
+    "#};
+    let values_yaml = indoc! {r"
+        external: false
+        dev: false
+        ha: false
+        annotations: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "annotations": { "audit": 7 } }),
+            ),
+            false,
+            "a live helper splice keeps the metadata value type",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "annotations": { "audit": "ok" } }),
+            ),
+            true,
+            "string annotation values render",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({
+                    "dev": true,
+                    "annotations": { "audit": 7 },
+                }),
+            ),
+            true,
+            "dev mode keeps the helper splice dormant",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A custom root field is absent until the current template execution sets
+/// it. Comparing that nil field with a string is exact, so the helper's
+/// provider projection must not be discarded as approximate.
+#[test]
+fn helper_splice_absent_root_field_comparison_keeps_metadata_member_type() {
+    let helpers = indoc! {r#"
+        {{- define "repro.annotations" -}}
+        {{- if and (ne .mode "dev") .Values.annotations }}
+        annotations:
+          {{- toYaml .Values.annotations | nindent 2 }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: probe
+          {{- template "repro.annotations" . }}
+    "#};
+    let values_yaml = "annotations: {}\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "annotations": { "audit": 7 } }),
+            false,
+            "the absent root field makes the helper branch live",
+        ),
+        (
+            serde_json::json!({ "annotations": { "audit": "ok" } }),
+            true,
+            "string annotation values render",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A helper that selects a preferred metadata map with `or`/`default` keeps
+/// each candidate's provider member type in the states where it supplies the
+/// output.
+#[test]
+fn helper_splice_first_truthy_metadata_candidates_keep_member_types() {
+    let helpers = indoc! {r#"
+        {{- define "repro.annotations" -}}
+        {{- if or .Values.current.annotations .Values.legacyAnnotations }}
+        annotations:
+          {{- $kind := typeOf (or .Values.current.annotations .Values.legacyAnnotations) }}
+          {{- if eq $kind "string" }}
+            {{- tpl (.Values.current.annotations | default .Values.legacyAnnotations) . | nindent 2 }}
+          {{- else }}
+            {{- toYaml (.Values.current.annotations | default .Values.legacyAnnotations) | nindent 2 }}
+          {{- end }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+          {{- template "repro.annotations" . }}
+        spec:
+          containers:
+            - name: probe
+              image: busybox
+    "#};
+    let values_yaml = indoc! {r"
+        current:
+          annotations: {}
+        legacyAnnotations: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "current": { "annotations": { "audit": 7 } } }),
+            ),
+            false,
+            "the preferred candidate keeps the metadata value type",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "legacyAnnotations": { "audit": 7 } }),
+            ),
+            false,
+            "the fallback candidate keeps the metadata value type",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({
+                    "current": { "annotations": { "audit": "ok" } },
+                    "legacyAnnotations": { "audit": 7 },
+                }),
+            ),
+            true,
+            "the preferred candidate shadows a malformed fallback",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A helper nested inside another helper keeps the complete manifest path of
+/// its output when the outer helper contributes an embedded provider object.
+#[test]
+fn nested_helper_splice_keeps_embedded_metadata_member_type() {
+    let helpers = indoc! {r#"
+        {{- define "repro.annotations" -}}
+          annotations:
+            {{- toYaml .Values.annotations | nindent 4 }}
+        {{- end -}}
+        {{- define "repro.claims" -}}
+          volumeClaimTemplates:
+            - apiVersion: v1
+              kind: PersistentVolumeClaim
+              metadata:
+                name: data
+                {{- include "repro.annotations" . | nindent 6 }}
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: apps/v1
+        kind: StatefulSet
+        metadata:
+          name: probe
+        spec:
+          selector:
+            matchLabels:
+              app: probe
+          serviceName: probe
+          template:
+            metadata:
+              labels:
+                app: probe
+            spec:
+              containers:
+                - name: probe
+                  image: busybox
+          {{ template "repro.claims" . }}
+    "#};
+    let values_yaml = "annotations: {}\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "annotations": { "audit": 7 } }),
+            false,
+            "numeric annotation member",
+        ),
+        (
+            serde_json::json!({ "annotations": { "audit": "ok" } }),
+            true,
+            "string annotation member",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A negated selector over an ordered merge is certainly true when every
+/// layer is falsy. That sound subset is enough to retain provider typing for
+/// a payload rendered under the guard.
+#[test]
+fn negated_merged_layer_guard_scopes_provider_payloads() {
+    let source = indoc! {r"
+        {{- $gate := mergeOverwrite .Values.base.gate .Values.override.gate -}}
+        {{- if and (not $gate.enabled) .Values.base.live }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+        spec:
+          securityContext:
+            {{- toYaml .Values.base.securityContext | nindent 4 }}
+          containers:
+            - name: probe
+              image: busybox
+        {{- end }}
+    "};
+    let schema = schema_for(parse_ir(source));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "base": {
+                    "gate": { "enabled": false },
+                    "live": true,
+                    "securityContext": { "runAsUser": "oops" },
+                },
+                "override": { "gate": { "enabled": false } },
+            }),
+            false,
+            "a live payload keeps the provider field type",
+        ),
+        (
+            serde_json::json!({
+                "base": {
+                    "gate": { "enabled": false },
+                    "live": true,
+                    "securityContext": { "runAsUser": 1000 },
+                },
+                "override": { "gate": { "enabled": false } },
+            }),
+            true,
+            "a valid live payload renders",
+        ),
+        (
+            serde_json::json!({
+                "base": {
+                    "gate": { "enabled": false },
+                    "live": true,
+                    "securityContext": { "runAsUser": "oops" },
+                },
+                "override": { "gate": { "enabled": true } },
+            }),
+            true,
+            "a truthy higher-priority guard layer keeps the payload dormant",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Merge-layer provider arms own the sink contract, including its ambient
+/// render guard. Their synthetic source-selection branch must not separately
+/// project the declared default's type while the resource is dormant.
+#[test]
+fn dormant_merge_layer_does_not_project_declared_default_type() {
+    let source = indoc! {r"
+        {{- $service := mergeOverwrite .Values.legacy .Values.current -}}
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          selector:
+            app: probe
+          ports:
+            - name: http
+              port: {{ $service.port }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        enabled: false
+        legacy:
+          port: 80
+        current: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(source), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "legacy": { "port": true } }),
+            ),
+            true,
+            "a dormant resource ignores the source spelling",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({
+                    "enabled": true,
+                    "legacy": { "port": true },
+                }),
+            ),
+            false,
+            "a live resource keeps provider typing",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({
+                    "enabled": true,
+                    "legacy": { "port": 8080 },
+                }),
+            ),
+            true,
+            "a valid live source renders",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A source consumed both directly and through an ordered merge keeps the
+/// direct sink contract beside the merge arm. The merge arm owns only the
+/// layered use and cannot erase an independent consumer when it is dormant.
+#[test]
+fn merge_layer_preserves_an_independent_direct_consumer() {
+    let source = indoc! {r"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: direct
+        spec:
+          selector:
+            app: probe
+          ports:
+            - name: direct
+              port: {{ .Values.legacy.port }}
+        ---
+        {{- $service := mergeOverwrite .Values.legacy .Values.current -}}
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: layered
+        spec:
+          selector:
+            app: probe
+          ports:
+            - name: layered
+              port: {{ $service.port }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        enabled: false
+        legacy:
+          port: 80
+        current: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(source), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "legacy": { "port": "oops" } }),
+            ),
+            false,
+            "the direct consumer remains typed while the merge arm is dormant",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "legacy": { "port": 8080 } }),
+            ),
+            true,
+            "a valid direct value renders while the merge arm is dormant",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({
+                    "enabled": true,
+                    "legacy": { "port": 8080 },
+                }),
+            ),
+            true,
+            "the same value remains valid when both consumers are live",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// An integer-cast comparison is not exact over every Helm input spelling,
+/// but its positive integer region is exact. Provider typing can safely bind
+/// inside that region and remain dormant outside it.
+#[test]
+fn int_cast_sound_subset_scopes_provider_payloads() {
+    let source = indoc! {r"
+        {{- if gt (int64 .Values.count) 0 }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+        spec:
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 4 }}
+          containers:
+            - name: probe
+              image: busybox
+        {{- end }}
+    "};
+    let schema = schema_for(parse_ir(source));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "count": 1,
+                "securityContext": { "runAsUser": "oops" },
+            }),
+            false,
+            "a live payload keeps the provider field type",
+        ),
+        (
+            serde_json::json!({
+                "count": 1,
+                "securityContext": { "runAsUser": 1000 },
+            }),
+            true,
+            "a valid live payload renders",
+        ),
+        (
+            serde_json::json!({
+                "count": 0,
+                "securityContext": { "runAsUser": "oops" },
+            }),
+            true,
+            "a zero count keeps the payload dormant",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A sound subset on an otherwise undecodable header is sufficient to type
+/// the provider payload wherever that subset fires. Its Boolean shape is not
+/// limited to one special guard family.
+#[test]
+fn compound_sound_subset_scopes_provider_payloads() {
+    let live_subset = helm_schema_core::Predicate::all(vec![
+        helm_schema_core::Predicate::truthy_path("enabled"),
+        helm_schema_core::Predicate::Or(vec![
+            helm_schema_core::Predicate::truthy_path("create"),
+            helm_schema_core::Predicate::from(Guard::Eq {
+                path: "mode".to_string(),
+                value: GuardValue::String("live".to_string()),
+            }),
+        ]),
+    ]);
+    let contract = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: "annotations".to_string(),
+        path: YamlPath(vec!["metadata".to_string(), "annotations".to_string()]),
+        kind: ValueKind::YamlSerialized,
+        condition: helm_schema_core::GuardDnf::from_conjunction([
+            helm_schema_core::Predicate::approximate_with_sound_predicate(
+                "repro",
+                BTreeSet::new(),
+                live_subset,
+            ),
+        ]),
+        resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+        provenance: Vec::new(),
+        has_string_contract: false,
+        stringified: false,
+        template_supplied_member_keys: BTreeSet::new(),
+        split_segment: None,
+        merge_layers: None,
+        range_key: false,
+        nil_omitting: false,
+        omitted_members: std::collections::BTreeMap::new(),
+        digest: false,
+        merge_operand: false,
+    }]);
+    let schema = schema_for_values_yaml(
+        contract,
+        Some(indoc! {"
+            enabled: false
+            create: false
+            mode: dormant
+            annotations: {}
+        "}),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "enabled": true,
+                "create": false,
+                "mode": "live",
+                "annotations": 7,
+            }),
+            false,
+            "a live compound subset types the payload",
+        ),
+        (
+            serde_json::json!({
+                "enabled": true,
+                "create": true,
+                "mode": "dormant",
+                "annotations": { "audit": "ok" },
+            }),
+            true,
+            "either exact alternative can activate a valid payload",
+        ),
+        (
+            serde_json::json!({
+                "enabled": false,
+                "create": true,
+                "mode": "live",
+                "annotations": 7,
+            }),
+            true,
+            "a malformed dormant payload stays open",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A selected scalar result can retain an operand as influence without
+/// preserving its value. A sound execution subset must not project the
+/// provider's output string type back onto the Boolean selector.
+#[test]
+fn sound_subset_does_not_type_scalar_selection_influence() {
+    let source = indoc! {r#"
+        {{- if or .Values.live .Release.IsUpgrade }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: repro
+        spec:
+          containers:
+            - name: repro
+              image: busybox
+              env:
+                - name: FLAG
+                  value: {{ ternary "true" "false" .Values.flag | quote }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        live: false
+        flag: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(source), Some(values_yaml));
+
+    for (flag, want, label) in [
+        (serde_json::json!(false), true, "false selector"),
+        (serde_json::json!(true), true, "true selector"),
+        (serde_json::json!(7), false, "non-Boolean selector"),
+    ] {
+        let instance = composed_instance(
+            values_yaml,
+            serde_json::json!({
+                "live": true,
+                "flag": flag,
+            }),
+        );
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "ternary's own Boolean contract must survive without inheriting \
+             the provider output type for a {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Textual placement does not prove that a falsy source bypasses its
+/// consumer. Strict formatters can still read empty maps and arrays.
+#[test]
+fn textual_rows_are_not_inherently_falsy_tolerant() -> eyre::Result<()> {
+    let signals = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: "repository".to_string(),
+        path: YamlPath(vec![
+            "spec".to_string(),
+            "containers[*]".to_string(),
+            "image".to_string(),
+        ]),
+        kind: ValueKind::Serialized,
+        condition: helm_schema_core::GuardDnf::default(),
+        resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+        provenance: Vec::new(),
+        has_string_contract: false,
+        stringified: false,
+        template_supplied_member_keys: BTreeSet::new(),
+        split_segment: None,
+        merge_layers: None,
+        range_key: false,
+        nil_omitting: false,
+        omitted_members: std::collections::BTreeMap::new(),
+        digest: false,
+        merge_operand: false,
+    }])
+    .finalize()
+    .into_schema_signals();
+    let evidence = signals
+        .evidence_for("repository")
+        .ok_or_eyre("expected textual repository evidence")?;
+
+    sim_assert_eq!(
+        have: evidence.facts.all_render_uses_falsy_tolerant,
+        want: false
+    );
+    Ok(())
+}
+
 #[test]
 fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
@@ -805,6 +2581,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
@@ -851,6 +2628,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         )),
         provenance: Vec::new(),
         has_string_contract: false,
+        stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
@@ -882,7 +2660,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
     assert!(
         variants
             .iter()
-            .any(|variant| variant.get("type").and_then(Value::as_str) == Some("string")),
+            .any(|variant| schema_accepts_instance(variant, &Value::String("service".to_string()))),
         "rendered scalar sink should still preserve the scalar branch: {schema:#}",
     );
 }
@@ -932,9 +2710,13 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
         ),
     ])
     .with_inference_enabled(true);
-    let resolved =
-        crate::path_resolver::PathSchemaResolver::new(&schema_signals, &values_yaml, &provider)
-            .resolve_all();
+    let resolved = crate::path_resolver::PathSchemaResolver::new(
+        &schema_signals,
+        &values_yaml,
+        &serde_yaml::Value::Null,
+        &provider,
+    )
+    .resolve_all();
     let resolved_metric_relabelings = resolved
         .iter()
         .find(|path| path.value_path == "serviceMonitor.metricRelabelings")
@@ -1046,9 +2828,13 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
         .wrap_err("parse Zalando operator values fixture")?;
     let provider = production_chain_provider();
 
-    let resolved =
-        crate::path_resolver::PathSchemaResolver::new(&schema_signals, &values_yaml, &provider)
-            .resolve_all();
+    let resolved = crate::path_resolver::PathSchemaResolver::new(
+        &schema_signals,
+        &values_yaml,
+        &serde_yaml::Value::Null,
+        &provider,
+    )
+    .resolve_all();
     let resolved_extra_envs = resolved
         .iter()
         .find(|path| path.value_path == "extraEnvs")
@@ -1195,6 +2981,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             )),
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -1221,6 +3008,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             )),
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -1293,6 +3081,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             resource: Some(resource.clone()),
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -1310,6 +3099,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             resource: Some(resource),
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -1364,6 +3154,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         )),
         provenance: Vec::new(),
         has_string_contract: false,
+        stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
@@ -1863,6 +3654,16 @@ fn template_supplied_sibling_keys_relax_provider_requiredness() {
             false,
             "the slot's member typing still applies",
         ),
+        (
+            serde_json::json!({ "tmpVolume": null }),
+            false,
+            "a null fragment corrupts the literal volume item",
+        ),
+        (
+            serde_json::json!({}),
+            false,
+            "deleting the fragment corrupts the literal volume item",
+        ),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
@@ -2175,6 +3976,73 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "ranged required leaf ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A positive sibling guard activates a ranged member's provider slot only
+/// for truthy members. Disabled members need no leaf, while enabled members
+/// must carry the direct source that otherwise renders as null.
+#[test]
+fn positive_member_guard_scopes_required_provider_leaf_presence() {
+    let src = indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+                - name: test
+                  image: busybox
+                  ports:
+                  {{- range $name, $port := .Values.ports }}
+                  {{- if $port.enabled }}
+                    - name: {{ $name }}
+                      containerPort: {{ $port.containerPort }}
+                  {{- end }}
+                  {{- end }}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("ports: {}\n"));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "ports": { "audit": { "enabled": false } } }),
+            true,
+            "a disabled member renders no provider slot",
+        ),
+        (
+            serde_json::json!({ "ports": { "audit": {
+                "enabled": true,
+                "containerPort": 8080,
+            } } }),
+            true,
+            "an enabled member with a valid leaf renders",
+        ),
+        (
+            serde_json::json!({ "ports": { "audit": { "enabled": true } } }),
+            false,
+            "an enabled member without its leaf renders null",
+        ),
+        (
+            serde_json::json!({ "ports": { "audit": {
+                "enabled": true,
+                "containerPort": null,
+            } } }),
+            false,
+            "an enabled member with an explicit null renders null",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
         );
     }
 }

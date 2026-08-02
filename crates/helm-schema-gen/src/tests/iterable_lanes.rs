@@ -332,6 +332,91 @@ fn shared_accumulator_helper_ranges_bind_each_source_iterable_domain() {
     }
 }
 
+/// A helper range selected by its subject's truthiness still remains dormant
+/// behind the caller's independent feature gate. The guarded iterable arm
+/// must not turn the declared list default into path-wide typing.
+#[test]
+fn caller_gate_keeps_helper_range_subject_open_while_dormant() {
+    let helpers = indoc! {r#"
+        {{- define "repro.pullSecrets" -}}
+          {{- $root := .root -}}
+          {{- range (concat .root.Values.global.pullSecrets .imagePullSecrets) -}}
+            {{- if eq (typeOf .) "map[string]interface {}" -}}
+        - {{ toYaml (dict "name" (tpl .name $root)) | trim }}
+            {{- else -}}
+        - name: {{ tpl . $root }}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.imageRenderer.enabled }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: repro
+        spec:
+          {{- if or .Values.imageRenderer.image.pullSecrets .Values.global.pullSecrets }}
+          imagePullSecrets:
+            {{- include "repro.pullSecrets" (dict "root" . "imagePullSecrets" .Values.imageRenderer.image.pullSecrets) | nindent 4 }}
+          {{- end }}
+          containers:
+            - name: repro
+              image: example.invalid/repro
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r"
+        global:
+          pullSecrets: []
+        imageRenderer:
+          enabled: false
+          image:
+            pullSecrets: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "global": { "pullSecrets": [] },
+                "imageRenderer": {
+                    "enabled": false,
+                    "image": { "pullSecrets": "dormant" },
+                },
+            }),
+            true,
+            "the caller gate skips the helper",
+        ),
+        (
+            serde_json::json!({
+                "global": { "pullSecrets": [] },
+                "imageRenderer": {
+                    "enabled": true,
+                    "image": { "pullSecrets": "live" },
+                },
+            }),
+            false,
+            "the live helper range rejects a string",
+        ),
+        (
+            serde_json::json!({
+                "global": { "pullSecrets": [] },
+                "imageRenderer": {
+                    "enabled": true,
+                    "image": { "pullSecrets": ["registry"] },
+                },
+            }),
+            true,
+            "the live helper range accepts a list",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// datadog's orchestrator custom-resources shape: a range over a binding
 /// that SELECTS a fallback (`$crs := .Values.x | default list`) iterates
 /// the fallback on every Helm-falsy input, so falsy scalars render through

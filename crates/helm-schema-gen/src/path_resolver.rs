@@ -10,7 +10,7 @@ use serde_yaml::Value as YamlValue;
 
 use helm_schema_core::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
 
-use crate::merge::{merge_schema_list, union_schema_list};
+use crate::merge::{intersect_schema_list, merge_schema_list, union_schema_list};
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, guard_value_to_json, is_empty_schema, type_schema};
@@ -52,6 +52,7 @@ struct ProviderSchemaLookupKey {
 pub(crate) struct PathSchemaResolver<'a> {
     schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
     values_yaml_info: BTreeMap<String, ValuesYamlPathInfo>,
+    dependency_default_paths: BTreeSet<String>,
     provider: &'a dyn ResourceSchemaOracle,
     provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<ProviderSchemaCandidate>>>,
 }
@@ -60,17 +61,28 @@ impl<'a> PathSchemaResolver<'a> {
     pub(crate) fn new(
         contract_signals: &'a ContractSchemaSignals,
         values_yaml_doc: &YamlValue,
+        dependency_values_yaml_doc: &YamlValue,
         provider: &'a dyn ResourceSchemaOracle,
     ) -> Self {
         let values_yaml_info = build_values_yaml_path_info(
             values_yaml_doc,
             contract_signals.referenced_value_paths(),
             contract_signals.pruned_parent_value_paths(),
+            contract_signals.unconditionally_omitted_value_paths(),
             contract_signals.direct_ranged_value_paths(),
         );
         Self {
             schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
             values_yaml_info,
+            dependency_default_paths: contract_signals
+                .referenced_value_paths()
+                .iter()
+                .filter(|path| {
+                    crate::values_yaml::yaml_value_at_path(dependency_values_yaml_doc, path)
+                        .is_some()
+                })
+                .cloned()
+                .collect(),
             provider,
             provider_schema_cache: HashMap::new(),
         }
@@ -83,7 +95,14 @@ impl<'a> PathSchemaResolver<'a> {
         provider: &dyn ResourceSchemaOracle,
     ) -> ResolvedPathSchema {
         let path_segments = crate::split_value_path(&evidence.value_path);
-        resolve_path_evidence(evidence, path_segments, None, provider, &mut HashMap::new())
+        resolve_path_evidence(
+            evidence,
+            path_segments,
+            None,
+            false,
+            provider,
+            &mut HashMap::new(),
+        )
     }
 
     #[tracing::instrument(skip_all)]
@@ -111,6 +130,7 @@ impl<'a> PathSchemaResolver<'a> {
             &evidence,
             crate::split_value_path(value_path),
             self.values_yaml_info.get(value_path),
+            self.dependency_default_paths.contains(value_path),
             self.provider,
             &mut self.provider_schema_cache,
         ))
@@ -121,6 +141,7 @@ fn resolve_path_evidence(
     evidence: &ContractPathSchemaEvidence,
     path_segments: Vec<String>,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
+    has_dependency_default: bool,
     provider: &dyn ResourceSchemaOracle,
     provider_schema_cache: &mut HashMap<
         ProviderSchemaLookupKey,
@@ -132,10 +153,15 @@ fn resolve_path_evidence(
     let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
     let accepted_dependency_values_root_fragment =
         evidence.facts.accepted_dependency_values_root_fragment;
-    let (policy_inputs, provider_schema_candidate) =
-        build_path_schema_inputs(evidence, values_yaml_info, provider, provider_schema_cache);
+    let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
+        evidence,
+        values_yaml_info,
+        has_dependency_default,
+        provider,
+        provider_schema_cache,
+    );
     let (structural_policy_inputs, _) =
-        build_path_schema_inputs(evidence, None, provider, provider_schema_cache);
+        build_path_schema_inputs(evidence, None, false, provider, provider_schema_cache);
     let structural_schema = ResolvePolicy::resolve_schema_for_value_path(structural_policy_inputs);
     let mut schema = ResolvePolicy::resolve_schema_for_value_path(policy_inputs);
     if let Some(values_yaml_info) = values_yaml_info {
@@ -217,6 +243,7 @@ fn provider_schemas_for_path_evidence(
 fn build_path_schema_inputs(
     evidence: &ContractPathSchemaEvidence,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
+    has_dependency_default: bool,
     provider: &dyn ResourceSchemaOracle,
     provider_schema_cache: &mut HashMap<
         ProviderSchemaLookupKey,
@@ -229,10 +256,11 @@ fn build_path_schema_inputs(
         provider_schemas,
         metadata_schema(&evidence.metadata_field_kinds),
     );
-    let values_yaml_facts = values_yaml_info.map_or_else(
+    let mut values_yaml_facts = values_yaml_info.map_or_else(
         ValuesYamlPathFacts::absent,
         super::values_yaml::ValuesYamlPathInfo::facts,
     );
+    values_yaml_facts.has_dependency_default = has_dependency_default;
     let facts = ValuePathSchemaFacts::new(evidence.facts, values_yaml_facts);
     let values_yaml_schema = values_yaml_info
         .map(|path_info| path_info.schema.clone())
@@ -324,7 +352,7 @@ fn provider_schema_for_path(
     let provider_schema = if let Some(provider_schema) = single_provider_schema.as_deref() {
         provider_schema.schema().clone()
     } else {
-        merge_schema_list(
+        intersect_schema_list(
             provider_schemas
                 .into_iter()
                 .map(|schema| schema.schema().clone())
@@ -337,10 +365,9 @@ fn provider_schema_for_path(
         None
     };
 
-    (
-        merge_schema_list(vec![provider_schema, metadata_schema]),
-        provider_schema_candidate,
-    )
+    let provider_schema = intersect_schema_list(vec![provider_schema, metadata_schema]);
+
+    (provider_schema, provider_schema_candidate)
 }
 
 fn metadata_field_schema(field: MetadataFieldKind) -> Value {
@@ -354,7 +381,7 @@ fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
     if field_kinds.is_empty() {
         empty_schema()
     } else {
-        merge_schema_list(
+        intersect_schema_list(
             field_kinds
                 .iter()
                 .copied()
@@ -405,6 +432,34 @@ pub(crate) fn fail_requirement_schema<'a>(
                         } else {
                             // Nonpositive integer ranges execute no iterations,
                             // so no member reaches the body requirement.
+                            serde_json::json!({ "type": "integer", "maximum": 0 })
+                        };
+                    arms.push(integer);
+                }
+                arms.push(serde_json::json!({ "type": "null" }));
+                parts.push(serde_json::json!({ "anyOf": arms }));
+            }
+            helm_schema_core::ContractRequirementTarget::MembersExceptKeys {
+                keys,
+                allow_integer,
+            } => {
+                let properties = keys
+                    .iter()
+                    .map(|key| (key.clone(), serde_json::json!({})))
+                    .collect::<serde_json::Map<_, _>>();
+                let mut arms = vec![
+                    serde_json::json!({ "type": "array", "items": requirement }),
+                    serde_json::json!({
+                        "type": "object",
+                        "properties": properties,
+                        "additionalProperties": requirement,
+                    }),
+                ];
+                if *allow_integer {
+                    let integer =
+                        if requirements_allow_runtime_kind(&implication.requirements, "integer") {
+                            serde_json::json!({ "type": "integer" })
+                        } else {
                             serde_json::json!({ "type": "integer", "maximum": 0 })
                         };
                     arms.push(integer);
@@ -784,6 +839,9 @@ fn requirements_allow_runtime_kind(
         FailValueRequirement::ComparableKind(required) => {
             required == schema_type || schema_type == "null"
         }
+        FailValueRequirement::PrintfStringOperand => {
+            matches!(schema_type, "object" | "string")
+        }
         FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
         FailValueRequirement::MatchesPattern { .. }
         | FailValueRequirement::NotMatchesPattern { .. }
@@ -993,8 +1051,18 @@ fn fail_value_requirement_schema(
                     parts.push(string);
                 }
             }
-            FailValueRequirement::QuotedSerializationSafe { style } => {
-                parts.push(crate::quoted_serialization::reference_schema(*style));
+            FailValueRequirement::QuotedSerializationSafe { style, templated } => {
+                parts.push(crate::quoted_serialization::reference_schema(
+                    *style, *templated,
+                ));
+            }
+            FailValueRequirement::PrintfStringOperand => {
+                parts.push(serde_json::json!({
+                    "anyOf": [
+                        crate::resolve_policy::printf_string_formattable_string_schema(),
+                        crate::resolve_policy::printf_string_formattable_mapping_schema(),
+                    ]
+                }));
             }
             FailValueRequirement::PlainScalarSafe {
                 token_initial,

@@ -3,6 +3,7 @@
 //! totally-formatted embeddings tolerate any input kind.
 
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
 use super::{parse_ir, schema_accepts_instance, schema_for_values_yaml};
 
@@ -188,6 +189,334 @@ fn double_quoted_splice_excludes_invalid_quoted_content() {
             schema_accepts_instance(&schema, &instance) == want,
             "only invalid double-quoted content corrupts the token: \
              instance={instance}; schema={schema}"
+        );
+    }
+}
+
+fn double_quoted_safe_definition() -> serde_json::Value {
+    serde_json::json!({
+        "anyOf": [
+            { "type": ["boolean", "integer", "null", "number"] },
+            {
+                "pattern": r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#,
+                "type": "string",
+            },
+            {
+                "items": { "$ref": "#/$defs/helm-double-quoted-safe" },
+                "type": "array",
+            },
+            {
+                "additionalProperties": {
+                    "$ref": "#/$defs/helm-double-quoted-safe",
+                },
+                "propertyNames": {
+                    "pattern": r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#,
+                },
+                "type": "object",
+            },
+        ],
+    })
+}
+
+/// `tpl` is the identity on action-free input, so manual quotes constrain
+/// that input's lexical content. A real template program remains open because
+/// its rendered result is not the source text.
+#[test]
+fn double_quoted_tpl_constrains_only_action_free_input() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          image: "{{ tpl .Values.repository . }}:latest"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("repository: quay.io/example\n"));
+
+    let expected = serde_json::json!({
+        "$defs": {
+            "helm-double-quoted-safe": double_quoted_safe_definition(),
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [
+            {
+                "additionalProperties": {},
+                "properties": {
+                    "repository": {
+                        "anyOf": [
+                            { "$ref": "#/$defs/helm-double-quoted-safe" },
+                            { "pattern": r"\{\{", "type": "string" },
+                        ],
+                    },
+                },
+            },
+            {
+                "if": {
+                    "anyOf": [
+                        {
+                            "not": {
+                                "properties": { "repository": {} },
+                                "required": ["repository"],
+                                "type": "object",
+                            },
+                        },
+                        {
+                            "properties": { "repository": { "enum": [null] } },
+                            "required": ["repository"],
+                            "type": "object",
+                        },
+                    ],
+                },
+                "then": false,
+            },
+        ],
+        "properties": {
+            "repository": { "type": "string" },
+        },
+        "type": "object",
+    });
+    sim_assert_eq!(have: schema, want: expected);
+
+    for (repository, want) in [
+        ("quay.io/example", true),
+        ("bad\"quote", false),
+        (r"{{ .Values.registry }}", true),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(
+                &schema,
+                &serde_json::json!({ "repository": repository }),
+            ),
+            want: want,
+            "repository={repository:?}",
+        );
+    }
+}
+
+/// `toString` makes `tpl` total while retaining its exact `%v` preimage:
+/// action-free strings still reach the quote verbatim, and all other input
+/// kinds use Helm's recursive formatting.
+#[test]
+fn double_quoted_tpl_of_to_string_keeps_its_serialization_preimage() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          endpoint: "{{ tpl (toString .Values.endpoint) . }}"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("endpoint: https://example.com\n"));
+
+    let expected = serde_json::json!({
+        "$defs": {
+            "helm-double-quoted-safe": double_quoted_safe_definition(),
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [
+            {
+                "additionalProperties": {},
+                "properties": {
+                    "endpoint": {
+                        "anyOf": [
+                            { "$ref": "#/$defs/helm-double-quoted-safe" },
+                            { "pattern": r"\{\{", "type": "string" },
+                        ],
+                    },
+                },
+            },
+        ],
+        "properties": {
+            "endpoint": {},
+        },
+        "type": "object",
+    });
+    sim_assert_eq!(have: schema, want: expected);
+
+    for (endpoint, want) in [
+        (serde_json::json!("https://example.com"), true),
+        (serde_json::json!("bad\"quote"), false),
+        (serde_json::json!(r"{{ .Values.endpointOverride }}"), true),
+        (serde_json::json!(7), true),
+        (serde_json::json!({ "host": "example.com" }), true),
+        (serde_json::json!({ "host": "bad\"quote" }), false),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(
+                &schema,
+                &serde_json::json!({ "endpoint": endpoint }),
+            ),
+            want: want,
+            "endpoint={endpoint}",
+        );
+    }
+}
+
+fn conditionally_rendered_quoted_tpl_clauses() -> serde_json::Value {
+    serde_json::json!([
+        {
+            "if": {
+                "not": {
+                    "properties": {
+                        "volumes": { "$ref": "#/$defs/t" },
+                    },
+                    "required": ["volumes"],
+                    "type": "object",
+                },
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {
+                    "endpoint": {
+                        "anyOf": [
+                            { "$ref": "#/$defs/helm-double-quoted-safe" },
+                            { "pattern": r"\{\{", "type": "string" },
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "if": {
+                "allOf": [
+                    {
+                        "properties": {
+                            "endpoint": { "$ref": "#/$defs/t" },
+                        },
+                        "required": ["endpoint"],
+                        "type": "object",
+                    },
+                    {
+                        "not": {
+                            "properties": {
+                                "volumes": { "$ref": "#/$defs/t" },
+                            },
+                            "required": ["volumes"],
+                            "type": "object",
+                        },
+                    },
+                ],
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {
+                    "endpoint": {
+                        "anyOf": [
+                            { "type": "string" },
+                            { "type": "null" },
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "if": {
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": { "endpoint": {} },
+                                    "required": ["endpoint"],
+                                    "type": "object",
+                                },
+                            },
+                            {
+                                "properties": {
+                                    "endpoint": { "enum": [null] },
+                                },
+                                "required": ["endpoint"],
+                                "type": "object",
+                            },
+                        ],
+                    },
+                    {
+                        "not": {
+                            "properties": {
+                                "volumes": { "$ref": "#/$defs/t" },
+                            },
+                            "required": ["volumes"],
+                            "type": "object",
+                        },
+                    },
+                ],
+            },
+            "then": false,
+        },
+    ])
+}
+
+#[test]
+fn conditionally_rendered_double_quoted_tpl_keeps_its_placement_language() {
+    let src = indoc! {r#"
+        {{- if not (contains "home" (quote .Values.volumes)) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          endpoint: "{{ tpl .Values.endpoint . }}"
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            endpoint: https://example.com
+            volumes: []
+        "}),
+    );
+    let expected = serde_json::json!({
+        "$defs": {
+            "helm-double-quoted-safe": double_quoted_safe_definition(),
+            "t": {
+                "anyOf": [
+                    { "const": true },
+                    { "not": { "const": 0 }, "type": "number" },
+                    { "minLength": 1, "type": "string" },
+                    { "minItems": 1, "type": "array" },
+                    { "minProperties": 1, "type": "object" },
+                ],
+            },
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": conditionally_rendered_quoted_tpl_clauses(),
+        "properties": {
+            "endpoint": {},
+            "volumes": {},
+        },
+        "type": "object",
+    });
+    sim_assert_eq!(have: schema, want: expected);
+    for (instance, want) in [
+        (
+            serde_json::json!({
+                "endpoint": "bad\"quote",
+                "volumes": [],
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "endpoint": "bad\"quote",
+                "volumes": ["home"],
+            }),
+            true,
+        ),
+        (
+            serde_json::json!({
+                "endpoint": r#"{{ "https://example.com" }}"#,
+                "volumes": [],
+            }),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
         );
     }
 }

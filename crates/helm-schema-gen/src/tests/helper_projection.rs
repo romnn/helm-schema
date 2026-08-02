@@ -379,10 +379,11 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
 
     let mut define_index = DefineIndex::new();
     define_index.add_file_source("helpers.tpl", helpers);
-    let ir = SymbolicIrContext::new(&define_index)
+    let schema_signals = SymbolicIrContext::new(&define_index)
         .generate_contract_ir(src)
-        .finalize();
-    let schema = schema_for_values_yaml(ir.uses(), Some(values_yaml));
+        .finalize()
+        .into_schema_signals();
+    let schema = schema_for_values_yaml(schema_signals, Some(values_yaml));
 
     let fullname = schema
         .pointer("/properties/fullnameOverride")
@@ -391,10 +392,84 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
         permits_null(fullname),
         "common.fullname should keep fullnameOverride nullable, got {fullname}"
     );
-    assert!(
-        permits_type(fullname, "string"),
-        "common.fullname should keep fullnameOverride string-like, got {fullname}"
-    );
+    for falsy in [
+        serde_json::Value::Null,
+        serde_json::json!(false),
+        serde_json::json!(0),
+        serde_json::json!(""),
+        serde_json::json!([]),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({
+                    "nameOverride": null,
+                    "fullnameOverride": falsy,
+                }),
+            ),
+            "the string transform never executes for a Helm-falsy override: {schema}"
+        );
+    }
+    for (value, want) in [
+        (serde_json::json!("custom"), true),
+        (serde_json::json!({ "member": "value" }), false),
+    ] {
+        let instance = serde_json::json!({
+            "nameOverride": null,
+            "fullnameOverride": value,
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the string contract applies exactly on the truthy helper arm: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn helper_branches_keep_the_shared_plain_slot_language() {
+    let helpers = indoc! {r#"
+        {{- define "sample.name" -}}
+        {{- if .Values.useLegacyNames }}
+        {{- default .Release.Name .Values.nameOverride }}
+        {{- else }}
+        {{- default .Chart.Name .Values.nameOverride }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ include "sample.name" . }}
+          labels:
+            app: {{ include "sample.name" . }}
+    "#};
+    let values_yaml = indoc! {"
+        useLegacyNames: true
+        nameOverride: ''
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (value, want, label) in [
+        (serde_json::json!("safe-name"), true, "plain name"),
+        (serde_json::json!("a: b"), false, "mapping token"),
+        (serde_json::json!("a\nb"), false, "line break"),
+        (serde_json::json!({}), true, "falsy mapping fallback"),
+        (serde_json::json!([]), true, "falsy list fallback"),
+    ] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({
+                    "useLegacyNames": true,
+                    "nameOverride": value,
+                }),
+            ) == want,
+            "helper branch {label}: {schema}"
+        );
+    }
 }
 
 /// A helper that substitutes the release namespace when an override is

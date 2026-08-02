@@ -1,6 +1,7 @@
 use super::*;
 use color_eyre::eyre;
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
 /// A `regexMatch` fail whose subject reached the match through `tpl` (a
 /// raw template PROGRAM, not the rendered text) constrains only the
@@ -970,6 +971,90 @@ fn root_values_merge_defaults_activate_live_consumer_contracts() {
 }
 
 #[test]
+fn root_values_merge_keeps_the_pre_rewrite_source_presence_alternative() -> eyre::Result<()> {
+    let mutation = indoc! {r#"
+        {{- $defaults := .Values._internal_defaults -}}
+        {{- $_ := unset .Values "_internal_defaults" -}}
+        {{- $_ := set $ "Values" (mustMergeOverwrite $defaults $.Values) -}}
+    "#};
+    let consumer = indoc! {r#"
+        {{- if eq .Values.global.resourceScope "all" }}
+        live
+        {{- end }}
+    "#};
+    let mut contract = parse_ir(mutation);
+    contract.append(parse_ir(consumer));
+    let signals = schema_signals_for(contract);
+    let clauses = signals
+        .terminal_clauses()
+        .iter()
+        .filter(|clause| {
+            clause
+                .iter()
+                .any(|guard| guard.value_paths().iter().any(|path| path == "global"))
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(
+        have: clauses,
+        want: vec![vec![helm_schema_core::ConditionalGuard::Absent {
+            path: "global".to_string(),
+        }]]
+    );
+
+    let schema = schema_for_values_yaml(
+        signals,
+        Some(indoc! {"
+            _internal_defaults:
+              global:
+                resourceScope: all
+        "}),
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "_internal_defaults": {
+                    "global": { "resourceScope": "all" }
+                }
+            }),
+            true,
+            "the pre-rewrite source supplies the host",
+        ),
+        (
+            serde_json::json!({}),
+            false,
+            "removing both host spellings aborts",
+        ),
+        (
+            serde_json::json!({ "_internal_defaults": {} }),
+            false,
+            "the surviving source root must still supply the host",
+        ),
+        (
+            serde_json::json!({ "global": { "resourceScope": "all" } }),
+            true,
+            "an explicit effective host replaces the removed source",
+        ),
+        (
+            serde_json::json!({ "global": {} }),
+            true,
+            "the accessed host may exist without the optional leaf",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+    let expected: Value = serde_json::from_str(include_str!(
+        "fixtures/root_values_merge_source_presence.schema.json"
+    ))?;
+    sim_assert_eq!(have: schema, want: expected);
+    Ok(())
+}
+
+#[test]
 fn multiple_default_sources_for_one_values_target_abstain() {
     let first = indoc! {r#"
         {{- $defaults := .Values.first_defaults -}}
@@ -1434,6 +1519,78 @@ fn stringified_equality_binds_the_tostring_preimage() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "stringified equality preimage: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Pattern predicates over `toString` test rendered text for every raw
+/// input kind. Their fail arms can still reject the exact raw-string subset:
+/// a string that misses the pattern reaches `fail`, while a numeric value
+/// whose rendering matches remains valid.
+#[test]
+fn stringified_pattern_fail_arms_keep_the_raw_string_mismatch_subset() {
+    let src = indoc! {r#"
+        {{- if not (regexMatch "^[0-9]+$" (toString .Values.regex)) }}
+        {{- fail "regex mismatch" }}
+        {{- end }}
+        {{- if not (contains "2" (toString .Values.contains)) }}
+        {{- fail "contains mismatch" }}
+        {{- end }}
+        {{- if not (hasPrefix "1" (toString .Values.prefix)) }}
+        {{- fail "prefix mismatch" }}
+        {{- end }}
+        {{- if not (hasSuffix "3" (toString .Values.suffix)) }}
+        {{- fail "suffix mismatch" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let values_yaml = indoc! {"
+        regex: 3
+        contains: 123
+        prefix: 123
+        suffix: 123
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (overrides, want, label) in [
+        (
+            serde_json::json!({ "regex": "bad" }),
+            false,
+            "regex string mismatch",
+        ),
+        (
+            serde_json::json!({ "contains": "bad" }),
+            false,
+            "contains string mismatch",
+        ),
+        (
+            serde_json::json!({ "prefix": "bad" }),
+            false,
+            "prefix string mismatch",
+        ),
+        (
+            serde_json::json!({ "suffix": "bad" }),
+            false,
+            "suffix string mismatch",
+        ),
+        (
+            serde_json::json!({
+                "regex": 3,
+                "contains": 123,
+                "prefix": 123,
+                "suffix": 123
+            }),
+            true,
+            "matching numeric renderings",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; want={want}; schema={schema}"
         );
     }
 }
@@ -3033,6 +3190,74 @@ fn member_local_guards_scope_member_local_requirements() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "member-local guard ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// `required` observes the result of `coalesce`, not either source in
+/// isolation: the call aborts only while every candidate is Helm-falsy.
+#[test]
+fn required_over_coalesce_rejects_only_the_all_falsy_state() {
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        {{- $_ := required "set a value" (coalesce .Values.primary .Values.fallback) }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        enabled: false
+        primary: ""
+        fallback: ""
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let expected = expected_values_schema(
+        [
+            ("enabled".to_string(), serde_json::json!({})),
+            ("fallback".to_string(), serde_json::json!({})),
+            ("primary".to_string(), serde_json::json!({})),
+        ]
+        .into_iter()
+        .collect(),
+        vec![serde_json::json!({
+            "if": {
+                "allOf": [
+                    helm_truthy_guard("enabled"),
+                    {
+                        "not": {
+                            "anyOf": [
+                                helm_truthy_guard("fallback"),
+                                helm_truthy_guard("primary"),
+                            ],
+                        },
+                    },
+                ],
+            },
+            "then": false,
+        })],
+        true,
+    );
+    sim_assert_eq!(have: schema, want: expected);
+
+    for (instance, want) in [
+        (
+            serde_json::json!({ "enabled": true, "primary": "", "fallback": "" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "enabled": true, "primary": "secret", "fallback": "" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "enabled": true, "primary": "", "fallback": "secret" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "enabled": false, "primary": "", "fallback": "" }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "required(coalesce …) truth table: instance={instance}; want={want}; schema={schema}"
         );
     }
 }

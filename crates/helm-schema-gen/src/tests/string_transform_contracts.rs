@@ -1,6 +1,363 @@
 use super::*;
+use color_eyre::eyre;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full expected schema keeps this precedence regression in one auditable scenario"
+)]
+fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -> eyre::Result<()> {
+    let mut contract = parse_ir(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          registry: {{ .Values.global.imageRegistry | default "" | b64enc | quote }}
+    "#});
+    contract.map_value_paths(|path| format!("metrics.{path}"));
+    contract.project_dependency_global_contracts(&["metrics".to_string()]);
+    let schema = schema_for_values_yaml(contract, None);
+    let expected: serde_json::Value = serde_json::from_str(indoc! {r##"
+        {
+          "$defs": {
+            "t": {
+              "anyOf": [
+                { "const": true },
+                { "not": { "const": 0 }, "type": "number" },
+                { "minLength": 1, "type": "string" },
+                { "minItems": 1, "type": "array" },
+                { "minProperties": 1, "type": "object" }
+              ]
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "imageRegistry": { "$ref": "#/$defs/t" }
+                        },
+                        "required": ["imageRegistry"],
+                        "type": "object"
+                      }
+                    },
+                    "required": ["global"],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "imageRegistry": {
+                            "not": { "enum": [null] }
+                          }
+                        },
+                        "required": ["imageRegistry"],
+                        "type": "object"
+                      }
+                    },
+                    "required": ["global"],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "required": ["imageRegistry"],
+                        "type": "object"
+                      }
+                    },
+                    "required": ["global"],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "global": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "imageRegistry": {
+                        "anyOf": [
+                          { "type": "string" },
+                          { "type": "null" }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "metrics": {
+                        "properties": {
+                          "global": {
+                            "properties": {
+                              "imageRegistry": { "$ref": "#/$defs/t" }
+                            },
+                            "required": ["imageRegistry"],
+                            "type": "object"
+                          }
+                        },
+                        "required": ["global"],
+                        "type": "object"
+                      }
+                    },
+                    "required": ["metrics"],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "global": {
+                                  "properties": { "imageRegistry": {} },
+                                  "required": ["imageRegistry"],
+                                  "type": "object"
+                                }
+                              },
+                              "required": ["global"],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "imageRegistry": { "enum": [null] }
+                                },
+                                "required": ["imageRegistry"],
+                                "type": "object"
+                              }
+                            },
+                            "required": ["global"],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "global": {
+                              "required": ["imageRegistry"],
+                              "type": "object"
+                            }
+                          },
+                          "required": ["global"],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "global": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "imageRegistry": {
+                            "anyOf": [
+                              { "type": "string" },
+                              { "type": "null" }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "metrics": {
+                              "properties": { "global": {} },
+                              "required": ["global"],
+                              "type": "object"
+                            }
+                          },
+                          "required": ["metrics"],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "metrics": {
+                            "properties": {
+                              "global": { "enum": [null] }
+                            },
+                            "required": ["global"],
+                            "type": "object"
+                          }
+                        },
+                        "required": ["metrics"],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": { "metrics": {} },
+                          "required": ["metrics"],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "metrics": { "enum": [null] }
+                        },
+                        "required": ["metrics"],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
+          "properties": {
+            "global": {
+              "additionalProperties": {},
+              "properties": { "imageRegistry": {} }
+            },
+            "metrics": {
+              "additionalProperties": {},
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": { "global": {} },
+                          "required": ["global"],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "global": { "enum": [null] }
+                        },
+                        "required": ["global"],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
+              "properties": {
+                "global": {
+                  "additionalProperties": {},
+                  "properties": { "imageRegistry": {} },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+    "##})?;
+    sim_assert_eq!(have: schema, want: expected);
+
+    assert!(schema_accepts_instance(
+        &schema,
+        &serde_json::json!({
+            "global": { "imageRegistry": "registry.example" },
+            "metrics": { "global": { "imageRegistry": 7 } }
+        })
+    ));
+    assert!(!schema_accepts_instance(
+        &schema,
+        &serde_json::json!({
+            "global": {},
+            "metrics": { "global": { "imageRegistry": 7 } }
+        })
+    ));
+    assert!(!schema_accepts_instance(
+        &schema,
+        &serde_json::json!({
+            "global": { "imageRegistry": 7 },
+            "metrics": { "global": { "imageRegistry": "registry.child" } }
+        })
+    ));
+    Ok(())
+}
+
+#[test]
+fn shadowed_dependency_global_default_does_not_type_ignored_input() {
+    let mut contract = ContractIr::default();
+    contract.add_type_hint("metrics.agent.replicas", "integer");
+    let schema_signals = contract.finalize().into_schema_signals();
+    let shadowed =
+        std::collections::BTreeSet::from(["metrics.agent.global.imageRegistry".to_string()]);
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &provider())
+            .with_values_yaml(Some(indoc! {"
+                metrics:
+                  agent:
+                    replicas: 1
+                    global:
+                      imageRegistry: []
+            "}))
+            .with_shadowed_input_paths(&shadowed),
+    );
+
+    sim_assert_eq!(
+        have: schema,
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "metrics": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "agent": {
+                            "additionalProperties": {},
+                            "properties": {
+                                "replicas": {
+                                    "type": "integer"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        })
+    );
+}
 
 /// A total stringification is neutral evidence about its own input; an
 /// INDEPENDENT unconditional string consumer still binds. Cilium's
@@ -232,6 +589,107 @@ fn dynamic_printf_format_requires_string() {
     );
 }
 
+/// Case mapping has two independent effects at an unquoted YAML slot: its
+/// operand must be a Go string, and token-breaking characters survive the
+/// mapping unchanged. Keeping only the former loses the sink's lexical
+/// language (kube-state-metrics' probe schemes).
+#[test]
+fn case_mapping_keeps_the_plain_slot_language_beside_its_string_contract() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: test
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 8080
+                  scheme: {{ upper .Values.scheme }}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("scheme: http\n"));
+
+    for value in ["http", "HTTPS"] {
+        let instance = serde_json::json!({ "scheme": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "ordinary string schemes render: instance={instance}; schema={schema}"
+        );
+    }
+    let multiline = ['a', '\n', 'b'].into_iter().collect::<String>();
+    for value in ["a: b", "a #b", multiline.as_str(), "&anchor"] {
+        let instance = serde_json::json!({ "scheme": value });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "case mapping preserves token-breaking text: instance={instance}; schema={schema}"
+        );
+    }
+    let non_string = serde_json::json!({ "scheme": 7 });
+    assert!(
+        !schema_accepts_instance(&schema, &non_string),
+        "upper still requires a Go string: schema={schema}"
+    );
+}
+
+/// Helm's `lookup` consumes four strings but returns external cluster state;
+/// its result is not any argument's identity. A literal `default` therefore
+/// keeps every falsy source spelling out of the strict argument lane
+/// (Cilium's configurable cluster-info name and namespace).
+#[test]
+fn lookup_argument_contract_preserves_a_literal_defaults_falsy_escape() {
+    let helpers = indoc! {r#"
+        {{- define "lookup-name" -}}
+        {{- $name := default "cluster-info" .Values.name -}}
+        {{- $configmap := lookup "v1" "ConfigMap" "default" $name -}}
+        {{- if $configmap -}}
+        {{- get $configmap.data "value" -}}
+        {{- else -}}
+        fallback
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          value: {{ include "lookup-name" . | quote }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some("name: \"\"\n"));
+
+    for value in [
+        serde_json::json!("custom"),
+        serde_json::json!(""),
+        serde_json::json!(false),
+        serde_json::json!(0),
+        serde_json::json!([]),
+        serde_json::json!({}),
+        serde_json::json!(null),
+    ] {
+        let instance = serde_json::json!({ "name": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "lookup receives the literal fallback for every falsy source: instance={instance}; schema={schema}"
+        );
+    }
+    for value in [
+        serde_json::json!([1]),
+        serde_json::json!({ "bad": true }),
+        serde_json::json!(7),
+        serde_json::json!(true),
+    ] {
+        let instance = serde_json::json!({ "name": value });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "truthy non-strings reach lookup and abort: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// printf's data parameters render through any verb (Go fmt embeds
 /// mismatches in the output): airflow formats `dags.gitSync.subPath` with a
 /// literal format and Helm renders `subPath: 7` as `%!s(int64=7)`.
@@ -263,12 +721,258 @@ fn printf_data_argument_accepts_any_value_through_helper_sink() {
         serde_json::json!(7),
         serde_json::json!(null),
     ] {
-        let instance = serde_json::json!({ "dags": { "gitSync": { "subPath": sub_path } } });
+        let instance = serde_json::json!({
+            "airflowHome": "/opt/airflow",
+            "dags": { "gitSync": { "subPath": sub_path } }
+        });
         assert!(
             schema_accepts_instance(&schema, &instance),
             "printf data arguments render any value: instance={instance}; schema={schema}"
         );
     }
+}
+
+/// `%s` is total as a formatter argument, but when its diagnostic output
+/// opens an unquoted YAML token a non-string or missing value corrupts that
+/// token. The same formatter inside explicit quotes remains total
+/// (Sealed Secrets' unquoted image registry).
+#[test]
+fn token_initial_printf_string_argument_uses_the_plain_slot_language() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+          annotations:
+            quoted: "{{ printf "%s/suffix" .Values.quoted }}"
+            piped: {{ printf "%s/suffix" .Values.piped | quote }}
+        spec:
+          containers:
+            - name: test
+              image: {{ printf "%s/repository:tag" .Values.registry }}
+    "#};
+    let values_yaml = indoc! {"
+        registry: registry.example.com
+        quoted: value
+        piped: value
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for registry in [
+        serde_json::json!("registry.example.com"),
+        serde_json::json!("true"),
+        serde_json::json!("&anchor"),
+    ] {
+        let instance = serde_json::json!({ "registry": registry, "quoted": 7, "piped": ["any"] });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "a valid leading string and quoted diagnostics both render: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for registry in [
+        serde_json::json!(7),
+        serde_json::json!(false),
+        serde_json::json!([]),
+        serde_json::json!(null),
+        serde_json::json!("a: b"),
+    ] {
+        let instance =
+            serde_json::json!({ "registry": registry, "quoted": "value", "piped": "value" });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a token-opening %s must receive structurally safe string text: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "quoted": "value" })),
+        "a missing token-opening argument renders an invalid fmt diagnostic: {schema}"
+    );
+}
+
+/// A helper-local fallback keeps the formatter contract on the arm that
+/// actually supplies its token-opening `%s`. A dormant fallback remains
+/// open even though the same helper rejects it when selected (Airflow's
+/// image repository selection).
+#[test]
+fn helper_printf_keeps_its_selected_token_initial_argument() {
+    let helpers = indoc! {r#"
+        {{- define "image" -}}
+        {{- $repository := .Values.primary | default .Values.fallback -}}
+        {{- printf "%s:tag" $repository -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: {{ include "image" . }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(indoc! {"
+            primary: ''
+            fallback: repository
+        "}),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "primary": "", "fallback": "repository" }),
+            true,
+            "the fallback string is selected",
+        ),
+        (
+            serde_json::json!({ "primary": "", "fallback": "a #b" }),
+            true,
+            "a selected comment leaves an ordinary string prefix",
+        ),
+        (
+            serde_json::json!({ "primary": "", "fallback": "true #b" }),
+            false,
+            "a selected comment leaves a Boolean prefix",
+        ),
+        (
+            serde_json::json!({ "primary": "", "fallback": {} }),
+            true,
+            "a selected empty mapping formats as plain map text",
+        ),
+        (
+            serde_json::json!({ "primary": "", "fallback": { "key": {} } }),
+            true,
+            "a selected bounded mapping formats as plain map text",
+        ),
+        (
+            serde_json::json!({ "primary": "", "fallback": { "a: b": {} } }),
+            false,
+            "a mapping key can still break the formatted token",
+        ),
+        (
+            serde_json::json!({ "primary": "repository", "fallback": 7 }),
+            true,
+            "a live primary leaves the fallback dormant",
+        ),
+        (
+            serde_json::json!({ "primary": "", "fallback": 7 }),
+            false,
+            "a selected numeric fallback emits an invalid diagnostic",
+        ),
+        (
+            serde_json::json!({ "primary": "" }),
+            false,
+            "a missing selected fallback emits an invalid diagnostic",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "selected formatter arm ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn helper_prefix_branch_scopes_the_token_opening_formatter_argument() {
+    let helpers = indoc! {r#"
+        {{- define "image" -}}
+        {{- $registry := default .Values.image.registry .Values.global.registry -}}
+        {{- $repository := .Values.image.repository -}}
+        {{- if $registry -}}
+          {{- printf "%s/%s:tag" $registry $repository -}}
+        {{- else -}}
+          {{- printf "%s:tag" $repository -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: {{ include "image" . }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(indoc! {"
+            global:
+              registry: docker.io
+            image:
+              registry: ''
+              repository: repo
+        "}),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "global": { "registry": "docker.io" },
+                "image": { "registry": 7, "repository": 7 }
+            }),
+            true,
+            "the global prefix keeps both local operands away from token opening",
+        ),
+        (
+            serde_json::json!({
+                "global": { "registry": "" },
+                "image": { "registry": "", "repository": 7 }
+            }),
+            false,
+            "the prefix-free branch makes repository token-opening",
+        ),
+        (
+            serde_json::json!({
+                "global": { "registry": "" },
+                "image": { "registry": 7, "repository": "repo" }
+            }),
+            false,
+            "the selected local registry opens the prefixed branch",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "formatter branch ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn quoting_helper_printf_output_clears_its_plain_slot_contract() {
+    let helpers = indoc! {r#"
+        {{- define "image" -}}
+        {{- printf "%s:tag" .Values.repository -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          image: {{ include "image" . | quote }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("repository: example.com/repository\n"),
+    );
+
+    sim_assert_eq!(
+        have: schema,
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "repository": {}
+            },
+            "type": "object"
+        })
+    );
 }
 
 /// Chart repro (sealed-secrets `additionalNamespaces`): a declared-list
@@ -677,6 +1381,80 @@ fn tpl_program_contract_survives_default_chain() {
     }
 }
 
+/// A string transform reached only after the operand's own truthiness check
+/// constrains the live arm, not the falsy fallback arm.
+#[test]
+fn self_guarded_string_transform_keeps_every_falsy_spelling() {
+    let helpers = indoc! {r#"
+        {{- define "repro.rawName" -}}
+        {{- .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+        {{- end }}
+        {{- define "repro.name" -}}
+        {{- if .Values.nameOverride }}
+        {{- include "repro.rawName" . }}
+        {{- else }}
+        fallback
+        {{- end }}
+        {{- end }}
+        {{- define "repro.addr" -}}
+        {{- with .Values.redis }}
+        {{- ternary (printf "%s:6379" (include "repro.name" $)) .external (eq .type "internal") }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: repro
+        data:
+          endpoint: {{ include "repro.addr" . | quote }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        enabled: true
+        nameOverride: ''
+        redis:
+          type: internal
+          external: redis.example.com
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (value, want, label) in [
+        (
+            serde_json::json!({}),
+            true,
+            "an empty mapping takes the fallback",
+        ),
+        (
+            serde_json::json!([]),
+            true,
+            "an empty list takes the fallback",
+        ),
+        (serde_json::json!(null), true, "null takes the fallback"),
+        (
+            serde_json::json!("custom"),
+            true,
+            "a string reaches the transform",
+        ),
+        (
+            serde_json::json!({ "member": "value" }),
+            false,
+            "a truthy mapping reaches the string transform",
+        ),
+    ] {
+        let instance = composed_instance(
+            values_yaml,
+            serde_json::json!({ "enabled": true, "nameOverride": value }),
+        );
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// tempo's jaeger receivers: `regexSplit ":" . -1 | last` extracts the
 /// port suffix of an endpoint string into a Service port slot, so the
 /// accepted endpoints are strings whose LAST `:`-segment is numeric.
@@ -853,6 +1631,61 @@ fn nil_strict_string_consumers_require_their_operand_to_exist() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "{label}: instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn strict_tpl_in_composed_scalar_keeps_its_input_type() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        {{- if .Values.server.stateful }}
+        kind: StatefulSet
+        {{- else if .Values.server.daemon }}
+        kind: DaemonSet
+        {{- else }}
+        kind: Deployment
+        {{- end }}
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+                - name: main
+                {{- if .Values.image.digest }}
+                  image: "{{ tpl .Values.image.repository . }}@{{ tpl .Values.image.digest . }}"
+                {{- else }}
+                  image: "{{ tpl .Values.image.repository . }}:{{ tpl .Values.image.tag . | default .Chart.AppVersion }}{{ if .Values.image.distroless }}-distroless{{ end }}"
+                {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        image:
+          repository: example/image
+          tag: ''
+          digest: ''
+          distroless: false
+        server:
+          stateful: false
+          daemon: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for repository in [serde_json::json!({}), serde_json::json!([])] {
+        let instance = composed_instance(
+            values_yaml,
+            serde_json::json!({ "image": { "repository": repository } }),
+        );
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "tpl requires a string even when sibling tag/digest guards are falsy: \
+             instance={instance}; schema={schema}"
         );
     }
 }

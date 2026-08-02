@@ -16,6 +16,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -45,7 +46,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
     );
     sim_assert_eq!(
         have: schema.pointer("/properties/feature/allOf/0/if/properties/enabled/$ref"),
-        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
+        want: Some(&serde_json::json!("#/$defs/t")),
         "guard should lower at the nearest common ancestor, not only at the root: {schema}"
     );
     sim_assert_eq!(
@@ -162,6 +163,7 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -235,6 +237,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -257,7 +260,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
 
     sim_assert_eq!(
         have: schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/$ref"),
-        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
+        want: Some(&serde_json::json!("#/$defs/t")),
         "negated boolean guards should lower to JSON Schema `not`: {schema}"
     );
     sim_assert_eq!(
@@ -281,6 +284,7 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -366,6 +370,7 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -444,6 +449,7 @@ fn equal_nil_guard_treats_absent_path_as_matching_nil() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -499,6 +505,7 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -523,14 +530,14 @@ fn or_boolean_guards_lower_to_any_of_condition() {
 
     sim_assert_eq!(
         have: schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/$ref"),
-        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
+        want: Some(&serde_json::json!("#/$defs/t")),
         "disjunctions should lower to anyOf clauses: {schema}"
     );
     sim_assert_eq!(
         have: schema.pointer(
             "/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/$ref"
         ),
-        want: Some(&serde_json::json!("#/$defs/helm-truthy")),
+        want: Some(&serde_json::json!("#/$defs/t")),
         "all boolean branches in the disjunction should be preserved: {schema}"
     );
     sim_assert_eq!(
@@ -567,6 +574,7 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -637,6 +645,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -657,6 +666,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -730,6 +740,7 @@ fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
@@ -799,6 +810,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -819,6 +831,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -897,6 +910,7 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,

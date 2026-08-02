@@ -578,3 +578,67 @@ fn include_condition_absorbs_helper_type_dispatch_alternatives() {
         );
     }
 }
+
+/// A helper that serializes a list beside a fixed list item requires the
+/// source only while that serialization executes. `toYaml nil` emits
+/// `null`, which cannot continue the helper's sequence (Fluent Bit's fixed
+/// `DaemonSet` volumes and volume mounts).
+#[test]
+fn helper_sequence_continuation_requires_its_serialized_source() {
+    let helpers = indoc! {r#"
+        {{- define "pod" -}}
+        volumeMounts:
+          - name: config
+            mountPath: /config
+        {{- if eq .Values.kind "DaemonSet" }}
+          {{- toYaml .Values.daemonSetVolumeMounts | nindent 2 }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: test
+              {{- include "pod" . | nindent 6 }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(indoc! {"
+            kind: DaemonSet
+            daemonSetVolumeMounts:
+              - name: varlog
+                mountPath: /var/log
+        "}),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "kind": "DaemonSet",
+                "daemonSetVolumeMounts": [{ "name": "varlog", "mountPath": "/var/log" }]
+            }),
+            true,
+            "a live list continues the sequence",
+        ),
+        (
+            serde_json::json!({ "kind": "DaemonSet" }),
+            false,
+            "a missing live source emits null beside the fixed item",
+        ),
+        (
+            serde_json::json!({ "kind": "Deployment" }),
+            true,
+            "the inactive serialization leaves the source dormant",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "helper serialization scope ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

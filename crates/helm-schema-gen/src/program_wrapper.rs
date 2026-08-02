@@ -168,7 +168,9 @@ fn rewrite_document(root: &mut Value, keys: &[(&str, bool)], excluded: &BTreeSet
             "$defs" => {
                 if let Some(definitions) = child.as_object_mut() {
                     for (name, definition) in definitions.iter_mut() {
-                        if name.starts_with("helm-") {
+                        if name == crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
+                            || name.starts_with("helm-")
+                        {
                             continue;
                         }
                         wrap_node(definition, keys, WrapperEdge::Unknown, excluded);

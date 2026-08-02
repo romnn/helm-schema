@@ -596,6 +596,10 @@ fn derived_split_range_does_not_reclassify_its_string_source() {
         ),
         "splitList rejects a list operand even though its result is ranged: {schema}"
     );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "namespaces": null })),
+        "the unconditional splitList operand rejects a null-deleted source: {schema}"
+    );
     sim_assert_eq!(have: schema, want: expected);
 }
 

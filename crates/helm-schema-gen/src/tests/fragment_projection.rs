@@ -250,37 +250,26 @@ fn assigned_fragment_variable_keeps_open_string_map_when_reused_in_helper_call()
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
-    let pod_labels = schema
-        .pointer("/properties/podLabels")
-        .expect("podLabels present");
-    assert_open_map_with_layered_string_values(
+    assert_parsed_map_layer_domain(
         &schema,
-        pod_labels,
         "podLabels",
         "podLabels reused through a local fragment variable",
     );
 }
 
-/// The layered-merge shape: the path's BASE keeps an open map lane (and
-/// the templated-string alternative), while string-VALUE typing rides the
-/// synthesized layer arms — asserted through acceptance polarities so the
-/// arms' scoping stays observable.
-fn assert_open_map_with_layered_string_values(
-    schema: &serde_json::Value,
-    node: &serde_json::Value,
-    property: &str,
-    label: &str,
-) {
-    assert!(
-        schema_contains_type(node, "string"),
-        "{label} should keep a templated string branch, got {node}"
-    );
+/// A parsed-map layer constrains mapping members at the provider sink while
+/// keeping non-mapping inputs open: `fromYaml` turns those inputs into an
+/// error map, and a raw string may itself contain a mapping document.
+fn assert_parsed_map_layer_domain(schema: &serde_json::Value, property: &str, label: &str) {
     let segments: Vec<&str> = property.split('.').collect();
-    for (member_value, want) in [
-        (serde_json::json!("x"), true),
-        (serde_json::json!(5), false),
+    for (value, want) in [
+        (serde_json::json!("custom-key: x"), true),
+        (serde_json::json!(7), true),
+        (serde_json::json!(["custom-key"]), true),
+        (serde_json::json!({ "custom-key": "x" }), true),
+        (serde_json::json!({ "custom-key": 5 }), false),
     ] {
-        let mut instance = serde_json::json!({ "custom-key": member_value });
+        let mut instance = value;
         for segment in segments.iter().rev() {
             instance = serde_json::json!({ *segment: instance });
         }
@@ -312,12 +301,8 @@ fn assigned_annotations_fragment_variable_keeps_open_string_map() {
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
-    let annotations = schema
-        .pointer("/properties/serviceAccount/properties/annotations")
-        .expect("serviceAccount.annotations present");
-    assert_open_map_with_layered_string_values(
+    assert_parsed_map_layer_domain(
         &schema,
-        annotations,
         "serviceAccount.annotations",
         "serviceAccount.annotations reused through a local fragment variable",
     );
@@ -442,9 +427,7 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
         "omitted probe fragment should retain rendered Kubernetes Probe fields, got {probe}; ir={ir:#?}"
     );
     assert!(
-        probe
-            .pointer("/anyOf/0/properties/probeCommandTimeout")
-            .is_some(),
+        schema_contains_property(probe, "probeCommandTimeout"),
         "explicit command interpolation should keep probeCommandTimeout represented, got {probe}"
     );
     for (overrides, want, label) in [
@@ -521,12 +504,8 @@ fn assigned_fragment_variable_with_empty_defaults_keeps_open_string_map() {
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
-    let pod_labels = schema
-        .pointer("/properties/podLabels")
-        .expect("podLabels present");
-    assert_open_map_with_layered_string_values(
+    assert_parsed_map_layer_domain(
         &schema,
-        pod_labels,
         "podLabels",
         "empty-map podLabels rendered through the assigned fragment helper path",
     );
@@ -596,6 +575,87 @@ fn helper_built_matchlabels_keeps_name_override_scalar() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "helper-built matchLabels {label}: instance={instance}; schema={schema}; ir={ir:?}"
+        );
+    }
+    for (pod_labels, want, label) in [
+        (
+            serde_json::json!({ "ignored": {} }),
+            true,
+            "an unselected custom label is discarded",
+        ),
+        (
+            serde_json::json!({ "app.kubernetes.io/name": {} }),
+            false,
+            "a selected custom label reaches the string-valued sink",
+        ),
+    ] {
+        let instance = serde_json::json!({ "podLabels": pod_labels });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "pick projection ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn omitted_merge_members_do_not_regain_declared_types() {
+    let helpers = indoc! {r#"
+        {{- define "test.presets" -}}
+        {{- $presets := dict -}}
+        {{- $_ := set $presets "known-default" .Values.presetValue -}}
+        {{- toYaml $presets }}
+        {{- end -}}
+
+        {{- define "test.params" -}}
+        {{- $config := omit .Values.params "create" "annotations" -}}
+        {{- $preset := include "test.presets" . | fromYaml | default dict -}}
+        {{- range $key, $value := mergeOverwrite $preset $config }}
+        {{ $key }}: {{ toString $value | toYaml }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.params.create }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: params
+          {{- if .Values.params.annotations }}
+          annotations:
+            {{- range $key, $value := .Values.params.annotations }}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+        data:
+          {{- include "test.params" . | nindent 2 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        params:
+          create: true
+          annotations: {}
+          known: value
+        presetValue: value
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (instance, label) in [
+        (
+            serde_json::json!({ "params": { "create": 7 } }),
+            "the omitted control member",
+        ),
+        (
+            serde_json::json!({ "params": { "create": true, "annotations": [] } }),
+            "the omitted annotation member's iterable alternative",
+        ),
+        (
+            serde_json::json!({ "params": { "create": true, "known": {} } }),
+            "a total-stringified ranged value",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "{label} never reaches ConfigMap data: instance={instance}; schema={schema}"
         );
     }
 }
@@ -728,12 +788,8 @@ fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
-    let pod_labels = schema
-        .pointer("/properties/podLabels")
-        .expect("podLabels present");
-    assert_open_map_with_layered_string_values(
+    assert_parsed_map_layer_domain(
         &schema,
-        pod_labels,
         "podLabels",
         "metadata.labels podLabels with unresolved workload kind",
     );
@@ -1100,8 +1156,10 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
             "resources".to_string(),
         ]),
         kind: helm_schema_ir::ValueKind::Fragment,
+        stringified: false,
         resource: ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string()),
         is_self_range_collection: false,
+        source_null_tolerant: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,

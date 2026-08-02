@@ -34,6 +34,41 @@ fn guard_only_path_does_not_treat_the_declared_default_as_input_typing() {
 }
 
 #[test]
+fn block_scalar_parts_do_not_project_input_shapes() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: example
+        data:
+          config.yaml: |
+            enabled: {{ .Values.enabled }}
+            items:
+        {{ .Values.items | toYaml | indent 4 }}
+    "};
+    let values_yaml = indoc! {"
+        enabled: true
+        items:
+          - name: default
+    "};
+
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    sim_assert_eq!(
+        have: schema,
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {},
+                "items": {},
+            },
+            "type": "object",
+        })
+    );
+}
+
+#[test]
 #[expect(
     clippy::too_many_lines,
     reason = "the complete fixture scenario is clearest as one contiguous test"
@@ -96,6 +131,18 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
             true,
             "both navigated hosts are present",
         ),
+        (
+            serde_json::json!({
+                "presets": {
+                    "clusterMetrics": {
+                        "collectionInterval": { "custom": 7 },
+                        "allocatableTypesToReport": 7
+                    }
+                }
+            }),
+            true,
+            "the helper serializes both leaves into block text",
+        ),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
@@ -125,22 +172,8 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
                         "type": "object",
                         "additionalProperties": {},
                         "properties": {
-                            "allocatableTypesToReport": {
-                                "anyOf": [
-                                    {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    {
-                                        "type": "null"
-                                    }
-                                ]
-                            },
-                            "collectionInterval": {
-                                "type": "string"
-                            }
+                            "allocatableTypesToReport": {},
+                            "collectionInterval": {}
                         }
                     }
                 }
@@ -148,6 +181,132 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
         }
     });
     sim_assert_eq!(have: schema, want: expected);
+}
+
+#[test]
+fn shallow_helper_output_inside_block_scalar_stays_pathless() {
+    let helpers = indoc! {r#"
+        {{- define "collector.config" -}}
+        collector.yaml: |-
+        {{- if .Values.payload }}
+          payload:
+        {{ .Values.payload | toYaml | indent 4 }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: collector
+          annotations:
+            checksum/config: {{ include "collector.config" . | sha256sum }}
+        data:
+        {{ include "collector.config" . | nindent 2 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        enabled: true
+        payload:
+          - default
+    "};
+
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    sim_assert_eq!(
+        have: schema,
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {},
+                "payload": {},
+            },
+            "type": "object",
+        })
+    );
+}
+
+#[test]
+fn shallow_control_after_block_scalar_remains_a_mapping_sibling() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: notifications
+        data:
+          context: |
+            enabled: true
+          {{- with .Values.notifiers }}
+            {{- toYaml . | nindent 2 }}
+          {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        notifiers:
+          service.test: enabled
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (notifiers, want) in [
+        (serde_json::json!({ "service.test": "enabled" }), true),
+        (serde_json::json!({ "service.test": 7 }), false),
+        (serde_json::json!({ "other": 7 }), false),
+        (serde_json::json!({ "other": null }), true),
+        (serde_json::json!(7), false),
+    ] {
+        let instance = serde_json::json!({ "notifiers": notifiers });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the control body renders beside the block scalar: instance={instance}; schema={schema}"
+        );
+    }
+
+    sim_assert_eq!(
+        have: schema,
+        want: serde_json::json!({
+            "$defs": {
+                "t": {
+                    "anyOf": [
+                        { "const": true },
+                        { "not": { "const": 0 }, "type": "number" },
+                        { "minLength": 1, "type": "string" },
+                        { "minItems": 1, "type": "array" },
+                        { "minProperties": 1, "type": "object" },
+                    ],
+                },
+            },
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "notifiers": {
+                    "anyOf": [
+                        {
+                            "additionalProperties": {
+                                "type": ["string", "null"],
+                            },
+                            "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+                            "properties": {
+                                "service.test": {
+                                    "type": "string",
+                                },
+                            },
+                            "type": "object",
+                        },
+                        {
+                            "not": {
+                                "$ref": "#/$defs/t",
+                            },
+                        },
+                        {
+                            "type": "null",
+                        },
+                    ],
+                },
+            },
+            "type": "object",
+        })
+    );
 }
 
 #[test]
@@ -228,15 +387,8 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
                         "type": "object",
                         "additionalProperties": {},
                         "properties": {
-                            "allocatableTypesToReport": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "collectionInterval": {
-                                "type": "string"
-                            },
+                            "allocatableTypesToReport": {},
+                            "collectionInterval": {},
                             "enabled": {}
                         }
                     }

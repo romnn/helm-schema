@@ -1,6 +1,6 @@
 {
   "$defs": {
-    "helm-truthy": {
+    "t": {
       "anyOf": [
         {
           "const": true
@@ -37,7 +37,7 @@
               "prometheus": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -59,7 +59,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -106,11 +106,8 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
-                  },
-                  {
-                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -132,12 +129,11 @@
                           "type": "string"
                         },
                         "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-                        "properties": {},
                         "type": "object"
                       },
                       {
                         "not": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       }
                     ]
@@ -163,6 +159,73 @@
             "properties": {
               "nameOverride": {
                 "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "pattern": ":[ \\t]|:$"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[ \\t]#"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[\\r\\n]"
+                          }
+                        }
+                      ],
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
                   {
                     "allOf": [
                       {
@@ -219,8 +282,26 @@
                     "type": "string"
                   },
                   {
+                    "allOf": [
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -232,6 +313,73 @@
             "properties": {
               "namespace": {
                 "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "pattern": ":[ \\t]|:$"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[ \\t]#"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[\\r\\n]"
+                          }
+                        }
+                      ],
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
                   {
                     "allOf": [
                       {
@@ -289,11 +437,49 @@
                     "type": "string"
                   },
                   {
+                    "allOf": [
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "prometheus": {
+                "additionalProperties": {},
+                "properties": {
+                  "servicemonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "targetPort": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -317,6 +503,22 @@
           {
             "additionalProperties": {},
             "properties": {
+              "prometheus": {
+                "additionalProperties": {},
+                "properties": {
+                  "servicemonitor": {
+                    "required": [
+                      "targetPort"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
               "serviceAnnotations": {
                 "anyOf": [
                   {
@@ -324,12 +526,11 @@
                       "type": "string"
                     },
                     "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                    "properties": {},
                     "type": "object"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -351,7 +552,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -363,6 +564,73 @@
             "properties": {
               "serviceIPFamilyPolicy": {
                 "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "pattern": ":[ \\t]|:$"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[ \\t]#"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[\\r\\n]"
+                          }
+                        }
+                      ],
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
                   {
                     "allOf": [
                       {
@@ -420,8 +688,26 @@
                     "type": "string"
                   },
                   {
+                    "allOf": [
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -438,12 +724,11 @@
                       "type": "string"
                     },
                     "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-                    "properties": {},
                     "type": "object"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -459,7 +744,7 @@
           {
             "properties": {
               "fullnameOverride": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -472,7 +757,7 @@
               "prometheus": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -494,7 +779,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -539,7 +824,7 @@
           {
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -552,7 +837,7 @@
               "prometheus": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -574,7 +859,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -619,7 +904,7 @@
           "prometheus": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -659,7 +944,7 @@
               "prometheus": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -709,7 +994,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -775,7 +1060,21 @@
     "config": {},
     "containerSecurityContext": {},
     "crds": {},
-    "creator": {},
+    "creator": {
+      "anyOf": [
+        {
+          "enum": [
+            "helm"
+          ]
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "disableAutoApproval": {},
     "dns01RecursiveNameservers": {},
     "dns01RecursiveNameserversOnly": {},
@@ -813,7 +1112,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -827,7 +1126,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -851,9 +1150,76 @@
                 "additionalProperties": {},
                 "properties": {
                   "targetPort": {
-                    "anyOf": [
+                    "oneOf": [
                       {
-                        "oneOf": [
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "not": {
+                                        "pattern": ":[ \\t]|:$"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[ \\t]#"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[\\r\\n]"
+                                      }
+                                    }
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "maxItems": 0,
+                                  "type": "array"
+                                },
+                                {
+                                  "maxProperties": 0,
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            "propertyNames": {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                }
+                              ],
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
                           {
                             "allOf": [
                               {
@@ -893,6 +1259,16 @@
                               },
                               {
                                 "not": {
+                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                }
+                              },
+                              {
+                                "not": {
                                   "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                                 }
                               }
@@ -900,20 +1276,35 @@
                             "type": "string"
                           },
                           {
-                            "anyOf": [
+                            "allOf": [
                               {
-                                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-                                "type": "string"
+                                "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
                               },
                               {
-                                "type": "integer"
+                                "not": {
+                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                }
                               }
-                            ]
+                            ],
+                            "type": "string"
                           }
                         ]
                       },
                       {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -928,7 +1319,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -974,7 +1365,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -1016,7 +1407,7 @@
                     "podmonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -1041,18 +1432,7 @@
         "podmonitor": {
           "additionalProperties": {},
           "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            }
+            "enabled": {}
           }
         },
         "servicemonitor": {

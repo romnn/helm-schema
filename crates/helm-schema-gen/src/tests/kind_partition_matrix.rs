@@ -274,13 +274,13 @@ fn pdb_int_or_string_survives_declared_integer_default() {
         );
     }
     assert!(
-        !schema_accepts_instance(
+        schema_accepts_instance(
             &schema,
             &serde_json::json!({
                 "podDisruptionBudget": { "enabled": true, "maxUnavailable": { "a": 1 } }
             })
         ),
-        "a live mapping is neither integer nor string: {schema}"
+        "Go's plain formatting turns a safe mapping into a string accepted by IntOrString: {schema}"
     );
 }
 
@@ -365,9 +365,33 @@ fn type_of_dispatch_keeps_serialized_arm_structured() {
                 - name: main
     "#};
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
+    assert!(
+        signals
+            .evidence_for("affinity")
+            .is_some_and(
+                |evidence| evidence.conditional_overlays.iter().any(|overlay| {
+                    overlay.guards.iter().any(|guard| {
+                        matches!(
+                            guard,
+                            helm_schema_core::ConditionalGuard::Not(inner)
+                                if matches!(
+                                    inner.as_ref(),
+                                    helm_schema_core::ConditionalGuard::TypeIs {
+                                        path,
+                                        schema_type,
+                                    } if path == "affinity" && schema_type == "string"
+                                )
+                        )
+                    }) && !overlay.evidence.facts.used_as_serialized
+                })
+            ),
+        "the structure-preserving complement must keep provider evidence ahead of the scalar declared default"
+    );
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &strict_provider())
-            .with_values_yaml(Some("affinity: {}\n")),
+        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(indoc! {"
+                affinity: |
+                  nodeAffinity: {}
+            "})),
     );
     for (instance, want) in [
         (

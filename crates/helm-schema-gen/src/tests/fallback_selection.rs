@@ -315,7 +315,8 @@ fn falsy_reassignment_to_another_source_scopes_the_parser_to_truthy_values() {
         agents:
           tag: "7.80.1"
     "#};
-    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = schema_for_values_yaml(ir, Some(values_yaml));
     for (tag, want) in [
         (serde_json::json!(""), true),
         (serde_json::json!(null), true),

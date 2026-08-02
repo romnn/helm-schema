@@ -1,4 +1,5 @@
 use color_eyre::eyre::{self, OptionExt as _};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use crate::path_resolver::ecma_compatible_pattern;
@@ -18,9 +19,15 @@ fn leading_multiline_start_anchor_has_an_exact_ecma_form() -> eyre::Result<()> {
     for sample in [
         "",
         "name=value",
-        "# comment\nname = value\n",
+        indoc! {"
+            # comment
+            name = value
+        "},
         "xname=value",
-        "\n xname=value",
+        indoc! {"
+
+             xname=value"
+        },
     ] {
         sim_assert_eq!(
             have: ecma.is_match(sample),

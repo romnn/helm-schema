@@ -7,7 +7,8 @@ use helm_schema_core::{
 use serde_yaml::Value as YamlValue;
 
 use crate::condition_encoding::{
-    HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
+    HELM_TRUTHY_DEFINITION_NAME, evaluate_guard_set_on_values, helm_truthy_definition_schema,
+    value_references_helm_truthy,
 };
 use crate::foreign_schema::ForeignSchemaRestriction;
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
@@ -16,7 +17,7 @@ use crate::path_schema::{
     open_fragment_values_schema,
 };
 use crate::schema_model::{
-    add_null_schema, empty_schema, empty_string_schema, guard_value_to_json,
+    add_null_schema, empty_schema, empty_string_schema, guard_value_to_json, is_annotation_keyword,
     is_declared_object_schema, is_empty_schema, is_object_or_array_schema,
     is_open_string_map_schema, is_scalar_like_schema, is_scalar_schema, scalar_union_schema,
     schema_allows_type, schema_permits_empty_string, schema_type, type_schema,
@@ -147,6 +148,7 @@ impl ValuePathSchemaFacts {
     fn empty_map_placeholder_has_structural_object_use(self, provider_schema: &Value) -> bool {
         self.values_yaml.is_empty_map
             && !self.contract.used_as_serialized
+            && !self.contract.has_parsed_map_layered_use
             && (self.contract.is_ranged_source
                 || self.contract.has_self_range_guard_render_use
                 || self.contract.used_as_yaml_serialized
@@ -226,6 +228,9 @@ impl ResolvePolicy {
                 .split_segment
                 .as_ref()
                 .and_then(|segment| split_segment_provider_preimage(schema, segment)),
+            ValueKind::Scalar if use_.stringified => {
+                Some(stringified_plain_scalar_provider_preimage(schema.clone()))
+            }
             ValueKind::Scalar => ForeignSchemaRestriction::Scalar
                 .apply(schema.clone())
                 .map(plain_scalar_provider_preimage),
@@ -247,6 +252,7 @@ impl ResolvePolicy {
                     SchemaNode::any_of(vec![
                         SchemaNode::enum_values(vec![value]),
                         SchemaNode::type_named(value_type),
+                        SchemaNode::type_named("null"),
                     ])
                     .into_value(),
                 )
@@ -324,7 +330,9 @@ impl ResolvePolicy {
         // documents intent without narrowing. Real contracts from OTHER
         // uses (provider sinks on their own rows, string-transform hints,
         // guard schemas) still apply below: one stringified occurrence must
-        // not erase an independent stricter consumer.
+        // not erase an independent stricter consumer. Merge-layer provider
+        // typing likewise lives on its selected, unshadowed arms; the
+        // declared type must not duplicate that sink contract path-wide.
         let control_only_without_contract = !facts.contract.has_non_control_use
             && !facts.contract.has_referenced_descendants
             && !facts.contract.has_item_descendants
@@ -386,6 +394,8 @@ impl ResolvePolicy {
             &type_hint_schema,
             &guard_predicate_schema,
         );
+        let preserve_common_plain_string =
+            schema_covers_strict_plain_scalar_string(&provider_schema);
         let partial_scalar_schema = Self::partial_scalar_schema_for_value_path(
             facts,
             &provider_schema,
@@ -406,31 +416,39 @@ impl ResolvePolicy {
             },
             preserve_empty_string_fallback,
         );
+        let merged =
+            if preserve_common_plain_string && !schema_covers_strict_plain_scalar_string(&merged) {
+                union_schema_list(vec![merged, strict_plain_scalar_string_schema()])
+            } else {
+                merged
+            };
         let widening_schema = merge_two_schemas(guarded_type_hint_schema, deferred_guard_schema);
         let merged = if !is_empty_schema(&merged) && !is_empty_schema(&widening_schema) {
-            merge_two_schemas(merged, widening_schema)
+            union_schema_list(vec![merged, widening_schema])
         } else {
             merged
         };
         let merged = if !is_empty_schema(&merged)
             && !facts.contract.is_direct_ranged_source
-            && !facts.contract.has_string_contract
+            && !facts.contract.has_non_self_guarded_string_contract
             && ((facts.contract.has_render_use
-                && (facts.contract.all_render_uses_self_guarded
+                && ((facts.contract.all_render_uses_self_guarded
+                    && !facts.contract.has_unconditional_render_use)
                     || (facts.contract.all_render_uses_falsy_tolerant
-                        && !facts.contract.has_referenced_descendants))
-                && !facts.contract.has_unconditional_render_use)
+                        && !facts.contract.has_referenced_descendants)))
                 || fallback_hint_only_typing)
         {
-            // Every Helm-falsy value skips a self-guarded consumer (or takes
-            // a literal fallback before any consumer runs). Keeping only the
-            // declared falsy default made schema validity depend on which
-            // off-state the chart happened to ship. A path-wide runtime
-            // string contract disables the escape: that consumer parses the
-            // RAW value before any selection runs. Falsy-tolerant uses
-            // (merge operands, digest rows) extend the escape only for LEAF
-            // paths: a falsy parent would still abort its descendants' field
-            // reads, so referenced descendants keep the strict base.
+            // Every Helm-falsy value either skips a self-guarded consumer,
+            // survives every falsy-tolerant consumer, or takes a literal
+            // fallback before any consumer runs. Keeping only the declared
+            // falsy default made schema validity depend on which off-state
+            // the chart happened to ship. A path-wide runtime string
+            // contract disables the escape: that consumer parses the raw
+            // value before any selection runs. A contract carried only by
+            // guarded overlays does not. Falsy-tolerant uses (merge operands,
+            // digest rows) extend the escape only for leaf paths: a falsy
+            // parent would still abort its descendants' field reads, so
+            // referenced descendants keep the strict base.
             union_schema_list(vec![merged, helm_falsy_schema()])
         } else {
             merged
@@ -448,9 +466,20 @@ impl ResolvePolicy {
             && facts.contract.has_render_use
             && facts.contract.all_render_uses_self_guarded
             && is_object_or_array_schema(&merged);
+        // A parent-level null removes a dependency-owned override before
+        // the subchart coalesces its own default back in. That spelling is
+        // therefore safe when no unconditional parent consumer observes the
+        // transient deletion.
+        let dependency_default_tolerates_null = facts.values_yaml.has_dependency_default
+            && !facts.contract.accepted_dependency_values_root_fragment
+            && !facts.contract.has_unconditional_render_use;
+        let nullable_scalar_without_strict_raw_consumer = is_scalar_like_schema(&merged)
+            && facts.contract.is_nullable
+            && !facts.contract.has_non_self_guarded_string_contract;
         let resolved = if (preserve_explicit_null_default
-            || (is_scalar_like_schema(&merged) && facts.contract.is_nullable)
-            || self_guarded_structure_tolerates_null)
+            || nullable_scalar_without_strict_raw_consumer
+            || self_guarded_structure_tolerates_null
+            || dependency_default_tolerates_null)
             && !is_empty_schema(&merged)
         {
             add_null_schema(merged)
@@ -784,31 +813,23 @@ pub(crate) fn split_segment_pattern(
 }
 
 fn plain_scalar_provider_preimage(schema: Value) -> Value {
-    // A raw string spelling an implicit YAML token of ANOTHER kind the slot
-    // ALSO allows still validates once the completed document reparses
-    // (aws-load-balancer-controller's `nameOverride: "null"` renders a
-    // null the null-widened provider slot accepts), so the token-class
-    // exclusions below apply only for kinds the slot rejects.
-    let allowed = ImplicitTokenAllowance {
-        null: schema_allows_type(&schema, "null"),
-        boolean: schema_allows_type(&schema, "boolean"),
-        number: schema_allows_type(&schema, "number"),
-        integer: schema_allows_type(&schema, "integer"),
-    };
-    plain_scalar_provider_preimage_with(schema, allowed)
+    plain_scalar_provider_preimage_with(schema)
 }
 
-/// Which implicit-token kinds the WHOLE provider slot accepts; computed once
-/// so nested variants keep seeing their siblings' kinds.
-#[derive(Clone, Copy)]
-struct ImplicitTokenAllowance {
-    null: bool,
-    boolean: bool,
-    number: bool,
-    integer: bool,
+fn stringified_plain_scalar_provider_preimage(schema: Value) -> Value {
+    let preserves_plain_string = schema_covers_strict_plain_scalar_string(&schema);
+    let scalar_preimage = plain_scalar_provider_preimage(schema);
+    if preserves_plain_string {
+        union_schema_list(vec![
+            scalar_preimage,
+            printf_string_formattable_mapping_schema(),
+        ])
+    } else {
+        scalar_preimage
+    }
 }
 
-fn plain_scalar_provider_preimage_with(schema: Value, allowed: ImplicitTokenAllowance) -> Value {
+fn plain_scalar_provider_preimage_with(schema: Value) -> Value {
     let Some(object) = schema.as_object() else {
         return schema;
     };
@@ -819,7 +840,7 @@ fn plain_scalar_provider_preimage_with(schema: Value, allowed: ImplicitTokenAllo
             .map(|schema_type| {
                 let mut variant = object.clone();
                 variant.insert("type".to_string(), Value::String(schema_type.to_string()));
-                plain_scalar_provider_preimage_with(Value::Object(variant), allowed)
+                plain_scalar_provider_preimage_with(Value::Object(variant))
             })
             .collect();
         return union_schema_list(variants);
@@ -833,7 +854,7 @@ fn plain_scalar_provider_preimage_with(schema: Value, allowed: ImplicitTokenAllo
                     variants
                         .iter()
                         .cloned()
-                        .map(|variant| plain_scalar_provider_preimage_with(variant, allowed))
+                        .map(plain_scalar_provider_preimage_with)
                         .collect(),
                 ),
             );
@@ -845,7 +866,8 @@ fn plain_scalar_provider_preimage_with(schema: Value, allowed: ImplicitTokenAllo
         Some("integer") => scalar_number_preimage(schema, true),
         Some("number") => scalar_number_preimage(schema, false),
         Some("boolean") => scalar_boolean_preimage(schema),
-        Some("string") => scalar_plain_string_preimage(schema, allowed),
+        Some("string") => scalar_plain_string_preimage(schema),
+        Some("null") => scalar_null_preimage(schema),
         _ => schema,
     }
 }
@@ -865,38 +887,217 @@ pub(crate) fn plain_scalar_structural_exclusions(token_initial: bool) -> Vec<Val
     exclusions
 }
 
-fn scalar_plain_string_preimage(schema: Value, allowed: ImplicitTokenAllowance) -> Value {
+pub(crate) fn plain_scalar_safe_comment_string_schema() -> Value {
+    serde_json::json!({
+        "type": "string",
+        "allOf": [
+            {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+                "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                }
+            },
+            {
+                "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                }
+            }
+        ]
+    })
+}
+
+pub(crate) fn printf_string_formattable_string_schema() -> Value {
+    serde_json::json!({
+        "anyOf": [
+            {
+                "type": "string",
+                "allOf": plain_scalar_structural_exclusions(true),
+            },
+            plain_scalar_safe_comment_string_schema(),
+            {
+                "type": "string",
+                "pattern": "^&[A-Za-z0-9_-]+$",
+            },
+        ]
+    })
+}
+
+pub(crate) fn strict_plain_scalar_string_schema() -> Value {
     let mut exclusions = plain_scalar_structural_exclusions(true);
-    if !allowed.null {
-        exclusions
-            .push(serde_json::json!({ "not": { "pattern": PLAIN_SCALAR_NULL_TOKEN_PATTERN } }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_NULL_TOKEN_PATTERN }
+    }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_BOOL_TOKEN_PATTERN }
+    }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN }
+    }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN }
+    }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN }
+    }));
+    serde_json::json!({
+        "type": "string",
+        "allOf": exclusions,
+    })
+}
+
+pub(crate) fn schema_covers_strict_plain_scalar_string(schema: &Value) -> bool {
+    if let Some(variants) = schema.get("anyOf").and_then(Value::as_array) {
+        return variants
+            .iter()
+            .any(schema_covers_strict_plain_scalar_string);
     }
-    if !allowed.boolean {
-        exclusions
-            .push(serde_json::json!({ "not": { "pattern": PLAIN_SCALAR_BOOL_TOKEN_PATTERN } }));
+    if let Some(variants) = schema.get("oneOf").and_then(Value::as_array) {
+        let covering = variants
+            .iter()
+            .enumerate()
+            .filter_map(|(index, variant)| {
+                schema_covers_strict_plain_scalar_string(variant).then_some(index)
+            })
+            .collect::<Vec<_>>();
+        let [covering_index] = covering.as_slice() else {
+            return false;
+        };
+        return variants.iter().enumerate().all(|(index, variant)| {
+            index == *covering_index || schema_rejects_strict_plain_scalar_string(variant)
+        });
     }
-    if !allowed.number && !allowed.integer {
-        exclusions.push(serde_json::json!({
-            "not": { "pattern": PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN }
-        }));
-        // Helm's YAML 1.1 resolver also reads hex, explicit octal, and
-        // binary spellings as integers, so a bare token in any of those
-        // forms reparses away from the string the sink needs (velero's
-        // unquoted BackupStorageLocation provider).
-        exclusions.push(serde_json::json!({
-            "not": { "pattern": PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN }
-        }));
+
+    let Some(object) = schema.as_object() else {
+        return false;
+    };
+    if schema_type(schema) != Some("string")
+        || !object
+            .keys()
+            .all(|key| matches!(key.as_str(), "type" | "allOf") || is_annotation_keyword(key))
+    {
+        return false;
     }
-    if !allowed.number {
-        exclusions.push(serde_json::json!({
-            "not": { "pattern": PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN }
-        }));
+    let Some(candidate_exclusions) = object.get("allOf").and_then(Value::as_array) else {
+        return true;
+    };
+    let strict = strict_plain_scalar_string_schema();
+    let Some(strict_exclusions) = strict.get("allOf").and_then(Value::as_array) else {
+        return false;
+    };
+    candidate_exclusions
+        .iter()
+        .all(|exclusion| strict_exclusions.contains(exclusion))
+}
+
+fn schema_rejects_strict_plain_scalar_string(schema: &Value) -> bool {
+    let Some(object) = schema.as_object() else {
+        return false;
+    };
+    let Some(schema_type) = object.get("type") else {
+        return false;
+    };
+    match schema_type {
+        Value::String(schema_type) => schema_type != "string",
+        Value::Array(schema_types) => !schema_types
+            .iter()
+            .any(|schema_type| schema_type.as_str() == Some("string")),
+        _ => false,
     }
+}
+
+pub(crate) fn printf_string_formattable_mapping_schema() -> Value {
+    let interior_safe_string = serde_json::json!({
+        "type": "string",
+        "allOf": plain_scalar_structural_exclusions(false),
+    });
+    serde_json::json!({
+        "type": "object",
+        "propertyNames": interior_safe_string.clone(),
+        "additionalProperties": {
+            "anyOf": [
+                { "type": "boolean" },
+                { "type": "integer" },
+                { "type": "null" },
+                { "type": "number" },
+                interior_safe_string,
+                { "type": "array", "maxItems": 0 },
+                { "type": "object", "maxProperties": 0 },
+            ]
+        }
+    })
+}
+
+fn scalar_plain_string_preimage(schema: Value) -> Value {
+    let mut exclusions = plain_scalar_structural_exclusions(true);
+    let unconstrained_string = schema.as_object().is_some_and(|object| {
+        [
+            "const",
+            "enum",
+            "format",
+            "maxLength",
+            "minLength",
+            "pattern",
+        ]
+        .iter()
+        .all(|keyword| !object.contains_key(*keyword))
+    });
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_NULL_TOKEN_PATTERN }
+    }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_BOOL_TOKEN_PATTERN }
+    }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN }
+    }));
+    // Helm's YAML 1.1 resolver also reads hex, explicit octal, and binary
+    // spellings as integers, so a bare token in any of those forms belongs
+    // to the numeric provider arm rather than the string arm.
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN }
+    }));
+    exclusions.push(serde_json::json!({
+        "not": { "pattern": PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN }
+    }));
     let lexical_domain = serde_json::json!({
         "type": "string",
         "allOf": exclusions
     });
-    merge_schema_list(vec![schema, lexical_domain])
+    let string_preimage = merge_schema_list(vec![schema, lexical_domain]);
+    if !unconstrained_string {
+        return string_preimage;
+    }
+
+    // Go formats a mapping as `map[k:v]` at a raw scalar hole. This bounded
+    // structural subset keeps every key and value free of the YAML token
+    // breakers that could turn that spelling into another node kind.
+    union_schema_list(vec![
+        string_preimage,
+        plain_scalar_safe_comment_string_schema(),
+        printf_string_formattable_mapping_schema(),
+    ])
+}
+
+fn scalar_null_preimage(schema: Value) -> Value {
+    let rendered_null_string = serde_json::json!({
+        "anyOf": [
+            {
+                "type": "string",
+                "pattern": "^[ \\t]*(#.*)?$"
+            },
+            {
+                "type": "string",
+                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$"
+            },
+            {
+                "type": "string",
+                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$"
+            },
+        ]
+    });
+    union_schema_list(vec![schema, rendered_null_string])
 }
 
 fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
@@ -1016,6 +1217,8 @@ fn conditional_target_schema_inner(
 ) -> Value {
     let declared_default = yaml_value_at_path(values_yaml_doc, target_value_path)
         .and_then(|value| serde_json::to_value(value).ok());
+    let self_guard_excludes_declared_default =
+        self_guards_exclude_declared_default(target_value_path, overlay, values_yaml_doc);
     // A branch that rejects the path's own declared default narrows values
     // the chart itself ships.
     let rejects_declared_default = |schema: &Value| {
@@ -1024,36 +1227,13 @@ fn conditional_target_schema_inner(
             .is_some_and(|default_value| !schema_accepts_json_value(schema, default_value))
     };
 
-    // A branch keyed on the path's own positive type partition must stay
-    // satisfiable for that type — the arm executes for
-    // it. A branch resolve that contradicts its partition (an object-guess
-    // for a `kindIs "slice"` arm) merges WITH the partition instead.
-    let branch_schema = {
-        let mut branch_schema = branch_schema;
-        let mut positive_self_types = std::collections::BTreeSet::new();
-        for guard in &overlay.guards {
-            collect_positive_self_types(guard, target_value_path, false, &mut positive_self_types);
-        }
-        for schema_type in positive_self_types {
-            // A "number" partition over an integer-allowing branch is NOT a
-            // contradiction: draft-07 `integer` is a value predicate that
-            // integral floats satisfy, so the arm stays satisfiable while the
-            // branch keeps rejecting fractional floats the render would place
-            // into the provider slot (sealed-secrets' `typeOf`-dispatched
-            // policy/v1 minAvailable).
-            if schema_type == "number" && schema_allows_non_falsy_type(&branch_schema, "integer") {
-                continue;
-            }
-            if !schema_allows_non_falsy_type(&branch_schema, &schema_type) {
-                branch_schema = union_schema_list(vec![branch_schema, type_schema(&schema_type)]);
-            }
-        }
-        branch_schema
-    };
+    let branch_schema =
+        preserve_positive_self_type_domains(target_value_path, overlay, branch_schema);
 
-    // A serialized catch-all branch still needs the declared structural
-    // shape: unlike a positive type arm, the complement executes for every
-    // unhandled kind.
+    // A serialized catch-all branch selected by the declared default still
+    // needs that default's structural shape. A default outside the complement
+    // belongs to another arm and must not overwrite this branch's provider
+    // schema.
     let self_type_complement = overlay.guards.iter().any(|guard| {
         matches!(
             guard,
@@ -1064,10 +1244,11 @@ fn conditional_target_schema_inner(
                 )
         )
     });
-    let branch_schema = if active_by_defaults.is_some()
+    let branch_schema = if !self_guard_excludes_declared_default
+        && active_by_defaults.is_some()
         && (!(overlay.evidence.facts.used_as_serialized
             || overlay.evidence.facts.used_as_yaml_serialized)
-            || self_type_complement)
+            || (self_type_complement && active_by_defaults == Some(true)))
         // A declared-`{}` placeholder claims no input shape for a fragment
         // branch: `toYaml` is total there, so the placeholder's
         // object typing must not narrow the branch.
@@ -1079,7 +1260,9 @@ fn conditional_target_schema_inner(
     } else {
         branch_schema
     };
-    let branch_schema = if rejects_declared_default(&branch_schema) {
+    let branch_schema = if !self_guard_excludes_declared_default
+        && rejects_declared_default(&branch_schema)
+    {
         declared_default.as_ref().map_or_else(
             || branch_schema.clone(),
             |default_value| {
@@ -1119,6 +1302,9 @@ fn conditional_target_schema_inner(
     // Guards inactive by defaults or undecidable on the values doc can still
     // be activated by a user who keeps the chart's other defaults.
     if active_by_defaults != Some(true) {
+        if self_guard_excludes_declared_default {
+            return branch_schema;
+        }
         if is_placeholder_fragment_object_schema(&branch_schema)
             && !is_placeholder_fragment_object_schema(&resolved_fallback)
         {
@@ -1148,6 +1334,57 @@ fn conditional_target_schema_inner(
     } else {
         branch_schema
     }
+}
+
+fn self_guards_exclude_declared_default(
+    target_value_path: &str,
+    overlay: &ConditionalPathOverlay,
+    values_yaml_doc: &YamlValue,
+) -> bool {
+    // A self-type partition that excludes the declared value never applies
+    // to that value, even if foreign guards change. Its branch therefore
+    // must not be widened back to the sample shape.
+    let self_guards = overlay
+        .guards
+        .iter()
+        .filter(|guard| {
+            let paths = guard.value_paths();
+            !paths.is_empty() && paths.iter().all(|path| path == target_value_path)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    !self_guards.is_empty()
+        && evaluate_guard_set_on_values(&self_guards, values_yaml_doc) == Some(false)
+}
+
+fn preserve_positive_self_type_domains(
+    target_value_path: &str,
+    overlay: &ConditionalPathOverlay,
+    mut branch_schema: Value,
+) -> Value {
+    // A branch keyed on the path's own positive type partition must stay
+    // satisfiable for that type — the arm executes for it. A branch resolve
+    // that contradicts its partition (an object guess for a `kindIs "slice"`
+    // arm) merges with the partition instead.
+    let mut positive_self_types = std::collections::BTreeSet::new();
+    for guard in &overlay.guards {
+        collect_positive_self_types(guard, target_value_path, false, &mut positive_self_types);
+    }
+    for schema_type in positive_self_types {
+        // A "number" partition over an integer-allowing branch is not a
+        // contradiction: draft-07 `integer` is a value predicate that
+        // integral floats satisfy, so the arm stays satisfiable while the
+        // branch keeps rejecting fractional floats the render would place
+        // into the provider slot (sealed-secrets' `typeOf`-dispatched
+        // policy/v1 minAvailable).
+        if schema_type == "number" && schema_allows_non_falsy_type(&branch_schema, "integer") {
+            continue;
+        }
+        if !schema_allows_non_falsy_type(&branch_schema, &schema_type) {
+            branch_schema = union_schema_list(vec![branch_schema, type_schema(&schema_type)]);
+        }
+    }
+    branch_schema
 }
 
 fn collect_positive_self_types(

@@ -1,6 +1,6 @@
 {
   "$defs": {
-    "helm-truthy": {
+    "t": {
       "anyOf": [
         {
           "const": true
@@ -35,7 +35,7 @@
           "podPriorityClassName": {
             "properties": {
               "create": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -58,11 +58,8 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
-                  },
-                  {
-                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -76,6 +73,73 @@
             "properties": {
               "nameOverride": {
                 "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "pattern": ":[ \\t]|:$"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[ \\t]#"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[\\r\\n]"
+                          }
+                        }
+                      ],
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
                   {
                     "allOf": [
                       {
@@ -132,34 +196,29 @@
                     "type": "string"
                   },
                   {
+                    "allOf": [
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "podPriorityClassName": {
-                "additionalProperties": {},
-                "properties": {
-                  "priority": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "podPriorityClassName": {
-                "type": "object"
               }
             }
           }
@@ -172,7 +231,7 @@
           {
             "properties": {
               "fullnameOverride": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -185,7 +244,7 @@
               "podPriorityClassName": {
                 "properties": {
                   "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -225,7 +284,7 @@
               "podPriorityClassName": {
                 "properties": {
                   "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -245,7 +304,7 @@
                 "podPriorityClassName": {
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   },
                   "required": [
@@ -277,7 +336,7 @@
           {
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -290,7 +349,7 @@
               "podPriorityClassName": {
                 "properties": {
                   "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -388,7 +447,7 @@
           "if": {
             "properties": {
               "create": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -403,6 +462,73 @@
                 "properties": {
                   "name": {
                     "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                }
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "maxItems": 0,
+                              "type": "array"
+                            },
+                            {
+                              "maxProperties": 0,
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "propertyNames": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
                       {
                         "allOf": [
                           {
@@ -460,8 +586,26 @@
                         "type": "string"
                       },
                       {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(null|Null|NULL)[ \\t]+#"
+                            }
+                          }
+                        ],
+                        "type": "string"
+                      },
+                      {
                         "not": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       }
                     ]
@@ -484,7 +628,19 @@
                         "type": "null"
                       },
                       {
+                        "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                        "type": "string"
+                      },
+                      {
                         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "type": "string"
+                      },
+                      {
+                        "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                        "type": "string"
+                      },
+                      {
+                        "pattern": "^[ \\t]*(#.*)?$",
                         "type": "string"
                       }
                     ]

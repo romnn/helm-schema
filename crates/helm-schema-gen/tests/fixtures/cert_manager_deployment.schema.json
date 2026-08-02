@@ -1,6 +1,6 @@
 {
   "$defs": {
-    "helm-truthy": {
+    "t": {
       "anyOf": [
         {
           "const": true
@@ -40,7 +40,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 ]
               }
@@ -90,10 +90,20 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "enableServiceLinks": {
+          "not": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "config": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -108,11 +118,8 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/helm-truthy"
+                  "$ref": "#/$defs/t"
                 }
-              },
-              {
-                "type": "null"
               },
               {
                 "type": "string"
@@ -126,7 +133,7 @@
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -157,7 +164,7 @@
             "serviceAccount": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/helm-truthy"
+                  "$ref": "#/$defs/t"
                 }
               },
               "required": [
@@ -203,7 +210,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -224,7 +231,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 ]
               }
@@ -264,7 +271,7 @@
           "global": {
             "properties": {
               "nodeSelector": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -303,14 +310,33 @@
       "additionalProperties": {},
       "properties": {
         "global": {
-          "anyOf": [
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
+          "type": "object"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullPolicy": {
+              "not": {
+                "type": "null"
+              }
             }
-          ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "required": [
+            "pullPolicy"
+          ],
+          "type": "object"
         }
       }
     },
@@ -318,7 +344,7 @@
       "if": {
         "properties": {
           "ingressShim": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -341,6 +367,183 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "livenessProbe": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/t"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "livenessProbe"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "livenessProbe": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "livenessProbe"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "failureThreshold": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "initialDelaySeconds": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "periodSeconds": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "successThreshold": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "timeoutSeconds": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "required": [
+                  "failureThreshold"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "required": [
+                  "initialDelaySeconds"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "required": [
+                  "periodSeconds"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "required": [
+                  "successThreshold"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "required": [
+                  "timeoutSeconds"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "properties": {
           "livenessProbe": {
             "anyOf": [
@@ -348,7 +551,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             ]
           }
@@ -375,7 +578,7 @@
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -408,7 +611,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             ]
           }
@@ -442,7 +645,7 @@
               "prometheus": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -464,7 +667,7 @@
                     "servicemonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -511,7 +714,7 @@
           "prometheus": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -542,6 +745,28 @@
           }
         }
       }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "replicaCount": {
+          "not": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "required": [
+        "enableServiceLinks"
+      ],
+      "type": "object"
+    },
+    {
+      "required": [
+        "replicaCount"
+      ],
+      "type": "object"
     },
     {
       "if": {
@@ -1480,7 +1705,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1500,25 +1725,7 @@
     },
     "cainjector": {},
     "clusterResourceNamespace": {},
-    "config": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
-      ]
-    },
+    "config": {},
     "containerSecurityContext": {
       "anyOf": [
         {
@@ -1677,7 +1884,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1692,6 +1899,9 @@
         },
         {
           "type": "string"
+        },
+        {
+          "type": "null"
         }
       ]
     },
@@ -1702,12 +1912,11 @@
             "type": "string"
           },
           "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "properties": {},
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1741,7 +1950,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1901,19 +2110,14 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
     },
     "extraObjects": {},
     "featureGates": {},
-    "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "fullnameOverride": {},
     "global": {
       "additionalProperties": {},
       "allOf": [
@@ -1972,12 +2176,11 @@
                 "type": "string"
               },
               "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-              "properties": {},
               "type": "object"
             },
             {
               "not": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             }
           ]
@@ -2070,7 +2273,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -2078,6 +2281,73 @@
     "http_proxy": {
       "anyOf": [
         {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
           "allOf": [
             {
               "not": {
@@ -2134,8 +2404,26 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -2143,6 +2431,73 @@
     "https_proxy": {
       "anyOf": [
         {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
           "allOf": [
             {
               "not": {
@@ -2199,19 +2554,104 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
     },
     "image": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "digest": {},
-            "pullPolicy": {
+      "additionalProperties": {},
+      "properties": {
+        "digest": {},
+        "pullPolicy": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
               "allOf": [
                 {
                   "not": {
@@ -2267,18 +2707,30 @@
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "string"
             },
-            "registry": {},
-            "repository": {},
-            "tag": {}
-          },
-          "type": "object"
+            {
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            }
+          ]
         },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
-      ],
+        "registry": {},
+        "repository": {},
+        "tag": {}
+      },
       "type": "object"
     },
     "ingressShim": {
@@ -2302,14 +2754,14 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 ]
               },
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -2416,18 +2868,7 @@
         }
       ],
       "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "enabled": {},
         "failureThreshold": {},
         "initialDelaySeconds": {},
         "periodSeconds": {},
@@ -2438,6 +2879,73 @@
     "maxConcurrentChallenges": {},
     "nameOverride": {
       "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
         {
           "allOf": [
             {
@@ -2494,14 +3002,99 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
     },
     "namespace": {
       "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
         {
           "allOf": [
             {
@@ -2559,14 +3152,99 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
     },
     "no_proxy": {
       "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
         {
           "allOf": [
             {
@@ -2624,8 +3302,26 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -2638,12 +3334,11 @@
             "type": "string"
           },
           "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "properties": {},
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -2694,13 +3389,80 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
     },
     "podDnsPolicy": {
       "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
         {
           "allOf": [
             {
@@ -2758,8 +3520,26 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -2777,12 +3557,11 @@
             "type": "string"
           },
           "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "properties": {},
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -2796,7 +3575,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -2838,7 +3617,7 @@
                     "servicemonitor": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -2863,7 +3642,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -2909,17 +3688,13 @@
         "podmonitor": {
           "additionalProperties": {},
           "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
+            "enabled": {}
           }
         },
         "servicemonitor": {
           "additionalProperties": {},
           "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
+            "enabled": {}
           }
         }
       },
@@ -3007,7 +3782,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -3181,7 +3956,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -3189,20 +3964,76 @@
     "serviceAccount": {
       "additionalProperties": {},
       "properties": {
-        "create": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "create": {},
         "name": {
           "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
             {
               "allOf": [
                 {
@@ -3260,8 +4091,26 @@
               "type": "string"
             },
             {
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
               "not": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             }
           ]
@@ -3316,7 +4165,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -3357,7 +4206,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -3467,7 +4316,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -3524,7 +4373,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -5130,7 +5979,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]

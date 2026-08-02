@@ -60,7 +60,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
     let strict_enabled = serde_json::json!({
         "properties": {
             "strict": {
-                "properties": { "enabled": { "$ref": "#/$defs/helm-truthy" } },
+                "properties": { "enabled": { "$ref": "#/$defs/t" } },
                 "required": ["enabled"],
                 "type": "object",
             },
@@ -92,7 +92,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
             "allOf": [{
                 "if": { "allOf": [
                     {
-                        "properties": { "enabled": { "$ref": "#/$defs/helm-truthy" } },
+                        "properties": { "enabled": { "$ref": "#/$defs/t" } },
                         "required": ["enabled"],
                         "type": "object",
                     },
@@ -330,7 +330,7 @@ fn member_local_guard_does_not_leak_its_string_contract() {
     // at all. A non-object member cannot satisfy the selector, so it passes
     // both arms unconstrained.
     let gate = serde_json::json!({
-        "properties": { "enabled": { "$ref": "#/$defs/helm-truthy" } },
+        "properties": { "enabled": { "$ref": "#/$defs/t" } },
         "required": ["enabled"],
         "type": "object",
     });
@@ -1513,7 +1513,7 @@ fn tilde_semver_guard_scopes_member_host_shape_exactly() {
                 "host": {
                     "additionalProperties": {},
                     "properties": {
-                        "member": { "type": "boolean" },
+                        "member": {},
                     },
                 },
             },
@@ -1526,7 +1526,7 @@ fn tilde_semver_guard_scopes_member_host_shape_exactly() {
             "component": {
                 "properties": {
                     "enabled": {
-                        "$ref": "#/$defs/helm-truthy",
+                        "$ref": "#/$defs/t",
                     },
                 },
                 "required": ["enabled"],

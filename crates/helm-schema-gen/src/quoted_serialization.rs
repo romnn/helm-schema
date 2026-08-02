@@ -20,14 +20,24 @@ pub(crate) fn definition_name(style: QuotedScalarStyle) -> &'static str {
     }
 }
 
-pub(crate) fn reference_schema(style: QuotedScalarStyle) -> Value {
-    json!({ "$ref": format!("#/$defs/{}", definition_name(style)) })
+pub(crate) fn reference_schema(style: QuotedScalarStyle, templated: bool) -> Value {
+    let reference = json!({ "$ref": format!("#/$defs/{}", definition_name(style)) });
+    if templated {
+        json!({
+            "anyOf": [
+                reference,
+                { "type": "string", "pattern": "\\{\\{" },
+            ]
+        })
+    } else {
+        reference
+    }
 }
 
 pub(crate) fn definition_schema(style: QuotedScalarStyle) -> Value {
     let pattern = crate::path_resolver::ecma_compatible_pattern(style.safe_content_pattern())
         .unwrap_or_else(|| style.safe_content_pattern().to_string());
-    let reference = reference_schema(style);
+    let reference = reference_schema(style, false);
     json!({
         "anyOf": [
             { "type": ["boolean", "integer", "null", "number"] },

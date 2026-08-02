@@ -1,7 +1,103 @@
-use super::merge_two_schemas;
+use super::{intersect_schema_list, merge_two_schemas};
+use color_eyre::eyre;
 use serde_json::Value;
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn provider_intersection_never_widens_a_shared_plain_string_domain() -> eyre::Result<()> {
+    let plain_string = json!({
+        "type": "string",
+        "allOf": [
+            { "not": { "pattern": ":[ \\t]|:$" } },
+            { "not": { "pattern": "[\\r\\n]" } },
+        ],
+    });
+    let first = json!({
+        "anyOf": [
+            plain_string.clone(),
+            { "type": "null" },
+        ],
+    });
+    let second = json!({
+        "anyOf": [
+            plain_string,
+            { "type": "object", "maxProperties": 0 },
+        ],
+    });
+    let intersection = intersect_schema_list(vec![first, second]);
+    let validator = jsonschema::validator_for(&intersection)?;
+
+    sim_assert_eq!(
+        have: validator.is_valid(&json!("safe-name")),
+        want: true,
+    );
+    sim_assert_eq!(
+        have: validator.is_valid(&json!("a: b")),
+        want: false,
+    );
+    sim_assert_eq!(
+        have: validator.is_valid(&json!("a\nb")),
+        want: false,
+    );
+    Ok(())
+}
+
+#[test]
+fn provider_intersection_deduplicates_annotation_only_differences() {
+    let intersection = intersect_schema_list(vec![
+        json!({
+            "description": "second sink",
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "second field description",
+                    "type": "string",
+                },
+            },
+        }),
+        json!({
+            "description": "first sink",
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "first field description",
+                    "type": "string",
+                },
+            },
+        }),
+    ]);
+
+    sim_assert_eq!(
+        have: intersection,
+        want: json!({
+            "description": "first sink",
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "first field description",
+                    "type": "string",
+                },
+            },
+        }),
+    );
+}
+
+#[test]
+fn provider_intersection_drops_a_redundant_declared_type() {
+    let restricted = json!({
+        "anyOf": [
+            { "type": "string", "pattern": "^[a-z]+$" },
+            { "type": "string", "maxLength": 8 },
+        ],
+    });
+    let intersection = intersect_schema_list(vec![
+        restricted.clone(),
+        json!({ "description": "declared shape", "type": "string" }),
+    ]);
+
+    sim_assert_eq!(have: intersection, want: restricted);
+}
 
 #[test]
 fn merge_open_string_map_with_fixed_values_object_keeps_map_open() {

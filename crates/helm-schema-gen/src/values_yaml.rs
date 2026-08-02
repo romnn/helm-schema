@@ -124,6 +124,7 @@ pub(crate) struct ValuesYamlPathFacts {
     pub(crate) is_empty_string: bool,
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
+    pub(crate) has_dependency_default: bool,
 }
 
 impl ValuesYamlPathFacts {
@@ -143,6 +144,7 @@ impl ValuesYamlPathInfo {
             is_empty_string: self.is_empty_string,
             is_empty_map: self.is_empty_map,
             is_mapping: self.is_mapping,
+            has_dependency_default: false,
         }
     }
 }
@@ -152,6 +154,7 @@ pub(crate) fn build_values_yaml_path_info(
     values_yaml_doc: &YamlValue,
     referenced_value_paths: &BTreeSet<String>,
     pruned_parent_value_paths: &BTreeSet<String>,
+    unconditionally_omitted_value_paths: &BTreeSet<String>,
     direct_ranged_value_paths: &BTreeSet<String>,
 ) -> BTreeMap<String, ValuesYamlPathInfo> {
     referenced_value_paths
@@ -176,6 +179,15 @@ pub(crate) fn build_values_yaml_path_info(
                             &mut path_info.schema,
                             path,
                             direct_ranged_value_paths,
+                        );
+                        // A member removed before every provider sink has no
+                        // parent-level input contract. Its own path evidence
+                        // decides whether the declared default remains
+                        // meaningful.
+                        prune_referenced_descendant_schemas(
+                            &mut path_info.schema,
+                            path,
+                            unconditionally_omitted_value_paths,
                         );
                     }
                     path_info
@@ -242,6 +254,32 @@ pub(crate) fn yaml_value_at_path<'a>(
     value_path: &str,
 ) -> Option<&'a YamlValue> {
     yaml_value_at_segments(doc, &crate::split_value_path(value_path))
+}
+
+pub(crate) fn remove_values_paths(doc: &mut YamlValue, paths: &BTreeSet<String>) {
+    for path in paths {
+        remove_value_at_segments(doc, &crate::split_value_path(path));
+    }
+}
+
+fn remove_value_at_segments(doc: &mut YamlValue, path: &[String]) {
+    let Some((last, parents)) = path.split_last() else {
+        return;
+    };
+    let mut current = doc;
+    for segment in parents {
+        let YamlValue::Mapping(mapping) = current else {
+            return;
+        };
+        let Some(next) = mapping.get_mut(YamlValue::String(segment.clone())) else {
+            return;
+        };
+        current = next;
+    }
+    let YamlValue::Mapping(mapping) = current else {
+        return;
+    };
+    mapping.remove(YamlValue::String(last.clone()));
 }
 
 fn lookup_values_yaml_values<'a>(

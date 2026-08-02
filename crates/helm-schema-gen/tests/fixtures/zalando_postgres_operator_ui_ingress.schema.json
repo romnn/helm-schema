@@ -1,6 +1,6 @@
 {
   "$defs": {
-    "helm-truthy": {
+    "t": {
       "anyOf": [
         {
           "const": true
@@ -35,7 +35,7 @@
           "ingress": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -58,11 +58,8 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
-                  },
-                  {
-                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -196,6 +193,103 @@
               "ingress": {
                 "additionalProperties": {},
                 "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "host": {
+                                  "not": {
+                                    "type": "null"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "host"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "properties": {
+                                "host": {},
+                                "paths": {
+                                  "anyOf": [
+                                    {
+                                      "items": {},
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalProperties": {},
+                                      "type": "object"
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "host": {
+                                  "not": {
+                                    "type": "null"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "host"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "properties": {
+                                "host": {},
+                                "paths": {
+                                  "anyOf": [
+                                    {
+                                      "items": {},
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalProperties": {},
+                                      "type": "object"
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
                   "tls": {
                     "additionalProperties": {
                       "additionalProperties": {},
@@ -249,6 +343,73 @@
             "properties": {
               "nameOverride": {
                 "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "pattern": ":[ \\t]|:$"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[ \\t]#"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[\\r\\n]"
+                          }
+                        }
+                      ],
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
                   {
                     "allOf": [
                       {
@@ -305,8 +466,26 @@
                     "type": "string"
                   },
                   {
+                    "allOf": [
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -334,7 +513,7 @@
           {
             "properties": {
               "fullnameOverride": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -347,7 +526,7 @@
               "ingress": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -387,7 +566,7 @@
               "ingress": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -406,7 +585,7 @@
               "ingress": {
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -423,69 +602,170 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "tls": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "hosts": {
+                              "anyOf": [
+                                {
+                                  "items": {},
+                                  "type": "array"
+                                },
+                                {
+                                  "additionalProperties": {},
+                                  "type": "object"
+                                }
+                              ]
                             },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
+                            "secretName": {}
+                          },
+                          "type": "object"
                         },
-                        "secretName": {}
+                        "type": "array"
                       },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "hosts": {
+                              "anyOf": [
+                                {
+                                  "items": {},
+                                  "type": "array"
+                                },
+                                {
+                                  "additionalProperties": {},
+                                  "type": "object"
+                                }
+                              ]
                             },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
+                            "secretName": {}
+                          },
+                          "type": "object"
                         },
-                        "secretName": {}
+                        "type": "object"
                       },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "secretName": {
+                                  "not": {
+                                    "type": "null"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "secretName"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "properties": {
+                                "hosts": {
+                                  "anyOf": [
+                                    {
+                                      "items": {},
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalProperties": {},
+                                      "type": "object"
+                                    }
+                                  ]
+                                },
+                                "secretName": {}
+                              }
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "secretName": {
+                                  "not": {
+                                    "type": "null"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "secretName"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "properties": {
+                                "hosts": {
+                                  "anyOf": [
+                                    {
+                                      "items": {},
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalProperties": {},
+                                      "type": "object"
+                                    }
+                                  ]
+                                },
+                                "secretName": {}
+                              }
+                            }
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -496,7 +776,7 @@
               "ingress": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -513,7 +793,7 @@
           {
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -547,7 +827,7 @@
               "ingress": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -638,7 +918,7 @@
           "if": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -658,12 +938,11 @@
                           "type": "string"
                         },
                         "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                        "properties": {},
                         "type": "object"
                       },
                       {
                         "not": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       }
                     ]
@@ -679,116 +958,294 @@
                       "properties": {
                         "paths": {
                           "additionalProperties": {
-                            "allOf": [
+                            "anyOf": [
                               {
-                                "not": {
-                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                }
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "not": {
+                                            "pattern": ":[ \\t]|:$"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[ \\t]#"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[\\r\\n]"
+                                          }
+                                        }
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "maxItems": 0,
+                                      "type": "array"
+                                    },
+                                    {
+                                      "maxProperties": 0,
+                                      "type": "object"
+                                    }
+                                  ]
+                                },
+                                "propertyNames": {
+                                  "allOf": [
+                                    {
+                                      "not": {
+                                        "pattern": ":[ \\t]|:$"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[ \\t]#"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[\\r\\n]"
+                                      }
+                                    }
+                                  ],
+                                  "type": "string"
+                                },
+                                "type": "object"
                               },
                               {
-                                "not": {
-                                  "pattern": "^[-?:]([ \\t]|$)"
-                                }
+                                "allOf": [
+                                  {
+                                    "not": {
+                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[-?:]([ \\t]|$)"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(|~|null|Null|NULL)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                    }
+                                  }
+                                ],
+                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                                "type": "string"
                               },
                               {
-                                "not": {
-                                  "pattern": ":[ \\t]|:$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[ \\t]#"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[\\r\\n]"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(|~|null|Null|NULL)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                }
+                                "allOf": [
+                                  {
+                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                    }
+                                  }
+                                ],
+                                "type": "string"
                               }
-                            ],
-                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                            "type": "string"
+                            ]
                           },
                           "items": {
-                            "allOf": [
+                            "anyOf": [
                               {
-                                "not": {
-                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                }
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "not": {
+                                            "pattern": ":[ \\t]|:$"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[ \\t]#"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[\\r\\n]"
+                                          }
+                                        }
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "maxItems": 0,
+                                      "type": "array"
+                                    },
+                                    {
+                                      "maxProperties": 0,
+                                      "type": "object"
+                                    }
+                                  ]
+                                },
+                                "propertyNames": {
+                                  "allOf": [
+                                    {
+                                      "not": {
+                                        "pattern": ":[ \\t]|:$"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[ \\t]#"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[\\r\\n]"
+                                      }
+                                    }
+                                  ],
+                                  "type": "string"
+                                },
+                                "type": "object"
                               },
                               {
-                                "not": {
-                                  "pattern": "^[-?:]([ \\t]|$)"
-                                }
+                                "allOf": [
+                                  {
+                                    "not": {
+                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[-?:]([ \\t]|$)"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(|~|null|Null|NULL)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                    }
+                                  }
+                                ],
+                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                                "type": "string"
                               },
                               {
-                                "not": {
-                                  "pattern": ":[ \\t]|:$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[ \\t]#"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[\\r\\n]"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(|~|null|Null|NULL)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                }
+                                "allOf": [
+                                  {
+                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                    }
+                                  }
+                                ],
+                                "type": "string"
                               }
-                            ],
-                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                            "type": "string"
+                            ]
                           }
                         }
                       }
@@ -798,116 +1255,294 @@
                       "properties": {
                         "paths": {
                           "additionalProperties": {
-                            "allOf": [
+                            "anyOf": [
                               {
-                                "not": {
-                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                }
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "not": {
+                                            "pattern": ":[ \\t]|:$"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[ \\t]#"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[\\r\\n]"
+                                          }
+                                        }
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "maxItems": 0,
+                                      "type": "array"
+                                    },
+                                    {
+                                      "maxProperties": 0,
+                                      "type": "object"
+                                    }
+                                  ]
+                                },
+                                "propertyNames": {
+                                  "allOf": [
+                                    {
+                                      "not": {
+                                        "pattern": ":[ \\t]|:$"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[ \\t]#"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[\\r\\n]"
+                                      }
+                                    }
+                                  ],
+                                  "type": "string"
+                                },
+                                "type": "object"
                               },
                               {
-                                "not": {
-                                  "pattern": "^[-?:]([ \\t]|$)"
-                                }
+                                "allOf": [
+                                  {
+                                    "not": {
+                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[-?:]([ \\t]|$)"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(|~|null|Null|NULL)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                    }
+                                  }
+                                ],
+                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                                "type": "string"
                               },
                               {
-                                "not": {
-                                  "pattern": ":[ \\t]|:$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[ \\t]#"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[\\r\\n]"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(|~|null|Null|NULL)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                }
+                                "allOf": [
+                                  {
+                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                    }
+                                  }
+                                ],
+                                "type": "string"
                               }
-                            ],
-                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                            "type": "string"
+                            ]
                           },
                           "items": {
-                            "allOf": [
+                            "anyOf": [
                               {
-                                "not": {
-                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                }
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "not": {
+                                            "pattern": ":[ \\t]|:$"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[ \\t]#"
+                                          }
+                                        },
+                                        {
+                                          "not": {
+                                            "pattern": "[\\r\\n]"
+                                          }
+                                        }
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "maxItems": 0,
+                                      "type": "array"
+                                    },
+                                    {
+                                      "maxProperties": 0,
+                                      "type": "object"
+                                    }
+                                  ]
+                                },
+                                "propertyNames": {
+                                  "allOf": [
+                                    {
+                                      "not": {
+                                        "pattern": ":[ \\t]|:$"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[ \\t]#"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[\\r\\n]"
+                                      }
+                                    }
+                                  ],
+                                  "type": "string"
+                                },
+                                "type": "object"
                               },
                               {
-                                "not": {
-                                  "pattern": "^[-?:]([ \\t]|$)"
-                                }
+                                "allOf": [
+                                  {
+                                    "not": {
+                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[-?:]([ \\t]|$)"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(|~|null|Null|NULL)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                    }
+                                  }
+                                ],
+                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                                "type": "string"
                               },
                               {
-                                "not": {
-                                  "pattern": ":[ \\t]|:$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[ \\t]#"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[\\r\\n]"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(|~|null|Null|NULL)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                                }
-                              },
-                              {
-                                "not": {
-                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                }
+                                "allOf": [
+                                  {
+                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                    }
+                                  }
+                                ],
+                                "type": "string"
                               }
-                            ],
-                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                            "type": "string"
+                            ]
                           }
                         }
                       }
@@ -970,6 +1605,73 @@
                   "ingressClassName": {
                     "anyOf": [
                       {
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                }
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "maxItems": 0,
+                              "type": "array"
+                            },
+                            {
+                              "maxProperties": 0,
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "propertyNames": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
                         "allOf": [
                           {
                             "not": {
@@ -1026,8 +1728,26 @@
                         "type": "string"
                       },
                       {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(null|Null|NULL)[ \\t]+#"
+                            }
+                          }
+                        ],
+                        "type": "string"
+                      },
+                      {
                         "not": {
-                          "$ref": "#/$defs/helm-truthy"
+                          "$ref": "#/$defs/t"
                         }
                       }
                     ]
@@ -1092,7 +1812,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -1103,7 +1823,7 @@
               {
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
@@ -1134,7 +1854,7 @@
                             },
                             {
                               "not": {
-                                "$ref": "#/$defs/helm-truthy"
+                                "$ref": "#/$defs/t"
                               }
                             },
                             {
@@ -1168,7 +1888,7 @@
                             },
                             {
                               "not": {
-                                "$ref": "#/$defs/helm-truthy"
+                                "$ref": "#/$defs/t"
                               }
                             },
                             {
@@ -1198,60 +1918,149 @@
                       "additionalProperties": {},
                       "properties": {
                         "secretName": {
-                          "allOf": [
+                          "anyOf": [
                             {
-                              "not": {
-                                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                              }
+                              "additionalProperties": {
+                                "anyOf": [
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "allOf": [
+                                      {
+                                        "not": {
+                                          "pattern": ":[ \\t]|:$"
+                                        }
+                                      },
+                                      {
+                                        "not": {
+                                          "pattern": "[ \\t]#"
+                                        }
+                                      },
+                                      {
+                                        "not": {
+                                          "pattern": "[\\r\\n]"
+                                        }
+                                      }
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "maxItems": 0,
+                                    "type": "array"
+                                  },
+                                  {
+                                    "maxProperties": 0,
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              "propertyNames": {
+                                "allOf": [
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  }
+                                ],
+                                "type": "string"
+                              },
+                              "type": "object"
                             },
                             {
-                              "not": {
-                                "pattern": "^[-?:]([ \\t]|$)"
-                              }
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^[-?:]([ \\t]|$)"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(|~|null|Null|NULL)$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                  }
+                                }
+                              ],
+                              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+                              "type": "string"
                             },
                             {
-                              "not": {
-                                "pattern": ":[ \\t]|:$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[ \\t]#"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[\\r\\n]"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^(|~|null|Null|NULL)$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                              }
+                              "allOf": [
+                                {
+                                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                  }
+                                }
+                              ],
+                              "type": "string"
                             }
-                          ],
-                          "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-                          "type": "string"
+                          ]
                         }
                       }
                     },
@@ -1259,60 +2068,149 @@
                       "additionalProperties": {},
                       "properties": {
                         "secretName": {
-                          "allOf": [
+                          "anyOf": [
                             {
-                              "not": {
-                                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                              }
+                              "additionalProperties": {
+                                "anyOf": [
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "allOf": [
+                                      {
+                                        "not": {
+                                          "pattern": ":[ \\t]|:$"
+                                        }
+                                      },
+                                      {
+                                        "not": {
+                                          "pattern": "[ \\t]#"
+                                        }
+                                      },
+                                      {
+                                        "not": {
+                                          "pattern": "[\\r\\n]"
+                                        }
+                                      }
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "maxItems": 0,
+                                    "type": "array"
+                                  },
+                                  {
+                                    "maxProperties": 0,
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              "propertyNames": {
+                                "allOf": [
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  }
+                                ],
+                                "type": "string"
+                              },
+                              "type": "object"
                             },
                             {
-                              "not": {
-                                "pattern": "^[-?:]([ \\t]|$)"
-                              }
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^[-?:]([ \\t]|$)"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(|~|null|Null|NULL)$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                  }
+                                }
+                              ],
+                              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+                              "type": "string"
                             },
                             {
-                              "not": {
-                                "pattern": ":[ \\t]|:$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[ \\t]#"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[\\r\\n]"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^(|~|null|Null|NULL)$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                              }
+                              "allOf": [
+                                {
+                                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                  }
+                                }
+                              ],
+                              "type": "string"
                             }
-                          ],
-                          "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-                          "type": "string"
+                          ]
                         }
                       }
                     }
@@ -1342,9 +2240,7 @@
     "service": {
       "additionalProperties": {},
       "properties": {
-        "port": {
-          "type": "string"
-        }
+        "port": {}
       }
     },
     "serviceAccount": {},

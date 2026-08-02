@@ -58,6 +58,14 @@ fn literal_dotted_index_and_get_keys_generate_one_root_property() {
         ),
         "the chart's literal dotted-key default should validate: {schema}"
     );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({})),
+        "Sprig get returns an empty string for a missing key, so the selected field aborts: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "foo.bar": "value" })),
+        "the get result must host the selected field: {schema}"
+    );
 }
 
 #[test]
@@ -516,6 +524,58 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
             }
         }
     });
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+#[test]
+fn foreign_render_guard_does_not_inherit_the_rendered_paths_default_type() {
+    let src = indoc! {r"
+        {{- if .Values.enabled }}
+        key: {{ .Values.name }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        enabled: true
+        name: example
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    let expected = serde_json::json!({
+        "$defs": {
+            "t": {
+                "anyOf": [
+                    { "const": true },
+                    { "not": { "const": 0 }, "type": "number" },
+                    { "minLength": 1, "type": "string" },
+                    { "minItems": 1, "type": "array" },
+                    { "minProperties": 1, "type": "object" },
+                ],
+            },
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [{
+            "if": {
+                "properties": {
+                    "enabled": { "$ref": "#/$defs/t" },
+                },
+                "required": ["enabled"],
+                "type": "object",
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {
+                    "name": { "type": "string" },
+                },
+            },
+        }],
+        "properties": {
+            "enabled": {},
+            "name": {},
+        },
+        "type": "object",
+    });
+
     sim_assert_eq!(have: schema, want: expected);
 }
 

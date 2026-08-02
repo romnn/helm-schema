@@ -158,7 +158,49 @@ pub(crate) fn schema_allows_type(schema: &Value, expected_type: &str) -> bool {
         }
     }
 
+    if let Some(Value::Array(variants)) = object.get("allOf") {
+        return variants
+            .iter()
+            .any(|variant| schema_allows_type(variant, expected_type))
+            && variants
+                .iter()
+                .all(|variant| !schema_excludes_type(variant, expected_type));
+    }
+
     false
+}
+
+fn schema_excludes_type(schema: &Value, expected_type: &str) -> bool {
+    if schema == &Value::Bool(false) {
+        return true;
+    }
+    if let Some(schema_type) = schema_type(schema) {
+        return schema_type != expected_type;
+    }
+    if let Some(Value::Array(names)) = schema.get("type") {
+        return !names
+            .iter()
+            .any(|name| name.as_str() == Some(expected_type));
+    }
+    let Some(object) = schema.as_object() else {
+        return false;
+    };
+    for key in ["oneOf", "anyOf"] {
+        if let Some(Value::Array(variants)) = object.get(key) {
+            return !variants.is_empty()
+                && variants
+                    .iter()
+                    .all(|variant| schema_excludes_type(variant, expected_type));
+        }
+    }
+    object
+        .get("allOf")
+        .and_then(Value::as_array)
+        .is_some_and(|variants| {
+            variants
+                .iter()
+                .any(|variant| schema_excludes_type(variant, expected_type))
+        })
 }
 
 pub(crate) fn add_null_schema(schema: Value) -> Value {

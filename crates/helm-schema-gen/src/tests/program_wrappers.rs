@@ -21,20 +21,23 @@ const ENGINE_HELPERS: &str = indoc! {r#"
 "#};
 
 const ENGINE_SRC: &str = indoc! {r#"
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: test
-    data:
-      port: {{ .Values.port }}
     {{- $values := get (include "test.tplValues" (dict "doc" .Values "ctx" $) | fromJson) "doc" }}
     {{- $_ := set . "Values" $values }}
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: test
+    spec:
+      selector:
+        app: test
+      ports:
+        - port: {{ .Values.port }}
 "#};
 
 /// A detected engine adds the singleton-wrapper alternative at value
 /// nodes: the wrapper's program must be a string, exactly one sentinel key
-/// forms a wrapper, and non-wrapper maps keep failing the node's ordinary
-/// domain.
+/// forms a wrapper, and non-wrapper maps keep failing the integer provider
+/// slot.
 #[test]
 fn detected_engine_accepts_program_wrappers_at_value_nodes() {
     let schema = schema_for_values_yaml(
@@ -63,6 +66,40 @@ fn detected_engine_accepts_program_wrappers_at_value_nodes() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "wrapper alternatives ride detected engine conventions: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn program_wrappers_do_not_rewrite_truthiness_definitions() {
+    let source = indoc! {r#"
+        {{- $values := get (include "test.tplValues" (dict "doc" .Values "ctx" $) | fromJson) "doc" }}
+        {{- $_ := set . "Values" $values }}
+        {{- if .Values.port }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          selector:
+            app: test
+          ports:
+            - port: {{ .Values.port }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(source, ENGINE_HELPERS),
+        Some("port: 4222\n"),
+    );
+
+    for (instance, want) in [
+        (serde_json::json!({ "port": { "$tplYaml": "4333" } }), true),
+        (serde_json::json!({ "port": { "$tplYaml": true } }), false),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "truthiness tests must see the raw wrapper map while the value schema validates its program: \
              instance={instance}; want={want}; schema={schema}"
         );
     }
@@ -199,10 +236,17 @@ fn without_an_engine_wrapper_maps_stay_ordinary_objects() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("port: 4222\n"));
     assert!(
-        !schema_accepts_instance(
+        schema_accepts_instance(
             &schema,
             &serde_json::json!({ "port": { "$tplYaml": "4333" } })
         ),
-        "no engine, no wrapper alternative: schema={schema}"
+        "without an engine the map is ordinary input, and its safe Go-formatted text renders: schema={schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "port": { "$tplYaml": "a: b" } })
+        ),
+        "ordinary maps still obey the plain-scalar text grammar: schema={schema}"
     );
 }

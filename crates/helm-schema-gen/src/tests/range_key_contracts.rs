@@ -33,21 +33,7 @@ fn guarded_range_member_string_contract_stays_branch_scoped() {
         "allOf": [helm_truthy_guard("config"), helm_truthy_guard("enabled")]
     });
     let mut properties = serde_json::Map::new();
-    properties.insert(
-        "config".to_string(),
-        serde_json::json!({
-            "anyOf": [
-                {
-                    "additionalProperties": false,
-                    "maxProperties": 0,
-                    "properties": {},
-                    "type": "object",
-                },
-                { "additionalProperties": {}, "type": "object" },
-                { "not": { "$ref": "#/$defs/helm-truthy" } },
-            ]
-        }),
-    );
+    properties.insert("config".to_string(), serde_json::json!({}));
     properties.insert("enabled".to_string(), serde_json::json!({}));
     properties.insert("templates".to_string(), serde_json::json!({}));
     let all_of = vec![serde_json::json!({
@@ -131,7 +117,7 @@ fn range_key_string_contract_preserves_only_the_empty_array_lane() {
     let schema = schema_for_values_yaml(parse_ir(src), Some("extraPorts: {}\n"));
     sim_assert_eq!(
         have: &schema,
-        want: &expected_range_key_string_schema("extraPorts")
+        want: &expected_range_key_string_schema("extraPorts", true)
     );
 
     for instance in [
@@ -176,7 +162,7 @@ fn helper_string_contract_on_range_key_does_not_constrain_members() {
     );
     sim_assert_eq!(
         have: &schema,
-        want: &expected_range_key_string_schema("extraPorts")
+        want: &expected_range_key_string_schema("extraPorts", false)
     );
 
     assert!(
@@ -215,7 +201,7 @@ fn range_key_string_predicate_constrains_the_array_lane() {
     let schema = schema_for_values_yaml(parse_ir(src), Some("extraPorts: {}\n"));
     sim_assert_eq!(
         have: &schema,
-        want: &expected_range_key_string_schema("extraPorts")
+        want: &expected_range_key_string_schema("extraPorts", true)
     );
 
     assert!(
@@ -252,10 +238,9 @@ fn non_string_range_key_operand_does_not_infer_a_string_contract() {
         "items".to_string(),
         serde_json::json!({
             "anyOf": [
-                { "items": {}, "type": "array" },
                 { "type": "array" },
-                { "type": "null" },
                 { "type": "object" },
+                { "type": "null" },
             ]
         }),
     );
@@ -300,7 +285,7 @@ fn raw_range_key_occurrence_survives_a_derived_sibling() {
     let schema = schema_for_values_yaml(parse_ir(src), Some("items: {}\n"));
     sim_assert_eq!(
         have: &schema,
-        want: &expected_range_key_string_schema("items")
+        want: &expected_range_key_string_schema("items", true)
     );
 
     assert!(

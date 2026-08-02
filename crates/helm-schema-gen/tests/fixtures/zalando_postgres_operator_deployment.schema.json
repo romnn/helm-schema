@@ -31,7 +31,7 @@
         }
       ]
     },
-    "helm-truthy": {
+    "t": {
       "anyOf": [
         {
           "const": true
@@ -69,7 +69,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             ]
           }
@@ -105,49 +105,148 @@
                   "api_port": {
                     "oneOf": [
                       {
-                        "allOf": [
+                        "anyOf": [
                           {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "not": {
+                                        "pattern": ":[ \\t]|:$"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[ \\t]#"
+                                      }
+                                    },
+                                    {
+                                      "not": {
+                                        "pattern": "[\\r\\n]"
+                                      }
+                                    }
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "maxItems": 0,
+                                  "type": "array"
+                                },
+                                {
+                                  "maxProperties": 0,
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            "propertyNames": {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                }
+                              ],
+                              "type": "string"
+                            },
+                            "type": "object"
                           },
                           {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
+                            "allOf": [
+                              {
+                                "not": {
+                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": ":[ \\t]|:$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(|~|null|Null|NULL)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                }
+                              }
+                            ],
+                            "type": "string"
                           },
                           {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
+                            "allOf": [
+                              {
+                                "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(null|Null|NULL)[ \\t]+#"
+                                }
+                              }
+                            ],
+                            "type": "string"
                           }
-                        ],
-                        "type": "string"
+                        ]
                       },
                       {
                         "anyOf": [
@@ -182,7 +281,40 @@
             "additionalProperties": {},
             "properties": {
               "configLoggingRestApi": {
+                "required": [
+                  "api_port"
+                ],
                 "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "readinessProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "initialDelaySeconds": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "readinessProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "periodSeconds": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
               }
             }
           },
@@ -195,6 +327,28 @@
                     "type": "object"
                   }
                 ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "readinessProbe": {
+                "required": [
+                  "initialDelaySeconds"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "readinessProbe": {
+                "required": [
+                  "periodSeconds"
+                ],
+                "type": "object"
               }
             }
           }
@@ -220,7 +374,7 @@
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -240,6 +394,21 @@
                 "type": "null"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullPolicy": {
+              "not": {
+                "type": "null"
+              }
+            }
           }
         }
       }
@@ -284,10 +453,21 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "required": [
+            "pullPolicy"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -317,7 +497,7 @@
           {
             "properties": {
               "readinessProbe": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -1233,6 +1413,9 @@
         },
         {
           "type": "string"
+        },
+        {
+          "type": "null"
         }
       ]
     },
@@ -1246,7 +1429,7 @@
           "if": {
             "properties": {
               "create": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
@@ -1259,6 +1442,73 @@
             "properties": {
               "name": {
                 "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "allOf": [
+                        {
+                          "not": {
+                            "pattern": ":[ \\t]|:$"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[ \\t]#"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[\\r\\n]"
+                          }
+                        }
+                      ],
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
                   {
                     "allOf": [
                       {
@@ -1316,8 +1566,26 @@
                     "type": "string"
                   },
                   {
+                    "allOf": [
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
                     "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                      "$ref": "#/$defs/t"
                     }
                   }
                 ]
@@ -1489,7 +1757,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1499,60 +1767,149 @@
       "additionalProperties": {},
       "properties": {
         "pullPolicy": {
-          "allOf": [
+          "anyOf": [
             {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
             },
             {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                  }
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
             },
             {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
             }
-          ],
-          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-          "type": "string"
+          ]
         },
         "registry": {},
         "repository": {},
@@ -1585,13 +1942,80 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
     },
     "nameOverride": {
       "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
         {
           "allOf": [
             {
@@ -1648,8 +2072,26 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1675,12 +2117,11 @@
             "type": "string"
           },
           "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "properties": {},
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1698,12 +2139,11 @@
             "type": "string"
           },
           "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "properties": {},
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1712,6 +2152,73 @@
     "podServiceAccount": {},
     "priorityClassName": {
       "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
         {
           "allOf": [
             {
@@ -1769,8 +2276,26 @@
           "type": "string"
         },
         {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         }
       ]
@@ -1786,7 +2311,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             ]
           },
@@ -2072,6 +2597,73 @@
         "name": {
           "anyOf": [
             {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
               "allOf": [
                 {
                   "not": {
@@ -2128,8 +2720,26 @@
               "type": "string"
             },
             {
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
               "not": {
-                "$ref": "#/$defs/helm-truthy"
+                "$ref": "#/$defs/t"
               }
             },
             {

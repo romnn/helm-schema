@@ -80,7 +80,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
                 "if": {
                     "anyOf": [
                         { "type": "object" },
-                        { "$ref": "#/$defs/helm-truthy" },
+                        { "$ref": "#/$defs/t" },
                     ]
                 },
                 "then": {
@@ -101,7 +101,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
             "environment": {
                 "anyOf": [
                     { "type": "object" },
-                    { "$ref": "#/$defs/helm-truthy" },
+                    { "$ref": "#/$defs/t" },
                 ]
             }
         },
@@ -307,11 +307,10 @@ fn scalar_item_range_keeps_provider_array_metadata() {
     );
 }
 
-/// A scalar input list that is wrapped into object-valued output items should
-/// stay a scalar values array and must not inherit the provider object-item
-/// schema for the rendered resource field.
+/// An input list wrapped into object-valued output items keeps the preimage of
+/// the rendered scalar field rather than inheriting its resource object.
 #[test]
-fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
+fn scalar_range_wrapped_into_object_items_keeps_scalar_preimage() {
     let src = indoc! {r"
         apiVersion: networking.k8s.io/v1
         kind: Ingress
@@ -356,8 +355,12 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
         "hosts[].paths items should retain the provider string branch, got {host_paths}"
     );
     assert!(
-        !schema_contains_type(path_items, "object"),
-        "quoted scalar inputs must not widen to object items, got {host_paths}"
+        schema_accepts_instance(path_items, &serde_json::json!({ "segment": "value" })),
+        "a YAML-safe Go-formatted mapping still renders as a scalar, got {host_paths}"
+    );
+    assert!(
+        !schema_accepts_instance(path_items, &serde_json::json!(["/nested"])),
+        "a Go-formatted sequence renders as a flow sequence, got {host_paths}"
     );
 }
 
@@ -482,6 +485,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
         has_string_contract: false,
+        stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
@@ -505,17 +509,35 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
     // hosts them (`range` iterates arrays and maps alike), so both lanes
     // carry the rendered name's scalar typing and no untyped artifact arm
     // survives.
-    sim_assert_eq!(
-        have: pull_secrets.pointer("/anyOf/0/items/type").and_then(Value::as_str),
-        want: Some("string"),
-        "array items should inherit the rendered name scalar type, got {pull_secrets}"
-    );
-    sim_assert_eq!(
-        have: pull_secrets
-            .pointer("/anyOf/1/additionalProperties/type")
-            .and_then(Value::as_str),
-        want: Some("string"),
-        "map member values should inherit the rendered name scalar type, got {pull_secrets}"
+    let array_items = pull_secrets
+        .pointer("/anyOf/0/items")
+        .expect("array items carry the rendered scalar preimage");
+    let map_values = pull_secrets
+        .pointer("/anyOf/1/additionalProperties")
+        .expect("map values carry the rendered scalar preimage");
+    sim_assert_eq!(have: array_items, want: map_values);
+    for value in [
+        serde_json::json!("secret"),
+        serde_json::json!("secret # comment"),
+    ] {
+        assert!(
+            schema_accepts_instance(array_items, &value),
+            "both safe scalar spellings satisfy the rendered name preimage: {array_items}"
+        );
+    }
+    for value in [
+        serde_json::json!(7),
+        serde_json::json!(true),
+        serde_json::json!([]),
+    ] {
+        assert!(
+            !schema_accepts_instance(array_items, &value),
+            "the rendered name preimage rejects non-string node kinds: {array_items}"
+        );
+    }
+    assert!(
+        schema_accepts_instance(array_items, &serde_json::json!({})),
+        "an empty mapping is Go-formatted into a YAML string: {array_items}"
     );
     let arms = pull_secrets
         .get("anyOf")

@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use serde_json::{Map, Value};
 
 use crate::schema_model::{empty_schema, is_annotation_keyword, is_empty_schema, schema_type};
@@ -9,6 +11,81 @@ pub(crate) fn merge_schema_list(schemas: Vec<Value>) -> Value {
         return empty_schema();
     };
     it.fold(first, merge_two_schemas)
+}
+
+/// Intersects constraints from sinks that all observe the same value.
+///
+/// This is deliberately separate from [`merge_schema_list`]: evidence merge
+/// preserves alternatives, while simultaneous sinks must not admit a value
+/// rejected by any one sink.
+pub(crate) fn intersect_schema_list(schemas: Vec<Value>) -> Value {
+    let schemas = dedup_validation_equivalent_schemas(
+        schemas
+            .into_iter()
+            .filter(|schema| !is_empty_schema(schema))
+            .collect(),
+    );
+    let mut schemas = drop_redundant_type_schemas(&schemas);
+    match schemas.len() {
+        0 => empty_schema(),
+        1 => schemas.pop().unwrap_or_else(empty_schema),
+        _ => {
+            schemas.sort_by_key(helm_schema_json_schema_walk::canonical_json_string);
+            serde_json::json!({ "allOf": schemas })
+        }
+    }
+}
+
+fn dedup_validation_equivalent_schemas(mut schemas: Vec<Value>) -> Vec<Value> {
+    if schemas.len() < 2 {
+        return schemas;
+    }
+
+    schemas.sort_by_key(helm_schema_json_schema_walk::canonical_json_string);
+    let mut fingerprints = BTreeSet::new();
+    schemas.retain(|schema| {
+        let mut validation_schema = schema.clone();
+        strip_validation_annotations(&mut validation_schema);
+        fingerprints.insert(helm_schema_json_schema_walk::canonical_json_string(
+            &validation_schema,
+        ))
+    });
+    schemas
+}
+
+fn drop_redundant_type_schemas(schemas: &[Value]) -> Vec<Value> {
+    schemas
+        .iter()
+        .enumerate()
+        .filter(|(index, schema)| {
+            let Some(schema_type) = validation_only_type(schema) else {
+                return true;
+            };
+            !schemas.iter().enumerate().any(|(other_index, other)| {
+                *index != other_index && schema_only_allows_type(other, &schema_type)
+            })
+        })
+        .map(|(_, schema)| schema.clone())
+        .collect()
+}
+
+fn validation_only_type(schema: &Value) -> Option<String> {
+    let mut validation_schema = schema.clone();
+    strip_validation_annotations(&mut validation_schema);
+    let object = validation_schema.as_object()?;
+    (object.len() == 1)
+        .then(|| object.get("type").and_then(Value::as_str))
+        .flatten()
+        .map(str::to_string)
+}
+
+fn strip_validation_annotations(schema: &mut Value) {
+    if let Some(object) = schema.as_object_mut() {
+        object.retain(|key, _| !is_annotation_keyword(key));
+    }
+    helm_schema_json_schema_walk::visit_subschemas_mut(schema, &mut |subschema| {
+        strip_validation_annotations(subschema);
+    });
 }
 
 pub(crate) fn union_schema_list(mut schemas: Vec<Value>) -> Value {

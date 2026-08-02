@@ -886,7 +886,7 @@ pub(crate) fn value_references_helm_truthy(value: &Value) -> bool {
 /// Helm truthiness as one shared definition: every truthy/with condition
 /// references it, which keeps the emitted `if` blocks small on charts with
 /// many guarded renders.
-pub(crate) const HELM_TRUTHY_DEFINITION_NAME: &str = "helm-truthy";
+pub(crate) const HELM_TRUTHY_DEFINITION_NAME: &str = "t";
 
 pub(crate) fn helm_truthy_condition_schema() -> SchemaNode {
     SchemaNode::foreign(serde_json::json!({
@@ -971,6 +971,17 @@ fn build_required_condition_fragment(
             .require(head.clone())
             .property(head.clone(), child),
     )
+}
+
+/// The raw input path is missing or null before any chart-authored values
+/// reconstruction supplies a fallback.
+pub(crate) fn input_path_absent_condition(value_path: &str) -> Option<SchemaNode> {
+    let segments = split_value_path(value_path);
+    let present_non_null = build_required_condition_fragment(
+        &segments,
+        SchemaNode::not(SchemaNode::enum_values(vec![Value::Null])),
+    )?;
+    Some(SchemaNode::not(present_non_null))
 }
 
 pub(crate) fn evaluate_guard_set_on_values(

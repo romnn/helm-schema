@@ -1,18 +1,25 @@
-//! Provider-required output fields require their source leaves.
+//! Null-intolerant provider output slots require their source leaves.
 //!
-//! When a conditional branch renders a direct scalar `.Values` hole into a
-//! resource field the provider marks `required`, Helm still renders on a
-//! missing or null source — emitting an explicit null the provider then
-//! rejects (a Service `port`, for example). Wherever the branch's guards
-//! hold, the source leaf must therefore be present and non-null.
+//! When a direct scalar `.Values` hole renders into a typed resource field,
+//! Helm still renders on a missing or null source — emitting an explicit null
+//! the provider then rejects (a Service `port` or PVC storage request, for
+//! example). The source leaf must therefore be present and non-null wherever
+//! the render is live, including an unconditional render. The output field
+//! need not itself be required: an optional typed field is still invalid when
+//! the rendered manifest explicitly supplies null.
 //!
-//! The projection is deliberately bounded to branch overlays with exact
-//! decoded guards and to direct scalar holes: serialized, fragment,
-//! partial-scalar, defaulted, ranged, and self-guarded uses all render
-//! something else (or nothing) on a missing source, so they abstain. The
-//! requirements ride the same root-anchored arm machinery as `fail`
-//! implications, which also relaxes the presence half for leaves the
-//! chart's own defaults supply.
+//! The projection is deliberately bounded to unconditional uses backed by a
+//! non-null chart default, or branch overlays with exact decoded guards that
+//! are dormant on a missing default. This keeps intentionally unset chart
+//! inputs valid while still rejecting a null override that deletes a
+//! provider-valid default. Dependency-owned defaults abstain because Helm
+//! refills them at the subchart coalescing stage. Ordered merge layers also
+//! abstain: absence in one layer selects a lower layer rather than rendering
+//! null, so presence is a property of the combined result, not any individual
+//! source path. Path-wide serialization or fragment facts from a separate use
+//! cannot erase an independent direct provider hole; all-use nullability still
+//! makes defaulted and self-guarded paths abstain. The requirements ride the
+//! same root-anchored arm machinery as `fail` implications.
 
 use std::collections::{BTreeMap, HashMap};
 
@@ -21,24 +28,80 @@ use helm_schema_core::{
     FailValueRequirement, ProviderSchemaUse, ResourceSchemaOracle, ValueKind,
 };
 use serde_json::Value;
+use serde_yaml::Value as YamlValue;
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "the direct and conditional projections share one provider-nullability cache and source-default invariant"
+)]
 pub(crate) fn synthesized_required_source_implications(
     contract_schema_signals: &ContractSchemaSignals,
+    values_yaml_doc: &YamlValue,
+    subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> BTreeMap<String, Vec<ContractFailImplication>> {
     let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
-    let mut required_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
+    let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let segments = crate::split_value_path(value_path);
         let Some((leaf_segment, parent_segments)) = segments.split_last() else {
             continue;
         };
-        if parent_segments.is_empty() || segments.iter().any(|segment| segment == "*") {
+        if segments.iter().any(|segment| segment == "*") {
             continue;
+        }
+        let base_facts = evidence.facts;
+        if base_facts.has_unconditional_render_use
+            && !source_has_dependency_default(subchart_defaults_doc, value_path)
+            && source_has_non_null_default(values_yaml_doc, value_path)
+            && !base_facts.is_nullable
+            && evidence.provider_schema_uses.iter().any(|use_| {
+                use_.kind == ValueKind::Scalar
+                    && !use_.is_self_range_collection
+                    && !use_.source_null_tolerant
+                    && use_.merge_layers.is_none()
+                    && !use_.range_key
+                    && use_.outer_guards.is_empty()
+                    && *null_rejected_by_use
+                        .entry(use_.clone())
+                        .or_insert_with(|| provider_use_rejects_null(provider, use_))
+            })
+        {
+            push_implication(
+                &mut implications,
+                helm_schema_core::join_value_path(parent_segments.iter().cloned()),
+                ContractFailImplication {
+                    outer_guards: Vec::new(),
+                    target: ContractRequirementTarget::Value,
+                    requirements: vec![FailValueRequirement::HasMemberEvenDefaulted(
+                        leaf_segment.clone(),
+                    )],
+                },
+            );
+            push_implication(
+                &mut implications,
+                value_path.clone(),
+                ContractFailImplication {
+                    outer_guards: Vec::new(),
+                    target: ContractRequirementTarget::Value,
+                    requirements: vec![FailValueRequirement::NotSchemaType("null".to_string())],
+                },
+            );
         }
         for overlay in &evidence.conditional_overlays {
             if overlay.guards.is_empty() {
+                continue;
+            }
+            if source_has_dependency_default(subchart_defaults_doc, value_path) {
+                continue;
+            }
+            if !source_has_non_null_default(values_yaml_doc, value_path)
+                && crate::condition_encoding::evaluate_guard_set_on_values(
+                    &overlay.guards,
+                    values_yaml_doc,
+                ) != Some(false)
+            {
                 continue;
             }
             // A guard on the leaf itself keys the branch on the value's own
@@ -55,26 +118,19 @@ pub(crate) fn synthesized_required_source_implications(
             // the branch's nullability fact is the marker that absence
             // renders something else (or nothing) instead of a null.
             let facts = overlay.evidence.facts;
-            if facts.used_as_serialized
-                || facts.used_as_yaml_serialized
-                || facts.used_as_fragment
-                || facts.used_as_pathless_fragment
-                || facts.is_partial_scalar_value_path
-                || facts.is_nullable
-                || facts.has_self_guarded_render_use
-                || facts.is_ranged_source
-            {
+            if facts.is_nullable {
                 continue;
             }
             let renders_into_required_field =
                 overlay.evidence.provider_schema_uses.iter().any(|use_| {
                     use_.kind == ValueKind::Scalar
                         && !use_.is_self_range_collection
-                        && *required_by_use.entry(use_.clone()).or_insert_with(|| {
-                            provider
-                                .schema_fragment_for_use(use_)
-                                .is_some_and(|fragment| fragment.required_in_parent())
-                        })
+                        && !use_.source_null_tolerant
+                        && use_.merge_layers.is_none()
+                        && !use_.range_key
+                        && *null_rejected_by_use
+                            .entry(use_.clone())
+                            .or_insert_with(|| provider_use_rejects_null(provider, use_))
                 });
             if !renders_into_required_field {
                 continue;
@@ -85,7 +141,9 @@ pub(crate) fn synthesized_required_source_implications(
                 ContractFailImplication {
                     outer_guards: overlay.guards.clone(),
                     target: ContractRequirementTarget::Value,
-                    requirements: vec![FailValueRequirement::HasMember(leaf_segment.clone())],
+                    requirements: vec![FailValueRequirement::HasMemberEvenDefaulted(
+                        leaf_segment.clone(),
+                    )],
                 },
             );
             push_implication(
@@ -105,7 +163,7 @@ pub(crate) fn synthesized_required_source_implications(
 
 /// The ranged-member half of the required-source projection: a wildcard
 /// member LEAF (`extraPorts.*.containerPort`, `…httpHeaders.*.name`)
-/// rendered into a provider-required field emits an explicit null for
+/// rendered into a null-intolerant provider slot emits an explicit null for
 /// every member missing the leaf, which the provider rejects. Guards
 /// split by scope: collection-level guards ride the arm as outer guards,
 /// while a member-scoped truthiness guard becomes the ESCAPE alternative
@@ -119,10 +177,11 @@ pub(crate) fn synthesized_required_source_implications(
 )]
 pub(crate) fn synthesized_ranged_member_required_implications(
     contract_schema_signals: &ContractSchemaSignals,
+    subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> BTreeMap<String, Vec<ContractFailImplication>> {
     let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
-    let mut required_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
+    let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let segments = crate::split_value_path(value_path);
@@ -162,13 +221,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
             // missing source; only the direct scalar hole forces the null.
             // Self-`default` fallbacks surface as nullability, exactly as
             // in the direct lane above.
-            if facts.used_as_yaml_serialized
-                || facts.used_as_fragment
-                || facts.used_as_pathless_fragment
-                || facts.is_partial_scalar_value_path
-                || facts.is_nullable
-                || facts.has_self_guarded_render_use
-            {
+            if facts.is_nullable {
                 continue;
             }
             let renders_into_required_field = uses.iter().any(|use_| {
@@ -178,19 +231,19 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                 // value (traefik's local-plugin `mountPath`). Every other
                 // serialized form stays tolerant.
                 let null_forcing = match use_.kind {
-                    ValueKind::Scalar => !facts.used_as_serialized,
+                    ValueKind::Scalar => true,
                     ValueKind::Serialized => use_.nil_omitting,
                     _ => false,
                 };
                 null_forcing
                     && !use_.is_self_range_collection
+                    && !use_.source_null_tolerant
+                    && use_.merge_layers.is_none()
                     && !use_.range_key
                     && use_.split_segment.is_none()
-                    && *required_by_use.entry(use_.clone()).or_insert_with(|| {
-                        provider
-                            .schema_fragment_for_use(use_)
-                            .is_some_and(|fragment| fragment.required_in_parent())
-                    })
+                    && *null_rejected_by_use
+                        .entry(use_.clone())
+                        .or_insert_with(|| provider_use_rejects_null(provider, use_))
             });
             if !renders_into_required_field {
                 continue;
@@ -209,14 +262,11 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                         .filter(|field| !field.contains('*'))
                         .map(helm_schema_core::split_value_path)
                 };
-                // Only NEGATIVE member guards qualify: an else-arm renders
-                // the leaf alone, so its guard's positive side is the
-                // exact escape. A POSITIVE member-field guard selects an
-                // arm reading from the guarded subtree, where the leaf
-                // routinely rides a `default` fallback chain whose primary
-                // source this projection cannot see — requiring the leaf
-                // there would reject members the chart renders (promtail's
-                // `service.port` members need no `containerPort`).
+                // A member guard becomes the exact dormant alternative:
+                // an else-arm escapes when its field is truthy, while a
+                // positive arm escapes when its member or tested field is
+                // falsy. Defaulted leaves were already excluded by the
+                // nullability facts above.
                 match guard {
                     helm_schema_core::ConditionalGuard::Not(inner) => match inner.as_ref() {
                         helm_schema_core::ConditionalGuard::Truthy { path } => {
@@ -231,6 +281,21 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                         }
                         _ => undecodable = true,
                     },
+                    helm_schema_core::ConditionalGuard::Truthy { path }
+                        if path == &member_scope =>
+                    {
+                        escapes.push(vec![FailValueRequirement::HelmFalsy]);
+                    }
+                    helm_schema_core::ConditionalGuard::Truthy { path } => {
+                        match member_field(path) {
+                            Some(field) => {
+                                escapes.push(vec![FailValueRequirement::FieldHelmFalsy {
+                                    path: field,
+                                }]);
+                            }
+                            None => undecodable = true,
+                        }
+                    }
                     _ => undecodable = true,
                 }
             }
@@ -253,9 +318,20 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     outer_guards,
                     // An integer iterable has no members to constrain;
                     // leaving that lane open is the safe direction.
-                    target: ContractRequirementTarget::Members {
-                        allow_integer: true,
-                    },
+                    target: dependency_defaulted_member_keys(
+                        subchart_defaults_doc,
+                        collection_segments,
+                        field_segments,
+                    )
+                    .map_or(
+                        ContractRequirementTarget::Members {
+                            allow_integer: true,
+                        },
+                        |keys| ContractRequirementTarget::MembersExceptKeys {
+                            keys,
+                            allow_integer: true,
+                        },
+                    ),
                     requirements,
                 },
             );
@@ -263,6 +339,48 @@ pub(crate) fn synthesized_ranged_member_required_implications(
     }
 
     implications
+}
+
+fn source_has_non_null_default(values_yaml_doc: &YamlValue, value_path: &str) -> bool {
+    crate::values_yaml::yaml_value_at_path(values_yaml_doc, value_path)
+        .is_some_and(|value| !value.is_null())
+}
+
+fn source_has_dependency_default(subchart_defaults_doc: &YamlValue, value_path: &str) -> bool {
+    crate::values_yaml::yaml_value_at_path(subchart_defaults_doc, value_path).is_some()
+}
+
+fn dependency_defaulted_member_keys(
+    subchart_defaults_doc: &YamlValue,
+    collection_segments: &[String],
+    field_segments: &[String],
+) -> Option<std::collections::BTreeSet<String>> {
+    let YamlValue::Mapping(members) =
+        crate::values_yaml::yaml_value_at_segments(subchart_defaults_doc, collection_segments)?
+    else {
+        return None;
+    };
+    let keys = members
+        .iter()
+        .filter_map(|(key, member)| {
+            let key = key.as_str()?;
+            crate::values_yaml::yaml_value_at_segments(member, field_segments)
+                .filter(|default| !default.is_null())
+                .map(|_| key.to_string())
+        })
+        .collect::<std::collections::BTreeSet<_>>();
+    (!keys.is_empty()).then_some(keys)
+}
+
+fn provider_use_rejects_null(
+    provider: &dyn ResourceSchemaOracle,
+    provider_use: &ProviderSchemaUse,
+) -> bool {
+    let Some(fragment) = provider.schema_fragment_for_use(provider_use) else {
+        return false;
+    };
+    jsonschema::validator_for(fragment.schema())
+        .is_ok_and(|validator| !validator.is_valid(&Value::Null))
 }
 
 /// Fail implications for provider slots observed through a SPLIT SEGMENT
