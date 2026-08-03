@@ -1,6 +1,8 @@
 //! JSON Schema lowering from normalized Helm contract signals.
 
 mod base_schema;
+#[cfg(feature = "bench-support")]
+pub mod bench_support;
 mod condition_encoding;
 mod emission_plan;
 mod emission_policy;

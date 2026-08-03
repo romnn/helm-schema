@@ -1,7 +1,7 @@
 //! Plan coverage matrix for CLI flag handling: per-axis conflicts,
 //! validation rules, and strict-mode invariants.
 
-use clap::Parser;
+use clap::{CommandFactory as _, Parser};
 use color_eyre::eyre;
 use helm_schema_cli::Cli;
 use helm_schema_cli::cli::{CrdVersionLookup, DiagFormat, K8sVersionFallback, SchemaProfile};
@@ -54,6 +54,15 @@ fn cli_schema_profile_defaults_to_full_and_accepts_lean() -> eyre::Result<()> {
     let cli = parse(&["--profile", "lean"]).map_err(|error| eyre::eyre!(error))?;
     sim_assert_eq!(have: cli.profile, want: Some(SchemaProfile::Lean));
     Ok(())
+}
+
+#[test]
+fn long_help_states_the_profile_retention_contract() {
+    let help = Cli::command().render_long_help().to_string();
+    assert!(help.contains("full  keeps mandatory facts"));
+    assert!(help.contains("lean  keeps every mandatory fact"));
+    assert!(help.contains("Mandatory facts cannot be disabled"));
+    assert!(help.contains("--local-conditionals <STATE>"));
 }
 
 #[test]

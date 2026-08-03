@@ -26,7 +26,8 @@ pub use profile_args::SchemaProfile;
 #[derive(Parser, Debug, Clone)]
 #[command(
     name = "helm-schema",
-    about = "Generate JSON schema for Helm values.yaml"
+    about = "Generate JSON schema for Helm values.yaml",
+    after_long_help = "EMISSION RETENTION:\n  full  keeps mandatory facts, root/local ordinary conditionals, terminal clauses,\n        and kind partitions.\n  lean  keeps every mandatory fact and every locally anchored ordinary conditional;\n        it drops root-anchored ordinary conditionals, terminal clauses, and kind\n        partitions.\n\nMandatory facts cannot be disabled. The four emission override flags only change\nW-class refinements and therefore only widen acceptance when switched off."
 )]
 pub struct Cli {
     /// Chart directory or packaged chart archive to analyze.
@@ -76,9 +77,9 @@ pub struct Cli {
 
     /// Select how much analyzed contract evidence is emitted.
     ///
-    /// `lean` omits document-level conditional validation. It only widens
-    /// acceptance and substantially reduces Helm's schema compilation cost on
-    /// large charts.
+    /// `lean` retains mandatory and locally anchored ordinary facts. It drops
+    /// root ordinary conditionals, terminals, and kind partitions, so it only
+    /// widens acceptance while reducing Helm's schema compilation cost.
     #[arg(long, value_enum)]
     pub profile: Option<SchemaProfile>,
 

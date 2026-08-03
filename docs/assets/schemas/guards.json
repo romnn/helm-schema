@@ -1,6 +1,39 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "autoscaling": {}
+              },
+              "required": [
+                "autoscaling"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "autoscaling": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
   "properties": {
     "autoscaling": {
       "additionalProperties": {},
@@ -50,45 +83,32 @@
         }
       ],
       "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "anyOf": [
-                  {
-                    "const": true
-                  },
-                  {
-                    "not": {
-                      "const": 0
-                    },
-                    "type": "number"
-                  },
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  {
-                    "minProperties": 1,
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "enabled": {},
         "minReplicas": {}
       },
       "type": "object"
     }
   },
   "type": "object",
-  "x-helm-schema-generated": true
+  "x-helm-schema-generated": true,
+  "x-helm-schema-policy": {
+    "annotation-format-version": 1,
+    "modifiers": {
+      "overrides": {
+        "count": 0,
+        "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "reference-mode": "fully-inlined"
+    },
+    "narrowing": [],
+    "policy-fingerprint": "4e6202505d786965bede4b949c4a0b5f7f80a1e2cf66fd3321a17aaf7276b29b",
+    "policy-vocabulary-version": 1,
+    "requested-profile": "full",
+    "resolved": {
+      "kind-partitions": true,
+      "local-conditionals": true,
+      "root-anchored-conditionals": true,
+      "terminal-clauses": true
+    }
+  }
 }

@@ -82,9 +82,56 @@ helm-schema ./path/to/chart \
   --compact
 ```
 
-Lean keeps base path, type, and provider constraints, but omits
-document-level conditional refinements. It can therefore accept some values
-that full validation rejects. Full validation remains the default.
+Lean retains every unconditional mandatory fact and every locally anchored
+ordinary conditional. It drops root-anchored ordinary conditionals, terminal
+clauses, and all kind partitions. It can therefore accept some values that full
+validation rejects. Full validation remains the default.
+
+### Emission profiles and chart configuration
+
+Profiles are presets over four widening-only emission controls:
+
+| profile | root conditionals | local conditionals | terminals | kind partitions |
+|---|---:|---:|---:|---:|
+| `full` | on | on | on | on |
+| `lean` | off | on | off | off |
+
+Mandatory facts—unconditional base/provider constraints, presence and not-null
+requirements, default preservation, host preparation, and scalar spelling
+semantics—are always retained. Switching an emission control off can only widen
+acceptance; it cannot make the schema reject a value accepted by `full`.
+
+A root chart can pin its policy in `helm-schema.yaml`:
+
+```yaml
+version: 1
+profile: lean
+emission:
+  local-conditionals: off
+```
+
+Only the root chart's file is discovered; dependency config files are ignored.
+Discovery works the same for chart directories and packaged `.tgz`/`.tar.gz`
+charts. Unknown fields, malformed YAML, unsupported versions, and contradictory
+knob combinations fail instead of being ignored.
+
+Policy values resolve in this order, from highest to lowest precedence:
+
+| priority | source |
+|---:|---|
+| 1 | CLI emission overrides (`--root-anchored-conditionals`, `--local-conditionals`, `--terminal-clauses`, `--kind-partitions`) |
+| 2 | `helm-schema.yaml` `emission` values |
+| 3 | the selected profile preset |
+| 4 | the built-in `full` default |
+
+An explicit CLI `--profile` deliberately resets file-level emission overrides;
+CLI emission overrides still apply on top. Use `--config PATH` to select a file
+relative to the invocation directory, `--no-config` to disable configuration,
+or `--print-effective-config` to inspect every resolved value and its source
+without analyzing the chart.
+
+See the [configuration reference](https://romnn.github.io/helm-schema/docs/reference/configuration/)
+for the complete version-1 contract.
 
 ### Helpful workflows
 

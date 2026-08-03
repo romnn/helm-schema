@@ -12279,3 +12279,28 @@ policies for prepared overrides and the annotation. Directory and packaged
 generation agree, and one clean final-build dump produced all 84 full,
 generator, lean, and final-output artifacts byte-identically. This round has
 no schema acceptance flip and requires no Helm flip adjudication.
+
+## Emission-profile benchmark and documentation (2026-08-03, sixty-seventh round)
+
+The dedicated workspace benchmark builds one immutable Temporal emission plan
+per sample and projects full, standard lean, and the chart-local fast policy
+from it. The report records fact and carrier accounting, exact final serialized
+metrics, construction/projection/completion timings, retained plan and provider
+candidate bytes, sequential Rust-validator cost, real Helm cold and repeated
+warm lint samples, anchor checksums, and machine/tool metadata. Its persistent
+output and all benchmark scratch live outside `/tmp`.
+
+On the pinned Temporal 0.62.0 wrapper, full is 3,981,595 bytes with a 101.98 s
+warm Helm median; standard lean is 1,600,557 bytes with a 10.99 s median; the
+chart-local fast policy is 47,196 bytes with a 0.10 s median. Lean retains all
+10 Mandatory and 6,849 OrdinaryLocal facts while dropping 4,641 OrdinaryRoot
+and 693 TerminalGuarded facts. These numbers remain below the decision stops,
+so the middle lean contract stands.
+
+The measurement-only scalar-plain experiment removes 34 spelling unions but
+saves only 2,389 bytes and 22 objects, and its 105.45 s warm Helm median is no
+better than full. `scalar-spellings` therefore remains unexposed, and
+`assume-typed-scalars` remains absent. README, CLI help, and the configuration
+reference now state the exact retention and precedence contracts. One clean
+final-build dump produced all 84 artifacts byte-identically to the sixty-sixth
+round, so no acceptance flip or Helm fixture adjudication is required.

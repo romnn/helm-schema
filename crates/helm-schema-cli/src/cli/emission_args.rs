@@ -19,19 +19,19 @@ impl From<PolicyToggle> for bool {
 /// Optional W-class emission overrides applied after profile and config policy.
 #[derive(Args, Debug, Clone, Copy, Default)]
 pub struct EmissionArgs {
-    /// Override root-anchored conditional emission.
+    /// Override root-anchored ordinary conditional emission (W-class).
     #[arg(long, value_enum, value_name = "STATE")]
     pub root_anchored_conditionals: Option<PolicyToggle>,
 
-    /// Override locally anchored conditional emission.
+    /// Override locally anchored ordinary conditional emission (W-class).
     #[arg(long, value_enum, value_name = "STATE")]
     pub local_conditionals: Option<PolicyToggle>,
 
-    /// Override unconditional and guarded terminal-clause emission.
+    /// Override unconditional and guarded terminal-clause emission (W-class).
     #[arg(long, value_enum, value_name = "STATE")]
     pub terminal_clauses: Option<PolicyToggle>,
 
-    /// Override kind-partition refinement emission.
+    /// Override kind partitions; at least one matching anchor lane must be on.
     #[arg(long, value_enum, value_name = "STATE")]
     pub kind_partitions: Option<PolicyToggle>,
 }

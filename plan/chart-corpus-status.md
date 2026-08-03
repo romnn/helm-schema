@@ -116,6 +116,17 @@ part and a separately listed residual. Detailed round history remains in
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
 
+- **Emission-profile benchmark and documentation (sixty-seventh round).** A
+  dedicated persistent-output command measures the pinned Temporal wrapper
+  from one shared immutable plan, including report-derived facts/carriers,
+  exact final bytes and condition structure, plan/projection timing, retained
+  memory, sequential Rust-validator cost, real Helm cold/warm samples, and
+  environment metadata. Standard lean measures 1,600,557 bytes and a 10.99 s
+  warm Helm median; scalar-plain saves only 2,389 bytes with no compile-cost
+  benefit and remains unexposed. README, CLI help, and configuration docs pin
+  the retention and precedence contracts. All 84 clean-dump artifacts remain
+  byte-identical, so the round has no semantic fixture flip.
+
 - **Schema-emission configuration surface (sixty-sixth round).** Root chart
   directories and archives share one VFS config/analysis source; config
   discovery is root-only and print mode performs no analysis or provider

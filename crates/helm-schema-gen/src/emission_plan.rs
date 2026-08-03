@@ -348,6 +348,33 @@ impl LoweredEmissionPlan {
         drop(fill_span);
         finish_generated(schema, emission_report)
     }
+
+    #[cfg(feature = "bench-support")]
+    pub(crate) fn benchmark_retained_candidate_bytes(&self) -> usize {
+        fn record_candidate(
+            candidate: Option<&crate::provider_schema::ProviderSchemaCandidate>,
+            payloads: &mut BTreeSet<String>,
+        ) {
+            let Some(candidate) = candidate else {
+                return;
+            };
+            payloads.insert(candidate.key().to_string());
+            if let Some(definition) = candidate.source_definition_schema() {
+                payloads.insert(helm_schema_json_schema_walk::canonical_json_string(
+                    definition,
+                ));
+            }
+        }
+
+        let mut payloads = BTreeSet::new();
+        for resolved in &self.resolved_paths {
+            record_candidate(resolved.provider_schema_candidate.as_ref(), &mut payloads);
+        }
+        for conjunct in &self.conditional_schemas {
+            record_candidate(conjunct.provider_candidate.as_ref(), &mut payloads);
+        }
+        payloads.iter().map(String::len).sum()
+    }
 }
 
 fn canonicalize_mandatory_constraints(

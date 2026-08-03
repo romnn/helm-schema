@@ -27,6 +27,7 @@ bookFlatSection: false
 ## Reference
 
 - **[CLI reference]({{< relref "reference/cli.md" >}})** — every flag and argument.
+- **[Configuration]({{< relref "reference/configuration.md" >}})** — emission profiles, chart-local policy, and precedence.
 - **[Output]({{< relref "reference/output.md" >}})** — the shape of the generated schema, `$ref` handling, and minimization.
 - **[Diagnostics]({{< relref "reference/diagnostics.md" >}})** — the warnings and hints the tool emits.
 - **[Caching]({{< relref "reference/caching.md" >}})** — cache layout and the compatibility policy.

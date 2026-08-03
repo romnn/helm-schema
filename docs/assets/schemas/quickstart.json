@@ -16,6 +16,68 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -35,7 +97,7 @@
           "type": "integer"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         }
       ]
@@ -119,15 +181,41 @@
               "type": "integer"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             }
           ]
         }
       },
+      "required": [
+        "port"
+      ],
       "type": "object"
     }
   },
+  "required": [
+    "replicaCount"
+  ],
   "type": "object",
-  "x-helm-schema-generated": true
+  "x-helm-schema-generated": true,
+  "x-helm-schema-policy": {
+    "annotation-format-version": 1,
+    "modifiers": {
+      "overrides": {
+        "count": 0,
+        "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "reference-mode": "fully-inlined"
+    },
+    "narrowing": [],
+    "policy-fingerprint": "4e6202505d786965bede4b949c4a0b5f7f80a1e2cf66fd3321a17aaf7276b29b",
+    "policy-vocabulary-version": 1,
+    "requested-profile": "full",
+    "resolved": {
+      "kind-partitions": true,
+      "local-conditionals": true,
+      "root-anchored-conditionals": true,
+      "terminal-clauses": true
+    }
+  }
 }

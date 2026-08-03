@@ -846,7 +846,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Step 4 — configuration surface
 
-- Status: in-progress.
+- Status: landed.
 - Measured results:
   - The checked public matrix exposes `EmissionSelection = Preset { profile,
     delta } | Explicit(EmissionPolicy)`, retains requested-profile provenance,
@@ -915,14 +915,123 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     chart-local config.
   - `task tokei:core`: exit 0; production Rust is 60,363 LOC (`+694` from
     Step 3).
-- Commit: pending.
+- Commit: `20e31e8` (`feat(schema): add emission policy configuration`).
 
 ## Step 5 — benchmark and documentation
 
-- Status: pending.
-- Measured results: pending.
-- Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: in-progress.
+- Measured results:
+  - The pinned Temporal wrapper remains dependency version 0.62.0. The
+    vendored archive SHA-256 is
+    `c2f01baeef60ed96335948640a8ac30fb49a10b906e20c259b92f81f2cba5c04`
+    and the dependency-lock SHA-256 is
+    `e401fb6aebdc95368cce83f2785d52e0e359298bb8be649fcbec637b914e2748`.
+  - Three analysis samples build one immutable plan per sample and project
+    full, standard lean, and the chart-local Temporal-fast policy from that
+    plan. Warm plan construction is 3,564.75 ms median
+    (3,545.89–3,583.62); retained-plan RSS delta is 221,659,136 bytes,
+    unique retained provider-candidate payloads occupy 295,740 canonical
+    bytes, and process peak RSS is 1,403,068 KiB.
+  - The plan lowers 12,193 facts: 10 Mandatory, 4,641 OrdinaryRoot, 6,849
+    OrdinaryLocal, and 693 TerminalGuarded. Full retains all facts and has
+    418 root / 1,183 local carriers / 1,601 condition nodes. Standard lean
+    retains Mandatory plus all OrdinaryLocal facts, has 0 root / 450 local
+    carriers / 450 condition nodes, and drops exactly 4,641 OrdinaryRoot plus
+    693 TerminalGuarded facts. Temporal-fast retains only the 10 Mandatory
+    facts and has no conditional carriers.
+  - Exact compact final outputs are: full 3,981,595 bytes / 142,287 objects /
+    1,538 conditions; lean 1,600,557 bytes / 55,618 objects / 424 conditions;
+    Temporal-fast 47,196 bytes / 2,322 objects / 0 conditions. Full and lean
+    have 1,504/403 unique conditions and 828/410 unique `then` payloads.
+  - Helm 4.2.3 strict-lint cold/warm-median times are baseline 0.06/0.05 s,
+    full 102.26/101.98 s, standard lean 10.69/10.99 s, and Temporal-fast
+    0.10/0.10 s. Each warm median covers three fresh Helm processes; lean's
+    range is 10.86–11.36 s. The exact-preset lint and size thresholds do not
+    trigger, and no monotonicity failure exists, so the middle lean contract
+    remains final.
+  - Sequential compiled Rust validators take 341.65 ms for full, 126.53 ms
+    for lean, and 3.49 ms for Temporal-fast. Keeping full while compiling,
+    using, and dropping each comparison raises process high-water RSS from
+    255,836 to 641,384 KiB.
+  - The measurement-only scalar-plain transform removes 34 scalar spelling
+    unions. It saves only 2,389 bytes and 22 objects from full (3,979,206
+    bytes / 142,265 objects, approximately 0.06% by bytes). Its Rust validator
+    compiles in 291.99 ms, while Helm cold/warm-median lint is 98.60/105.45 s
+    with a 103.75–115.27 s warm range. It has no material size or compile-cost
+    benefit, so `scalar-spellings` remains unexposed; `assume-typed-scalars`
+    remains absent.
+  - The dedicated `task bench:emission-profiles` command and persistent-output
+    script record report-derived facts/carriers/final metrics, shared-plan
+    timing, sequential validator timing, baseline and per-policy Helm samples,
+    RSS, machine/tool versions, and anchor checksums. Default benchmark and
+    trace outputs also moved from `/tmp` into the repository `target` tree.
+  - README, long CLI help, CLI reference, and the new configuration reference
+    state the exact full/lean retention contract, strict root-source trust
+    boundary, explicit-profile reset, and CLI > file > preset > built-in
+    precedence. The documentation build regenerated its examples with the
+    authoritative policy annotation.
+- Deviations:
+  - No frozen-plan contract was reinterpreted. The plan-authorized
+    `bench-support` fallback is used because the end-to-end Temporal session
+    and the immutable generator plan are in different crates. It is a
+    non-default feature; the runtime session entry point remains crate-private
+    and test-only, and no public CLI/config policy knob was added.
+- Adjudication evidence:
+  - Step 5 changes benchmark support and documentation, not schema selection
+    or emission. One clean final-build dump ran 61 tests and wrote 84
+    artifacts; all 84 are byte-identical to the Step 4 final dump. There is no
+    TIGHTEN or LOOSEN to adjudicate against Helm.
+  - The benchmark itself uses real `helm lint --strict` in fresh processes for
+    every baseline and schema sample, and the Rust validator confirms the
+    coalesced Temporal defaults validate under full, lean, Temporal-fast, and
+    the measurement-only scalar output.
+- Review dossier:
+  - Complete release benchmark and environment capture:
+    `HELM_SCHEMA_BENCH_DIR=/home/roman/dev/helm-schema-step5-final-benchmark-20260803-c
+    HELM_SCHEMA_BENCH_RUNS=3 HELM_SCHEMA_LINT_WARM_RUNS=3 task
+    bench:emission-profiles`; the command exits 0 and writes
+    `metrics.final.json`.
+  - Fact, carrier, final-output, timing, memory, tool, and scalar decision
+    evidence: `jq '{anchor, runs, generation, scalar_spellings_plain,
+    validators, helm_lint, environment}'
+    /home/roman/dev/helm-schema-step5-final-benchmark-20260803-c/metrics.final.json`.
+  - Feature-gated shared-plan benchmark compilation and API-boundary audit:
+    `cargo test -p helm-schema --features bench-support --lib --no-run`, then
+    `rg -n 'benchmark_emission_policies|bench_support' crates/helm-schema-gen
+    crates/helm-schema`; default builds omit the feature and the session method
+    is `pub(crate)` under `cfg(all(feature = "bench-support", test))`.
+  - Exact CLI help contract: `cargo test -p helm-schema-cli --test cli_flags
+    long_help_states_the_profile_retention_contract -- --exact`, then
+    `cargo run --quiet -p helm-schema-cli -- --help`.
+  - Configuration/reference site and regenerated examples: `task docs:build`.
+  - Single clean final-build dump:
+    `mkdir -p /home/roman/dev/helm-schema-step5-final-dump-20260803-c`, then
+    `TMPDIR=/home/roman/dev/helm-schema-step5-final-dump-20260803-c
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 tests pass and 84 files are written.
+  - No semantic drift: `diff -rq
+    /home/roman/dev/helm-schema-step4-final-dump-20260803-b
+    /home/roman/dev/helm-schema-step5-final-dump-20260803-c`; exit 0.
+- Gates on the final Step 5 implementation tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all 3 structural lint tests
+    passed.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and 3
+    targets passed, including `bench-support` off/on for `helm-schema-gen` and
+    `helm-schema`.
+  - `cargo nextest run --workspace`: exit 0; 1,176 passed.
+  - `task test:integration`: exit 0; 554 passed, 6 skipped.
+  - `task test:all`: exit 0; 1,734 passed, 6 skipped, including the live
+    network lane.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked, including Temporal under its
+    chart-local fast config.
+  - `task tokei:core`: exit 0; production Rust is 60,495 LOC (`+132` from
+    Step 4).
+  - Supplemental documentation gate `task docs:build`: exit 0; 32 pages built
+    after regenerating all four documentation schema examples.
 - Commit: pending.

@@ -411,6 +411,28 @@ impl AnalysisSession {
             .resolved_emission_policy
             .get_or_try_init(|| Ok(self.opts.emission.resolve()?))?)
     }
+
+    #[cfg(all(feature = "bench-support", test))]
+    pub(crate) fn benchmark_emission_policies(
+        &self,
+        policies: &[helm_schema_gen::bench_support::BenchmarkPolicy],
+        runs: std::num::NonZeroUsize,
+    ) -> EngineResult<helm_schema_gen::bench_support::MultiPolicyBenchmark> {
+        let prepared = self.prepared()?;
+        let finalized_contract = self.finalized_contract()?;
+        let mut provider_options = self.opts.provider.clone();
+        provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
+        let provider = provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
+        let input = ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
+            .with_values_yaml(prepared.values_yaml.as_deref())
+            .with_dependency_values_yaml(prepared.dependency_values_yaml.as_deref())
+            .with_dependency_refill_values_yaml(prepared.dependency_refill_values_yaml.as_deref())
+            .with_shadowed_input_paths(&prepared.shadowed_input_paths)
+            .with_values_descriptions(&prepared.values_descriptions);
+        Ok(helm_schema_gen::bench_support::benchmark_policies(
+            &input, policies, runs,
+        ))
+    }
 }
 
 pub(crate) fn emit_input_channel_diagnostics(

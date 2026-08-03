@@ -207,7 +207,7 @@ tasks:
     vars:
       HELM_SCHEMA_BIN: "{{.ROOT_DIR}}/target/release/helm-schema"
       CHART: '{{.CHART | default "./testdata/charts/cert-manager"}}'
-      OUTPUT: '{{.OUTPUT | default "/tmp/helm-schema-bench.schema.json"}}'
+      OUTPUT: '{{.OUTPUT | default "./target/bench/helm-schema-bench.schema.json"}}'
     cmds:
       - cargo build -p helm-schema-cli --release
       - >-
@@ -223,8 +223,8 @@ tasks:
     vars:
       HELM_SCHEMA_BIN: "{{.ROOT_DIR}}/target/release/helm-schema"
       CHART: '{{.CHART | default "./testdata/charts/cert-manager"}}'
-      OUTPUT: '{{.OUTPUT | default "/tmp/helm-schema-trace.schema.json"}}'
-      TRACE: '{{.TRACE | default "/tmp/helm-schema-trace.pftrace"}}'
+      OUTPUT: '{{.OUTPUT | default "./target/bench/helm-schema-trace.schema.json"}}'
+      TRACE: '{{.TRACE | default "./target/bench/helm-schema-trace.pftrace"}}'
     cmds:
       - cargo build -p helm-schema-cli --release
       - >-
@@ -244,15 +244,20 @@ tasks:
       - >-
         task bench:chart --
         CHART=./testdata/charts/cert-manager
-        OUTPUT=/tmp/helm-schema-bench-cert-manager.json
+        OUTPUT=./target/bench/helm-schema-bench-cert-manager.json
       - >-
         task bench:chart --
         CHART={{.LUUP3_DIR}}/deployment/charts/inbucket
-        OUTPUT=/tmp/helm-schema-bench-inbucket.json
+        OUTPUT=./target/bench/helm-schema-bench-inbucket.json
       - >-
         task bench:chart --
         CHART={{.LUUP3_DIR}}/deployment/charts/temporal
-        OUTPUT=/tmp/helm-schema-bench-temporal.json
+        OUTPUT=./target/bench/helm-schema-bench-temporal.json
+
+  bench:emission-profiles:
+    desc: "benchmark emission policies on the pinned Temporal wrapper"
+    cmds:
+      - ./plan/chart-corpus-scripts/benchmark-emission-profiles.sh {{.CLI_ARGS}}
 
   lint:ast-grep:
     desc: "lint with ast-grep rules"
