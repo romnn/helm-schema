@@ -293,8 +293,13 @@ impl AnalysisSession {
         policy_input_options: PolicyInputOptions,
         request: EmitRequest,
     ) -> EngineResult<Value> {
-        let prepared = prepare_emit_request(override_paths, &policy_input_options, request)?;
         let generated = self.generated_schema()?;
+        let prepared = prepare_emit_request(
+            override_paths,
+            &policy_input_options,
+            request,
+            &generated.schema,
+        )?;
         apply_schema_output_pipeline(
             generated.schema,
             prepared,

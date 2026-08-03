@@ -39,7 +39,20 @@ fn prepare(
     paths: &[PathBuf],
     reference_policy: ReferencePolicy,
 ) -> crate::error::EngineResult<PreparedEmitRequest> {
-    prepare_emit_request(paths, &policy_options(), request(reference_policy))
+    prepare_for_schema(paths, reference_policy, &serde_json::json!({}))
+}
+
+fn prepare_for_schema(
+    paths: &[PathBuf],
+    reference_policy: ReferencePolicy,
+    base_schema: &Value,
+) -> crate::error::EngineResult<PreparedEmitRequest> {
+    prepare_emit_request(
+        paths,
+        &policy_options(),
+        request(reference_policy),
+        base_schema,
+    )
 }
 
 fn output_policy() -> FinalOutputPolicy {
@@ -108,6 +121,86 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
     );
 
     fs::remove_dir_all(&temp_dir).expect("remove temp dir");
+}
+
+#[test]
+fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre::Result<()> {
+    let temp_dir = test_temp_dir("shared-bundle-namespace");
+    fs::create_dir_all(&temp_dir)?;
+    fs::write(temp_dir.join("alpha.json"), r#"{"const":"alpha"}"#)?;
+    fs::write(temp_dir.join("beta.json"), r#"{"const":7}"#)?;
+    let alpha_override = temp_dir.join("alpha-override.json");
+    fs::write(
+        &alpha_override,
+        r#"{"properties":{"alpha":{"$ref":"./alpha.json"}}}"#,
+    )?;
+    let beta_override = temp_dir.join("beta-override.json");
+    fs::write(
+        &beta_override,
+        r#"{"$defs":{"schema2":{"const":"caller"}},"properties":{"beta":{"$ref":"./beta.json"}}}"#,
+    )?;
+    let base = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": {
+            "schema1": { "type": "boolean" },
+        },
+        "properties": {
+            "base": { "$ref": "#/$defs/schema1" },
+            "alpha": { "type": "string" },
+            "beta": { "type": "string" },
+        },
+        "type": "object",
+    });
+    let paths = [alpha_override.clone(), beta_override.clone()];
+    let prepared = prepare_for_schema(&paths, ReferencePolicy::SelfContained, &base)?;
+    let ordered_digest = prepared.identity().digest;
+    let repeated = prepare_for_schema(&paths, ReferencePolicy::SelfContained, &base)?;
+    sim_assert_eq!(have: repeated.identity().digest, want: ordered_digest.clone());
+    let reversed = prepare_for_schema(
+        &[beta_override, alpha_override],
+        ReferencePolicy::SelfContained,
+        &base,
+    )?;
+    sim_assert_eq!(have: reversed.identity().digest == ordered_digest, want: false);
+
+    let output = apply_schema_output_pipeline(base, prepared, &temp_dir, output_policy())?;
+
+    sim_assert_eq!(
+        have: output.pointer("/properties/alpha/$ref"),
+        want: Some(&serde_json::json!("#/$defs/schema3"))
+    );
+    sim_assert_eq!(
+        have: output.pointer("/properties/beta/$ref"),
+        want: Some(&serde_json::json!("#/$defs/schema4"))
+    );
+    sim_assert_eq!(
+        have: output.pointer("/$defs/schema3"),
+        want: Some(&serde_json::json!({ "const": "alpha" }))
+    );
+    sim_assert_eq!(
+        have: output.pointer("/$defs/schema4"),
+        want: Some(&serde_json::json!({ "const": 7 }))
+    );
+    let validator = jsonschema::validator_for(&output)?;
+    sim_assert_eq!(
+        have: validator.is_valid(&serde_json::json!({
+            "base": true,
+            "alpha": "alpha",
+            "beta": 7,
+        })),
+        want: true
+    );
+    sim_assert_eq!(
+        have: validator.is_valid(&serde_json::json!({
+            "base": true,
+            "alpha": "alpha",
+            "beta": "alpha",
+        })),
+        want: false
+    );
+
+    fs::remove_dir_all(&temp_dir)?;
+    Ok(())
 }
 
 #[test]

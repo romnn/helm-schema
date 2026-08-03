@@ -642,6 +642,20 @@ fn round68_fixture_flips_match_the_helm_adjudicated_list() -> eyre::Result<()> {
     Ok(())
 }
 
+#[test]
+#[ignore = "maintenance: compares the Round 69 dump with its baseline ref"]
+fn round69_override_bundling_is_corpus_acceptance_equivalent() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    eyre::ensure!(
+        flips.is_empty(),
+        "round 69 changed fixture acceptance:\n{}",
+        flips.join("\n")
+    );
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
 fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>)> {
     let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
         .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;

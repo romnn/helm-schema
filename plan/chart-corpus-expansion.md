@@ -12339,3 +12339,27 @@ new composed-default selection predicate and Zalando Postgres Operator removes
 the condition derived from a meta-selected `kindIs` subject; the remaining 16
 IR fixtures are byte-identical. Neither IR delta adds a schema acceptance flip
 beyond the schema dump and compiled-prober result above.
+
+## Shared override-bundling namespace (2026-08-03, sixty-ninth round)
+
+Self-contained override preparation now allocates bundled external-reference
+definitions from one namespace reserved across the generated base and every
+override's authored `$defs`. Each override continues to carry its own fetched
+definitions, so later replacement cannot leave another override's refs
+dangling, but generated `schemaN` names cannot silently collide during the
+application-ordered deep merge. The prepared-override identity remains an
+ordered array: identical order is deterministic and reversed order changes the
+digest.
+
+A private pipeline regression reserves `schema1` in the base and `schema2` in
+a later override, then proves two external targets become distinct `schema3`
+and `schema4` definitions. A command-line equality regression exercises the
+reported two-`--override-schema` collision end to end and pins each ref to its
+own external content.
+
+One clean final-build dump writes all 84 artifacts byte-identically to the
+sixty-eighth round. The compiled Rust prober compares that dump with commit
+`8ab98fc` over 112,356 default-composed/null-deletion documents and reports
+zero acceptance flips. There is consequently no fixture-direction verdict to
+adjudicate with Helm; the hermetic monotonicity/semantic controls and live
+Helm/provider replay remain green.

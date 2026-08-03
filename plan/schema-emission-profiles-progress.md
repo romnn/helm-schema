@@ -1164,4 +1164,87 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 downstream charts passed.
   - `task tokei:core`: exit 0; 60,586 production Rust LOC.
+- Commit: `8ab98fc` (`fix(schema): close round-68 emission findings`).
+
+## Round 69 — shared override-bundling namespace
+
+- Status: landed; commit pending.
+- Measured results:
+  - Self-contained override preparation reserves generated definition names
+    across the generated base and every override's authored `$defs` before it
+    bundles any external reference. Each override still carries the
+    definitions it references, while generated names are unique across the
+    complete application-ordered merge.
+  - A private output-pipeline regression reserves base `schema1` and a later
+    override's authored `schema2`; the two external targets become `schema3`
+    and `schema4`, resolve to their distinct contents, and validate the
+    intended combined instance. Repeating the same order produces the same
+    override digest; reversing the order produces a different digest.
+  - A command-line end-to-end equality regression passes two
+    `--override-schema` documents whose external refs would previously both
+    become `schema1`. The final output instead contains distinct `schema1`
+    and `schema2` definitions with the correct ref targets and a pinned
+    application-ordered policy digest.
+  - One clean final-build dump ran 61 tests and wrote exactly 84 artifacts.
+    Every artifact is byte-identical to the Round 68 dump.
+  - The compiled Rust prober checked 112,356 coalesced documents at top-level
+    deletion, second-level deletion, and empty member/item granularities. It
+    found zero acceptance flips across all 60 full and lean schemas.
+  - Production Rust is 60,637 LOC (`+51` from Round 68).
+- Deviations:
+  - This closes a verified pre-existing output-pipeline defect rather than an
+    emission-profile regression. The frozen plan was not edited.
+  - The session constructs its memoized generated schema before loading
+    overrides so preparation can reserve the base definition namespace.
+    Override file and external-ref IO remains in the preparation phase; the
+    pure output transform still consumes prepared documents only.
+- Adjudication evidence:
+  - No committed fixture changes direction: the complete 84-artifact dump is
+    byte-identical and the independent acceptance prober reports zero flips.
+    Therefore there is no fixture TIGHTEN or LOOSEN to adjudicate with Helm.
+  - The collision itself is adjudicated at the final CLI boundary by exact
+    output equality: both refs resolve to their own external document, and
+    neither definition is silently deep-merged with the other.
+- Review dossier:
+  - Shared base/override namespace and ordered digest: `cargo nextest run -p
+    helm-schema -E
+    'test(bundled_overrides_allocate_names_across_the_base_and_every_override)'`.
+  - Command-line two-override reproducer: `cargo nextest run -P integration
+    -p helm-schema-cli --test override_bundling -E
+    'test(multiple_override_external_refs_use_distinct_bundled_definitions)'`.
+  - Single clean dump: `TMPDIR=/home/roman/dev/helm-schema/target/round69-final-dump
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 tests pass and 84 artifacts are written.
+  - Compiled three-granularity zero-flip proof:
+    `TMPDIR=/home/roman/dev/helm-schema/target/round69-tmp
+    SCHEMA_ACCEPTANCE_BASELINE_REF=8ab98fc
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round69-final-dump
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(round69_override_bundling_is_corpus_acceptance_equivalent)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=112356 flips=0`.
+  - Hermetic monotonicity and semantic controls: `cargo nextest run -P
+    integration -p helm-schema --test schema_emission_profiles -E
+    'test(/(current_profiles_obey_monotonicity_and_semantic_controls|local_kind_partition_is_a_local_policy_fact|temporal_wrapper_pairwise_matrix_is_monotone)/)'`.
+  - Live Helm/provider replay: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profile_live -E
+    'test(replay_semantic_controls_against_helm_and_provider)'
+    --run-ignored ignored-only --no-capture`.
+- Gates on the final Round 69 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 feature combinations for 13 packages across
+    three targets, with both Zig caches under `target`.
+  - `cargo nextest run --workspace`: exit 0; 1,188 passed, zero skipped.
+  - `task test:integration`: exit 0; 558 passed, 11 skipped by the profile.
+  - `task test:all`: exit 0; 1,750 passed, 11 skipped by the profile,
+    including the live network tests.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 downstream charts passed.
+  - `task tokei:core`: exit 0; 60,637 production Rust LOC.
 - Commit: pending.

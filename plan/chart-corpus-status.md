@@ -1,6 +1,9 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-08-03 after the sixty-eighth round closed the independent
+Last reconciled 2026-08-03 after the sixty-ninth round gave independently
+bundled overrides one base-and-override-wide definition namespace, closing a
+pre-existing collision without changing any of the 84 emission fixtures or
+112,356 probed acceptances. The sixty-eighth round closed the independent
 emission review: composed formatter fallbacks, canonical carrier preservation,
 kind-partition separation, caller-rooted/URI-decoded reachability, successor
 `else with` truth, diagnostic provenance, and the hardened Helm 4 probe model.
@@ -118,6 +121,13 @@ part and a separately listed residual. Detailed round history remains in
 
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
+
+- **Shared override-bundling namespace (sixty-ninth round).** Generated
+  bundled-definition names are reserved across the base and all overrides,
+  while each override carries the definitions it references. Full-output CLI
+  equality pins two distinct external refs and the ordered digest contract.
+  All 84 emission artifacts are byte-identical and the compiled
+  112,356-document battery reports zero acceptance flips.
 
 - **Emission-review findings closure (sixty-eighth round).** Chained
   `default` selection scopes every exact primary identity; required-entry and

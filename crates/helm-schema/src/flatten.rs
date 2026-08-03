@@ -102,9 +102,21 @@ pub fn bundle_refs(
     fetch_policy: FetchPolicy,
     load_budget: LoadBudget,
 ) -> EngineResult<Value> {
+    let mut namespace = BundleNamespace::default();
+    bundle_refs_in_namespace(schema, base_dir, fetch_policy, load_budget, &mut namespace)
+}
+
+/// Bundle one document using names reserved across a larger output assembly.
+pub(crate) fn bundle_refs_in_namespace(
+    schema: Value,
+    base_dir: &Path,
+    fetch_policy: FetchPolicy,
+    load_budget: LoadBudget,
+    namespace: &mut BundleNamespace,
+) -> EngineResult<Value> {
     let base_uri = directory_file_uri(base_dir)?;
     let retriever = FsHttpRetrieve::new(fetch_policy, load_budget);
-    bundle_with_retriever(schema, &base_uri, retriever)
+    bundle_with_retriever_in_namespace(schema, &base_uri, retriever, namespace)
 }
 
 /// Validate and normalize already-prepared refs without allowing file/URL
@@ -160,45 +172,77 @@ pub fn flatten_with_retriever(
 /// fails, or the resulting definitions cannot be inserted safely.
 #[instrument(skip_all)]
 pub fn bundle_with_retriever(
-    mut schema: Value,
+    schema: Value,
     base_uri: &str,
     retriever: impl Retrieve,
 ) -> EngineResult<Value> {
+    let mut namespace = BundleNamespace::default();
+    bundle_with_retriever_in_namespace(schema, base_uri, retriever, &mut namespace)
+}
+
+fn bundle_with_retriever_in_namespace(
+    mut schema: Value,
+    base_uri: &str,
+    retriever: impl Retrieve,
+    namespace: &mut BundleNamespace,
+) -> EngineResult<Value> {
+    namespace.reserve_schema(&schema);
     let root_document_uri = document_uri(&uri::from_str(base_uri)?)?;
     let root_base_uri = effective_base_uri(&schema, &root_document_uri)?;
     let root_document_uris = BTreeSet::from([
         root_document_uri.as_str().to_string(),
         root_base_uri.as_str().to_string(),
     ]);
-    let existing_definition_names = existing_definition_names(&schema);
-    let mut state = BundleState::new(retriever, root_document_uris, existing_definition_names);
+    let mut state = BundleState::new(retriever, root_document_uris, namespace);
     state.bundle_schema(&mut schema, &root_document_uri)?;
     state.insert_definitions(&mut schema)?;
     Ok(schema)
 }
 
-struct BundleState<R> {
+/// Generated-definition name allocator shared by separately bundled documents.
+#[derive(Default)]
+pub(crate) struct BundleNamespace {
+    definition_names: BTreeSet<String>,
+    next_definition_id: usize,
+}
+
+impl BundleNamespace {
+    pub(crate) fn reserve_schema(&mut self, schema: &Value) {
+        self.definition_names
+            .extend(existing_definition_names(schema));
+    }
+
+    fn next_definition_name(&mut self) -> String {
+        loop {
+            self.next_definition_id += 1;
+            let name = format!("schema{}", self.next_definition_id);
+            if self.definition_names.insert(name.clone()) {
+                return name;
+            }
+        }
+    }
+}
+
+struct BundleState<'a, R> {
     retriever: R,
     root_document_uris: BTreeSet<String>,
     names_by_target_uri: BTreeMap<String, String>,
     definitions: BTreeMap<String, Value>,
-    existing_definition_names: BTreeSet<String>,
-    next_definition_id: usize,
+    namespace: &'a mut BundleNamespace,
 }
 
-impl<R: Retrieve> BundleState<R> {
+impl<'a, R: Retrieve> BundleState<'a, R> {
     fn new(
         retriever: R,
         root_document_uris: BTreeSet<String>,
-        existing_definition_names: BTreeSet<String>,
+        namespace: &'a mut BundleNamespace,
     ) -> Self {
         Self {
             retriever,
             root_document_uris,
             names_by_target_uri: BTreeMap::new(),
             definitions: BTreeMap::new(),
-            existing_definition_names,
-            next_definition_id: 1,
+            namespace,
         }
     }
 
@@ -239,7 +283,7 @@ impl<R: Retrieve> BundleState<R> {
             return Ok(name.clone());
         }
 
-        let name = self.next_definition_name();
+        let name = self.namespace.next_definition_name();
         self.names_by_target_uri.insert(target_key, name.clone());
 
         let target_document_uri = document_uri(target_uri)?;
@@ -268,16 +312,6 @@ impl<R: Retrieve> BundleState<R> {
                 CliError::RefBundling(format!("retrieve {target_document_uri}: {err}"))
             })?;
         select_fragment(document, target_uri)
-    }
-
-    fn next_definition_name(&mut self) -> String {
-        loop {
-            let name = format!("schema{}", self.next_definition_id);
-            self.next_definition_id += 1;
-            if self.existing_definition_names.insert(name.clone()) {
-                return name;
-            }
-        }
     }
 
     fn insert_definitions(self, schema: &mut Value) -> EngineResult<()> {

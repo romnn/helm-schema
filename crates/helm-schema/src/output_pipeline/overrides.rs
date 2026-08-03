@@ -81,10 +81,30 @@ pub(crate) fn prepare_emit_request(
     paths: &[PathBuf],
     options: &PolicyInputOptions,
     request: EmitRequest,
+    base_schema: &Value,
 ) -> EngineResult<PreparedEmitRequest> {
+    let unprepared_override_schemas = paths
+        .iter()
+        .map(|path| load_override_schema(path, options))
+        .collect::<EngineResult<Vec<_>>>()?;
+    let mut namespace = flatten::BundleNamespace::default();
+    namespace.reserve_schema(base_schema);
+    for override_schema in &unprepared_override_schemas {
+        namespace.reserve_schema(override_schema.schema());
+    }
     let prepared_override_schemas = paths
         .iter()
-        .map(|path| load_prepared_override_schema(path, options, request.reference_policy))
+        .zip(unprepared_override_schemas)
+        .map(|(path, unprepared)| {
+            let prepared_schema = prepare_override_schema(
+                unprepared.schema(),
+                path,
+                options,
+                request.reference_policy,
+                &mut namespace,
+            )?;
+            Ok(unprepared.into_prepared(prepared_schema))
+        })
         .collect::<EngineResult<Vec<_>>>()?;
     Ok(PreparedEmitRequest {
         prepared_override_schemas,
@@ -93,11 +113,10 @@ pub(crate) fn prepare_emit_request(
 }
 
 #[tracing::instrument(skip_all)]
-fn load_prepared_override_schema(
+fn load_override_schema(
     path: &Path,
     options: &PolicyInputOptions,
-    reference_policy: ReferencePolicy,
-) -> EngineResult<PreparedOverride> {
+) -> EngineResult<UnpreparedOverride> {
     let override_schema = load_json_file(path, options.load_budget.max_schema_document_bytes)?;
     if !override_schema.is_object() && !override_schema.is_boolean() {
         return Err(crate::error::CliError::InvalidOverrideRoot {
@@ -105,10 +124,7 @@ fn load_prepared_override_schema(
             kind: json_kind(&override_schema),
         });
     }
-    let unprepared = UnpreparedOverride::capture(override_schema);
-    let prepared_schema =
-        prepare_override_schema(unprepared.schema(), path, options, reference_policy)?;
-    Ok(unprepared.into_prepared(prepared_schema))
+    Ok(UnpreparedOverride::capture(override_schema))
 }
 
 #[tracing::instrument(skip_all, fields(reference_policy = ?reference_policy))]
@@ -117,15 +133,17 @@ fn prepare_override_schema(
     override_path: &Path,
     options: &PolicyInputOptions,
     reference_policy: ReferencePolicy,
+    namespace: &mut flatten::BundleNamespace,
 ) -> EngineResult<Value> {
     let override_base = override_path.parent().unwrap_or_else(|| Path::new("."));
 
     match reference_policy {
-        ReferencePolicy::SelfContained => flatten::bundle_refs(
+        ReferencePolicy::SelfContained => flatten::bundle_refs_in_namespace(
             schema.clone(),
             override_base,
             options.fetch_policy,
             options.load_budget,
+            namespace,
         ),
         ReferencePolicy::FullyInlinedExport => flatten::flatten_refs(
             schema,
