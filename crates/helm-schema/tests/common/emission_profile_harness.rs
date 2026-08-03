@@ -1,7 +1,9 @@
 use std::collections::BTreeSet;
+use std::io::Read as _;
 use std::path::Path;
 
 use color_eyre::eyre::{self, WrapErr as _};
+use flate2::read::GzDecoder;
 use helm_schema::AnalysisSession;
 use helm_schema::generation::{GenerateOptions, GeneratedSchema, SchemaProfile};
 use helm_schema::provider::ProviderOptions;
@@ -226,6 +228,9 @@ pub(crate) fn structural_probe_battery(
     let retained_dependency_defaults = defaults
         .as_object()
         .map(|defaults| {
+            // Helm refills a deleted dependency root from the subchart. The
+            // battery preserves the supplied coalesced root, but cannot
+            // synthesize child defaults missing from that input document.
             defaults
                 .iter()
                 .filter(|(key, _)| dependency_roots.contains(*key))
@@ -450,20 +455,136 @@ fn chart_dependency_roots(chart_relative_path: &str) -> eyre::Result<BTreeSet<St
         std::fs::read_to_string(&path).wrap_err_with(|| format!("read {}", path.display()))?;
     let manifest: serde_yaml::Value =
         serde_yaml::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))?;
-    let roots = manifest
+    let dependencies = manifest
         .get("dependencies")
         .and_then(serde_yaml::Value::as_sequence)
         .into_iter()
-        .flatten()
-        .filter_map(|dependency| {
-            dependency
-                .get("alias")
-                .or_else(|| dependency.get("name"))
-                .and_then(serde_yaml::Value::as_str)
-        })
-        .map(str::to_string)
-        .collect();
+        .flatten();
+    let mut roots = BTreeSet::new();
+    let mut values_keys_by_name = std::collections::BTreeMap::new();
+    for dependency in dependencies {
+        let Some(name) = dependency.get("name").and_then(serde_yaml::Value::as_str) else {
+            continue;
+        };
+        let values_key = dependency
+            .get("alias")
+            .and_then(serde_yaml::Value::as_str)
+            .unwrap_or(name);
+        values_keys_by_name.insert(name.to_string(), values_key.to_string());
+    }
+
+    let charts_dir = chart.join("charts");
+    if charts_dir.is_dir() {
+        let mut entries = std::fs::read_dir(&charts_dir)
+            .wrap_err_with(|| format!("read {}", charts_dir.display()))?
+            .collect::<Result<Vec<_>, _>>()?;
+        entries.sort_by_key(std::fs::DirEntry::file_name);
+        for entry in entries {
+            let entry_path = entry.path();
+            let name = if entry_path.is_dir() {
+                chart_name_from_directory(&entry_path)?
+            } else if is_chart_archive(&entry_path) {
+                chart_name_from_archive(&entry_path)?
+            } else {
+                None
+            };
+            if let Some(name) = name {
+                roots.insert(values_keys_by_name.get(&name).cloned().unwrap_or(name));
+            }
+        }
+    }
     Ok(roots)
+}
+
+fn chart_name_from_directory(chart: &Path) -> eyre::Result<Option<String>> {
+    for manifest_name in ["Chart.yaml", "Chart.template.yaml"] {
+        let manifest = chart.join(manifest_name);
+        if manifest.is_file() {
+            return chart_name_from_manifest_bytes(
+                &std::fs::read(&manifest)
+                    .wrap_err_with(|| format!("read {}", manifest.display()))?,
+                &manifest.display().to_string(),
+            );
+        }
+    }
+    Ok(None)
+}
+
+fn chart_name_from_archive(path: &Path) -> eyre::Result<Option<String>> {
+    let file = std::fs::File::open(path).wrap_err_with(|| format!("read {}", path.display()))?;
+    let mut archive = tar::Archive::new(GzDecoder::new(file));
+    let mut manifests = Vec::new();
+    for entry in archive.entries().wrap_err("read chart archive entries")? {
+        let mut entry = entry.wrap_err("read chart archive entry")?;
+        if !entry.header().entry_type().is_file() {
+            continue;
+        }
+        let entry_path = entry
+            .path()
+            .wrap_err("read chart archive entry path")?
+            .into_owned();
+        let file_name = entry_path.file_name().and_then(|name| name.to_str());
+        if !matches!(file_name, Some("Chart.yaml" | "Chart.template.yaml")) {
+            continue;
+        }
+        let depth = entry_path.components().count();
+        if depth > 2 {
+            continue;
+        }
+        let mut bytes = Vec::new();
+        entry
+            .read_to_end(&mut bytes)
+            .wrap_err("read chart manifest from archive")?;
+        let chart_root = entry_path
+            .parent()
+            .map(|parent| parent.to_string_lossy().to_string())
+            .unwrap_or_default();
+        let manifest_priority = usize::from(file_name != Some("Chart.yaml"));
+        manifests.push((
+            depth,
+            chart_root,
+            manifest_priority,
+            entry_path.to_string_lossy().to_string(),
+            bytes,
+        ));
+    }
+    manifests.sort_by(|left, right| {
+        left.0
+            .cmp(&right.0)
+            .then_with(|| left.1.cmp(&right.1))
+            .then_with(|| left.2.cmp(&right.2))
+    });
+    let Some((_, _, _, manifest_path, bytes)) = manifests.into_iter().next() else {
+        return Ok(None);
+    };
+    chart_name_from_manifest_bytes(&bytes, &format!("{}:{manifest_path}", path.display()))
+}
+
+fn chart_name_from_manifest_bytes(bytes: &[u8], source: &str) -> eyre::Result<Option<String>> {
+    let manifest: serde_yaml::Value =
+        serde_yaml::from_slice(bytes).wrap_err_with(|| format!("parse {source}"))?;
+    Ok(manifest
+        .get("name")
+        .and_then(serde_yaml::Value::as_str)
+        .map(str::to_string))
+}
+
+fn is_chart_archive(path: &Path) -> bool {
+    let is_tgz = path
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("tgz"));
+    let is_tar_gz = path
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("gz"))
+        && path
+            .file_stem()
+            .and_then(|stem| Path::new(stem).extension())
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("tar"));
+
+    is_tgz || is_tar_gz
 }
 
 pub(crate) fn sparse_override(path: &[&str], value: Value) -> ProbeInstance {

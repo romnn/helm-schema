@@ -17,5 +17,5 @@ pub use format::{FinalOutputMetrics, write_schema_json};
 pub use options::{
     EmitRequest, JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferencePolicy,
 };
-pub(crate) use overrides::{PreparedEmitRequest, prepare_emit_request};
+pub(crate) use overrides::{PreparedEmitRequest, load_emit_request, prepare_emit_request};
 pub(crate) use transforms::apply_schema_output_pipeline;

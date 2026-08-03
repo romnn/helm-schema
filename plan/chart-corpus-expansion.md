@@ -12406,3 +12406,25 @@ byte-identical to Round 70, and the expanded compiled battery reports zero
 acceptance flips across 120,540 probes. A pinned live matrix records the stable
 cells and prints the observed mixed-collision winner set for independent
 replay.
+
+## Pipeline/session boundary and harness hygiene (2026-08-03, seventy-second round)
+
+Override file IO and schema-root validation now happen before chart generation,
+restoring fail-fast error precedence without moving external-reference bundling
+ahead of the generated base namespace. The shared namespace deduplicates the
+same external target across override documents, while preserving deterministic
+generated names and the application-ordered override digest.
+
+Late generated-definition pruning decodes percent escapes per JSON Pointer
+segment, so an encoded slash inside a definition name cannot become a path
+separator. Empty `required` carriers preserve their object type on untyped
+hosts. The structural battery also derives roots from installed directory and
+archive subcharts, including vendored children absent from the parent manifest;
+those Helm-owned roots are no longer sampled as ordinary deletable values.
+
+One clean final-build dump writes all 84 artifacts without a fixture change.
+The compiled Rust prober compares the final dump with `a2f9f00` over 120,435
+default-composed/null-deletion documents and reports zero acceptance flips.
+The 105-probe reduction from the prior round is the explicit dependency-root
+correction. No fixture-direction verdict requires Helm adjudication, and the
+live Helm/provider controls and downstream 32-chart gate remain green.

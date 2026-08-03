@@ -87,6 +87,42 @@ fn narrowing_and_reference_modifiers_change_the_policy_fingerprint() -> eyre::Re
     Ok(())
 }
 
+#[test]
+fn override_loading_and_root_validation_precede_chart_generation() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let tempdir = tempfile::tempdir().wrap_err("create invalid-input fixture directory")?;
+    let override_path = tempdir.path().join("invalid-override.json");
+    std::fs::write(&override_path, b"null\n").wrap_err("write invalid override")?;
+    let missing_chart = tempdir.path().join("missing-chart");
+    let session = profile_session_at(&missing_chart, SchemaProfile::Full, false);
+
+    let error = emit_with_override(&session, &override_path, ReferencePolicy::PreserveRefs)
+        .expect_err("invalid override root should fail before chart generation");
+
+    sim_assert_eq!(
+        have: error.to_string(),
+        want: format!(
+            "override schema root in {} must be an object or boolean, found null",
+            override_path.display()
+        )
+    );
+
+    let missing_override = tempdir.path().join("missing-override.json");
+    let result = session.emit_with_policy_paths(
+        &[missing_override],
+        PolicyInputOptions {
+            fetch_policy: FetchPolicy::input_assembly(false),
+            load_budget: LoadBudget::default(),
+        },
+        emit_request(ReferencePolicy::PreserveRefs),
+    );
+    sim_assert_eq!(
+        have: matches!(result, Err(helm_schema::CliError::Io(_))),
+        want: true
+    );
+    Ok(())
+}
+
 fn emit_with_override(
     session: &helm_schema::AnalysisSession,
     path: &Path,
@@ -114,6 +150,14 @@ fn emit_request(reference_policy: ReferencePolicy) -> EmitRequest {
 
 fn profile_session(profile: SchemaProfile, infer_required: bool) -> helm_schema::AnalysisSession {
     let chart_dir = test_util::workspace_testdata().join("charts").join(CHART);
+    profile_session_at(&chart_dir, profile, infer_required)
+}
+
+fn profile_session_at(
+    chart_dir: &Path,
+    profile: SchemaProfile,
+    infer_required: bool,
+) -> helm_schema::AnalysisSession {
     let chart_dir = chart_dir.to_string_lossy().to_string();
     helm_schema::AnalysisSession::new(GenerateOptions {
         chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),

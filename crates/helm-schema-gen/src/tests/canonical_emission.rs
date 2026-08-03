@@ -138,6 +138,43 @@ fn canonical_required_entries_type_an_untyped_object_host() -> eyre::Result<()> 
 }
 
 #[test]
+fn canonical_empty_required_entries_still_type_an_untyped_object_host() -> eyre::Result<()> {
+    let mut base = SchemaDocument::new_root_object();
+    base.insert_path_schema(&["value".to_string()], SchemaNode::untyped_member_host());
+    let mut canonical = base.clone();
+    let constraint = json!({ "type": "object", "required": [] });
+
+    sim_assert_eq!(
+        have: canonical.canonicalize_constraint_at_path(&["value".to_string()], &constraint),
+        want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
+    );
+    let canonical = canonical.into_value();
+    sim_assert_eq!(
+        have: canonical.pointer("/properties/value/type"),
+        want: Some(&json!("object"))
+    );
+
+    let mut legacy = base.into_value();
+    legacy
+        .as_object_mut()
+        .ok_or_else(|| eyre::eyre!("root schema is not an object"))?
+        .insert(
+            "allOf".to_string(),
+            json!([{ "properties": { "value": constraint } }]),
+        );
+    assert_equivalent(
+        &legacy,
+        &canonical,
+        [
+            json!({}),
+            json!({ "value": null }),
+            json!({ "value": "scalar" }),
+            json!({ "value": {} }),
+        ],
+    )
+}
+
+#[test]
 fn canonicalization_falls_back_without_mutating_a_missing_closed_root_slot() {
     let mut schema = SchemaDocument::new_root_object();
     schema.insert_path_schema(&["known".to_string()], SchemaNode::type_named("string"));

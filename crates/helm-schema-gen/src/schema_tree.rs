@@ -254,11 +254,6 @@ fn apply_required_entries(
         .iter()
         .map(Value::as_str)
         .collect::<Option<Vec<_>>>()?;
-    if required.is_empty() {
-        return Some(CanonicalConstraintOutcome::Applied(
-            CanonicalConstraintApplication::Redundant,
-        ));
-    }
 
     match node {
         SchemaNode::Object {

@@ -465,6 +465,33 @@ fn structural_battery_preserves_helm_v4_dependency_roots() -> eyre::Result<()> {
 }
 
 #[test]
+fn structural_battery_preserves_unlisted_vendored_dependency_roots() -> eyre::Result<()> {
+    let chart = "schema-emission-unlisted-dependency";
+    let defaults = json!({ "vendored": { "enabled": true } });
+    let probes = structural_probe_battery(chart, &defaults, &[])?;
+
+    let retained = probes
+        .iter()
+        .find_map(|(name, probe)| (name == "all declared keys deleted").then_some(probe));
+    let Some(ProbeInstance::Coalesced(retained)) = retained else {
+        return Err(eyre::eyre!("all-declared-keys probe missing"));
+    };
+    sim_assert_eq!(
+        have: retained.get("vendored"),
+        want: Some(&json!({ "enabled": true }))
+    );
+    sim_assert_eq!(
+        have: probes.iter().any(|(_, probe)| matches!(
+            probe,
+            ProbeInstance::SparseOverride(value)
+                if value.get("vendored").is_some_and(serde_json::Value::is_null)
+        )),
+        want: false
+    );
+    Ok(())
+}
+
+#[test]
 fn structural_battery_samples_depth_three_and_guard_states() -> eyre::Result<()> {
     let chart = "schema-emission-controls";
     let defaults = read_root_defaults(chart)?;
@@ -719,6 +746,20 @@ fn round70_partition_and_canonicalization_changes_are_acceptance_equivalent() ->
     eyre::ensure!(
         flips.is_empty(),
         "round 70 changed fixture acceptance:\n{}",
+        flips.join("\n")
+    );
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
+#[test]
+#[ignore = "maintenance: compares the Round 72 dump with its baseline ref"]
+fn round72_pipeline_changes_are_acceptance_equivalent() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    eyre::ensure!(
+        flips.is_empty(),
+        "round 72 changed fixture acceptance:\n{}",
         flips.join("\n")
     );
     eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");

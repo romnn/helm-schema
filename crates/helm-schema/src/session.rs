@@ -16,7 +16,7 @@ use crate::error::EngineResult;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
     EmitRequest, FinalOutputPolicy, PolicyInputOptions, PreparedEmitRequest,
-    apply_schema_output_pipeline, prepare_emit_request,
+    apply_schema_output_pipeline, load_emit_request, prepare_emit_request,
 };
 use crate::provider_builder;
 use crate::values_roots;
@@ -293,13 +293,9 @@ impl AnalysisSession {
         policy_input_options: PolicyInputOptions,
         request: EmitRequest,
     ) -> EngineResult<Value> {
+        let loaded = load_emit_request(override_paths, &policy_input_options, request)?;
         let generated = self.generated_schema()?;
-        let prepared = prepare_emit_request(
-            override_paths,
-            &policy_input_options,
-            request,
-            &generated.schema,
-        )?;
+        let prepared = prepare_emit_request(loaded, &policy_input_options, &generated.schema)?;
         apply_schema_output_pipeline(
             generated.schema,
             prepared,

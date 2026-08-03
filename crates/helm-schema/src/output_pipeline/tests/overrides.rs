@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::output_pipeline::{
     EmitRequest, FinalOutputPolicy, OutputPipelineOptions, PolicyInputOptions, PreparedEmitRequest,
-    ReferencePolicy, apply_schema_output_pipeline, prepare_emit_request,
+    ReferencePolicy, apply_schema_output_pipeline, load_emit_request, prepare_emit_request,
 };
 
 fn test_temp_dir(name: &str) -> PathBuf {
@@ -47,12 +47,9 @@ fn prepare_for_schema(
     reference_policy: ReferencePolicy,
     base_schema: &Value,
 ) -> crate::error::EngineResult<PreparedEmitRequest> {
-    prepare_emit_request(
-        paths,
-        &policy_options(),
-        request(reference_policy),
-        base_schema,
-    )
+    let options = policy_options();
+    let loaded = load_emit_request(paths, &options, request(reference_policy))?;
+    prepare_emit_request(loaded, &options, base_schema)
 }
 
 fn output_policy() -> FinalOutputPolicy {
@@ -197,6 +194,56 @@ fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre
             "beta": "alpha",
         })),
         want: false
+    );
+
+    fs::remove_dir_all(&temp_dir)?;
+    Ok(())
+}
+
+#[test]
+fn bundled_overrides_share_one_definition_for_the_same_external_target() -> eyre::Result<()> {
+    let temp_dir = test_temp_dir("shared-bundle-target");
+    fs::create_dir_all(&temp_dir)?;
+    fs::write(temp_dir.join("shared.json"), r#"{"const":"shared"}"#)?;
+    let alpha_override = temp_dir.join("alpha-override.json");
+    fs::write(
+        &alpha_override,
+        r#"{"properties":{"alpha":{"$ref":"./shared.json"}}}"#,
+    )?;
+    let beta_override = temp_dir.join("beta-override.json");
+    fs::write(
+        &beta_override,
+        r#"{"properties":{"beta":{"$ref":"./shared.json"}}}"#,
+    )?;
+    let base = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+            "alpha": { "type": "string" },
+            "beta": { "type": "string" },
+        },
+        "type": "object",
+    });
+    let paths = [alpha_override, beta_override];
+    let prepared = prepare_for_schema(&paths, ReferencePolicy::SelfContained, &base)?;
+    let digest = prepared.identity().digest;
+    let repeated = prepare_for_schema(&paths, ReferencePolicy::SelfContained, &base)?;
+    sim_assert_eq!(have: repeated.identity().digest, want: digest);
+
+    let output = apply_schema_output_pipeline(base, prepared, &temp_dir, output_policy())?;
+
+    sim_assert_eq!(
+        have: output.pointer("/properties/alpha/$ref"),
+        want: Some(&serde_json::json!("#/$defs/schema1"))
+    );
+    sim_assert_eq!(
+        have: output.pointer("/properties/beta/$ref"),
+        want: Some(&serde_json::json!("#/$defs/schema1"))
+    );
+    sim_assert_eq!(
+        have: output.get("$defs"),
+        want: Some(&serde_json::json!({
+            "schema1": { "const": "shared" },
+        }))
     );
 
     fs::remove_dir_all(&temp_dir)?;

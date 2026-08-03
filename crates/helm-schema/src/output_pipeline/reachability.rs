@@ -187,29 +187,38 @@ fn definition_id_from_reference(reference: &str) -> Result<Option<DefinitionId>,
     let Some(fragment) = reference.strip_prefix('#') else {
         return Ok(None);
     };
-    if fragment.as_bytes().iter().enumerate().any(|(index, byte)| {
+    let decoded_segments = fragment
+        .split('/')
+        .map(|segment| {
+            if has_invalid_percent_encoding(segment) {
+                return Err(());
+            }
+            percent_decode_str(segment)
+                .decode_utf8()
+                .map(|segment| decode_json_pointer_segment(&segment))
+                .map_err(|_| ())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let [root, keyword, name, ..] = decoded_segments.as_slice() else {
+        return Ok(None);
+    };
+    if root.is_empty() && matches!(keyword.as_str(), "$defs" | "definitions") {
+        return Ok(Some(DefinitionId {
+            keyword: keyword.clone(),
+            name: name.clone(),
+        }));
+    }
+    Ok(None)
+}
+
+fn has_invalid_percent_encoding(segment: &str) -> bool {
+    segment.as_bytes().iter().enumerate().any(|(index, byte)| {
         *byte == b'%'
-            && fragment
+            && segment
                 .as_bytes()
                 .get(index + 1..index + 3)
                 .is_none_or(|digits| !digits.iter().all(u8::is_ascii_hexdigit))
-    }) {
-        return Err(());
-    }
-    let fragment = percent_decode_str(fragment).decode_utf8().map_err(|_| ())?;
-    for keyword in ["$defs", "definitions"] {
-        let prefix = format!("/{keyword}/");
-        if let Some(encoded_name) = fragment
-            .strip_prefix(&prefix)
-            .and_then(|suffix| suffix.split('/').next())
-        {
-            return Ok(Some(DefinitionId {
-                keyword: keyword.to_string(),
-                name: decode_json_pointer_segment(encoded_name),
-            }));
-        }
-    }
-    Ok(None)
+    })
 }
 
 fn decode_json_pointer_segment(segment: &str) -> String {

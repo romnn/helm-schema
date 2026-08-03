@@ -203,11 +203,15 @@ fn bundle_with_retriever_in_namespace(
 #[derive(Default)]
 pub(crate) struct BundleNamespace {
     definition_names: BTreeSet<String>,
+    names_by_target_uri: BTreeMap<String, String>,
     next_definition_id: usize,
 }
 
 impl BundleNamespace {
     pub(crate) fn reserve_schema(&mut self, schema: &Value) {
+        // Bundled targets are emitted only under `$defs`; legacy
+        // `definitions` entries therefore occupy a distinct reference
+        // namespace and cannot collide with generated target names.
         self.definition_names
             .extend(existing_definition_names(schema));
     }
@@ -226,7 +230,6 @@ impl BundleNamespace {
 struct BundleState<'a, R> {
     retriever: R,
     root_document_uris: BTreeSet<String>,
-    names_by_target_uri: BTreeMap<String, String>,
     definitions: BTreeMap<String, Value>,
     namespace: &'a mut BundleNamespace,
 }
@@ -240,7 +243,6 @@ impl<'a, R: Retrieve> BundleState<'a, R> {
         Self {
             retriever,
             root_document_uris,
-            names_by_target_uri: BTreeMap::new(),
             definitions: BTreeMap::new(),
             namespace,
         }
@@ -279,12 +281,14 @@ impl<'a, R: Retrieve> BundleState<'a, R> {
 
     fn definition_name_for_target(&mut self, target_uri: &Uri<String>) -> EngineResult<String> {
         let target_key = target_uri.as_str().to_string();
-        if let Some(name) = self.names_by_target_uri.get(&target_key) {
+        if let Some(name) = self.namespace.names_by_target_uri.get(&target_key) {
             return Ok(name.clone());
         }
 
         let name = self.namespace.next_definition_name();
-        self.names_by_target_uri.insert(target_key, name.clone());
+        self.namespace
+            .names_by_target_uri
+            .insert(target_key, name.clone());
 
         let target_document_uri = document_uri(target_uri)?;
         let mut target_schema = self.resolve_target_schema(target_uri, &target_document_uri)?;

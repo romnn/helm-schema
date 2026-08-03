@@ -504,8 +504,8 @@ fn record_range_key_slot_use(
 /// concretizes per disjunct: when the conjunction structurally entails
 /// exactly one arm's selecting predicate, this row's kind IS that arm's
 /// literal (airflow's `strategy:` under `not $stateful` is a Deployment
-/// row). Unmatched rows keep the flat candidates; the branches themselves
-/// never leave the builder.
+/// row). Unmatched rows keep both flat candidates and branch provenance so
+/// emission can distinguish selector-dependent from ordinary uses.
 fn kind_branch_resolved_use(
     contract_use: &ContractUse,
     predicates: &[Predicate],

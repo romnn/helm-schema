@@ -121,6 +121,28 @@ fn late_prune_decodes_percent_encoded_definition_refs() {
 }
 
 #[test]
+fn late_prune_decodes_percent_encoding_within_each_pointer_segment() {
+    let mut schema = json!({
+        "$defs": {
+            "provider/name": { "type": "string" },
+            "orphan": { "type": "integer" },
+        },
+        "$ref": "#/%24defs/provider%2Fname",
+    });
+    let owned = OwnedDefinitions::capture(&schema).retain_unchanged(&schema);
+
+    let removed = prune_unreachable_owned_definitions(&mut schema, &owned);
+
+    sim_assert_eq!(have: removed, want: 1);
+    sim_assert_eq!(
+        have: schema.get("$defs"),
+        want: Some(&json!({
+            "provider/name": { "type": "string" },
+        }))
+    );
+}
+
+#[test]
 fn late_prune_preserves_definitions_for_undecodable_local_refs() {
     let mut schema = json!({
         "$defs": {

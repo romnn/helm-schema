@@ -1477,4 +1477,107 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 downstream charts passed.
   - `task tokei:core`: exit 0; 60,757 production Rust LOC (no production
     change from Round 70).
+- Commit: `a2f9f00` (`test(schema): record yaml boolean key veto`).
+
+## Round 72 — pipeline/session boundaries and harness hygiene
+
+- Status: landed; commit pending.
+- Measured results:
+  - Override documents are loaded and root-kind validated before chart
+    generation. External-reference bundling remains after generation, where
+    the generated base can seed the shared namespace. An end-to-end precedence
+    control proves an invalid override root and a missing override path both
+    fail before a simultaneously missing chart path.
+  - The shared override namespace now deduplicates equal external target URIs
+    across override documents. Two overrides targeting one URI both reference
+    `#/$defs/schema1`, emit one generated definition, and produce the same
+    application-ordered digest on a repeated preparation.
+  - Late reachability splits a JSON Pointer before percent-decoding each
+    segment. A definition named `provider/name` remains one segment when
+    reached through `#/$defs/provider%2Fname`; malformed percent encodings
+    continue to retain conservatively.
+  - Applying an empty Mandatory `required` carrier to an untyped object host
+    now preserves the carrier's `type: object` half. The exhaustive canonical
+    equivalence lane covers empty and non-empty required sets.
+  - Acceptance probes derive dependency roots from installed `charts/`
+    directories and chart archives as well as manifest declarations. An
+    unlisted vendored child is no longer null-deleted as an ordinary root.
+    The harness explicitly records that it cannot synthesize child defaults
+    missing from the already supplied coalesced input document.
+  - One clean final-build dump runs 62 tests and writes exactly 84 artifacts.
+    No fixture is modified. The expanded compiled Rust battery checks 120,435
+    default-composed documents against `a2f9f00` and finds zero acceptance
+    flips. The 105-probe reduction from Round 71 is the measured effect of
+    excluding installed dependency roots, not an unreported cap.
+  - Production Rust is 60,785 LOC (`+28` from Round 71).
+- Deviations:
+  - Round 69's note that override loading followed generation is superseded:
+    file IO and root validation now precede generation, while bundling still
+    follows it to preserve the base-plus-overrides namespace contract.
+  - The generated-name reservation boundary intentionally reads root `$defs`
+    only. Legacy `definitions` remains a distinct reference namespace and is
+    documented at the reservation site.
+  - No Round 72 item is deferred or blocked. The frozen plan is unchanged.
+- Adjudication evidence:
+  - The clean dump is fixture-identical, and the final-depth battery reports
+    zero TIGHTEN and zero LOOSEN across 120,435 probes. There is therefore no
+    corpus fixture flip to adopt or adjudicate individually with Helm.
+  - The live semantic-control replay passes against Helm and the pinned
+    provider. The hermetic monotonicity and Temporal pairwise controls also
+    pass on the final Round 72 tree.
+  - The lower probe count is pinned by the unlisted-vendored-dependency
+    control: the harness now protects the child root that Helm obtains from
+    the installed `charts/` tree.
+- Review dossier:
+  - Session precedence and shared-target bundling: `cargo nextest run -p
+    helm-schema -E
+    'test(override_loading_and_root_validation_precede_chart_generation) |
+    test(bundled_overrides_share_one_definition_for_the_same_external_target)'`.
+  - Reachability and degenerate canonical carrier: `cargo nextest run -p
+    helm-schema -p helm-schema-gen -E
+    'test(late_prune_decodes_percent_encoding_within_each_pointer_segment) |
+    test(late_prune_preserves_definitions_for_undecodable_local_refs) |
+    test(canonical_empty_required_entries_still_type_an_untyped_object_host)'`.
+  - Vendored dependency roots and retained probe depth: `cargo nextest run -P
+    integration -p helm-schema --test schema_emission_profiles -E
+    'test(structural_battery_preserves_unlisted_vendored_dependency_roots) |
+    test(structural_battery_preserves_helm_v4_dependency_roots) |
+    test(structural_battery_samples_depth_three_and_guard_states)'`.
+  - Single clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/round72-final-dump
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+  - Expanded zero-flip proof: `TMPDIR=/home/roman/dev/helm-schema/target/round72-tmp
+    SCHEMA_ACCEPTANCE_BASELINE_REF=a2f9f00
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round72-final-dump
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(round72_pipeline_changes_are_acceptance_equivalent)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=120435 flips=0` and reports every
+    guard/depth cap on stderr.
+  - Hermetic controls: `cargo nextest run -P integration -p helm-schema
+    --test schema_emission_profiles -E
+    'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+    test(temporal_wrapper_pairwise_matrix_is_monotone)'`.
+  - Live Helm/provider replay: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profile_live -E
+    'test(replay_semantic_controls_against_helm_and_provider)'
+    --run-ignored ignored-only --no-capture`.
+- Gates on the final Round 72 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 after the final edit; the whole workspace and all
+    three ast-grep rules pass.
+  - `task lint:fc`: exit 0; 48 feature combinations for 13 packages across
+    three targets.
+  - `cargo nextest run --workspace`: exit 0; 1,196 passed, zero skipped.
+  - `task test:integration`: exit 0; 562 passed, 16 skipped by the profile.
+  - `task test:all`: exit 0; 1,762 passed, 16 skipped by the profile,
+    including the live network tests.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 downstream charts passed.
+  - `task tokei:core`: exit 0; 60,785 production Rust LOC.
 - Commit: pending.

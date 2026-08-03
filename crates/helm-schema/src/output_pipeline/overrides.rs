@@ -10,6 +10,19 @@ use crate::load_budget::read_to_end_capped;
 use crate::output_pipeline::{EmitRequest, PolicyInputOptions, ReferencePolicy};
 use crate::schema_override::{PreparedOverride, UnpreparedOverride};
 
+/// Output policy inputs validated before chart generation begins.
+#[derive(Debug)]
+pub(crate) struct LoadedEmitRequest {
+    loaded_overrides: Vec<LoadedOverride>,
+    request: EmitRequest,
+}
+
+#[derive(Debug)]
+struct LoadedOverride {
+    path: PathBuf,
+    schema: UnpreparedOverride,
+}
+
 /// Output policy inputs loaded from the filesystem before final schema
 /// transforms run.
 ///
@@ -66,7 +79,34 @@ impl PreparedEmitRequest {
     }
 }
 
-/// Loads and prepares override schemas according to reference and fetch policy.
+/// Loads override schemas before chart generation begins.
+///
+/// # Errors
+///
+/// Returns an error when an override exceeds its load budget, cannot be read
+/// or decoded, or has a non-schema root.
+#[tracing::instrument(skip_all, fields(override_count = paths.len()))]
+pub(crate) fn load_emit_request(
+    paths: &[PathBuf],
+    options: &PolicyInputOptions,
+    request: EmitRequest,
+) -> EngineResult<LoadedEmitRequest> {
+    let loaded_overrides = paths
+        .iter()
+        .map(|path| {
+            Ok(LoadedOverride {
+                path: path.clone(),
+                schema: load_override_schema(path, options)?,
+            })
+        })
+        .collect::<EngineResult<Vec<_>>>()?;
+    Ok(LoadedEmitRequest {
+        loaded_overrides,
+        request,
+    })
+}
+
+/// Prepares loaded override schemas according to reference and fetch policy.
 ///
 /// Overrides must not reference generator-owned definitions in the inferred
 /// document's `$defs`; their names and presence are private implementation
@@ -74,36 +114,34 @@ impl PreparedEmitRequest {
 ///
 /// # Errors
 ///
-/// Returns an error when an override exceeds its load budget, cannot be read
-/// or decoded, or contains references that policy cannot prepare.
-#[tracing::instrument(skip_all, fields(override_count = paths.len()))]
+/// Returns an error when an override contains references that policy cannot
+/// prepare.
+#[tracing::instrument(skip_all, fields(override_count = loaded.loaded_overrides.len()))]
 pub(crate) fn prepare_emit_request(
-    paths: &[PathBuf],
+    loaded: LoadedEmitRequest,
     options: &PolicyInputOptions,
-    request: EmitRequest,
     base_schema: &Value,
 ) -> EngineResult<PreparedEmitRequest> {
-    let unprepared_override_schemas = paths
-        .iter()
-        .map(|path| load_override_schema(path, options))
-        .collect::<EngineResult<Vec<_>>>()?;
+    let LoadedEmitRequest {
+        loaded_overrides,
+        request,
+    } = loaded;
     let mut namespace = flatten::BundleNamespace::default();
     namespace.reserve_schema(base_schema);
-    for override_schema in &unprepared_override_schemas {
-        namespace.reserve_schema(override_schema.schema());
+    for loaded in &loaded_overrides {
+        namespace.reserve_schema(loaded.schema.schema());
     }
-    let prepared_override_schemas = paths
-        .iter()
-        .zip(unprepared_override_schemas)
-        .map(|(path, unprepared)| {
+    let prepared_override_schemas = loaded_overrides
+        .into_iter()
+        .map(|loaded| {
             let prepared_schema = prepare_override_schema(
-                unprepared.schema(),
-                path,
+                loaded.schema.schema(),
+                &loaded.path,
                 options,
                 request.reference_policy,
                 &mut namespace,
             )?;
-            Ok(unprepared.into_prepared(prepared_schema))
+            Ok(loaded.schema.into_prepared(prepared_schema))
         })
         .collect::<EngineResult<Vec<_>>>()?;
     Ok(PreparedEmitRequest {
