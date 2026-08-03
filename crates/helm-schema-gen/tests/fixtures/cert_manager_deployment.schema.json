@@ -63,11 +63,7 @@
             "additionalProperties": {},
             "properties": {
               "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -78,24 +74,10 @@
       "additionalProperties": {},
       "properties": {
         "creator": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "null",
+            "string"
           ]
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "enableServiceLinks": {
-          "not": {
-            "type": "null"
-          }
         }
       }
     },
@@ -145,13 +127,9 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -254,11 +232,7 @@
             "additionalProperties": {},
             "properties": {
               "leaderElection": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -292,51 +266,13 @@
             "additionalProperties": {},
             "properties": {
               "nodeSelector": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "null",
+                  "object"
                 ]
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "global": {
-          "type": "object"
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "pullPolicy": {
-              "not": {
-                "type": "null"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "required": [
-            "pullPolicy"
-          ],
-          "type": "object"
         }
       }
     },
@@ -356,11 +292,7 @@
         "additionalProperties": {},
         "properties": {
           "ingressShim": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ]
+            "type": "object"
           }
         }
       }
@@ -565,11 +497,7 @@
         "additionalProperties": {},
         "properties": {
           "livenessProbe": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ]
+            "type": "object"
           }
         }
       }
@@ -590,13 +518,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -625,13 +549,9 @@
         "additionalProperties": {},
         "properties": {
           "nodeSelector": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "object"
             ]
           }
         }
@@ -697,11 +617,7 @@
             "additionalProperties": {},
             "properties": {
               "podmonitor": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -735,38 +651,12 @@
             "additionalProperties": {},
             "properties": {
               "servicemonitor": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
         }
       }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "replicaCount": {
-          "not": {
-            "type": "null"
-          }
-        }
-      }
-    },
-    {
-      "required": [
-        "enableServiceLinks"
-      ],
-      "type": "object"
-    },
-    {
-      "required": [
-        "replicaCount"
-      ],
-      "type": "object"
     },
     {
       "if": {
@@ -2731,6 +2621,9 @@
         "repository": {},
         "tag": {}
       },
+      "required": [
+        "pullPolicy"
+      ],
       "type": "object"
     },
     "ingressShim": {
@@ -5986,5 +5879,9 @@
     },
     "webhook": {}
   },
+  "required": [
+    "enableServiceLinks",
+    "replicaCount"
+  ],
   "type": "object"
 }

@@ -269,11 +269,10 @@
             "additionalProperties": {},
             "properties": {
               "configLoggingRestApi": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "required": [
+                  "api_port"
+                ],
+                "type": "object"
               }
             }
           },
@@ -281,9 +280,6 @@
             "additionalProperties": {},
             "properties": {
               "configLoggingRestApi": {
-                "required": [
-                  "api_port"
-                ],
                 "type": "object"
               }
             }
@@ -322,18 +318,6 @@
             "additionalProperties": {},
             "properties": {
               "readinessProbe": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "readinessProbe": {
                 "required": [
                   "initialDelaySeconds"
                 ],
@@ -351,6 +335,14 @@
                 "type": "object"
               }
             }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "readinessProbe": {
+                "type": "object"
+              }
+            }
           }
         ]
       }
@@ -359,13 +351,9 @@
       "additionalProperties": {},
       "properties": {
         "configTarget": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "null",
+            "string"
           ]
         }
       }
@@ -386,29 +374,10 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "pullPolicy": {
-              "not": {
-                "type": "null"
-              }
-            }
           }
         }
       }
@@ -453,17 +422,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "required": [
-            "pullPolicy"
-          ],
-          "type": "object"
-        }
-      }
-    },
-    {
       "if": {
         "properties": {
           "nameOverride": {
@@ -479,13 +437,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -1915,6 +1869,9 @@
         "repository": {},
         "tag": {}
       },
+      "required": [
+        "pullPolicy"
+      ],
       "type": "object"
     },
     "imagePullSecrets": {

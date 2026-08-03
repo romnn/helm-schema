@@ -10,10 +10,11 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   conditionals remain enabled; root-anchored conditionals, kind partitions, and terminal clauses
   are disabled.
 - Status: preliminary default adopted in Step 2. The exact Temporal preset is
-  below the size budget, its median strict-lint time is 19.31 seconds, and no
-  monotonicity-law failure occurred. Step 3 must reconfirm this decision after
-  canonical emission and the late reachability prune.
-- Veto window: open through the Step 3 reconfirmation.
+  below the size budget, its final-phase strict-lint median is 15.00 seconds,
+  and no monotonicity-law failure occurred. Step 3 reconfirms the middle point
+  after canonical emission and the late reachability prune.
+- Veto window: closed by the Step 3 fixture commit after no measurement trigger
+  and no user veto. Changing the preset now requires an explicit follow-up.
 
 ### Temporal migration
 
@@ -702,16 +703,144 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 charts checked.
   - `task tokei:core`: exit 0; production Rust is 59,242 LOC (`+127` from
     Step 1b VE).
-- Commit: pending.
+- Commit: `d67020f` (`feat(schema): adopt middle lean emission policy`).
 
 ## Step 3 — canonical emission and final output metrics
 
-- Status: pending.
-- Measured results: pending.
-- Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed.
+- Measured results:
+  - Canonicalization has the total top-level result required by the frozen
+    plan: `Applied(Emitted | Redundant) | NotApplicable`; the caller retains
+    the original Mandatory carrier on `NotApplicable`. On the Temporal anchor,
+    full and lean each apply 6 Mandatory constraints directly, prove 0
+    redundant, and retain 4 fallback carriers. Mandatory accounting is
+    emitted 6 / equivalent 0 / redundant 0 / fallback 4 under both policies.
+  - Constructor-owned kind unions now serialize as deterministic JSON Schema
+    type arrays. The exhaustive seven-kind power-set test proves them
+    acceptance-equivalent to their former `anyOf` arms, while the provider
+    payload test proves foreign type unions are not rewritten.
+  - The final Temporal full document is 5,631,055 bytes / 147,135 objects /
+    1,541 condition nodes / 1,504 unique conditions / 828 unique `then`
+    payloads. Middle lean is 3,057,894 bytes / 59,358 objects / 422 condition
+    nodes / 403 unique conditions / 410 unique `then` payloads. Bytes include
+    the trailing newline from the exact compact `write_schema_json` output.
+  - The lean output is below the 4,718,592-byte budget. Strict Helm lint over
+    that exact file took 23.36, 15.00, and 14.39 seconds (median 15.00), so the
+    final-phase lean veto does not trigger.
+  - One final-build dump produced 84 artifacts: 56 full corpus, 20 generator,
+    4 lean, and 4 final-output fixtures. Every dump artifact is byte-identical
+    to its adopted fixture. Across the 60 full/lean semantic schemas, total
+    serialized fixture bytes move 124,622,225 → 124,605,827 (`-16,398`) and
+    the net root definition count moves 26,563 → 26,519 (`-44`) after all
+    canonicalization, minification, and ownership-aware pruning effects.
+  - The compiled baseline/worktree prober checks 114,684 default-composed,
+    null-deletion documents across the 60 full and lean schemas and reports
+    zero acceptance flips. The seven-test hermetic law/control lane and the
+    three-test live Helm/provider/parity lane also pass.
+- Deviations:
+  - No frozen-plan contract was reinterpreted. Redundancy is represented as an
+    `Applied` disposition rather than a third top-level canonicalization
+    result, preserving the plan's exact `Applied | NotApplicable(original)`
+    boundary while retaining separate report counts.
+  - Canonical object conjunctions exposed an existing phase interaction:
+    missing-default backfill treated the direct object conjunct as an
+    alternative carrier and could accept a scalar Temporal replica. The
+    insertion path now recognizes only a proven object-only schema containing
+    an exact generator object conjunct and fills that same lane. Ordinary
+    foreign object roots retain their legacy openness; the focused Temporal
+    regression and zero-flip battery pin the distinction.
+  - The integration gate found four full-equality expectations outside the
+    84-artifact dump filter: three inline packaged/child-view fixtures and the
+    CLI full-fixture schema. Their changes are only the exhaustively proven
+    constructor/canonical rewrites. The CLI candidate was produced in its own
+    clean dump, all four complete equality tests pass, and their existing
+    semantic controls remain green. No corpus artifact or prober verdict
+    changed.
+- Adjudication evidence:
+  - No TIGHTEN or LOOSEN exists in the 114,684-probe fixture battery, so Step 3
+    has no new per-flip Helm verdict to adopt. The full live control replay
+    nevertheless passes under Helm 4.2.3 and the pinned Kubernetes 1.29
+    provider boundary, including the unconditional-fail control and all
+    touched-validator constructs.
+  - Exhaustive compiled-validator tests prove the canonical property-slot,
+    presence, not-null, and type-union rewrites. Missing closed-root slots
+    return `NotApplicable` without mutation; already non-null slots are
+    proven redundant; provider-owned payloads remain byte-structural inputs.
+  - Late reachability closes transitive `$defs` and `definitions` references,
+    decodes JSON Pointer names, and conservatively follows nested scopes. It
+    removes only unchanged definitions captured from generator output;
+    caller-added and caller-modified definitions survive even when dead.
+  - Final override replacement and fully inlined transport each have an
+    end-to-end regression proving that their orphaned generator definition is
+    removed after the final transform ordering.
+- Review dossier:
+  - Canonical algebra and constructor-owned type-union exhaustive tests:
+    `cargo nextest run -p helm-schema-gen canonical`.
+  - Late-prune ownership, reachability, and validation-equivalence tests:
+    `cargo nextest run -p helm-schema -E
+    'test(/(reachability|fully_inline|caller_overwrite)/)'`.
+  - Exact final-output and fact measurements:
+    `TMPDIR=/home/roman/dev/helm-schema-step3-prober-scratch cargo nextest
+    run -P integration -p helm-schema --test schema_emission_profiles
+    --run-ignored ignored-only --nocapture temporal_middle_policy_measurements`.
+  - Baseline-to-adopted compiled acceptance battery:
+    `SCHEMA_ACCEPTANCE_BASELINE_REF=d67020f
+    TMPDIR=/home/roman/dev/helm-schema-step3-prober-scratch cargo nextest run
+    -P integration -p helm-schema --test schema_emission_profiles
+    --run-ignored ignored-only --nocapture
+    early_provider_definition_pruning_is_acceptance_equivalent`; it reports
+    `charts_checked=60 probes_checked=114684 flips=0`.
+  - Hermetic monotonicity and three-category controls:
+    `TMPDIR=/home/roman/dev/helm-schema-step3-prober-scratch cargo nextest run
+    -P integration -p helm-schema --test schema_emission_profiles -E
+    'not test(/(early_provider_definition_pruning_is_acceptance_equivalent|middle_lean_transition_has_only_preregistered_tightenings|temporal_middle_policy_measurements)/)'`.
+  - Live Helm/provider controls and validator parity:
+    `TMPDIR=/home/roman/dev/helm-schema-step3-prober-scratch cargo nextest run
+    -P integration -p helm-schema --test schema_emission_profile_live
+    --run-ignored ignored-only`.
+  - Single clean final-build dump:
+    `mkdir -p /home/roman/dev/helm-schema-step3-final-dump-20260803-d`, then
+    `TMPDIR=/home/roman/dev/helm-schema-step3-final-dump-20260803-d
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 tests pass and the directory contains
+    exactly 84 JSON artifacts.
+  - Exact final lean output: `cargo run --quiet -p helm-schema-cli --
+    testdata/charts/schema-emission-temporal-wrapper --profile lean
+    --exclude-tests --compact --k8s-version v1.29.0-standalone-strict
+    --strict-k8s-version --k8s-schema-cache-dir
+    testdata/provider-bundle/kubernetes-json-schema-cache
+    --crd-catalog-cache-dir
+    testdata/provider-bundle/crds-catalog-cache --offline --output
+    /home/roman/dev/helm-schema-step3-lint/chart/values.schema.json`, followed
+    by `wc -c` and `jq '[.. | objects] | length'` on that file.
+  - Final Helm compile timing: copy the pinned wrapper to
+    `/home/roman/dev/helm-schema-step3-lint/chart`, place the exact preceding
+    output at `values.schema.json`, create its otherwise-empty `templates/`
+    directory, then run `/usr/bin/time -f
+    'elapsed=%e user=%U system=%S max_rss_kb=%M exit=%x' helm lint
+    /home/roman/dev/helm-schema-step3-lint/chart --strict` three times.
+  - Supplemental full-equality candidates and semantic controls:
+    `TMPDIR=/home/roman/dev/helm-schema-step3-cli-dump SCHEMA_DUMP=1 cargo
+    nextest run -P integration -p helm-schema-cli --test cli
+    generates_schema_for_fixture_chart_without_k8s_provider`, then `cargo
+    nextest run -P integration -p helm-schema-cli -E
+    'test(/(wrapper_chart_with_subchart_tarball_containing_dir_entries|generates_schema_for_fixture_chart_without_k8s_provider|nested_printf_around_common_fullname_keeps_name_overrides_nullable|subchart_values_are_scoped_to_the_coalesced_child_view)/)'`;
+    the final focused run reports 4 passed.
+- Gates on the final Step 3 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 42 feature combinations checked.
+  - `cargo nextest run --workspace`: exit 0; 1,169 passed.
+  - `task test:integration`: exit 0; 545 passed, 6 skipped.
+  - `task test:all`: exit 0; 1,718 passed, 6 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked.
+  - `task tokei:core`: exit 0; production Rust is 59,669 LOC (`+427` from
+    Step 2).
 - Commit: pending.
 
 ## Step 4 — configuration surface

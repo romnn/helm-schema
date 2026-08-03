@@ -7,6 +7,7 @@ use crate::error::EngineResult;
 use crate::flatten;
 use crate::output_pipeline::annotation::{FinalOutputPolicy, annotate_final_schema};
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
+use crate::output_pipeline::reachability::{OwnedDefinitions, prune_unreachable_owned_definitions};
 use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use crate::schema_override;
 
@@ -32,12 +33,15 @@ pub(crate) fn apply_schema_output_pipeline(
     policy: FinalOutputPolicy,
     options: OutputPipelineOptions,
 ) -> EngineResult<Value> {
+    let generated_definitions = OwnedDefinitions::capture(&schema);
     let override_identity = policy_inputs.identity();
     for override_schema in policy_inputs.into_prepared_override_schemas() {
         schema = schema_override::apply_prepared_schema_override(schema, override_schema);
     }
+    let generated_definitions = generated_definitions.retain_unchanged(&schema);
 
     schema = apply_output_transforms(schema, base_dir, options)?;
+    prune_unreachable_owned_definitions(&mut schema, &generated_definitions);
     annotate_final_schema(schema, policy, &override_identity, options.reference_mode)
 }
 

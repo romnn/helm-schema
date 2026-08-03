@@ -2767,21 +2767,13 @@
       "additionalProperties": {},
       "properties": {
         "additionalArgs": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Additional arguments to be added to the operator's args list."
+          "description": "Additional arguments to be added to the operator's args list.",
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
         }
       }
     },
@@ -2910,15 +2902,11 @@
                 "description": "Operator configuration.",
                 "properties": {
                   "clusterWide": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "This option determines if the operator is responsible for observing\nevents across the entire Kubernetes cluster or if its focus should be\nnarrowed down to the specific namespace within which it has been deployed."
+                    "description": "This option determines if the operator is responsible for observing\nevents across the entire Kubernetes cluster or if its focus should be\nnarrowed down to the specific namespace within which it has been deployed.",
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
                   }
                 }
               }
@@ -3134,13 +3122,9 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -3170,11 +3154,7 @@
             "additionalProperties": {},
             "properties": {
               "grafanaDashboard": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -3185,13 +3165,9 @@
       "additionalProperties": {},
       "properties": {
         "monitoring": {
-          "anyOf": [
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "null",
+            "object"
           ]
         }
       }
@@ -3256,13 +3232,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -3553,60 +3525,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "port": {
-              "not": {
-                "type": "null"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "webhook": {
-          "additionalProperties": {},
-          "description": "The webhook configuration.",
-          "properties": {
-            "port": {
-              "not": {
-                "type": "null"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "webhook": {
-          "description": "The webhook configuration.",
-          "required": [
-            "port"
-          ],
-          "type": "object"
         }
       }
     },
@@ -5852,6 +5770,9 @@
           ]
         }
       },
+      "required": [
+        "port"
+      ],
       "type": "object"
     },
     "serviceAccount": {
@@ -6347,6 +6268,9 @@
           "$ref": "#/$defs/E"
         }
       },
+      "required": [
+        "port"
+      ],
       "type": "object"
     }
   },

@@ -1,11 +1,29 @@
 use helm_schema_core::GuardValue;
 use serde_json::{Number, Value};
+use std::collections::BTreeSet;
 
 use crate::merge::{merge_two_schemas, union_schema_list};
 use crate::schema_node::{JsonSchemaType, SchemaNode};
 
 pub(crate) fn type_schema(ty: &str) -> Value {
     SchemaNode::type_named(ty).into_value()
+}
+
+/// Builds a union whose alternatives are known to be generator-owned JSON
+/// kinds. Keeping this constructor separate avoids rewriting type-looking
+/// provider payloads after their provenance has been erased.
+pub(crate) fn type_union_schema(types: impl IntoIterator<Item = impl AsRef<str>>) -> Value {
+    let types = types
+        .into_iter()
+        .map(|schema_type| schema_type.as_ref().to_string())
+        .collect::<BTreeSet<_>>();
+    match types.len() {
+        0 => empty_schema(),
+        1 => type_schema(types.first().map(String::as_str).unwrap_or_default()),
+        _ => serde_json::json!({
+            "type": types.into_iter().map(Value::String).collect::<Vec<_>>(),
+        }),
+    }
 }
 
 pub(crate) fn guard_value_to_json(value: &GuardValue) -> Option<Value> {
@@ -170,7 +188,7 @@ pub(crate) fn schema_allows_type(schema: &Value, expected_type: &str) -> bool {
     false
 }
 
-fn schema_excludes_type(schema: &Value, expected_type: &str) -> bool {
+pub(crate) fn schema_excludes_type(schema: &Value, expected_type: &str) -> bool {
     if schema == &Value::Bool(false) {
         return true;
     }

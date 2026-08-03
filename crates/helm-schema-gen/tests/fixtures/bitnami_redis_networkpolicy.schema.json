@@ -237,13 +237,9 @@
         "additionalProperties": {},
         "properties": {
           "architecture": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -402,23 +398,6 @@
                 "additionalProperties": {},
                 "properties": {
                   "containerPorts": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "master": {
-                "additionalProperties": {},
-                "properties": {
-                  "containerPorts": {
                     "required": [
                       "redis"
                     ],
@@ -432,11 +411,20 @@
             "additionalProperties": {},
             "properties": {
               "master": {
-                "anyOf": [
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "containerPorts": {
                     "type": "object"
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "master": {
+                "type": "object"
               }
             }
           },
@@ -444,11 +432,7 @@
             "additionalProperties": {},
             "properties": {
               "metrics": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           },
@@ -621,11 +605,7 @@
             "additionalProperties": {},
             "properties": {
               "sentinel": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -671,13 +651,9 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -773,11 +749,10 @@
                 "additionalProperties": {},
                 "properties": {
                   "containerPorts": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "required": [
+                      "http"
+                    ],
+                    "type": "object"
                   }
                 }
               }
@@ -790,9 +765,6 @@
                 "additionalProperties": {},
                 "properties": {
                   "containerPorts": {
-                    "required": [
-                      "http"
-                    ],
                     "type": "object"
                   }
                 }
@@ -806,11 +778,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "metrics": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "type": "object"
                   }
                 }
               }
@@ -1119,13 +1087,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -1170,13 +1134,9 @@
         "additionalProperties": {},
         "properties": {
           "namespaceOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -1349,16 +1309,10 @@
                 "additionalProperties": {},
                 "properties": {
                   "ingressNSMatchLabels": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
                     ]
                   }
                 }
@@ -1535,16 +1489,10 @@
                 "additionalProperties": {},
                 "properties": {
                   "ingressNSPodMatchLabels": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
                     ]
                   }
                 }
@@ -1923,16 +1871,10 @@
                     "additionalProperties": {},
                     "properties": {
                       "ingressNSMatchLabels": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
                         ]
                       }
                     }
@@ -2170,16 +2112,10 @@
                     "additionalProperties": {},
                     "properties": {
                       "ingressNSPodMatchLabels": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
                         ]
                       }
                     }
@@ -2281,11 +2217,10 @@
                 "additionalProperties": {},
                 "properties": {
                   "containerPorts": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "required": [
+                      "sentinel"
+                    ],
+                    "type": "object"
                   }
                 }
               }
@@ -2298,9 +2233,6 @@
                 "additionalProperties": {},
                 "properties": {
                   "containerPorts": {
-                    "required": [
-                      "sentinel"
-                    ],
                     "type": "object"
                   }
                 }
@@ -3460,16 +3392,10 @@
             "additionalProperties": {},
             "properties": {
               "ingressNSMatchLabels": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "array",
+                  "null",
+                  "object"
                 ]
               }
             }
@@ -3545,16 +3471,10 @@
             "additionalProperties": {},
             "properties": {
               "ingressNSPodMatchLabels": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "array",
+                  "null",
+                  "object"
                 ]
               }
             }

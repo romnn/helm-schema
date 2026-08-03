@@ -403,10 +403,7 @@ fn conditionally_rendered_quoted_tpl_clauses() -> serde_json::Value {
                 "additionalProperties": {},
                 "properties": {
                     "endpoint": {
-                        "anyOf": [
-                            { "type": "string" },
-                            { "type": "null" },
-                        ],
+                        "type": ["null", "string"],
                     },
                 },
             },

@@ -365,67 +365,14 @@
       "type": "null"
     },
     "I": {
-      "additionalProperties": {
-        "additionalProperties": {},
-        "properties": {
-          "hosts": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      },
-      "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-      "items": {
-        "additionalProperties": {},
-        "properties": {
-          "hosts": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    "J": {
-      "anyOf": [
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        }
+      "type": [
+        "array",
+        "integer",
+        "null",
+        "object"
       ]
     },
-    "K": {
+    "J": {
       "type": [
         "string",
         "null"
@@ -514,27 +461,17 @@
       ]
     },
     "i": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "j": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "k": {
+    "j": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "l": {
+    "k": {
       "properties": {
         "ingress": {
           "properties": {
@@ -553,7 +490,7 @@
       ],
       "type": "object"
     },
-    "m": {
+    "l": {
       "allOf": [
         {
           "additionalProperties": {
@@ -576,7 +513,7 @@
         }
       ]
     },
-    "n": {
+    "m": {
       "additionalProperties": false,
       "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
       "properties": {
@@ -782,7 +719,7 @@
         "null"
       ]
     },
-    "o": {
+    "n": {
       "properties": {
         "enabled": {
           "$ref": "#/$defs/t"
@@ -793,7 +730,7 @@
       ],
       "type": "object"
     },
-    "p": {
+    "o": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -804,13 +741,13 @@
       ],
       "type": "object"
     },
-    "q": {
+    "p": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "r": {
+    "q": {
       "properties": {
         "tls": {
           "$ref": "#/$defs/t"
@@ -821,7 +758,7 @@
       ],
       "type": "object"
     },
-    "s": {
+    "r": {
       "properties": {
         "teams": {
           "enum": [
@@ -834,32 +771,7 @@
       ],
       "type": "object"
     },
-    "t": {
-      "anyOf": [
-        {
-          "const": true
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "minProperties": 1,
-          "type": "object"
-        }
-      ]
-    },
-    "u": {
+    "s": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
@@ -1049,7 +961,32 @@
         "null"
       ]
     },
-    "v": {
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    },
+    "u": {
       "additionalProperties": {},
       "properties": {
         "paths": {
@@ -1378,7 +1315,7 @@
         }
       }
     },
-    "w": {
+    "v": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -1544,7 +1481,7 @@
         }
       }
     },
-    "x": {
+    "w": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -1708,24 +1645,45 @@
         }
       ]
     },
+    "x": {
+      "additionalProperties": {
+        "additionalProperties": {},
+        "properties": {
+          "hosts": {
+            "type": [
+              "array",
+              "integer",
+              "null",
+              "object"
+            ]
+          }
+        }
+      },
+      "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+      "items": {
+        "additionalProperties": {},
+        "properties": {
+          "hosts": {
+            "type": [
+              "array",
+              "integer",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
     "y": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
           "paths": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "array",
+              "integer",
+              "null",
+              "object"
             ]
           }
         }
@@ -1734,19 +1692,11 @@
         "additionalProperties": {},
         "properties": {
           "paths": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "array",
+              "integer",
+              "null",
+              "object"
             ]
           }
         }
@@ -1783,7 +1733,7 @@
           "description": "configure UI ENVs",
           "properties": {
             "teams": {
-              "$ref": "#/$defs/J"
+              "type": "array"
             }
           }
         }
@@ -1797,7 +1747,7 @@
           "description": "configure UI ENVs",
           "properties": {
             "teams": {
-              "type": "array"
+              "$ref": "#/$defs/I"
             }
           }
         }
@@ -1805,7 +1755,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/l"
+        "$ref": "#/$defs/k"
       },
       "then": {
         "allOf": [
@@ -1880,7 +1830,7 @@
                 "description": "configure UI ingress. If needed: \"enabled: true\"",
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/I"
+                    "$ref": "#/$defs/x"
                   }
                 }
               }
@@ -1905,7 +1855,10 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/i"
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       }
@@ -1956,12 +1909,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/k"
           },
           {
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/q"
               }
             },
             "required": [
@@ -2011,7 +1964,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/k"
           },
           {
             "$ref": "#/$defs/C"
@@ -2019,7 +1972,7 @@
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/o"
               }
             },
             "required": [
@@ -2033,7 +1986,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/x"
+            "$ref": "#/$defs/w"
           }
         }
       }
@@ -2054,23 +2007,10 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/i"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "configure UI service",
-          "properties": {
-            "port": {
-              "not": {
-                "type": "null"
-              }
-            }
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       }
@@ -2083,21 +2023,12 @@
           "description": "configure UI service",
           "properties": {
             "type": {
-              "$ref": "#/$defs/i"
+              "type": [
+                "null",
+                "string"
+              ]
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "description": "configure UI service",
-          "required": [
-            "port"
-          ],
-          "type": "object"
         }
       }
     },
@@ -2232,7 +2163,7 @@
               {
                 "properties": {
                   "envs": {
-                    "$ref": "#/$defs/s"
+                    "$ref": "#/$defs/r"
                   }
                 },
                 "required": [
@@ -2502,7 +2433,7 @@
             "preferredDuringSchedulingIgnoredDuringExecution": {
               "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
               "items": {
-                "$ref": "#/$defs/n"
+                "$ref": "#/$defs/m"
               },
               "type": [
                 "array",
@@ -2512,7 +2443,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/s"
               },
               "type": [
                 "array",
@@ -2532,7 +2463,7 @@
             "preferredDuringSchedulingIgnoredDuringExecution": {
               "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
               "items": {
-                "$ref": "#/$defs/n"
+                "$ref": "#/$defs/m"
               },
               "type": [
                 "array",
@@ -2542,7 +2473,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/s"
               },
               "type": [
                 "array",
@@ -2579,7 +2510,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/s"
+                "$ref": "#/$defs/r"
               }
             ]
           },
@@ -2709,7 +2640,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/k"
+                        "$ref": "#/$defs/j"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -2790,7 +2721,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/k"
+                        "$ref": "#/$defs/j"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -2916,7 +2847,7 @@
             "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
             "properties": {
               "name": {
-                "$ref": "#/$defs/k"
+                "$ref": "#/$defs/j"
               }
             },
             "type": [
@@ -2942,7 +2873,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/n"
           },
           "then": {
             "allOf": [
@@ -2952,7 +2883,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/l"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -2966,10 +2897,10 @@
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/v"
+                      "$ref": "#/$defs/u"
                     },
                     "items": {
-                      "$ref": "#/$defs/v"
+                      "$ref": "#/$defs/u"
                     }
                   }
                 }
@@ -3054,7 +2985,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/I"
+                    "$ref": "#/$defs/x"
                   }
                 }
               }
@@ -3065,10 +2996,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/n"
               },
               {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/q"
               }
             ]
           },
@@ -3093,11 +3024,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/w"
+                      "$ref": "#/$defs/v"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/w"
+                      "$ref": "#/$defs/v"
                     }
                   }
                 }
@@ -3121,11 +3052,11 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/x"
+      "$ref": "#/$defs/w"
     },
     "nodeSelector": {
       "additionalProperties": {
-        "$ref": "#/$defs/K"
+        "$ref": "#/$defs/J"
       },
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
       "type": [
@@ -3137,10 +3068,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/q"
+          "$ref": "#/$defs/p"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
           "$ref": "#/$defs/1"
@@ -3236,7 +3167,7 @@
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/i"
         },
         {
           "$ref": "#/$defs/2"
@@ -3372,7 +3303,7 @@
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/j"
+                    "$ref": "#/$defs/i"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -3391,10 +3322,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/q"
+              "$ref": "#/$defs/p"
             },
             {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/1"
@@ -3411,7 +3342,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/j"
+              "$ref": "#/$defs/i"
             }
           ]
         },
@@ -3475,6 +3406,9 @@
           ]
         }
       },
+      "required": [
+        "port"
+      ],
       "type": "object"
     },
     "serviceAccount": {
@@ -3482,7 +3416,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/o"
           },
           "then": {
             "additionalProperties": {},

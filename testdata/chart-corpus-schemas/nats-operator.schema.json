@@ -1246,15 +1246,11 @@
       "additionalProperties": {},
       "properties": {
         "antiAffinity": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard"
+          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       }
     },
@@ -1621,12 +1617,8 @@
                 "additionalProperties": {},
                 "properties": {
                   "auth": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version"
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "type": "object"
                   }
                 }
               }
@@ -1723,24 +1715,6 @@
                 "additionalProperties": {},
                 "properties": {
                   "configReload": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+."
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "required": [
                       "enabled"
@@ -1796,6 +1770,20 @@
                     "required": [
                       "tag"
                     ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "type": "object"
                   }
                 }
@@ -1893,24 +1881,6 @@
                 "additionalProperties": {},
                 "properties": {
                   "metrics": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "Prometheus Metrics Exporter"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
                     "description": "Prometheus Metrics Exporter",
                     "required": [
                       "enabled"
@@ -1966,6 +1936,20 @@
                     "required": [
                       "tag"
                     ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
                     "type": "object"
                   }
                 }
@@ -2010,11 +1994,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "type": "object"
                   }
                 }
               }
@@ -2171,12 +2151,8 @@
                 "description": "Prometheus Metrics Exporter",
                 "properties": {
                   "servicemonitor": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "Prometheus Operator ServiceMonitor config"
+                    "description": "Prometheus Operator ServiceMonitor config",
+                    "type": "object"
                   }
                 }
               }
@@ -2435,13 +2411,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -2507,15 +2479,11 @@
       "additionalProperties": {},
       "properties": {
         "updateStrategy": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%"
+          "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       }
     },

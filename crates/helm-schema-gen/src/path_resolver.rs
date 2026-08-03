@@ -884,13 +884,13 @@ fn fail_value_requirement_schema(
     for requirement in requirements {
         match requirement {
             FailValueRequirement::SchemaType(schema_type) => {
-                let type_schema = type_schema(schema_type);
                 if per_member {
-                    parts.push(type_schema);
+                    parts.push(type_schema(schema_type));
                 } else {
-                    parts.push(serde_json::json!({
-                        "anyOf": [type_schema, { "type": "null" }]
-                    }));
+                    parts.push(crate::schema_model::type_union_schema([
+                        schema_type.as_str(),
+                        "null",
+                    ]));
                 }
             }
             // No null tolerance: the consumer type-asserts before its nil
@@ -958,9 +958,10 @@ fn fail_value_requirement_schema(
             }
             // Nil compares, so a null member is as valid as an absent one.
             FailValueRequirement::ComparableKind(schema_type) => {
-                parts.push(serde_json::json!({
-                    "anyOf": [type_schema(schema_type), { "type": "null" }]
-                }));
+                parts.push(crate::schema_model::type_union_schema([
+                    schema_type.as_str(),
+                    "null",
+                ]));
             }
             FailValueRequirement::NotSchemaType(schema_type) => {
                 parts.push(serde_json::json!({ "not": type_schema(schema_type) }));
@@ -1013,14 +1014,13 @@ fn fail_value_requirement_schema(
                 parts.push(Value::Object(bounds));
             }
             FailValueRequirement::MemberHost { handled_kinds, .. } => {
-                let mut arms = vec![type_schema("object")];
-                arms.extend(
+                let types = std::iter::once("object").chain(
                     handled_kinds
                         .iter()
                         .filter(|kind| kind.as_str() != "object")
-                        .map(|kind| type_schema(kind)),
+                        .map(String::as_str),
                 );
-                parts.push(serde_json::json!({ "anyOf": arms }));
+                parts.push(crate::schema_model::type_union_schema(types));
             }
             FailValueRequirement::Iterable { allow_integer } => {
                 parts.push(crate::runtime_iterable_schema(*allow_integer));

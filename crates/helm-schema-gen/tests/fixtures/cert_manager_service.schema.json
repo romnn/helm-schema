@@ -88,13 +88,9 @@
             "additionalProperties": {},
             "properties": {
               "creator": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "null",
+                  "string"
                 ]
               }
             }
@@ -146,11 +142,7 @@
             "additionalProperties": {},
             "properties": {
               "global": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           },
@@ -490,11 +482,10 @@
                 "additionalProperties": {},
                 "properties": {
                   "servicemonitor": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "required": [
+                      "targetPort"
+                    ],
+                    "type": "object"
                   }
                 }
               }
@@ -507,9 +498,6 @@
                 "additionalProperties": {},
                 "properties": {
                   "servicemonitor": {
-                    "required": [
-                      "targetPort"
-                    ],
                     "type": "object"
                   }
                 }
@@ -806,13 +794,9 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -886,13 +870,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -925,11 +905,7 @@
             "additionalProperties": {},
             "properties": {
               "podmonitor": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }

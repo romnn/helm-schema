@@ -21,6 +21,7 @@ use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProv
 
 mod block_scalar_projection;
 mod bound_helpers;
+mod canonical_emission;
 mod chart_local_crd_contracts;
 mod completed_token_contracts;
 mod default_hint_extraction;
@@ -273,33 +274,26 @@ fn expected_range_key_string_schema(path: &str, includes_declared_map: bool) -> 
             serde_json::json!({ "type": "null" }),
         ]);
     }
+    let iterable = serde_json::json!({ "type": ["array", "null", "object"] });
+    let collection = if includes_declared_map {
+        serde_json::json!({ "anyOf": variants })
+    } else {
+        iterable.clone()
+    };
+    let string_key_domain = serde_json::json!({
+        "anyOf": [
+            { "type": "object" },
+            { "maxItems": 0, "type": "array" },
+            { "type": "null" },
+        ]
+    });
     let mut properties = serde_json::Map::new();
-    properties.insert(path.to_string(), serde_json::json!({ "anyOf": variants }));
+    properties.insert(path.to_string(), collection);
     expected_values_schema(
         properties,
         vec![
-            // The unconditional two-variable range demands an iterable
-            // collection in every state, beside the key-contract arm.
-            root_property_schema(
-                path,
-                serde_json::json!({
-                    "anyOf": [
-                        { "type": "array" },
-                        { "type": "object" },
-                        { "type": "null" },
-                    ]
-                }),
-            ),
-            root_property_schema(
-                path,
-                serde_json::json!({
-                    "anyOf": [
-                        { "type": "object" },
-                        { "maxItems": 0, "type": "array" },
-                        { "type": "null" },
-                    ]
-                }),
-            ),
+            root_property_schema(path, string_key_domain),
+            root_property_schema(path, iterable),
         ],
         false,
     )
@@ -434,7 +428,7 @@ fn schema_contains_open_string_map(schema: &Value) -> bool {
         return true;
     }
 
-    ["anyOf", "oneOf"]
+    ["anyOf", "allOf", "oneOf"]
         .into_iter()
         .filter_map(|key| schema.get(key).and_then(Value::as_array))
         .flatten()
@@ -468,7 +462,7 @@ fn schema_contains_type(schema: &Value, schema_type: &str) -> bool {
         return true;
     }
 
-    ["anyOf", "oneOf"]
+    ["anyOf", "allOf", "oneOf"]
         .into_iter()
         .filter_map(|key| schema.get(key).and_then(Value::as_array))
         .flatten()
@@ -725,14 +719,26 @@ fn permits_null(schema: &Value) -> bool {
     schema_accepts_instance(schema, &Value::Null)
 }
 
-fn any_of_variant_matching<'a, F: Fn(&'a Value) -> bool>(
+fn schema_variant_matching<'a, F: Fn(&'a Value) -> bool>(
     schema: &'a Value,
     predicate: F,
 ) -> Option<&'a Value> {
-    schema
-        .get("anyOf")
-        .and_then(Value::as_array)
-        .and_then(|variants| variants.iter().find(|variant| predicate(variant)))
+    fn find<'a>(schema: &'a Value, predicate: &impl Fn(&'a Value) -> bool) -> Option<&'a Value> {
+        if predicate(schema) {
+            return Some(schema);
+        }
+        for keyword in ["anyOf", "allOf", "oneOf"] {
+            if let Some(found) = schema
+                .get(keyword)
+                .and_then(Value::as_array)
+                .and_then(|variants| variants.iter().find_map(|variant| find(variant, predicate)))
+            {
+                return Some(found);
+            }
+        }
+        schema.get("then").and_then(|then| find(then, predicate))
+    }
+    find(schema, &predicate)
 }
 
 /// The emitted arm of a ranged node with the given `type`.
@@ -740,7 +746,16 @@ fn any_of_variant_matching<'a, F: Fn(&'a Value) -> bool>(
 /// A conditional range keeps its runtime domain in an `allOf`/`then` arm;
 /// an unconditional range carries the same alternatives directly.
 fn ranged_arm_of_type<'a>(schema: &'a Value, ty: &str) -> Option<&'a Value> {
-    if schema.get("type").and_then(Value::as_str) == Some(ty) {
+    if schema.get("type").and_then(Value::as_str) == Some(ty)
+        || schema
+            .get("type")
+            .and_then(Value::as_array)
+            .is_some_and(|types| {
+                types
+                    .iter()
+                    .any(|schema_type| schema_type.as_str() == Some(ty))
+            })
+    {
         return Some(schema);
     }
     for keyword in ["anyOf", "oneOf"] {

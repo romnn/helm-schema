@@ -2815,12 +2815,6 @@ fn live_unset_requires_a_present_object_operand() {
             "additionalProperties": false,
             "allOf": [
                 {
-                    "additionalProperties": {},
-                    "properties": {
-                        "context": { "type": "object" }
-                    }
-                },
-                {
                     "if": {
                         "anyOf": [
                             {
@@ -2843,7 +2837,12 @@ fn live_unset_requires_a_present_object_operand() {
                 }
             ],
             "properties": {
-                "context": {}
+                "context": {
+                    "allOf": [
+                        {},
+                        { "type": "object" },
+                    ]
+                }
             },
             "type": "object"
         })

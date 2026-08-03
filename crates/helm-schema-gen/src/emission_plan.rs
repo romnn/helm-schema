@@ -8,7 +8,7 @@ use crate::base_schema::{ConditionalTargetIndex, classify_base};
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
-use crate::emission_policy::{EmissionClass, EmissionPolicy};
+use crate::emission_policy::{EmissionClass, EmissionOrigin, EmissionPolicy};
 use crate::emission_report::{EmissionReport, FactRecord};
 use crate::overlay_lowering::{
     ConditionalHostPreparation, LoweredConjunct, append_selected_constraints,
@@ -19,7 +19,10 @@ use crate::provider_definitions::{
     extract_provider_definitions, extract_repeated_provider_payloads, insert_definitions_into_root,
     prune_unreachable_provider_definitions,
 };
-use crate::schema_tree::{SchemaDocument, draft07_root_document};
+use crate::schema_tree::{
+    CanonicalConstraintApplication, CanonicalConstraintOutcome, SchemaDocument,
+    draft07_root_document,
+};
 use crate::{ValuesSchemaInput, split_value_path};
 
 pub(crate) struct LoweredEmissionPlan {
@@ -143,7 +146,6 @@ impl LoweredEmissionPlan {
             .collect::<Vec<_>>();
         let support = EmissionSupportPlan::build(
             &contract_schema_signals,
-            &documents,
             &resolved_paths,
             &conditional_schemas,
         );
@@ -162,9 +164,8 @@ impl LoweredEmissionPlan {
     pub(crate) fn project(&self, policy: EmissionPolicy) -> ProjectedTree {
         debug_assert!(policy.is_valid());
         let mut emission_report = EmissionReport::default();
-        let mut selected_indices = Vec::new();
         let mut selected_conditionals = Vec::new();
-        for (conditional_index, conjunct) in self.conditional_schemas.iter().enumerate() {
+        for conjunct in &self.conditional_schemas {
             let selected = policy.selects(&conjunct.class);
             emission_report.record_fact(FactRecord {
                 class: &conjunct.class,
@@ -172,7 +173,6 @@ impl LoweredEmissionPlan {
                 selected,
             });
             if selected {
-                selected_indices.push(conditional_index);
                 selected_conditionals.push(conjunct.clone());
             }
         }
@@ -205,19 +205,12 @@ impl LoweredEmissionPlan {
             &resolved_paths,
             &self.support,
         );
-        let folded_fact_indices = self.support.conditional_hosts.apply(&mut document);
-        let mut emitted_conditionals = Vec::new();
-        for (conditional_index, conjunct) in selected_indices.into_iter().zip(selected_conditionals)
-        {
-            if folded_fact_indices.contains(&conditional_index) {
-                if matches!(conjunct.class, EmissionClass::Mandatory) {
-                    emission_report.mandatory_outcomes.equivalent += 1;
-                }
-            } else {
-                emitted_conditionals.push(conjunct);
-            }
-        }
-
+        self.support.conditional_hosts.apply(&mut document);
+        let fallback_conditionals = canonicalize_mandatory_constraints(
+            &mut document,
+            selected_conditionals,
+            &mut emission_report,
+        );
         let absence = crate::condition_encoding::AbsenceDefaults {
             deeper_stage: &self.documents.subchart_defaults,
             dependency_refill: &self.documents.dependency_refill,
@@ -225,7 +218,7 @@ impl LoweredEmissionPlan {
         };
         append_selected_constraints(
             &mut document,
-            emitted_conditionals,
+            fallback_conditionals,
             &self.documents.composed,
             absence,
             &mut emission_report,
@@ -357,10 +350,54 @@ impl LoweredEmissionPlan {
     }
 }
 
+fn canonicalize_mandatory_constraints(
+    document: &mut SchemaDocument,
+    conditionals: Vec<LoweredConjunct>,
+    report: &mut EmissionReport,
+) -> Vec<LoweredConjunct> {
+    let mut fallback = Vec::new();
+    for conjunct in conditionals {
+        if !matches!(conjunct.class, EmissionClass::Mandatory) {
+            fallback.push(conjunct);
+            continue;
+        }
+        let mut target_segments = conjunct.carrier.ancestor_segments.clone();
+        target_segments.extend(conjunct.carrier.relative_target_segments.iter().cloned());
+        let is_object_host = conjunct.schema.as_object().is_some_and(|object| {
+            object.len() == 1 && object.get("type").and_then(Value::as_str) == Some("object")
+        });
+        let canonical_object_host = is_object_host
+            && conjunct.carrier.ancestor_segments.is_empty()
+            && matches!(
+                conjunct.origin,
+                EmissionOrigin::FailImplication | EmissionOrigin::Backprojection
+            );
+        let outcome = if !is_object_host || canonical_object_host {
+            document.canonicalize_constraint_at_path(&target_segments, &conjunct.schema)
+        } else {
+            CanonicalConstraintOutcome::NotApplicable
+        };
+        match outcome {
+            CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted) => {
+                report.canonicalization.applied += 1;
+                report.mandatory_outcomes.emitted += 1;
+            }
+            CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant) => {
+                report.canonicalization.redundant += 1;
+                report.mandatory_outcomes.redundant += 1;
+            }
+            CanonicalConstraintOutcome::NotApplicable => {
+                report.canonicalization.fallback += 1;
+                fallback.push(conjunct);
+            }
+        }
+    }
+    fallback
+}
+
 impl EmissionSupportPlan {
     fn build(
         contract_schema_signals: &ContractSchemaSignals,
-        documents: &RootValuesDocuments,
         resolved_paths: &[ResolvedPathSchema],
         conditional_schemas: &[LoweredConjunct],
     ) -> Self {
@@ -442,14 +479,7 @@ impl EmissionSupportPlan {
             default_fill_skip_paths,
             conditional_hosts: ConditionalHostPreparation::default(),
         };
-        let mut support_document = materialize_base_document(
-            contract_schema_signals,
-            &documents.input_defaults,
-            resolved_paths,
-            &support,
-        );
-        support.conditional_hosts =
-            prepare_conditional_hosts(&mut support_document, conditional_schemas);
+        support.conditional_hosts = prepare_conditional_hosts(conditional_schemas);
         support
     }
 }

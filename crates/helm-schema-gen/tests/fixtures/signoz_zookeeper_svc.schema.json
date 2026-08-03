@@ -94,13 +94,9 @@
         "additionalProperties": {},
         "properties": {
           "commonAnnotations": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -137,13 +133,9 @@
         "additionalProperties": {},
         "properties": {
           "commonLabels": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -165,13 +157,9 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -193,13 +181,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -289,13 +273,9 @@
             "additionalProperties": {},
             "properties": {
               "annotations": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "null",
+                  "string"
                 ]
               }
             }
@@ -353,13 +333,9 @@
             "additionalProperties": {},
             "properties": {
               "extraPorts": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "null",
+                  "string"
                 ]
               }
             }
@@ -639,11 +615,7 @@
             "additionalProperties": {},
             "properties": {
               "nodePorts": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -711,46 +683,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "election": {
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "follower": {
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -851,38 +783,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "required": [
-                "election"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "required": [
-                "follower"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -932,13 +832,9 @@
             "additionalProperties": {},
             "properties": {
               "sessionAffinityConfig": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "null",
+                  "string"
                 ]
               }
             }
@@ -953,42 +849,12 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
+              "type": [
+                "null",
+                "string"
               ]
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "type": {
-              "not": {
-                "type": "null"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "required": [
-            "type"
-          ],
-          "type": "object"
         }
       }
     },
@@ -2648,6 +2514,10 @@
             },
             "tls": {}
           },
+          "required": [
+            "election",
+            "follower"
+          ],
           "type": "object"
         },
         "sessionAffinity": {
@@ -3000,6 +2870,9 @@
           ]
         }
       },
+      "required": [
+        "type"
+      ],
       "type": "object"
     },
     "serviceAccount": {},

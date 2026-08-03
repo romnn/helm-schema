@@ -477,8 +477,8 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
             .is_some_and(|properties| properties.contains_key("initialDelaySeconds")),
         "Probe fields must be guard-scoped, not unconditional, got {probe}"
     );
-    let guard = probe
-        .pointer("/allOf/0/if")
+    let guard = schema_variant_matching(probe, |variant| variant.get("if").is_some())
+        .and_then(|variant| variant.get("if"))
         .expect("probe overlay guard present");
     assert!(
         guard.to_string().contains("enabled"),

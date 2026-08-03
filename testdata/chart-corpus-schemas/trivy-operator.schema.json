@@ -6425,11 +6425,7 @@
                 "description": "alternateReportStorage is the flag to enable alternate storage for all trivy reports (crds) in the form json files inside of a persistent volume",
                 "properties": {
                   "podSecurityContext": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "type": "object"
                   }
                 }
               }
@@ -6513,15 +6509,11 @@
           "additionalProperties": {},
           "properties": {
             "specs": {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "specs is a list of compliance specs to be used by the cluster compliance scanner\n- k8s-cis-1.23\n- k8s-nsa-1.0\n- k8s-pss-baseline-0.1\n- k8s-pss-restricted-0.1\n- eks-cis-1.4\n- rke2-cis-1.24"
+              "description": "specs is a list of compliance specs to be used by the cluster compliance scanner\n- k8s-cis-1.23\n- k8s-nsa-1.0\n- k8s-pss-baseline-0.1\n- k8s-pss-restricted-0.1\n- eks-cis-1.4\n- rke2-cis-1.24",
+              "type": [
+                "array",
+                "null"
+              ]
             }
           }
         }
@@ -6576,15 +6568,11 @@
             "additionalProperties": {},
             "properties": {
               "fullnameOverride": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "fullnameOverride override operator full name"
+                "description": "fullnameOverride override operator full name",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           },
@@ -6658,11 +6646,7 @@
             "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values",
             "properties": {
               "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -6686,12 +6670,8 @@
         "additionalProperties": {},
         "properties": {
           "global": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ],
-            "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values"
+            "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values",
+            "type": "object"
           }
         }
       }
@@ -7158,12 +7138,8 @@
                     "additionalProperties": {},
                     "properties": {
                       "extraServerVolumes": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          }
-                        ],
-                        "description": "volumes set trivy-server volumes"
+                        "description": "volumes set trivy-server volumes",
+                        "type": "object"
                       }
                     }
                   }
@@ -7396,11 +7372,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "server": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "type": "object"
                   }
                 }
               }
@@ -7760,15 +7732,11 @@
       "additionalProperties": {},
       "properties": {
         "managedBy": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "managedBy is similar to .Release.Service but allows to overwrite the value"
+          "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       }
     },
@@ -7788,15 +7756,11 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "nameOverride override operator name"
+            "description": "nameOverride override operator name",
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       }
@@ -7933,30 +7897,14 @@
             "additionalProperties": {},
             "properties": {
               "namespace": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "namespace to install the operator, defaults to the .Release.Namespace"
+                "description": "namespace to install the operator, defaults to the .Release.Namespace",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "operator": {
-          "anyOf": [
-            {
-              "type": "object"
-            }
-          ]
         }
       }
     },
@@ -8008,15 +7956,11 @@
             "additionalProperties": {},
             "properties": {
               "registryPassword": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "registryPassword is the password for the registry"
+                "description": "registryPassword is the password for the registry",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -8057,15 +8001,11 @@
             "additionalProperties": {},
             "properties": {
               "registryUser": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "registryUser is the user for the registry"
+                "description": "registryUser is the user for the registry",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -8101,23 +8041,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
-          "properties": {
-            "metricsPort": {
-              "description": "port exposed by the Service",
-              "not": {
-                "type": "null"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "properties": {
           "service": {
@@ -8145,30 +8068,14 @@
             "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
             "properties": {
               "type": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "the Service type"
+                "description": "the Service type",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
-          "required": [
-            "metricsPort"
-          ],
-          "type": "object"
         }
       }
     },
@@ -8303,18 +8210,12 @@
                 "additionalProperties": {},
                 "properties": {
                   "insecureRegistries": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "The registry to which insecure connections are allowed. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
+                    "description": "The registry to which insecure connections are allowed. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
                   }
                 }
               }
@@ -8381,18 +8282,12 @@
                 "additionalProperties": {},
                 "properties": {
                   "nonSslRegistries": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Registries without SSL. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
+                    "description": "Registries without SSL. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
                   }
                 }
               }
@@ -8442,18 +8337,12 @@
                     "description": "Mirrored registries. There can be multiple registries with different keys.\nMake sure to quote registries containing dots",
                     "properties": {
                       "mirror": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "\"docker.io\": docker-mirror.example.com"
+                        "description": "\"docker.io\": docker-mirror.example.com",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
                       }
                     }
                   }
@@ -8468,12 +8357,8 @@
                 "additionalProperties": {},
                 "properties": {
                   "registry": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "Mirrored registries. There can be multiple registries with different keys.\nMake sure to quote registries containing dots"
+                    "description": "Mirrored registries. There can be multiple registries with different keys.\nMake sure to quote registries containing dots",
+                    "type": "object"
                   }
                 }
               }
@@ -8529,10 +8414,10 @@
               "trivy": {
                 "anyOf": [
                   {
-                    "type": "array"
+                    "type": "object"
                   },
                   {
-                    "type": "object"
+                    "$ref": "#/$defs/1H"
                   },
                   {
                     "type": "null"
@@ -8545,16 +8430,10 @@
             "additionalProperties": {},
             "properties": {
               "trivy": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/1H"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "array",
+                  "null",
+                  "object"
                 ]
               }
             }
@@ -8596,15 +8475,11 @@
             "additionalProperties": {},
             "properties": {
               "dbRepositoryPassword": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The password for dbRepository authentication"
+                "description": "The password for dbRepository authentication",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -8645,15 +8520,11 @@
             "additionalProperties": {},
             "properties": {
               "dbRepositoryUsername": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The username for dbRepository authentication"
+                "description": "The username for dbRepository authentication",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -8694,15 +8565,11 @@
             "additionalProperties": {},
             "properties": {
               "githubToken": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "githubToken is the GitHub access token used by Trivy to download the vulnerabilities\ndatabase from GitHub. Only applicable in Standalone mode."
+                "description": "githubToken is the GitHub access token used by Trivy to download the vulnerabilities\ndatabase from GitHub. Only applicable in Standalone mode.",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -8741,11 +8608,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "image": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+                    "type": "object"
                   }
                 }
               }
@@ -8782,15 +8645,11 @@
             "additionalProperties": {},
             "properties": {
               "mode": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required."
+                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required.",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -8881,15 +8740,11 @@
                 "description": "resources resource requests and limits for scan job containers",
                 "properties": {
                   "limits": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "ephemeralStorage: \"2Gi\""
+                    "description": "ephemeralStorage: \"2Gi\"",
+                    "type": [
+                      "null",
+                      "object"
+                    ]
                   }
                 }
               }
@@ -8982,13 +8837,9 @@
                 "description": "resources resource requests and limits for scan job containers",
                 "properties": {
                   "requests": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "null",
+                      "object"
                     ]
                   }
                 }
@@ -9062,15 +8913,11 @@
             "additionalProperties": {},
             "properties": {
               "resources": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "resources resource requests and limits for scan job containers"
+                "description": "resources resource requests and limits for scan job containers",
+                "type": [
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -9140,67 +8987,11 @@
             "additionalProperties": {},
             "properties": {
               "serverCustomHeaders": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "serverCustomHeaders is a comma separated list of custom HTTP headers sent by\nTrivy client to Trivy server. Only applicable in ClientServer mode.\nserverCustomHeaders: \"foo=bar\""
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/a"
-          },
-          {
-            "properties": {
-              "trivy": {
-                "properties": {
-                  "serverPassword": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "serverPassword"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "trivy"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/7"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "serverPassword": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "serverPassword this param is the server user to be used to download db from private registry"
+                "description": "serverCustomHeaders is a comma separated list of custom HTTP headers sent by\nTrivy client to Trivy server. Only applicable in ClientServer mode.\nserverCustomHeaders: \"foo=bar\"",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -9242,6 +9033,54 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/a"
+          },
+          {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "serverPassword": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "serverPassword"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/7"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "trivy": {
+            "additionalProperties": {},
+            "properties": {
+              "serverPassword": {
+                "description": "serverPassword this param is the server user to be used to download db from private registry",
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -9315,15 +9154,11 @@
             "additionalProperties": {},
             "properties": {
               "serverToken": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "serverToken is the token to authenticate Trivy client with Trivy server. Only\napplicable in ClientServer mode."
+                "description": "serverToken is the token to authenticate Trivy client with Trivy server. Only\napplicable in ClientServer mode.",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -9367,15 +9202,11 @@
             "additionalProperties": {},
             "properties": {
               "serverUser": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "serverUser this param is the server user to be used to download db from private registry"
+                "description": "serverUser this param is the server user to be used to download db from private registry",
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -9526,6 +9357,25 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/B"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "trivyOperator": {
+            "additionalProperties": {},
+            "properties": {
+              "policiesConfig": {
+                "description": "policiesConfig Custom Rego Policies to be used by the config audit scanner\nSee https://github.com/aquasecurity/trivy-operator/blob/main/docs/tutorials/writing-custom-configuration-audit-policies.md for more details.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/B"
@@ -9558,34 +9408,11 @@
             "additionalProperties": {},
             "properties": {
               "policiesConfig": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "policiesConfig Custom Rego Policies to be used by the config audit scanner\nSee https://github.com/aquasecurity/trivy-operator/blob/main/docs/tutorials/writing-custom-configuration-audit-policies.md for more details."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/B"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivyOperator": {
-            "additionalProperties": {},
-            "properties": {
-              "policiesConfig": {
                 "description": "policiesConfig Custom Rego Policies to be used by the config audit scanner\nSee https://github.com/aquasecurity/trivy-operator/blob/main/docs/tutorials/writing-custom-configuration-audit-policies.md for more details.",
-                "type": "string"
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -9599,15 +9426,11 @@
           "additionalProperties": {},
           "properties": {
             "vulnerabilityReportsPlugin": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports `Trivy`"
+              "description": "vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports `Trivy`",
+              "type": [
+                "null",
+                "string"
+              ]
             }
           }
         }
@@ -12284,6 +12107,9 @@
           "description": "the Service type"
         }
       },
+      "required": [
+        "metricsPort"
+      ],
       "type": "object"
     },
     "serviceAccount": {

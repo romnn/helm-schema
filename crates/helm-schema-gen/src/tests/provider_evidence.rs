@@ -99,19 +99,13 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() {
                         {
                             "additionalProperties": {},
                             "properties": {
-                                "params": {
-                                    "anyOf": [
-                                        { "type": "array" },
-                                        { "type": "object" },
-                                        { "type": "null" },
-                                    ],
-                                },
+                                "params": { "type": "object" },
                             },
                         },
                         {
                             "additionalProperties": {},
                             "properties": {
-                                "params": { "type": "object" },
+                                "params": { "type": ["array", "null", "object"] },
                             },
                         },
                     ],

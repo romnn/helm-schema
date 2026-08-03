@@ -123,7 +123,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
                 serde_json::json!({
                     "additionalProperties": {},
                     "properties": {
-                        "receiver": { "anyOf": [{ "type": "object" }] },
+                        "receiver": { "type": "object" },
                     },
                 }),
             ),
@@ -135,7 +135,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
                 serde_json::json!({
                     "additionalProperties": {},
                     "properties": {
-                        "receiver": { "anyOf": [{ "type": "object" }] },
+                        "receiver": { "type": "object" },
                     },
                 }),
             ),
@@ -1590,9 +1590,7 @@ fn tilde_semver_guard_scopes_member_host_shape_exactly() {
                     serde_json::json!({
                         "additionalProperties": {},
                         "properties": {
-                            "host": {
-                                "anyOf": [{ "type": "object" }],
-                            },
+                            "host": { "type": "object" },
                         },
                     }),
                 ),
@@ -1604,17 +1602,14 @@ fn tilde_semver_guard_scopes_member_host_shape_exactly() {
                         root_property_schema(
                             "version",
                             serde_json::json!({
-                                "anyOf": [
-                                    { "type": "string" },
-                                    { "type": "null" },
-                                ],
+                                "pattern": r"^v?(0*[0-9]{1,20})(\.0*[0-9]{1,20})?(\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+                                "type": "string",
                             }),
                         ),
                         root_property_schema(
                             "version",
                             serde_json::json!({
-                                "pattern": r"^v?(0*[0-9]{1,20})(\.0*[0-9]{1,20})?(\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
-                                "type": "string",
+                                "type": ["null", "string"],
                             }),
                         ),
                     ],

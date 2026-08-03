@@ -230,57 +230,6 @@
         "allOf": [
           {
             "properties": {
-              "fullnameOverride": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "podPriorityClassName": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podPriorityClassName"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
               "podPriorityClassName": {
                 "properties": {
                   "create": {
@@ -335,6 +284,53 @@
         "allOf": [
           {
             "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "podPriorityClassName": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podPriorityClassName"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "nameOverride": {
                 "$ref": "#/$defs/t"
               }
@@ -369,13 +365,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }

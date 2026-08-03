@@ -4664,21 +4664,13 @@
       "additionalProperties": {},
       "properties": {
         "args": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Add custom arguments to the Crossplane pod."
+          "description": "Add custom arguments to the Crossplane pod.",
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
         }
       }
     },
@@ -4765,10 +4757,10 @@
         "extraEnvVarsCrossplane": {
           "anyOf": [
             {
-              "type": "array"
+              "type": "object"
             },
             {
-              "type": "object"
+              "$ref": "#/$defs/G"
             },
             {
               "type": "null"
@@ -4782,18 +4774,12 @@
       "additionalProperties": {},
       "properties": {
         "extraEnvVarsCrossplane": {
-          "anyOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/G"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+          "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
         }
       }
     },
@@ -4822,10 +4808,10 @@
         "extraEnvVarsCrossplaneInit": {
           "anyOf": [
             {
-              "type": "array"
+              "type": "object"
             },
             {
-              "type": "object"
+              "$ref": "#/$defs/G"
             },
             {
               "type": "null"
@@ -4839,18 +4825,12 @@
       "additionalProperties": {},
       "properties": {
         "extraEnvVarsCrossplaneInit": {
-          "anyOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/G"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+          "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
         }
       }
     },
@@ -4885,10 +4865,10 @@
               "extraEnvVarsRBACManager": {
                 "anyOf": [
                   {
-                    "type": "array"
+                    "type": "object"
                   },
                   {
-                    "type": "object"
+                    "$ref": "#/$defs/G"
                   },
                   {
                     "type": "null"
@@ -4902,18 +4882,12 @@
             "additionalProperties": {},
             "properties": {
               "extraEnvVarsRBACManager": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/G"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+                "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
               }
             }
           },
@@ -4943,21 +4917,13 @@
                 "additionalProperties": {},
                 "properties": {
                   "args": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Add custom arguments to the RBAC Manager pod."
+                    "description": "Add custom arguments to the RBAC Manager pod.",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
                   }
                 }
               }
@@ -5098,26 +5064,18 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "null",
+                  "object"
                 ]
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "null",
+                  "object"
                 ]
               },
               "type": "object"
@@ -5266,18 +5224,12 @@
             "additionalProperties": {},
             "properties": {
               "imagePullSecrets": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
+                "description": "The imagePullSecret names to add to the Crossplane ServiceAccount.",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -5426,13 +5378,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -5701,11 +5649,7 @@
             "additionalProperties": {},
             "properties": {
               "service": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                "type": "object"
               }
             }
           }
@@ -5772,18 +5716,12 @@
                 "additionalProperties": {},
                 "properties": {
                   "customAnnotations": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
+                    "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
                   }
                 }
               }

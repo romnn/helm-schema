@@ -23,7 +23,14 @@ const LEAN_FIXTURE_CHARTS: &[&str] = &[
 #[test]
 fn lean_profile_schemas_match_their_separate_fixture_lane() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
+    let dump_chart = std::env::var("SCHEMA_DUMP_CHART").ok();
     for chart in LEAN_FIXTURE_CHARTS {
+        if dump_chart
+            .as_deref()
+            .is_some_and(|selected| selected != *chart)
+        {
+            continue;
+        }
         let (_, lean) = generate_profile_schemas(chart)?;
         let fixture_path = test_util::workspace_testdata()
             .join("emission-profile-schemas/lean")
@@ -36,8 +43,6 @@ fn lean_profile_schemas_match_their_separate_fixture_lane() -> eyre::Result<()> 
             bytes.push(b'\n');
             std::fs::write(&dump_path, bytes)
                 .wrap_err_with(|| format!("write {}", dump_path.display()))?;
-        }
-        if !fixture_path.exists() && std::env::var("SCHEMA_DUMP").is_ok() {
             continue;
         }
         let expected: serde_json::Value = serde_json::from_str(
@@ -436,13 +441,48 @@ fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
 #[ignore = "maintenance: records Step 2 Temporal policy measurements"]
 fn temporal_middle_policy_measurements() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let (full, lean) = generate_profile_outputs("schema-emission-temporal-wrapper")?;
-    let full_bytes = serde_json::to_vec(&full.schema)?.len();
-    let lean_bytes = serde_json::to_vec(&lean.schema)?.len();
-    let full_objects = count_schema_objects(&full.schema);
-    let lean_objects = count_schema_objects(&lean.schema);
+    let full_session = harness::profile_session(
+        "schema-emission-temporal-wrapper",
+        helm_schema::generation::SchemaProfile::Full,
+        false,
+    );
+    let lean_session = harness::profile_session(
+        "schema-emission-temporal-wrapper",
+        helm_schema::generation::SchemaProfile::Lean,
+        false,
+    );
+    let full = full_session.generated_schema()?;
+    let lean = lean_session.generated_schema()?;
+    let output_options = helm_schema::output::OutputPipelineOptions {
+        reference_mode: helm_schema::output::ReferenceMode::SelfContained,
+        strip_descriptions: false,
+        minimize: true,
+    };
+    let full_schema =
+        full_session.emit(helm_schema::output::PolicyInputs::default(), output_options)?;
+    let lean_schema =
+        lean_session.emit(helm_schema::output::PolicyInputs::default(), output_options)?;
+    let mut full_bytes = Vec::new();
+    let full_metrics = helm_schema::output::write_schema_json(
+        &mut full_bytes,
+        &full_schema,
+        helm_schema::output::JsonOutputFormat::Compact,
+    )?;
+    let mut lean_bytes = Vec::new();
+    let lean_metrics = helm_schema::output::write_schema_json(
+        &mut lean_bytes,
+        &lean_schema,
+        helm_schema::output::JsonOutputFormat::Compact,
+    )?;
+    let lean_budget_limit = 9 * 1024 * 1024 / 2;
+    eyre::ensure!(
+        lean_metrics.serialized_bytes < lean_budget_limit,
+        "Temporal lean output is {} bytes, over the {lean_budget_limit}-byte budget",
+        lean_metrics.serialized_bytes,
+    );
     eprintln!(
-        "full_bytes={full_bytes} full_objects={full_objects} lean_bytes={lean_bytes} lean_objects={lean_objects}"
+        "full={full_metrics:?} lean={lean_metrics:?} lean_budget_bytes={} lean_budget_limit={}",
+        lean_metrics.serialized_bytes, lean_budget_limit,
     );
     for class in [
         helm_schema::generation::EmissionClassKind::Mandatory,
@@ -463,20 +503,14 @@ fn temporal_middle_policy_measurements() -> eyre::Result<()> {
             counts.selected - lean_counts.selected
         );
     }
+    eprintln!(
+        "full_canonical={:?} full_mandatory={:?} lean_canonical={:?} lean_mandatory={:?}",
+        full.emission_report.canonicalization,
+        full.emission_report.mandatory_outcomes,
+        lean.emission_report.canonicalization,
+        lean.emission_report.mandatory_outcomes,
+    );
     Ok(())
-}
-
-fn count_schema_objects(value: &serde_json::Value) -> usize {
-    match value {
-        serde_json::Value::Object(object) => {
-            1 + object.values().map(count_schema_objects).sum::<usize>()
-        }
-        serde_json::Value::Array(items) => items.iter().map(count_schema_objects).sum(),
-        serde_json::Value::Null
-        | serde_json::Value::Bool(_)
-        | serde_json::Value::Number(_)
-        | serde_json::Value::String(_) => 0,
-    }
 }
 
 #[test]
@@ -538,7 +572,7 @@ fn local_kind_partition_is_a_local_policy_fact() -> eyre::Result<()> {
 }
 
 #[test]
-#[ignore = "maintenance: requires SCHEMA_ACCEPTANCE_BASELINE_REF"]
+#[ignore = "maintenance: compares current full and lean fixtures with a baseline ref"]
 fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
     let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
@@ -561,42 +595,100 @@ fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<
             continue;
         };
         let relative_path = format!("testdata/chart-corpus-schemas/{filename}");
-        let output = std::process::Command::new("git")
-            .args(["show", &format!("{baseline_ref}:{relative_path}")])
-            .output()
-            .wrap_err_with(|| format!("read {relative_path} from {baseline_ref}"))?;
-        eyre::ensure!(
-            output.status.success(),
-            "git show failed for {baseline_ref}:{relative_path}: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        let baseline: serde_json::Value = serde_json::from_slice(&output.stdout)
-            .wrap_err_with(|| format!("parse {baseline_ref}:{relative_path}"))?;
-        let current: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(&fixture_path)
-                .wrap_err_with(|| format!("read {}", fixture_path.display()))?,
-        )
-        .wrap_err_with(|| format!("parse {}", fixture_path.display()))?;
+        let baseline = read_schema_at_ref(&baseline_ref, &relative_path)?;
+        let dump_filename = format!("helm-schema.cli.chart-corpus.{chart}.schema.json");
+        let current = read_acceptance_candidate(&fixture_path, &dump_filename)?;
         let defaults = read_root_defaults(chart)?;
-        let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
-        for (probe_name, probe) in structural_probe_battery(&defaults) {
-            probes_checked += 1;
-            let (before, after) = profiles.verdicts(&probe);
-            if before != after {
-                flips.push(format!(
-                    "{chart}: {probe_name}: before={before}, after={after}"
-                ));
-            }
-        }
+        collect_acceptance_flips(
+            chart,
+            &baseline,
+            &current,
+            &defaults,
+            &mut probes_checked,
+            &mut flips,
+        )?;
+        charts_checked += 1;
+    }
+    let lean_fixture_dir = test_util::workspace_testdata().join("emission-profile-schemas/lean");
+    for chart in LEAN_FIXTURE_CHARTS {
+        let filename = format!("{chart}.schema.json");
+        let fixture_path = lean_fixture_dir.join(&filename);
+        let relative_path = format!("testdata/emission-profile-schemas/lean/{filename}");
+        let baseline = read_schema_at_ref(&baseline_ref, &relative_path)?;
+        let dump_filename = format!("helm-schema.emission-profile.lean.{chart}.schema.json");
+        let current = read_acceptance_candidate(&fixture_path, &dump_filename)?;
+        let defaults = if *chart == "schema-emission-temporal-wrapper" {
+            read_json_fixture(chart, "coalesced-defaults.json")?
+        } else {
+            read_root_defaults(chart)?
+        };
+        collect_acceptance_flips(
+            &format!("lean/{chart}"),
+            &baseline,
+            &current,
+            &defaults,
+            &mut probes_checked,
+            &mut flips,
+        )?;
         charts_checked += 1;
     }
 
     eyre::ensure!(
         flips.is_empty(),
-        "early provider-definition pruning changed acceptance:\n{}",
+        "step 3 changed fixture acceptance:\n{}",
         flips.join("\n")
     );
     eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
+fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serde_json::Value> {
+    let output = std::process::Command::new("git")
+        .args(["show", &format!("{reference}:{relative_path}")])
+        .output()
+        .wrap_err_with(|| format!("read {relative_path} from {reference}"))?;
+    eyre::ensure!(
+        output.status.success(),
+        "git show failed for {reference}:{relative_path}: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    serde_json::from_slice(&output.stdout)
+        .wrap_err_with(|| format!("parse {reference}:{relative_path}"))
+}
+
+fn read_acceptance_candidate(
+    fixture_path: &std::path::Path,
+    dump_filename: &str,
+) -> eyre::Result<serde_json::Value> {
+    let candidate_path = std::env::var_os("SCHEMA_ACCEPTANCE_CANDIDATE_DUMP").map_or_else(
+        || fixture_path.to_path_buf(),
+        |dir| std::path::PathBuf::from(dir).join(dump_filename),
+    );
+    serde_json::from_str(
+        &std::fs::read_to_string(&candidate_path)
+            .wrap_err_with(|| format!("read {}", candidate_path.display()))?,
+    )
+    .wrap_err_with(|| format!("parse {}", candidate_path.display()))
+}
+
+fn collect_acceptance_flips(
+    chart: &str,
+    baseline: &serde_json::Value,
+    current: &serde_json::Value,
+    defaults: &serde_json::Value,
+    probes_checked: &mut usize,
+    flips: &mut Vec<String>,
+) -> eyre::Result<()> {
+    let profiles = ProfileSchemas::compile(baseline, current, defaults.clone())?;
+    for (probe_name, probe) in structural_probe_battery(defaults) {
+        *probes_checked += 1;
+        let (before, after) = profiles.verdicts(&probe);
+        if before != after {
+            flips.push(format!(
+                "{chart}: {probe_name}: before={before}, after={after}"
+            ));
+        }
+    }
     Ok(())
 }
 

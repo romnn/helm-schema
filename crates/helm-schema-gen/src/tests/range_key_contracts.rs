@@ -236,25 +236,13 @@ fn non_string_range_key_operand_does_not_infer_a_string_contract() {
     let mut properties = serde_json::Map::new();
     properties.insert(
         "items".to_string(),
-        serde_json::json!({
-            "anyOf": [
-                { "type": "array" },
-                { "type": "object" },
-                { "type": "null" },
-            ]
-        }),
+        serde_json::json!({ "type": ["array", "null", "object"] }),
     );
     // The unconditional two-variable range still demands an iterable
     // collection even though the key operand infers no string contract.
     let all_of = vec![root_property_schema(
         "items",
-        serde_json::json!({
-            "anyOf": [
-                { "type": "array" },
-                { "type": "object" },
-                { "type": "null" },
-            ]
-        }),
+        serde_json::json!({ "type": ["array", "null", "object"] }),
     )];
     sim_assert_eq!(
         have: &schema,

@@ -41,11 +41,6 @@ pub(crate) struct ConjunctCarrier {
     pub(crate) ancestor_segments: Vec<String>,
     pub(crate) relative_target_segments: Vec<String>,
     pub(crate) base_effect: ConditionalBaseEffect,
-    fold_unconditional_object_host_into_base: bool,
-    /// Whether the conditional is a pure `allOf` requirement rather than a
-    /// branch-owned schema projection. [`Self::base_effect`] independently
-    /// records whether that arm participates in base ownership.
-    pub(crate) arm_only: bool,
     /// Every member access on this target rides the nil-safe grouped form
     /// (`(.Values.x).member`), which renders at an absent or null-deleted
     /// receiver instead of aborting. The base host materialized for the
@@ -81,8 +76,6 @@ impl LoweredConjunct {
         target_schema: Value,
         provider_schema_candidate: Option<ProviderSchemaCandidate>,
         base_effect: ConditionalBaseEffect,
-        fold_unconditional_object_host_into_base: bool,
-        arm_only: bool,
         relax_untyped_host: bool,
     ) -> Self {
         let class = EmissionClass::conditional(
@@ -98,8 +91,6 @@ impl LoweredConjunct {
                 ancestor_segments,
                 relative_target_segments,
                 base_effect,
-                fold_unconditional_object_host_into_base,
-                arm_only,
                 relax_untyped_host,
             },
             schema: target_schema,
@@ -121,8 +112,6 @@ impl LoweredConjunct {
                 ancestor_segments: Vec::new(),
                 relative_target_segments: Vec::new(),
                 base_effect: ConditionalBaseEffect::None,
-                fold_unconditional_object_host_into_base: false,
-                arm_only: true,
                 relax_untyped_host: false,
             },
             schema: Value::Bool(false),
@@ -260,8 +249,6 @@ pub(crate) fn collect_conditional_schemas(
                 None,
                 ConditionalBaseEffect::None,
                 false,
-                true,
-                false,
             ));
         }
     }
@@ -327,16 +314,6 @@ pub(crate) fn collect_conditional_schemas(
             {
                 continue;
             }
-            // An unconditional member-host requirement is dropped only when
-            // it can be folded INTO the emitted base
-            // (`fold_unconditional_object_host_into_base` below, applied to
-            // the real tree). Comparing against the RESOLVED schema here
-            // happens too early to know that: the emitted base can end up
-            // wider than the resolved one this loop sees (an open-map merge
-            // or a union lane drops `type: object`), and a dropped arm then
-            // leaves a scalar host accepted — helm aborts navigating it
-            // (reloader's `serviceAccount`, cert-manager's three
-            // `podDisruptionBudget` families).
             let member_host_only = !implication.requirements.is_empty()
                 && implication.requirements.iter().all(|requirement| {
                     matches!(
@@ -468,8 +445,6 @@ pub(crate) fn collect_conditional_schemas(
                 target_schema,
                 None,
                 base_effect,
-                member_host_complete_domain,
-                true,
                 member_host_complete_domain && all_member_hosts_presence_scoped,
             ));
         }
@@ -551,8 +526,6 @@ pub(crate) fn collect_conditional_schemas(
                             ConditionalBaseEffect::Own
                         },
                         false,
-                        false,
-                        false,
                     ));
                     continue;
                 }
@@ -633,8 +606,6 @@ pub(crate) fn collect_conditional_schemas(
                                 ConditionalBaseEffect::Own
                             },
                             false,
-                            false,
-                            false,
                         ));
                     }
                     continue;
@@ -661,8 +632,6 @@ pub(crate) fn collect_conditional_schemas(
                     } else {
                         ConditionalBaseEffect::Own
                     },
-                    false,
-                    false,
                     false,
                 ));
             }
@@ -904,8 +873,6 @@ fn append_omitted_member_arms(
                 None,
                 ConditionalBaseEffect::None,
                 false,
-                true,
-                false,
             ));
         }
     }
@@ -1042,8 +1009,6 @@ fn append_merge_shadow_arms(
                     None,
                     base_effect,
                     false,
-                    true,
-                    false,
                 ));
             }
             if merge.position == 0 {
@@ -1094,8 +1059,6 @@ fn append_merge_shadow_arms(
                     target_schema,
                     None,
                     ConditionalBaseEffect::None,
-                    false,
-                    true,
                     false,
                 ));
             }
@@ -1994,62 +1957,32 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct ConditionalHostPreparation {
-    folded_hosts: Vec<(usize, Vec<String>)>,
     relaxed_host_paths: BTreeSet<Vec<String>>,
 }
 
 impl ConditionalHostPreparation {
-    pub(crate) fn apply(&self, root_schema: &mut SchemaDocument) -> BTreeSet<usize> {
-        let mut folded_fact_indices = BTreeSet::new();
-        for (fact_index, target_path) in &self.folded_hosts {
-            if root_schema.constrain_existing_path_to_object(target_path) {
-                folded_fact_indices.insert(*fact_index);
-            }
-        }
+    pub(crate) fn apply(&self, root_schema: &mut SchemaDocument) {
         for path in &self.relaxed_host_paths {
             root_schema.relax_host_object_type(path);
         }
-        folded_fact_indices
     }
 }
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn prepare_conditional_hosts(
-    root_schema: &mut SchemaDocument,
     conditionals: &[LoweredConjunct],
 ) -> ConditionalHostPreparation {
     let mut preparation = ConditionalHostPreparation::default();
-    let mut folded_fact_indices = BTreeSet::new();
-    for (fact_index, conditional) in conditionals.iter().enumerate() {
-        let folds_into_base = conditional.carrier.fold_unconditional_object_host_into_base
-            && conditional.carrier.arm_only
-            && conditional.outer_guards().is_empty()
-            && conditional.carrier.ancestor_segments.is_empty()
-            && is_object_domain_only(&conditional.schema)
-            && root_schema
-                .constrain_existing_path_to_object(&conditional.carrier.relative_target_segments);
-        if folds_into_base {
-            folded_fact_indices.insert(fact_index);
-            preparation.folded_hosts.push((
-                fact_index,
-                conditional.carrier.relative_target_segments.clone(),
-            ));
-        }
-    }
     // Nil-safe member hosts drop the structural `type: object` their
     // descendants materialized. This is policy-free support: every
     // projection starts from the same relaxed base, whether or not it keeps
     // the presence-guarded arm carrying the exact contract.
-    for (fact_index, conditional) in conditionals.iter().enumerate() {
-        if folded_fact_indices.contains(&fact_index) {
-            continue;
-        }
+    for conditional in conditionals {
         if conditional.carrier.relax_untyped_host
             && !crate::schema_model::is_empty_schema(&conditional.schema)
         {
             let mut segments = conditional.carrier.ancestor_segments.clone();
             segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
-            root_schema.relax_host_object_type(&segments);
             preparation.relaxed_host_paths.insert(segments);
         }
     }
@@ -2223,7 +2156,7 @@ pub(crate) fn append_selected_constraints(
             SchemaNode::all_of(emission.contents)
         };
         report.carriers.grouping_fan_in = report.carriers.grouping_fan_in.max(emission.facts);
-        report.mandatory_outcomes.emitted += emission.mandatory_facts;
+        report.mandatory_outcomes.fallback += emission.mandatory_facts;
         root_schema.append_conditional(&emission.ancestor_segments, emission.condition, content);
     }
 }
@@ -2269,32 +2202,6 @@ fn build_scoped_target_fragment(
 
     let relative = current_anchor.strip_prefix(conditional.carrier.ancestor_segments.as_slice())?;
     Some(build_target_fragment(relative, content).into_value())
-}
-
-fn is_object_domain_only(schema: &Value) -> bool {
-    let Some(object) = schema.as_object() else {
-        return false;
-    };
-    if object.len() != 1 {
-        return false;
-    }
-    match object.get("type") {
-        Some(Value::String(schema_type)) => schema_type == "object",
-        Some(Value::Array(schema_types)) => {
-            !schema_types.is_empty()
-                && schema_types
-                    .iter()
-                    .all(|schema_type| schema_type.as_str() == Some("object"))
-        }
-        _ => ["anyOf", "oneOf"].into_iter().any(|keyword| {
-            object
-                .get(keyword)
-                .and_then(Value::as_array)
-                .is_some_and(|branches| {
-                    !branches.is_empty() && branches.iter().all(is_object_domain_only)
-                })
-        }),
-    }
 }
 
 /// Merge `incoming` into `target` when both are plain `properties` object

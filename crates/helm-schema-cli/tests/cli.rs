@@ -784,8 +784,15 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
         .wrap_err("generate schema")?;
 
     let child_global_defaults_schema = serde_json::json!({
-      "additionalProperties": {},
-      "type": "object"
+      "allOf": [
+        {
+          "allOf": [
+            { "additionalProperties": {} },
+            { "type": "object" }
+          ]
+        },
+        { "type": "object" }
+      ]
     });
 
     let expected = serde_json::json!({
@@ -798,16 +805,7 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
       "allOf": [
         {
           "additionalProperties": {},
-          "properties": {
-            "kid": {
-              "additionalProperties": {},
-              "properties": { "global": { "type": "object" } }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": { "kid": { "anyOf": [{ "type": "object" }, { "type": "null" }] } }
+          "properties": { "kid": { "type": ["null", "object"] } }
         }
       ],
       "properties": {
@@ -1928,7 +1926,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
                     "additionalProperties": {},
                     "properties": {
                         "fullnameOverride": {
-                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                            "type": ["null", "string"]
                         }
                     }
                 }
@@ -1958,7 +1956,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
                     "additionalProperties": {},
                     "properties": {
                         "nameOverride": {
-                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                            "type": ["null", "string"]
                         }
                     }
                 }

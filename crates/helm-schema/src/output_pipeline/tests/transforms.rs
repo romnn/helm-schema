@@ -1,3 +1,4 @@
+use color_eyre::eyre;
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
@@ -88,6 +89,43 @@ fn self_contained_reference_mode_preserves_prepared_internal_refs() {
         want: Some("string"),
         "prepared definitions should remain available under $defs"
     );
+}
+
+#[test]
+fn fully_inlined_output_prunes_generator_definitions_orphaned_by_transport() -> eyre::Result<()> {
+    let schema = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": {
+            "stringValue": {
+                "type": "string"
+            }
+        },
+        "properties": {
+            "fromRef": {
+                "$ref": "#/$defs/stringValue"
+            }
+        },
+        "type": "object"
+    });
+
+    let output = apply_schema_output_pipeline(
+        schema,
+        PolicyInputs::default(),
+        std::path::Path::new("/does/not/matter"),
+        output_policy(),
+        OutputPipelineOptions {
+            reference_mode: ReferenceMode::FullyInlinedExport,
+            strip_descriptions: false,
+            minimize: false,
+        },
+    )?;
+
+    sim_assert_eq!(have: output.get("$defs"), want: None);
+    sim_assert_eq!(
+        have: output.pointer("/properties/fromRef/type").and_then(Value::as_str),
+        want: Some("string")
+    );
+    Ok(())
 }
 
 #[test]

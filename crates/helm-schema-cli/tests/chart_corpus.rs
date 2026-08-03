@@ -61,8 +61,9 @@ const KNOWN_VALUES_REJECTIONS: &[&str] = &[
 
 fn assert_chart_schema_fixture(chart: &str) -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
+    let dump = std::env::var("SCHEMA_DUMP").is_ok();
 
-    if std::env::var("SCHEMA_DUMP").is_ok() {
+    if dump {
         let path =
             std::env::temp_dir().join(format!("helm-schema.cli.chart-corpus.{chart}.schema.json"));
         let mut bytes =
@@ -81,14 +82,13 @@ fn assert_chart_schema_fixture(chart: &str) -> eyre::Result<()> {
     } else {
         values_validation::assert_values_json_validates(&values_json, &schema);
     }
+    if dump {
+        return Ok(());
+    }
 
     let fixture_path = test_util::workspace_testdata()
         .join("chart-corpus-schemas")
         .join(format!("{chart}.schema.json"));
-    if !fixture_path.exists() && std::env::var("SCHEMA_DUMP").is_ok() {
-        // Bootstrap mode: the dump above is the fixture candidate.
-        return Ok(());
-    }
     let expected: Value = serde_json::from_str(
         &std::fs::read_to_string(&fixture_path)
             .wrap_err_with(|| format!("read fixture {}", fixture_path.display()))?,

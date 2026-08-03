@@ -86,10 +86,7 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
                     "additionalProperties": {},
                     "properties": {
                       "imageRegistry": {
-                        "anyOf": [
-                          { "type": "string" },
-                          { "type": "null" }
-                        ]
+                        "type": ["null", "string"]
                       }
                     }
                   }
@@ -176,10 +173,7 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
                         "additionalProperties": {},
                         "properties": {
                           "imageRegistry": {
-                            "anyOf": [
-                              { "type": "string" },
-                              { "type": "null" }
-                            ]
+                            "type": ["null", "string"]
                           }
                         }
                       }

@@ -207,20 +207,6 @@ fn plain_probe_port_expected_schema() -> Value {
     serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
-            "allOf": [
-                {
-                    "additionalProperties": {},
-                    "properties": {
-                        "port": {
-                            "not": { "type": "null" }
-                        }
-                    }
-                },
-                {
-                    "required": ["port"],
-                    "type": "object"
-                }
-            ],
             "properties": {
                 "port": {
                     "oneOf": [
@@ -318,6 +304,7 @@ fn plain_probe_port_expected_schema() -> Value {
                     ]
                 }
             },
+            "required": ["port"],
             "type": "object"
     })
 }

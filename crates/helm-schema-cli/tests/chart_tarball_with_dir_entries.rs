@@ -215,7 +215,7 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
                 "additionalProperties": {},
                 "properties": {
                     "subchart": {
-                        "anyOf": [{ "type": "object" }, { "type": "null" }]
+                        "type": ["null", "object"]
                     }
                 }
             }

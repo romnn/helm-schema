@@ -208,10 +208,10 @@ impl ResolvePolicy {
             // (array or map) is the only sound projection (traefik's
             // resourceAttributes flag loops reassembled through the
             // pod-template roundtrip).
-            ValueKind::Fragment if use_.is_self_range_collection => schema_allows_type(
-                schema, "array",
-            )
-            .then(|| serde_json::json!({ "anyOf": [{ "type": "array" }, { "type": "object" }] })),
+            ValueKind::Fragment if use_.is_self_range_collection => {
+                schema_allows_type(schema, "array")
+                    .then(|| crate::schema_model::type_union_schema(["array", "object"]))
+            }
             ValueKind::Fragment => schema_allows_type(schema, "array").then(|| schema.clone()),
             ValueKind::PartialScalar | ValueKind::Serialized => None,
             ValueKind::Scalar if use_.is_self_range_collection => {

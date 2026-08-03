@@ -84,11 +84,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
                     ]
                 },
                 "then": {
-                    "anyOf": [
-                        { "type": "array" },
-                        { "type": "object" },
-                        { "type": "null" },
-                    ]
+                    "type": ["array", "null", "object"]
                 }
             }]
         }),
@@ -135,13 +131,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
                 ),
                 root_property_schema(
                     "environment",
-                    serde_json::json!({
-                        "anyOf": [
-                            { "type": "array" },
-                            { "type": "object" },
-                            { "type": "null" },
-                        ]
-                    }),
+                    serde_json::json!({ "type": ["array", "null", "object"] }),
                 ),
             ] },
         }),
@@ -281,7 +271,7 @@ fn scalar_item_range_keeps_provider_array_metadata() {
     let access_modes = schema
         .pointer("/properties/accessModes")
         .expect("accessModes present");
-    let array_arm = any_of_variant_matching(access_modes, |variant| {
+    let array_arm = schema_variant_matching(access_modes, |variant| {
         variant.get("type").and_then(Value::as_str) == Some("array")
             && variant.get("description").is_some()
     })

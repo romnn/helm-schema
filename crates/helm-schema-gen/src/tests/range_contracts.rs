@@ -108,10 +108,19 @@ fn direct_nested_range_keeps_the_map_lane_beside_a_declared_list_default() {
     // The live inner range owns its member domain. The declared sample fields
     // remain ordinary base evidence and cannot narrow this runtime arm.
     let iterable_member = serde_json::json!({
-        "anyOf": [
-            { "items": {}, "type": "array" },
-            { "additionalProperties": {}, "type": "object" },
-            { "type": "null" },
+        "allOf": [
+            { "type": ["array", "null", "object"] },
+            {
+                "anyOf": [
+                    {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object",
+                    },
+                    { "items": {}, "type": "array" },
+                    { "type": "null" },
+                ],
+            },
         ],
     });
     let expected = expected_values_schema(
@@ -269,16 +278,30 @@ fn named_member_keeps_the_ranged_default_selection_contract() {
 
 fn expected_block_scalar_nested_range_schema() -> Value {
     let nested_range_member = serde_json::json!({
-        "anyOf": [
-            { "items": {}, "type": "array" },
-            { "additionalProperties": {}, "type": "object" },
-            { "type": "null" },
+        "allOf": [
+            { "type": ["array", "null", "object"] },
+            {
+                "anyOf": [
+                    {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object",
+                    },
+                    { "items": {}, "type": "array" },
+                    { "type": "null" },
+                ],
+            },
         ],
     });
-    let declared_range_member = serde_json::json!({
+    let declared_range_member = serde_json::json!({ "type": ["array", "null", "object"] });
+    let base_range_member = serde_json::json!({
         "anyOf": [
-            { "type": "array" },
-            { "type": "object" },
+            {
+                "additionalProperties": {},
+                "properties": {},
+                "type": "object",
+            },
+            { "items": {}, "type": "array" },
             { "type": "null" },
         ],
     });
@@ -286,7 +309,7 @@ fn expected_block_scalar_nested_range_schema() -> Value {
     properties.insert(
         "config".to_string(),
         serde_json::json!({
-            "additionalProperties": nested_range_member.clone(),
+            "additionalProperties": base_range_member,
             "properties": {
                 "logging": declared_range_member.clone(),
                 "traces": declared_range_member,
@@ -313,15 +336,7 @@ fn expected_block_scalar_nested_range_schema() -> Value {
                     ],
                 }),
             ),
-            root_property_schema(
-                "config",
-                serde_json::json!({
-                    "anyOf": [
-                        { "type": "object" },
-                        { "type": "null" },
-                    ],
-                }),
-            ),
+            root_property_schema("config", serde_json::json!({ "type": ["null", "object"] })),
             navigated_host_clause(&["config"]),
         ],
         false,
@@ -408,18 +423,21 @@ fn block_scalar_nested_range_uses_member_identity_not_influence() {
     sim_assert_eq!(have: schema, want: expected);
 }
 
-fn conditional_duplicate_config_schema(nested_range_member: &Value) -> Value {
-    let declared_section = serde_json::json!({
-        "anyOf": [
-            { "type": "array" },
-            { "type": "object" },
-            { "type": "null" },
-        ],
-    });
+fn conditional_duplicate_config_schema() -> Value {
     serde_json::json!({
-        "additionalProperties": nested_range_member,
+        "additionalProperties": {
+            "anyOf": [
+                {
+                    "additionalProperties": {},
+                    "properties": {},
+                    "type": "object",
+                },
+                { "items": {}, "type": "array" },
+                { "type": "null" },
+            ],
+        },
         "properties": {
-            "traces": declared_section,
+            "traces": { "type": ["array", "null", "object"] },
         },
         "type": "object",
     })
@@ -427,17 +445,23 @@ fn conditional_duplicate_config_schema(nested_range_member: &Value) -> Value {
 
 fn expected_conditional_duplicate_nested_range_schema() -> Value {
     let nested_range_member = serde_json::json!({
-        "anyOf": [
-            { "items": {}, "type": "array" },
-            { "additionalProperties": {}, "type": "object" },
-            { "type": "null" },
+        "allOf": [
+            { "type": ["array", "null", "object"] },
+            {
+                "anyOf": [
+                    {
+                        "additionalProperties": {},
+                        "properties": {},
+                        "type": "object",
+                    },
+                    { "items": {}, "type": "array" },
+                    { "type": "null" },
+                ],
+            },
         ],
     });
     let mut properties = serde_json::Map::new();
-    properties.insert(
-        "config".to_string(),
-        conditional_duplicate_config_schema(&nested_range_member),
-    );
+    properties.insert("config".to_string(), conditional_duplicate_config_schema());
     properties.insert("enabled".to_string(), serde_json::json!({}));
     let missing_config = serde_json::json!({
         "anyOf": [
@@ -476,15 +500,7 @@ fn expected_conditional_duplicate_nested_range_schema() -> Value {
                     ],
                 }),
             ),
-            root_property_schema(
-                "config",
-                serde_json::json!({
-                    "anyOf": [
-                        { "type": "object" },
-                        { "type": "null" },
-                    ],
-                }),
-            ),
+            root_property_schema("config", serde_json::json!({ "type": ["null", "object"] })),
             serde_json::json!({
                 "if": {
                     "allOf": [

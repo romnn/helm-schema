@@ -1,13 +1,6 @@
 {
   "$defs": {
     "1": {
-      "anyOf": [
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "2": {
       "properties": {
         "operator": {
           "$ref": "#/$defs/t"
@@ -18,19 +11,19 @@
       ],
       "type": "object"
     },
-    "3": {
+    "2": {
       "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
       "type": "string"
     },
-    "4": {
+    "3": {
       "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "5": {
+    "4": {
       "pattern": "^[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "6": {
+    "5": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -97,7 +90,7 @@
       },
       "type": "object"
     },
-    "7": {
+    "6": {
       "allOf": [
         {
           "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
@@ -115,57 +108,57 @@
       ],
       "type": "string"
     },
-    "8": {
+    "7": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "9": {
+    "8": {
       "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
-    "a": {
+    "9": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "b": {
+    "a": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "c": {
+    "b": {
       "not": {
         "pattern": "[ \\t]#"
       }
     },
-    "d": {
+    "c": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "e": {
+    "d": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "f": {
+    "e": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "g": {
+    "f": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "h": {
+    "g": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "i": {
+    "h": {
       "properties": {
         "nats": {
           "$ref": "#/$defs/t"
@@ -176,7 +169,7 @@
       ],
       "type": "object"
     },
-    "j": {
+    "i": {
       "properties": {
         "type": {
           "enum": [
@@ -189,7 +182,7 @@
       ],
       "type": "object"
     },
-    "k": {
+    "j": {
       "additionalProperties": {},
       "properties": {
         "configMap": {
@@ -202,7 +195,7 @@
         }
       }
     },
-    "l": {
+    "k": {
       "additionalProperties": {},
       "properties": {
         "configMap": {
@@ -214,7 +207,7 @@
         }
       }
     },
-    "m": {
+    "l": {
       "properties": {
         "configMap": {
           "enum": [
@@ -227,19 +220,15 @@
       ],
       "type": "object"
     },
-    "n": {
+    "m": {
       "additionalProperties": {},
       "properties": {
         "configMap": {
-          "anyOf": [
-            {
-              "type": "object"
-            }
-          ]
+          "type": "object"
         }
       }
     },
-    "o": {
+    "n": {
       "properties": {
         "configMap": {}
       },
@@ -248,7 +237,7 @@
       ],
       "type": "object"
     },
-    "p": {
+    "o": {
       "oneOf": [
         {
           "type": [
@@ -263,6 +252,13 @@
           ]
         }
       ]
+    },
+    "p": {
+      "additionalProperties": {},
+      "properties": {
+        "key": {},
+        "name": {}
+      }
     },
     "providerSchema1": {
       "anyOf": [
@@ -425,13 +421,6 @@
         }
       ]
     },
-    "q": {
-      "additionalProperties": {},
-      "properties": {
-        "key": {},
-        "name": {}
-      }
-    },
     "t": {
       "anyOf": [
         {
@@ -463,7 +452,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/i"
+        "$ref": "#/$defs/h"
       },
       "then": {
         "allOf": [
@@ -477,7 +466,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "secret": {
-                        "$ref": "#/$defs/1"
+                        "type": "object"
                       }
                     }
                   }
@@ -492,7 +481,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "credentials": {
-                    "$ref": "#/$defs/1"
+                    "type": "object"
                   }
                 }
               }
@@ -502,7 +491,7 @@
             "additionalProperties": {},
             "properties": {
               "nats": {
-                "$ref": "#/$defs/1"
+                "type": "object"
               }
             }
           }
@@ -511,7 +500,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/2"
+        "$ref": "#/$defs/1"
       },
       "then": {
         "allOf": [
@@ -522,7 +511,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "operatorjwt": {
-                    "$ref": "#/$defs/n"
+                    "$ref": "#/$defs/m"
                   }
                 }
               }
@@ -535,7 +524,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "operatorjwt": {
-                    "$ref": "#/$defs/1"
+                    "type": "object"
                   }
                 }
               }
@@ -548,7 +537,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "systemaccountjwt": {
-                    "$ref": "#/$defs/n"
+                    "$ref": "#/$defs/m"
                   }
                 }
               }
@@ -561,7 +550,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "systemaccountjwt": {
-                    "$ref": "#/$defs/1"
+                    "type": "object"
                   }
                 }
               }
@@ -571,7 +560,7 @@
             "additionalProperties": {},
             "properties": {
               "operator": {
-                "$ref": "#/$defs/1"
+                "type": "object"
               }
             }
           }
@@ -582,7 +571,7 @@
       "if": {
         "properties": {
           "store": {
-            "$ref": "#/$defs/j"
+            "$ref": "#/$defs/i"
           }
         },
         "required": [
@@ -619,7 +608,10 @@
                 "additionalProperties": {},
                 "properties": {
                   "file": {
-                    "$ref": "#/$defs/1"
+                    "required": [
+                      "storageSize"
+                    ],
+                    "type": "object"
                   }
                 }
               }
@@ -632,9 +624,6 @@
                 "additionalProperties": {},
                 "properties": {
                   "file": {
-                    "required": [
-                      "storageSize"
-                    ],
                     "type": "object"
                   }
                 }
@@ -651,13 +640,9 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
+              "type": [
+                "null",
+                "string"
               ]
             }
           }
@@ -668,7 +653,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/i"
+            "$ref": "#/$defs/h"
           },
           {
             "anyOf": [
@@ -722,7 +707,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/i"
+            "$ref": "#/$defs/h"
           },
           {
             "anyOf": [
@@ -792,7 +777,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2"
+            "$ref": "#/$defs/1"
           },
           {
             "anyOf": [
@@ -846,7 +831,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2"
+            "$ref": "#/$defs/1"
           },
           {
             "anyOf": [
@@ -856,7 +841,7 @@
                     "operator": {
                       "properties": {
                         "operatorjwt": {
-                          "$ref": "#/$defs/o"
+                          "$ref": "#/$defs/n"
                         }
                       },
                       "required": [
@@ -876,7 +861,7 @@
                   "operator": {
                     "properties": {
                       "operatorjwt": {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -900,7 +885,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2"
+            "$ref": "#/$defs/1"
           },
           {
             "anyOf": [
@@ -954,7 +939,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2"
+            "$ref": "#/$defs/1"
           },
           {
             "anyOf": [
@@ -964,7 +949,7 @@
                     "operator": {
                       "properties": {
                         "systemaccountjwt": {
-                          "$ref": "#/$defs/o"
+                          "$ref": "#/$defs/n"
                         }
                       },
                       "required": [
@@ -984,7 +969,7 @@
                   "operator": {
                     "properties": {
                       "systemaccountjwt": {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -1075,118 +1060,118 @@
         "image": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/5"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/h"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
                   "$ref": "#/$defs/f"
                 },
                 {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/8"
+                  "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/9"
                 },
                 {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/a"
+                },
+                {
                   "$ref": "#/$defs/e"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/d"
                 }
               ],
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/6"
             },
             {
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/4"
-            },
-            {
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/2"
+            },
+            {
+              "$ref": "#/$defs/4"
             }
           ]
         },
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/5"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/h"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
                   "$ref": "#/$defs/f"
                 },
                 {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/8"
+                  "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/9"
                 },
                 {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/a"
+                },
+                {
                   "$ref": "#/$defs/e"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/d"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/6"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/4"
-            },
-            {
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/2"
+            },
+            {
+              "$ref": "#/$defs/4"
             }
           ]
         },
@@ -1224,7 +1209,7 @@
             },
             "limits": {
               "additionalProperties": {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/o"
               },
               "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -1234,7 +1219,7 @@
             },
             "requests": {
               "additionalProperties": {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/o"
               },
               "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -1270,59 +1255,59 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/6"
+                            "$ref": "#/$defs/5"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/h"
-                              },
-                              {
-                                "$ref": "#/$defs/a"
-                              },
-                              {
-                                "$ref": "#/$defs/c"
-                              },
-                              {
-                                "$ref": "#/$defs/b"
-                              },
-                              {
                                 "$ref": "#/$defs/f"
                               },
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/8"
+                                "$ref": "#/$defs/g"
                               },
                               {
                                 "$ref": "#/$defs/9"
                               },
                               {
+                                "$ref": "#/$defs/b"
+                              },
+                              {
+                                "$ref": "#/$defs/a"
+                              },
+                              {
                                 "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/7"
+                              },
+                              {
+                                "$ref": "#/$defs/8"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
                               }
                             ],
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/7"
+                            "$ref": "#/$defs/6"
                           },
                           {
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/4"
-                          },
-                          {
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/5"
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
                           }
                         ]
                       }
@@ -1339,7 +1324,7 @@
           "additionalProperties": {},
           "properties": {
             "secret": {
-              "$ref": "#/$defs/q"
+              "$ref": "#/$defs/p"
             }
           }
         },
@@ -1372,7 +1357,7 @@
             "additionalProperties": {},
             "properties": {
               "operatorjwt": {
-                "$ref": "#/$defs/k"
+                "$ref": "#/$defs/j"
               }
             }
           }
@@ -1400,7 +1385,7 @@
             "additionalProperties": {},
             "properties": {
               "systemaccountjwt": {
-                "$ref": "#/$defs/k"
+                "$ref": "#/$defs/j"
               }
             }
           }
@@ -1408,10 +1393,10 @@
       ],
       "properties": {
         "operatorjwt": {
-          "$ref": "#/$defs/l"
+          "$ref": "#/$defs/k"
         },
         "systemaccountjwt": {
-          "$ref": "#/$defs/l"
+          "$ref": "#/$defs/k"
         }
       }
     },
@@ -1420,7 +1405,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/j"
+            "$ref": "#/$defs/i"
           },
           "then": {
             "additionalProperties": {},
@@ -1433,54 +1418,54 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/6"
+                            "$ref": "#/$defs/5"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/h"
-                              },
-                              {
-                                "$ref": "#/$defs/a"
-                              },
-                              {
-                                "$ref": "#/$defs/c"
-                              },
-                              {
-                                "$ref": "#/$defs/b"
-                              },
-                              {
                                 "$ref": "#/$defs/f"
                               },
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/8"
+                                "$ref": "#/$defs/g"
                               },
                               {
                                 "$ref": "#/$defs/9"
                               },
                               {
+                                "$ref": "#/$defs/b"
+                              },
+                              {
+                                "$ref": "#/$defs/a"
+                              },
+                              {
                                 "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/7"
+                              },
+                              {
+                                "$ref": "#/$defs/8"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
                               }
                             ],
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/4"
+                            "$ref": "#/$defs/6"
                           },
                           {
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/5"
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
                           },
                           {
                             "type": "null"
@@ -1490,17 +1475,17 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/4"
+                            "$ref": "#/$defs/3"
                           },
                           {
                             "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/3"
+                            "$ref": "#/$defs/2"
                           },
                           {
-                            "$ref": "#/$defs/5"
+                            "$ref": "#/$defs/4"
                           },
                           {
                             "type": "null"
@@ -1521,7 +1506,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/j"
+                "$ref": "#/$defs/i"
               },
               {
                 "anyOf": [

@@ -62,7 +62,7 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
         .pointer("/properties/persistence/properties/dataSource")
         .expect("persistence.dataSource present");
 
-    any_of_variant_matching(data_source, |variant| {
+    schema_variant_matching(data_source, |variant| {
         variant.get("type").and_then(Value::as_str) == Some("object")
             && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
     })
@@ -100,13 +100,13 @@ fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let env = schema.pointer("/properties/env").expect("env present");
 
-    any_of_variant_matching(env, |variant| {
+    schema_variant_matching(env, |variant| {
         variant.get("type").and_then(Value::as_str) == Some("object")
             && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
     })
     .unwrap_or_else(|| panic!("exact empty object off-state missing: {env}; ir={ir:?}"));
 
-    any_of_variant_matching(env, |variant| {
+    schema_variant_matching(env, |variant| {
         variant.get("type").and_then(Value::as_str) == Some("array")
     })
     .unwrap_or_else(|| panic!("non-empty array form missing: {env}"));

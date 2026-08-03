@@ -165,8 +165,6 @@ fn assert_fixture(name: &str, actual: &Value) -> eyre::Result<()> {
         bytes.push(b'\n');
         std::fs::write(&dump_path, bytes)
             .wrap_err_with(|| format!("write {}", dump_path.display()))?;
-    }
-    if !fixture_path.exists() && std::env::var("SCHEMA_DUMP").is_ok() {
         return Ok(());
     }
     let expected: Value = serde_json::from_str(

@@ -343,3 +343,44 @@ fn caller_authored_ref_replace_keys_do_not_collide_with_merge_intent() -> eyre::
     fs::remove_dir_all(&temp_dir)?;
     Ok(())
 }
+
+#[test]
+fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre::Result<()> {
+    let temp_dir = test_temp_dir("orphaned-generated-definition");
+    fs::create_dir_all(&temp_dir)?;
+    let override_path = temp_dir.join("override.json");
+    fs::write(
+        &override_path,
+        r#"{"properties":{"value":{"anyOf":[{"type":"integer"}]}}}"#,
+    )?;
+    let policy_inputs = load_policy_inputs(
+        &[override_path],
+        &policy_options(ReferenceMode::SelfContained),
+    )?;
+    let schema = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": {
+            "generated": { "type": "string" },
+        },
+        "properties": {
+            "value": { "$ref": "#/$defs/generated" },
+        },
+        "type": "object",
+    });
+
+    let output = apply_schema_output_pipeline(
+        schema,
+        policy_inputs,
+        &temp_dir,
+        output_policy(),
+        output_options(ReferenceMode::SelfContained),
+    )?;
+
+    sim_assert_eq!(have: output.get("$defs"), want: None);
+    sim_assert_eq!(
+        have: output.pointer("/properties/value"),
+        want: Some(&serde_json::json!({ "anyOf": [{ "type": "integer" }] }))
+    );
+    fs::remove_dir_all(&temp_dir)?;
+    Ok(())
+}

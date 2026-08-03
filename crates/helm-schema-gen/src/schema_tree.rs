@@ -15,6 +15,18 @@ pub(crate) struct SchemaDocument {
     root: SchemaNode,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CanonicalConstraintOutcome {
+    Applied(CanonicalConstraintApplication),
+    NotApplicable,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CanonicalConstraintApplication {
+    Emitted,
+    Redundant,
+}
+
 impl SchemaDocument {
     pub(crate) fn new_root_object() -> Self {
         Self {
@@ -46,6 +58,17 @@ impl SchemaDocument {
         replace_schema_at_parts(&mut self.root, path_segments, schema);
     }
 
+    /// Conjoins an unconditional generator constraint at an existing values
+    /// slot. A missing direct slot is not created: the closed root may reject
+    /// that name, so the caller must retain its root-anchored fallback.
+    pub(crate) fn canonicalize_constraint_at_path(
+        &mut self,
+        path_segments: &[String],
+        constraint: &Value,
+    ) -> CanonicalConstraintOutcome {
+        canonicalize_constraint_at_parts(&mut self.root, path_segments, constraint)
+    }
+
     pub(crate) fn append_conditional(
         &mut self,
         ancestor_segments: &[String],
@@ -53,10 +76,6 @@ impl SchemaDocument {
         then_schema: SchemaNode,
     ) {
         append_conditional_at_parts(&mut self.root, ancestor_segments, condition, then_schema);
-    }
-
-    pub(crate) fn constrain_existing_path_to_object(&mut self, path_segments: &[String]) -> bool {
-        constrain_existing_path_to_object(&mut self.root, path_segments)
     }
 
     /// Drops the structural `type: object` from a host whose members are
@@ -132,6 +151,195 @@ impl SchemaDocument {
     }
 }
 
+fn canonicalize_constraint_at_parts(
+    node: &mut SchemaNode,
+    path_segments: &[String],
+    constraint: &Value,
+) -> CanonicalConstraintOutcome {
+    let Some((head, tail)) = path_segments.split_first() else {
+        let is_object_constraint = constraint.as_object().is_some_and(|object| {
+            object.len() == 1 && object.get("type").and_then(Value::as_str) == Some("object")
+        });
+        if is_object_constraint && let Some(outcome) = canonicalize_object_constraint(node) {
+            return outcome;
+        }
+        if let Some(outcome) = apply_required_entries(node, constraint) {
+            return outcome;
+        }
+        if !is_object_constraint && !is_not_null_constraint(constraint) {
+            return CanonicalConstraintOutcome::NotApplicable;
+        }
+        if matches!(node, SchemaNode::Foreign(Value::Bool(false)))
+            || constraint_is_implied_by_node(node, constraint)
+        {
+            return CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant);
+        }
+        let existing = std::mem::replace(node, SchemaNode::empty());
+        *node = SchemaNode::all_of(vec![existing, SchemaNode::foreign(constraint.clone())]);
+        return CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted);
+    };
+
+    match node {
+        SchemaNode::Object { properties, .. } => properties
+            .get_mut(head)
+            .map_or(CanonicalConstraintOutcome::NotApplicable, |child| {
+                canonicalize_constraint_at_parts(child, tail, constraint)
+            }),
+        SchemaNode::Array { items, .. } if head == "*" => items
+            .as_deref_mut()
+            .map_or(CanonicalConstraintOutcome::NotApplicable, |child| {
+                canonicalize_constraint_at_parts(child, tail, constraint)
+            }),
+        SchemaNode::Foreign(Value::Object(object)) => {
+            let Some(child_value) = object
+                .get_mut("properties")
+                .and_then(Value::as_object_mut)
+                .and_then(|properties| properties.get_mut(head))
+            else {
+                return CanonicalConstraintOutcome::NotApplicable;
+            };
+            let mut child = SchemaNode::foreign(std::mem::take(child_value));
+            let outcome = canonicalize_constraint_at_parts(&mut child, tail, constraint);
+            *child_value = child.into_value();
+            outcome
+        }
+        SchemaNode::Empty | SchemaNode::Array { .. } | SchemaNode::Foreign(_) => {
+            CanonicalConstraintOutcome::NotApplicable
+        }
+    }
+}
+
+fn canonicalize_object_constraint(node: &mut SchemaNode) -> Option<CanonicalConstraintOutcome> {
+    match node {
+        SchemaNode::Empty | SchemaNode::Foreign(Value::Bool(true)) => {
+            *node = SchemaNode::type_named("object");
+            Some(CanonicalConstraintOutcome::Applied(
+                CanonicalConstraintApplication::Emitted,
+            ))
+        }
+        SchemaNode::Object { typed, .. } => {
+            let was_typed = *typed;
+            *typed = true;
+            Some(if was_typed {
+                CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant)
+            } else {
+                CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
+            })
+        }
+        SchemaNode::Foreign(value) if crate::schema_model::schema_type(value) == Some("object") => {
+            Some(CanonicalConstraintOutcome::Applied(
+                CanonicalConstraintApplication::Redundant,
+            ))
+        }
+        SchemaNode::Foreign(Value::Bool(false)) => Some(CanonicalConstraintOutcome::Applied(
+            CanonicalConstraintApplication::Redundant,
+        )),
+        SchemaNode::Array { .. }
+        | SchemaNode::Foreign(
+            Value::Null | Value::Number(_) | Value::String(_) | Value::Array(_) | Value::Object(_),
+        ) => None,
+    }
+}
+
+fn apply_required_entries(
+    node: &mut SchemaNode,
+    constraint: &Value,
+) -> Option<CanonicalConstraintOutcome> {
+    let constraint = constraint.as_object()?;
+    if constraint.len() != 2 || constraint.get("type").and_then(Value::as_str) != Some("object") {
+        return None;
+    }
+    let required = constraint.get("required")?.as_array()?;
+    let required = required
+        .iter()
+        .map(Value::as_str)
+        .collect::<Option<Vec<_>>>()?;
+    if required.is_empty() {
+        return Some(CanonicalConstraintOutcome::Applied(
+            CanonicalConstraintApplication::Redundant,
+        ));
+    }
+
+    match node {
+        SchemaNode::Object {
+            properties,
+            required: existing,
+            ..
+        } => {
+            if required.iter().any(|name| !properties.contains_key(*name)) {
+                return Some(CanonicalConstraintOutcome::NotApplicable);
+            }
+            let before = existing.len();
+            existing.extend(required.into_iter().map(str::to_string));
+            Some(if existing.len() == before {
+                CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant)
+            } else {
+                CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
+            })
+        }
+        SchemaNode::Foreign(Value::Object(object))
+            if object.get("type").and_then(Value::as_str) == Some("object") =>
+        {
+            let all_slots_exist = object
+                .get("properties")
+                .and_then(Value::as_object)
+                .is_some_and(|properties| {
+                    required.iter().all(|name| properties.contains_key(*name))
+                });
+            if !all_slots_exist {
+                return Some(CanonicalConstraintOutcome::NotApplicable);
+            }
+            let existing = object
+                .entry("required".to_string())
+                .or_insert_with(|| Value::Array(Vec::new()));
+            let Some(existing) = existing.as_array_mut() else {
+                return Some(CanonicalConstraintOutcome::NotApplicable);
+            };
+            let before = existing.len();
+            for name in required {
+                let name = Value::String(name.to_string());
+                if !existing.contains(&name) {
+                    existing.push(name);
+                }
+            }
+            existing.sort_by(|left, right| left.as_str().cmp(&right.as_str()));
+            Some(if existing.len() == before {
+                CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant)
+            } else {
+                CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
+            })
+        }
+        SchemaNode::Foreign(Value::Bool(false)) => Some(CanonicalConstraintOutcome::Applied(
+            CanonicalConstraintApplication::Redundant,
+        )),
+        SchemaNode::Empty
+        | SchemaNode::Array { .. }
+        | SchemaNode::Foreign(
+            Value::Null
+            | Value::Bool(true)
+            | Value::Number(_)
+            | Value::String(_)
+            | Value::Array(_)
+            | Value::Object(_),
+        ) => Some(CanonicalConstraintOutcome::NotApplicable),
+    }
+}
+
+fn constraint_is_implied_by_node(node: &SchemaNode, constraint: &Value) -> bool {
+    let existing = node.clone().into_value();
+    if is_not_null_constraint(constraint) {
+        return crate::schema_model::schema_excludes_type(&existing, "null");
+    }
+    false
+}
+
+fn is_not_null_constraint(constraint: &Value) -> bool {
+    constraint
+        == &serde_json::json!({
+            "not": { "type": "null" },
+        })
+}
+
 fn relax_host_object_type(node: &mut SchemaNode, path_segments: &[String]) {
     let Some((head, tail)) = path_segments.split_first() else {
         match node {
@@ -172,59 +380,6 @@ fn relax_host_object_type(node: &mut SchemaNode, path_segments: &[String]) {
             }
         }
         _ => {}
-    }
-}
-
-fn constrain_existing_path_to_object(node: &mut SchemaNode, path_segments: &[String]) -> bool {
-    let Some((head, tail)) = path_segments.split_first() else {
-        return match node {
-            SchemaNode::Empty | SchemaNode::Foreign(Value::Bool(true)) => {
-                *node = SchemaNode::unknown_object();
-                true
-            }
-            SchemaNode::Object { typed, .. } => {
-                *typed = true;
-                true
-            }
-            SchemaNode::Foreign(Value::Object(object)) => match object.get("type") {
-                None => {
-                    object.insert("type".to_string(), Value::String("object".to_string()));
-                    true
-                }
-                Some(Value::String(schema_type)) => schema_type == "object",
-                Some(Value::Array(schema_types))
-                    if schema_types
-                        .iter()
-                        .any(|schema_type| schema_type == "object") =>
-                {
-                    object.insert("type".to_string(), Value::String("object".to_string()));
-                    true
-                }
-                _ => false,
-            },
-            SchemaNode::Foreign(Value::Bool(false)) => true,
-            SchemaNode::Array { .. } | SchemaNode::Foreign(_) => false,
-        };
-    };
-
-    match node {
-        SchemaNode::Object { properties, .. } => properties
-            .get_mut(head)
-            .is_some_and(|child| constrain_existing_path_to_object(child, tail)),
-        SchemaNode::Foreign(Value::Object(object)) => {
-            let Some(child_value) = object
-                .get_mut("properties")
-                .and_then(Value::as_object_mut)
-                .and_then(|properties| properties.get_mut(head))
-            else {
-                return false;
-            };
-            let mut child = SchemaNode::foreign(std::mem::take(child_value));
-            let constrained = constrain_existing_path_to_object(&mut child, tail);
-            *child_value = child.into_value();
-            constrained
-        }
-        SchemaNode::Empty | SchemaNode::Array { .. } | SchemaNode::Foreign(_) => false,
     }
 }
 
@@ -282,6 +437,42 @@ fn conjoin_collection_member_schema(collection_schema: &mut Value, member_schema
             for arm in arms {
                 conjoined |= conjoin_collection_member_schema(arm, member_schema);
             }
+        }
+    }
+
+    if let Some(types) = object.get("type").and_then(Value::as_array) {
+        let allows_array = types
+            .iter()
+            .any(|schema_type| schema_type.as_str() == Some("array"));
+        let allows_object = types
+            .iter()
+            .any(|schema_type| schema_type.as_str() == Some("object"));
+        if allows_array {
+            let existing = object
+                .remove("items")
+                .unwrap_or_else(|| Value::Object(Map::new()));
+            object.insert(
+                "items".to_string(),
+                conjoin_schema_values(existing, member_schema.clone()),
+            );
+        }
+        if allows_object {
+            if let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) {
+                for property in properties.values_mut() {
+                    let existing = std::mem::take(property);
+                    *property = conjoin_schema_values(existing, member_schema.clone());
+                }
+            }
+            let existing = object
+                .remove("additionalProperties")
+                .unwrap_or_else(|| Value::Object(Map::new()));
+            object.insert(
+                "additionalProperties".to_string(),
+                conjoin_schema_values(existing, member_schema.clone()),
+            );
+        }
+        if allows_array || allows_object {
+            return true;
         }
     }
 
@@ -987,6 +1178,9 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
             *child_value = child_node.into_value();
             return;
         }
+        if insert_into_canonical_object_conjunct(node, head, tail, &leaf) {
+            return;
+        }
         // A union base (an off-state arm plus one open object arm, e.g. a
         // declared-empty serialized map) hosts descendants in its open arm:
         // merging a carrier at the union level would replace the open arm
@@ -1079,4 +1273,69 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         child.clear_exact_empty_constraint_for_descendant();
     }
     insert_schema_at_parts(child, tail, leaf);
+}
+
+fn insert_into_canonical_object_conjunct(
+    node: &mut SchemaNode,
+    head: &str,
+    tail: &[String],
+    leaf: &SchemaNode,
+) -> bool {
+    // A canonical object constraint may leave the slot's type inside
+    // `allOf`. Descendant default evidence still belongs to that same
+    // object lane; union-merging a new carrier would let either side
+    // bypass the other.
+    let SchemaNode::Foreign(value) = node else {
+        return false;
+    };
+    if !has_exact_object_conjunct(value) || !schema_only_allows_object(value) {
+        return false;
+    }
+    let Some(object) = value.as_object_mut() else {
+        return false;
+    };
+    let properties = object
+        .entry("properties".to_string())
+        .or_insert_with(|| Value::Object(Map::new()));
+    let Some(properties) = properties.as_object_mut() else {
+        return false;
+    };
+    let next_is_array = tail.first().is_some_and(|segment| segment == "*");
+    let child = properties.entry(head.to_string()).or_insert_with(|| {
+        if tail.is_empty() || next_is_array {
+            SchemaNode::empty().into_value()
+        } else {
+            SchemaNode::unknown_object().into_value()
+        }
+    });
+    let mut child = SchemaNode::foreign(std::mem::take(child));
+    if tail.is_empty() {
+        merge_into_schema_slot(&mut child, leaf.clone());
+    } else {
+        child.clear_exact_empty_constraint_for_descendant();
+        insert_schema_at_parts(&mut child, tail, leaf.clone());
+    }
+    properties.insert(head.to_string(), child.into_value());
+    true
+}
+
+fn schema_only_allows_object(schema: &Value) -> bool {
+    crate::schema_model::schema_allows_type(schema, "object")
+        && ["array", "boolean", "integer", "null", "number", "string"]
+            .into_iter()
+            .all(|schema_type| crate::schema_model::schema_excludes_type(schema, schema_type))
+}
+
+fn has_exact_object_conjunct(schema: &Value) -> bool {
+    schema
+        .get("allOf")
+        .and_then(Value::as_array)
+        .is_some_and(|conjuncts| {
+            conjuncts.iter().any(|conjunct| {
+                conjunct.as_object().is_some_and(|object| {
+                    object.len() == 1
+                        && object.get("type").and_then(Value::as_str) == Some("object")
+                })
+            })
+        })
 }

@@ -12219,3 +12219,37 @@ both merge behavior and the application-ordered fingerprint; caller-authored
 `$ref-replace` keys remain ordinary data. Four final-output equality fixtures
 pin those contracts while `GeneratedSchema` and the semantic corpus remain
 unannotated.
+
+## Canonical emission and late reachability (2026-08-03, sixty-fifth round)
+
+Mandatory constraints now take one total canonicalization path:
+`Applied(Emitted | Redundant) | NotApplicable`. Presence is written into an
+existing object's `required` set, not-null is conjoined in the existing
+property slot unless its implication is proven, and a missing closed-root slot
+retains its original root-anchored fallback. The former arm-then-object-fold
+state and its throwaway support document are deleted. Generator-owned type
+union constructors emit deterministic type arrays; provider payloads are never
+walked or rewritten.
+
+The final output pipeline captures generator-owned root definitions before
+overrides, removes ownership from caller-modified entries, and prunes only
+unchanged definitions unreachable after reference transport and minification.
+Transitive references, both definition keywords, escaped JSON Pointer names,
+and nested-scope references are covered. Final override replacement and full
+inlining each prove their newly orphaned generated definitions disappear while
+caller definitions survive.
+
+`FinalOutputMetrics` is returned by the exact serialization boundary and counts
+bytes including the trailing newline, object nodes, condition nodes, distinct
+conditions, and distinct `then` payloads. On the pinned Temporal wrapper the
+final lean document is 3,057,894 bytes / 59,358 objects / 422 conditions and
+strict Helm lint has a 15.00-second median, below both veto thresholds. Full is
+5,631,055 bytes / 147,135 objects / 1,541 conditions.
+
+One clean final-build dump produced all 84 full, generator, lean, and
+final-output candidates, each byte-identical to its adopted fixture. The
+compiled Rust prober compares the preceding commit with all 60 semantic
+fixtures over 114,684 default-composed/null-deletion documents and reports zero
+acceptance flips. Therefore no new per-flip Helm adjudication is required; the
+complete live Helm/provider control lane and validator-parity suite remain
+green.

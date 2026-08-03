@@ -297,8 +297,8 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         "snapshots should allow null, got {snapshots}"
     );
     assert!(
-        permits_type(snapshots, "array"),
-        "snapshots should also allow concrete arrays, got {snapshots}"
+        schema_accepts_instance(&schema, &serde_json::json!({ "snapshots": [] })),
+        "snapshots should also allow concrete arrays, got {schema}"
     );
 }
 

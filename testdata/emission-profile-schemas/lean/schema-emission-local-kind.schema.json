@@ -31,42 +31,12 @@
           "additionalProperties": {},
           "properties": {
             "kind": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
+              "type": [
+                "null",
+                "string"
               ]
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "workload": {
-          "additionalProperties": {},
-          "properties": {
-            "kind": {
-              "not": {
-                "type": "null"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "workload": {
-          "required": [
-            "kind"
-          ],
-          "type": "object"
         }
       }
     }
@@ -187,6 +157,9 @@
         },
         "strategy": {}
       },
+      "required": [
+        "kind"
+      ],
       "type": "object"
     }
   },

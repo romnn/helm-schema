@@ -190,15 +190,12 @@ fn generate_values_schema_through(
 /// member structure integers cannot provide; strings and non-integral
 /// numbers fail in every channel.
 pub(crate) fn runtime_iterable_schema(allow_integer: bool) -> serde_json::Value {
-    let mut arms = vec![
-        serde_json::json!({ "type": "array" }),
-        serde_json::json!({ "type": "object" }),
-    ];
+    let mut types = vec!["array", "object"];
     if allow_integer {
-        arms.push(serde_json::json!({ "type": "integer" }));
+        types.push("integer");
     }
-    arms.push(serde_json::json!({ "type": "null" }));
-    serde_json::json!({ "anyOf": arms })
+    types.push("null");
+    crate::schema_model::type_union_schema(types)
 }
 
 pub(crate) use helm_schema_core::split_value_path;

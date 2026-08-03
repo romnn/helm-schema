@@ -1835,13 +1835,9 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -1958,15 +1954,11 @@
           "additionalProperties": {},
           "properties": {
             "enabled": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "When set to false leader election will be disabled"
+              "description": "When set to false leader election will be disabled",
+              "type": [
+                "boolean",
+                "null"
+              ]
             }
           }
         }
@@ -1988,13 +1980,9 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -2046,6 +2034,17 @@
                     "anyOf": [
                       {
                         "additionalProperties": {},
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "items": {},
+                        "type": "integer"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "items": {},
                         "type": "object"
                       },
                       {
@@ -2056,14 +2055,7 @@
                         "type": "array"
                       },
                       {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
                         "$ref": "#/$defs/1"
-                      },
-                      {
-                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -2108,19 +2100,11 @@
                 "additionalProperties": {},
                 "properties": {
                   "mountOptions": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
                     ]
                   }
                 }
@@ -2319,32 +2303,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "nfs": {
-          "additionalProperties": {},
-          "properties": {
-            "volumeName": {
-              "not": {
-                "type": "null"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "nfs": {
-          "required": [
-            "volumeName"
-          ],
-          "type": "object"
-        }
       }
     },
     {
@@ -3279,6 +3237,9 @@
           ]
         }
       },
+      "required": [
+        "volumeName"
+      ],
       "type": "object"
     },
     "nodeSelector": {

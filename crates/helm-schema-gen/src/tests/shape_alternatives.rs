@@ -425,7 +425,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         "self-guarded empty-string default should stay valid, got {schema}"
     );
     assert!(
-        any_of_variant_matching(&schema, |variant| {
+        schema_variant_matching(&schema, |variant| {
             variant.get("minLength").and_then(Value::as_u64) == Some(1)
         })
         .is_some(),
