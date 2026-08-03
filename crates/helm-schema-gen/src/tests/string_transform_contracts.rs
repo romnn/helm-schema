@@ -1,6 +1,6 @@
 use super::*;
 use color_eyre::eyre;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -858,6 +858,56 @@ fn printf_plain_slot_contract_follows_default_operand_selection() {
             schema_accepts_instance(&schema, &instance) == want,
             "formatter selection ({label}): instance={instance}; want={want}; schema={schema}"
         );
+    }
+}
+
+/// A nested `default` primary carries every earlier selection predicate to
+/// the final fallback, regardless of whether the chain uses pipeline or call
+/// syntax.
+#[test]
+fn printf_plain_slot_contract_follows_chained_default_selection() {
+    let values_yaml = indoc! {"
+        x: set
+        y: fally
+        z: fallz
+    "};
+    for expression in [
+        ".Values.x | default .Values.y | default .Values.z",
+        "default .Values.z (default .Values.y .Values.x)",
+    ] {
+        let src = formatdoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              token: {{{{ printf "%s-x" ({expression}) }}}}
+        "#};
+        let schema = schema_for_values_yaml(parse_ir(&src), Some(values_yaml));
+        for (overrides, want, label) in [
+            (
+                serde_json::json!({ "z": null }),
+                true,
+                "a live first operand leaves the final fallback dormant",
+            ),
+            (
+                serde_json::json!({ "x": null, "y": null, "z": "selected" }),
+                true,
+                "the selected final fallback supplies safe text",
+            ),
+            (
+                serde_json::json!({ "x": null, "y": null, "z": null }),
+                false,
+                "a missing selected final fallback corrupts the YAML token",
+            ),
+        ] {
+            let instance = composed_instance(values_yaml, overrides);
+            assert!(
+                schema_accepts_instance(&schema, &instance) == want,
+                "chained formatter selection ({label}): expression={expression}; \
+                 instance={instance}; want={want}; schema={schema}"
+            );
+        }
     }
 }
 

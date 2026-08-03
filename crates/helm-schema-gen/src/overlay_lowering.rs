@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
-    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
-    ProviderSchemaFragment, ResourceSchemaOracle,
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractSchemaSignals,
+    GuardValue, ProviderSchemaFragment, ProviderSchemaUse, ResourceSchemaOracle,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -1164,15 +1164,17 @@ fn dereferenced_payload_subschema(
     }
 }
 
-struct PartitionedOverlay {
-    overlay: ConditionalPathOverlay,
-    flavor: ConditionalFlavor,
+pub(crate) struct PartitionedOverlay {
+    pub(crate) overlay: ConditionalPathOverlay,
+    pub(crate) flavor: ConditionalFlavor,
 }
 
-fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<PartitionedOverlay> {
+pub(crate) fn kind_partitioned_overlays(
+    overlay: &ConditionalPathOverlay,
+) -> Vec<PartitionedOverlay> {
     let mut kinds = BTreeSet::new();
     for use_ in &overlay.evidence.provider_schema_uses {
-        if !use_.resource.kind_candidates.is_empty() {
+        if provider_use_depends_on_kind_selector(use_) {
             kinds.insert(use_.resource.kind.clone());
             kinds.extend(use_.resource.kind_candidates.iter().cloned());
         }
@@ -1190,34 +1192,55 @@ fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<Partitione
         }];
     };
 
-    kinds
-        .into_iter()
-        .filter_map(|kind| {
-            let mut partition = overlay.clone();
-            partition.guards.push(ConditionalGuard::Eq {
-                path: selector.clone(),
-                value: GuardValue::string(kind.clone()),
-            });
-            partition.guards.sort();
-            partition.guards.dedup();
-            partition.evidence.provider_schema_uses.retain_mut(|use_| {
-                if use_.resource.kind_candidates.is_empty() {
-                    return true;
-                }
-                let supports_kind =
-                    use_.resource.kind == kind || use_.resource.kind_candidates.contains(&kind);
-                if supports_kind {
-                    use_.resource.kind = kind.clone();
-                    use_.resource.kind_candidates.clear();
-                }
-                supports_kind
-            });
-            (!partition.evidence.provider_schema_uses.is_empty()).then_some(PartitionedOverlay {
-                overlay: partition,
-                flavor: ConditionalFlavor::KindPartition,
-            })
+    let mut partitions = Vec::new();
+    let mut ordinary = overlay.clone();
+    ordinary.evidence = ConditionalOverlayEvidence {
+        provider_schema_uses: ordinary
+            .evidence
+            .provider_schema_uses
+            .into_iter()
+            .filter(|use_| !provider_use_depends_on_kind_selector(use_))
+            .collect(),
+        ..ConditionalOverlayEvidence::default()
+    };
+    if !ordinary.evidence.provider_schema_uses.is_empty() {
+        partitions.push(PartitionedOverlay {
+            overlay: ordinary,
+            flavor: ConditionalFlavor::Ordinary,
+        });
+    }
+
+    partitions.extend(kinds.into_iter().filter_map(|kind| {
+        let mut partition = overlay.clone();
+        partition
+            .evidence
+            .provider_schema_uses
+            .retain(provider_use_depends_on_kind_selector);
+        partition.guards.push(ConditionalGuard::Eq {
+            path: selector.clone(),
+            value: GuardValue::string(kind.clone()),
+        });
+        partition.guards.sort();
+        partition.guards.dedup();
+        partition.evidence.provider_schema_uses.retain_mut(|use_| {
+            let supports_kind =
+                use_.resource.kind == kind || use_.resource.kind_candidates.contains(&kind);
+            if supports_kind {
+                use_.resource.kind = kind.clone();
+                use_.resource.kind_candidates.clear();
+            }
+            supports_kind
+        });
+        (!partition.evidence.provider_schema_uses.is_empty()).then_some(PartitionedOverlay {
+            overlay: partition,
+            flavor: ConditionalFlavor::KindPartition,
         })
-        .collect()
+    }));
+    partitions
+}
+
+fn provider_use_depends_on_kind_selector(use_: &ProviderSchemaUse) -> bool {
+    !use_.resource.kind_candidates.is_empty() || !use_.resource.kind_branches.is_empty()
 }
 
 fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> Option<String> {

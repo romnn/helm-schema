@@ -70,6 +70,7 @@ fn sample_variants() -> Vec<Diagnostic> {
         },
         Diagnostic::DiscoveredConfigWeakensEmission {
             disabled_knobs: vec!["terminal-clauses".to_string()],
+            explicit: false,
         },
     ]
 }

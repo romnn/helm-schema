@@ -657,11 +657,47 @@ fn invalid_kind_requires_one_exact_subject_identity() {
 }
 
 #[test]
+fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
+    let mut metadata = HelperOutputMeta {
+        input_identity: true,
+        ..HelperOutputMeta::default()
+    };
+    metadata.conjoin_branches(&BTreeSet::from([Predicate::truthy_path("enabled")]));
+    let env = EvalEnv {
+        locals: HashMap::from([(
+            "selected".to_string(),
+            AbstractValue::ValuesPath("value".to_string()),
+        )]),
+        local_output_meta: HashMap::from([(
+            "selected".to_string(),
+            BTreeMap::from([("value".to_string(), metadata)]),
+        )]),
+        ..EvalEnv::default()
+    };
+
+    let result = eval_expr(&expr(r#"kindIs "invalid" $selected"#), &env);
+
+    sim_assert_eq!(have: result.truth.predicate(), want: None);
+}
+
+#[test]
 fn go_regex_literal_escaping_leaves_re2_hyphens_bare() {
     sim_assert_eq!(
         have: crate::escape_regex_literal("prefix-with.+symbols"),
         want: r"prefix-with\.\+symbols"
     );
+}
+
+#[test]
+fn lexical_escape_patterns_use_the_shared_go_regex_quoting() {
+    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
+        "^value$",
+        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimSuffix(
+            "-/x.y".to_string(),
+        )]),
+    );
+
+    sim_assert_eq!(have: pattern, want: r"^(?:value)(?:-/x\.y)?$");
 }
 
 #[test]
@@ -1012,6 +1048,26 @@ fn default_choice_records_primary_and_fallback_selection_conditions() {
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("global.storageClass").negated(),
+        ])])),
+    );
+}
+
+#[test]
+fn chained_default_records_the_composed_primary_selection_on_the_final_fallback() {
+    let result = eval_expr(
+        &single_expr(".Values.x | default .Values.y | default .Values.z"),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("z")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("x").negated(),
+            Predicate::truthy_path("y").negated(),
         ])])),
     );
 }

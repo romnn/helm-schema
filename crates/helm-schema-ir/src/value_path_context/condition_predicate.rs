@@ -1217,9 +1217,7 @@ impl ValuePathContext<'_> {
                 if schema_type.is_some() {
                     self.single_resolved_values_path_expr(arg)
                 } else {
-                    eval_expr(arg, &self.expression_eval_env())
-                        .value
-                        .and_then(|value| value.direct_values_identity())
+                    eval_expr(arg, &self.expression_eval_env()).exact_input_identity()
                 }
             })
             .collect::<Option<Vec<_>>>()?

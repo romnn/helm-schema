@@ -79,6 +79,7 @@ impl From<ConfigToggle> for bool {
 struct LoadedConfig {
     path: String,
     config: ConfigFile,
+    explicit: bool,
 }
 
 /// Resolved CLI composition-root policy and its visible provenance.
@@ -86,6 +87,7 @@ pub(crate) struct EffectiveConfig {
     pub(crate) selection: EmissionSelection,
     policy: EmissionPolicy,
     pub(crate) file_weakening: Vec<&'static str>,
+    pub(crate) file_weakening_is_explicit: bool,
     printable: PrintableEffectiveConfig,
 }
 
@@ -169,9 +171,11 @@ pub(crate) fn resolve(
     let effective = resolve_loaded(loaded.as_ref(), cli_profile, cli_emission)?;
     let without_file = resolve_loaded(None, cli_profile, cli_emission)?;
     let file_weakening = weakened_knobs(without_file.policy, effective.policy);
+    let file_weakening_is_explicit = loaded.as_ref().is_some_and(|loaded| loaded.explicit);
 
     Ok(EffectiveConfig {
         file_weakening,
+        file_weakening_is_explicit,
         ..effective
     })
 }
@@ -181,13 +185,13 @@ fn load_config(
     chart_path: &Path,
     explicit_config: Option<&Path>,
 ) -> EngineResult<Option<LoadedConfig>> {
-    let (path, source) = if let Some(explicit_config) = explicit_config {
+    let (path, source, explicit) = if let Some(explicit_config) = explicit_config {
         let path = absolute_config_path(explicit_config)?;
         let source = std::fs::read_to_string(&path).map_err(|source| CliError::ConfigRead {
             path: path.clone(),
             source,
         })?;
-        (path.display().to_string(), source)
+        (path.display().to_string(), source, true)
     } else {
         let config_path = root_source.chart_dir().join(CONFIG_FILE_NAME)?;
         if !config_path.is_file()? {
@@ -197,6 +201,7 @@ fn load_config(
         (
             format!("{}/{}", chart_path.display(), CONFIG_FILE_NAME),
             source,
+            false,
         )
     };
 
@@ -218,7 +223,11 @@ fn load_config(
             path: path.clone(),
             source,
         })?;
-    Ok(Some(LoadedConfig { path, config }))
+    Ok(Some(LoadedConfig {
+        path,
+        config,
+        explicit,
+    }))
 }
 
 fn absolute_config_path(path: &Path) -> EngineResult<PathBuf> {
@@ -288,10 +297,10 @@ fn resolve_loaded(
     );
 
     let delta = EmissionPolicyDelta::new(
-        Some(root.value),
-        Some(local.value),
-        Some(terminal.value),
-        Some(kind.value),
+        explicit_override(&root),
+        explicit_override(&local),
+        explicit_override(&terminal),
+        explicit_override(&kind),
     );
     let selection = EmissionSelection::Preset { profile, delta };
     let policy = EmissionPolicy::new(
@@ -317,8 +326,13 @@ fn resolve_loaded(
         selection,
         policy,
         file_weakening: Vec::new(),
+        file_weakening_is_explicit: false,
         printable,
     })
+}
+
+fn explicit_override(knob: &EffectiveKnob) -> Option<bool> {
+    matches!(knob.source, ValueSource::File(_) | ValueSource::Cli).then_some(knob.value)
 }
 
 fn apply_delta(

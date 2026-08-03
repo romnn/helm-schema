@@ -145,7 +145,7 @@ impl Interpreter<'_> {
                         .map(TruthCondition::negated)
                         .chain(std::iter::once(own_truth.clone())),
                 );
-                if matches!(arm, ArmSpec::If(_)) {
+                if matches!(arm, ArmSpec::If(_) | ArmSpec::With(_)) {
                     prior_truth_conditions.push(own_truth);
                 }
                 Some(truth)

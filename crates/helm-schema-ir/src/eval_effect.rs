@@ -873,6 +873,23 @@ impl EvalResult {
         self.scalar_dispatch = Some(dispatch);
         self
     }
+
+    pub(crate) fn exact_input_identity(&self) -> Option<String> {
+        let path = match self.value.as_ref()? {
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => path,
+            AbstractValue::OutputPath(path, meta)
+                if meta.is_input_identity() && meta.predicates.is_empty() =>
+            {
+                path
+            }
+            _ => return None,
+        };
+        self.effects
+            .local_output_meta
+            .get(path)
+            .is_none_or(|meta| meta.predicates.is_empty())
+            .then(|| path.clone())
+    }
 }
 
 fn truth_for_value(value: Option<&AbstractValue>) -> TruthCondition {

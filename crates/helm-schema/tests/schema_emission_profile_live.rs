@@ -97,6 +97,192 @@ fn replay_unconditional_fail_against_helm() -> eyre::Result<()> {
     Ok(())
 }
 
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_else_with_successor_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join("target/round68-live");
+    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
+    let chart = tempfile::Builder::new()
+        .prefix("else-with-successor-")
+        .tempdir_in(scratch_root)
+        .wrap_err("create else-with chart")?;
+    std::fs::create_dir(chart.path().join("templates"))?;
+    std::fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc! {"
+            apiVersion: v2
+            name: else-with-successor
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("values.yaml"),
+        indoc! {"
+            first: false
+            second: ''
+            payload:
+              invalid: true
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("templates/configmap.yaml"),
+        indoc! {r"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: else-with-successor
+            data:
+            {{- with .Values.first }}
+              payload: first
+            {{- else with .Values.second }}
+              payload: second
+            {{- else }}
+              payload: {{ .Values.payload | b64enc }}
+            {{- end }}
+        "},
+    )?;
+
+    for (set_value, renders) in [
+        (None, false),
+        (Some("first=selected"), true),
+        (Some("second=selected"), true),
+    ] {
+        let mut command = Command::new("helm");
+        command
+            .args(["template", "else-with-successor"])
+            .arg(chart.path())
+            .arg("--skip-schema-validation");
+        if let Some(set_value) = set_value {
+            command.arg("--set-string").arg(set_value);
+        }
+        let output = command
+            .output()
+            .wrap_err("render else-with successor control")?;
+        eyre::ensure!(
+            output.status.success() == renders,
+            "else-with successor polarity mismatch for {set_value:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_chained_default_printf_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join("target/round68-live");
+    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
+    let chart = tempfile::Builder::new()
+        .prefix("chained-default-")
+        .tempdir_in(scratch_root)
+        .wrap_err("create chained-default chart")?;
+    std::fs::create_dir(chart.path().join("templates"))?;
+    std::fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc! {"
+            apiVersion: v2
+            name: chained-default
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("values.yaml"),
+        indoc! {"
+            x: set
+            y: fally
+            z: fallz
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("templates/configmap.yaml"),
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: chained-default
+            data:
+              pipeline: {{ printf "%s-x" (.Values.x | default .Values.y | default .Values.z) }}
+              call: {{ printf "%s-x" (default .Values.z (default .Values.y .Values.x)) }}
+        "#},
+    )?;
+
+    for (set_values, renders) in [
+        ("z=null", true),
+        ("x=null,y=null,z=selected", true),
+        ("x=null,y=null,z=null", false),
+    ] {
+        let output = Command::new("helm")
+            .args(["template", "chained-default"])
+            .arg(chart.path())
+            .arg("--skip-schema-validation")
+            .arg("--set")
+            .arg(set_values)
+            .output()
+            .wrap_err("render chained-default control")?;
+        eyre::ensure!(
+            output.status.success() == renders,
+            "chained-default polarity mismatch for {set_values}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_round68_corpus_loosenings_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let cases = [
+        ("airflow", "fullnameOverride", "false", true),
+        ("airflow", "fullnameOverride", "true", false),
+        ("airflow", "fullnameOverride", "0", true),
+        ("airflow", "fullnameOverride", "1.5", false),
+        ("airflow", "fullnameOverride", "[]", true),
+        ("airflow", "fullnameOverride", "[{}]", false),
+        ("airflow", "fullnameOverride", "{}", true),
+        ("airflow", "fullnameOverride", r#"{"unknown":true}"#, false),
+        ("metallb", "fullnameOverride", "false", true),
+        ("metallb", "fullnameOverride", "0", true),
+        ("metallb", "fullnameOverride", "[]", true),
+        ("metallb", "fullnameOverride", "{}", true),
+        ("traefik", "namespaceOverride", "false", true),
+        ("traefik", "namespaceOverride", "0", true),
+        ("traefik", "namespaceOverride", "[]", true),
+        ("traefik", "namespaceOverride", "{}", true),
+    ];
+    let charts = test_util::workspace_testdata().join("charts");
+    let mut failures = Vec::new();
+    for (chart, path, value, renders) in cases {
+        let output = Command::new("helm")
+            .args(["template", "round68"])
+            .arg(charts.join(chart))
+            .arg("--skip-schema-validation")
+            .arg("--set-json")
+            .arg(format!("{path}={value}"))
+            .output()
+            .wrap_err_with(|| format!("render {chart} with {path}={value}"))?;
+        if output.status.success() != renders {
+            failures.push(format!(
+                "{chart} {path}={value}: Helm success={}, expected {renders}; {}",
+                output.status.success(),
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
+    }
+    eyre::ensure!(
+        failures.is_empty(),
+        "Round 68 corpus loosening failures:\n{}",
+        failures.join("\n")
+    );
+    Ok(())
+}
+
 fn live_controls() -> Vec<LiveControl> {
     use LiveTransport::{Set, SetString, ValuesFileJson};
     use SinkVerdict::{Accept, Reject, Unresolved};

@@ -204,6 +204,8 @@ pub enum Diagnostic {
     DiscoveredConfigWeakensEmission {
         /// Stable knob names disabled because the config was applied.
         disabled_knobs: Vec<String>,
+        /// Whether the config path came from an explicit `--config` argument.
+        explicit: bool,
     },
 }
 
@@ -322,7 +324,7 @@ impl Diagnostic {
             Diagnostic::CrdVersionAvailableAtOtherVersions {
                 available_versions, ..
             } => canonicalise_strings(available_versions),
-            Diagnostic::DiscoveredConfigWeakensEmission { disabled_knobs } => {
+            Diagnostic::DiscoveredConfigWeakensEmission { disabled_knobs, .. } => {
                 canonicalise_strings(disabled_knobs);
             }
             Diagnostic::ResolvedFromFallbackVersion { .. }

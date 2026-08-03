@@ -528,12 +528,11 @@ fn kind_branch_resolved_use(
         _ => None,
     };
     let mut resolved = contract_use.clone();
-    if let Some(resource) = resolved.resource.as_mut() {
-        if let Some(kind) = selected_kind {
-            resource.kind = kind;
-            resource.kind_candidates.clear();
-        }
-        resource.kind_branches.clear();
+    if let Some(resource) = resolved.resource.as_mut()
+        && let Some(kind) = selected_kind
+    {
+        resource.kind = kind;
+        resource.kind_candidates.clear();
     }
     Some(resolved)
 }

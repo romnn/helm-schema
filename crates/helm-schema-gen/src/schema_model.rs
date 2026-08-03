@@ -203,6 +203,12 @@ pub(crate) fn schema_excludes_type(schema: &Value, expected_type: &str) -> bool 
     let Some(object) = schema.as_object() else {
         return false;
     };
+    if object
+        .get("not")
+        .is_some_and(|negated| schema_type(negated) == Some(expected_type))
+    {
+        return true;
+    }
     for key in ["oneOf", "anyOf"] {
         if let Some(Value::Array(variants)) = object.get(key) {
             return !variants.is_empty()

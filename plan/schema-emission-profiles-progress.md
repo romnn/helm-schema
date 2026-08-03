@@ -58,8 +58,11 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     absence/fail captures to every source. The downstream cert-manager
     wrapper proved that unsound: it rejected an absent parent `global` even
     though the dependency's declared `global` default supplies the operand.
-    The final patch projects range modes only; the wrapper defaults render
-    and validate again.
+    The final patch projects both whole-global range modes and `RangeInput`
+    fail captures to every live source. The current iterable-domain fail
+    requirement admits absent/null inputs, so the wrapper's child default
+    still renders and validates. The regression must remain green before any
+    future whole-global capture kind becomes absence-strict.
 - Adjudication evidence:
   - Jenkins `controller.jenkinsRef` null-deletion changes reject → accept;
     Helm renders because the selected sidecar-folder value makes the
@@ -567,7 +570,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Step 2 — lean policy and annotations
 
-- Status: landed; commit pending.
+- Status: landed.
 - Measured results:
   - Pre-registered shadow-projection input from Step 1a: controls 9 facts
     (`3594d70cd4304790641f1d5ee12a157da54a9215846bb181260f4f79b6f271e7`),
@@ -1035,3 +1038,130 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - Supplemental documentation gate `task docs:build`: exit 0; 32 pages built
     after regenerating all four documentation schema examples.
 - Commit: `b731c30` (`feat(schema): add emission profile benchmark`).
+
+## Round 68 — emission-review findings closure
+
+- Status: landed; commit pending.
+- Measured results:
+  - Chained `default` selection now stamps a final fallback with the negated
+    truthiness of every exact identity in a composed `FirstTruthy` primary.
+    Pipeline and call-order three-deep controls accept a dormant or selected
+    final fallback and retain the true-tooth rejection when every operand is
+    null-deleted.
+  - Mandatory required-entry canonicalization now types an untyped object
+    host. Completion backfill recognizes every semantically object-only
+    canonical conjunct, including the not-null form, so a later inserted
+    member cannot bypass the dropped carrier.
+  - Kind partitioning separates truly selector-independent provider uses onto
+    an Ordinary conjunct. Candidate-bearing and exact branch-selected uses
+    retain their typed selector provenance and stay in the kind partitions;
+    unrelated overlay evidence remains with those partitions.
+  - Late reachability starts from every caller-retained definition, decodes
+    percent-encoded local fragments before JSON Pointer matching, and keeps
+    every definition conservatively when a local fragment cannot decode.
+  - The full-side semantic oracle is explicit for every control, including
+    full-accepts for an unknown provider kind. The structural battery retains
+    Helm 4 dependency roots instead of probing parent null-deletion states
+    that Helm refills from the dependency chart.
+  - One clean final-build dump ran 61 tests and wrote exactly 84 artifacts.
+    Twenty-one full corpus fixtures, the Temporal lean fixture, and one
+    generator fixture changed; all four final-output fixtures remained
+    byte-identical. Across the 23 changed files, serialized fixture bytes
+    moved from 85,546,740 to 85,477,530 (`-69,210`).
+  - One clean IR dump ran the complete 18-case corpus. Two IR fixtures
+    changed: Bitnami Redis retains the chained-default selection predicate,
+    while Zalando Postgres Operator drops conditions derived from a
+    meta-selected `kindIs` subject. The other 16 IR fixtures are
+    byte-identical.
+  - The compiled Rust prober checked 112,356 coalesced documents at top-level
+    deletion, second-level deletion, and empty member/item granularities. It
+    found 16 loosenings, zero tightenings: eight Airflow
+    `fullnameOverride`, four MetalLB `fullnameOverride`, and four Traefik
+    `namespaceOverride` probes.
+  - Helm 4.2.3 renders all 12 falsy/empty loosenings. Four truthy non-string
+    Airflow shapes still abort in a string-consuming helper; full accepts
+    those states because the corrected `kindIs "invalid"` decoder abstains
+    when output selection is conditional instead of asserting one raw input
+    identity. This is a recorded loss of completeness, not a false rejection
+    or an invented exact guard.
+  - Production Rust is 60,586 LOC (`+91` from Step 5).
+- Deviations:
+  - The review's “empty `kind_candidates`” shorthand was insufficient for an
+    exact kind arm whose candidates had already been cleared by IR
+    concretization. Non-serialized `kind_branches` now remains as typed
+    provenance through emission, preventing a selected ConfigMap constraint
+    from becoming an unconditional ordinary constraint on the Service arm.
+  - The round-58 whole-global note is corrected rather than changing the
+    working projection: both range modes and `RangeInput` fail captures fan
+    out. A full-schema dependency regression pins that the current iterable
+    domain admits absent/null parent globals supplied by the child default.
+  - Every low-severity item was fixed; none was deferred or blocked. The
+    frozen plan was not edited.
+- Adjudication evidence:
+  - Helm 4.2.3 renders chained-default `printf` with a dormant deleted final
+    fallback and with that fallback selected, while the all-null raw scalar
+    spelling still makes Helm reject the rendered YAML.
+  - An `else with` successor control renders when either preceding arm is
+    selected and reaches the invalid final operand only when both are falsy.
+  - The 16 fixture flips are pinned in one live Helm table with the exact 12
+    render / four abort verdicts described above. Every adopted fixture is
+    byte-identical to the candidate used by the compiled prober.
+- Review dossier:
+  - Formatter/default selection and sibling forms: `cargo nextest run -p
+    helm-schema-ir -p helm-schema-gen -E
+    'test(/(chained_default|printf_plain_slot_contract_follows_chained_default_selection)/)'`.
+  - Canonical required host and completion-order backfill: `cargo nextest run
+    -p helm-schema-gen -E
+    'test(/(canonical_required_entries_type_an_untyped_object_host|canonical_not_null_conjunction_survives_completion_default_backfill|conditional_duplicate_of_nested_range_does_not_restore_declared_leaf_types)/)'`.
+  - Partition separation and full semantic controls: `cargo nextest run -p
+    helm-schema-gen -E
+    'test(selector_independent_provider_uses_stay_on_an_ordinary_conjunct)'`,
+    then `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(/(current_profiles_obey_monotonicity_and_semantic_controls|local_kind_partition_is_a_local_policy_fact|temporal_wrapper_pairwise_matrix_is_monotone)/)'`.
+  - Reachability closure and encoded fragments: `cargo nextest run -p
+    helm-schema -E
+    'test(/(late_prune|retained_caller_definition_keeps_owned_transitive_references)/)'`.
+  - Config provenance and failure-path diagnostics: `cargo nextest run -p
+    helm-schema-cli -E
+    'test(temporal_combination_keeps_profile_provenance_and_cli_profile_resets_file_delta)'`,
+    then `cargo nextest run -P integration -p helm-schema-cli -E
+    'test(/(config_weakening_diagnostic_survives_downstream_failure|relative_explicit_config)/)'`.
+  - New live controls: `TMPDIR=/home/roman/dev/helm-schema/target/round68-tmp
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profile_live -E
+    'test(/(replay_chained_default_printf_against_helm|replay_else_with_successor_against_helm|replay_round68_corpus_loosenings_against_helm|replay_semantic_controls_against_helm_and_provider)/)'
+    --run-ignored ignored-only --no-capture`.
+  - Compiled three-granularity flip proof: `TMPDIR=/home/roman/dev/helm-schema/target/round68-tmp
+    SCHEMA_ACCEPTANCE_BASELINE_REF=34e58cc
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round68-final-dump
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(round68_fixture_flips_match_the_helm_adjudicated_list)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=112356 flips=16`.
+  - Single clean dump: `TMPDIR=/home/roman/dev/helm-schema/target/round68-final-dump
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 tests pass and 84 artifacts are written.
+  - Complete clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/round68-ir-final-dump
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; the
+    18-case corpus passes and writes 18 artifacts.
+- Gates on the final Round 68 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 feature combinations for 13 packages across
+    three targets. The successful invocation places both Zig caches under
+    `target` because the sandbox denies Zig's default cache path.
+  - `cargo nextest run --workspace`: exit 0; 1,187 passed, zero skipped.
+  - `task test:integration`: exit 0; 557 passed, 10 skipped by the profile.
+  - `task test:all`: exit 0; 1,748 passed, 10 skipped by the profile,
+    including the live network tests.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 downstream charts passed.
+  - `task tokei:core`: exit 0; 60,586 production Rust LOC.
+- Commit: pending.

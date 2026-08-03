@@ -262,6 +262,7 @@ fn apply_required_entries(
 
     match node {
         SchemaNode::Object {
+            typed,
             properties,
             required: existing,
             ..
@@ -270,8 +271,10 @@ fn apply_required_entries(
                 return Some(CanonicalConstraintOutcome::NotApplicable);
             }
             let before = existing.len();
+            let was_typed = *typed;
+            *typed = true;
             existing.extend(required.into_iter().map(str::to_string));
-            Some(if existing.len() == before {
+            Some(if was_typed && existing.len() == before {
                 CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant)
             } else {
                 CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
@@ -1288,7 +1291,7 @@ fn insert_into_canonical_object_conjunct(
     let SchemaNode::Foreign(value) = node else {
         return false;
     };
-    if !has_exact_object_conjunct(value) || !schema_only_allows_object(value) {
+    if !schema_only_allows_object(value) {
         return false;
     }
     let Some(object) = value.as_object_mut() else {
@@ -1324,18 +1327,4 @@ fn schema_only_allows_object(schema: &Value) -> bool {
         && ["array", "boolean", "integer", "null", "number", "string"]
             .into_iter()
             .all(|schema_type| crate::schema_model::schema_excludes_type(schema, schema_type))
-}
-
-fn has_exact_object_conjunct(schema: &Value) -> bool {
-    schema
-        .get("allOf")
-        .and_then(Value::as_array)
-        .is_some_and(|conjuncts| {
-            conjuncts.iter().any(|conjunct| {
-                conjunct.as_object().is_some_and(|object| {
-                    object.len() == 1
-                        && object.get("type").and_then(Value::as_str) == Some("object")
-                })
-            })
-        })
 }

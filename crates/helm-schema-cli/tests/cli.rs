@@ -870,6 +870,134 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the dependency defaults, full expected schema, and validation belong to one regression"
+)]
+fn whole_global_range_accepts_a_child_default_when_the_parent_is_absent() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+        "},
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        indoc! {"
+            global:
+              enabled: true
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/configmap.yaml")?,
+        indoc! {r"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              {{- range $key, $value := .Values.global }}
+              global-{{ $key }}: {{ $value | quote }}
+              {{- end }}
+        "},
+    )?;
+
+    let actual = generate_values_schema_for_chart(&GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: SchemaProfile::default().into(),
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            k8s_schema_cache_dir: None,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
+            disable_k8s_schemas: true,
+            crd_override_dir: None,
+            ..Default::default()
+        },
+    })
+    .map_err(into_eyre)
+    .wrap_err("generate schema")?;
+    let expected = serde_json::json!({
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "global": { "type": ["array", "null", "object"] }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "kid": {
+              "additionalProperties": {},
+              "properties": {
+                "global": { "type": ["array", "null", "object"] }
+              }
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": { "kid": { "type": ["null", "object"] } }
+        }
+      ],
+      "properties": {
+        "global": { "type": ["array", "null", "object"] },
+        "kid": {
+          "additionalProperties": {},
+          "properties": {
+            "global": {
+              "anyOf": [
+                {
+                  "additionalProperties": { "type": "boolean" },
+                  "properties": { "enabled": { "type": "boolean" } },
+                  "type": "object"
+                },
+                { "items": {}, "type": "array" },
+                { "type": "null" },
+                { "additionalProperties": {}, "type": "object" }
+              ]
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    });
+    sim_assert_eq!(have: actual, want: expected);
+    let validator = jsonschema::validator_for(&actual)?;
+    assert!(
+        validator.is_valid(&serde_json::json!({
+            "kid": { "global": { "enabled": true } }
+        })),
+        "the coalesced child default satisfies the range while the parent global is absent"
+    );
+    Ok(())
+}
+
+#[test]
 fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 

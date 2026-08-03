@@ -73,6 +73,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
                     .iter()
                     .map(|knob| (*knob).to_string())
                     .collect(),
+                explicit: effective_config.file_weakening_is_explicit,
             },
         );
     }
@@ -85,51 +86,51 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
         return Ok(());
     }
 
-    cli.crd.validate().map_err(CliError::CliValidation)?;
-    let fallback_window = cli
-        .k8s
-        .resolved_fallback_window()
-        .map_err(CliError::CliValidation)?;
-
-    let chart_dir = root_source.into_chart_dir();
-
-    let provider_options = ProviderOptions {
-        k8s_versions: cli.k8s.k8s_version.clone(),
-        k8s_version_fallback_window: fallback_window,
-        k8s_schema_mirrors: cli.k8s.k8s_schema_mirror.clone(),
-        k8s_schema_cache_dir: cli.k8s.k8s_schema_cache_dir.clone(),
-        no_cache: cli.k8s.no_cache,
-        allow_net: !cli.k8s.offline,
-        disable_k8s_schemas: cli.k8s.no_k8s_schemas,
-        crd_lookup_loose: matches!(cli.crd.lookup_mode(), cli::CrdVersionLookup::Loose),
-        crd_catalog_mirrors: cli.crd.crd_catalog_mirror.clone(),
-        crd_catalog_cache_dir: cli.crd.crd_catalog_cache_dir.clone(),
-        crd_override_dir: cli.crd.crd_override_dir.clone(),
-        local_schema_universe: helm_schema::provider::LocalSchemaUniverse::default(),
-        crd_cache_record_source: cli.crd.crd_cache_record_source,
-        api_version_guess: cli.inference.enabled(),
-    };
-
-    let opts = GenerateOptions {
-        chart_dir,
-        include_tests: !cli.chart.exclude_tests,
-        include_subchart_values: !cli.chart.no_subchart_values,
-        values_files: cli.chart.values_files.clone(),
-        infer_required: cli.chart.infer_required,
-        emission: effective_config.selection,
-        provider: provider_options,
-    };
-
-    let session = AnalysisSession::with_diagnostics(opts, diagnostics.clone());
-    let policy_input_options = PolicyInputOptions {
-        fetch_policy: FetchPolicy::input_assembly(!cli.k8s.offline),
-        load_budget: LoadBudget::default(),
-    };
-    let emit_request = cli.output.emit_request();
-    let schema =
-        session.emit_with_policy_paths(&cli.override_schema, policy_input_options, emit_request)?;
-
+    let generated = (|| {
+        cli.crd.validate().map_err(CliError::CliValidation)?;
+        let fallback_window = cli
+            .k8s
+            .resolved_fallback_window()
+            .map_err(CliError::CliValidation)?;
+        let chart_dir = root_source.into_chart_dir();
+        let provider_options = ProviderOptions {
+            k8s_versions: cli.k8s.k8s_version.clone(),
+            k8s_version_fallback_window: fallback_window,
+            k8s_schema_mirrors: cli.k8s.k8s_schema_mirror.clone(),
+            k8s_schema_cache_dir: cli.k8s.k8s_schema_cache_dir.clone(),
+            no_cache: cli.k8s.no_cache,
+            allow_net: !cli.k8s.offline,
+            disable_k8s_schemas: cli.k8s.no_k8s_schemas,
+            crd_lookup_loose: matches!(cli.crd.lookup_mode(), cli::CrdVersionLookup::Loose),
+            crd_catalog_mirrors: cli.crd.crd_catalog_mirror.clone(),
+            crd_catalog_cache_dir: cli.crd.crd_catalog_cache_dir.clone(),
+            crd_override_dir: cli.crd.crd_override_dir.clone(),
+            local_schema_universe: helm_schema::provider::LocalSchemaUniverse::default(),
+            crd_cache_record_source: cli.crd.crd_cache_record_source,
+            api_version_guess: cli.inference.enabled(),
+        };
+        let opts = GenerateOptions {
+            chart_dir,
+            include_tests: !cli.chart.exclude_tests,
+            include_subchart_values: !cli.chart.no_subchart_values,
+            values_files: cli.chart.values_files.clone(),
+            infer_required: cli.chart.infer_required,
+            emission: effective_config.selection,
+            provider: provider_options,
+        };
+        let session = AnalysisSession::with_diagnostics(opts, diagnostics.clone());
+        let policy_input_options = PolicyInputOptions {
+            fetch_policy: FetchPolicy::input_assembly(!cli.k8s.offline),
+            load_budget: LoadBudget::default(),
+        };
+        session.emit_with_policy_paths(
+            &cli.override_schema,
+            policy_input_options,
+            cli.output.emit_request(),
+        )
+    })();
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
+    let schema = generated?;
 
     let json_format = cli.output.json_format();
 

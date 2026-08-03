@@ -98,6 +98,46 @@ fn canonical_presence_rewrites_required_and_not_null_shapes_equivalently() -> ey
 }
 
 #[test]
+fn canonical_required_entries_type_an_untyped_object_host() -> eyre::Result<()> {
+    let mut base = SchemaDocument::new_root_object();
+    base.insert_path_schema(&["value".to_string()], SchemaNode::unknown_object());
+    base.insert_path_schema(
+        &["value".to_string(), "member".to_string()],
+        SchemaNode::type_named("string"),
+    );
+    let mut canonical = base.clone();
+    let required = json!({ "type": "object", "required": ["member"] });
+    sim_assert_eq!(
+        have: canonical.canonicalize_constraint_at_path(&["value".to_string()], &required),
+        want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
+    );
+    let canonical = canonical.into_value();
+    sim_assert_eq!(
+        have: canonical.pointer("/properties/value/type"),
+        want: Some(&json!("object"))
+    );
+
+    let mut legacy = base.into_value();
+    legacy
+        .as_object_mut()
+        .ok_or_else(|| eyre::eyre!("root schema is not an object"))?
+        .insert(
+            "allOf".to_string(),
+            json!([{ "properties": { "value": required } }]),
+        );
+    assert_equivalent(
+        &legacy,
+        &canonical,
+        [
+            json!({}),
+            json!({ "value": "scalar" }),
+            json!({ "value": {} }),
+            json!({ "value": { "member": "set" } }),
+        ],
+    )
+}
+
+#[test]
 fn canonicalization_falls_back_without_mutating_a_missing_closed_root_slot() {
     let mut schema = SchemaDocument::new_root_object();
     schema.insert_path_schema(&["known".to_string()], SchemaNode::type_named("string"));
@@ -216,6 +256,55 @@ fn canonical_object_conjunction_survives_missing_default_backfill() -> eyre::Res
     let validator = jsonschema::validator_for(&schema)
         .map_err(|error| eyre::eyre!("compile canonical schema: {error}"))?;
     assert!(!validator.is_valid(&json!({ "value": "v1" })));
+    assert!(validator.is_valid(&json!({ "value": { "member": "configured" } })));
+    Ok(())
+}
+
+#[test]
+fn canonical_not_null_conjunction_survives_completion_default_backfill() -> eyre::Result<()> {
+    let provider_payload = json!({
+        "description": "provider-owned",
+        "type": ["null", "object"],
+    });
+    let mut schema = SchemaDocument::new_root_object();
+    schema.insert_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(provider_payload.clone()),
+    );
+    sim_assert_eq!(
+        have: schema.canonicalize_constraint_at_path(
+            &["value".to_string()],
+            &json!({ "not": { "type": "null" } }),
+        ),
+        want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
+    );
+    let defaults: YamlValue = serde_yaml::from_str(indoc! {"
+        value:
+          member: default
+    "})?;
+    schema.merge_missing_values_yaml_defaults_under_roots(
+        &defaults,
+        &[Vec::new()],
+        &std::collections::BTreeSet::new(),
+    );
+    let schema = schema.into_value();
+
+    sim_assert_eq!(
+        have: schema.pointer("/properties/value/allOf/0"),
+        want: Some(&provider_payload)
+    );
+    sim_assert_eq!(
+        have: schema.pointer("/properties/value/allOf/1"),
+        want: Some(&json!({ "not": { "type": "null" } }))
+    );
+    sim_assert_eq!(
+        have: schema.pointer("/properties/value/properties/member/type"),
+        want: Some(&json!("string"))
+    );
+    let validator = jsonschema::validator_for(&schema)
+        .map_err(|error| eyre::eyre!("compile canonical schema: {error}"))?;
+    assert!(!validator.is_valid(&json!({ "value": null })));
+    assert!(!validator.is_valid(&json!({ "value": "scalar" })));
     assert!(validator.is_valid(&json!({ "value": { "member": "configured" } })));
     Ok(())
 }

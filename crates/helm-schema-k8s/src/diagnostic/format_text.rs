@@ -128,9 +128,15 @@ pub fn format_diagnostic_text(diagnostic: &Diagnostic) -> String {
         Diagnostic::InputChannelNumericRangeAmbiguity { value_path } => format!(
             "warning: {value_path} has input-channel-dependent integer range semantics: Helm can iterate an integer from --set but rejects the same JSON number from a values file or --set-json; JSON Schema cannot distinguish those inputs"
         ),
-        Diagnostic::DiscoveredConfigWeakensEmission { disabled_knobs } => format!(
-            "warning: discovered helm-schema config weakens schema emission by disabling: {}",
-            disabled_knobs.join(", ")
-        ),
+        Diagnostic::DiscoveredConfigWeakensEmission {
+            disabled_knobs,
+            explicit,
+        } => {
+            let source = if *explicit { "explicit" } else { "discovered" };
+            format!(
+                "warning: {source} helm-schema config weakens schema emission by disabling: {}",
+                disabled_knobs.join(", ")
+            )
+        }
     }
 }

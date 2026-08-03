@@ -397,7 +397,7 @@ pub(crate) fn pattern_with_lexical_escapes(
             LexicalEscape::Contains(token)
             | LexicalEscape::TrimPrefix(token)
             | LexicalEscape::TrimSuffix(token)
-            | LexicalEscape::CutAtToken(token) => regex_literal(token),
+            | LexicalEscape::CutAtToken(token) => crate::escape_regex_literal(token),
         })
         .collect();
     alternatives.push(format!("(?:{pattern})"));
@@ -430,42 +430,15 @@ fn composed_edge_escape_pattern(
     }
     let mut composed = String::from("^");
     if let Some(token) = prefix {
-        let _ = write!(composed, "(?:{})?", regex_literal(token));
+        let _ = write!(composed, "(?:{})?", crate::escape_regex_literal(token));
     }
     let _ = write!(composed, "(?:{anchored})");
     if let Some(token) = suffix {
-        let _ = write!(composed, "(?:{})?", regex_literal(token));
+        let _ = write!(composed, "(?:{})?", crate::escape_regex_literal(token));
     }
     if let Some(token) = cut {
-        let _ = write!(composed, "(?:{}.*)?", regex_literal(token));
+        let _ = write!(composed, "(?:{}.*)?", crate::escape_regex_literal(token));
     }
     composed.push('$');
     Some(composed)
-}
-
-fn regex_literal(text: &str) -> String {
-    let mut escaped = String::with_capacity(text.len());
-    for character in text.chars() {
-        if matches!(
-            character,
-            '.' | '+'
-                | '*'
-                | '?'
-                | '('
-                | ')'
-                | '|'
-                | '['
-                | ']'
-                | '{'
-                | '}'
-                | '^'
-                | '$'
-                | '\\'
-                | '/'
-        ) {
-            escaped.push('\\');
-        }
-        escaped.push(character);
-    }
-    escaped
 }

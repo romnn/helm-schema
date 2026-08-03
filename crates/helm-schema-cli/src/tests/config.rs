@@ -1,6 +1,6 @@
 use color_eyre::eyre;
 use helm_schema::chart_source::RootChartSource;
-use helm_schema::generation::SchemaProfile;
+use helm_schema::generation::{EmissionSelection, SchemaProfile};
 use helm_schema::output::LoadBudget;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
@@ -44,6 +44,13 @@ fn temporal_combination_keeps_profile_provenance_and_cli_profile_resets_file_del
     sim_assert_eq!(have: resolved.requested_profile(), want: Some(SchemaProfile::Lean));
     sim_assert_eq!(have: resolved.policy().local_conditionals(), want: false);
     sim_assert_eq!(have: effective.file_weakening.len(), want: 4);
+    let EmissionSelection::Preset { delta, .. } = effective.selection else {
+        return Err(eyre::eyre!("config selection lost preset provenance"));
+    };
+    sim_assert_eq!(have: delta.root_anchored_conditionals(), want: None);
+    sim_assert_eq!(have: delta.local_conditionals(), want: Some(false));
+    sim_assert_eq!(have: delta.terminal_clauses(), want: None);
+    sim_assert_eq!(have: delta.kind_partitions(), want: None);
 
     let reset = resolve(
         &root,

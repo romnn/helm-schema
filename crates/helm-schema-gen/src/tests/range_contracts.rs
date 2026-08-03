@@ -481,7 +481,7 @@ fn expected_conditional_duplicate_nested_range_schema() -> Value {
             },
         ],
     });
-    let mut expected = expected_values_schema(
+    expected_values_schema(
         properties,
         vec![
             root_property_schema(
@@ -513,9 +513,7 @@ fn expected_conditional_duplicate_nested_range_schema() -> Value {
             navigated_host_clause(&["config"]),
         ],
         true,
-    );
-    expected["additionalProperties"] = serde_json::json!({});
-    expected
+    )
 }
 
 #[test]

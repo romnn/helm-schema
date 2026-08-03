@@ -141,6 +141,33 @@ fn relative_explicit_config_is_resolved_from_invocation_directory() -> eyre::Res
         have: source,
         want: temp.path().join("policy.yaml").display().to_string()
     );
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("explicit helm-schema config"),
+        "explicit config weakening should name its source: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    Ok(())
+}
+
+#[test]
+fn config_weakening_diagnostic_survives_downstream_failure() -> eyre::Result<()> {
+    let temp = tempfile::tempdir()?;
+    let chart = temp.path().join("chart");
+    write_chart(&chart, Some(TEMPORAL_CONFIG))?;
+
+    let output = Command::new(HELM_SCHEMA_BIN)
+        .args(["--diag-format=json", "--crd-catalog-dir", "removed"])
+        .arg(&chart)
+        .output()?;
+
+    assert!(!output.status.success());
+    let diagnostics = String::from_utf8_lossy(&output.stderr)
+        .lines()
+        .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+        .collect::<Vec<_>>();
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic.get("type").and_then(Value::as_str) == Some("DiscoveredConfigWeakensEmission")
+    }));
     Ok(())
 }
 

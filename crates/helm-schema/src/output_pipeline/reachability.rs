@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
+use percent_encoding::percent_decode_str;
 use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -57,14 +58,28 @@ pub(crate) fn prune_unreachable_owned_definitions(
     }
     let all_definitions = root_definitions(schema);
     let mut reachable = BTreeSet::new();
-    collect_references_outside_root_definitions(schema, &mut reachable);
+    for id in all_definitions.keys() {
+        if !owned.original.contains_key(id) {
+            reachable.insert(id.clone());
+        }
+    }
+    let preserve_all = collect_references_outside_root_definitions(schema, &mut reachable);
+    if preserve_all {
+        reachable.extend(all_definitions.keys().cloned());
+    }
     let mut pending = reachable.iter().cloned().collect::<VecDeque<_>>();
     while let Some(id) = pending.pop_front() {
         let Some(definition) = all_definitions.get(&id) else {
             continue;
         };
         let mut referenced = BTreeSet::new();
-        collect_references(definition, &mut referenced);
+        if collect_references(definition, &mut referenced) {
+            for id in all_definitions.keys() {
+                if reachable.insert(id.clone()) {
+                    pending.push_back(id.clone());
+                }
+            }
+        }
         for referenced_id in referenced {
             if reachable.insert(referenced_id.clone()) {
                 pending.push_back(referenced_id);
@@ -118,58 +133,83 @@ fn root_definitions(schema: &Value) -> BTreeMap<DefinitionId, Value> {
 fn collect_references_outside_root_definitions(
     schema: &Value,
     referenced: &mut BTreeSet<DefinitionId>,
-) {
+) -> bool {
     let Some(root) = schema.as_object() else {
-        collect_references(schema, referenced);
-        return;
+        return collect_references(schema, referenced);
     };
-    if let Some(reference) = root.get("$ref").and_then(Value::as_str)
-        && let Some(id) = definition_id_from_reference(reference)
-    {
-        referenced.insert(id);
+    let mut preserve_all = false;
+    if let Some(reference) = root.get("$ref").and_then(Value::as_str) {
+        preserve_all |= collect_reference(reference, referenced);
     }
     for (key, child) in root {
         if key != "$defs" && key != "definitions" {
-            collect_references(child, referenced);
+            preserve_all |= collect_references(child, referenced);
         }
     }
+    preserve_all
 }
 
-fn collect_references(schema: &Value, referenced: &mut BTreeSet<DefinitionId>) {
+fn collect_references(schema: &Value, referenced: &mut BTreeSet<DefinitionId>) -> bool {
     match schema {
         Value::Object(object) => {
-            if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-                && let Some(id) = definition_id_from_reference(reference)
-            {
-                referenced.insert(id);
+            let mut preserve_all = false;
+            if let Some(reference) = object.get("$ref").and_then(Value::as_str) {
+                preserve_all |= collect_reference(reference, referenced);
             }
             for child in object.values() {
-                collect_references(child, referenced);
+                preserve_all |= collect_references(child, referenced);
             }
+            preserve_all
         }
         Value::Array(items) => {
+            let mut preserve_all = false;
             for item in items {
-                collect_references(item, referenced);
+                preserve_all |= collect_references(item, referenced);
             }
+            preserve_all
         }
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => false,
     }
 }
 
-fn definition_id_from_reference(reference: &str) -> Option<DefinitionId> {
+fn collect_reference(reference: &str, referenced: &mut BTreeSet<DefinitionId>) -> bool {
+    match definition_id_from_reference(reference) {
+        Ok(Some(id)) => {
+            referenced.insert(id);
+            false
+        }
+        Ok(None) => false,
+        Err(()) => true,
+    }
+}
+
+fn definition_id_from_reference(reference: &str) -> Result<Option<DefinitionId>, ()> {
+    let Some(fragment) = reference.strip_prefix('#') else {
+        return Ok(None);
+    };
+    if fragment.as_bytes().iter().enumerate().any(|(index, byte)| {
+        *byte == b'%'
+            && fragment
+                .as_bytes()
+                .get(index + 1..index + 3)
+                .is_none_or(|digits| !digits.iter().all(u8::is_ascii_hexdigit))
+    }) {
+        return Err(());
+    }
+    let fragment = percent_decode_str(fragment).decode_utf8().map_err(|_| ())?;
     for keyword in ["$defs", "definitions"] {
-        let prefix = format!("#/{keyword}/");
-        if let Some(encoded_name) = reference
+        let prefix = format!("/{keyword}/");
+        if let Some(encoded_name) = fragment
             .strip_prefix(&prefix)
             .and_then(|suffix| suffix.split('/').next())
         {
-            return Some(DefinitionId {
+            return Ok(Some(DefinitionId {
                 keyword: keyword.to_string(),
                 name: decode_json_pointer_segment(encoded_name),
-            });
+            }));
         }
     }
-    None
+    Ok(None)
 }
 
 fn decode_json_pointer_segment(segment: &str) -> String {

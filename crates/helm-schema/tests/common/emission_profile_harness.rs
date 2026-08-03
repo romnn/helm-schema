@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::path::Path;
 
 use color_eyre::eyre::{self, WrapErr as _};
@@ -12,7 +13,6 @@ use vfs::VfsPath;
 pub(crate) enum ContractVerdict {
     Accept,
     Reject(&'static str),
-    Unresolved(&'static str),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -108,15 +108,26 @@ impl ProfileSchemas {
     pub(crate) fn assert_controls(&self, controls: &[SemanticControl]) -> eyre::Result<()> {
         let mut failures = Vec::new();
         for control in controls {
-            let (full, lean) = self.verdicts(&control.instance);
+            let instance = self.compose(&control.instance);
+            let full_errors = self
+                .full
+                .iter_errors(&instance)
+                .map(|error| error.to_string())
+                .collect::<Vec<_>>();
+            let lean_errors = self
+                .lean
+                .iter_errors(&instance)
+                .map(|error| error.to_string())
+                .collect::<Vec<_>>();
+            let full = full_errors.is_empty();
+            let lean = lean_errors.is_empty();
             let full_matches = match control.contract {
                 ContractVerdict::Accept => full,
                 ContractVerdict::Reject(_) => !full,
-                ContractVerdict::Unresolved(_) => true,
             };
             if !full_matches || lean != control.lean_accepts {
                 failures.push(format!(
-                    "{} [{:?}, {:?}]: contract={:?}, full={full}, lean={lean}, expected lean={}; {}",
+                    "{} [{:?}, {:?}]: contract={:?}, full={full}, lean={lean}, expected lean={}; {}; full errors={full_errors:?}; lean errors={lean_errors:?}",
                     control.name,
                     control.category,
                     control.transport,
@@ -200,16 +211,30 @@ pub(crate) fn read_chart_schema_fixture(chart: &str) -> eyre::Result<Value> {
     serde_json::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))
 }
 
-pub(crate) fn structural_probe_battery(defaults: &Value) -> Vec<(String, ProbeInstance)> {
+pub(crate) fn structural_probe_battery(
+    chart_relative_path: &str,
+    defaults: &Value,
+) -> eyre::Result<Vec<(String, ProbeInstance)>> {
+    let dependency_roots = chart_dependency_roots(chart_relative_path)?;
+    let retained_dependency_defaults = defaults
+        .as_object()
+        .map(|defaults| {
+            defaults
+                .iter()
+                .filter(|(key, _)| dependency_roots.contains(*key))
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect()
+        })
+        .unwrap_or_default();
     let mut probes = vec![
         ("defaults".to_string(), ProbeInstance::Defaults),
         (
             "all declared keys deleted".to_string(),
-            ProbeInstance::Coalesced(Value::Object(Map::new())),
+            ProbeInstance::Coalesced(Value::Object(retained_dependency_defaults)),
         ),
     ];
     let mut paths = Vec::new();
-    collect_paths(defaults, &mut Vec::new(), 2, &mut paths);
+    collect_paths(defaults, &mut Vec::new(), 2, &dependency_roots, &mut paths);
     let replacements = [
         Value::Null,
         Value::Bool(false),
@@ -235,7 +260,35 @@ pub(crate) fn structural_probe_battery(defaults: &Value) -> Vec<(String, ProbeIn
             ));
         }
     }
-    probes
+    Ok(probes)
+}
+
+fn chart_dependency_roots(chart_relative_path: &str) -> eyre::Result<BTreeSet<String>> {
+    let chart = chart_path(chart_relative_path);
+    let manifest = chart.join("Chart.yaml");
+    let path = if manifest.is_file() {
+        manifest
+    } else {
+        chart.join("Chart.template.yaml")
+    };
+    let source =
+        std::fs::read_to_string(&path).wrap_err_with(|| format!("read {}", path.display()))?;
+    let manifest: serde_yaml::Value =
+        serde_yaml::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))?;
+    let roots = manifest
+        .get("dependencies")
+        .and_then(serde_yaml::Value::as_sequence)
+        .into_iter()
+        .flatten()
+        .filter_map(|dependency| {
+            dependency
+                .get("alias")
+                .or_else(|| dependency.get("name"))
+                .and_then(serde_yaml::Value::as_str)
+        })
+        .map(str::to_string)
+        .collect();
+    Ok(roots)
 }
 
 pub(crate) fn sparse_override(path: &[&str], value: Value) -> ProbeInstance {
@@ -341,16 +394,20 @@ fn collect_paths(
     value: &Value,
     prefix: &mut Vec<String>,
     depth: usize,
+    protected_roots: &BTreeSet<String>,
     paths: &mut Vec<Vec<String>>,
 ) {
     let Value::Object(entries) = value else {
         return;
     };
     for (key, child) in entries {
+        if prefix.is_empty() && protected_roots.contains(key) {
+            continue;
+        }
         prefix.push(key.clone());
         paths.push(prefix.clone());
         if depth > 1 {
-            collect_paths(child, prefix, depth - 1, paths);
+            collect_paths(child, prefix, depth - 1, protected_roots, paths);
         }
         prefix.pop();
     }

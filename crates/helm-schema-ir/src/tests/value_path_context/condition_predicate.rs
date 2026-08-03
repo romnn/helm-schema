@@ -59,6 +59,36 @@ fn invalid_kind_is_absence_or_null_instead_of_truthiness() {
     );
 }
 
+#[test]
+fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
+    let template_bindings = HashMap::from([(
+        "selected".to_string(),
+        AbstractValue::ValuesPath("value".to_string()),
+    )]);
+    let mut metadata = HelperOutputMeta {
+        input_identity: true,
+        ..HelperOutputMeta::default()
+    };
+    metadata.conjoin_branches(&std::collections::BTreeSet::from([Predicate::truthy_path(
+        "enabled",
+    )]));
+    let template_output_meta = HashMap::from([(
+        "selected".to_string(),
+        BTreeMap::from([("value".to_string(), metadata)]),
+    )]);
+
+    sim_assert_eq!(
+        have: parse_condition_with_template_facts(
+            r#"kindIs "invalid" $selected"#,
+            template_bindings,
+            template_output_meta,
+        ),
+        want: vec![Guard::Truthy {
+            path: "value".to_string(),
+        }],
+    );
+}
+
 fn parse_condition_with_template_facts(
     text: &str,
     template_bindings: HashMap<String, AbstractValue>,

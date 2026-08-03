@@ -69,7 +69,7 @@ fn current_profiles_obey_monotonicity_and_semantic_controls() -> eyre::Result<()
     let controls = semantic_controls();
 
     profiles.assert_controls(&controls)?;
-    let mut probes = structural_probe_battery(&defaults);
+    let mut probes = structural_probe_battery("schema-emission-controls", &defaults)?;
     probes.extend(controls.iter().map(|control| {
         (
             format!("semantic control: {}", control.name),
@@ -291,7 +291,7 @@ fn conditional_controls() -> Vec<SemanticControl> {
 }
 
 fn partition_controls() -> Vec<SemanticControl> {
-    use ContractVerdict::{Accept, Reject, Unresolved};
+    use ContractVerdict::{Accept, Reject};
     use ControlCategory::{PositiveControl, RemovedTooth};
     use Transport::ValuesFileJson;
 
@@ -323,7 +323,7 @@ fn partition_controls() -> Vec<SemanticControl> {
             PositiveControl,
             sparse_override(&["dynamic", "kind"], json!("FutureKind")),
             ValuesFileJson,
-            Unresolved("the provider has no schema for FutureKind"),
+            Accept,
             true,
             "provider uncertainty must not become a rejection",
         ),
@@ -434,6 +434,32 @@ fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
             rationale: "the middle-point lean contract retains dependency-local provider typing",
         },
     ])?;
+    Ok(())
+}
+
+#[test]
+fn structural_battery_preserves_helm_v4_dependency_roots() -> eyre::Result<()> {
+    let chart = "schema-emission-temporal-wrapper";
+    let defaults = read_json_fixture(chart, "coalesced-defaults.json")?;
+    let probes = structural_probe_battery(chart, &defaults)?;
+
+    let retained = probes
+        .iter()
+        .find_map(|(name, probe)| (name == "all declared keys deleted").then_some(probe));
+    let Some(ProbeInstance::Coalesced(retained)) = retained else {
+        return Err(eyre::eyre!("all-declared-keys probe missing"));
+    };
+    assert!(
+        retained.get("temporal").is_some(),
+        "Helm v4 refills the dependency root after a parent null deletion"
+    );
+    assert!(probes.iter().all(|(_, probe)| {
+        !matches!(
+            probe,
+            ProbeInstance::SparseOverride(value)
+                if value.get("temporal").is_some_and(serde_json::Value::is_null)
+        )
+    }));
     Ok(())
 }
 
@@ -575,8 +601,50 @@ fn local_kind_partition_is_a_local_policy_fact() -> eyre::Result<()> {
 #[ignore = "maintenance: compares current full and lean fixtures with a baseline ref"]
 fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
+    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    eyre::ensure!(
+        flips.is_empty(),
+        "step 3 changed fixture acceptance:\n{}",
+        flips.join("\n")
+    );
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
+#[test]
+#[ignore = "maintenance: compares the Round 68 dump with its baseline ref"]
+fn round68_fixture_flips_match_the_helm_adjudicated_list() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    let expected = vec![
+        "airflow: fullnameOverride <- false: before=false, after=true",
+        "airflow: fullnameOverride <- true: before=false, after=true",
+        "airflow: fullnameOverride <- integer: before=false, after=true",
+        "airflow: fullnameOverride <- number: before=false, after=true",
+        "airflow: fullnameOverride <- empty array: before=false, after=true",
+        "airflow: fullnameOverride <- empty object item: before=false, after=true",
+        "airflow: fullnameOverride <- empty object: before=false, after=true",
+        "airflow: fullnameOverride <- unknown object member: before=false, after=true",
+        "metallb: fullnameOverride <- false: before=false, after=true",
+        "metallb: fullnameOverride <- integer: before=false, after=true",
+        "metallb: fullnameOverride <- empty array: before=false, after=true",
+        "metallb: fullnameOverride <- empty object: before=false, after=true",
+        "traefik: namespaceOverride <- false: before=false, after=true",
+        "traefik: namespaceOverride <- integer: before=false, after=true",
+        "traefik: namespaceOverride <- empty array: before=false, after=true",
+        "traefik: namespaceOverride <- empty object: before=false, after=true",
+    ]
+    .into_iter()
+    .map(str::to_string)
+    .collect::<Vec<_>>();
+    sim_assert_eq!(have: flips, want: expected);
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=16");
+    Ok(())
+}
+
+fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>)> {
     let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
-        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the pre-prune commit")?;
+        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
     let fixture_dir = test_util::workspace_testdata().join("chart-corpus-schemas");
     let mut fixture_paths = std::fs::read_dir(&fixture_dir)
         .wrap_err_with(|| format!("read {}", fixture_dir.display()))?
@@ -601,6 +669,7 @@ fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<
         let defaults = read_root_defaults(chart)?;
         collect_acceptance_flips(
             chart,
+            chart,
             &baseline,
             &current,
             &defaults,
@@ -624,6 +693,7 @@ fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<
         };
         collect_acceptance_flips(
             &format!("lean/{chart}"),
+            chart,
             &baseline,
             &current,
             &defaults,
@@ -633,13 +703,7 @@ fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<
         charts_checked += 1;
     }
 
-    eyre::ensure!(
-        flips.is_empty(),
-        "step 3 changed fixture acceptance:\n{}",
-        flips.join("\n")
-    );
-    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
-    Ok(())
+    Ok((charts_checked, probes_checked, flips))
 }
 
 fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serde_json::Value> {
@@ -672,7 +736,8 @@ fn read_acceptance_candidate(
 }
 
 fn collect_acceptance_flips(
-    chart: &str,
+    label: &str,
+    chart_relative_path: &str,
     baseline: &serde_json::Value,
     current: &serde_json::Value,
     defaults: &serde_json::Value,
@@ -680,12 +745,12 @@ fn collect_acceptance_flips(
     flips: &mut Vec<String>,
 ) -> eyre::Result<()> {
     let profiles = ProfileSchemas::compile(baseline, current, defaults.clone())?;
-    for (probe_name, probe) in structural_probe_battery(defaults) {
+    for (probe_name, probe) in structural_probe_battery(chart_relative_path, defaults)? {
         *probes_checked += 1;
         let (before, after) = profiles.verdicts(&probe);
         if before != after {
             flips.push(format!(
-                "{chart}: {probe_name}: before={before}, after={after}"
+                "{label}: {probe_name}: before={before}, after={after}"
             ));
         }
     }
@@ -732,7 +797,7 @@ fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<(
             read_root_defaults(chart)?
         };
         let transition = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
-        for (probe_name, probe) in structural_probe_battery(&defaults) {
+        for (probe_name, probe) in structural_probe_battery(chart, &defaults)? {
             probes_checked += 1;
             let (legacy, middle) = transition.verdicts(&probe);
             match (legacy, middle) {

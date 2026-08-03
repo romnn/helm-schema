@@ -31,6 +31,7 @@ pub(super) fn eval_default(
     let mut effects = primary.effects;
     let primary_paths = identity_value_paths(primary.value.as_ref());
     let primary_identity = direct_raw_identity_path(primary.value.as_ref());
+    let primary_selection_paths = default_primary_selection_paths(primary.value.as_ref());
     effects.add_default_paths(primary_paths.clone());
     // Only a LITERAL fallback types the path: `default "x" .Values.name`
     // documents a string-shaped input. A call fallback (`default (include
@@ -52,7 +53,16 @@ pub(super) fn eval_default(
     let mut fallback_paths = BTreeSet::new();
     let mut fallback_dispatch = None;
     for fallback in fallback_args {
-        let result = eval_expr_with_helper_calls(fallback, env, resolver);
+        let mut result = eval_expr_with_helper_calls(fallback, env, resolver);
+        if let Some(primary_selection_paths) = &primary_selection_paths {
+            let selection = primary_selection_paths
+                .iter()
+                .cloned()
+                .map(Predicate::truthy_path)
+                .map(|predicate| predicate.negated())
+                .collect();
+            super::conjoin_result_selection(&mut result, &selection);
+        }
         fallback_dispatch = result.scalar_dispatch.clone();
         fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);
@@ -86,11 +96,11 @@ pub(super) fn eval_default(
                 };
             }
         }
-        let fallback_condition = BTreeSet::from([Predicate::truthy_path(primary_path).negated()]);
+    }
+    if primary_selection_paths.is_some() {
         for path in fallback_paths {
             let meta = effects.local_output_meta.entry(path).or_default();
             meta.input_identity = true;
-            meta.conjoin_branches(&fallback_condition);
         }
     }
     // `values` holds the primary first and the fallback second exactly when
@@ -105,6 +115,22 @@ pub(super) fn eval_default(
         return result.with_scalar_dispatch(dispatch);
     }
     result
+}
+
+fn default_primary_selection_paths(value: Option<&AbstractValue>) -> Option<Vec<String>> {
+    match value? {
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            Some(vec![path.clone()])
+        }
+        AbstractValue::OutputPath(path, meta) if meta.is_input_identity() => {
+            Some(vec![path.clone()])
+        }
+        AbstractValue::FirstTruthy(candidates) => candidates
+            .iter()
+            .map(AbstractValue::direct_values_identity)
+            .collect::<Option<Vec<_>>>(),
+        _ => None,
+    }
 }
 
 pub(super) fn direct_raw_identity_path(value: Option<&AbstractValue>) -> Option<String> {

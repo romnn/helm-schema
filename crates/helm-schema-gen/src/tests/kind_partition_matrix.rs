@@ -1,4 +1,90 @@
 use super::*;
+use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_core::{
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractValuePathFacts,
+    KindBranch, Predicate,
+};
+use test_util::prelude::sim_assert_eq;
+
+fn partition_provider_use(resource: ResourceRef) -> ProviderSchemaUse {
+    ProviderSchemaUse {
+        value_path: "value".to_string(),
+        path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
+        kind: ValueKind::Scalar,
+        stringified: false,
+        resource,
+        is_self_range_collection: false,
+        source_null_tolerant: false,
+        template_supplied_member_keys: BTreeSet::new(),
+        split_segment: None,
+        merge_layers: None,
+        range_key: false,
+        nil_omitting: false,
+        omitted_members: BTreeMap::new(),
+        outer_guards: Vec::new(),
+    }
+}
+
+#[test]
+fn selector_independent_provider_uses_stay_on_an_ordinary_conjunct() -> eyre::Result<()> {
+    let independent = partition_provider_use(ResourceRef::concrete(
+        "v1".to_string(),
+        "ConfigMap".to_string(),
+    ));
+    let mut dynamic_resource =
+        ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
+    dynamic_resource.kind_candidates = vec!["StatefulSet".to_string()];
+    dynamic_resource.kind_branches = vec![KindBranch {
+        predicate: Predicate::True,
+        kind: "Deployment".to_string(),
+    }];
+    let dependent = partition_provider_use(dynamic_resource);
+    let overlay = ConditionalPathOverlay {
+        guards: vec![ConditionalGuard::Eq {
+            path: "workload.kind".to_string(),
+            value: GuardValue::string("Deployment"),
+        }],
+        evidence: ConditionalOverlayEvidence {
+            facts: ContractValuePathFacts {
+                used_as_serialized: true,
+                ..ContractValuePathFacts::default()
+            },
+            provider_schema_uses: vec![independent.clone(), dependent],
+            ..ConditionalOverlayEvidence::default()
+        },
+        preserve_base_schema: false,
+    };
+
+    let partitions = crate::overlay_lowering::kind_partitioned_overlays(&overlay);
+    let mut partitions = partitions.into_iter();
+    let ordinary = partitions.next().ok_or_eyre("ordinary partition missing")?;
+
+    sim_assert_eq!(have: partitions.len(), want: 2);
+    sim_assert_eq!(
+        have: ordinary.flavor,
+        want: crate::emission_policy::ConditionalFlavor::Ordinary
+    );
+    sim_assert_eq!(
+        have: &ordinary.overlay.evidence.provider_schema_uses,
+        want: &vec![independent]
+    );
+    sim_assert_eq!(
+        have: ordinary.overlay.evidence.facts,
+        want: ContractValuePathFacts::default()
+    );
+    for partition in partitions {
+        sim_assert_eq!(
+            have: partition.flavor,
+            want: crate::emission_policy::ConditionalFlavor::KindPartition
+        );
+        sim_assert_eq!(have: partition.overlay.evidence.provider_schema_uses.len(), want: 1);
+        sim_assert_eq!(
+            have: partition.overlay.evidence.facts.used_as_serialized,
+            want: true
+        );
+    }
+    Ok(())
+}
 
 fn strict_provider() -> Chain {
     Chain::new(vec![Box::new(

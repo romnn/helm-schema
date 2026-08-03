@@ -26,19 +26,6 @@
       }
     },
     "14": {
-      "additionalProperties": {},
-      "properties": {
-        "repository": {
-          "not": {
-            "type": "array"
-          }
-        }
-      }
-    },
-    "15": {
-      "description": "Number of failures before the probe is considered failed."
-    },
-    "16": {
       "properties": {
         "frr": {
           "enum": [
@@ -51,12 +38,15 @@
       ],
       "type": "object"
     },
-    "17": {
+    "15": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "18": {
+    "16": {
+      "description": "How often (in seconds) to perform the probe."
+    },
+    "17": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -215,7 +205,7 @@
         }
       ]
     },
-    "19": {
+    "18": {
       "additionalProperties": false,
       "description": "tlsConfig defines TLS configuration used by the client.",
       "properties": {
@@ -395,6 +385,43 @@
         }
       },
       "type": "object"
+    },
+    "19": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              ]
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            }
+          ]
+        }
+      }
     },
     "1A": {
       "properties": {
@@ -610,43 +637,6 @@
       ]
     },
     "1F": {
-      "not": {
-        "properties": {
-          "frr-k8s": {
-            "properties": {
-              "frrk8s": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "name": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frrk8s"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "frr-k8s"
-        ],
-        "type": "object"
-      }
-    },
-    "1G": {
       "if": {
         "allOf": [
           {
@@ -692,7 +682,7 @@
       },
       "then": false
     },
-    "1H": {
+    "1G": {
       "if": {
         "allOf": [
           {
@@ -945,21 +935,118 @@
         ]
       }
     },
-    "1I": {
+    "1H": {
       "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
       "format": "int32",
       "type": "integer"
     },
-    "1J": {
+    "1I": {
       "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
       "format": "int32",
       "type": "null"
     },
+    "1J": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "serviceAccount": {}
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "serviceAccount": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "1K": {
+      "additionalProperties": {},
+      "properties": {
+        "labels": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Labels to add or overwrite.",
+              "type": "object"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "1L": {
+      "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+    },
+    "1M": {
+      "properties": {
+        "addressPoolExhausted": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "addressPoolExhausted"
+      ],
+      "type": "object"
+    },
+    "1N": {
+      "properties": {
+        "prometheus": {
+          "properties": {
+            "rbacPrometheus": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "rbacPrometheus"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "prometheus"
+      ],
+      "type": "object"
+    },
+    "1O": {
+      "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+      "type": "null"
+    },
+    "1P": {
+      "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
+    },
+    "1Q": {
       "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
       "type": "null"
     },
-    "1L": {
+    "1R": {
       "additionalProperties": {},
       "properties": {
         "labels": {
@@ -988,104 +1075,7 @@
         }
       }
     },
-    "1M": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "serviceAccount": {}
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "1N": {
-      "additionalProperties": {},
-      "properties": {
-        "labels": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "Labels to add or overwrite.",
-              "type": "object"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "1O": {
-      "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
-    },
-    "1P": {
-      "properties": {
-        "addressPoolExhausted": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "addressPoolExhausted"
-      ],
-      "type": "object"
-    },
-    "1Q": {
-      "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
-    },
-    "1R": {
-      "properties": {
-        "prometheus": {
-          "properties": {
-            "rbacPrometheus": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "rbacPrometheus"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "prometheus"
-      ],
-      "type": "object"
-    },
     "1S": {
-      "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-      "type": "null"
-    },
-    "1T": {
       "properties": {
         "frr-k8s": {
           "properties": {
@@ -1104,7 +1094,7 @@
       ],
       "type": "object"
     },
-    "1U": {
+    "1T": {
       "properties": {
         "prometheus": {
           "properties": {
@@ -1125,17 +1115,33 @@
       ],
       "type": "object"
     },
-    "1V": {
-      "description": "Comma-separated list of numeric CurveID values (e.g. 29,4588). See https://pkg.go.dev/crypto/tls#CurveID. If empty, uses Go defaults."
+    "1U": {
+      "properties": {
+        "readinessProbe": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "readinessProbe"
+      ],
+      "type": "object"
     },
-    "1W": {
+    "1V": {
       "description": "The name of the ServiceAccount to use. If not set and create is\ntrue, a name is generated using the fullname template"
     },
-    "1X": {
+    "1W": {
       "$ref": "#/$defs/helm-double-quoted-safe",
       "description": "Exclude the pools matching the regular expression from triggering the alert."
     },
-    "1Y": {
+    "1X": {
       "properties": {
         "frr": {
           "properties": {
@@ -1156,63 +1162,45 @@
       ],
       "type": "object"
     },
-    "1Z": {
+    "1Y": {
       "properties": {
-        "readinessProbe": {
+        "controller": {
           "properties": {
-            "enabled": {
+            "webhookMode": {
               "$ref": "#/$defs/t"
             }
           },
           "required": [
-            "enabled"
+            "webhookMode"
           ],
           "type": "object"
         }
       },
       "required": [
-        "readinessProbe"
+        "controller"
+      ],
+      "type": "object"
+    },
+    "1Z": {
+      "properties": {
+        "frr-k8s": {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "frr-k8s"
       ],
       "type": "object"
     },
     "1a": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
-              ]
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "1b": {
       "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
       "format": "int64",
       "type": [
@@ -1220,7 +1208,7 @@
         "null"
       ]
     },
-    "1c": {
+    "1b": {
       "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported sysctls (by the container runtime) might fail to launch. Note that this field cannot be set when spec.os.name is windows.",
       "items": {
         "additionalProperties": false,
@@ -1249,7 +1237,7 @@
         "null"
       ]
     },
-    "1d": {
+    "1c": {
       "additionalProperties": {},
       "properties": {
         "nodeSelector": {
@@ -1278,14 +1266,14 @@
         }
       }
     },
-    "1e": {
+    "1d": {
       "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside Pod. This field will only apply to volume types which support fsGroup based ownership(and permissions). It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir. Valid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "string",
         "null"
       ]
     },
-    "1f": {
+    "1e": {
       "anyOf": [
         {
           "properties": {
@@ -1358,7 +1346,7 @@
         }
       ]
     },
-    "1g": {
+    "1f": {
       "anyOf": [
         {
           "not": {
@@ -1416,14 +1404,14 @@
         }
       ]
     },
-    "1h": {
+    "1g": {
       "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "1i": {
+    "1h": {
       "anyOf": [
         {
           "properties": {
@@ -1496,11 +1484,11 @@
         }
       ]
     },
-    "1j": {
+    "1i": {
       "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
       "type": "null"
     },
-    "1k": {
+    "1j": {
       "anyOf": [
         {
           "not": {
@@ -1558,7 +1546,7 @@
         }
       ]
     },
-    "1l": {
+    "1k": {
       "allOf": [
         {
           "properties": {
@@ -1611,7 +1599,7 @@
         }
       ]
     },
-    "1m": {
+    "1l": {
       "allOf": [
         {
           "anyOf": [
@@ -1708,7 +1696,7 @@
         }
       ]
     },
-    "1n": {
+    "1m": {
       "allOf": [
         {
           "anyOf": [
@@ -1805,7 +1793,7 @@
         }
       ]
     },
-    "1o": {
+    "1n": {
       "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
       "items": {
         "format": "int64",
@@ -1819,7 +1807,7 @@
         "null"
       ]
     },
-    "1p": {
+    "1o": {
       "anyOf": [
         {
           "not": {
@@ -1893,7 +1881,7 @@
         }
       ]
     },
-    "1q": {
+    "1p": {
       "anyOf": [
         {
           "not": {
@@ -1950,6 +1938,80 @@
                   },
                   "required": [
                     "frr"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "frrk8s"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "frr-k8s"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "1q": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "frr-k8s": {
+                "properties": {
+                  "frrk8s": {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "create": {}
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frrk8s"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "frr-k8s"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "frr-k8s": {
+              "properties": {
+                "frrk8s": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
                   ],
                   "type": "object"
                 }
@@ -2443,82 +2505,6 @@
     },
     "20": {
       "properties": {
-        "controller": {
-          "properties": {
-            "webhookMode": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "webhookMode"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "controller"
-      ],
-      "type": "object"
-    },
-    "21": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "create": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "22": {
-      "properties": {
-        "frr-k8s": {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "frr-k8s"
-      ],
-      "type": "object"
-    },
-    "23": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "name": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "24": {
-      "properties": {
         "memberlist": {
           "properties": {
             "enabled": {
@@ -2536,26 +2522,7 @@
       ],
       "type": "object"
     },
-    "25": {
-      "properties": {
-        "speaker": {
-          "properties": {
-            "secretName": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "secretName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "speaker"
-      ],
-      "type": "object"
-    },
-    "26": {
+    "21": {
       "properties": {
         "frrk8s": {
           "properties": {
@@ -2574,10 +2541,24 @@
       ],
       "type": "object"
     },
-    "27": {
+    "22": {
+      "description": "Comma-separated list of numeric CurveID values (e.g. 29,4588). See https://pkg.go.dev/crypto/tls#CurveID. If empty, uses Go defaults."
+    },
+    "23": {
       "description": "Comma-separated list of TLS cipher suites. If empty, uses Go defaults. Only applies to TLS 1.2."
     },
-    "28": {
+    "24": {
+      "properties": {
+        "percent": {
+          "$ref": "#/$defs/helm-single-quoted-safe"
+        }
+      },
+      "required": [
+        "percent"
+      ],
+      "type": "object"
+    },
+    "25": {
       "properties": {
         "startupProbe": {
           "enum": [
@@ -2590,283 +2571,49 @@
       ],
       "type": "object"
     },
-    "29": {
+    "26": {
       "description": "Minimum consecutive successes for the probe to be considered successful."
     },
-    "2A": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "string"
-    },
-    "2B": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
-      "type": "string"
-    },
-    "2C": {
-      "additionalProperties": false,
-      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+    "27": {
       "properties": {
-        "localhostProfile": {
-          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-          "type": [
-            "string",
-            "null"
+        "frrMetrics": {
+          "enum": [
+            null
           ]
-        },
-        "type": {
-          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-          "type": "string"
         }
       },
       "required": [
-        "type"
+        "frrMetrics"
       ],
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-unions": [
-        {
-          "discriminator": "type",
-          "fields-to-discriminateBy": {
-            "localhostProfile": "LocalhostProfile"
-          }
-        }
-      ]
+      "type": "object"
     },
-    "2D": {
-      "anyOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "frr-k8s": {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "serviceAccount": {}
-                        },
-                        "required": [
-                          "serviceAccount"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frr-k8s"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "frr-k8s": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "serviceAccount": {
-                          "enum": [
-                            ""
-                          ]
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "frr-k8s"
-              ],
-              "type": "object"
-            }
+    "28": {
+      "properties": {
+        "memberlist": {
+          "enum": [
+            null
           ]
-        },
-        {
-          "properties": {
-            "frr-k8s": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "serviceAccount": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "frr-k8s"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "frr-k8s": {
-              "allOf": [
-                {
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "serviceAccount": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "frr-k8s"
-          ],
-          "type": "object"
         }
-      ]
+      },
+      "required": [
+        "memberlist"
+      ],
+      "type": "object"
     },
-    "2E": {
+    "29": {
+      "properties": {
+        "podMonitor": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "podMonitor"
+      ],
+      "type": "object"
+    },
+    "2A": {
       "additionalProperties": {},
       "properties": {
         "timeoutSeconds": {
@@ -2902,7 +2649,7 @@
         }
       }
     },
-    "2F": {
+    "2B": {
       "anyOf": [
         {
           "anyOf": [
@@ -3031,7 +2778,7 @@
         }
       ]
     },
-    "2G": {
+    "2C": {
       "additionalProperties": {},
       "properties": {
         "successThreshold": {
@@ -3067,7 +2814,7 @@
         }
       }
     },
-    "2H": {
+    "2D": {
       "anyOf": [
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
@@ -3103,7 +2850,7 @@
         }
       ]
     },
-    "2I": {
+    "2E": {
       "allOf": [
         {
           "anyOf": [
@@ -3225,7 +2972,7 @@
         }
       ]
     },
-    "2J": {
+    "2F": {
       "allOf": [
         {
           "anyOf": [
@@ -3347,7 +3094,7 @@
         }
       ]
     },
-    "2K": {
+    "2G": {
       "additionalProperties": {},
       "properties": {
         "metricRelabelings": {
@@ -3431,7 +3178,7 @@
         }
       }
     },
-    "2L": {
+    "2H": {
       "additionalProperties": {},
       "properties": {
         "serviceAccount": {
@@ -3608,7 +3355,7 @@
         }
       }
     },
-    "2M": {
+    "2I": {
       "additionalProperties": {},
       "properties": {
         "image": {
@@ -3784,7 +3531,7 @@
         }
       }
     },
-    "2N": {
+    "2J": {
       "additionalProperties": {},
       "properties": {
         "command": {
@@ -3953,7 +3700,7 @@
         }
       }
     },
-    "2O": {
+    "2K": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -4109,7 +3856,7 @@
         }
       }
     },
-    "2P": {
+    "2L": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -4273,7 +4020,7 @@
         }
       ]
     },
-    "2Q": {
+    "2M": {
       "additionalProperties": {},
       "properties": {
         "tolerations": {
@@ -4340,7 +4087,7 @@
         }
       }
     },
-    "2R": {
+    "2N": {
       "allOf": [
         {
           "additionalProperties": {
@@ -4363,11 +4110,11 @@
         }
       ]
     },
-    "2S": {
+    "2O": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "2T": {
+    "2P": {
       "additionalProperties": {},
       "properties": {
         "failureThreshold": {
@@ -4402,7 +4149,7 @@
         }
       }
     },
-    "2U": {
+    "2Q": {
       "additionalProperties": false,
       "description": "keySecret defines the Secret containing the client key file for the targets.",
       "properties": {
@@ -4426,7 +4173,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "2V": {
+    "2R": {
       "additionalProperties": {},
       "properties": {
         "periodSeconds": {
@@ -4461,7 +4208,7 @@
         }
       }
     },
-    "2W": {
+    "2S": {
       "additionalProperties": {
         "type": [
           "string",
@@ -4472,7 +4219,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "2X": {
+    "2T": {
       "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
       "enum": [
         "TLS10",
@@ -4482,7 +4229,7 @@
       ],
       "type": "string"
     },
-    "2Y": {
+    "2U": {
       "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
       "enum": [
         "TLS10",
@@ -4492,7 +4239,7 @@
       ],
       "type": "string"
     },
-    "2Z": {
+    "2V": {
       "propertyNames": {
         "allOf": [
           {
@@ -4524,46 +4271,38 @@
       },
       "type": "object"
     },
+    "2W": {
+      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+      "type": "null"
+    },
+    "2X": {
+      "properties": {
+        "addressPoolUsage": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "addressPoolUsage"
+      ],
+      "type": "object"
+    },
+    "2Y": {
+      "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
+      "type": "string"
+    },
+    "2Z": {
+      "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
+      "type": "string"
+    },
     "2a": {
-      "properties": {
-        "frrMetrics": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "frrMetrics"
-      ],
-      "type": "object"
-    },
-    "2b": {
-      "properties": {
-        "memberlist": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "memberlist"
-      ],
-      "type": "object"
-    },
-    "2c": {
-      "properties": {
-        "podMonitor": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "podMonitor"
-      ],
-      "type": "object"
-    },
-    "2d": {
       "additionalProperties": {},
       "properties": {
         "labels": {},
@@ -4571,18 +4310,29 @@
       },
       "type": "object"
     },
-    "2e": {
+    "2b": {
       "properties": {
-        "percent": {
-          "$ref": "#/$defs/helm-single-quoted-safe"
+        "reloader": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "percent"
+        "reloader"
       ],
       "type": "object"
     },
-    "2f": {
+    "2c": {
+      "properties": {
+        "prometheusRule": {}
+      },
+      "required": [
+        "prometheusRule"
+      ],
+      "type": "object"
+    },
+    "2d": {
       "properties": {
         "podAnnotations": {
           "$ref": "#/$defs/t"
@@ -4593,7 +4343,7 @@
       ],
       "type": "object"
     },
-    "2g": {
+    "2e": {
       "properties": {
         "serviceAccount": {
           "enum": [
@@ -4606,10 +4356,10 @@
       ],
       "type": "object"
     },
-    "2h": {
+    "2f": {
       "description": "Minimum TLS version (VersionTLS12 or VersionTLS13). Defaults to VersionTLS13."
     },
-    "2i": {
+    "2g": {
       "properties": {
         "prometheusRule": {
           "enum": [
@@ -4622,10 +4372,10 @@
       ],
       "type": "object"
     },
-    "2j": {
+    "2h": {
       "description": "Exclude the pools matching the regular expression from triggering the alert."
     },
-    "2k": {
+    "2i": {
       "additionalProperties": {},
       "properties": {
         "relabelings": {
@@ -4709,29 +4459,7 @@
         }
       }
     },
-    "2l": {
-      "properties": {
-        "reloader": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "reloader"
-      ],
-      "type": "object"
-    },
-    "2m": {
-      "properties": {
-        "prometheusRule": {}
-      },
-      "required": [
-        "prometheusRule"
-      ],
-      "type": "object"
-    },
-    "2n": {
+    "2j": {
       "properties": {
         "serviceMonitor": {}
       },
@@ -4740,7 +4468,7 @@
       ],
       "type": "object"
     },
-    "2o": {
+    "2k": {
       "properties": {
         "frrk8s": {
           "enum": [
@@ -4753,7 +4481,7 @@
       ],
       "type": "object"
     },
-    "2p": {
+    "2l": {
       "properties": {
         "rbac": {
           "enum": [
@@ -4766,7 +4494,7 @@
       ],
       "type": "object"
     },
-    "2q": {
+    "2m": {
       "properties": {
         "memberlist": {}
       },
@@ -4775,7 +4503,7 @@
       ],
       "type": "object"
     },
-    "2r": {
+    "2n": {
       "properties": {
         "podMonitor": {}
       },
@@ -4784,7 +4512,7 @@
       ],
       "type": "object"
     },
-    "2s": {
+    "2o": {
       "properties": {
         "tls": {
           "enum": [
@@ -4797,13 +4525,13 @@
       ],
       "type": "object"
     },
-    "2t": {
+    "2p": {
       "description": "Specifies whether a ServiceAccount should be created"
     },
-    "2u": {
+    "2q": {
       "description": "Number of seconds after which the probe times out."
     },
-    "2v": {
+    "2r": {
       "oneOf": [
         {
           "type": [
@@ -4819,7 +4547,7 @@
         }
       ]
     },
-    "2w": {
+    "2s": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -4991,7 +4719,7 @@
         }
       }
     },
-    "2x": {
+    "2t": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -5029,7 +4757,7 @@
         "null"
       ]
     },
-    "2y": {
+    "2u": {
       "allOf": [
         {
           "not": {
@@ -5085,7 +4813,7 @@
       "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
       "type": "string"
     },
-    "2z": {
+    "2v": {
       "additionalProperties": {},
       "properties": {
         "interval": {
@@ -5157,6 +4885,279 @@
         }
       }
     },
+    "2w": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "string"
+    },
+    "2x": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
+      "type": "string"
+    },
+    "2y": {
+      "additionalProperties": false,
+      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+      "properties": {
+        "localhostProfile": {
+          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-unions": [
+        {
+          "discriminator": "type",
+          "fields-to-discriminateBy": {
+            "localhostProfile": "LocalhostProfile"
+          }
+        }
+      ]
+    },
+    "2z": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "serviceAccount": {}
+                        },
+                        "required": [
+                          "serviceAccount"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "frr-k8s": {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "serviceAccount": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "frr-k8s"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "properties": {
+            "frr-k8s": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "serviceAccount": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "frr-k8s"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "frr-k8s": {
+              "allOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "serviceAccount": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "frr-k8s"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "3": {
       "additionalProperties": {
         "anyOf": [
@@ -5225,58 +5226,29 @@
       "type": "object"
     },
     "30": {
-      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-      "type": "null"
+      "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
+      "type": "string"
     },
     "31": {
       "properties": {
-        "addressPoolUsage": {
+        "serviceAccount": {
           "properties": {
-            "enabled": {
+            "create": {
               "$ref": "#/$defs/t"
             }
           },
           "required": [
-            "enabled"
+            "create"
           ],
           "type": "object"
         }
       },
       "required": [
-        "addressPoolUsage"
+        "serviceAccount"
       ],
       "type": "object"
     },
     "32": {
-      "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
-      "type": "string"
-    },
-    "33": {
-      "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
-      "type": "string"
-    },
-    "34": {
-      "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
-      "type": "string"
-    },
-    "35": {
-      "properties": {
-        "livenessProbe": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "livenessProbe"
-      ],
-      "type": "object"
-    },
-    "36": {
-      "description": "serverName is used to verify the hostname for the targets.",
-      "type": "string"
-    },
-    "37": {
       "properties": {
         "external": {
           "$ref": "#/$defs/t"
@@ -5287,7 +5259,7 @@
       ],
       "type": "object"
     },
-    "38": {
+    "33": {
       "properties": {
         "prometheus": {
           "enum": [
@@ -5300,7 +5272,7 @@
       ],
       "type": "object"
     },
-    "39": {
+    "34": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -5311,7 +5283,7 @@
       ],
       "type": "object"
     },
-    "3a": {
+    "35": {
       "properties": {
         "namespace": {
           "enum": [
@@ -5324,14 +5296,23 @@
       ],
       "type": "object"
     },
-    "3b": {
+    "36": {
+      "properties": {
+        "serviceAccount": {}
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "37": {
       "additionalProperties": {
         "type": "string"
       },
       "description": "Labels to add or overwrite.",
       "type": "object"
     },
-    "3c": {
+    "38": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -5342,7 +5323,7 @@
       ],
       "type": "object"
     },
-    "3d": {
+    "39": {
       "properties": {
         "readinessProbe": {
           "enum": [
@@ -5355,7 +5336,7 @@
       ],
       "type": "object"
     },
-    "3e": {
+    "3a": {
       "properties": {
         "serviceMonitor": {
           "enum": [
@@ -5368,16 +5349,24 @@
       ],
       "type": "object"
     },
-    "3f": {
+    "3b": {
       "properties": {
-        "serviceAccount": {}
+        "livenessProbe": {
+          "enum": [
+            null
+          ]
+        }
       },
       "required": [
-        "serviceAccount"
+        "livenessProbe"
       ],
       "type": "object"
     },
-    "3g": {
+    "3c": {
+      "description": "serverName is used to verify the hostname for the targets.",
+      "type": "string"
+    },
+    "3d": {
       "properties": {
         "speaker": {
           "enum": [
@@ -5390,10 +5379,7 @@
       ],
       "type": "object"
     },
-    "3h": {
-      "$ref": "#/$defs/providerSchema2"
-    },
-    "3i": {
+    "3e": {
       "properties": {
         "image": {
           "enum": [
@@ -5406,7 +5392,10 @@
       ],
       "type": "object"
     },
-    "3j": {
+    "3f": {
+      "$ref": "#/$defs/providerSchema2"
+    },
+    "3g": {
       "properties": {
         "speaker": {}
       },
@@ -5415,7 +5404,7 @@
       ],
       "type": "object"
     },
-    "3k": {
+    "3h": {
       "properties": {
         "image": {}
       },
@@ -5424,7 +5413,7 @@
       ],
       "type": "object"
     },
-    "3l": {
+    "3i": {
       "allOf": [
         {
           "not": {
@@ -5480,7 +5469,7 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "3m": {
+    "3j": {
       "anyOf": [
         {
           "allOf": [
@@ -5547,7 +5536,7 @@
       ],
       "description": "Scrape interval. If not set, the Prometheus default scrape interval is used."
     },
-    "3n": {
+    "3k": {
       "allOf": [
         {
           "not": {
@@ -5603,7 +5592,7 @@
       "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
       "type": "string"
     },
-    "3o": {
+    "3l": {
       "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
       "items": {
         "additionalProperties": false,
@@ -5672,7 +5661,7 @@
       },
       "type": "array"
     },
-    "3p": {
+    "3m": {
       "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
       "items": {
         "additionalProperties": false,
@@ -5741,7 +5730,7 @@
       },
       "type": "array"
     },
-    "3q": {
+    "3n": {
       "additionalProperties": {},
       "properties": {
         "pullPolicy": {
@@ -5912,7 +5901,7 @@
         }
       }
     },
-    "3r": {
+    "3o": {
       "anyOf": [
         {
           "additionalProperties": false,
@@ -6005,7 +5994,7 @@
         }
       ]
     },
-    "3s": {
+    "3p": {
       "additionalProperties": false,
       "description": "cert defines the Client certificate to present when doing client-authentication.",
       "properties": {
@@ -6060,7 +6049,7 @@
       },
       "type": "object"
     },
-    "3t": {
+    "3q": {
       "additionalProperties": false,
       "description": "ca defines the Certificate authority used when verifying server certificates.",
       "properties": {
@@ -6115,7 +6104,7 @@
       },
       "type": "object"
     },
-    "3u": {
+    "3r": {
       "description": "If specified, the pod's tolerations.",
       "items": {
         "additionalProperties": false,
@@ -6270,39 +6259,18 @@
       ]
     },
     "7": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "8": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "9": {
       "pattern": "^[ \\t]*(#.*)?$",
       "type": "string"
     },
+    "8": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "9": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
     "A": {
-      "additionalProperties": {},
-      "properties": {
-        "enabled": {},
-        "failureThreshold": {},
-        "initialDelaySeconds": {},
-        "periodSeconds": {},
-        "port": {},
-        "successThreshold": {},
-        "timeoutSeconds": {}
-      }
-    },
-    "B": {
-      "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-      "type": "null"
-    },
-    "C": {
-      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "D": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -6318,7 +6286,7 @@
         }
       ]
     },
-    "E": {
+    "B": {
       "properties": {
         "podMonitor": {
           "properties": {
@@ -6337,13 +6305,18 @@
       ],
       "type": "object"
     },
-    "F": {
+    "C": {
+      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "D": {
       "required": [
         "port"
       ],
       "type": "object"
     },
-    "G": {
+    "E": {
       "additionalProperties": {},
       "properties": {
         "port": {
@@ -6353,7 +6326,7 @@
         }
       }
     },
-    "H": {
+    "F": {
       "allOf": [
         {
           "not": {
@@ -6409,7 +6382,7 @@
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "string"
     },
-    "I": {
+    "G": {
       "oneOf": [
         {
           "anyOf": [
@@ -6598,7 +6571,7 @@
         }
       ]
     },
-    "J": {
+    "H": {
       "allOf": [
         {
           "not": {
@@ -6654,7 +6627,7 @@
       "description": "Name of the object being referenced.",
       "type": "string"
     },
-    "K": {
+    "I": {
       "additionalProperties": {},
       "properties": {
         "failureThreshold": {
@@ -6690,7 +6663,7 @@
         }
       }
     },
-    "L": {
+    "J": {
       "allOf": [
         {
           "additionalProperties": {
@@ -6723,7 +6696,7 @@
         }
       ]
     },
-    "M": {
+    "K": {
       "allOf": [
         {
           "not": {
@@ -6778,7 +6751,7 @@
       ],
       "type": "string"
     },
-    "N": {
+    "L": {
       "additionalProperties": {},
       "properties": {
         "periodSeconds": {
@@ -6814,12 +6787,39 @@
         }
       }
     },
-    "O": {
+    "M": {
+      "properties": {
+        "controller": {
+          "properties": {
+            "serviceAccount": {
+              "properties": {
+                "create": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
+    },
+    "N": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "P": {
+    "O": {
       "anyOf": [
         {
           "not": {
@@ -6847,7 +6847,7 @@
         }
       ]
     },
-    "Q": {
+    "P": {
       "anyOf": [
         {
           "not": {
@@ -6875,7 +6875,7 @@
         }
       ]
     },
-    "R": {
+    "Q": {
       "properties": {
         "networkpolicies": {
           "properties": {
@@ -6894,7 +6894,7 @@
       ],
       "type": "object"
     },
-    "S": {
+    "R": {
       "properties": {
         "livenessProbe": {
           "properties": {
@@ -6913,9 +6913,14 @@
       ],
       "type": "object"
     },
-    "T": {
+    "S": {
       "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "T": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
     "U": {
@@ -6927,15 +6932,20 @@
       }
     },
     "V": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "W": {
       "description": "Scrape interval. If not set, the Prometheus default scrape interval is used."
     },
+    "W": {
+      "additionalProperties": {},
+      "properties": {
+        "repository": {
+          "not": {
+            "type": "array"
+          }
+        }
+      }
+    },
     "X": {
-      "description": "How often (in seconds) to perform the probe."
+      "description": "Number of failures before the probe is considered failed."
     },
     "Y": {
       "not": {
@@ -6948,25 +6958,6 @@
       }
     },
     "a": {
-      "properties": {
-        "frrk8s": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "frrk8s"
-      ],
-      "type": "object"
-    },
-    "b": {
       "properties": {
         "frr-k8s": {
           "properties": {
@@ -6998,6 +6989,25 @@
       },
       "required": [
         "frr-k8s"
+      ],
+      "type": "object"
+    },
+    "b": {
+      "properties": {
+        "frrk8s": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "frrk8s"
       ],
       "type": "object"
     },
@@ -7466,28 +7476,20 @@
     },
     "p": {
       "properties": {
-        "speaker": {
+        "serviceMonitor": {
           "properties": {
-            "memberlist": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
+            "enabled": {
+              "$ref": "#/$defs/t"
             }
           },
           "required": [
-            "memberlist"
+            "enabled"
           ],
           "type": "object"
         }
       },
       "required": [
-        "speaker"
+        "serviceMonitor"
       ],
       "type": "object"
     },
@@ -10648,29 +10650,23 @@
       "type": "object"
     },
     "r": {
-      "properties": {
-        "serviceMonitor": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
-    },
-    "s": {
       "additionalProperties": {},
       "properties": {
         "resources": {}
       }
+    },
+    "s": {
+      "anyOf": [
+        {
+          "description": "The port that will be exposed by this service.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+          "type": "string"
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -10698,120 +10694,6 @@
       ]
     },
     "u": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "frr-k8s": {
-                "properties": {
-                  "frrk8s": {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "create": {}
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frrk8s"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frr-k8s"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "frr-k8s": {
-              "properties": {
-                "frrk8s": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "frrk8s"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "frr-k8s"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "v": {
-      "anyOf": [
-        {
-          "description": "The port that will be exposed by this service.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        }
-      ]
-    },
-    "w": {
-      "properties": {
-        "controller": {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "create": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "create"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "controller"
-      ],
-      "type": "object"
-    },
-    "x": {
       "properties": {
         "prometheus": {
           "properties": {
@@ -10838,7 +10720,7 @@
       ],
       "type": "object"
     },
-    "y": {
+    "v": {
       "anyOf": [
         {
           "not": {
@@ -10866,7 +10748,7 @@
         }
       ]
     },
-    "z": {
+    "w": {
       "properties": {
         "prometheus": {
           "properties": {
@@ -10884,6 +10766,49 @@
         "prometheus"
       ],
       "type": "object"
+    },
+    "x": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {},
+        "failureThreshold": {},
+        "initialDelaySeconds": {},
+        "periodSeconds": {},
+        "port": {},
+        "successThreshold": {},
+        "timeoutSeconds": {}
+      }
+    },
+    "y": {
+      "properties": {
+        "speaker": {
+          "properties": {
+            "memberlist": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "memberlist"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "speaker"
+      ],
+      "type": "object"
+    },
+    "z": {
+      "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+      "type": "null"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -10903,7 +10828,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/14"
+                    "$ref": "#/$defs/W"
                   }
                 }
               }
@@ -10995,25 +10920,25 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/H"
+                        "$ref": "#/$defs/F"
                       },
                       {
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/B"
+                        "$ref": "#/$defs/z"
                       },
                       {
                         "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
                       }
                     ],
                     "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
@@ -11034,7 +10959,7 @@
           {
             "properties": {
               "controller": {
-                "$ref": "#/$defs/S"
+                "$ref": "#/$defs/R"
               }
             },
             "required": [
@@ -11054,7 +10979,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/G"
+                    "$ref": "#/$defs/E"
                   }
                 }
               }
@@ -11068,7 +10993,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/F"
+                    "$ref": "#/$defs/D"
                   }
                 }
               }
@@ -11086,7 +11011,7 @@
           {
             "properties": {
               "controller": {
-                "$ref": "#/$defs/1Z"
+                "$ref": "#/$defs/1U"
               }
             },
             "required": [
@@ -11106,7 +11031,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/G"
+                    "$ref": "#/$defs/E"
                   }
                 }
               }
@@ -11120,7 +11045,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/F"
+                    "$ref": "#/$defs/D"
                   }
                 }
               }
@@ -11141,7 +11066,7 @@
             "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/2O"
+                "$ref": "#/$defs/2K"
               }
             }
           }
@@ -11157,17 +11082,17 @@
                 "$ref": "#/$defs/e"
               },
               {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/1Y"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/1Y"
               },
               {
-                "$ref": "#/$defs/R"
+                "$ref": "#/$defs/Q"
               }
             ]
           }
@@ -11245,16 +11170,16 @@
                                 "$ref": "#/$defs/Z"
                               },
                               {
-                                "$ref": "#/$defs/V"
-                              },
-                              {
-                                "$ref": "#/$defs/O"
-                              },
-                              {
                                 "$ref": "#/$defs/T"
                               },
                               {
-                                "$ref": "#/$defs/17"
+                                "$ref": "#/$defs/N"
+                              },
+                              {
+                                "$ref": "#/$defs/S"
+                              },
+                              {
+                                "$ref": "#/$defs/15"
                               }
                             ],
                             "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
@@ -11264,16 +11189,16 @@
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/1S"
+                            "$ref": "#/$defs/1O"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
                           }
                         ],
                         "description": "Validation failure policy for CRDs. Can be Fail or Ignore."
@@ -11341,7 +11266,7 @@
                                     "$ref": "#/$defs/3"
                                   },
                                   {
-                                    "$ref": "#/$defs/2A"
+                                    "$ref": "#/$defs/2w"
                                   },
                                   {
                                     "$ref": "#/$defs/4"
@@ -11353,13 +11278,13 @@
                                     "$ref": "#/$defs/1"
                                   },
                                   {
+                                    "$ref": "#/$defs/9"
+                                  },
+                                  {
                                     "$ref": "#/$defs/8"
                                   },
                                   {
                                     "$ref": "#/$defs/7"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/9"
                                   }
                                 ],
                                 "description": "The FRR image pull policy."
@@ -11658,7 +11583,7 @@
                                 "$ref": "#/$defs/3"
                               },
                               {
-                                "$ref": "#/$defs/2A"
+                                "$ref": "#/$defs/2w"
                               },
                               {
                                 "$ref": "#/$defs/4"
@@ -11670,13 +11595,13 @@
                                 "$ref": "#/$defs/1"
                               },
                               {
+                                "$ref": "#/$defs/9"
+                              },
+                              {
                                 "$ref": "#/$defs/8"
                               },
                               {
                                 "$ref": "#/$defs/7"
-                              },
-                              {
-                                "$ref": "#/$defs/9"
                               }
                             ],
                             "description": "The frr-k8s image pull policy."
@@ -11788,7 +11713,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/2Z"
+                            "$ref": "#/$defs/2V"
                           },
                           {
                             "type": "array"
@@ -11864,7 +11789,7 @@
                       "nodeSelector": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/2W"
+                            "$ref": "#/$defs/2S"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -12005,25 +11930,25 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/2y"
+                            "$ref": "#/$defs/2u"
                           },
                           {
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/1j"
+                            "$ref": "#/$defs/1i"
                           },
                           {
                             "$ref": "#/$defs/1"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
                           }
                         ],
                         "description": "Runtime class name for the pod."
@@ -12054,25 +11979,25 @@
                                 "$ref": "#/$defs/3"
                               },
                               {
-                                "$ref": "#/$defs/3n"
+                                "$ref": "#/$defs/3k"
                               },
                               {
                                 "$ref": "#/$defs/4"
                               },
                               {
-                                "$ref": "#/$defs/30"
+                                "$ref": "#/$defs/2W"
                               },
                               {
                                 "$ref": "#/$defs/1"
+                              },
+                              {
+                                "$ref": "#/$defs/9"
                               },
                               {
                                 "$ref": "#/$defs/8"
                               },
                               {
                                 "$ref": "#/$defs/7"
-                              },
-                              {
-                                "$ref": "#/$defs/9"
                               }
                             ],
                             "description": "The name of the ServiceAccount to use. If not set and create is true, a name is generated using the fullname template."
@@ -12139,7 +12064,7 @@
                       "tolerations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/3u"
+                            "$ref": "#/$defs/3r"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -12274,7 +12199,7 @@
                 "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
                 "properties": {
                   "imagePullSecrets": {
-                    "$ref": "#/$defs/2H"
+                    "$ref": "#/$defs/2D"
                   }
                 }
               }
@@ -12293,7 +12218,7 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/M"
+                        "$ref": "#/$defs/K"
                       },
                       {
                         "$ref": "#/$defs/4"
@@ -12302,13 +12227,13 @@
                         "$ref": "#/$defs/1"
                       },
                       {
+                        "$ref": "#/$defs/9"
+                      },
+                      {
                         "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
                       },
                       {
                         "type": "null"
@@ -12435,25 +12360,25 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/H"
+                            "$ref": "#/$defs/F"
                           },
                           {
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/B"
+                            "$ref": "#/$defs/z"
                           },
                           {
                             "$ref": "#/$defs/1"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
                           }
                         ],
                         "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
@@ -12487,17 +12412,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/a"
               },
               {
-                "$ref": "#/$defs/a"
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/a"
               },
               {
                 "$ref": "#/$defs/c"
@@ -12526,10 +12451,10 @@
                           "secureMetricsPort": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/v"
+                                "$ref": "#/$defs/s"
                               },
                               {
-                                "$ref": "#/$defs/I"
+                                "$ref": "#/$defs/G"
                               }
                             ],
                             "description": "Secure metrics port for FRR."
@@ -12554,7 +12479,7 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/18"
+                            "$ref": "#/$defs/17"
                           },
                           {
                             "anyOf": [
@@ -12562,7 +12487,7 @@
                                 "$ref": "#/$defs/3"
                               },
                               {
-                                "$ref": "#/$defs/M"
+                                "$ref": "#/$defs/K"
                               },
                               {
                                 "$ref": "#/$defs/4"
@@ -12595,10 +12520,10 @@
                       "secureMetricsPort": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/v"
+                            "$ref": "#/$defs/s"
                           },
                           {
-                            "$ref": "#/$defs/I"
+                            "$ref": "#/$defs/G"
                           }
                         ],
                         "description": "Port frr-k8s will listen on for secure metrics."
@@ -12661,7 +12586,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/J"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -12693,7 +12618,7 @@
                         "description": "Prometheus Operator ServiceMonitors.",
                         "properties": {
                           "interval": {
-                            "$ref": "#/$defs/3m"
+                            "$ref": "#/$defs/3j"
                           }
                         }
                       }
@@ -12721,7 +12646,7 @@
                           "metricRelabelings": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/3p"
+                                "$ref": "#/$defs/3m"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -12755,7 +12680,7 @@
                           "relabelings": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/3o"
+                                "$ref": "#/$defs/3l"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -12778,16 +12703,16 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/1l"
+          },
+          {
+            "$ref": "#/$defs/2E"
+          },
+          {
             "$ref": "#/$defs/1m"
           },
           {
-            "$ref": "#/$defs/2I"
-          },
-          {
-            "$ref": "#/$defs/1n"
-          },
-          {
-            "$ref": "#/$defs/2J"
+            "$ref": "#/$defs/2F"
           }
         ]
       },
@@ -12810,7 +12735,7 @@
                         "description": "Secure metrics port for FRR.",
                         "oneOf": [
                           {
-                            "$ref": "#/$defs/18"
+                            "$ref": "#/$defs/17"
                           },
                           {
                             "$ref": "#/$defs/1u"
@@ -12830,10 +12755,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1m"
+            "$ref": "#/$defs/1l"
           },
           {
-            "$ref": "#/$defs/2I"
+            "$ref": "#/$defs/2E"
           }
         ]
       },
@@ -12851,7 +12776,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "livenessProbe": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/I"
                       }
                     }
                   }
@@ -12876,22 +12801,22 @@
                           "initialDelaySeconds": {
                             "anyOf": [
                               {
+                                "$ref": "#/$defs/1H"
+                              },
+                              {
                                 "$ref": "#/$defs/1I"
                               },
                               {
-                                "$ref": "#/$defs/1J"
-                              },
-                              {
-                                "$ref": "#/$defs/8"
+                                "$ref": "#/$defs/9"
                               },
                               {
                                 "$ref": "#/$defs/l"
                               },
                               {
-                                "$ref": "#/$defs/7"
+                                "$ref": "#/$defs/8"
                               },
                               {
-                                "$ref": "#/$defs/9"
+                                "$ref": "#/$defs/7"
                               }
                             ],
                             "description": "Number of seconds after the container has started before liveness probes are initiated."
@@ -12916,7 +12841,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "livenessProbe": {
-                        "$ref": "#/$defs/N"
+                        "$ref": "#/$defs/L"
                       }
                     }
                   }
@@ -12936,7 +12861,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "livenessProbe": {
-                        "$ref": "#/$defs/2G"
+                        "$ref": "#/$defs/2C"
                       }
                     }
                   }
@@ -12956,7 +12881,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "livenessProbe": {
-                        "$ref": "#/$defs/2E"
+                        "$ref": "#/$defs/2A"
                       }
                     }
                   }
@@ -12973,17 +12898,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1p"
+                "$ref": "#/$defs/1o"
               },
               {
-                "$ref": "#/$defs/a"
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1p"
+                "$ref": "#/$defs/1o"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13006,7 +12931,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "readinessProbe": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/I"
                       }
                     }
                   }
@@ -13031,22 +12956,22 @@
                           "initialDelaySeconds": {
                             "anyOf": [
                               {
+                                "$ref": "#/$defs/1H"
+                              },
+                              {
                                 "$ref": "#/$defs/1I"
                               },
                               {
-                                "$ref": "#/$defs/1J"
-                              },
-                              {
-                                "$ref": "#/$defs/8"
+                                "$ref": "#/$defs/9"
                               },
                               {
                                 "$ref": "#/$defs/l"
                               },
                               {
-                                "$ref": "#/$defs/7"
+                                "$ref": "#/$defs/8"
                               },
                               {
-                                "$ref": "#/$defs/9"
+                                "$ref": "#/$defs/7"
                               }
                             ],
                             "description": "Number of seconds after the container has started before readiness probes are initiated."
@@ -13071,7 +12996,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "readinessProbe": {
-                        "$ref": "#/$defs/N"
+                        "$ref": "#/$defs/L"
                       }
                     }
                   }
@@ -13091,7 +13016,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "readinessProbe": {
-                        "$ref": "#/$defs/2G"
+                        "$ref": "#/$defs/2C"
                       }
                     }
                   }
@@ -13111,7 +13036,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "readinessProbe": {
-                        "$ref": "#/$defs/2E"
+                        "$ref": "#/$defs/2A"
                       }
                     }
                   }
@@ -13128,17 +13053,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/1q"
               },
               {
-                "$ref": "#/$defs/a"
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/1q"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13166,7 +13091,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/2R"
+                                "$ref": "#/$defs/2N"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -13202,25 +13127,25 @@
                                 "$ref": "#/$defs/3"
                               },
                               {
-                                "$ref": "#/$defs/3l"
+                                "$ref": "#/$defs/3i"
                               },
                               {
                                 "$ref": "#/$defs/4"
                               },
                               {
-                                "$ref": "#/$defs/2S"
+                                "$ref": "#/$defs/2O"
                               },
                               {
                                 "$ref": "#/$defs/1"
+                              },
+                              {
+                                "$ref": "#/$defs/9"
                               },
                               {
                                 "$ref": "#/$defs/8"
                               },
                               {
                                 "$ref": "#/$defs/7"
-                              },
-                              {
-                                "$ref": "#/$defs/9"
                               }
                             ],
                             "description": "The name of the ServiceAccount to use. If not set and create is true, a name is generated using the fullname template."
@@ -13242,17 +13167,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1k"
+                "$ref": "#/$defs/1j"
               },
               {
-                "$ref": "#/$defs/a"
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1k"
+                "$ref": "#/$defs/1j"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13281,7 +13206,7 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/J"
+                            "$ref": "#/$defs/H"
                           },
                           {
                             "$ref": "#/$defs/4"
@@ -13305,10 +13230,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1n"
+            "$ref": "#/$defs/1m"
           },
           {
-            "$ref": "#/$defs/2J"
+            "$ref": "#/$defs/2F"
           }
         ]
       },
@@ -13326,7 +13251,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "startupProbe": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/I"
                       }
                     }
                   }
@@ -13346,7 +13271,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "startupProbe": {
-                        "$ref": "#/$defs/N"
+                        "$ref": "#/$defs/L"
                       }
                     }
                   }
@@ -13363,64 +13288,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/1S"
               },
               {
-                "$ref": "#/$defs/a"
-              },
-              {
-                "$ref": "#/$defs/1F"
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
-              },
-              {
-                "$ref": "#/$defs/c"
-              },
-              {
-                "$ref": "#/$defs/1F"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "frr-k8s": {
-            "additionalProperties": {},
-            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-            "properties": {
-              "fullnameOverride": {
-                "description": "String to override the default fully qualified app name.",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/1T"
-              },
-              {
-                "$ref": "#/$defs/a"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/1T"
+                "$ref": "#/$defs/1S"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13454,17 +13332,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/22"
+                "$ref": "#/$defs/1Z"
               },
               {
-                "$ref": "#/$defs/a"
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/22"
+                "$ref": "#/$defs/1Z"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13501,10 +13379,10 @@
                 "$ref": "#/$defs/k"
               },
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/a"
               },
               {
-                "$ref": "#/$defs/a"
+                "$ref": "#/$defs/b"
               }
             ]
           },
@@ -13514,7 +13392,7 @@
                 "$ref": "#/$defs/k"
               },
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/a"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13542,22 +13420,22 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/2B"
+                            "$ref": "#/$defs/2x"
                           },
                           {
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/1K"
+                            "$ref": "#/$defs/1Q"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
                           }
                         ],
                         "description": "The namespace where Prometheus is deployed. Required when \".Values.prometheus.rbacPrometheus == true\" and \"prometheus.serviceMonitor.enabled=true\"."
@@ -13585,7 +13463,7 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/J"
+                            "$ref": "#/$defs/H"
                           },
                           {
                             "$ref": "#/$defs/4"
@@ -13611,23 +13489,23 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1q"
-              },
-              {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/1p"
               },
               {
                 "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1q"
+                "$ref": "#/$defs/1p"
               },
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/a"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13637,23 +13515,23 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1g"
-              },
-              {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/1f"
               },
               {
                 "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/b"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1g"
+                "$ref": "#/$defs/1f"
               },
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/a"
               },
               {
                 "$ref": "#/$defs/c"
@@ -13684,35 +13562,35 @@
                             "description": "tlsConfig defines TLS configuration used by the client.",
                             "properties": {
                               "ca": {
-                                "$ref": "#/$defs/3t"
+                                "$ref": "#/$defs/3q"
                               },
                               "caFile": {
-                                "$ref": "#/$defs/34"
+                                "$ref": "#/$defs/30"
                               },
                               "cert": {
-                                "$ref": "#/$defs/3s"
+                                "$ref": "#/$defs/3p"
                               },
                               "certFile": {
-                                "$ref": "#/$defs/32"
+                                "$ref": "#/$defs/2Y"
                               },
                               "insecureSkipVerify": {
                                 "description": "Disables SSL certificate verification",
                                 "type": "boolean"
                               },
                               "keyFile": {
-                                "$ref": "#/$defs/33"
+                                "$ref": "#/$defs/2Z"
                               },
                               "keySecret": {
-                                "$ref": "#/$defs/2U"
+                                "$ref": "#/$defs/2Q"
                               },
                               "maxVersion": {
-                                "$ref": "#/$defs/2X"
+                                "$ref": "#/$defs/2T"
                               },
                               "minVersion": {
-                                "$ref": "#/$defs/2Y"
+                                "$ref": "#/$defs/2U"
                               },
                               "serverName": {
-                                "$ref": "#/$defs/36"
+                                "$ref": "#/$defs/3c"
                               }
                             },
                             "type": "object"
@@ -13751,10 +13629,43 @@
             "$ref": "#/$defs/e"
           },
           {
-            "$ref": "#/$defs/w"
+            "allOf": [
+              {
+                "$ref": "#/$defs/M"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           {
-            "$ref": "#/$defs/x"
+            "$ref": "#/$defs/u"
           },
           {
             "$ref": "#/$defs/i"
@@ -13795,86 +13706,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/w"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "controller": {
-                      "$ref": "#/$defs/23"
-                    }
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/5"
-              },
-              {
-                "$ref": "#/$defs/p"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/25"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/5"
-              },
-              {
-                "properties": {
-                  "speaker": {
-                    "$ref": "#/$defs/21"
-                  }
-                },
-                "required": [
-                  "speaker"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "speaker": {
-                      "$ref": "#/$defs/23"
-                    }
-                  },
-                  "required": [
-                    "speaker"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
                 "$ref": "#/$defs/e"
               },
               {
@@ -13885,7 +13716,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/w"
+                "$ref": "#/$defs/M"
               },
               {
                 "$ref": "#/$defs/g"
@@ -13898,7 +13729,7 @@
                 "$ref": "#/$defs/g"
               },
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/u"
               }
             ]
           },
@@ -13976,7 +13807,7 @@
             "additionalProperties": {},
             "properties": {
               "imagePullSecrets": {
-                "$ref": "#/$defs/2H"
+                "$ref": "#/$defs/2D"
               }
             }
           },
@@ -14019,10 +13850,10 @@
             "$ref": "#/$defs/e"
           },
           {
-            "$ref": "#/$defs/w"
+            "$ref": "#/$defs/M"
           },
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/Q"
           },
           {
             "$ref": "#/$defs/q"
@@ -14039,7 +13870,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/2P"
+            "$ref": "#/$defs/2L"
           }
         }
       }
@@ -14048,7 +13879,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/x"
+            "$ref": "#/$defs/u"
           },
           {
             "$ref": "#/$defs/i"
@@ -14067,7 +13898,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/M"
+                "$ref": "#/$defs/K"
               },
               {
                 "$ref": "#/$defs/4"
@@ -14082,7 +13913,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/3c"
+        "$ref": "#/$defs/38"
       },
       "then": {
         "additionalProperties": {},
@@ -14098,7 +13929,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/R"
+        "$ref": "#/$defs/Q"
       },
       "then": {
         "allOf": [
@@ -14143,14 +13974,14 @@
                 "$ref": "#/$defs/e"
               },
               {
-                "$ref": "#/$defs/z"
+                "$ref": "#/$defs/w"
               },
               {
                 "anyOf": [
                   {
                     "properties": {
                       "controller": {
-                        "$ref": "#/$defs/2f"
+                        "$ref": "#/$defs/2d"
                       }
                     },
                     "required": [
@@ -14159,7 +13990,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/z"
+                    "$ref": "#/$defs/w"
                   }
                 ]
               }
@@ -14168,7 +13999,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/z"
+                "$ref": "#/$defs/w"
               },
               {
                 "$ref": "#/$defs/5"
@@ -14181,12 +14012,12 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/z"
+                    "$ref": "#/$defs/w"
                   },
                   {
                     "properties": {
                       "speaker": {
-                        "$ref": "#/$defs/2f"
+                        "$ref": "#/$defs/2d"
                       }
                     },
                     "required": [
@@ -14269,7 +14100,7 @@
               "prometheus": {
                 "properties": {
                   "prometheusRule": {
-                    "$ref": "#/$defs/1P"
+                    "$ref": "#/$defs/1M"
                   }
                 },
                 "required": [
@@ -14303,7 +14134,7 @@
                     "description": "MetalLBAddressPoolExhausted",
                     "properties": {
                       "excludePools": {
-                        "$ref": "#/$defs/1X"
+                        "$ref": "#/$defs/1W"
                       }
                     }
                   }
@@ -14482,7 +14313,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "excludePools": {
-                        "$ref": "#/$defs/1X"
+                        "$ref": "#/$defs/1W"
                       }
                     }
                   }
@@ -14523,13 +14354,13 @@
                             "anyOf": [
                               {
                                 "items": {
-                                  "$ref": "#/$defs/2d"
+                                  "$ref": "#/$defs/2a"
                                 },
                                 "type": "array"
                               },
                               {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2d"
+                                  "$ref": "#/$defs/2a"
                                 },
                                 "type": "object"
                               },
@@ -14567,13 +14398,13 @@
                             "anyOf": [
                               {
                                 "items": {
-                                  "$ref": "#/$defs/2e"
+                                  "$ref": "#/$defs/24"
                                 },
                                 "type": "array"
                               },
                               {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2e"
+                                  "$ref": "#/$defs/24"
                                 },
                                 "type": "object"
                               },
@@ -14603,17 +14434,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/u"
               },
               {
-                "$ref": "#/$defs/1R"
+                "$ref": "#/$defs/1N"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1R"
+                "$ref": "#/$defs/1N"
               },
               {
                 "$ref": "#/$defs/f"
@@ -14739,7 +14570,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/J"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -14771,7 +14602,7 @@
                           "tlsConfig": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/19"
+                                "$ref": "#/$defs/18"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -14837,7 +14668,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/14"
+                    "$ref": "#/$defs/W"
                   }
                 }
               }
@@ -14943,25 +14774,25 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/H"
+                        "$ref": "#/$defs/F"
                       },
                       {
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/B"
+                        "$ref": "#/$defs/z"
                       },
                       {
                         "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
                       }
                     ],
                     "description": "The name of the secret to be mounted in the speaker pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
@@ -14998,7 +14829,7 @@
                     "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
                     "properties": {
                       "image": {
-                        "$ref": "#/$defs/14"
+                        "$ref": "#/$defs/W"
                       }
                     }
                   }
@@ -15210,10 +15041,10 @@
                   "metricsPort": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/v"
+                        "$ref": "#/$defs/s"
                       },
                       {
-                        "$ref": "#/$defs/I"
+                        "$ref": "#/$defs/G"
                       }
                     ]
                   }
@@ -15233,7 +15064,7 @@
           {
             "properties": {
               "speaker": {
-                "$ref": "#/$defs/S"
+                "$ref": "#/$defs/R"
               }
             },
             "required": [
@@ -15253,7 +15084,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/G"
+                    "$ref": "#/$defs/E"
                   }
                 }
               }
@@ -15267,7 +15098,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/F"
+                    "$ref": "#/$defs/D"
                   }
                 }
               }
@@ -15283,7 +15114,7 @@
             "$ref": "#/$defs/5"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/y"
           },
           {
             "properties": {
@@ -15341,7 +15172,7 @@
             "$ref": "#/$defs/5"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/y"
           }
         ]
       },
@@ -15473,7 +15304,7 @@
           {
             "properties": {
               "speaker": {
-                "$ref": "#/$defs/1Z"
+                "$ref": "#/$defs/1U"
               }
             },
             "required": [
@@ -15493,7 +15324,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/G"
+                    "$ref": "#/$defs/E"
                   }
                 }
               }
@@ -15507,7 +15338,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/F"
+                    "$ref": "#/$defs/D"
                   }
                 }
               }
@@ -15526,7 +15357,7 @@
             "$ref": "#/$defs/5"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/y"
           }
         ]
       },
@@ -15563,16 +15394,16 @@
                         "$ref": "#/$defs/Z"
                       },
                       {
-                        "$ref": "#/$defs/V"
-                      },
-                      {
-                        "$ref": "#/$defs/O"
-                      },
-                      {
                         "$ref": "#/$defs/T"
                       },
                       {
-                        "$ref": "#/$defs/17"
+                        "$ref": "#/$defs/N"
+                      },
+                      {
+                        "$ref": "#/$defs/S"
+                      },
+                      {
+                        "$ref": "#/$defs/15"
                       }
                     ],
                     "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -15589,13 +15420,13 @@
                     "$ref": "#/$defs/1"
                   },
                   {
+                    "$ref": "#/$defs/9"
+                  },
+                  {
                     "$ref": "#/$defs/8"
                   },
                   {
                     "$ref": "#/$defs/7"
-                  },
-                  {
-                    "$ref": "#/$defs/9"
                   }
                 ]
               }
@@ -15611,10 +15442,26 @@
             "$ref": "#/$defs/5"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/y"
           },
           {
-            "$ref": "#/$defs/25"
+            "properties": {
+              "speaker": {
+                "properties": {
+                  "secretName": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "secretName"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "speaker"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -15655,7 +15502,7 @@
             "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/2O"
+                "$ref": "#/$defs/2K"
               }
             }
           }
@@ -15683,13 +15530,32 @@
             "$ref": "#/$defs/k"
           },
           {
+            "$ref": "#/$defs/a"
+          },
+          {
             "$ref": "#/$defs/b"
+          },
+          {
+            "$ref": "#/$defs/2B"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/k"
           },
           {
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/2F"
+            "$ref": "#/$defs/b"
+          },
+          {
+            "$ref": "#/$defs/2z"
           }
         ]
       },
@@ -15700,15 +15566,15 @@
         "allOf": [
           {
             "$ref": "#/$defs/k"
-          },
-          {
-            "$ref": "#/$defs/b"
           },
           {
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/2D"
+            "$ref": "#/$defs/c"
+          },
+          {
+            "$ref": "#/$defs/2B"
           }
         ]
       },
@@ -15721,13 +15587,13 @@
             "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/a"
           },
           {
             "$ref": "#/$defs/c"
           },
           {
-            "$ref": "#/$defs/2F"
+            "$ref": "#/$defs/2z"
           }
         ]
       },
@@ -15737,26 +15603,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/k"
-          },
-          {
-            "$ref": "#/$defs/b"
-          },
-          {
-            "$ref": "#/$defs/c"
-          },
-          {
-            "$ref": "#/$defs/2D"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/26"
+            "$ref": "#/$defs/21"
           },
           {
             "$ref": "#/$defs/5"
@@ -15766,7 +15613,7 @@
               {
                 "properties": {
                   "frrk8s": {
-                    "$ref": "#/$defs/3a"
+                    "$ref": "#/$defs/35"
                   }
                 },
                 "required": [
@@ -15803,7 +15650,7 @@
                     "prometheus": {
                       "properties": {
                         "serviceMonitor": {
-                          "$ref": "#/$defs/3j"
+                          "$ref": "#/$defs/3g"
                         }
                       },
                       "required": [
@@ -15823,7 +15670,7 @@
                   "prometheus": {
                     "properties": {
                       "serviceMonitor": {
-                        "$ref": "#/$defs/3g"
+                        "$ref": "#/$defs/3d"
                       }
                     },
                     "required": [
@@ -15852,10 +15699,10 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/a"
+                "$ref": "#/$defs/b"
               },
               {
-                "$ref": "#/$defs/26"
+                "$ref": "#/$defs/21"
               }
             ]
           }
@@ -15865,7 +15712,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/P"
+        "$ref": "#/$defs/O"
       },
       "then": false
     },
@@ -15878,7 +15725,7 @@
                 "not": {
                   "properties": {
                     "controller": {
-                      "$ref": "#/$defs/3f"
+                      "$ref": "#/$defs/36"
                     }
                   },
                   "required": [
@@ -15890,7 +15737,7 @@
               {
                 "properties": {
                   "controller": {
-                    "$ref": "#/$defs/2g"
+                    "$ref": "#/$defs/2e"
                   }
                 },
                 "required": [
@@ -15901,7 +15748,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           }
         ]
       },
@@ -15956,7 +15803,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/2o"
+                    "$ref": "#/$defs/2k"
                   }
                 ]
               }
@@ -15986,7 +15833,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/16"
+                        "$ref": "#/$defs/14"
                       }
                     },
                     "required": [
@@ -16022,7 +15869,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/1Y"
+                        "$ref": "#/$defs/1X"
                       }
                     },
                     "required": [
@@ -16058,7 +15905,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/2a"
+                        "$ref": "#/$defs/27"
                       }
                     },
                     "required": [
@@ -16140,7 +15987,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/3i"
+                        "$ref": "#/$defs/3e"
                       }
                     },
                     "required": [
@@ -16176,7 +16023,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/35"
+                        "$ref": "#/$defs/3b"
                       }
                     },
                     "required": [
@@ -16212,7 +16059,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/3d"
+                        "$ref": "#/$defs/39"
                       }
                     },
                     "required": [
@@ -16248,7 +16095,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/2l"
+                        "$ref": "#/$defs/2b"
                       }
                     },
                     "required": [
@@ -16284,7 +16131,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/2g"
+                        "$ref": "#/$defs/2e"
                       }
                     },
                     "required": [
@@ -16320,7 +16167,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/28"
+                        "$ref": "#/$defs/25"
                       }
                     },
                     "required": [
@@ -16354,7 +16201,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/38"
+                    "$ref": "#/$defs/33"
                   }
                 ]
               }
@@ -16382,7 +16229,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/1U"
+                    "$ref": "#/$defs/1T"
                   }
                 ]
               }
@@ -16410,7 +16257,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/2p"
+                    "$ref": "#/$defs/2l"
                   }
                 ]
               }
@@ -16438,7 +16285,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/2s"
+                    "$ref": "#/$defs/2o"
                   }
                 ]
               }
@@ -16470,7 +16317,7 @@
             }
           },
           {
-            "$ref": "#/$defs/2o"
+            "$ref": "#/$defs/2k"
           }
         ]
       },
@@ -16509,83 +16356,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/y"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "$ref": "#/$defs/2r"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "$ref": "#/$defs/2c"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/y"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "$ref": "#/$defs/2m"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "$ref": "#/$defs/2i"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/y"
-          }
-        ]
+        "$ref": "#/$defs/v"
       },
       "then": false
     },
@@ -16608,12 +16379,88 @@
                 }
               },
               {
-                "$ref": "#/$defs/1U"
+                "properties": {
+                  "prometheus": {
+                    "$ref": "#/$defs/29"
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
               }
             ]
           },
           {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/v"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "$ref": "#/$defs/2c"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "prometheus": {
+                    "$ref": "#/$defs/2g"
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/v"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "$ref": "#/$defs/2j"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/$defs/1T"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/v"
           }
         ]
       },
@@ -16634,7 +16481,7 @@
             }
           },
           {
-            "$ref": "#/$defs/2p"
+            "$ref": "#/$defs/2l"
           }
         ]
       },
@@ -16642,7 +16489,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/Q"
+        "$ref": "#/$defs/P"
       },
       "then": false
     },
@@ -16673,7 +16520,7 @@
               {
                 "properties": {
                   "speaker": {
-                    "$ref": "#/$defs/16"
+                    "$ref": "#/$defs/14"
                   }
                 },
                 "required": [
@@ -16684,7 +16531,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/P"
           }
         ]
       },
@@ -16699,7 +16546,7 @@
                 "not": {
                   "properties": {
                     "speaker": {
-                      "$ref": "#/$defs/2q"
+                      "$ref": "#/$defs/2m"
                     }
                   },
                   "required": [
@@ -16711,7 +16558,7 @@
               {
                 "properties": {
                   "speaker": {
-                    "$ref": "#/$defs/2b"
+                    "$ref": "#/$defs/28"
                   }
                 },
                 "required": [
@@ -16722,7 +16569,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/P"
           }
         ]
       },
@@ -16745,7 +16592,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/2s"
+                "$ref": "#/$defs/2o"
               }
             ]
           },
@@ -16776,7 +16623,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/2N"
+                "$ref": "#/$defs/2J"
               },
               {
                 "allOf": [
@@ -16786,13 +16633,13 @@
                 ]
               },
               {
-                "$ref": "#/$defs/2M"
+                "$ref": "#/$defs/2I"
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1R"
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/1c"
               },
               {
                 "$ref": "#/$defs/1s"
@@ -16810,16 +16657,16 @@
                         "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
                         "properties": {
                           "fsGroup": {
-                            "$ref": "#/$defs/1b"
+                            "$ref": "#/$defs/1a"
                           },
                           "fsGroupChangePolicy": {
-                            "$ref": "#/$defs/1e"
+                            "$ref": "#/$defs/1d"
                           },
                           "runAsGroup": {
                             "$ref": "#/$defs/1v"
                           },
                           "runAsNonRoot": {
-                            "$ref": "#/$defs/1h"
+                            "$ref": "#/$defs/1g"
                           },
                           "runAsUser": {
                             "description": "nobody",
@@ -16833,16 +16680,16 @@
                             "$ref": "#/$defs/1r"
                           },
                           "seccompProfile": {
-                            "$ref": "#/$defs/2C"
+                            "$ref": "#/$defs/2y"
                           },
                           "supplementalGroups": {
-                            "$ref": "#/$defs/1o"
+                            "$ref": "#/$defs/1n"
                           },
                           "sysctls": {
-                            "$ref": "#/$defs/1c"
+                            "$ref": "#/$defs/1b"
                           },
                           "windowsOptions": {
-                            "$ref": "#/$defs/2x"
+                            "$ref": "#/$defs/2t"
                           }
                         },
                         "type": "object"
@@ -16858,7 +16705,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/2L"
+                "$ref": "#/$defs/2H"
               },
               {
                 "additionalProperties": {},
@@ -16874,10 +16721,10 @@
                             "description": "Spec to control the desired behavior of rolling update.",
                             "properties": {
                               "maxSurge": {
-                                "$ref": "#/$defs/2v"
+                                "$ref": "#/$defs/2r"
                               },
                               "maxUnavailable": {
-                                "$ref": "#/$defs/2v"
+                                "$ref": "#/$defs/2r"
                               }
                             },
                             "type": [
@@ -16907,13 +16754,13 @@
                 }
               },
               {
-                "$ref": "#/$defs/2Q"
+                "$ref": "#/$defs/2M"
               }
             ]
           }
         },
         {
-          "$ref": "#/$defs/1H"
+          "$ref": "#/$defs/1G"
         },
         {
           "$ref": "#/$defs/1t"
@@ -16925,15 +16772,15 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/39"
+                    "$ref": "#/$defs/34"
                   },
                   "then": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/1a"
+                        "$ref": "#/$defs/19"
                       },
                       {
-                        "$ref": "#/$defs/2w"
+                        "$ref": "#/$defs/2s"
                       }
                     ]
                   }
@@ -16943,7 +16790,7 @@
           }
         },
         {
-          "$ref": "#/$defs/1G"
+          "$ref": "#/$defs/1F"
         },
         {
           "$ref": "#/$defs/1D"
@@ -16953,7 +16800,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/1M"
+            "$ref": "#/$defs/1J"
           },
           "then": false
         }
@@ -16969,7 +16816,7 @@
         },
         "labels": {},
         "livenessProbe": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/x"
         },
         "logLevel": {
           "description": "Controller log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
@@ -16980,7 +16827,7 @@
         "podAnnotations": {},
         "priorityClassName": {},
         "readinessProbe": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/x"
         },
         "resources": {},
         "runtimeClassName": {},
@@ -16990,10 +16837,10 @@
           "properties": {
             "annotations": {},
             "create": {
-              "$ref": "#/$defs/2t"
+              "$ref": "#/$defs/2p"
             },
             "name": {
-              "$ref": "#/$defs/1W"
+              "$ref": "#/$defs/1V"
             }
           },
           "type": "object"
@@ -17032,7 +16879,7 @@
               "type": "string"
             },
             {
-              "$ref": "#/$defs/1S"
+              "$ref": "#/$defs/1O"
             }
           ]
         }
@@ -17146,19 +16993,19 @@
                   "description": "Enable liveness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/15"
+                  "$ref": "#/$defs/X"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before liveness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/X"
+                  "$ref": "#/$defs/16"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/29"
+                  "$ref": "#/$defs/26"
                 },
                 "timeoutSeconds": {
-                  "$ref": "#/$defs/2u"
+                  "$ref": "#/$defs/2q"
                 }
               }
             },
@@ -17178,19 +17025,19 @@
                   "description": "Enable readiness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/15"
+                  "$ref": "#/$defs/X"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before readiness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/X"
+                  "$ref": "#/$defs/16"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/29"
+                  "$ref": "#/$defs/26"
                 },
                 "timeoutSeconds": {
-                  "$ref": "#/$defs/2u"
+                  "$ref": "#/$defs/2q"
                 }
               }
             },
@@ -17232,10 +17079,10 @@
                   "description": "Enable startup probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/15"
+                  "$ref": "#/$defs/X"
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/X"
+                  "$ref": "#/$defs/16"
                 }
               }
             },
@@ -17294,7 +17141,7 @@
                   "description": "Enable Prometheus ServiceMonitor for frr-k8s metrics.\nThe FRR-K8s BGP/BFD metrics are exposed with the \"frrk8s_\" prefix\n(e.g. frrk8s_bgp_session_up, frrk8s_bfd_session_up).\nTo rename them to the legacy \"metallb_\" prefix for backward compatibility\nwith existing dashboards or alerts, enable and configure metric relabelings:\nmetricRelabelings:\n- sourceLabels: [__name__]\nregex: \"frrk8s_bgp_(.*)\"\ntargetLabel: \"__name__\"\nreplacement: \"metallb_bgp_$1\"\n- sourceLabels: [__name__]\nregex: \"frrk8s_bfd_(.*)\"\ntargetLabel: \"__name__\"\nreplacement: \"metallb_bfd_$1\""
                 },
                 "interval": {
-                  "$ref": "#/$defs/W"
+                  "$ref": "#/$defs/V"
                 },
                 "jobLabel": {
                   "description": "Job label for scrape target."
@@ -17324,16 +17171,16 @@
           "additionalProperties": {},
           "properties": {
             "cipherSuites": {
-              "$ref": "#/$defs/27"
+              "$ref": "#/$defs/23"
             },
             "curvePreferences": {
-              "$ref": "#/$defs/1V"
+              "$ref": "#/$defs/22"
             },
             "metricsTLSSecret": {
               "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
             },
             "minVersion": {
-              "$ref": "#/$defs/2h"
+              "$ref": "#/$defs/2f"
             }
           }
         }
@@ -17350,7 +17197,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/37"
+                "$ref": "#/$defs/32"
               }
             ]
           },
@@ -17377,7 +17224,7 @@
     "imagePullSecrets": {},
     "loadBalancerClass": {},
     "nameOverride": {
-      "$ref": "#/$defs/2P"
+      "$ref": "#/$defs/2L"
     },
     "networkpolicies": {
       "additionalProperties": {},
@@ -17393,7 +17240,7 @@
                 "description": "to override internal k8s api targetPort",
                 "oneOf": [
                   {
-                    "$ref": "#/$defs/18"
+                    "$ref": "#/$defs/17"
                   },
                   {
                     "$ref": "#/$defs/1u"
@@ -17423,7 +17270,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/p"
           },
           "then": {
             "additionalProperties": {},
@@ -17431,10 +17278,10 @@
               "metricsPort": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/v"
+                    "$ref": "#/$defs/s"
                   },
                   {
-                    "$ref": "#/$defs/I"
+                    "$ref": "#/$defs/G"
                   }
                 ],
                 "description": "port both controller and speaker will listen on for metrics (always HTTPS).\nMatches the port kube-rbac-proxy previously served on."
@@ -17448,7 +17295,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/E"
+                    "$ref": "#/$defs/B"
                   },
                   {
                     "$ref": "#/$defs/m"
@@ -17461,7 +17308,7 @@
                     "$ref": "#/$defs/m"
                   },
                   {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/p"
                   }
                 ]
               }
@@ -17478,22 +17325,22 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/2B"
+                        "$ref": "#/$defs/2x"
                       },
                       {
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/1K"
+                        "$ref": "#/$defs/1Q"
+                      },
+                      {
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
                       }
                     ],
                     "description": "the namespace where prometheus is deployed\nrequired when \" .Values.prometheus.rbacPrometheus == true \" and \" .Values.prometheus.podMonitor.enabled=true or prometheus.serviceMonitor.enabled=true \""
@@ -17509,7 +17356,7 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/J"
+                        "$ref": "#/$defs/H"
                       },
                       {
                         "$ref": "#/$defs/4"
@@ -17529,13 +17376,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/E"
+                "$ref": "#/$defs/B"
               },
               {
                 "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/1i"
+                "$ref": "#/$defs/1h"
               }
             ]
           },
@@ -17545,13 +17392,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/E"
+                "$ref": "#/$defs/B"
               },
               {
                 "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1e"
               }
             ]
           },
@@ -17561,26 +17408,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/E"
+                "$ref": "#/$defs/B"
               },
               {
-                "$ref": "#/$defs/r"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/m"
-              },
-              {
-                "$ref": "#/$defs/r"
-              },
-              {
-                "$ref": "#/$defs/1i"
+                "$ref": "#/$defs/p"
               }
             ]
           },
@@ -17593,10 +17424,10 @@
                 "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/p"
               },
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1h"
               }
             ]
           },
@@ -17604,29 +17435,15 @@
         },
         {
           "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "$ref": "#/$defs/2r"
-                }
+                "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/2c"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/2m"
-                }
+                "$ref": "#/$defs/p"
               },
               {
-                "$ref": "#/$defs/2i"
+                "$ref": "#/$defs/1e"
               }
             ]
           },
@@ -17641,7 +17458,37 @@
                 }
               },
               {
-                "$ref": "#/$defs/3e"
+                "$ref": "#/$defs/29"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/2c"
+                }
+              },
+              {
+                "$ref": "#/$defs/2g"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/2j"
+                }
+              },
+              {
+                "$ref": "#/$defs/3a"
               }
             ]
           },
@@ -17697,13 +17544,13 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2z"
+                    "$ref": "#/$defs/2v"
                   },
                   {
-                    "$ref": "#/$defs/2K"
+                    "$ref": "#/$defs/2G"
                   },
                   {
-                    "$ref": "#/$defs/2k"
+                    "$ref": "#/$defs/2i"
                   }
                 ]
               }
@@ -17721,16 +17568,16 @@
               "description": "enable support for Prometheus Operator"
             },
             "interval": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/V"
             },
             "jobLabel": {
               "description": "Job label for scrape target"
             },
             "metricRelabelings": {
-              "$ref": "#/$defs/1O"
+              "$ref": "#/$defs/1L"
             },
             "relabelings": {
-              "$ref": "#/$defs/1Q"
+              "$ref": "#/$defs/1P"
             }
           },
           "type": "object"
@@ -17822,7 +17669,7 @@
                                   "type": "string"
                                 },
                                 "labels": {
-                                  "$ref": "#/$defs/3b"
+                                  "$ref": "#/$defs/37"
                                 },
                                 "record": {
                                   "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
@@ -17850,7 +17697,7 @@
               "if": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/1P"
+                    "$ref": "#/$defs/1M"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -17865,7 +17712,7 @@
                     "description": "MetalLBAddressPoolExhausted",
                     "properties": {
                       "labels": {
-                        "$ref": "#/$defs/D"
+                        "$ref": "#/$defs/A"
                       }
                     }
                   }
@@ -17876,7 +17723,7 @@
               "if": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/31"
+                    "$ref": "#/$defs/2X"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -17891,10 +17738,10 @@
                     "properties": {
                       "thresholds": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1N"
+                          "$ref": "#/$defs/1K"
                         },
                         "items": {
-                          "$ref": "#/$defs/1N"
+                          "$ref": "#/$defs/1K"
                         }
                       }
                     }
@@ -17929,7 +17776,7 @@
                     "description": "MetalLBBGPSessionDown",
                     "properties": {
                       "labels": {
-                        "$ref": "#/$defs/D"
+                        "$ref": "#/$defs/A"
                       }
                     }
                   }
@@ -17963,7 +17810,7 @@
                     "description": "MetalLBConfigNotLoaded",
                     "properties": {
                       "labels": {
-                        "$ref": "#/$defs/D"
+                        "$ref": "#/$defs/A"
                       }
                     }
                   }
@@ -17997,7 +17844,7 @@
                     "description": "MetalLBStaleConfig",
                     "properties": {
                       "labels": {
-                        "$ref": "#/$defs/D"
+                        "$ref": "#/$defs/A"
                       }
                     }
                   }
@@ -18206,7 +18053,7 @@
               "properties": {
                 "enabled": {},
                 "excludePools": {
-                  "$ref": "#/$defs/2j"
+                  "$ref": "#/$defs/2h"
                 },
                 "labels": {}
               }
@@ -18216,7 +18063,7 @@
               "properties": {
                 "enabled": {},
                 "excludePools": {
-                  "$ref": "#/$defs/2j"
+                  "$ref": "#/$defs/2h"
                 },
                 "thresholds": {}
               }
@@ -18303,7 +18150,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/J"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -18324,7 +18171,7 @@
                           "tlsConfig": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/19"
+                                "$ref": "#/$defs/18"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -18337,13 +18184,13 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2z"
+                    "$ref": "#/$defs/2v"
                   },
                   {
-                    "$ref": "#/$defs/2K"
+                    "$ref": "#/$defs/2G"
                   },
                   {
-                    "$ref": "#/$defs/2k"
+                    "$ref": "#/$defs/2i"
                   }
                 ]
               }
@@ -18355,7 +18202,7 @@
                     "$ref": "#/$defs/2"
                   },
                   {
-                    "$ref": "#/$defs/P"
+                    "$ref": "#/$defs/O"
                   }
                 ]
               },
@@ -18382,16 +18229,16 @@
               "description": "enable support for Prometheus Operator"
             },
             "interval": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/V"
             },
             "jobLabel": {
               "description": "Job label for scrape target"
             },
             "metricRelabelings": {
-              "$ref": "#/$defs/1O"
+              "$ref": "#/$defs/1L"
             },
             "relabelings": {
-              "$ref": "#/$defs/1Q"
+              "$ref": "#/$defs/1P"
             },
             "speaker": {
               "additionalProperties": {},
@@ -18439,7 +18286,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/2N"
+                "$ref": "#/$defs/2J"
               },
               {
                 "allOf": [
@@ -18449,13 +18296,13 @@
                 ]
               },
               {
-                "$ref": "#/$defs/2M"
+                "$ref": "#/$defs/2I"
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1R"
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/1c"
               },
               {
                 "$ref": "#/$defs/1s"
@@ -18488,25 +18335,25 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/2y"
+                        "$ref": "#/$defs/2u"
                       },
                       {
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/1j"
+                        "$ref": "#/$defs/1i"
                       },
                       {
                         "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
                       }
                     ],
                     "description": "Selects which runtime class will be used by the pod."
@@ -18523,16 +18370,16 @@
                         "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
                         "properties": {
                           "fsGroup": {
-                            "$ref": "#/$defs/1b"
+                            "$ref": "#/$defs/1a"
                           },
                           "fsGroupChangePolicy": {
-                            "$ref": "#/$defs/1e"
+                            "$ref": "#/$defs/1d"
                           },
                           "runAsGroup": {
                             "$ref": "#/$defs/1v"
                           },
                           "runAsNonRoot": {
-                            "$ref": "#/$defs/1h"
+                            "$ref": "#/$defs/1g"
                           },
                           "runAsUser": {
                             "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
@@ -18546,16 +18393,16 @@
                             "$ref": "#/$defs/1r"
                           },
                           "seccompProfile": {
-                            "$ref": "#/$defs/2C"
+                            "$ref": "#/$defs/2y"
                           },
                           "supplementalGroups": {
-                            "$ref": "#/$defs/1o"
+                            "$ref": "#/$defs/1n"
                           },
                           "sysctls": {
-                            "$ref": "#/$defs/1c"
+                            "$ref": "#/$defs/1b"
                           },
                           "windowsOptions": {
-                            "$ref": "#/$defs/2x"
+                            "$ref": "#/$defs/2t"
                           }
                         },
                         "type": "object"
@@ -18571,10 +18418,10 @@
                 }
               },
               {
-                "$ref": "#/$defs/2L"
+                "$ref": "#/$defs/2H"
               },
               {
-                "$ref": "#/$defs/2Q"
+                "$ref": "#/$defs/2M"
               },
               {
                 "additionalProperties": {},
@@ -18633,7 +18480,7 @@
                     "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
                     "properties": {
                       "image": {
-                        "$ref": "#/$defs/3q"
+                        "$ref": "#/$defs/3n"
                       }
                     }
                   }
@@ -18661,7 +18508,7 @@
                     "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
                     "properties": {
                       "resources": {
-                        "$ref": "#/$defs/3r"
+                        "$ref": "#/$defs/3o"
                       }
                     }
                   }
@@ -18737,12 +18584,12 @@
                     "$ref": "#/$defs/d"
                   },
                   {
-                    "$ref": "#/$defs/S"
+                    "$ref": "#/$defs/R"
                   }
                 ]
               },
               {
-                "$ref": "#/$defs/1l"
+                "$ref": "#/$defs/1k"
               }
             ]
           },
@@ -18754,7 +18601,7 @@
                 "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
                 "properties": {
                   "metricsPort": {
-                    "$ref": "#/$defs/3h"
+                    "$ref": "#/$defs/3f"
                   }
                 }
               }
@@ -18762,7 +18609,7 @@
           }
         },
         {
-          "$ref": "#/$defs/1H"
+          "$ref": "#/$defs/1G"
         },
         {
           "if": {
@@ -18771,7 +18618,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/24"
+                "$ref": "#/$defs/20"
               }
             ]
           },
@@ -18822,16 +18669,16 @@
                                 "$ref": "#/$defs/Z"
                               },
                               {
-                                "$ref": "#/$defs/V"
-                              },
-                              {
-                                "$ref": "#/$defs/O"
-                              },
-                              {
                                 "$ref": "#/$defs/T"
                               },
                               {
-                                "$ref": "#/$defs/17"
+                                "$ref": "#/$defs/N"
+                              },
+                              {
+                                "$ref": "#/$defs/S"
+                              },
+                              {
+                                "$ref": "#/$defs/15"
                               }
                             ],
                             "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
@@ -18855,25 +18702,25 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/H"
+                        "$ref": "#/$defs/F"
                       },
                       {
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/B"
+                        "$ref": "#/$defs/z"
                       },
                       {
                         "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
                       }
                     ]
                   }
@@ -18892,7 +18739,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/21"
+                "$ref": "#/$defs/31"
               }
             ]
           },
@@ -18902,7 +18749,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "serviceAccount": {
-                    "$ref": "#/$defs/1a"
+                    "$ref": "#/$defs/19"
                   }
                 }
               },
@@ -18910,7 +18757,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "serviceAccount": {
-                    "$ref": "#/$defs/2w"
+                    "$ref": "#/$defs/2s"
                   }
                 }
               }
@@ -18919,7 +18766,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/1l"
+            "$ref": "#/$defs/1k"
           },
           "then": {
             "allOf": [
@@ -18927,7 +18774,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "startupProbe": {
-                    "$ref": "#/$defs/2T"
+                    "$ref": "#/$defs/2P"
                   }
                 }
               },
@@ -18935,7 +18782,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "startupProbe": {
-                    "$ref": "#/$defs/2V"
+                    "$ref": "#/$defs/2R"
                   }
                 }
               }
@@ -18957,7 +18804,7 @@
                     "not": {
                       "properties": {
                         "frr": {
-                          "$ref": "#/$defs/3k"
+                          "$ref": "#/$defs/3h"
                         }
                       },
                       "required": [
@@ -18967,7 +18814,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/1Y"
+                    "$ref": "#/$defs/1X"
                   }
                 ]
               }
@@ -18998,7 +18845,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2a"
+                    "$ref": "#/$defs/27"
                   }
                 ]
               }
@@ -19241,7 +19088,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2l"
+                    "$ref": "#/$defs/2b"
                   }
                 ]
               }
@@ -19272,7 +19119,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/28"
+                    "$ref": "#/$defs/25"
                   }
                 ]
               }
@@ -19319,7 +19166,7 @@
           "then": false
         },
         {
-          "$ref": "#/$defs/1G"
+          "$ref": "#/$defs/1F"
         },
         {
           "$ref": "#/$defs/1D"
@@ -19334,7 +19181,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1M"
+                "$ref": "#/$defs/1J"
               }
             ]
           },
@@ -19356,7 +19203,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/24"
+                  "$ref": "#/$defs/20"
                 }
               }
             ]
@@ -19378,7 +19225,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/16"
+                "$ref": "#/$defs/14"
               }
             ]
           },
@@ -19389,11 +19236,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/2q"
+                  "$ref": "#/$defs/2m"
                 }
               },
               {
-                "$ref": "#/$defs/2b"
+                "$ref": "#/$defs/28"
               }
             ]
           },
@@ -19437,7 +19284,7 @@
           "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend."
         },
         "frrMetrics": {
-          "$ref": "#/$defs/s"
+          "$ref": "#/$defs/r"
         },
         "ignoreExcludeLB": {
           "description": "ignore the exclude-from-external-loadbalancer label"
@@ -19449,19 +19296,19 @@
           "additionalProperties": {},
           "properties": {
             "cpFrrFiles": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/r"
             },
             "cpMetrics": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/r"
             },
             "cpReloader": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/r"
             }
           }
         },
         "labels": {},
         "livenessProbe": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/x"
         },
         "logLevel": {
           "description": "Speaker log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
@@ -19490,10 +19337,10 @@
         "podAnnotations": {},
         "priorityClassName": {},
         "readinessProbe": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/x"
         },
         "reloader": {
-          "$ref": "#/$defs/s"
+          "$ref": "#/$defs/r"
         },
         "resources": {
           "description": "Defines a secret name for the controller to generate a memberlist encryption secret\nBy default secretName: {{ \"metallb.fullname\" }}-memberlist\nsecretName:"
@@ -19508,10 +19355,10 @@
           "properties": {
             "annotations": {},
             "create": {
-              "$ref": "#/$defs/2t"
+              "$ref": "#/$defs/2p"
             },
             "name": {
-              "$ref": "#/$defs/1W"
+              "$ref": "#/$defs/1V"
             }
           }
         },
@@ -19536,16 +19383,16 @@
       "additionalProperties": {},
       "properties": {
         "cipherSuites": {
-          "$ref": "#/$defs/27"
+          "$ref": "#/$defs/23"
         },
         "controllerMetricsTLSSecret": {
           "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
         },
         "curvePreferences": {
-          "$ref": "#/$defs/1V"
+          "$ref": "#/$defs/22"
         },
         "minVersion": {
-          "$ref": "#/$defs/2h"
+          "$ref": "#/$defs/2f"
         },
         "speakerMetricsTLSSecret": {
           "description": "The name of the secret to be mounted in the speaker pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."

@@ -3165,17 +3165,6 @@
     },
     "A": {
       "properties": {
-        "extraPorts": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "extraPorts"
-      ],
-      "type": "object"
-    },
-    "B": {
-      "properties": {
         "extraContainers": {
           "type": "string"
         }
@@ -3185,7 +3174,7 @@
       ],
       "type": "object"
     },
-    "C": {
+    "B": {
       "properties": {
         "initContainers": {
           "type": "string"
@@ -3196,13 +3185,13 @@
       ],
       "type": "object"
     },
-    "D": {
+    "C": {
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "E": {
+    "D": {
       "oneOf": [
         {
           "type": [
@@ -3218,7 +3207,7 @@
         }
       ]
     },
-    "F": {
+    "E": {
       "anyOf": [
         {
           "not": {
@@ -3262,7 +3251,7 @@
         }
       ]
     },
-    "G": {
+    "F": {
       "not": {
         "properties": {
           "openShift": {
@@ -3290,6 +3279,33 @@
         ],
         "type": "object"
       }
+    },
+    "G": {
+      "properties": {
+        "openShift": {
+          "properties": {
+            "securityContextConstraints": {
+              "properties": {
+                "create": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "securityContextConstraints"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "openShift"
+      ],
+      "type": "object"
     },
     "H": {
       "propertyNames": {
@@ -4216,6 +4232,10 @@
       "type": "integer"
     },
     "o": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "p": {
       "properties": {
         "openShift": {
           "properties": {
@@ -4233,10 +4253,6 @@
         "openShift"
       ],
       "type": "object"
-    },
-    "p": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
     },
     "providerSchema1": {
       "additionalProperties": false,
@@ -9892,33 +9908,6 @@
     },
     "y": {
       "properties": {
-        "openShift": {
-          "properties": {
-            "securityContextConstraints": {
-              "properties": {
-                "create": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "create"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "securityContextConstraints"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "openShift"
-      ],
-      "type": "object"
-    },
-    "z": {
-      "properties": {
         "hotReload": {
           "properties": {
             "enabled": {
@@ -9933,6 +9922,17 @@
       },
       "required": [
         "hotReload"
+      ],
+      "type": "object"
+    },
+    "z": {
+      "properties": {
+        "extraPorts": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "extraPorts"
       ],
       "type": "object"
     }
@@ -11121,7 +11121,7 @@
                     "$ref": "#/$defs/7"
                   },
                   {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/o"
                   },
                   {
                     "$ref": "#/$defs/6"
@@ -11481,7 +11481,7 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/o"
                       }
                     ]
                   }
@@ -11528,7 +11528,7 @@
                         "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/o"
                       },
                       {
                         "$ref": "#/$defs/6"
@@ -11629,7 +11629,7 @@
                     "$ref": "#/$defs/7"
                   },
                   {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/o"
                   },
                   {
                     "$ref": "#/$defs/6"
@@ -11664,10 +11664,10 @@
                         "description": "Spec to control the desired behavior of rolling update.",
                         "properties": {
                           "maxSurge": {
-                            "$ref": "#/$defs/E"
+                            "$ref": "#/$defs/D"
                           },
                           "maxUnavailable": {
-                            "$ref": "#/$defs/E"
+                            "$ref": "#/$defs/D"
                           }
                         },
                         "type": [
@@ -11761,7 +11761,7 @@
                   "extraFiles": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/D"
+                        "$ref": "#/$defs/C"
                       },
                       {
                         "$ref": "#/$defs/v"
@@ -11811,7 +11811,7 @@
                   "upstream": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/D"
+                        "$ref": "#/$defs/C"
                       },
                       {
                         "$ref": "#/$defs/v"
@@ -12203,7 +12203,7 @@
                     "$ref": "#/$defs/7"
                   },
                   {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/o"
                   },
                   {
                     "$ref": "#/$defs/6"
@@ -12302,10 +12302,10 @@
                         "description": "Spec to control the desired behavior of daemon set rolling update.",
                         "properties": {
                           "maxSurge": {
-                            "$ref": "#/$defs/E"
+                            "$ref": "#/$defs/D"
                           },
                           "maxUnavailable": {
-                            "$ref": "#/$defs/E"
+                            "$ref": "#/$defs/D"
                           }
                         },
                         "type": [
@@ -12537,7 +12537,7 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/A"
               }
             ]
           },
@@ -12547,7 +12547,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/A"
               }
             ]
           }
@@ -12574,7 +12574,7 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/A"
               }
             ]
           },
@@ -12587,7 +12587,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/A"
               }
             ]
           }
@@ -12608,7 +12608,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/A"
+                "$ref": "#/$defs/z"
               },
               {
                 "$ref": "#/$defs/4"
@@ -12618,7 +12618,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/A"
+                "$ref": "#/$defs/z"
               },
               {
                 "$ref": "#/$defs/2"
@@ -12706,7 +12706,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/z"
           },
           {
             "properties": {
@@ -12738,7 +12738,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/A"
+        "$ref": "#/$defs/z"
       },
       "then": {
         "allOf": [
@@ -12841,10 +12841,15 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
-                "$ref": "#/$defs/y"
+                "$ref": "#/$defs/G"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/11"
+                }
               }
             ]
           },
@@ -12877,31 +12882,6 @@
                 "type": "string"
               }
             ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/o"
-          },
-          {
-            "$ref": "#/$defs/y"
-          },
-          {
-            "not": {
-              "$ref": "#/$defs/11"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
           }
         }
       }
@@ -13171,7 +13151,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/D"
+                        "$ref": "#/$defs/C"
                       },
                       {
                         "$ref": "#/$defs/v"
@@ -13424,7 +13404,7 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/C"
+                "$ref": "#/$defs/B"
               }
             ]
           },
@@ -13434,7 +13414,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/C"
+                "$ref": "#/$defs/B"
               }
             ]
           }
@@ -13461,7 +13441,7 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/C"
+                "$ref": "#/$defs/B"
               }
             ]
           },
@@ -13474,7 +13454,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/C"
+                "$ref": "#/$defs/B"
               }
             ]
           }
@@ -13664,7 +13644,7 @@
               "luaScripts": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/D"
+                    "$ref": "#/$defs/C"
                   },
                   {
                     "$ref": "#/$defs/v"
@@ -13851,26 +13831,26 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
-              },
-              {
-                "$ref": "#/$defs/y"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/G"
+              },
+              {
+                "$ref": "#/$defs/F"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/r"
               },
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/F"
               }
             ]
           }
@@ -13908,10 +13888,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/p"
           },
           {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/G"
           },
           {
             "$ref": "#/$defs/11"
@@ -13940,7 +13920,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/o"
+        "$ref": "#/$defs/p"
       },
       "then": {
         "additionalProperties": {},
@@ -13989,7 +13969,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/o"
               },
               {
                 "$ref": "#/$defs/6"
@@ -14147,7 +14127,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/4"
@@ -14163,7 +14143,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/4"
@@ -14179,7 +14159,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/2"
@@ -14195,7 +14175,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/2"
@@ -14325,7 +14305,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/p"
           },
           {
             "$ref": "#/$defs/r"
@@ -14359,7 +14339,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/F"
           }
         ]
       },
@@ -14416,7 +14396,7 @@
             "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/E"
           },
           {
             "$ref": "#/$defs/3"
@@ -14653,7 +14633,7 @@
             "$ref": "#/$defs/2"
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/E"
           },
           {
             "$ref": "#/$defs/3"
@@ -14869,7 +14849,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/E"
           },
           {
             "$ref": "#/$defs/3"

@@ -62,12 +62,72 @@ fn late_prune_preserves_caller_modified_and_caller_added_definitions() {
 }
 
 #[test]
+fn retained_caller_definition_keeps_owned_transitive_references() {
+    let generated = json!({
+        "$defs": {
+            "caller": { "type": "string" },
+            "owned": { "type": "integer" },
+        },
+        "type": "object",
+    });
+    let captured = OwnedDefinitions::capture(&generated);
+    let mut overridden = json!({
+        "$defs": {
+            "caller": { "$ref": "#/$defs/owned" },
+            "owned": { "type": "integer" },
+        },
+        "type": "object",
+    });
+    let owned = captured.retain_unchanged(&overridden);
+
+    let removed = prune_unreachable_owned_definitions(&mut overridden, &owned);
+
+    sim_assert_eq!(have: removed, want: 0);
+    assert!(overridden.pointer("/$defs/owned").is_some());
+}
+
+#[test]
 fn late_prune_decodes_definition_names_in_json_pointer_refs() {
     let mut schema = json!({
         "$defs": {
             "provider/name~shape": { "type": "string" },
         },
         "$ref": "#/$defs/provider~1name~0shape",
+    });
+    let owned = OwnedDefinitions::capture(&schema).retain_unchanged(&schema);
+
+    let removed = prune_unreachable_owned_definitions(&mut schema, &owned);
+
+    sim_assert_eq!(have: removed, want: 0);
+}
+
+#[test]
+fn late_prune_decodes_percent_encoded_definition_refs() {
+    let mut schema = json!({
+        "$defs": {
+            "plain": { "type": "string" },
+            "space name": { "type": "integer" },
+        },
+        "allOf": [
+            { "$ref": "#/%24defs/plain" },
+            { "$ref": "#/$defs/space%20name" },
+        ],
+    });
+    let owned = OwnedDefinitions::capture(&schema).retain_unchanged(&schema);
+
+    let removed = prune_unreachable_owned_definitions(&mut schema, &owned);
+
+    sim_assert_eq!(have: removed, want: 0);
+}
+
+#[test]
+fn late_prune_preserves_definitions_for_undecodable_local_refs() {
+    let mut schema = json!({
+        "$defs": {
+            "one": { "type": "string" },
+            "two": { "type": "integer" },
+        },
+        "$ref": "#/$defs/%FF",
     });
     let owned = OwnedDefinitions::capture(&schema).retain_unchanged(&schema);
 

@@ -117,10 +117,7 @@ pub(super) fn eval_type_is(
             subject_paths = identity_value_paths(result.value.as_ref());
             if function == "kindIs"
                 && type_name == Some("invalid")
-                && let Some(path) = result
-                    .value
-                    .as_ref()
-                    .and_then(AbstractValue::direct_values_identity)
+                && let Some(path) = result.exact_input_identity()
             {
                 truth = TruthCondition::exact(Predicate::invalid_kind_path(path));
             } else if let (Some(schema_type), Some(type_name)) = (&schema_type, type_name) {

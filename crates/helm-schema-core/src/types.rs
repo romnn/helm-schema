@@ -61,8 +61,9 @@ pub struct ResourceRef {
     /// Predicate-qualified alternatives behind an inline-conditional
     /// `kind:`. An IR-internal enrichment: attached at use-tagging time
     /// (the selecting locals resolve only in template scope) and consumed
-    /// by the contract-signal builder's per-row kind concretization, so it
-    /// never serializes.
+    /// by the contract-signal builder's per-row kind concretization. It
+    /// remains as non-serialized provenance so emission can distinguish an
+    /// exact selected arm from a selector-independent concrete resource.
     #[serde(skip)]
     pub kind_branches: Vec<KindBranch>,
 }

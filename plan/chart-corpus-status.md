@@ -1,9 +1,12 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-08-02 after the fifty-ninth round added the frozen
-schema-emission profile harness, pinned Temporal wrapper, hermetic/live
-oracle lanes, and relax-host preflight without changing production behavior
-or fixtures. The preceding fifty-eighth round closed the seven
+Last reconciled 2026-08-03 after the sixty-eighth round closed the independent
+emission review: composed formatter fallbacks, canonical carrier preservation,
+kind-partition separation, caller-rooted/URI-decoded reachability, successor
+`else with` truth, diagnostic provenance, and the hardened Helm 4 probe model.
+The preceding emission rounds landed the frozen profile harness, immutable
+plan, lean selector, canonical output, configuration surface, and benchmark.
+The preceding fifty-eighth round closed the seven
 confirmed review findings without reopening `In progress`: formatter
 operands now follow selection and later encoding, `kindIs "invalid"` requires
 an exact identity, `else with` abstains from an invented truth, literal regex
@@ -115,6 +118,18 @@ part and a separately listed residual. Detailed round history remains in
 
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
+
+- **Emission-review findings closure (sixty-eighth round).** Chained
+  `default` selection scopes every exact primary identity; required-entry and
+  completion canonicalization no longer weaken their carriers; truly
+  selector-independent provider uses remain ordinary while selected kinds
+  stay partitioned. Reachability follows caller-retained and percent-encoded
+  references, successor `else with` arms remain incomplete, diagnostics keep
+  source/provenance on failure, and the Helm 4 battery retains dependency
+  roots. A 112,356-document compiled probe finds 16 loosenings and no
+  tightenings; Helm 4.2.3 adjudication pins 12 renderable falsy/empty states
+  and four deliberate Airflow false accepts caused by sound `kindIs`
+  abstention.
 
 - **Emission-profile benchmark and documentation (sixty-seventh round).** A
   dedicated persistent-output command measures the pinned Temporal wrapper

@@ -13637,25 +13637,6 @@
       "type": "object"
     },
     "O": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "create": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "P": {
       "anyOf": [
         {
           "not": {
@@ -13683,7 +13664,7 @@
         }
       ]
     },
-    "Q": {
+    "P": {
       "allOf": [
         {
           "not": {
@@ -13738,7 +13719,7 @@
       ],
       "type": "string"
     },
-    "R": {
+    "Q": {
       "additionalProperties": false,
       "description": "MetricTarget defines the target value, average value, or average utilization of a specific metric",
       "properties": {
@@ -13792,7 +13773,7 @@
       ],
       "type": "object"
     },
-    "S": {
+    "R": {
       "allOf": [
         {
           "properties": {
@@ -13858,7 +13839,7 @@
         }
       ]
     },
-    "T": {
+    "S": {
       "allOf": [
         {
           "properties": {
@@ -13924,17 +13905,17 @@
         }
       ]
     },
-    "U": {
+    "T": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "integer"
     },
-    "V": {
+    "U": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "null"
     },
-    "W": {
+    "V": {
       "description": "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.",
       "items": {
         "type": [
@@ -13943,6 +13924,25 @@
         ]
       },
       "type": "array"
+    },
+    "W": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "create": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
     },
     "X": {
       "not": {
@@ -21489,25 +21489,6 @@
     },
     "v": {
       "properties": {
-        "defaultBackend": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "defaultBackend"
-      ],
-      "type": "object"
-    },
-    "w": {
-      "properties": {
         "patch": {
           "properties": {
             "enabled": {
@@ -21525,7 +21506,7 @@
       ],
       "type": "object"
     },
-    "x": {
+    "w": {
       "properties": {
         "controller": {
           "properties": {
@@ -21552,7 +21533,7 @@
       ],
       "type": "object"
     },
-    "y": {
+    "x": {
       "anyOf": [
         {
           "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
@@ -21566,6 +21547,25 @@
           "type": "null"
         }
       ]
+    },
+    "y": {
+      "properties": {
+        "defaultBackend": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "defaultBackend"
+      ],
+      "type": "object"
     },
     "z": {
       "properties": {
@@ -21600,7 +21600,7 @@
             "$ref": "#/$defs/1l"
           },
           {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/R"
           }
         ]
       },
@@ -21631,7 +21631,7 @@
             "$ref": "#/$defs/3n"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           },
           {
             "$ref": "#/$defs/C"
@@ -21643,7 +21643,7 @@
             "$ref": "#/$defs/G"
           },
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/1g"
@@ -21652,7 +21652,7 @@
             "$ref": "#/$defs/r"
           },
           {
-            "$ref": "#/$defs/O"
+            "$ref": "#/$defs/W"
           },
           {
             "$ref": "#/$defs/d"
@@ -22622,7 +22622,7 @@
                         "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/Q"
+                        "$ref": "#/$defs/P"
                       },
                       {
                         "$ref": "#/$defs/8"
@@ -23033,7 +23033,7 @@
             "$ref": "#/$defs/r"
           },
           {
-            "$ref": "#/$defs/O"
+            "$ref": "#/$defs/W"
           }
         ]
       },
@@ -23052,7 +23052,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/w"
               },
               {
                 "$ref": "#/$defs/C"
@@ -23062,7 +23062,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/w"
               },
               {
                 "$ref": "#/$defs/d"
@@ -23072,7 +23072,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/w"
               },
               {
                 "$ref": "#/$defs/a"
@@ -23128,10 +23128,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           },
           {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/R"
           }
         ]
       },
@@ -23180,7 +23180,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/x"
+        "$ref": "#/$defs/w"
       },
       "then": {
         "allOf": [
@@ -23247,7 +23247,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/T"
+        "$ref": "#/$defs/S"
       },
       "then": {
         "allOf": [
@@ -23321,7 +23321,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/S"
+        "$ref": "#/$defs/R"
       },
       "then": {
         "allOf": [
@@ -24499,7 +24499,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/y"
           }
         ]
       },
@@ -24548,7 +24548,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/v"
+        "$ref": "#/$defs/y"
       },
       "then": {
         "allOf": [
@@ -24750,7 +24750,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/y"
           },
           {
             "properties": {
@@ -24813,10 +24813,10 @@
             "$ref": "#/$defs/1l"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           },
           {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/R"
           },
           {
             "$ref": "#/$defs/C"
@@ -24847,7 +24847,7 @@
             "$ref": "#/$defs/G"
           },
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/1g"
@@ -24978,63 +24978,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "properties": {
-              "defaultBackend": {
-                "$ref": "#/$defs/O"
-              }
-            },
-            "required": [
-              "defaultBackend"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "defaultBackend": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "name": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "defaultBackend"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/t"
@@ -25125,7 +25068,7 @@
             "$ref": "#/$defs/1l"
           },
           {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/R"
           }
         ]
       },
@@ -25138,7 +25081,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/Q"
+                "$ref": "#/$defs/P"
               },
               {
                 "$ref": "#/$defs/8"
@@ -25155,7 +25098,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/x"
+            "$ref": "#/$defs/w"
           },
           {
             "$ref": "#/$defs/3k"
@@ -25350,7 +25293,7 @@
             "$ref": "#/$defs/23"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           },
           {
             "$ref": "#/$defs/C"
@@ -25362,7 +25305,7 @@
             "$ref": "#/$defs/G"
           },
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/1g"
@@ -25371,7 +25314,7 @@
             "$ref": "#/$defs/r"
           },
           {
-            "$ref": "#/$defs/O"
+            "$ref": "#/$defs/W"
           },
           {
             "$ref": "#/$defs/d"
@@ -25479,7 +25422,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/w"
               },
               {
                 "$ref": "#/$defs/3k"
@@ -25518,7 +25461,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/w"
               },
               {
                 "$ref": "#/$defs/3j"
@@ -25557,7 +25500,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/w"
               },
               {
                 "$ref": "#/$defs/3j"
@@ -25612,7 +25555,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/Q"
+                "$ref": "#/$defs/P"
               },
               {
                 "$ref": "#/$defs/8"
@@ -25647,7 +25590,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/a"
@@ -25958,7 +25901,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/y"
           },
           {
             "$ref": "#/$defs/J"
@@ -26175,7 +26118,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/P"
+        "$ref": "#/$defs/O"
       },
       "then": false
     },
@@ -26211,7 +26154,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           }
         ]
       },
@@ -26249,7 +26192,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           }
         ]
       },
@@ -26287,7 +26230,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           }
         ]
       },
@@ -26325,7 +26268,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           }
         ]
       },
@@ -26392,7 +26335,7 @@
             "$ref": "#/$defs/3g"
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           }
         ]
       },
@@ -27474,7 +27417,7 @@
                                             ]
                                           },
                                           "name": {
-                                            "$ref": "#/$defs/y"
+                                            "$ref": "#/$defs/x"
                                           },
                                           "optional": {
                                             "$ref": "#/$defs/60"
@@ -27510,7 +27453,7 @@
                                             ]
                                           },
                                           "name": {
-                                            "$ref": "#/$defs/y"
+                                            "$ref": "#/$defs/x"
                                           },
                                           "optional": {
                                             "$ref": "#/$defs/63"
@@ -27558,7 +27501,7 @@
                                     "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                                     "properties": {
                                       "name": {
-                                        "$ref": "#/$defs/y"
+                                        "$ref": "#/$defs/x"
                                       },
                                       "optional": {
                                         "$ref": "#/$defs/4r"
@@ -27588,7 +27531,7 @@
                                     "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                                     "properties": {
                                       "name": {
-                                        "$ref": "#/$defs/y"
+                                        "$ref": "#/$defs/x"
                                       },
                                       "optional": {
                                         "$ref": "#/$defs/4w"
@@ -28910,7 +28853,7 @@
                                   "$ref": "#/$defs/4K"
                                 },
                                 "target": {
-                                  "$ref": "#/$defs/R"
+                                  "$ref": "#/$defs/Q"
                                 }
                               },
                               "required": [
@@ -28931,7 +28874,7 @@
                                   "$ref": "#/$defs/1N"
                                 },
                                 "target": {
-                                  "$ref": "#/$defs/R"
+                                  "$ref": "#/$defs/Q"
                                 }
                               },
                               "required": [
@@ -28977,7 +28920,7 @@
                                   "$ref": "#/$defs/1N"
                                 },
                                 "target": {
-                                  "$ref": "#/$defs/R"
+                                  "$ref": "#/$defs/Q"
                                 }
                               },
                               "required": [
@@ -28998,7 +28941,7 @@
                                   "$ref": "#/$defs/1N"
                                 },
                                 "target": {
-                                  "$ref": "#/$defs/R"
+                                  "$ref": "#/$defs/Q"
                                 }
                               },
                               "required": [
@@ -29018,7 +28961,7 @@
                                   "$ref": "#/$defs/4K"
                                 },
                                 "target": {
-                                  "$ref": "#/$defs/R"
+                                  "$ref": "#/$defs/Q"
                                 }
                               },
                               "required": [
@@ -29982,7 +29925,7 @@
                                 "$ref": "#/$defs/7"
                               },
                               {
-                                "$ref": "#/$defs/Q"
+                                "$ref": "#/$defs/P"
                               },
                               {
                                 "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
@@ -30053,7 +29996,7 @@
                               "externalIPs": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/W"
+                                    "$ref": "#/$defs/V"
                                   },
                                   {
                                     "$ref": "#/$defs/1"
@@ -30231,7 +30174,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "$ref": "#/$defs/M"
@@ -30656,12 +30599,12 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "properties": {
                           "patch": {
-                            "$ref": "#/$defs/O"
+                            "$ref": "#/$defs/W"
                           }
                         },
                         "required": [
@@ -30781,7 +30724,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "properties": {
@@ -31154,7 +31097,7 @@
                               "externalIPs": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/W"
+                                    "$ref": "#/$defs/V"
                                   },
                                   {
                                     "$ref": "#/$defs/1"
@@ -31926,10 +31869,10 @@
                           "nodePort": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/U"
+                                "$ref": "#/$defs/T"
                               },
                               {
-                                "$ref": "#/$defs/V"
+                                "$ref": "#/$defs/U"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -32112,7 +32055,7 @@
                           "externalIPs": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/W"
+                                "$ref": "#/$defs/V"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -32542,7 +32485,7 @@
                               "externalIPs": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/W"
+                                    "$ref": "#/$defs/V"
                                   },
                                   {
                                     "$ref": "#/$defs/1"
@@ -32929,10 +32872,10 @@
                               "http": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/U"
+                                    "$ref": "#/$defs/T"
                                   },
                                   {
-                                    "$ref": "#/$defs/V"
+                                    "$ref": "#/$defs/U"
                                   },
                                   {
                                     "$ref": "#/$defs/1"
@@ -32984,10 +32927,10 @@
                               "https": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/U"
+                                    "$ref": "#/$defs/T"
                                   },
                                   {
-                                    "$ref": "#/$defs/V"
+                                    "$ref": "#/$defs/U"
                                   },
                                   {
                                     "$ref": "#/$defs/1"
@@ -33181,10 +33124,10 @@
                           "http": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/U"
+                                "$ref": "#/$defs/T"
                               },
                               {
-                                "$ref": "#/$defs/V"
+                                "$ref": "#/$defs/U"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -33231,10 +33174,10 @@
                           "https": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/U"
+                                "$ref": "#/$defs/T"
                               },
                               {
-                                "$ref": "#/$defs/V"
+                                "$ref": "#/$defs/U"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -33551,7 +33494,7 @@
                             "$ref": "#/$defs/7"
                           },
                           {
-                            "$ref": "#/$defs/Q"
+                            "$ref": "#/$defs/P"
                           },
                           {
                             "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -33720,7 +33663,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "anyOf": [
@@ -33773,7 +33716,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "anyOf": [
@@ -33826,7 +33769,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "anyOf": [
@@ -33876,7 +33819,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "anyOf": [
@@ -33932,7 +33875,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "anyOf": [
@@ -33982,7 +33925,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "anyOf": [
@@ -36395,7 +36338,7 @@
                                   "$ref": "#/$defs/4J"
                                 },
                                 "name": {
-                                  "$ref": "#/$defs/y"
+                                  "$ref": "#/$defs/x"
                                 },
                                 "optional": {
                                   "$ref": "#/$defs/4b"
@@ -37711,7 +37654,7 @@
                                             "$ref": "#/$defs/4J"
                                           },
                                           "name": {
-                                            "$ref": "#/$defs/y"
+                                            "$ref": "#/$defs/x"
                                           },
                                           "optional": {
                                             "$ref": "#/$defs/4b"
@@ -37757,7 +37700,7 @@
                                             ]
                                           },
                                           "name": {
-                                            "$ref": "#/$defs/y"
+                                            "$ref": "#/$defs/x"
                                           },
                                           "optional": {
                                             "description": "optional field specify whether the Secret or its key must be defined",
@@ -38069,7 +38012,7 @@
                                   "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                                   "properties": {
                                     "name": {
-                                      "$ref": "#/$defs/y"
+                                      "$ref": "#/$defs/x"
                                     }
                                   },
                                   "type": "object",
@@ -38654,7 +38597,7 @@
                       "externalIPs": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/W"
+                            "$ref": "#/$defs/V"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -39007,7 +38950,7 @@
                 "$ref": "#/$defs/6"
               },
               {
-                "$ref": "#/$defs/O"
+                "$ref": "#/$defs/W"
               }
             ]
           },

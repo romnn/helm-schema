@@ -12304,3 +12304,38 @@ better than full. `scalar-spellings` therefore remains unexposed, and
 reference now state the exact retention and precedence contracts. One clean
 final-build dump produced all 84 artifacts byte-identically to the sixty-sixth
 round, so no acceptance flip or Helm fixture adjudication is required.
+
+## Emission-review findings closure (2026-08-03, sixty-eighth round)
+
+The emission review's analyzer, canonicalization, harness, reachability,
+control-flow, diagnostic, and documentation findings are closed together.
+Composed `default` primaries now scope their final fallback metadata;
+canonical required entries type untyped hosts; completion backfill recognizes
+canonical object-only conjunctions; and selector-independent provider uses no
+longer ride every kind partition. Exact branch-selection provenance prevents
+that partition split from turning a selected provider schema into an
+unconditional constraint.
+
+Late definition pruning now starts from caller-retained definitions, decodes
+URI fragment escapes before JSON Pointer names, and conservatively retains on
+undecodable local references. `else with` contributes unknown truth to every
+successor, `kindIs "invalid"` refuses meta-selected identities, literal regex
+quoting has one implementation, and explicit-config diagnostics keep accurate
+source and preset-delta provenance even when later CLI validation fails. The
+probe battery retains Helm 4 dependency roots.
+
+One clean dump wrote 84 artifacts. Twenty-one corpus schemas, one lean schema,
+and one generator fixture changed; final-output fixtures did not. The compiled
+Rust prober checks 112,356 default-composed/null-deletion documents and records
+16 loosenings with zero tightenings. Helm 4.2.3 renders the 12 falsy/empty
+fullname/namespace overrides. Four truthy non-string Airflow overrides still
+abort; their new full acceptance records the deliberate abstention from an
+unsound exact `kindIs` identity rather than replacing it with another
+over-claim. A live table pins all 16 verdicts, and the adopted fixtures are
+byte-identical to the probed dump.
+
+A separate clean dump covers all 18 IR corpus cases. Bitnami Redis retains the
+new composed-default selection predicate and Zalando Postgres Operator removes
+the condition derived from a meta-selected `kindIs` subject; the remaining 16
+IR fixtures are byte-identical. Neither IR delta adds a schema acceptance flip
+beyond the schema dump and compiled-prober result above.
