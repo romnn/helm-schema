@@ -160,20 +160,12 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
 
 #[test]
 fn kind_partition_policy_requires_at_least_one_anchor_lane() {
-    use crate::emission_policy::{EmissionKnobs, EmissionPolicy};
+    use crate::emission_policy::{ConditionalAnchors, EmissionPolicy};
 
-    let policy = |root, local, kind| {
-        EmissionPolicy::new(EmissionKnobs {
-            root_anchored_conditionals: root,
-            local_conditionals: local,
-            terminal_clauses: true,
-            kind_partitions: kind,
-        })
-    };
-    assert!(policy(false, true, true).is_valid());
-    assert!(policy(true, false, true).is_valid());
-    assert!(!policy(false, false, true).is_valid());
-    assert!(policy(false, false, false).is_valid());
+    assert!(EmissionPolicy::new(ConditionalAnchors::Local, true, true).is_ok());
+    assert!(EmissionPolicy::new(ConditionalAnchors::Root, true, true).is_ok());
+    assert!(EmissionPolicy::new(ConditionalAnchors::None, true, true).is_err());
+    assert!(EmissionPolicy::new(ConditionalAnchors::None, true, false).is_ok());
 }
 
 #[test]

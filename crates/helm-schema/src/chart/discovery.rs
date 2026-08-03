@@ -188,7 +188,7 @@ fn chart_static_root_strings(chart: &ChartYaml) -> BTreeMap<Vec<String>, String>
     strings
 }
 
-fn is_chart_archive(file_name: &str) -> bool {
+pub(crate) fn is_chart_archive(file_name: &str) -> bool {
     let path = Path::new(file_name);
     let is_tgz = path
         .extension()
@@ -207,7 +207,10 @@ fn is_chart_archive(file_name: &str) -> bool {
     is_tgz || is_tar_gz
 }
 
-fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> EngineResult<VfsPath> {
+pub(crate) fn extract_chart_archive(
+    path: &VfsPath,
+    load_budget: LoadBudget,
+) -> EngineResult<VfsPath> {
     let mut file = path.open_file()?;
     let bytes = read_to_end_capped(
         &mut file,

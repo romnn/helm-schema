@@ -4,29 +4,30 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::generation::SchemaProfile;
 use crate::output_pipeline::{
-    FinalOutputPolicy, OutputPipelineOptions, PolicyInputs, ReferenceMode,
+    EmitRequest, FinalOutputPolicy, OutputPipelineOptions, PreparedEmitRequest, ReferencePolicy,
     apply_schema_output_pipeline,
 };
 
-fn options(reference_mode: ReferenceMode) -> OutputPipelineOptions {
-    OutputPipelineOptions {
-        reference_mode,
-        strip_descriptions: false,
-        minimize: false,
-    }
+fn request(reference_policy: ReferencePolicy) -> PreparedEmitRequest {
+    PreparedEmitRequest::empty(EmitRequest {
+        reference_policy,
+        output: OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: false,
+        },
+    })
 }
 
 fn emit(
     schema: Value,
     profile: SchemaProfile,
-    reference_mode: ReferenceMode,
+    reference_policy: ReferencePolicy,
 ) -> eyre::Result<Value> {
     Ok(apply_schema_output_pipeline(
         schema,
-        PolicyInputs::default(),
+        request(reference_policy),
         std::path::Path::new("/does/not/matter"),
         FinalOutputPolicy::for_profile(profile, false),
-        options(reference_mode),
     )?)
 }
 
@@ -42,9 +43,9 @@ fn final_policy_annotation_is_deterministic_and_overwrites_caller_key() -> eyre:
     let first = emit(
         schema.clone(),
         SchemaProfile::Lean,
-        ReferenceMode::PreserveRefs,
+        ReferencePolicy::PreserveRefs,
     )?;
-    let second = emit(schema, SchemaProfile::Lean, ReferenceMode::PreserveRefs)?;
+    let second = emit(schema, SchemaProfile::Lean, ReferencePolicy::PreserveRefs)?;
 
     sim_assert_eq!(have: &first, want: &second);
     sim_assert_eq!(
@@ -73,7 +74,7 @@ fn boolean_roots_are_wrapped_without_changing_acceptance() -> eyre::Result<()> {
         let output = emit(
             Value::Bool(boolean),
             SchemaProfile::Full,
-            ReferenceMode::PreserveRefs,
+            ReferencePolicy::PreserveRefs,
         )?;
         sim_assert_eq!(
             have: output["$schema"].clone(),
@@ -91,10 +92,9 @@ fn non_schema_roots_cannot_escape_annotation() {
     for root in [json!(null), json!(3), json!("schema"), json!([])] {
         let result = apply_schema_output_pipeline(
             root,
-            PolicyInputs::default(),
+            request(ReferencePolicy::PreserveRefs),
             std::path::Path::new("/does/not/matter"),
             FinalOutputPolicy::for_profile(SchemaProfile::Full, false),
-            options(ReferenceMode::PreserveRefs),
         );
         sim_assert_eq!(have: result.is_err(), want: true);
     }
@@ -109,9 +109,9 @@ fn reference_modifier_changes_the_policy_fingerprint() -> eyre::Result<()> {
     let bundled = emit(
         schema.clone(),
         SchemaProfile::Full,
-        ReferenceMode::SelfContained,
+        ReferencePolicy::SelfContained,
     )?;
-    let preserved = emit(schema, SchemaProfile::Full, ReferenceMode::PreserveRefs)?;
+    let preserved = emit(schema, SchemaProfile::Full, ReferencePolicy::PreserveRefs)?;
 
     let bundled_fingerprint = bundled
         .pointer("/x-helm-schema-policy/policy-fingerprint")

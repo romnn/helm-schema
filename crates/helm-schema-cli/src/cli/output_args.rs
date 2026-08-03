@@ -2,10 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use helm_schema::output::{
-    FetchPolicy, JsonOutputFormat, LoadBudget, OutputPipelineOptions, PolicyInputOptions,
-    ReferenceMode,
-};
+use helm_schema::output::{EmitRequest, JsonOutputFormat, OutputPipelineOptions, ReferencePolicy};
 
 /// Destination, serialization, reference, and minimization options.
 #[derive(Args, Debug, Clone)]
@@ -48,19 +45,13 @@ pub struct OutputArgs {
 }
 
 impl OutputArgs {
-    pub(crate) fn policy_input_options(&self, fetch_policy: FetchPolicy) -> PolicyInputOptions {
-        PolicyInputOptions {
-            reference_mode: ReferenceMode::from_flags(self.keep_refs, self.inline_refs),
-            fetch_policy,
-            load_budget: LoadBudget::default(),
-        }
-    }
-
-    pub(crate) fn pipeline_options(&self) -> OutputPipelineOptions {
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::from_flags(self.keep_refs, self.inline_refs),
-            strip_descriptions: self.strip_descriptions,
-            minimize: self.minimize,
+    pub(crate) fn emit_request(&self) -> EmitRequest {
+        EmitRequest {
+            reference_policy: ReferencePolicy::from_flags(self.keep_refs, self.inline_refs),
+            output: OutputPipelineOptions {
+                strip_descriptions: self.strip_descriptions,
+                minimize: self.minimize,
+            },
         }
     }
 

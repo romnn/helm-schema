@@ -20,11 +20,12 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 - Default: migrate the chart-local integration to `helm-schema.yaml` with `profile: lean` and
   `emission.local-conditionals: off`, removing the CLI profile flag.
-- Status: default selected by the Step 2 measurements. The downstream
-  `HELM_SCHEMA_OPTIONS`/`helm-schema.yaml` mutation is intentionally deferred
-  to Step 4, when the config loader exists; applying it earlier would remove
-  the only operative selector while the new file is still ignored.
-- Veto window: open until the Step 4 Temporal config fixture ships.
+- Status: executed in Step 4. The downstream Temporal chart now carries root
+  `helm-schema.yaml` version 1 with `profile: lean` and
+  `emission.local-conditionals: off`; `HELM_SCHEMA_OPTIONS` no longer carries
+  `--profile lean`.
+- Veto window: closed when the Step 4 config surface and exact Temporal
+  precedence tests shipped without a measurement trigger or user veto.
 
 ## Step -1 — round-58 review-findings closure
 
@@ -841,16 +842,79 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 charts checked.
   - `task tokei:core`: exit 0; production Rust is 59,669 LOC (`+427` from
     Step 2).
-- Commit: pending.
+- Commit: `35f4134` (`refactor(schema): canonicalize schema emission`).
 
 ## Step 4 — configuration surface
 
-- Status: pending.
-- Measured results: pending.
+- Status: in-progress.
+- Measured results:
+  - The checked public matrix exposes `EmissionSelection = Preset { profile,
+    delta } | Explicit(EmissionPolicy)`, retains requested-profile provenance,
+    and rejects only kind partitions with both anchor lanes disabled.
+  - Root directory and `.tgz` config resolution agree. Packaged and directory
+    generation produce byte-identical final schemas for the same chart.
+  - The exact Temporal config resolves to requested profile `lean` with local
+    conditionals off. An explicit CLI `--profile lean` resets the file delta
+    to standard lean, while an explicit CLI knob wins over file and preset.
+  - Unsupported config versions 0 and 2 report supported range `1..=1` and
+    the update-config/update-binary remediation. Unknown fields, malformed
+    YAML, X-class settings, and contradictory knob matrices fail hard.
+  - The aggregated weakening diagnostic is one typed event in both text and
+    JSON modes. Effective output reports built-in/profile/file/CLI provenance
+    for every field, and print mode succeeds without `Chart.yaml`, analysis,
+    provider construction, or network access.
+  - One clean final-build dump under
+    `/home/roman/dev/helm-schema-step4-final-dump-20260803-b` ran 61 tests and
+    wrote 84 artifacts. All 84 are byte-identical to the Step 3 final dump;
+    no semantic corpus, lean-lane, generator, or final-output fixture changed.
 - Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Adjudication evidence:
+  - No fixture acceptance flip exists: the complete 84-artifact clean dump is
+    byte-identical to Step 3. Step 4 changes selection/config composition and
+    reference-policy ownership without changing the default full projection,
+    so no new Helm flip verdict is required.
+  - The downstream Temporal file carries the already measured fast config
+    (`lean` plus local conditionals off); the default CLI invocation remains
+    full when no config is present.
+- Review dossier:
+  - Strict config trust, precedence, exact Temporal combination, root-only
+    discovery, and X-class exclusion: `cargo nextest run -p helm-schema-cli
+    -E 'test(config)'`.
+  - Directory/archive agreement, relative explicit config, early print exit,
+    aggregated JSON diagnostic, explicit-profile reset, and generated-policy
+    annotation: `cargo test -p helm-schema-cli --test config_surface`.
+  - Checked public policy and requested-profile contract: `cargo nextest run
+    -p helm-schema --test public_surface
+    emission_selection_resolves_checked_public_policy_once`.
+  - Single reference-policy ownership through override preparation, transport,
+    and annotation: `cargo nextest run -p helm-schema
+    caller_authored_ref_replace_keys_do_not_collide_with_merge_intent`; source
+    audit: `rg -n 'ReferencePolicy' crates/helm-schema/src/output_pipeline` and
+    verify it appears in `EmitRequest`, not `PolicyInputOptions` or
+    `OutputPipelineOptions`.
+  - Single clean final-build dump: `TMPDIR=/home/roman/dev/helm-schema-step4-final-dump-20260803-b
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 passed and 84 JSON artifacts were
+    written. `diff -rq /home/roman/dev/helm-schema-step3-final-dump-20260803-d
+    /home/roman/dev/helm-schema-step4-final-dump-20260803-b` exits 0.
+- Gates on the final Step 4 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 42 feature combinations and 3 structural lint
+    tests checked. The superseded first attempt failed only because Zig tried
+    its read-only default cache; the final run used the writable project cache.
+  - `cargo nextest run --workspace`: exit 0; 1,176 passed.
+  - `task test:integration`: exit 0; 553 passed, 6 skipped.
+  - `task test:all`: exit 0; 1,733 passed, 6 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked, including Temporal with the
+    chart-local config.
+  - `task tokei:core`: exit 0; production Rust is 60,363 LOC (`+694` from
+    Step 3).
 - Commit: pending.
 
 ## Step 5 — benchmark and documentation

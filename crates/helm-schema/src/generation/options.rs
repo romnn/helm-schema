@@ -6,7 +6,8 @@ use vfs::VfsPath;
 use crate::provider_builder::ProviderOptions;
 
 pub use helm_schema_gen::{
-    EmissionClassKind, EmissionReport, ResolvedEmissionPolicy, SchemaProfile,
+    ConditionalAnchors, EmissionClassKind, EmissionPolicy, EmissionPolicyDelta, EmissionReport,
+    EmissionSelection, InvalidEmissionPolicy, ResolvedEmissionPolicy, SchemaProfile,
 };
 
 /// Inputs and analysis policy for generating one chart schema.
@@ -23,7 +24,7 @@ pub struct GenerateOptions {
     /// Whether the optional required-property heuristic runs.
     pub infer_required: bool,
     /// Amount of analyzed contract evidence emitted into the schema.
-    pub profile: SchemaProfile,
+    pub emission: EmissionSelection,
     /// Kubernetes and CRD schema-provider policy.
     pub provider: ProviderOptions,
 }

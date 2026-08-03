@@ -49,10 +49,27 @@ fn cli_output_strip_descriptions_flag_parses() {
 #[test]
 fn cli_schema_profile_defaults_to_full_and_accepts_lean() -> eyre::Result<()> {
     let cli = parse(&[]).map_err(|error| eyre::eyre!(error))?;
-    sim_assert_eq!(have: cli.profile, want: SchemaProfile::Full);
+    sim_assert_eq!(have: cli.profile, want: None);
 
     let cli = parse(&["--profile", "lean"]).map_err(|error| eyre::eyre!(error))?;
-    sim_assert_eq!(have: cli.profile, want: SchemaProfile::Lean);
+    sim_assert_eq!(have: cli.profile, want: Some(SchemaProfile::Lean));
+    Ok(())
+}
+
+#[test]
+fn cli_config_flags_and_emission_overrides_are_tri_state() -> eyre::Result<()> {
+    let cli = parse(&[]).map_err(|error| eyre::eyre!(error))?;
+    sim_assert_eq!(have: cli.emission.local_conditionals, want: None);
+
+    let cli = parse(&["--local-conditionals", "off"]).map_err(|error| eyre::eyre!(error))?;
+    sim_assert_eq!(
+        have: cli.emission.local_conditionals,
+        want: Some(helm_schema_cli::cli::PolicyToggle::Off)
+    );
+
+    let error = parse(&["--config", "policy.yaml", "--no-config"])
+        .expect_err("config selectors must conflict");
+    assert!(error.contains("--config") || error.contains("--no-config"));
     Ok(())
 }
 

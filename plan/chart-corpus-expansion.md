@@ -12253,3 +12253,29 @@ fixtures over 114,684 default-composed/null-deletion documents and reports zero
 acceptance flips. Therefore no new per-flip Helm adjudication is required; the
 complete live Helm/provider control lane and validator-parity suite remain
 green.
+
+## Configuration surface (2026-08-03, sixty-sixth round)
+
+The CLI now opens a root chart directory or packaged archive into one VFS
+source before config resolution. Only that root handle participates in
+`helm-schema.yaml` discovery; dependency configs are ignored. Explicit config
+paths are resolved from the invocation directory, `--no-config` bypasses even
+a malformed discovered document, and `--print-effective-config` returns before
+chart analysis or provider construction.
+
+Version 1 strictly accepts only the full/lean presets and the four W-class
+emission knobs. Unknown fields, unsupported versions, X-class narrowing or
+transport settings, and the kind-partition/no-anchor combination are hard
+errors. Resolution follows CLI knob > config file > profile preset > built-in,
+while an explicit CLI profile resets file knob deltas. The exact Temporal
+combination retains lean profile provenance with local conditionals disabled,
+and the downstream chart now carries that policy in its root config rather
+than `HELM_SCHEMA_OPTIONS`.
+
+The library exposes checked complete policies, optional preset deltas, and one
+resolved policy/provenance value. Reference preparation and final transforms
+consume one `EmitRequest`; callers can no longer select conflicting reference
+policies for prepared overrides and the annotation. Directory and packaged
+generation agree, and one clean final-build dump produced all 84 full,
+generator, lean, and final-output artifacts byte-identically. This round has
+no schema acceptance flip and requires no Helm flip adjudication.

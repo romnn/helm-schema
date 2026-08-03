@@ -5,7 +5,7 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
 use crate::error::{CliError, EngineResult};
-use crate::output_pipeline::ReferenceMode;
+use crate::output_pipeline::ReferencePolicy;
 use crate::output_pipeline::overrides::PreparedOverridesIdentity;
 
 const ANNOTATION_FORMAT_VERSION: u64 = 1;
@@ -21,12 +21,17 @@ pub(crate) struct FinalOutputPolicy {
 }
 
 impl FinalOutputPolicy {
-    pub(crate) fn for_profile(profile: SchemaProfile, infer_required: bool) -> Self {
+    pub(crate) const fn new(resolved: ResolvedEmissionPolicy, infer_required: bool) -> Self {
         Self {
-            requested_profile: Some(profile),
-            resolved: profile.resolved_policy(),
+            requested_profile: resolved.requested_profile(),
+            resolved,
             infer_required,
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) const fn for_profile(profile: SchemaProfile, infer_required: bool) -> Self {
+        Self::new(profile.resolved_policy(), infer_required)
     }
 }
 
@@ -34,9 +39,9 @@ pub(crate) fn annotate_final_schema(
     schema: Value,
     policy: FinalOutputPolicy,
     overrides: &PreparedOverridesIdentity,
-    reference_mode: ReferenceMode,
+    reference_policy: ReferencePolicy,
 ) -> EngineResult<Value> {
-    let resolved = serde_json::to_value(policy.resolved)?;
+    let resolved = serde_json::to_value(policy.resolved.policy())?;
     let narrowing = if policy.infer_required {
         vec![Value::String("infer-required".to_string())]
     } else {
@@ -47,7 +52,7 @@ pub(crate) fn annotate_final_schema(
             "count": overrides.count,
             "digest": overrides.digest,
         },
-        "reference-mode": reference_mode.annotation_name(),
+        "reference-mode": reference_policy.annotation_name(),
     });
     let fingerprint_input = serde_json::json!({
         "policy-vocabulary-version": POLICY_VOCABULARY_VERSION,

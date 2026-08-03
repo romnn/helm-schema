@@ -102,7 +102,7 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> eyre::Result
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

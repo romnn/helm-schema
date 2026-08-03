@@ -1,6 +1,7 @@
 mod chart_args;
 mod crd_args;
 mod diag_args;
+mod emission_args;
 mod inference_args;
 mod k8s_args;
 mod output_args;
@@ -14,6 +15,7 @@ use clap::Parser;
 pub use chart_args::ChartArgs;
 pub use crd_args::{CrdArgs, CrdVersionLookup};
 pub use diag_args::{DiagArgs, DiagFormat};
+pub use emission_args::{EmissionArgs, PolicyToggle};
 pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
 pub use output_args::OutputArgs;
@@ -59,13 +61,30 @@ pub struct Cli {
     #[command(flatten)]
     pub perf: PerfArgs,
 
+    /// Read policy from this file instead of discovering `helm-schema.yaml`.
+    /// Relative paths are resolved from the invocation working directory.
+    #[arg(long, value_name = "PATH", conflicts_with = "no_config")]
+    pub config: Option<PathBuf>,
+
+    /// Ignore both discovered and explicit chart policy configuration.
+    #[arg(long, conflicts_with = "config")]
+    pub no_config: bool,
+
+    /// Print resolved policy values and their sources without analyzing the chart.
+    #[arg(long)]
+    pub print_effective_config: bool,
+
     /// Select how much analyzed contract evidence is emitted.
     ///
     /// `lean` omits document-level conditional validation. It only widens
     /// acceptance and substantially reduces Helm's schema compilation cost on
     /// large charts.
-    #[arg(long, value_enum, default_value_t)]
-    pub profile: SchemaProfile,
+    #[arg(long, value_enum)]
+    pub profile: Option<SchemaProfile>,
+
+    /// W-class emission-policy overrides.
+    #[command(flatten)]
+    pub emission: EmissionArgs,
 
     /// Schema files to merge on top of the inferred output, applied in
     /// the order given. Repeatable: pass multiple `--override-schema`

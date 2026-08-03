@@ -7,8 +7,8 @@ use color_eyre::eyre;
 use serde_json::Value;
 
 use crate::output_pipeline::{
-    FinalOutputPolicy, OutputPipelineOptions, PolicyInputOptions, ReferenceMode,
-    apply_schema_output_pipeline, load_policy_inputs,
+    EmitRequest, FinalOutputPolicy, OutputPipelineOptions, PolicyInputOptions, PreparedEmitRequest,
+    ReferencePolicy, apply_schema_output_pipeline, prepare_emit_request,
 };
 
 fn test_temp_dir(name: &str) -> PathBuf {
@@ -18,20 +18,28 @@ fn test_temp_dir(name: &str) -> PathBuf {
     ))
 }
 
-fn policy_options(reference_mode: ReferenceMode) -> PolicyInputOptions {
+fn policy_options() -> PolicyInputOptions {
     PolicyInputOptions {
-        reference_mode,
         fetch_policy: crate::fetch_policy::FetchPolicy::new(true, false),
         load_budget: crate::load_budget::LoadBudget::default(),
     }
 }
 
-fn output_options(reference_mode: ReferenceMode) -> OutputPipelineOptions {
-    OutputPipelineOptions {
-        reference_mode,
-        strip_descriptions: false,
-        minimize: false,
+fn request(reference_policy: ReferencePolicy) -> EmitRequest {
+    EmitRequest {
+        reference_policy,
+        output: OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: false,
+        },
     }
+}
+
+fn prepare(
+    paths: &[PathBuf],
+    reference_policy: ReferencePolicy,
+) -> crate::error::EngineResult<PreparedEmitRequest> {
+    prepare_emit_request(paths, &policy_options(), request(reference_policy))
 }
 
 fn output_policy() -> FinalOutputPolicy {
@@ -68,10 +76,8 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
     )
     .expect("write override schema");
 
-    let policy_options = policy_options(ReferenceMode::SelfContained);
-    let output_options = output_options(ReferenceMode::SelfContained);
-    let policy_inputs =
-        load_policy_inputs(&[override_path], &policy_options).expect("load overrides");
+    let prepared =
+        prepare(&[override_path], ReferencePolicy::SelfContained).expect("load overrides");
     let schema = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
@@ -82,14 +88,8 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(
-        schema,
-        policy_inputs,
-        &temp_dir,
-        output_policy(),
-        output_options,
-    )
-    .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())
+        .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -140,10 +140,8 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
     )
     .expect("write override schema");
 
-    let policy_options = policy_options(ReferenceMode::FullyInlinedExport);
-    let output_options = output_options(ReferenceMode::FullyInlinedExport);
-    let policy_inputs =
-        load_policy_inputs(&[override_path], &policy_options).expect("load overrides");
+    let prepared =
+        prepare(&[override_path], ReferencePolicy::FullyInlinedExport).expect("load overrides");
     let schema = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
@@ -154,14 +152,8 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(
-        schema,
-        policy_inputs,
-        &temp_dir,
-        output_policy(),
-        output_options,
-    )
-    .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())
+        .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -193,10 +185,8 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
     )
     .expect("write override schema");
 
-    let policy_options = policy_options(ReferenceMode::PreserveRefs);
-    let output_options = output_options(ReferenceMode::PreserveRefs);
-    let policy_inputs =
-        load_policy_inputs(&[override_path], &policy_options).expect("load overrides");
+    let prepared =
+        prepare(&[override_path], ReferencePolicy::PreserveRefs).expect("load overrides");
     let schema = serde_json::json!({
         "properties": {
             "cloud": {
@@ -206,14 +196,8 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(
-        schema,
-        policy_inputs,
-        &temp_dir,
-        output_policy(),
-        output_options,
-    )
-    .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())
+        .expect("apply output pipeline");
 
     sim_assert_eq!(
         have: output
@@ -240,7 +224,7 @@ fn override_loader_rejects_non_schema_roots() -> eyre::Result<()> {
     {
         let path = temp_dir.join(format!("override-{index}.json"));
         fs::write(&path, serde_json::to_vec(&root)?)?;
-        let result = load_policy_inputs(&[path], &policy_options(ReferenceMode::PreserveRefs));
+        let result = prepare(&[path], ReferencePolicy::PreserveRefs);
         sim_assert_eq!(have: result.is_err(), want: true);
     }
     fs::remove_dir_all(&temp_dir)?;
@@ -265,9 +249,8 @@ fn prepared_override_identity_includes_replacement_intent() -> eyre::Result<()> 
         &inline_path,
         r#"{"properties":{"cloud":{"enum":[null,"azure","minikube"]}}}"#,
     )?;
-    let options = policy_options(ReferenceMode::FullyInlinedExport);
-    let referenced = load_policy_inputs(&[referenced_path], &options)?;
-    let inline = load_policy_inputs(&[inline_path], &options)?;
+    let referenced = prepare(&[referenced_path], ReferencePolicy::FullyInlinedExport)?;
+    let inline = prepare(&[inline_path], ReferencePolicy::FullyInlinedExport)?;
 
     sim_assert_eq!(
         have: referenced.identity().digest == inline.identity().digest,
@@ -310,27 +293,31 @@ fn caller_authored_ref_replace_keys_do_not_collide_with_merge_intent() -> eyre::
     });
 
     for reference_mode in [
-        ReferenceMode::SelfContained,
-        ReferenceMode::FullyInlinedExport,
-        ReferenceMode::PreserveRefs,
+        ReferencePolicy::SelfContained,
+        ReferencePolicy::FullyInlinedExport,
+        ReferencePolicy::PreserveRefs,
     ] {
-        let policy_inputs = load_policy_inputs(
-            std::slice::from_ref(&override_path),
-            &policy_options(reference_mode),
-        )?;
-        let output = apply_schema_output_pipeline(
-            base.clone(),
-            policy_inputs,
-            &temp_dir,
-            output_policy(),
-            output_options(reference_mode),
-        )?;
+        let prepared = prepare(std::slice::from_ref(&override_path), reference_mode)?;
+        let output =
+            apply_schema_output_pipeline(base.clone(), prepared, &temp_dir, output_policy())?;
         sim_assert_eq!(
             have: output.pointer("/x-caller/$ref-replace"),
             want: Some(&serde_json::json!("caller non-ref value"))
         );
         let ref_location_value = output.pointer("/properties/cloud/$ref-replace");
-        if reference_mode == ReferenceMode::SelfContained {
+        let expected_annotation = match reference_mode {
+            ReferencePolicy::SelfContained => "bundled",
+            ReferencePolicy::FullyInlinedExport => "fully-inlined",
+            ReferencePolicy::PreserveRefs => "preserved",
+        };
+        sim_assert_eq!(
+            have: output
+                .pointer("/x-helm-schema-policy/modifiers/reference-mode")
+                .and_then(Value::as_str),
+            want: Some(expected_annotation),
+            "the request's reference policy must govern preparation and annotation"
+        );
+        if reference_mode == ReferencePolicy::SelfContained {
             sim_assert_eq!(have: ref_location_value, want: None);
         } else {
             sim_assert_eq!(
@@ -353,10 +340,7 @@ fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre
         &override_path,
         r#"{"properties":{"value":{"anyOf":[{"type":"integer"}]}}}"#,
     )?;
-    let policy_inputs = load_policy_inputs(
-        &[override_path],
-        &policy_options(ReferenceMode::SelfContained),
-    )?;
+    let prepared = prepare(&[override_path], ReferencePolicy::SelfContained)?;
     let schema = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$defs": {
@@ -368,13 +352,7 @@ fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre
         "type": "object",
     });
 
-    let output = apply_schema_output_pipeline(
-        schema,
-        policy_inputs,
-        &temp_dir,
-        output_policy(),
-        output_options(ReferenceMode::SelfContained),
-    )?;
+    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())?;
 
     sim_assert_eq!(have: output.get("$defs"), want: None);
     sim_assert_eq!(

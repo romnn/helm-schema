@@ -135,6 +135,45 @@ pub enum CliError {
     /// detected after `clap` parsing succeeded.
     #[error("invalid CLI options: {0}")]
     CliValidation(String),
+
+    /// An emission selection resolves to a contradictory knob matrix.
+    #[error("invalid emission policy: {0}")]
+    InvalidEmissionPolicy(#[from] helm_schema_gen::InvalidEmissionPolicy),
+
+    /// An explicit config path could not be read.
+    #[error("failed to read config {path}: {source}")]
+    ConfigRead {
+        /// Config file path.
+        path: PathBuf,
+        /// Underlying filesystem failure.
+        #[source]
+        source: std::io::Error,
+    },
+
+    /// A config document is malformed or contains unknown fields.
+    #[error("invalid config {path}: {source}")]
+    InvalidConfig {
+        /// Config file path or packaged-chart member label.
+        path: String,
+        /// YAML decoding failure.
+        #[source]
+        source: serde_yaml::Error,
+    },
+
+    /// A config document uses a version this binary cannot honor exactly.
+    #[error(
+        "unsupported config version {found} in {path}; supported range is {supported_min}..={supported_max}; update the config or the helm-schema binary"
+    )]
+    UnsupportedConfigVersion {
+        /// Config file path.
+        path: PathBuf,
+        /// Version requested by the config.
+        found: u64,
+        /// Oldest config version honored by this binary.
+        supported_min: u64,
+        /// Newest config version honored by this binary.
+        supported_max: u64,
+    },
 }
 
 /// Result returned by the schema engine's public operations.

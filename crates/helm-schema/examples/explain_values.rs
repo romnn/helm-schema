@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(PathBuf::from(".cache/kubernetes-json-schema-cache")),

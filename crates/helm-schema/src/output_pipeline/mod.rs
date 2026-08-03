@@ -14,6 +14,8 @@ mod transforms;
 
 pub(crate) use annotation::FinalOutputPolicy;
 pub use format::{FinalOutputMetrics, write_schema_json};
-pub use options::{JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferenceMode};
-pub use overrides::{PolicyInputs, load_policy_inputs};
+pub use options::{
+    EmitRequest, JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferencePolicy,
+};
+pub(crate) use overrides::{PreparedEmitRequest, prepare_emit_request};
 pub(crate) use transforms::apply_schema_output_pipeline;

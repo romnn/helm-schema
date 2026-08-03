@@ -7,8 +7,6 @@ use crate::load_budget::LoadBudget;
 /// feed information back into template analysis.
 #[derive(Debug, Clone, Copy)]
 pub struct OutputPipelineOptions {
-    /// Reference-preservation or inlining policy.
-    pub reference_mode: ReferenceMode,
     /// Whether descriptions are removed from final output.
     pub strip_descriptions: bool,
     /// Whether redundant schema structure is minimized.
@@ -19,8 +17,6 @@ pub struct OutputPipelineOptions {
 /// final output transforms run.
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyInputOptions {
-    /// Reference policy that determines which documents must be loaded.
-    pub reference_mode: ReferenceMode,
     /// Whether required remote documents may be fetched.
     pub fetch_policy: FetchPolicy,
     /// Byte and entry limits applied while loading documents.
@@ -33,7 +29,7 @@ pub struct PolicyInputOptions {
 /// resolved into a self-contained schema or preserved literally for consumers
 /// that want to manage references themselves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ReferenceMode {
+pub enum ReferencePolicy {
     /// Bundle referenced schemas while retaining reusable local definitions.
     SelfContained,
     /// Resolve and inline every reachable reference for export.
@@ -42,7 +38,7 @@ pub enum ReferenceMode {
     PreserveRefs,
 }
 
-impl ReferenceMode {
+impl ReferencePolicy {
     pub(crate) const fn annotation_name(self) -> &'static str {
         match self {
             Self::SelfContained => "bundled",
@@ -62,6 +58,15 @@ impl ReferenceMode {
             Self::SelfContained
         }
     }
+}
+
+/// One final-output request owning reference and output-transform policy.
+#[derive(Debug, Clone, Copy)]
+pub struct EmitRequest {
+    /// Reference preparation and final-output policy.
+    pub reference_policy: ReferencePolicy,
+    /// Output transforms independent of reference handling.
+    pub output: OutputPipelineOptions,
 }
 
 /// JSON serialization format for the final schema document.

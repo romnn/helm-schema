@@ -2,6 +2,8 @@
 
 mod analysis;
 mod chart;
+/// Root chart source opening for directories and packaged archives.
+pub mod chart_source;
 mod error;
 mod fetch_policy;
 /// JSON Schema reference bundling and inlining.
@@ -39,8 +41,8 @@ pub mod output {
     pub use crate::fetch_policy::FetchPolicy;
     pub use crate::load_budget::LoadBudget;
     pub use crate::output_pipeline::{
-        FinalOutputMetrics, JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions,
-        PolicyInputs, ReferenceMode, load_policy_inputs, write_schema_json,
+        EmitRequest, FinalOutputMetrics, JsonOutputFormat, OutputPipelineOptions,
+        PolicyInputOptions, ReferencePolicy, write_schema_json,
     };
 }
 

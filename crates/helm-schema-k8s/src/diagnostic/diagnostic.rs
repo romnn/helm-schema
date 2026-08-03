@@ -86,6 +86,8 @@ pub enum DiagnosticKey {
         /// Values path affected by the ambiguity.
         value_path: String,
     },
+    /// Discovered chart config weakens emission relative to this invocation without it.
+    DiscoveredConfigWeakensEmission,
 }
 
 /// User-facing diagnostic. Every event helm-schema emits at runtime is
@@ -198,6 +200,11 @@ pub enum Diagnostic {
         /// Values path affected by channel-dependent numeric semantics.
         value_path: String,
     },
+    /// Chart-local config disables one or more W-class emission constraints.
+    DiscoveredConfigWeakensEmission {
+        /// Stable knob names disabled because the config was applied.
+        disabled_knobs: Vec<String>,
+    },
 }
 
 impl Diagnostic {
@@ -285,6 +292,9 @@ impl Diagnostic {
                     value_path: value_path.clone(),
                 }
             }
+            Diagnostic::DiscoveredConfigWeakensEmission { .. } => {
+                DiagnosticKey::DiscoveredConfigWeakensEmission
+            }
         }
     }
 
@@ -312,6 +322,9 @@ impl Diagnostic {
             Diagnostic::CrdVersionAvailableAtOtherVersions {
                 available_versions, ..
             } => canonicalise_strings(available_versions),
+            Diagnostic::DiscoveredConfigWeakensEmission { disabled_knobs } => {
+                canonicalise_strings(disabled_knobs);
+            }
             Diagnostic::ResolvedFromFallbackVersion { .. }
             | Diagnostic::InferredApiVersion { .. }
             | Diagnostic::LocalOverrideUnreadable { .. }

@@ -1,8 +1,11 @@
 //! Public session API and staged schema-generation regressions.
 
 use color_eyre::eyre;
-use helm_schema::generation::{GenerateOptions, SchemaProfile};
-use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
+use helm_schema::generation::{
+    ConditionalAnchors, EmissionPolicy, EmissionPolicyDelta, EmissionSelection, GenerateOptions,
+    SchemaProfile,
+};
+use helm_schema::output::{EmitRequest, JsonOutputFormat, OutputPipelineOptions, ReferencePolicy};
 use helm_schema::provider::{K8sVersionChain, ProviderOptions};
 use helm_schema::{
     AnalysisSession,
@@ -47,6 +50,25 @@ fn generate_values_schema_for_chart(
 }
 
 #[test]
+fn emission_selection_resolves_checked_public_policy_once() -> eyre::Result<()> {
+    let selection = EmissionSelection::Preset {
+        profile: SchemaProfile::Lean,
+        delta: EmissionPolicyDelta::new(None, Some(false), None, None),
+    };
+    let resolved = selection.resolve()?;
+    sim_assert_eq!(have: resolved.requested_profile(), want: Some(SchemaProfile::Lean));
+    sim_assert_eq!(have: resolved.policy().local_conditionals(), want: false);
+
+    let explicit = EmissionPolicy::new(ConditionalAnchors::Root, true, true)?;
+    let resolved = EmissionSelection::Explicit(explicit).resolve()?;
+    sim_assert_eq!(have: resolved.requested_profile(), want: None);
+    sim_assert_eq!(have: resolved.policy(), want: explicit);
+
+    assert!(EmissionPolicy::new(ConditionalAnchors::None, true, true).is_err());
+    Ok(())
+}
+
+#[test]
 fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -84,8 +106,8 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
         JsonOutputFormat::Pretty
     ));
     assert!(matches!(
-        ReferenceMode::from_flags(false, false),
-        ReferenceMode::SelfContained
+        ReferencePolicy::from_flags(false, false),
+        ReferencePolicy::SelfContained
     ));
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {
@@ -94,7 +116,7 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -167,7 +189,7 @@ fn analysis_session_exposes_contract_and_generated_schema() -> eyre::Result<()> 
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -277,7 +299,7 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -393,7 +415,7 @@ fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()>
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -444,7 +466,7 @@ fn stage_functions_match_session_generated_schema() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -521,7 +543,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: true,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -651,7 +673,7 @@ fn analysis_session_emits_final_schema_through_output_pipeline() -> eyre::Result
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -662,14 +684,13 @@ fn analysis_session_emits_final_schema_through_output_pipeline() -> eyre::Result
         },
     });
 
-    let emitted = session.emit(
-        PolicyInputs::default(),
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::SelfContained,
+    let emitted = session.emit(EmitRequest {
+        reference_policy: ReferencePolicy::SelfContained,
+        output: OutputPipelineOptions {
             strip_descriptions: false,
             minimize: false,
         },
-    )?;
+    })?;
 
     sim_assert_eq!(
         have: emitted
@@ -741,7 +762,7 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -863,7 +884,7 @@ fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::
             include_subchart_values: true,
             values_files: Vec::new(),
             infer_required: false,
-            profile: SchemaProfile::default(),
+            emission: SchemaProfile::default().into(),
             provider: ProviderOptions {
                 k8s_versions: vec!["v1.35.0".to_string()],
                 allow_net: false,
@@ -929,7 +950,7 @@ fn analysis_session_explains_helper_origin_provenance() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -1002,7 +1023,7 @@ fn dependency_activation_guards_lower_with_helm_precedence() -> eyre::Result<()>
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -1102,7 +1123,7 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,

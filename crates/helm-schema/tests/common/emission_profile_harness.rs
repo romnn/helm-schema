@@ -275,7 +275,7 @@ fn generate_options(
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required,
-        profile,
+        emission: profile.into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(

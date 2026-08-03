@@ -3,12 +3,22 @@ use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
 use crate::output_pipeline::{
-    FinalOutputPolicy, OutputPipelineOptions, PolicyInputs, ReferenceMode,
+    EmitRequest, FinalOutputPolicy, OutputPipelineOptions, PreparedEmitRequest, ReferencePolicy,
     apply_schema_output_pipeline,
 };
 
 fn output_policy() -> FinalOutputPolicy {
     FinalOutputPolicy::for_profile(crate::generation::SchemaProfile::Full, false)
+}
+
+fn request(reference_policy: ReferencePolicy) -> PreparedEmitRequest {
+    PreparedEmitRequest::empty(EmitRequest {
+        reference_policy,
+        output: OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: false,
+        },
+    })
 }
 
 #[test]
@@ -25,14 +35,9 @@ fn reference_mode_preserves_refs_when_requested() {
 
     let output = apply_schema_output_pipeline(
         schema,
-        PolicyInputs::default(),
+        request(ReferencePolicy::PreserveRefs),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::PreserveRefs,
-            strip_descriptions: false,
-            minimize: false,
-        },
     )
     .expect("apply output pipeline");
 
@@ -64,14 +69,9 @@ fn self_contained_reference_mode_preserves_prepared_internal_refs() {
 
     let output = apply_schema_output_pipeline(
         schema,
-        PolicyInputs::default(),
+        request(ReferencePolicy::SelfContained),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::SelfContained,
-            strip_descriptions: false,
-            minimize: false,
-        },
     )
     .expect("apply output pipeline");
 
@@ -110,14 +110,9 @@ fn fully_inlined_output_prunes_generator_definitions_orphaned_by_transport() -> 
 
     let output = apply_schema_output_pipeline(
         schema,
-        PolicyInputs::default(),
+        request(ReferencePolicy::FullyInlinedExport),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::FullyInlinedExport,
-            strip_descriptions: false,
-            minimize: false,
-        },
     )?;
 
     sim_assert_eq!(have: output.get("$defs"), want: None);
@@ -142,14 +137,9 @@ fn self_contained_reference_mode_rejects_unprepared_external_refs() {
 
     let err = apply_schema_output_pipeline(
         schema,
-        PolicyInputs::default(),
+        request(ReferencePolicy::SelfContained),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::SelfContained,
-            strip_descriptions: false,
-            minimize: false,
-        },
     )
     .expect_err("unprepared external ref should fail final output transform");
 
@@ -179,14 +169,9 @@ fn fully_inlined_export_reference_mode_inlines_prepared_internal_refs() {
 
     let output = apply_schema_output_pipeline(
         schema,
-        PolicyInputs::default(),
+        request(ReferencePolicy::FullyInlinedExport),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::FullyInlinedExport,
-            strip_descriptions: false,
-            minimize: false,
-        },
     )
     .expect("apply output pipeline");
 
@@ -209,14 +194,9 @@ fn output_pipeline_marks_final_schema_as_generated() {
 
     let output = apply_schema_output_pipeline(
         schema,
-        PolicyInputs::default(),
+        request(ReferencePolicy::PreserveRefs),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
-        OutputPipelineOptions {
-            reference_mode: ReferenceMode::PreserveRefs,
-            strip_descriptions: false,
-            minimize: false,
-        },
     )
     .expect("apply output pipeline");
 

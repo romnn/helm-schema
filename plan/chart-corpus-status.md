@@ -116,6 +116,15 @@ part and a separately listed residual. Detailed round history remains in
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
 
+- **Schema-emission configuration surface (sixty-sixth round).** Root chart
+  directories and archives share one VFS config/analysis source; config
+  discovery is root-only and print mode performs no analysis or provider
+  work. Version 1 hard-fails unknown, unsupported, X-class, and contradictory
+  policy documents. Tri-state CLI precedence, the exact Temporal migration,
+  checked public policies, and mismatch-free reference ownership are pinned.
+  All 84 clean-dump artifacts remain byte-identical, so the round has no
+  semantic fixture flip.
+
 - **Schema-emission harness and relax-host preflight (fifty-ninth round).**
   Separately generated current full/lean schemas now run through one compiled
   Rust validator harness with coalesced-default/null-deletion probes. The 206

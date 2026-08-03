@@ -8,7 +8,7 @@ use crate::flatten;
 use crate::output_pipeline::annotation::{FinalOutputPolicy, annotate_final_schema};
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
 use crate::output_pipeline::reachability::{OwnedDefinitions, prune_unreachable_owned_definitions};
-use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs, ReferenceMode};
+use crate::output_pipeline::{OutputPipelineOptions, PreparedEmitRequest, ReferencePolicy};
 use crate::schema_override;
 
 /// Applies overrides, reference policy, and final minimization.
@@ -20,35 +20,36 @@ use crate::schema_override;
 #[tracing::instrument(
     skip_all,
     fields(
-        override_count = policy_inputs.override_count(),
-        reference_mode = ?options.reference_mode,
-        strip_descriptions = options.strip_descriptions,
-        minimize = options.minimize,
+        override_count = prepared.override_count(),
+        reference_policy = ?prepared.request.reference_policy,
+        strip_descriptions = prepared.request.output.strip_descriptions,
+        minimize = prepared.request.output.minimize,
     )
 )]
 pub(crate) fn apply_schema_output_pipeline(
     mut schema: Value,
-    policy_inputs: PolicyInputs,
+    prepared: PreparedEmitRequest,
     base_dir: &Path,
     policy: FinalOutputPolicy,
-    options: OutputPipelineOptions,
 ) -> EngineResult<Value> {
+    let options = prepared.request.output;
+    let reference_policy = prepared.request.reference_policy;
     let generated_definitions = OwnedDefinitions::capture(&schema);
-    let override_identity = policy_inputs.identity();
-    for override_schema in policy_inputs.into_prepared_override_schemas() {
+    let override_identity = prepared.identity();
+    for override_schema in prepared.into_prepared_override_schemas() {
         schema = schema_override::apply_prepared_schema_override(schema, override_schema);
     }
     let generated_definitions = generated_definitions.retain_unchanged(&schema);
 
-    schema = apply_output_transforms(schema, base_dir, options)?;
+    schema = apply_output_transforms(schema, base_dir, reference_policy, options)?;
     prune_unreachable_owned_definitions(&mut schema, &generated_definitions);
-    annotate_final_schema(schema, policy, &override_identity, options.reference_mode)
+    annotate_final_schema(schema, policy, &override_identity, reference_policy)
 }
 
 #[tracing::instrument(
     skip_all,
     fields(
-        reference_mode = ?options.reference_mode,
+        reference_policy = ?reference_policy,
         strip_descriptions = options.strip_descriptions,
         minimize = options.minimize,
     )
@@ -56,14 +57,15 @@ pub(crate) fn apply_schema_output_pipeline(
 fn apply_output_transforms(
     mut schema: Value,
     base_dir: &Path,
+    reference_policy: ReferencePolicy,
     options: OutputPipelineOptions,
 ) -> EngineResult<Value> {
-    match options.reference_mode {
-        ReferenceMode::SelfContained => schema = flatten::bundle_prepared_refs(schema, base_dir)?,
-        ReferenceMode::FullyInlinedExport => {
+    match reference_policy {
+        ReferencePolicy::SelfContained => schema = flatten::bundle_prepared_refs(schema, base_dir)?,
+        ReferencePolicy::FullyInlinedExport => {
             schema = flatten::flatten_prepared_refs(&schema, base_dir)?;
         }
-        ReferenceMode::PreserveRefs => {}
+        ReferencePolicy::PreserveRefs => {}
     }
 
     if options.strip_descriptions {

@@ -453,15 +453,15 @@ fn temporal_middle_policy_measurements() -> eyre::Result<()> {
     );
     let full = full_session.generated_schema()?;
     let lean = lean_session.generated_schema()?;
-    let output_options = helm_schema::output::OutputPipelineOptions {
-        reference_mode: helm_schema::output::ReferenceMode::SelfContained,
-        strip_descriptions: false,
-        minimize: true,
+    let emit_request = helm_schema::output::EmitRequest {
+        reference_policy: helm_schema::output::ReferencePolicy::SelfContained,
+        output: helm_schema::output::OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: true,
+        },
     };
-    let full_schema =
-        full_session.emit(helm_schema::output::PolicyInputs::default(), output_options)?;
-    let lean_schema =
-        lean_session.emit(helm_schema::output::PolicyInputs::default(), output_options)?;
+    let full_schema = full_session.emit(emit_request)?;
+    let lean_schema = lean_session.emit(emit_request)?;
     let mut full_bytes = Vec::new();
     let full_metrics = helm_schema::output::write_schema_json(
         &mut full_bytes,

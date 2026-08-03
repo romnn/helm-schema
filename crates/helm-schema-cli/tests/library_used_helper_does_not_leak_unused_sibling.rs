@@ -110,7 +110,7 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -194,7 +194,7 @@ fn unused_helper_in_used_library_does_not_perturb_infer_required() -> eyre::Resu
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: true,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

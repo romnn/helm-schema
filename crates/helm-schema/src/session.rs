@@ -15,8 +15,8 @@ use crate::chart;
 use crate::error::EngineResult;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
-    FinalOutputPolicy, OutputPipelineOptions, PolicyInputOptions, PolicyInputs,
-    apply_schema_output_pipeline, load_policy_inputs,
+    EmitRequest, FinalOutputPolicy, PolicyInputOptions, PreparedEmitRequest,
+    apply_schema_output_pipeline, prepare_emit_request,
 };
 use crate::provider_builder;
 use crate::values_roots;
@@ -134,6 +134,7 @@ pub struct AnalysisSession {
     finalized_contract: SessionCache<FinalizedContract>,
     resolved_contract: SessionCache<ResolvedContract>,
     generated_schema: SessionCache<GeneratedSchema>,
+    resolved_emission_policy: SessionCache<helm_schema_gen::ResolvedEmissionPolicy>,
 }
 
 struct SessionCache<T> {
@@ -184,6 +185,7 @@ impl AnalysisSession {
             finalized_contract: SessionCache::new(),
             resolved_contract: SessionCache::new(),
             generated_schema: SessionCache::new(),
+            resolved_emission_policy: SessionCache::new(),
         }
     }
 
@@ -269,18 +271,13 @@ impl AnalysisSession {
     ///
     /// Returns an error when generated-schema preparation, override merging,
     /// or reference processing fails.
-    pub fn emit(
-        &self,
-        policy_inputs: PolicyInputs,
-        output_options: OutputPipelineOptions,
-    ) -> EngineResult<Value> {
+    pub fn emit(&self, request: EmitRequest) -> EngineResult<Value> {
         let generated = self.generated_schema()?;
         apply_schema_output_pipeline(
             generated.schema,
-            policy_inputs,
+            PreparedEmitRequest::empty(request),
             self.chart_base_dir(),
-            FinalOutputPolicy::for_profile(self.opts.profile, self.opts.infer_required),
-            output_options,
+            FinalOutputPolicy::new(self.resolved_emission_policy()?, self.opts.infer_required),
         )
     }
 
@@ -294,10 +291,16 @@ impl AnalysisSession {
         &self,
         override_paths: &[PathBuf],
         policy_input_options: PolicyInputOptions,
-        output_options: OutputPipelineOptions,
+        request: EmitRequest,
     ) -> EngineResult<Value> {
-        let policy_inputs = load_policy_inputs(override_paths, &policy_input_options)?;
-        self.emit(policy_inputs, output_options)
+        let prepared = prepare_emit_request(override_paths, &policy_input_options, request)?;
+        let generated = self.generated_schema()?;
+        apply_schema_output_pipeline(
+            generated.schema,
+            prepared,
+            self.chart_base_dir(),
+            FinalOutputPolicy::new(self.resolved_emission_policy()?, self.opts.infer_required),
+        )
     }
 
     /// Explain one values path using the current contract and chart evidence.
@@ -393,7 +396,7 @@ impl AnalysisSession {
                     )
                     .with_shadowed_input_paths(&prepared.shadowed_input_paths)
                     .with_values_descriptions(&prepared.values_descriptions)
-                    .with_profile(self.opts.profile),
+                    .with_emission_policy(self.resolved_emission_policy()?.policy()),
             );
 
             Ok(ResolvedContract {
@@ -401,6 +404,12 @@ impl AnalysisSession {
                 emission_report,
             })
         })
+    }
+
+    fn resolved_emission_policy(&self) -> EngineResult<helm_schema_gen::ResolvedEmissionPolicy> {
+        Ok(*self
+            .resolved_emission_policy
+            .get_or_try_init(|| Ok(self.opts.emission.resolve()?))?)
     }
 }
 

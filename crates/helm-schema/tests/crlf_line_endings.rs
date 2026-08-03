@@ -76,7 +76,7 @@ fn schema_for(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,

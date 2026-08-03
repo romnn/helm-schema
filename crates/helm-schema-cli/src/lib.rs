@@ -2,17 +2,18 @@
 
 /// Typed command-line arguments and option validation.
 pub mod cli;
+mod config;
 mod diag_emit;
 
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
+use helm_schema::chart_source::RootChartSource;
 use helm_schema::diagnostics::DiagnosticSink;
-use helm_schema::output::{FetchPolicy, PolicyInputOptions, write_schema_json};
+use helm_schema::output::{FetchPolicy, LoadBudget, PolicyInputOptions, write_schema_json};
 use helm_schema::{AnalysisSession, EngineResult};
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
-use vfs::VfsPath;
 
 pub use cli::Cli;
 pub use helm_schema::generation::{GenerateOptions, SchemaProfile};
@@ -53,14 +54,44 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
     );
     let _entered = run_span.enter();
 
+    let root_source = RootChartSource::open(&cli.chart_dir, LoadBudget::default())?;
+    let effective_config = config::resolve(
+        &root_source,
+        &cli.chart_dir,
+        cli.config.as_deref(),
+        cli.no_config,
+        cli.profile,
+        cli.emission,
+    )?;
+
+    let diagnostics = DiagnosticSink::new();
+    if !effective_config.file_weakening.is_empty() {
+        diagnostics.push(
+            helm_schema::diagnostics::Diagnostic::DiscoveredConfigWeakensEmission {
+                disabled_knobs: effective_config
+                    .file_weakening
+                    .iter()
+                    .map(|knob| (*knob).to_string())
+                    .collect(),
+            },
+        );
+    }
+    if cli.print_effective_config {
+        let stdout = std::io::stdout();
+        let mut out = BufWriter::new(stdout.lock());
+        out.write_all(effective_config.to_yaml()?.as_bytes())?;
+        out.flush()?;
+        diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
+        return Ok(());
+    }
+
     cli.crd.validate().map_err(CliError::CliValidation)?;
     let fallback_window = cli
         .k8s
         .resolved_fallback_window()
         .map_err(CliError::CliValidation)?;
 
-    let chart_dir_str = cli.chart_dir.to_string_lossy().to_string();
-    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let chart_dir = root_source.into_chart_dir();
 
     let provider_options = ProviderOptions {
         k8s_versions: cli.k8s.k8s_version.clone(),
@@ -85,21 +116,18 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
         include_subchart_values: !cli.chart.no_subchart_values,
         values_files: cli.chart.values_files.clone(),
         infer_required: cli.chart.infer_required,
-        profile: cli.profile.into(),
+        emission: effective_config.selection,
         provider: provider_options,
     };
 
-    let diagnostics = DiagnosticSink::new();
     let session = AnalysisSession::with_diagnostics(opts, diagnostics.clone());
-    let policy_input_options: PolicyInputOptions = cli
-        .output
-        .policy_input_options(FetchPolicy::input_assembly(!cli.k8s.offline));
-    let output_options = cli.output.pipeline_options();
-    let schema = session.emit_with_policy_paths(
-        &cli.override_schema,
-        policy_input_options,
-        output_options,
-    )?;
+    let policy_input_options = PolicyInputOptions {
+        fetch_policy: FetchPolicy::input_assembly(!cli.k8s.offline),
+        load_budget: LoadBudget::default(),
+    };
+    let emit_request = cli.output.emit_request();
+    let schema =
+        session.emit_with_policy_paths(&cli.override_schema, policy_input_options, emit_request)?;
 
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
 

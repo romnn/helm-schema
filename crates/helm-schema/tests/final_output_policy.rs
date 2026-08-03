@@ -5,7 +5,8 @@ use std::path::Path;
 use color_eyre::eyre::{self, WrapErr as _};
 use helm_schema::generation::{GenerateOptions, SchemaProfile};
 use helm_schema::output::{
-    FetchPolicy, LoadBudget, OutputPipelineOptions, PolicyInputOptions, PolicyInputs, ReferenceMode,
+    EmitRequest, FetchPolicy, LoadBudget, OutputPipelineOptions, PolicyInputOptions,
+    ReferencePolicy,
 };
 use helm_schema::provider::ProviderOptions;
 use serde_json::{Value, json};
@@ -19,14 +20,8 @@ fn final_outputs_match_policy_annotation_fixtures() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
     let full_session = profile_session(SchemaProfile::Full, false);
     let lean_session = profile_session(SchemaProfile::Lean, false);
-    let full = full_session.emit(
-        PolicyInputs::default(),
-        output_options(ReferenceMode::SelfContained),
-    )?;
-    let lean = lean_session.emit(
-        PolicyInputs::default(),
-        output_options(ReferenceMode::SelfContained),
-    )?;
+    let full = full_session.emit(emit_request(ReferencePolicy::SelfContained))?;
+    let lean = lean_session.emit(emit_request(ReferencePolicy::SelfContained))?;
 
     assert_fixture("full", &full)?;
     assert_fixture("lean", &lean)?;
@@ -35,10 +30,7 @@ fn final_outputs_match_policy_annotation_fixtures() -> eyre::Result<()> {
         want: None
     );
 
-    let repeated = lean_session.emit(
-        PolicyInputs::default(),
-        output_options(ReferenceMode::SelfContained),
-    )?;
+    let repeated = lean_session.emit(emit_request(ReferencePolicy::SelfContained))?;
     sim_assert_eq!(have: repeated, want: lean);
     Ok(())
 }
@@ -59,7 +51,7 @@ fn overrides_cannot_forge_policy_annotations_or_boolean_root_identity() -> eyre:
         }))?,
     )
     .wrap_err("write caller override")?;
-    let caller = emit_with_override(&session, &caller_path, ReferenceMode::PreserveRefs)?;
+    let caller = emit_with_override(&session, &caller_path, ReferencePolicy::PreserveRefs)?;
     assert_fixture("caller-overwrite", &caller)?;
     sim_assert_eq!(
         have: caller["x-helm-schema-policy"]["requested-profile"].clone(),
@@ -68,7 +60,7 @@ fn overrides_cannot_forge_policy_annotations_or_boolean_root_identity() -> eyre:
 
     let boolean_path = tempdir.path().join("boolean.json");
     std::fs::write(&boolean_path, b"false\n").wrap_err("write Boolean override")?;
-    let boolean = emit_with_override(&session, &boolean_path, ReferenceMode::SelfContained)?;
+    let boolean = emit_with_override(&session, &boolean_path, ReferencePolicy::SelfContained)?;
     assert_fixture("boolean-false", &boolean)?;
     let validator = jsonschema::validator_for(&boolean)?;
     sim_assert_eq!(have: validator.is_valid(&json!({})), want: false);
@@ -78,18 +70,12 @@ fn overrides_cannot_forge_policy_annotations_or_boolean_root_identity() -> eyre:
 #[test]
 fn narrowing_and_reference_modifiers_change_the_policy_fingerprint() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let ordinary = profile_session(SchemaProfile::Full, false).emit(
-        PolicyInputs::default(),
-        output_options(ReferenceMode::SelfContained),
-    )?;
-    let narrowed = profile_session(SchemaProfile::Full, true).emit(
-        PolicyInputs::default(),
-        output_options(ReferenceMode::SelfContained),
-    )?;
-    let preserved = profile_session(SchemaProfile::Full, false).emit(
-        PolicyInputs::default(),
-        output_options(ReferenceMode::PreserveRefs),
-    )?;
+    let ordinary = profile_session(SchemaProfile::Full, false)
+        .emit(emit_request(ReferencePolicy::SelfContained))?;
+    let narrowed = profile_session(SchemaProfile::Full, true)
+        .emit(emit_request(ReferencePolicy::SelfContained))?;
+    let preserved = profile_session(SchemaProfile::Full, false)
+        .emit(emit_request(ReferencePolicy::PreserveRefs))?;
 
     sim_assert_eq!(
         have: narrowed["x-helm-schema-policy"]["narrowing"].clone(),
@@ -104,24 +90,25 @@ fn narrowing_and_reference_modifiers_change_the_policy_fingerprint() -> eyre::Re
 fn emit_with_override(
     session: &helm_schema::AnalysisSession,
     path: &Path,
-    reference_mode: ReferenceMode,
+    reference_policy: ReferencePolicy,
 ) -> eyre::Result<Value> {
     Ok(session.emit_with_policy_paths(
         &[path.to_path_buf()],
         PolicyInputOptions {
-            reference_mode,
             fetch_policy: FetchPolicy::input_assembly(false),
             load_budget: LoadBudget::default(),
         },
-        output_options(reference_mode),
+        emit_request(reference_policy),
     )?)
 }
 
-fn output_options(reference_mode: ReferenceMode) -> OutputPipelineOptions {
-    OutputPipelineOptions {
-        reference_mode,
-        strip_descriptions: false,
-        minimize: true,
+fn emit_request(reference_policy: ReferencePolicy) -> EmitRequest {
+    EmitRequest {
+        reference_policy,
+        output: OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: true,
+        },
     }
 }
 
@@ -134,7 +121,7 @@ fn profile_session(profile: SchemaProfile, infer_required: bool) -> helm_schema:
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required,
-        profile,
+        emission: profile.into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(

@@ -35,7 +35,7 @@ pub fn generate_chart_schema_for_path(chart_relative_path: &str) -> eyre::Result
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
-        profile: SchemaProfile::default(),
+        emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             // Provider availability is a deterministic test INPUT: the

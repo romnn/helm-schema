@@ -29,10 +29,9 @@ use serde_json::Value;
 
 pub(crate) use emission_plan::CompletionPass;
 use emission_plan::LoweredEmissionPlan;
-use emission_policy::EmissionPolicy;
-
 pub use emission_policy::{
-    EmissionClassKind, EmissionOrigin, POLICY_VOCABULARY_VERSION, ResolvedEmissionPolicy,
+    ConditionalAnchors, EmissionClassKind, EmissionOrigin, EmissionPolicy, EmissionPolicyDelta,
+    EmissionSelection, InvalidEmissionPolicy, POLICY_VOCABULARY_VERSION, ResolvedEmissionPolicy,
     SchemaProfile,
 };
 pub use emission_report::{
@@ -73,8 +72,8 @@ pub struct ValuesSchemaInput<'a> {
     pub shadowed_input_paths: Option<&'a BTreeSet<String>>,
     /// Documentation strings keyed by canonical values path.
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
-    /// Amount of analyzed contract evidence emitted into the schema.
-    pub profile: SchemaProfile,
+    /// Complete valid policy selecting analyzed contract evidence.
+    pub emission_policy: EmissionPolicy,
 }
 
 impl<'a> ValuesSchemaInput<'a> {
@@ -91,7 +90,7 @@ impl<'a> ValuesSchemaInput<'a> {
             dependency_refill_values_yaml: None,
             shadowed_input_paths: None,
             values_descriptions: None,
-            profile: SchemaProfile::Full,
+            emission_policy: SchemaProfile::Full.resolved_policy().policy(),
         }
     }
 
@@ -139,7 +138,14 @@ impl<'a> ValuesSchemaInput<'a> {
     /// Selects the schema emission profile.
     #[must_use]
     pub fn with_profile(mut self, profile: SchemaProfile) -> Self {
-        self.profile = profile;
+        self.emission_policy = profile.resolved_policy().policy();
+        self
+    }
+
+    /// Selects an already validated emission policy.
+    #[must_use]
+    pub fn with_emission_policy(mut self, policy: EmissionPolicy) -> Self {
+        self.emission_policy = policy;
         self
     }
 }
@@ -178,7 +184,7 @@ fn generate_values_schema_through(
     completion_pass: CompletionPass,
 ) -> (Value, EmissionReport) {
     let plan = LoweredEmissionPlan::build(input);
-    let projected = plan.project(EmissionPolicy::for_profile(input.profile));
+    let projected = plan.project(input.emission_policy);
     let completed = plan.complete(projected, completion_pass);
     (completed.schema, completed.emission_report)
 }
