@@ -1251,7 +1251,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Round 70 — deeper probes and canonical partition boundaries
 
-- Status: landed; commit pending.
+- Status: landed.
 - Measured results:
   - The compiled acceptance battery retains the existing top-level deletion,
     second-level deletion, and empty member/item probes, and adds exact
@@ -1378,4 +1378,103 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 downstream charts passed.
   - `task tokei:core`: exit 0; 60,757 production Rust LOC.
+- Commit: `876ff34` (`fix(schema): harden canonical partition boundaries`).
+
+## Round 71 — Helm YAML 1.1 boolean-key parity
+
+- Status: blocked at the measurement veto; evidence landed, production
+  behavior unchanged.
+- Measured results:
+  - Helm `v4.2.3` (`go1.26.5`) normalizes unquoted
+    `y/n/yes/no/on/off`, including all measured case variants, to boolean
+    map keys and exposes them in `.Values`/JSON as string keys `"true"` and
+    `"false"`. The same behavior occurs at the root, in nested mappings,
+    in chart defaults, and in `-f` values files. Among unquoted aliases for
+    one boolean key, the last source value wins.
+  - Quoted aliases such as `"y"`, `'no'`, and `"on"` remain literal string
+    keys. `--set y=...` and `--set nested.no=...` also create literal keys;
+    they do not enter the YAML decoder's boolean-key lane. Consequently
+    `.Values.y` is nil for an unquoted default normalized to `"true"`, but
+    resolves a quoted or `--set` key.
+  - The veto condition appears when a quoted canonical key (`"true"` or
+    `"false"`) coexists with an unquoted boolean spelling that normalizes to
+    the same JSON key. Twenty identical Helm processes produced different
+    winners for the same mappings. For example, `legacyThenQuoted` yielded
+    both `legacy` and `quoted`, and `quotedThenCanonical` yielded both
+    `canonical` and `quoted`. This is not a deterministic last-write rule a
+    schema composition pass can reproduce.
+  - The corpus and luup2 values sweep found zero unquoted legacy boolean-key
+    declarations. One clean final-build dump ran 61 tests and wrote 84
+    artifacts, all byte-identical to Round 70. The expanded compiled Rust
+    battery checked 120,540 default-composed documents and found zero flips.
+- Deviations:
+  - The recommended normalization and aggregated authoring diagnostic are
+    not adopted. The task's explicit stop branch applies because Helm's
+    quoted-canonical collision class is nondeterministic even at one pinned
+    Helm/Go version. Implementing a deterministic winner would claim parity
+    Helm itself does not provide.
+  - Two dispositions remain for the v3 reconciliation: reject ambiguous
+    mixed boolean/string key collisions with a diagnostic, or define a
+    deterministic helm-schema composition policy and disclose that it cannot
+    reproduce every Helm run. Normalizing only the non-colliding subset would
+    still need a structural preflight that detects and excludes the mixed
+    collision class.
+  - The frozen plan is unchanged. No corpus fixture is adopted and no schema
+    semantics change lands in this round.
+- Adjudication evidence:
+  - The pinned live matrix covers top-level and nested defaults, quoted keys,
+    a values file, `--set`, and dot/index selector results. Every stable cell
+    matches the measured Helm result.
+  - The live control accepts either documented winner for the mixed collision
+    and prints the observed set. An independent 20-process replay observed
+    both winners, establishing the veto rather than assigning an arbitrary
+    acceptance direction.
+  - With no schema fixture delta, the clean dump and expanded prober have no
+    TIGHTEN or LOOSEN to adjudicate.
+- Review dossier:
+  - Pinned Helm matrix and mixed-collision observation: `cargo nextest run -P
+    integration -p helm-schema --test schema_emission_profile_live -E
+    'test(replay_yaml_boolean_key_composition_against_helm)'
+    --run-ignored ignored-only --no-capture`.
+  - Repeated-process ambiguity reproducer: `for i in {1..20}; do cargo test
+    -p helm-schema --test schema_emission_profile_live
+    replay_yaml_boolean_key_composition_against_helm -- --ignored --exact
+    --nocapture; done`; inspect the printed `mixed boolean/string key
+    winners` sets.
+  - Corpus/downstream declaration sweep: `rg -n --glob 'values.yaml'
+    '^[[:space:]]*(?:[yY]|[nN]|[yY][eE][sS]|[nN][oO]|[oO][nN]|[oO][fF][fF])[[:space:]]*:'
+    testdata /home/roman/dev/branches/luup2/deployment/charts`; exit 1 with
+    no matches.
+  - Single clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/round71-tmp
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 tests pass and 84 artifacts are written.
+  - Expanded zero-flip proof: `TMPDIR=/home/roman/dev/helm-schema/target/round71-final-dump
+    SCHEMA_ACCEPTANCE_BASELINE_REF=876ff34
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round71-tmp
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(round70_partition_and_canonicalization_changes_are_acceptance_equivalent)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=120540 flips=0`.
+  - Hermetic controls: `cargo nextest run -P integration -p helm-schema
+    --test schema_emission_profiles -E
+    'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+    test(temporal_wrapper_pairwise_matrix_is_monotone)'`.
+- Gates on the final Round 71 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 feature combinations for 13 packages across
+    three targets.
+  - `cargo nextest run --workspace`: exit 0; 1,193 passed, zero skipped.
+  - `task test:integration`: exit 0; 560 passed, 15 skipped by the profile.
+  - `task test:all`: exit 0; 1,757 passed, 15 skipped by the profile,
+    including the live network tests.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 downstream charts passed.
+  - `task tokei:core`: exit 0; 60,757 production Rust LOC (no production
+    change from Round 70).
 - Commit: pending.

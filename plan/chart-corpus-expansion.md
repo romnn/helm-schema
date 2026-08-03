@@ -12390,3 +12390,19 @@ controls pin both dormant-fallback acceptance and the selected missing-fallback
 failure. One clean schema dump writes 84 artifacts; only Argo CD and OAuth2
 Proxy re-encode, with zero acceptance change. The 18-case IR dump remains
 byte-identical.
+
+## Helm YAML boolean-key parity preflight (2026-08-03, seventy-first round)
+
+The recommended values-boundary normalization is blocked by its measurement
+veto. Helm 4.2.3 consistently maps unquoted YAML 1.1 boolean aliases to
+`"true"`/`"false"`, keeps quoted aliases and `--set` paths literal, and uses
+the last unquoted alias value. However, a quoted canonical `"true"` or
+`"false"` colliding with a normalized unquoted key has no stable winner:
+identical Helm processes produced both operands from the same input.
+
+No deterministic normalization was adopted. The corpus and luup2 sweep found
+no unquoted legacy boolean-key declarations, the clean 84-artifact dump is
+byte-identical to Round 70, and the expanded compiled battery reports zero
+acceptance flips across 120,540 probes. A pinned live matrix records the stable
+cells and prints the observed mixed-collision winner set for independent
+replay.

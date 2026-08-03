@@ -1,11 +1,13 @@
 //! Live Helm and rendered-sink replay for schema-emission profile controls.
 
+use std::collections::BTreeSet;
 use std::path::Path;
 use std::process::{Command, Output};
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use indoc::indoc;
 use serde_json::{Value, json};
+use test_util::prelude::sim_assert_eq;
 
 const HELM_VERSION: &str = "v4.2.3";
 const PROVIDER_VERSION: &str = "1.29.0";
@@ -292,6 +294,77 @@ fn replay_opaque_formatter_default_against_helm() -> eyre::Result<()> {
 
 #[test]
 #[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_yaml_boolean_key_composition_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join("target/round71-live");
+    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
+    let chart = create_yaml_boolean_key_chart(&scratch_root)?;
+
+    let defaults = render_yaml_boolean_key_chart(chart.path(), None, None)?;
+    sim_assert_eq!(have: defaults["dot-y"].as_str(), want: Some("nil"));
+    sim_assert_eq!(have: defaults["true-key"].as_str(), want: Some("last"));
+    sim_assert_eq!(have: defaults["nested-dot-no"].as_str(), want: Some("nil"));
+    sim_assert_eq!(
+        have: defaults["nested-false-key"].as_str(),
+        want: Some("nested-false")
+    );
+    sim_assert_eq!(have: defaults["quoted-on"].as_str(), want: Some("quoted-on"));
+    let mut mixed_winners = BTreeSet::from([defaults["mixed-true"]
+        .as_str()
+        .ok_or_eyre("mixed collision did not render a string")?
+        .to_string()]);
+    for _ in 0..31 {
+        let replay = render_yaml_boolean_key_chart(chart.path(), None, None)?;
+        mixed_winners.insert(
+            replay["mixed-true"]
+                .as_str()
+                .ok_or_eyre("mixed collision did not render a string")?
+                .to_string(),
+        );
+    }
+    eyre::ensure!(
+        mixed_winners
+            .iter()
+            .all(|winner| matches!(winner.as_str(), "legacy" | "quoted")),
+        "unexpected mixed boolean/string key winner: {mixed_winners:?}"
+    );
+    eprintln!("mixed boolean/string key winners: {mixed_winners:?}");
+
+    let values_file = chart.path().join("override.yaml");
+    std::fs::write(
+        &values_file,
+        indoc! {r#"
+            y: file-first
+            yes: file-last
+            nested:
+              off: file-false
+              "on": file-quoted
+        "#},
+    )?;
+    let layered = render_yaml_boolean_key_chart(chart.path(), Some(&values_file), None)?;
+    sim_assert_eq!(have: layered["dot-y"].as_str(), want: Some("nil"));
+    sim_assert_eq!(have: layered["true-key"].as_str(), want: Some("file-last"));
+    sim_assert_eq!(
+        have: layered["nested-false-key"].as_str(),
+        want: Some("file-false")
+    );
+    sim_assert_eq!(have: layered["quoted-on"].as_str(), want: Some("file-quoted"));
+
+    let set = render_yaml_boolean_key_chart(chart.path(), None, Some("y=set-y,nested.no=set-no"))?;
+    sim_assert_eq!(have: set["dot-y"].as_str(), want: Some("set-y"));
+    sim_assert_eq!(have: set["true-key"].as_str(), want: Some("last"));
+    sim_assert_eq!(have: set["nested-dot-no"].as_str(), want: Some("set-no"));
+    sim_assert_eq!(
+        have: set["nested-false-key"].as_str(),
+        want: Some("nested-false")
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_selector_independent_ranged_provider_use_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
     let chart = test_util::workspace_testdata().join("charts/schema-emission-kind-range");
@@ -545,6 +618,88 @@ fn assert_helm_version() -> eyre::Result<()> {
         have.trim()
     );
     Ok(())
+}
+
+fn render_yaml_boolean_key_chart(
+    chart: &Path,
+    values_file: Option<&Path>,
+    set: Option<&str>,
+) -> eyre::Result<Value> {
+    let mut command = Command::new("helm");
+    command
+        .args(["template", "yaml-boolean-keys"])
+        .arg(chart)
+        .arg("--skip-schema-validation");
+    if let Some(values_file) = values_file {
+        command.arg("-f").arg(values_file);
+    }
+    if let Some(set) = set {
+        command.arg("--set").arg(set);
+    }
+    let output = command
+        .output()
+        .wrap_err("render YAML boolean-key control")?;
+    eyre::ensure!(
+        output.status.success(),
+        "YAML boolean-key control failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let manifest: serde_yaml::Value = serde_yaml::from_slice(&output.stdout)
+        .wrap_err("parse rendered YAML boolean-key control")?;
+    let data = manifest
+        .get("data")
+        .ok_or_eyre("rendered YAML boolean-key control has no data")?;
+    serde_json::to_value(data).wrap_err("convert rendered YAML boolean-key data")
+}
+
+fn create_yaml_boolean_key_chart(scratch_root: &Path) -> eyre::Result<tempfile::TempDir> {
+    let chart = tempfile::Builder::new()
+        .prefix("yaml-boolean-keys-")
+        .tempdir_in(scratch_root)
+        .wrap_err("create YAML boolean-key chart")?;
+    std::fs::create_dir(chart.path().join("templates"))?;
+    std::fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc! {"
+            apiVersion: v2
+            name: yaml-boolean-keys
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("values.yaml"),
+        indoc! {r#"
+            y: first
+            on: last
+            n: first-false
+            off: last-false
+            nested:
+              yes: nested-true
+              no: nested-false
+              "on": quoted-on
+            mixed:
+              on: legacy
+              "true": quoted
+        "#},
+    )?;
+    std::fs::write(
+        chart.path().join("templates/configmap.yaml"),
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: yaml-boolean-keys
+            data:
+              dot-y: {{ .Values.y | default "nil" | quote }}
+              true-key: {{ index .Values "true" | quote }}
+              nested-dot-no: {{ .Values.nested.no | default "nil" | quote }}
+              nested-false-key: {{ index .Values.nested "false" | quote }}
+              quoted-on: {{ index .Values.nested "on" | quote }}
+              mixed-true: {{ index .Values.mixed "true" | quote }}
+              values-json: {{ toJson .Values | quote }}
+        "#},
+    )?;
+    Ok(chart)
 }
 
 fn render_control(chart: &Path, transport: &LiveTransport) -> eyre::Result<Output> {
