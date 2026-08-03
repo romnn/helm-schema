@@ -1481,7 +1481,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Round 72 — pipeline/session boundaries and harness hygiene
 
-- Status: landed; commit pending.
+- Status: landed.
 - Measured results:
   - Override documents are loaded and root-kind validated before chart
     generation. External-reference bundling remains after generation, where
@@ -1580,4 +1580,4 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 downstream charts passed.
   - `task tokei:core`: exit 0; 60,785 production Rust LOC.
-- Commit: pending.
+- Commit: `ac36c7b` (`fix(schema): close round-72 pipeline findings`).
