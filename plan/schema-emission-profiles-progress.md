@@ -919,7 +919,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Step 5 — benchmark and documentation
 
-- Status: in-progress.
+- Status: landed.
 - Measured results:
   - The pinned Temporal wrapper remains dependency version 0.62.0. The
     vendored archive SHA-256 is
@@ -1034,4 +1034,4 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     Step 4).
   - Supplemental documentation gate `task docs:build`: exit 0; 32 pages built
     after regenerating all four documentation schema examples.
-- Commit: pending.
+- Commit: `b731c30` (`feat(schema): add emission profile benchmark`).
