@@ -28,10 +28,10 @@ pub(super) fn eval_default(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let primary_dispatch = primary.scalar_dispatch.clone();
+    let primary_selection = default_primary_selection(&primary);
     let mut effects = primary.effects;
     let primary_paths = identity_value_paths(primary.value.as_ref());
     let primary_identity = direct_raw_identity_path(primary.value.as_ref());
-    let primary_selection_paths = default_primary_selection_paths(primary.value.as_ref());
     effects.add_default_paths(primary_paths.clone());
     // Only a LITERAL fallback types the path: `default "x" .Values.name`
     // documents a string-shaped input. A call fallback (`default (include
@@ -54,7 +54,7 @@ pub(super) fn eval_default(
     let mut fallback_dispatch = None;
     for fallback in fallback_args {
         let mut result = eval_expr_with_helper_calls(fallback, env, resolver);
-        if let Some(primary_selection_paths) = &primary_selection_paths {
+        if let DefaultPrimarySelection::Exact(primary_selection_paths) = &primary_selection {
             let selection = primary_selection_paths
                 .iter()
                 .cloned()
@@ -97,7 +97,7 @@ pub(super) fn eval_default(
             }
         }
     }
-    if primary_selection_paths.is_some() {
+    if matches!(primary_selection, DefaultPrimarySelection::Exact(_)) {
         for path in fallback_paths {
             let meta = effects.local_output_meta.entry(path).or_default();
             meta.input_identity = true;
@@ -117,19 +117,35 @@ pub(super) fn eval_default(
     result
 }
 
-fn default_primary_selection_paths(value: Option<&AbstractValue>) -> Option<Vec<String>> {
-    match value? {
-        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
-            Some(vec![path.clone()])
-        }
-        AbstractValue::OutputPath(path, meta) if meta.is_input_identity() => {
-            Some(vec![path.clone()])
-        }
+enum DefaultPrimarySelection {
+    Exact(Vec<String>),
+    Opaque,
+}
+
+fn default_primary_selection(result: &EvalResult) -> DefaultPrimarySelection {
+    let Some(value) = result.value.as_ref() else {
+        return DefaultPrimarySelection::Opaque;
+    };
+    match value {
+        AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_) => result
+            .exact_input_identity()
+            .map_or(DefaultPrimarySelection::Opaque, |path| {
+                DefaultPrimarySelection::Exact(vec![path])
+            }),
+        AbstractValue::OutputPath(_, meta) if meta.is_input_identity() => result
+            .exact_input_identity()
+            .map_or(DefaultPrimarySelection::Opaque, |path| {
+                DefaultPrimarySelection::Exact(vec![path])
+            }),
         AbstractValue::FirstTruthy(candidates) => candidates
             .iter()
             .map(AbstractValue::direct_values_identity)
-            .collect::<Option<Vec<_>>>(),
-        _ => None,
+            .collect::<Option<Vec<_>>>()
+            .map_or(
+                DefaultPrimarySelection::Opaque,
+                DefaultPrimarySelection::Exact,
+            ),
+        _ => DefaultPrimarySelection::Opaque,
     }
 }
 

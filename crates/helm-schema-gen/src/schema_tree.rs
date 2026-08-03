@@ -1291,6 +1291,18 @@ fn insert_into_canonical_object_conjunct(
     let SchemaNode::Foreign(value) = node else {
         return false;
     };
+    if insert_into_canonical_mixed_object_lane(value, head, tail, leaf) {
+        return true;
+    }
+    let mut path_segments = Vec::with_capacity(tail.len() + 1);
+    path_segments.push(head.to_string());
+    path_segments.extend_from_slice(tail);
+    if multi_arm_object_union_has_equivalent_descendant(value, &path_segments) == Some(false) {
+        // Default backfill cannot identify which alternative supplied a
+        // branch-specific member constraint. Retaining the structural
+        // alternatives is safer than conjoining the default across them.
+        return true;
+    }
     if !schema_only_allows_object(value) {
         return false;
     }
@@ -1327,4 +1339,105 @@ fn schema_only_allows_object(schema: &Value) -> bool {
         && ["array", "boolean", "integer", "null", "number", "string"]
             .into_iter()
             .all(|schema_type| crate::schema_model::schema_excludes_type(schema, schema_type))
+}
+
+fn insert_into_canonical_mixed_object_lane(
+    schema: &mut Value,
+    head: &str,
+    tail: &[String],
+    leaf: &SchemaNode,
+) -> bool {
+    let Some(conjuncts) = schema.get_mut("allOf").and_then(Value::as_array_mut) else {
+        return false;
+    };
+    let [first, second] = conjuncts.as_slice() else {
+        return false;
+    };
+    let base_index = if is_not_null_constraint(first) {
+        1
+    } else if is_not_null_constraint(second) {
+        0
+    } else {
+        return false;
+    };
+    let Some(base) = conjuncts.get(base_index).and_then(Value::as_object) else {
+        return false;
+    };
+    let Some(types) = base.get("type").and_then(Value::as_array).cloned() else {
+        return false;
+    };
+    if !types.iter().any(|schema_type| schema_type == "object")
+        || !types.iter().any(|schema_type| {
+            schema_type
+                .as_str()
+                .is_some_and(|schema_type| !matches!(schema_type, "null" | "object"))
+        })
+    {
+        return false;
+    }
+
+    let mut base_keywords = base.clone();
+    base_keywords.remove("type");
+    let mut path_segments = Vec::with_capacity(tail.len() + 1);
+    path_segments.push(head.to_string());
+    path_segments.extend_from_slice(tail);
+    let mut arms = Vec::with_capacity(types.len());
+    for schema_type in types {
+        let mut arm = base_keywords.clone();
+        arm.insert("type".to_string(), schema_type.clone());
+        let mut arm = SchemaNode::foreign(Value::Object(arm));
+        if schema_type == "object" {
+            insert_schema_at_parts(&mut arm, &path_segments, leaf.clone());
+        }
+        arms.push(arm);
+    }
+    let Some(base) = conjuncts.get_mut(base_index) else {
+        return false;
+    };
+    *base = SchemaNode::any_of(arms).into_value();
+    true
+}
+
+fn multi_arm_object_union_has_equivalent_descendant(
+    schema: &Value,
+    path_segments: &[String],
+) -> Option<bool> {
+    let object = schema.as_object()?;
+    for keyword in ["anyOf", "oneOf"] {
+        let Some(arms) = object.get(keyword).and_then(Value::as_array) else {
+            continue;
+        };
+        if arms.len() <= 1 || !arms.iter().all(schema_only_allows_object) {
+            continue;
+        }
+        let first = arms
+            .first()
+            .and_then(|arm| schema_descendant_at_path(arm, path_segments));
+        return Some(
+            arms.iter()
+                .skip(1)
+                .all(|arm| schema_descendant_at_path(arm, path_segments) == first),
+        );
+    }
+    object
+        .get("allOf")
+        .and_then(Value::as_array)
+        .and_then(|arms| {
+            arms.iter().find_map(|arm| {
+                multi_arm_object_union_has_equivalent_descendant(arm, path_segments)
+            })
+        })
+}
+
+fn schema_descendant_at_path<'a>(
+    mut schema: &'a Value,
+    path_segments: &[String],
+) -> Option<&'a Value> {
+    for segment in path_segments {
+        if segment == "*" {
+            return None;
+        }
+        schema = schema.get("properties")?.get(segment)?;
+    }
+    Some(schema)
 }

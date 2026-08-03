@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: {{ .Values.kind }}
+metadata:
+  name: selected-kind
+data:
+{{- range $value := .Values.entries }}
+  key{{ $value }}: {{ $value | quote }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fixed-kind
+data:
+{{- range $value := .Values.entries }}
+  key{{ $value }}: {{ $value | quote }}
+{{- end }}

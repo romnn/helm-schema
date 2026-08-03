@@ -17602,19 +17602,6 @@
     },
     "8A": {
       "properties": {
-        "type": {
-          "enum": [
-            "LoadBalancer"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "8B": {
-      "properties": {
         "create": {
           "$ref": "#/$defs/t"
         }
@@ -17624,7 +17611,7 @@
       ],
       "type": "object"
     },
-    "8C": {
+    "8B": {
       "properties": {
         "global": {
           "enum": [
@@ -17637,7 +17624,7 @@
       ],
       "type": "object"
     },
-    "8D": {
+    "8C": {
       "properties": {
         "image": {}
       },
@@ -17646,15 +17633,15 @@
       ],
       "type": "object"
     },
-    "8E": {
+    "8D": {
       "description": "Required: resource to select",
       "type": "string"
     },
-    "8F": {
+    "8E": {
       "description": "key is the key to project.",
       "type": "string"
     },
-    "8G": {
+    "8F": {
       "anyOf": [
         {
           "type": "object"
@@ -17664,13 +17651,13 @@
         }
       ]
     },
-    "8H": {
+    "8G": {
       "type": [
         "number",
         "null"
       ]
     },
-    "8I": {
+    "8H": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -18166,12 +18153,14 @@
     },
     "8z": {
       "properties": {
-        "registry": {
-          "$ref": "#/$defs/t"
+        "type": {
+          "enum": [
+            "LoadBalancer"
+          ]
         }
       },
       "required": [
-        "registry"
+        "type"
       ],
       "type": "object"
     },
@@ -30394,42 +30383,6 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "image": {
-              "$ref": "#/$defs/8z"
-            }
-          },
-          "required": [
-            "image"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "properties": {
-              "imageRegistry": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/1"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Global registry to pull the images from"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/2a"
       },
       "then": {
@@ -37483,7 +37436,7 @@
                     "initContainers": {
                       "properties": {
                         "waitForRedis": {
-                          "$ref": "#/$defs/8D"
+                          "$ref": "#/$defs/8C"
                         }
                       },
                       "required": [
@@ -38941,7 +38894,7 @@
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/8F"
+                    "$ref": "#/$defs/8E"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -39953,7 +39906,7 @@
                                 "$ref": "#/$defs/2B"
                               },
                               {
-                                "$ref": "#/$defs/8H"
+                                "$ref": "#/$defs/8G"
                               }
                             ]
                           },
@@ -39965,7 +39918,7 @@
                       "resource": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/8E"
+                            "$ref": "#/$defs/8D"
                           },
                           {
                             "$ref": "#/$defs/i"
@@ -41343,7 +41296,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/8B"
+            "$ref": "#/$defs/8A"
           },
           "then": {
             "allOf": [
@@ -45006,7 +44959,7 @@
                       "portName": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/8I"
+                            "$ref": "#/$defs/8H"
                           },
                           {
                             "$ref": "#/$defs/1S"
@@ -49939,7 +49892,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/8C"
+                    "$ref": "#/$defs/8B"
                   }
                 ]
               },
@@ -52079,7 +52032,7 @@
                 "$ref": "#/$defs/Y"
               },
               {
-                "$ref": "#/$defs/8A"
+                "$ref": "#/$defs/8z"
               },
               {
                 "not": {
@@ -52736,7 +52689,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/8G"
+                "$ref": "#/$defs/8F"
               },
               {
                 "$ref": "#/$defs/1b"

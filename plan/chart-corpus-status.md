@@ -1,9 +1,15 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-08-03 after the sixty-ninth round gave independently
-bundled overrides one base-and-override-wide definition namespace, closing a
-pre-existing collision without changing any of the 84 emission fixtures or
-112,356 probed acceptances. The sixty-eighth round closed the independent
+Last reconciled 2026-08-03 after the seventieth round extended the compiled
+prober through third-level deletions and bounded guard-state pairs, preserved
+all selector-independent branch facts during kind partitioning, and hardened
+canonical descendant insertion at multi-arm and mixed-type boundaries. Two
+fixtures re-encode with zero flips across 120,540 final-depth probes; replaying
+from `34e58cc` finds only the same 16 Helm-adjudicated Round 68 loosenings. The
+sixty-ninth round gave independently bundled overrides one base-and-override-wide
+definition namespace, closing a pre-existing collision without changing any
+of the 84 emission fixtures or 112,356 probed acceptances. The sixty-eighth
+round closed the independent
 emission review: composed formatter fallbacks, canonical carrier preservation,
 kind-partition separation, caller-rooted/URI-decoded reachability, successor
 `else with` truth, diagnostic provenance, and the hardened Helm 4 probe model.
@@ -121,6 +127,14 @@ part and a separately listed residual. Detailed round history remains in
 
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
+
+- **Deeper probes and canonical partition boundaries (seventieth round).**
+  The compiled battery adds third-level deletions and bounded root-guard state
+  pairs with explicit omission logs. Ordinary kind partitions preserve range,
+  type, metadata, and base facts; canonical descendant backfill abstains over
+  unequal union arms and keeps mixed-type not-null slots closed. Two fixtures
+  re-encode with zero flips in 120,540 probes; the deeper replay from Round 68
+  finds no new acceptance change.
 
 - **Shared override-bundling namespace (sixty-ninth round).** Generated
   bundled-definition names are reserved across the base and all overrides,

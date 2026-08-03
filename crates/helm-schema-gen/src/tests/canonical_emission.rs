@@ -310,6 +310,95 @@ fn canonical_not_null_conjunction_survives_completion_default_backfill() -> eyre
 }
 
 #[test]
+fn multi_arm_object_union_abstains_from_ambiguous_default_backfill() -> eyre::Result<()> {
+    let provider_payload = json!({
+        "anyOf": [
+            {
+                "properties": {
+                    "member": { "type": "integer" },
+                    "variant": { "const": "integer" },
+                },
+                "required": ["member", "variant"],
+                "type": "object",
+            },
+            {
+                "properties": {
+                    "member": { "type": "boolean" },
+                    "variant": { "const": "boolean" },
+                },
+                "required": ["member", "variant"],
+                "type": "object",
+            },
+        ],
+    });
+    let mut schema = SchemaDocument::new_root_object();
+    schema.insert_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(json!({ "type": "string" })),
+    );
+    schema.replace_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(provider_payload),
+    );
+    schema.insert_path_schema(
+        &["value".to_string(), "member".to_string()],
+        SchemaNode::foreign(json!({ "type": "string" })),
+    );
+    let schema = schema.into_value();
+    let validator = jsonschema::validator_for(&schema)
+        .map_err(|error| eyre::eyre!("compile multi-arm schema: {error}"))?;
+
+    eyre::ensure!(
+        validator.is_valid(&json!({
+            "value": { "member": 1, "variant": "integer" },
+        })),
+        "integer union arm was tightened by descendant backfill: {schema}"
+    );
+    assert!(validator.is_valid(&json!({
+        "value": { "member": true, "variant": "boolean" },
+    })));
+    assert!(!validator.is_valid(&json!({
+        "value": { "member": "default", "variant": "integer" },
+    })));
+    Ok(())
+}
+
+#[test]
+fn mixed_type_not_null_conjunction_survives_default_backfill() -> eyre::Result<()> {
+    let provider_payload = json!({ "type": ["null", "object", "string"] });
+    let mut schema = SchemaDocument::new_root_object();
+    schema.insert_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(provider_payload),
+    );
+    sim_assert_eq!(
+        have: schema.canonicalize_constraint_at_path(
+            &["value".to_string()],
+            &json!({ "not": { "type": "null" } }),
+        ),
+        want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
+    );
+    let defaults: YamlValue = serde_yaml::from_str(indoc! {"
+        value:
+          member: default
+    "})?;
+    schema.merge_missing_values_yaml_defaults_under_roots(
+        &defaults,
+        &[Vec::new()],
+        &std::collections::BTreeSet::new(),
+    );
+    let schema = schema.into_value();
+    let validator = jsonschema::validator_for(&schema)
+        .map_err(|error| eyre::eyre!("compile mixed-type schema: {error}"))?;
+
+    assert!(!validator.is_valid(&json!({ "value": null })));
+    assert!(validator.is_valid(&json!({ "value": "configured" })));
+    assert!(validator.is_valid(&json!({ "value": { "member": "configured" } })));
+    assert!(!validator.is_valid(&json!({ "value": { "member": 7 } })));
+    Ok(())
+}
+
+#[test]
 fn generator_type_union_constructor_is_exhaustively_equivalent() -> eyre::Result<()> {
     let domains = [
         vec!["null", "string"],

@@ -681,6 +681,42 @@ fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
 }
 
 #[test]
+fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
+    let env = EvalEnv {
+        locals: HashMap::from([(
+            "selected".to_string(),
+            AbstractValue::ValuesPath("value".to_string()),
+        )]),
+        local_default_paths: HashMap::from([(
+            "selected".to_string(),
+            BTreeSet::from(["value".to_string()]),
+        )]),
+        ..EvalEnv::default()
+    };
+
+    let result = eval_expr(&expr(r#"kindIs "invalid" $selected"#), &env);
+
+    sim_assert_eq!(have: result.truth.predicate(), want: None);
+}
+
+#[test]
+fn opaque_default_primary_does_not_scope_its_fallback_as_an_exact_arm() {
+    let result = eval_expr(
+        &single_expr(r#"printf "%s" .Values.a | default .Values.z"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("z")
+            .map(|meta| &meta.predicates),
+        want: None,
+    );
+}
+
+#[test]
 fn go_regex_literal_escaping_leaves_re2_hyphens_bare() {
     sim_assert_eq!(
         have: crate::escape_regex_literal("prefix-with.+symbols"),

@@ -2,7 +2,7 @@ use super::*;
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractValuePathFacts,
-    KindBranch, Predicate,
+    KindBranch, MetadataFieldKind, Predicate,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -47,10 +47,12 @@ fn selector_independent_provider_uses_stay_on_an_ordinary_conjunct() -> eyre::Re
         evidence: ConditionalOverlayEvidence {
             facts: ContractValuePathFacts {
                 used_as_serialized: true,
+                is_ranged_source: true,
                 ..ContractValuePathFacts::default()
             },
+            metadata_field_kinds: BTreeSet::from([MetadataFieldKind::Name]),
+            type_hints: BTreeSet::from(["string".to_string()]),
             provider_schema_uses: vec![independent.clone(), dependent],
-            ..ConditionalOverlayEvidence::default()
         },
         preserve_base_schema: false,
     };
@@ -70,7 +72,15 @@ fn selector_independent_provider_uses_stay_on_an_ordinary_conjunct() -> eyre::Re
     );
     sim_assert_eq!(
         have: ordinary.overlay.evidence.facts,
-        want: ContractValuePathFacts::default()
+        want: overlay.evidence.facts
+    );
+    sim_assert_eq!(
+        have: &ordinary.overlay.evidence.metadata_field_kinds,
+        want: &overlay.evidence.metadata_field_kinds
+    );
+    sim_assert_eq!(
+        have: &ordinary.overlay.evidence.type_hints,
+        want: &overlay.evidence.type_hints
     );
     for partition in partitions {
         sim_assert_eq!(

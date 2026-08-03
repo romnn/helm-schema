@@ -911,6 +911,31 @@ fn printf_plain_slot_contract_follows_chained_default_selection() {
     }
 }
 
+#[test]
+fn opaque_formatter_default_primary_abstains_from_scoping_the_fallback() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          plain: {{ printf "%s" .Values.a | default .Values.z }}
+          encoded: {{ printf "%s" .Values.a | default .Values.z | b64enc }}
+    "#};
+    let values_yaml = indoc! {"
+        a: set
+        z: fallback
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let instance = composed_instance(values_yaml, serde_json::json!({ "z": null }));
+
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "a formatter-derived primary does not make its dormant fallback mandatory: \
+         instance={instance}; schema={schema}"
+    );
+}
+
 /// A helper-local fallback keeps the formatter contract on the arm that
 /// actually supplies its token-opening `%s`. A dormant fallback remains
 /// open even though the same helper rejects it when selected (Airflow's

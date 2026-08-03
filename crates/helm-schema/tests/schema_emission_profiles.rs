@@ -69,7 +69,8 @@ fn current_profiles_obey_monotonicity_and_semantic_controls() -> eyre::Result<()
     let controls = semantic_controls();
 
     profiles.assert_controls(&controls)?;
-    let mut probes = structural_probe_battery("schema-emission-controls", &defaults)?;
+    let mut probes =
+        structural_probe_battery("schema-emission-controls", &defaults, &[&full, &lean])?;
     probes.extend(controls.iter().map(|control| {
         (
             format!("semantic control: {}", control.name),
@@ -441,7 +442,7 @@ fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
 fn structural_battery_preserves_helm_v4_dependency_roots() -> eyre::Result<()> {
     let chart = "schema-emission-temporal-wrapper";
     let defaults = read_json_fixture(chart, "coalesced-defaults.json")?;
-    let probes = structural_probe_battery(chart, &defaults)?;
+    let probes = structural_probe_battery(chart, &defaults, &[])?;
 
     let retained = probes
         .iter()
@@ -460,6 +461,60 @@ fn structural_battery_preserves_helm_v4_dependency_roots() -> eyre::Result<()> {
                 if value.get("temporal").is_some_and(serde_json::Value::is_null)
         )
     }));
+    Ok(())
+}
+
+#[test]
+fn structural_battery_samples_depth_three_and_guard_states() -> eyre::Result<()> {
+    let chart = "schema-emission-controls";
+    let defaults = read_root_defaults(chart)?;
+    let (full, lean) = generate_profile_schemas(chart)?;
+    let probes = structural_probe_battery(chart, &defaults, &[&full, &lean])?;
+
+    eyre::ensure!(
+        probes
+            .iter()
+            .any(|(name, _)| name == "host.nested.value <- null deletion [depth 3]"),
+        "the depth-three deletion lane did not reach host.nested.value"
+    );
+    eyre::ensure!(
+        probes
+            .iter()
+            .any(|(name, _)| name.starts_with("root guard ") && name.contains(" satisfied via ")),
+        "the guard-state lane produced no satisfying witness"
+    );
+    eyre::ensure!(
+        probes
+            .iter()
+            .any(|(name, _)| name.starts_with("root guard ") && name.contains(" violated via ")),
+        "the guard-state lane produced no violating witness"
+    );
+    Ok(())
+}
+
+#[test]
+fn ordinary_kind_partition_evidence_keeps_the_complete_range_domain() -> eyre::Result<()> {
+    let chart = "schema-emission-kind-range";
+    let defaults = read_root_defaults(chart)?;
+    let (full, lean) = generate_profile_schemas(chart)?;
+    let profiles = ProfileSchemas::compile(&full, &lean, defaults)?;
+
+    for (name, probe) in [
+        (
+            "integer range",
+            sparse_override(&["entries"], serde_json::json!(2)),
+        ),
+        (
+            "map range",
+            sparse_override(&["entries"], serde_json::json!({ "configured": "value" })),
+        ),
+    ] {
+        let (full_accepts, lean_accepts) = profiles.verdicts(&probe);
+        eyre::ensure!(
+            full_accepts && lean_accepts,
+            "{name} must survive both the selected and ordinary projections: full={full_accepts}, lean={lean_accepts}"
+        );
+    }
     Ok(())
 }
 
@@ -656,6 +711,20 @@ fn round69_override_bundling_is_corpus_acceptance_equivalent() -> eyre::Result<(
     Ok(())
 }
 
+#[test]
+#[ignore = "maintenance: compares the Round 70 dump with its baseline ref"]
+fn round70_partition_and_canonicalization_changes_are_acceptance_equivalent() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    eyre::ensure!(
+        flips.is_empty(),
+        "round 70 changed fixture acceptance:\n{}",
+        flips.join("\n")
+    );
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
 fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>)> {
     let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
         .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
@@ -759,7 +828,9 @@ fn collect_acceptance_flips(
     flips: &mut Vec<String>,
 ) -> eyre::Result<()> {
     let profiles = ProfileSchemas::compile(baseline, current, defaults.clone())?;
-    for (probe_name, probe) in structural_probe_battery(chart_relative_path, defaults)? {
+    for (probe_name, probe) in
+        structural_probe_battery(chart_relative_path, defaults, &[baseline, current])?
+    {
         *probes_checked += 1;
         let (before, after) = profiles.verdicts(&probe);
         if before != after {
@@ -811,7 +882,9 @@ fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<(
             read_root_defaults(chart)?
         };
         let transition = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
-        for (probe_name, probe) in structural_probe_battery(chart, &defaults)? {
+        for (probe_name, probe) in
+            structural_probe_battery(chart, &defaults, &[&baseline, &current])?
+        {
             probes_checked += 1;
             let (legacy, middle) = transition.verdicts(&probe);
             match (legacy, middle) {

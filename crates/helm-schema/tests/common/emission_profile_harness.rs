@@ -9,6 +9,12 @@ use jsonschema::Validator;
 use serde_json::{Map, Value};
 use vfs::VfsPath;
 
+const MAX_PROBES_PER_CHART: usize = 50_000;
+const MAX_THIRD_LEVEL_DELETIONS_PER_CHART: usize = 2_048;
+const MAX_GUARD_STATE_PAIRS_PER_CHART: usize = 8;
+const MAX_GUARD_ARMS_ATTEMPTED_PER_CHART: usize = 24;
+const MAX_GUARD_WITNESS_CANDIDATES_PER_CHART: usize = 128;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ContractVerdict {
     Accept,
@@ -214,6 +220,7 @@ pub(crate) fn read_chart_schema_fixture(chart: &str) -> eyre::Result<Value> {
 pub(crate) fn structural_probe_battery(
     chart_relative_path: &str,
     defaults: &Value,
+    schemas: &[&Value],
 ) -> eyre::Result<Vec<(String, ProbeInstance)>> {
     let dependency_roots = chart_dependency_roots(chart_relative_path)?;
     let retained_dependency_defaults = defaults
@@ -260,7 +267,175 @@ pub(crate) fn structural_probe_battery(
             ));
         }
     }
+
+    let mut third_level_paths = Vec::new();
+    collect_paths_at_depth(
+        defaults,
+        &mut Vec::new(),
+        3,
+        &dependency_roots,
+        &mut third_level_paths,
+    );
+    let dropped_third_level = third_level_paths
+        .len()
+        .saturating_sub(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
+    third_level_paths.truncate(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
+    for path in third_level_paths {
+        let mut patch = Value::Object(Map::new());
+        set_path(&mut patch, &path, Value::Null);
+        probes.push((
+            format!("{} <- null deletion [depth 3]", path.join(".")),
+            ProbeInstance::SparseOverride(patch),
+        ));
+    }
+
+    let guard_probes = guard_state_probes(chart_relative_path, defaults, schemas, &probes)?;
+    probes.extend(guard_probes);
+
+    let dropped_total = probes.len().saturating_sub(MAX_PROBES_PER_CHART);
+    probes.truncate(MAX_PROBES_PER_CHART);
+    if dropped_third_level > 0 || dropped_total > 0 {
+        eprintln!(
+            "probe cap for {chart_relative_path}: dropped_third_level={dropped_third_level} dropped_total={dropped_total}"
+        );
+    }
     Ok(probes)
+}
+
+fn guard_state_probes(
+    chart_relative_path: &str,
+    defaults: &Value,
+    schemas: &[&Value],
+    candidates: &[(String, ProbeInstance)],
+) -> eyre::Result<Vec<(String, ProbeInstance)>> {
+    let mut guards = Vec::new();
+    let mut seen = BTreeSet::new();
+    for schema in schemas {
+        for condition in root_if_conditions(schema) {
+            let key = serde_json::to_string(condition).wrap_err("serialize root guard")?;
+            if seen.insert(key) {
+                guards.push((*schema, condition));
+            }
+        }
+    }
+
+    let total_guards = guards.len();
+
+    let mut normalized_defaults = defaults.clone();
+    drop_null_map_entries(&mut normalized_defaults);
+    let witness_candidates = bounded_guard_witness_candidates(candidates);
+    let mut probes = Vec::new();
+    let mut unresolved = 0;
+    let mut attempted = 0;
+    for (index, (schema, condition)) in guards
+        .into_iter()
+        .take(MAX_GUARD_ARMS_ATTEMPTED_PER_CHART)
+        .enumerate()
+    {
+        if probes.len() / 2 == MAX_GUARD_STATE_PAIRS_PER_CHART {
+            break;
+        }
+        attempted += 1;
+        let validator = compile_root_guard(schema, condition)?;
+        let mut satisfied = None;
+        let mut violated = None;
+        for (name, probe) in &witness_candidates {
+            let instance = compose_probe(&normalized_defaults, probe);
+            if validator.is_valid(&instance) {
+                satisfied.get_or_insert((name, probe));
+            } else {
+                violated.get_or_insert((name, probe));
+            }
+            if satisfied.is_some() && violated.is_some() {
+                break;
+            }
+        }
+        let (Some((satisfied_name, satisfied_probe)), Some((violated_name, violated_probe))) =
+            (satisfied, violated)
+        else {
+            unresolved += 1;
+            continue;
+        };
+        probes.push((
+            format!("root guard {index} satisfied via {satisfied_name}"),
+            satisfied_probe.clone(),
+        ));
+        probes.push((
+            format!("root guard {index} violated via {violated_name}"),
+            violated_probe.clone(),
+        ));
+    }
+
+    let dropped_by_cap = total_guards.saturating_sub(attempted);
+    let dropped_witness_candidates = candidates
+        .len()
+        .saturating_sub(MAX_GUARD_WITNESS_CANDIDATES_PER_CHART);
+    if dropped_by_cap > 0 || unresolved > 0 || dropped_witness_candidates > 0 {
+        eprintln!(
+            "guard sampling for {chart_relative_path}: sampled_pairs={} dropped_by_cap={dropped_by_cap} dropped_without_bounded_witness={unresolved} witness_candidates_omitted={dropped_witness_candidates}",
+            probes.len() / 2
+        );
+    }
+    Ok(probes)
+}
+
+fn bounded_guard_witness_candidates(
+    candidates: &[(String, ProbeInstance)],
+) -> Vec<&(String, ProbeInstance)> {
+    let retained = candidates.len().min(MAX_GUARD_WITNESS_CANDIDATES_PER_CHART);
+    if retained == candidates.len() {
+        return candidates.iter().collect();
+    }
+
+    let prefix_len = retained / 2;
+    let spread_len = retained - prefix_len;
+    let mut selected = candidates.iter().take(prefix_len).collect::<Vec<_>>();
+    selected.extend(
+        (0..spread_len)
+            .map(|slot| prefix_len + slot * (candidates.len() - prefix_len - 1) / (spread_len - 1))
+            .filter_map(|index| candidates.get(index)),
+    );
+    selected
+}
+
+fn root_if_conditions(schema: &Value) -> Vec<&Value> {
+    let mut conditions = Vec::new();
+    if let Some(condition) = schema.get("if") {
+        conditions.push(condition);
+    }
+    conditions.extend(
+        schema
+            .get("allOf")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|arm| arm.get("if")),
+    );
+    conditions
+}
+
+fn compile_root_guard(schema: &Value, condition: &Value) -> eyre::Result<Validator> {
+    let mut wrapper = Map::new();
+    for key in ["$schema", "$defs", "definitions"] {
+        if let Some(value) = schema.get(key) {
+            wrapper.insert(key.to_string(), value.clone());
+        }
+    }
+    wrapper.insert("allOf".to_string(), Value::Array(vec![condition.clone()]));
+    jsonschema::validator_for(&Value::Object(wrapper))
+        .map_err(|error| eyre::eyre!("compile root guard: {error}"))
+}
+
+fn compose_probe(defaults: &Value, probe: &ProbeInstance) -> Value {
+    match probe {
+        ProbeInstance::Defaults => defaults.clone(),
+        ProbeInstance::SparseOverride(value) => {
+            let mut composed = defaults.clone();
+            merge_override(&mut composed, value.clone());
+            composed
+        }
+        ProbeInstance::Coalesced(value) => value.clone(),
+    }
 }
 
 fn chart_dependency_roots(chart_relative_path: &str) -> eyre::Result<BTreeSet<String>> {
@@ -408,6 +583,30 @@ fn collect_paths(
         paths.push(prefix.clone());
         if depth > 1 {
             collect_paths(child, prefix, depth - 1, protected_roots, paths);
+        }
+        prefix.pop();
+    }
+}
+
+fn collect_paths_at_depth(
+    value: &Value,
+    prefix: &mut Vec<String>,
+    depth: usize,
+    protected_roots: &BTreeSet<String>,
+    paths: &mut Vec<Vec<String>>,
+) {
+    let Value::Object(entries) = value else {
+        return;
+    };
+    for (key, child) in entries {
+        if prefix.is_empty() && protected_roots.contains(key) {
+            continue;
+        }
+        prefix.push(key.clone());
+        if prefix.len() == depth {
+            paths.push(prefix.clone());
+        } else {
+            collect_paths_at_depth(child, prefix, depth, protected_roots, paths);
         }
         prefix.pop();
     }

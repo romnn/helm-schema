@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
-    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractSchemaSignals,
-    GuardValue, ProviderSchemaFragment, ProviderSchemaUse, ResourceSchemaOracle,
+    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
+    ProviderSchemaFragment, ProviderSchemaUse, ResourceSchemaOracle,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -1194,15 +1194,10 @@ pub(crate) fn kind_partitioned_overlays(
 
     let mut partitions = Vec::new();
     let mut ordinary = overlay.clone();
-    ordinary.evidence = ConditionalOverlayEvidence {
-        provider_schema_uses: ordinary
-            .evidence
-            .provider_schema_uses
-            .into_iter()
-            .filter(|use_| !provider_use_depends_on_kind_selector(use_))
-            .collect(),
-        ..ConditionalOverlayEvidence::default()
-    };
+    ordinary
+        .evidence
+        .provider_schema_uses
+        .retain(|use_| !provider_use_depends_on_kind_selector(use_));
     if !ordinary.evidence.provider_schema_uses.is_empty() {
         partitions.push(PartitionedOverlay {
             overlay: ordinary,

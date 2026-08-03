@@ -12363,3 +12363,30 @@ sixty-eighth round. The compiled Rust prober compares that dump with commit
 zero acceptance flips. There is consequently no fixture-direction verdict to
 adjudicate with Helm; the hermetic monotonicity/semantic controls and live
 Helm/provider replay remain green.
+
+## Deeper probes and canonical partition boundaries (2026-08-03, seventieth round)
+
+The compiled Rust acceptance battery now reaches exact third-level deletion
+paths and samples paired satisfying/violating states for root conditionals.
+Per-chart limits are explicit and every omitted deletion, guard, or witness
+candidate is logged. Replaying the Round 68/69 fixture set against `34e58cc`
+checks 120,538 default-composed documents and finds the same 16 adjudicated
+Round 68 loosenings with no new flip. The final Round 70 comparison against
+`10f5231` checks 120,540 documents and finds zero flips.
+
+Selector-independent provider uses now retain their overlay's range facts,
+type hints, metadata-field kinds, and base-preservation state on the Ordinary
+kind-partition conjunct. Helm 4.2.3 renders the new dynamic-kind range control
+with both its map default and a `--set` integer; full and lean accept both.
+Canonical descendant insertion preserves multi-arm structural alternatives by
+abstaining when their descendant schemas differ, and splits an explicit mixed
+object/scalar type array before inserting into only its object lane so an outer
+not-null conjunct cannot be bypassed.
+
+Exact input identity now accounts for default-selection and derived-text
+channels. Direct chained defaults keep exact operand selection, while an opaque
+formatter-derived primary does not make its fallback mandatory. Live Helm
+controls pin both dormant-fallback acceptance and the selected missing-fallback
+failure. One clean schema dump writes 84 artifacts; only Argo CD and OAuth2
+Proxy re-encode, with zero acceptance change. The 18-case IR dump remains
+byte-identical.

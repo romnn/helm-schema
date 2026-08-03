@@ -236,6 +236,88 @@ fn replay_chained_default_printf_against_helm() -> eyre::Result<()> {
 
 #[test]
 #[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_opaque_formatter_default_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join("target/round70-live");
+    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
+    let chart = tempfile::Builder::new()
+        .prefix("opaque-formatter-default-")
+        .tempdir_in(scratch_root)
+        .wrap_err("create opaque-default chart")?;
+    std::fs::create_dir(chart.path().join("templates"))?;
+    std::fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc! {"
+            apiVersion: v2
+            name: opaque-formatter-default
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("values.yaml"),
+        indoc! {"
+            a: set
+            z: fallback
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("templates/configmap.yaml"),
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: opaque-formatter-default
+            data:
+              plain: {{ printf "%s" .Values.a | default .Values.z }}
+              encoded: {{ printf "%s" .Values.a | default .Values.z | b64enc }}
+        "#},
+    )?;
+
+    let output = Command::new("helm")
+        .args(["template", "opaque-formatter-default"])
+        .arg(chart.path())
+        .arg("--skip-schema-validation")
+        .args(["--set", "z=null"])
+        .output()
+        .wrap_err("render opaque formatter default control")?;
+    eyre::ensure!(
+        output.status.success(),
+        "Helm rejected a dormant opaque fallback: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_selector_independent_ranged_provider_use_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let chart = test_util::workspace_testdata().join("charts/schema-emission-kind-range");
+    for set_arg in [None, Some(("--set", "entries=2"))] {
+        let mut command = Command::new("helm");
+        command
+            .args(["template", "schema-emission-kind-range"])
+            .arg(&chart)
+            .arg("--skip-schema-validation");
+        if let Some((flag, value)) = set_arg {
+            command.args([flag, value]);
+        }
+        let output = command
+            .output()
+            .wrap_err("render selector-independent ranged provider control")?;
+        eyre::ensure!(
+            output.status.success(),
+            "Helm rejected ranged provider control {set_arg:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_round68_corpus_loosenings_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
     let cases = [

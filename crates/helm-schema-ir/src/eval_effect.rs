@@ -884,11 +884,15 @@ impl EvalResult {
             }
             _ => return None,
         };
-        self.effects
-            .local_output_meta
-            .get(path)
-            .is_none_or(|meta| meta.predicates.is_empty())
-            .then(|| path.clone())
+        (!self.effects.defaults.contains(path)
+            && !self.effects.local_default_paths.contains(path)
+            && !self.effects.derived_text_paths.contains(path)
+            && self
+                .effects
+                .local_output_meta
+                .get(path)
+                .is_none_or(|meta| meta.predicates.is_empty()))
+        .then(|| path.clone())
     }
 }
 

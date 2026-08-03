@@ -1041,7 +1041,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Round 68 — emission-review findings closure
 
-- Status: landed; commit pending.
+- Status: landed.
 - Measured results:
   - Chained `default` selection now stamps a final fallback with the negated
     truthiness of every exact identity in a composed `FirstTruthy` primary.
@@ -1168,7 +1168,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Round 69 — shared override-bundling namespace
 
-- Status: landed; commit pending.
+- Status: landed.
 - Measured results:
   - Self-contained override preparation reserves generated definition names
     across the generated base and every override's authored `$defs` before it
@@ -1248,3 +1248,134 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 downstream charts passed.
   - `task tokei:core`: exit 0; 60,637 production Rust LOC.
 - Commit: `2a1d839` (`fix(schema): share override bundle namespace`).
+
+## Round 70 — deeper probes and canonical partition boundaries
+
+- Status: landed; commit pending.
+- Measured results:
+  - The compiled acceptance battery retains the existing top-level deletion,
+    second-level deletion, and empty member/item probes, and adds exact
+    third-level deletions plus bounded root-guard witness pairs. Per chart it
+    caps 50,000 total probes, 2,048 depth-three deletions, 24 attempted guards,
+    eight guard-state pairs, and 128 guard-witness candidates. Every omitted
+    path, guard, or witness candidate is reported on stderr.
+  - Replaying the Round 68/69 fixture set against `34e58cc` at the new depth
+    checks 120,538 coalesced documents and finds exactly the same 16
+    Helm-adjudicated Round 68 loosenings. It finds no additional flip.
+    Comparing the final Round 70 dump with `10f5231` checks 120,540 documents
+    and reports zero acceptance flips.
+  - Selector-independent provider uses remain on an Ordinary kind-partition
+    conjunct without discarding the branch's range facts, type hints,
+    metadata-field kinds, or base-preservation state. The new range control
+    accepts both map defaults and a Helm `--set` integer in full and lean.
+  - Descendant backfill now treats a multi-arm object union as branch-specific
+    unless the descendant schemas are equal. The ambiguous lane abstains from
+    default backfill instead of conjoining one descendant across every arm.
+    A canonical mixed object/scalar not-null slot splits only its explicit
+    type array, inserts the descendant into the object arm, and retains the
+    outer not-null conjunct.
+  - Exact input identity now rejects default-selection and derived-text
+    channels as well as meta predicates. Chained direct `default` operands
+    still carry their exact selection conjunction, while formatter-derived
+    primaries explicitly abstain from making a dormant fallback mandatory.
+  - One clean final-build dump runs 61 tests and writes exactly 84 artifacts.
+    Only Argo CD and OAuth2 Proxy re-encode: 4,398,171 -> 4,397,889 bytes and
+    1,982,205 -> 1,981,228 bytes, respectively. The 18-case clean IR dump is
+    byte-identical to the committed IR fixtures.
+  - Production Rust is 60,757 LOC (`+120` from Round 69).
+- Deviations:
+  - Multi-arm object unions disclose a deliberate completeness loss: when
+    their descendant constraints differ, composed-default evidence is not
+    added because the analyzer cannot attribute it to one arm without either
+    conjoining alternatives or weakening the structural provider tooth.
+    Equal descendants retain the canonical insertion path.
+  - Helm 4.2.3 accepts an integer range source supplied by `--set` but rejects
+    the corresponding `--set-json` number because the latter arrives as a
+    float64. The live control therefore uses the measured `--set entries=2`
+    transport; the existing input-channel diagnostic remains authoritative.
+  - Guard sampling is intentionally bounded. Charts whose guards have no
+    satisfying or violating witness among the bounded, default-composed
+    structural candidates report `dropped_without_bounded_witness`; they are
+    not silently counted as sampled controls.
+  - The frozen plan is unchanged.
+- Adjudication evidence:
+  - Helm `v4.2.3` (`go1.26.5`) renders the selector-independent ranged-provider
+    control with its map default and with `--set entries=2`. Full and lean
+    accept both coalesced documents.
+  - Helm renders both opaque formatter-default shapes with `z=null`; their
+    schemas accept that dormant-fallback deletion. The existing chained
+    default live control also retains both directions: deleting only `z`
+    renders, selecting a present final fallback renders, and selecting an
+    absent final fallback aborts.
+  - The two corpus fixture rewrites produce no acceptance change in 120,540
+    final-depth probes, so there is no new TIGHTEN or LOOSEN verdict requiring
+    per-fixture Helm adjudication. The earlier 16 loosenings remain exactly the
+    independently replayed and Helm-adjudicated Round 68 set.
+- Review dossier:
+  - Probe depth and guard controls: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profiles -E
+    'test(structural_battery_samples_depth_three_and_guard_states)'`.
+  - Expanded Round 68/69 replay: `TMPDIR=/home/roman/dev/helm-schema/target/round70-tmp
+    SCHEMA_ACCEPTANCE_BASELINE_REF=34e58cc
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round70-final-dump
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(round68_fixture_flips_match_the_helm_adjudicated_list)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=120538 flips=16`.
+  - Round 70 zero-flip proof: `TMPDIR=/home/roman/dev/helm-schema/target/round70-tmp
+    SCHEMA_ACCEPTANCE_BASELINE_REF=10f5231
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round70-final-dump
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(round70_partition_and_canonicalization_changes_are_acceptance_equivalent)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=120540 flips=0`.
+  - Kind-partition preservation: `cargo nextest run -p helm-schema-gen -E
+    'test(selector_independent_provider_uses_stay_on_an_ordinary_conjunct)'`,
+    then `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(ordinary_kind_partition_evidence_keeps_the_complete_range_domain)'`.
+  - Canonical boundary controls: `cargo nextest run -p helm-schema-gen -E
+    'test(multi_arm_object_union_abstains_from_ambiguous_default_backfill) |
+    test(mixed_type_not_null_conjunction_survives_default_backfill)'`.
+  - Exact identity and opaque-default boundary: `cargo nextest run -p
+    helm-schema-ir -p helm-schema-gen -E
+    'test(invalid_kind_abstains_for_a_default_selected_subject_identity) |
+    test(opaque_default_primary_does_not_scope_its_fallback_as_an_exact_arm) |
+    test(printf_plain_slot_contract_follows_chained_default_selection) |
+    test(opaque_formatter_default_primary_abstains_from_scoping_the_fallback)'`.
+  - Hermetic monotonicity and semantic controls: `cargo nextest run -P
+    integration -p helm-schema --test schema_emission_profiles -E
+    'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+    test(temporal_wrapper_pairwise_matrix_is_monotone)'`.
+  - Live Helm controls: `cargo nextest run -P integration -p helm-schema
+    --test schema_emission_profile_live -E
+    'test(replay_chained_default_printf_against_helm) |
+    test(replay_opaque_formatter_default_against_helm) |
+    test(replay_selector_independent_ranged_provider_use_against_helm)'
+    --run-ignored ignored-only --no-capture`.
+  - Single clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/round70-final-dump
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 tests pass and 84 artifacts are written.
+  - Complete clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/round70-ir-final-dump
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; 18
+    artifacts are byte-identical.
+- Gates on the final Round 70 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 feature combinations for 13 packages across
+    three targets, with both Zig caches under `target`.
+  - `cargo nextest run --workspace`: exit 0; 1,193 passed, zero skipped.
+  - `task test:integration`: exit 0; 560 passed, 14 skipped by the profile.
+  - `task test:all`: exit 0; 1,757 passed, 14 skipped by the profile,
+    including the live network tests.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 downstream charts passed.
+  - `task tokei:core`: exit 0; 60,757 production Rust LOC.
+- Commit: pending.
