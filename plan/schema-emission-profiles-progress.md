@@ -1247,4 +1247,4 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 downstream charts passed.
   - `task tokei:core`: exit 0; 60,637 production Rust LOC.
-- Commit: pending.
+- Commit: `2a1d839` (`fix(schema): share override bundle namespace`).
