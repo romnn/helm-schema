@@ -95,6 +95,47 @@ currently measured 173 MiB hybrid Helm grammar and 146 MiB YAML grammar source
 trees; the 213 MiB Go-template grammar remains because it is the main parser.
 Each step must replace this estimate with a measured `task tokei:core` delta.
 
+## Where the 61K actually lives, and the two available levers
+
+Per-crate production LOC at the baseline (tokei over `crates/*/src`,
+`src/tests` excluded; proportions are the point, not the fourth digit):
+
+| Crate | LOC | Share | What it is |
+|---|---:|---:|---|
+| helm-schema-ir | 35,713 | 58% | The Helm interpreter: expression/fragment evaluation, selection and truth semantics, string-consumer contracts, predicate algebra, contract builder |
+| helm-schema-gen | 13,886 | 23% | Lowering, emission plan/projection/completion, canonical emission, provider preimages, spellings |
+| helm-schema-k8s | 5,220 | 9% | Provider fetch/cache, capability oracle, CRD catalog |
+| helm-schema (session/output) | 4,316 | 7% | Session phases, output pipeline, overrides, annotation, pruning |
+| helm-schema-core | 3,565 | — | Shared contract-signal and guard types |
+| ast + syntax + cli + minify + walk | ~5,100 | — | Parsers, CLI surface, small output utilities |
+
+The 25K-era version and today's tree are not the same product. The growth is
+dominated by IR and gen semantic content added by the precision campaign:
+each Helm builtin's argument/nil/stringification behavior, selection
+reachability (default/coalesce/ternary chains, rendered-output truthiness),
+string-consumer contracts with their scoping, YAML scalar-spelling models,
+guard decoding with exactness, kind partitioning, terminal clauses, provider
+preimage partitioning, and the capability oracle. Those are facts about Helm,
+each spelled somewhere exactly once in the ideal architecture — this plan
+makes "exactly once" true, but it cannot make the fact count smaller.
+
+Therefore there are exactly two levers, and this plan's step sequence is only
+the first:
+
+1. **Consolidation (this plan, Steps 1–11):** delete parallel
+   representations, duplicate decoders, and compatibility layers. Measured
+   estimate −3,400…−1,300 LOC. This is the lever that improves correctness;
+   its LOC yield is bounded because most remaining lines are semantic
+   content, not plumbing.
+2. **Feature pruning (D5, optional Step 12):** delete whole semantic
+   verticals whose precision Roman decides is not worth their carrying cost.
+   This is the only lever that can move the total materially below ~57K.
+   It is a product decision per vertical, taken on measured cost/teeth
+   evidence, never a side effect of refactoring — and pruning units must be
+   whole verticals: a tooth-adding contract family goes together with the
+   selection-scoping machinery that exists only to keep that family from
+   false-rejecting.
+
 ## Target phase contracts
 
 The current phase graph and anchors are measured in
@@ -171,6 +212,14 @@ The present maintenance entry point is
 rename must remain a pure test rename and preserve the report format. Probe
 counts may change as schemas change, so the gate is complete accounting and
 adjudication, not the literal number 121,059.
+
+**Adversarial review cadence.** Every behavior-bearing step gets an
+independent adversarial review (the emission-round protocol: gate re-runs,
+code review of the mechanism, empirical probes of the adjacent directions
+the step's own tests skipped) before the next behavior-bearing step builds
+on it. Five consecutive emission-round reviews each found their confirmed
+false rejection in exactly such an adjacent state; the campaign inherits
+that cadence, not just the battery.
 
 ## Reconciliation of the previous draft's steps
 
@@ -309,6 +358,39 @@ Options:
 Recommendation: option 1, implemented one operation at a time with exact
 round-trip tests. Roman's choice blocks New Step 9 only.
 
+### D5. Feature-retention audit — the only lever below ~57K
+
+Measured evidence: the per-crate table above. Consolidation cannot reach the
+40K range while every semantic vertical is retained; only deleting whole
+verticals can. Step 1 therefore produces (as a measurement deliverable, no
+deletion) a feature-cost table with one row per candidate vertical:
+
+- kind partitioning (IR branch evidence + gen partition emission + matrix
+  controls);
+- terminal clauses (fail/absence terminal machinery);
+- string-consumer contracts (printf/encoder/formatter contracts plus the
+  selection-scoping machinery that prevents their false rejections — one
+  unit, inseparable);
+- scalar spelling models (radix/quote-falsy/YAML-1.1 value spellings and
+  provider preimage partitioning);
+- range-domain modeling and dependency-global projection;
+- the capability oracle and probe table;
+- local CRD projection and the CRD catalog.
+
+Each row records: production LOC attributable to the vertical, the corpus
+teeth only it provides (fixtures whose rejections disappear without it), its
+luup2 impact, and its direction class — **tooth-adding** (deletion is pure
+widening: safe, loses precision) versus **false-rejection-preventing**
+(deletable only together with the tooth-adding machinery it protects).
+
+Options per row: retain (default), or prune as an optional Step 12
+behavior-bearing deletion with full adjudication.
+
+Recommendation: retain everything until the Step 1 table exists; then decide
+per row. The plan makes no pruning choice on Roman's behalf. If the target is
+"materially below 57K", this table is where that conversation happens with
+numbers instead of hope.
+
 ## Reconciled implementation sequence
 
 ### Step 1 — delete dead surfaces and collapse shared utilities
@@ -334,6 +416,10 @@ Contract: **representation-only**.
    identical domains and no production callers. Public CLI exports, capability
    probes, and semantically distinct fail/guard predicates stay unless their
    ownership is proved equivalent.
+5. Produce the D5 feature-cost table as a measurement-only deliverable
+   (per-vertical LOC attribution, unique corpus teeth, luup2 impact,
+   direction class), recorded in the step dossier. No pruning happens in this
+   step; the table exists so D5 can be decided on numbers.
 
 Stop if a clean schema, IR, diagnostic, or final-output fixture changes. The
 full compiled battery must report zero flips. Estimated delta: **−280 to −180
@@ -443,15 +529,20 @@ delta: **+50 to +150 LOC** before old paths are removed.
 
 ### Step 6b — migrate truth, selection, and string-consumer scope
 
-Contract: **behavior-bearing**.
+Contract: **behavior-bearing**, one commit per family — 6b.1 through 6b.5
+each land, gate, and adjudicate separately. A regression found in 6b.3 must
+not be entangled with 6b.1's already-adjudicated flips; five families in one
+commit would recreate exactly the attribution problem the emission rounds
+were staged to avoid.
 
 Migrate, in this order:
 
-1. `default`, `coalesce`, `or`, ternary, and short-circuit reachability;
-2. condition/with/range truth decoding;
-3. helper/root scalar dispatch;
-4. strict string consumers and fail captures; and
-5. builder lowering of consumer requirements.
+1. `default`, `coalesce`, `or`, ternary, and short-circuit reachability
+   (6b.1);
+2. condition/with/range truth decoding (6b.2);
+3. helper/root scalar dispatch (6b.3);
+4. strict string consumers and fail captures (6b.4); and
+5. builder lowering of consumer requirements (6b.5).
 
 All consumers query the Step 6a carrier. Remove the local
 `DefaultPrimarySelection` enum, the separate faithful-lowering Boolean where
@@ -526,10 +617,23 @@ round before completing this step.
 
 Estimated delta: **−220 to −100 LOC**.
 
+**Post-Step-8 checkpoint — second-wave consolidation estimate.** After Steps
+6–8 make the fact model singular and producer-owned, re-measure whether the
+contract-signal assembly (the split builder from Step 3) and gen's overlay
+lowering still deserve to be two representations, or whether one typed
+conditional-evidence artifact can flow from builder to emission lowering
+directly. This is the largest remaining consolidation candidate
+(builder ~4.7K + overlay lowering ~2.3K lines), but its shape is only
+knowable after the migrations above; commit to re-estimating it here — with
+a measured proposal or a recorded "two representations are genuinely
+distinct" verdict — rather than promising a number now.
+
 ### Step 9 — make the schema tree total and remove JSON-shape protocols
 
-Decision gate: D4. Contract: **representation-only**, one commit per listed
-operation.
+Decision gate: D4 for operations 2–6 only. Operation 1 (the pure file
+splits) has no decision dependency and may land any time after Step 8 —
+do not let an open D4 stall it. Contract: **representation-only**, one
+commit per listed operation.
 
 1. Purely split `overlay_lowering.rs`, `resolve_policy.rs`, and
    `path_resolver.rs` by existing lowering, scalar-preimage,
@@ -615,7 +719,8 @@ Estimated delta depends on the choices: **−50 to +150 LOC**.
 | 9 | Total schema tree | Representation-only | D4 | −700…−350 |
 | 10 | Typed values and one templated-YAML model | Representation-only | — | −300…−100 |
 | 11 | Input composition policies | Behavior-bearing | D1, D2 | −50…+150 |
-|  | **Total** |  |  | **−3,380…−1,320** |
+| 12 | Optional feature pruning per D5 rows Roman strikes | Behavior-bearing | D5 | unbounded until the Step 1 table exists |
+|  | **Total (consolidation lever only, Steps 1–11)** |  |  | **−3,380…−1,320** |
 
 The order front-loads safe deletion, removes the chart-name heuristic before
 building on helper behavior, and establishes one invocation before catalog and
@@ -642,13 +747,19 @@ not simultaneously change producer semantics and canonical storage.
 
 ## Approval handoff
 
-Step sequence: 1 → 2 → 3a → 3b → 4 → 5 → 6a → 6b → 7a → 7b → 8 → 9 →
-10 → 11a/11b. Estimated total production Rust delta: −3,400 to −1,300 LOC, plus
-319 MiB of obsolete vendored grammar source if Step 10 proves fixture-identical.
+Step sequence: 1 → 2 → 3a → 3b → 4 → 5 → 6a → 6b.1–6b.5 → 7a → 7b → 8
+(+ checkpoint) → 9 → 10 → 11a/11b → optional 12. Estimated total production
+Rust delta from the consolidation lever (Steps 1–11): −3,380 to −1,320 LOC,
+plus 319 MiB of obsolete vendored grammar source if Step 10 proves
+fixture-identical. Movement materially below ~57K comes only from the D5
+feature-pruning lever (optional Step 12) and the post-Step-8 second-wave
+checkpoint, both decided on measured evidence produced by the campaign
+itself.
 
 Decisions awaiting Roman: D1 YAML boolean-key policy, D2 duplicate-alias
-modeling, D3 ownership of selection semantics, and D4 lossless unknown-keyword
-handling in the schema tree. None is silently defaulted.
+modeling, D3 ownership of selection semantics, D4 lossless unknown-keyword
+handling in the schema tree, and D5 feature retention (decided per row once
+the Step 1 table exists). None is silently defaulted.
 
 Once the plan is approved, the first handoff is **Step 1 — delete dead surfaces
 and collapse shared utilities**. It has no decision dependency, is
