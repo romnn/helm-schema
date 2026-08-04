@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 
 use helm_schema_core::{
-    ProviderSchemaFragment, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind,
-    YamlPath,
+    ConditionalGuard, ProviderSchemaFragment, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle,
+    ValueKind, YamlPath,
 };
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
@@ -470,7 +470,7 @@ pub(crate) fn fail_requirement_schema<'a>(
                 parts.push(serde_json::json!({ "anyOf": arms }));
             }
             helm_schema_core::ContractRequirementTarget::MembersMatchingPrefix { prefix } => {
-                let pattern = format!("^{}", helm_schema_ir::escape_regex_literal(prefix));
+                let pattern = format!("^{}", helm_schema_core::escape_regex_literal(prefix));
                 parts.push(serde_json::json!({
                     "anyOf": [
                         {
@@ -1043,7 +1043,7 @@ fn fail_value_requirement_schema(
                 let occurrences = segments.saturating_sub(1);
                 let pattern = format!(
                     "^(?:[\\s\\S]*{}){{{occurrences}}}",
-                    helm_schema_ir::escape_regex_literal(separator)
+                    helm_schema_core::escape_regex_literal(separator)
                 );
                 let string = serde_json::json!({ "type": "string", "pattern": pattern });
                 if *allow_non_string {
@@ -1208,10 +1208,7 @@ fn type_hint_schema(schema_types: &BTreeSet<String>) -> Value {
     )
 }
 
-fn guard_predicate_schema(
-    value_path: &str,
-    guard_predicates: &[helm_schema_ir::ConditionalGuard],
-) -> Value {
+fn guard_predicate_schema(value_path: &str, guard_predicates: &[ConditionalGuard]) -> Value {
     merge_schema_list(
         guard_predicates
             .iter()

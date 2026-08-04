@@ -10,10 +10,6 @@ use helm_schema_core::Predicate;
 
 use super::ValuePathContext;
 
-fn is_files_get_function(function: &str) -> bool {
-    function == "Files.Get" || function.ends_with(".Files.Get")
-}
-
 /// Dispatch-arm headers may themselves compare helper outputs; one level
 /// covers the chart shapes seen so far, and the cap keeps mutually
 /// recursive helpers from looping the decoder.
@@ -220,7 +216,7 @@ impl ValuePathContext<'_> {
                     if self.tostring_truthy_predicate(arg).is_some()),
                 "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args).is_some(),
                 "include" => self.include_truthy_predicate(expr).is_some(),
-                function if is_files_get_function(function) => {
+                function if crate::function_semantics::is_files_get(function) => {
                     self.files_get_printf_predicate(args).is_some()
                 }
                 _ => false,
@@ -490,7 +486,7 @@ impl ValuePathContext<'_> {
             "include" => self
                 .include_truthy_predicate(expr)
                 .or_else(|| self.truthy_predicate(expr)),
-            function if is_files_get_function(function) => self
+            function if crate::function_semantics::is_files_get(function) => self
                 .files_get_printf_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
             _ => self.truthy_predicate(expr),

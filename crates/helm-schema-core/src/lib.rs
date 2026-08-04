@@ -5,8 +5,7 @@ mod capability_liveness;
 mod contract_signals;
 mod contract_use;
 mod guard;
-/// Normalization helpers for conjunction and disjunction guard sets.
-pub mod guard_algebra;
+mod guard_algebra;
 mod guard_dnf;
 mod output_path;
 mod pattern_dialect;
@@ -35,7 +34,7 @@ pub use output_path::{
     DYNAMIC_MAPPING_VALUE_SEGMENT, append_relative_path, dynamic_mapping_value_path,
     sequence_item_path, values_path_has_descendant, values_path_is_descendant,
 };
-pub use pattern_dialect::normalize_schema_pattern_dialects;
+pub use pattern_dialect::{escape_regex_literal, normalize_schema_pattern_dialects};
 pub use predicate::{ApproximationRole, Predicate};
 pub use provenance::{ContractProvenance, SourceSpan};
 pub use provider_origin::ProviderOrigin;

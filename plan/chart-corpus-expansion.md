@@ -12489,3 +12489,17 @@ acceptance flips. Two of 18 IR artifacts, SigNoz PostgreSQL secrets and
 Zookeeper StatefulSet, remove statically dead fallback-output provenance and
 simplify its guarded dispatch while keeping evaluation-time failures; the other
 16 remain byte-identical.
+
+## Architecture Review v3 Step 1 (2026-08-05)
+
+The first v3 campaign step is representation-only. Dead guard-algebra and
+test-constructor surfaces are removed, regex literal quoting moves to the core
+owner, gen's production dependency on IR disappears, and `.Files.Get` call
+classification has one IR owner. One clean dump writes all 84 schema artifacts
+and one clean IR dump writes all 18 IR artifacts byte-identically. The compiled
+full-depth comparison checks 121,059 default-composed, null-deletion-aware,
+guard-state, and composite probes against `44aa758` and reports zero flips.
+
+The D5 feature-cost audit is recorded in
+`plan/architecture-review-v3-progress.md`. Every semantic vertical remains
+enabled; no feature-pruning fixture is adopted in this wave.

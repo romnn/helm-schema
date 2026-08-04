@@ -2,7 +2,7 @@ use crate::ConditionalGuard;
 
 /// Reports whether two conditional guards are exact logical complements.
 #[must_use]
-pub fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuard) -> bool {
+pub(crate) fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuard) -> bool {
     fn negated_truthy_path(guard: &ConditionalGuard) -> Option<&str> {
         let ConditionalGuard::Not(inner) = guard else {
             return None;
@@ -19,21 +19,6 @@ pub fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuar
         }
         _ => false,
     }
-}
-
-/// Reports whether every member of `subset` occurs in the larger `superset`.
-#[must_use]
-pub fn key_is_strict_subset(subset: &[ConditionalGuard], superset: &[ConditionalGuard]) -> bool {
-    key_is_strict_subset_by(subset, superset)
-}
-
-/// Keys differing in exactly one complementary member resolve to their shared key.
-#[must_use]
-pub fn resolve_complementary_keys(
-    left: &[ConditionalGuard],
-    right: &[ConditionalGuard],
-) -> Option<Vec<ConditionalGuard>> {
-    resolve_complementary_keys_by(left, right, guards_are_complementary)
 }
 
 fn key_is_strict_subset_by<T: PartialEq>(subset: &[T], superset: &[T]) -> bool {
@@ -62,13 +47,6 @@ fn resolve_complementary_keys_by<T: Clone + PartialEq>(
             .cloned()
             .collect(),
     )
-}
-
-/// Minimize a disjunction of conjunctive guard keys by exact resolution,
-/// absorption, and deduplication.
-#[must_use]
-pub fn minimize_key_disjunction(keys: Vec<Vec<ConditionalGuard>>) -> Vec<Vec<ConditionalGuard>> {
-    minimize_disjunction_by(keys, guards_are_complementary)
 }
 
 pub(crate) fn minimize_disjunction_by<T: Clone + Ord>(

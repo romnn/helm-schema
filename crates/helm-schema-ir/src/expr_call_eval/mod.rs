@@ -4,7 +4,7 @@ use helm_schema_ast::{
     Literal, TemplateExpr, literal_printf_format, render_printf_scalar_values,
     token_initial_printf_string_argument,
 };
-use helm_schema_core::{GuardDnf, GuardValue, Predicate};
+use helm_schema_core::{GuardDnf, GuardValue, Predicate, escape_regex_literal};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
@@ -1339,23 +1339,6 @@ fn scalar_pattern_condition(
         }
         _ => None,
     }
-}
-
-/// Quotes literal text for every regular-expression dialect emitted by helm-schema.
-#[doc(hidden)]
-#[must_use]
-pub fn escape_regex_literal(value: &str) -> String {
-    let mut escaped = String::with_capacity(value.len());
-    for character in value.chars() {
-        if matches!(
-            character,
-            '.' | '+' | '*' | '?' | '(' | ')' | '|' | '[' | ']' | '{' | '}' | '^' | '$' | '\\'
-        ) {
-            escaped.push('\\');
-        }
-        escaped.push(character);
-    }
-    escaped
 }
 
 fn direct_stringified_dispatch(

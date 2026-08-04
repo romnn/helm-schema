@@ -182,15 +182,11 @@ fn collect_files_get_paths<F>(
 {
     expr.walk(|node| {
         if let TemplateExpr::Call { function, args } = node
-            && is_static_files_get_call(function)
+            && crate::function_semantics::is_files_get(function)
             && let Some(path_arg) = args.first()
             && let Some(binding) = resolve_fragment_value(path_arg)
         {
             out.extend(binding.strings());
         }
     });
-}
-
-fn is_static_files_get_call(function: &str) -> bool {
-    function == "Files.Get" || function.ends_with(".Files.Get")
 }

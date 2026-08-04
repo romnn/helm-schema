@@ -29,13 +29,22 @@ pub(crate) fn raw_guard_sets(
             .map(|branch| branch.iter().cloned().collect())
             .collect()
     };
-    let mut condition = GuardDnf::from_contract_predicate_disjunction_preserving_evidence(branches);
-    if meta.defaulted {
-        condition = condition.conjoined_with_guards([Guard::Default {
-            path: source_expr.to_string(),
-        }]);
-    }
-    condition.guard_conjunctions()
+    let mut guard_sets = branches
+        .into_iter()
+        .flat_map(|branch| {
+            let guards = Predicate::contract_guard_stack(&branch);
+            let mut condition = GuardDnf::from_guards(guards);
+            if meta.defaulted {
+                condition = condition.conjoined_with_guards([Guard::Default {
+                    path: source_expr.to_string(),
+                }]);
+            }
+            condition.guard_conjunctions()
+        })
+        .collect::<Vec<_>>();
+    guard_sets.sort();
+    guard_sets.dedup();
+    guard_sets
 }
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;

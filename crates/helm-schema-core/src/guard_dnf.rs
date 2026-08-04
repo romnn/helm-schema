@@ -55,40 +55,6 @@ impl GuardDnf {
         )
     }
 
-    /// Project typed predicate branches to the contract-expressible guard
-    /// vocabulary while retaining their disjunction as one row condition.
-    #[must_use]
-    pub fn from_contract_predicate_disjunction(
-        conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = Predicate>>,
-    ) -> Self {
-        Self::from_guard_disjunction(conjunctions.into_iter().map(|conjunction| {
-            let predicates = conjunction.into_iter().collect::<Vec<_>>();
-            Predicate::contract_guard_stack(&predicates)
-        }))
-    }
-
-    /// Retain projected alternatives until their downstream evidence payloads
-    /// can be compared; early resolution can erase a nullable or strict arm.
-    #[must_use]
-    pub fn from_contract_predicate_disjunction_preserving_evidence(
-        conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = Predicate>>,
-    ) -> Self {
-        let mut condition = Self::never();
-        for conjunction in conjunctions {
-            condition
-                .union_preserving_disjuncts(Self::from_contract_predicate_conjunction(conjunction));
-        }
-        condition
-    }
-
-    /// Projects one predicate conjunction into contract guards.
-    #[must_use]
-    pub fn from_contract_predicate_conjunction(
-        predicates: impl IntoIterator<Item = Predicate>,
-    ) -> Self {
-        Self::from_contract_predicate_disjunction([predicates])
-    }
-
     /// Canonicalizes a disjunction of conditional-guard conjunctions.
     #[must_use]
     pub fn normalize_conditional_guard_disjunction(
@@ -187,16 +153,8 @@ impl GuardDnf {
         self.conjoined(&Self::from_guards(guards))
     }
 
-    /// Adds alternatives without absorbing subsets that may carry distinct evidence.
-    pub fn union_preserving_disjuncts(&mut self, other: Self) {
-        // Rows are combined before downstream evidence payloads are known to
-        // be equal, so absorption here could discard a more precise payload.
-        self.0.extend(other.0);
-    }
-
-    /// Union conditions after their evidence payloads are known to be
-    /// equal, re-normalizing so duplicate and subsumed disjuncts are
-    /// absorbed (unlike [`Self::union_preserving_disjuncts`]).
+    /// Union conditions after their evidence payloads are known to be equal,
+    /// re-normalizing so duplicate and subsumed disjuncts are absorbed.
     pub fn union_absorbing(&mut self, other: Self) {
         *self = Self::from_disjunction(std::mem::take(&mut self.0).into_iter().chain(other.0));
     }

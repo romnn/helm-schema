@@ -800,7 +800,7 @@ pub(crate) fn split_segment_pattern(
     if schema_type(schema) != Some("integer") {
         return None;
     }
-    let separator = helm_schema_ir::escape_regex_literal(&segment.separator);
+    let separator = helm_schema_core::escape_regex_literal(&segment.separator);
     Some(if segment.last {
         format!("^([\\s\\S]*{separator})?[+-]?[0-9]+$")
     } else {

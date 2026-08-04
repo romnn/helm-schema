@@ -1,6 +1,14 @@
 use test_util::prelude::sim_assert_eq;
 
-use super::{ecma_case_folded_pattern, normalize_schema_pattern_dialects};
+use super::{ecma_case_folded_pattern, escape_regex_literal, normalize_schema_pattern_dialects};
+
+#[test]
+fn go_regex_literal_escaping_leaves_re2_hyphens_bare() {
+    sim_assert_eq!(
+        have: escape_regex_literal("prefix-with.+symbols"),
+        want: r"prefix-with\.\+symbols"
+    );
+}
 
 #[test]
 fn leading_case_insensitive_group_folds_exactly() {

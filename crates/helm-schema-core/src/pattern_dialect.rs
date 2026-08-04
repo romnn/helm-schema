@@ -1,6 +1,22 @@
 use helm_schema_json_schema_walk::visit_subschemas_mut;
 use serde_json::Value;
 
+/// Quotes literal text for every regular-expression dialect emitted by helm-schema.
+#[must_use]
+pub fn escape_regex_literal(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        if matches!(
+            character,
+            '.' | '+' | '*' | '?' | '(' | ')' | '|' | '[' | ']' | '{' | '}' | '^' | '$' | '\\'
+        ) {
+            escaped.push('\\');
+        }
+        escaped.push(character);
+    }
+    escaped
+}
+
 /// Normalize regex dialects in every schema-position `pattern` keyword and
 /// `patternProperties` key. Provider schemas carry Go/RE2 spellings —
 /// notably a leading global `(?i)` — that Draft-07's ECMA-262 dialect
