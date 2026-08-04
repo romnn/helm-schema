@@ -1584,7 +1584,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Round 73 — second-review findings closure
 
-- Status: landed; commit pending.
+- Status: landed.
 - Measured results:
   - An opaque `default` primary now stamps its fallback with an unlowerable
     output-selection predicate. Downstream string consumers therefore retain
@@ -1726,4 +1726,4 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 charts complete.
   - `task tokei:core`: exit 0; 60,893 production Rust LOC.
-- Commit: pending.
+- Commit: `f3939c3` (`fix(schema): close round-73 review findings`).
