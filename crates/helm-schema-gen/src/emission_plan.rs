@@ -9,7 +9,7 @@ use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
 use crate::emission_policy::{EmissionClass, EmissionOrigin, EmissionPolicy};
-use crate::emission_report::{EmissionReport, FactRecord};
+use crate::emission_report::{EmissionReport, FactRecord, InsertionAbstentionCounts};
 use crate::overlay_lowering::{
     ConditionalHostPreparation, LoweredConjunct, append_selected_constraints,
     append_terminal_clauses, collect_conditional_schemas, prepare_conditional_hosts,
@@ -33,6 +33,7 @@ pub(crate) struct LoweredEmissionPlan {
     conditional_schemas: Vec<LoweredConjunct>,
     terminal_schemas: Vec<LoweredConjunct>,
     support: EmissionSupportPlan,
+    insertion_abstentions: InsertionAbstentionCounts,
 }
 
 #[derive(Clone)]
@@ -132,7 +133,7 @@ impl LoweredEmissionPlan {
             input.provider,
         )
         .resolve_all();
-        let conditional_schemas = collect_conditional_schemas(
+        let (conditional_schemas, insertion_abstentions) = collect_conditional_schemas(
             &resolved_paths,
             &contract_schema_signals,
             &documents.composed,
@@ -158,12 +159,14 @@ impl LoweredEmissionPlan {
             conditional_schemas,
             terminal_schemas,
             support,
+            insertion_abstentions,
         }
     }
 
     pub(crate) fn project(&self, policy: EmissionPolicy) -> ProjectedTree {
         debug_assert!(policy.is_valid());
         let mut emission_report = EmissionReport::default();
+        emission_report.insertion_abstentions = self.insertion_abstentions;
         let mut selected_conditionals = Vec::new();
         for conjunct in &self.conditional_schemas {
             let selected = policy.selects(&conjunct.class);
@@ -199,12 +202,13 @@ impl LoweredEmissionPlan {
             &mut selected_conditionals,
             &self.values_descriptions,
         );
-        let mut document = materialize_base_document(
+        let (mut document, base_document_abstentions) = materialize_base_document(
             &self.contract_schema_signals,
             &self.documents.input_defaults,
             &resolved_paths,
             &self.support,
         );
+        emission_report.insertion_abstentions.base_document += base_document_abstentions;
         self.support.conditional_hosts.apply(&mut document);
         let fallback_conditionals = canonicalize_mandatory_constraints(
             &mut document,
@@ -519,8 +523,9 @@ fn materialize_base_document(
     input_defaults: &YamlValue,
     resolved_paths: &[ResolvedPathSchema],
     support: &EmissionSupportPlan,
-) -> SchemaDocument {
+) -> (SchemaDocument, usize) {
     let mut document = SchemaDocument::new_root_object();
+    let mut insertion_abstentions = 0;
     let base_span = tracing::info_span!("base_path_insertion").entered();
     for resolved_path in resolved_paths {
         let owner = classify_base(
@@ -534,9 +539,11 @@ fn materialize_base_document(
         };
         let materialized_member_schema = schema.clone().into_value();
         if owner.replaces() {
-            document.replace_path_schema(&resolved_path.path_segments, schema);
+            insertion_abstentions +=
+                document.replace_path_schema(&resolved_path.path_segments, schema);
         } else {
-            document.insert_path_schema(&resolved_path.path_segments, schema);
+            insertion_abstentions +=
+                document.insert_path_schema(&resolved_path.path_segments, schema);
         }
         let Some((last, parent_segments)) = resolved_path.path_segments.split_last() else {
             continue;
@@ -561,7 +568,7 @@ fn materialize_base_document(
         );
     }
     drop(base_span);
-    document
+    (document, insertion_abstentions)
 }
 
 fn finish_generated(

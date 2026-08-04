@@ -538,6 +538,43 @@ fn multi_arm_object_union_abstains_when_all_of_hides_descendants() -> eyre::Resu
 }
 
 #[test]
+fn all_of_union_equivalence_abstains_when_conjunct_verdicts_conflict() -> eyre::Result<()> {
+    let object_arm = |schema_type: &str| {
+        json!({
+            "properties": { "member": { "type": schema_type } },
+            "required": ["member"],
+            "type": "object",
+        })
+    };
+    let provider_payload = json!({
+        "allOf": [
+            { "anyOf": [object_arm("integer"), object_arm("integer")] },
+            { "anyOf": [object_arm("integer"), object_arm("boolean")] },
+        ],
+    });
+    let mut schema = SchemaDocument::new_root_object();
+    schema.insert_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(provider_payload),
+    );
+
+    sim_assert_eq!(
+        have: schema.insert_path_schema(
+            &["value".to_string(), "member".to_string()],
+            SchemaNode::type_named("string"),
+        ),
+        want: 1
+    );
+    let schema = schema.into_value();
+    let validator = jsonschema::validator_for(&schema)
+        .map_err(|error| eyre::eyre!("compile conflicting-allOf schema: {error}"))?;
+    assert!(validator.is_valid(&json!({ "value": { "member": 1 } })));
+    assert!(!validator.is_valid(&json!({ "value": { "member": true } })));
+    assert!(!validator.is_valid(&json!({ "value": { "member": "default" } })));
+    Ok(())
+}
+
+#[test]
 fn mixed_type_not_null_conjunction_survives_default_backfill() -> eyre::Result<()> {
     let provider_payload = json!({ "type": ["null", "object", "string"] });
     let mut schema = SchemaDocument::new_root_object();

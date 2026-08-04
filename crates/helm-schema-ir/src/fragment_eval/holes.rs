@@ -544,7 +544,11 @@ impl Interpreter<'_> {
         });
         for path in formatted_paths {
             let mut shared = BTreeSet::new();
-            if effects.defaults.contains(&path) || effects.local_default_paths.contains(&path) {
+            if formatted_meta
+                .get(&path)
+                .is_none_or(|meta| meta.predicates.is_empty())
+                && (effects.defaults.contains(&path) || effects.local_default_paths.contains(&path))
+            {
                 shared.insert(Predicate::truthy_path(path.clone()));
             }
             let branches = formatted_meta

@@ -1094,7 +1094,7 @@ fn chained_default_records_the_composed_primary_selection_on_the_final_fallback(
 #[test]
 fn opaque_default_primary_records_an_unlowerable_fallback_selection() {
     let result = eval_expr(
-        &single_expr(r#"printf "%s" .Values.alpha | default .Values.omega"#),
+        &single_expr(r#"printf "%q" .Values.alpha | default .Values.omega"#),
         &EvalEnv::default(),
     );
 
@@ -1112,6 +1112,57 @@ fn opaque_default_primary_records_an_unlowerable_fallback_selection() {
             ),
         ])])),
     );
+}
+
+#[test]
+fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
+    let result = eval_expr(
+        &single_expr(r#"printf "%s" .Values.alpha | default .Values.beta | default .Values.omega"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("omega")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([Predicate::all(vec![
+            Predicate::from(Guard::MatchesPattern {
+                path: "alpha".to_string(),
+                pattern: "^$".to_string(),
+                templated: false,
+            }),
+            Predicate::truthy_path("beta").negated(),
+        ])])])),
+    );
+}
+
+#[test]
+fn literal_and_string_set_default_primaries_record_exact_fallback_reachability() {
+    for (expression, predicates) in [
+        (r#""" | default .Values.omega"#, Some(BTreeSet::new())),
+        (r#""x" | default .Values.omega"#, None),
+        (
+            r#"ternary "" "" .Values.choose | default .Values.omega"#,
+            Some(BTreeSet::new()),
+        ),
+        (
+            r#"ternary "x" "y" .Values.choose | default .Values.omega"#,
+            None,
+        ),
+    ] {
+        let result = eval_expr(&single_expr(expression), &EvalEnv::default());
+        sim_assert_eq!(
+            have: result
+                .effects
+                .local_output_meta
+                .get("omega")
+                .map(|meta| &meta.predicates),
+            want: predicates.as_ref(),
+            "literal primary selection mismatch for {expression}"
+        );
+    }
 }
 
 #[test]

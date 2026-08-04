@@ -12453,3 +12453,39 @@ One clean dump writes 84 artifacts. Six corpus schemas re-encode, but the
 the 18-case IR dump is byte-identical. The oauth2-proxy retro-check also finds
 no Round 70 widening: both old and new schemas retain the unconditional eager
 `tpl` string tooth, matching Helm's abort in both composite guard states.
+
+## Rendered-default truthiness and accounting closure (2026-08-04, seventy-fourth round)
+
+Formatter-derived `default` selection now decodes the truthiness of the
+rendered scalar dispatch rather than the raw source value. In particular,
+`printf "%s" false` produces a non-empty string, so a later fallback remains
+dormant even though the raw Boolean is Helm-falsy. The nine-shape schema and
+live matrices cover deletion, dormant wrong types, selected valid and invalid
+types, and the reported three-path composite state. Seven raw-falsy shapes
+render; `trunc` and `trimSuffix` leave the `%!s(bool=false)` mismatch spelling
+in a plain YAML slot, so Helm aborts while the schema deliberately abstains and
+accepts. Literal empty and non-empty
+primaries take their exact always/never fallback arms, while direct identity
+chains retain their exact selected-arm constraint. The value of a statically
+dead fallback does not flow onward, but Go-template eagerness still preserves
+failures caused while evaluating that fallback expression.
+
+An adversarial preflight rejected two attempted parallel formatter-provenance
+flags after they tightened MinIO and then six additional charts against
+documents Helm renders. The landed repair deletes that flag and keeps rendered
+selection in the scalar-dispatch model. Approximate-marker-only captures no
+longer masquerade as unconditional string consumers, insertion abstentions are
+counted at every generator call lane, and conflicting `allOf` descendant
+verdicts abstain.
+
+The compiled battery now makes its zero-truncation assertions independently
+falsifiable and records its deterministic schema-order prefix bias. The final
+coverage report emits 121,059 probes over 60 lanes: all 112,260 base and 7,465
+third-level candidates, 427 guard pairs, and 240 composite pairs. It also
+discloses every prefix cap and missing witness/payload category. One clean dump
+writes 84 artifacts. Ten chart-corpus schemas and the SigNoz Zookeeper
+generator fixture re-encode, but the comparison against `6e9966b` finds zero
+acceptance flips. Two of 18 IR artifacts, SigNoz PostgreSQL secrets and
+Zookeeper StatefulSet, remove statically dead fallback-output provenance and
+simplify its guarded dispatch while keeping evaluation-time failures; the other
+16 remain byte-identical.

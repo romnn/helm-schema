@@ -13,7 +13,7 @@ use crate::condition_encoding::{
 use crate::emission_policy::{
     ConditionalFlavor, EmissionClass, EmissionOrigin, GuardScopes, NestedGuardScope, TerminalWhen,
 };
-use crate::emission_report::EmissionReport;
+use crate::emission_report::{EmissionReport, InsertionAbstentionCounts};
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::conditional_target_schema;
@@ -168,7 +168,8 @@ pub(crate) fn collect_conditional_schemas(
     values_yaml_doc: &YamlValue,
     subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
-) -> Vec<LoweredConjunct> {
+) -> (Vec<LoweredConjunct>, InsertionAbstentionCounts) {
+    let mut insertion_abstentions = InsertionAbstentionCounts::default();
     let mut synthesized_implications =
         crate::required_source_backprojection::synthesized_required_source_implications(
             contract_schema_signals,
@@ -232,8 +233,9 @@ pub(crate) fn collect_conditional_schemas(
             {
                 continue;
             }
-            let target_schema =
+            let (target_schema, abstentions) =
                 crate::path_resolver::fail_requirement_schema(std::iter::once(implication));
+            insertion_abstentions.requirement_target += abstentions;
             if crate::schema_model::is_empty_schema(&target_schema) {
                 continue;
             }
@@ -340,8 +342,9 @@ pub(crate) fn collect_conditional_schemas(
             {
                 continue;
             }
-            let mut target_schema =
+            let (mut target_schema, abstentions) =
                 crate::path_resolver::fail_requirement_schema(std::iter::once(implication));
+            insertion_abstentions.requirement_target += abstentions;
             if crate::schema_model::is_empty_schema(&target_schema) {
                 continue;
             }
@@ -376,6 +379,7 @@ pub(crate) fn collect_conditional_schemas(
                     .get(target_segments.as_slice())
                     .map(Vec::as_slice)
                     .unwrap_or_default(),
+                &mut insertion_abstentions.conditional_member_projection,
             ) {
                 target_schema = crate::schema_tree::conjoin_collection_member_schema_value(
                     target_schema,
@@ -540,6 +544,7 @@ pub(crate) fn collect_conditional_schemas(
                         .get(target_segments.as_slice())
                         .map(Vec::as_slice)
                         .unwrap_or_default(),
+                    &mut insertion_abstentions.conditional_member_projection,
                 ) {
                     member_schemas.push(member_schema);
                 }
@@ -640,12 +645,13 @@ pub(crate) fn collect_conditional_schemas(
 
     append_merge_shadow_arms(&mut conditionals, contract_schema_signals, provider);
     append_omitted_member_arms(&mut conditionals, contract_schema_signals, provider);
-    conditionals
+    (conditionals, insertion_abstentions)
 }
 
-fn member_descendant_projection(
+pub(crate) fn member_descendant_projection(
     target_segments: &[String],
     descendants: &[&ResolvedPathSchema],
+    insertion_abstentions: &mut usize,
 ) -> Option<Value> {
     let mut member_schema = descendants
         .iter()
@@ -675,11 +681,13 @@ fn member_descendant_projection(
         let current = member_schema
             .take()
             .unwrap_or_else(|| SchemaNode::untyped_member_host().into_value());
-        member_schema = Some(crate::schema_tree::insert_path_schema_value(
+        let (inserted, abstentions) = crate::schema_tree::insert_path_schema_value(
             current,
             tail,
             descendant.structural_schema.clone(),
-        ));
+        );
+        *insertion_abstentions += abstentions;
+        member_schema = Some(inserted);
     }
     if !has_descendant {
         return None;

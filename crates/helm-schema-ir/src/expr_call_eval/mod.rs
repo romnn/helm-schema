@@ -1,7 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_ast::{Literal, TemplateExpr};
-use helm_schema_core::{GuardDnf, Predicate};
+use helm_schema_ast::{
+    Literal, TemplateExpr, literal_printf_format, render_printf_scalar_values,
+    token_initial_printf_string_argument,
+};
+use helm_schema_core::{GuardDnf, GuardValue, Predicate};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
@@ -32,11 +35,12 @@ use collections::{
 use comparisons::{eval_comparison, eval_pipeline_comparison, eval_ternary, eval_type_is};
 use root_mutation::eval_set_call;
 use serialization::{
-    eval_cat, eval_from_json, eval_from_json_pipeline, eval_from_yaml, eval_from_yaml_pipeline,
-    eval_join, eval_join_pipeline, eval_print, eval_printf, eval_regex_replace, eval_repeat,
-    eval_replace, eval_replace_pipeline, eval_to_json, eval_to_json_result, eval_to_yaml,
-    eval_to_yaml_result, eval_tpl, eval_trim_affix, eval_trim_affix_pipeline,
-    record_printf_argument_effects, record_total_conversion_effects,
+    conjoin_formatter_operand_selection, eval_cat, eval_from_json, eval_from_json_pipeline,
+    eval_from_yaml, eval_from_yaml_pipeline, eval_join, eval_join_pipeline, eval_print,
+    eval_printf, eval_regex_replace, eval_repeat, eval_replace, eval_replace_pipeline,
+    eval_to_json, eval_to_json_result, eval_to_yaml, eval_to_yaml_result, eval_tpl,
+    eval_trim_affix, eval_trim_affix_pipeline, record_printf_argument_effects,
+    record_total_conversion_effects,
 };
 use strict_operands::{
     pipeline_string_operand_facts, push_fail_capture, record_collection_item_kind_result,
@@ -958,18 +962,66 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             "fromYaml" => eval_from_yaml_pipeline(current, args, env, resolver),
             "fromJson" | "fromJsonArray" => eval_from_json_pipeline(current, args, env, resolver),
             "printf" => {
+                let piped_dispatch = current.scalar_dispatch.clone();
                 let mut effects = current.effects;
+                let piped_scalar = piped_dispatch
+                    .as_ref()
+                    .and_then(ScalarValueDispatch::constant_value);
                 // The piped value is printf's FINAL data argument; `args`
                 // hold the format plus any leading data arguments.
                 let piped = identity_value_paths(current.value.as_ref());
+                let token_initial_string_argument = token_initial_printf_string_argument(args);
+                if token_initial_string_argument == Some(args.len()) {
+                    conjoin_formatter_operand_selection(
+                        &piped,
+                        piped_dispatch.as_ref(),
+                        &mut effects,
+                    );
+                }
                 record_printf_argument_effects(false, &piped, &mut effects);
+                let mut scalar_values = Vec::with_capacity(args.len());
                 for (index, arg) in args.iter().enumerate() {
-                    let result = eval_expr_with_helper_calls(arg, env, resolver);
+                    let mut result = eval_expr_with_helper_calls(arg, env, resolver);
                     let identity_paths = identity_value_paths(result.value.as_ref());
+                    if token_initial_string_argument == Some(index) {
+                        conjoin_formatter_operand_selection(
+                            &identity_paths,
+                            result.scalar_dispatch.as_ref(),
+                            &mut result.effects,
+                        );
+                    }
+                    if index > 0 {
+                        scalar_values.push(
+                            result
+                                .scalar_dispatch
+                                .as_ref()
+                                .and_then(ScalarValueDispatch::constant_value),
+                        );
+                    }
                     effects.merge(result.effects);
                     record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
                 }
-                EvalResult::with_effects(current.value, effects)
+                scalar_values.push(piped_scalar);
+                let dispatch = literal_printf_format(args)
+                    .and_then(|format| {
+                        scalar_values
+                            .into_iter()
+                            .collect::<Option<Vec<_>>>()
+                            .and_then(|values| render_printf_scalar_values(format, &values))
+                    })
+                    .map(|value| ScalarValueDispatch::constant(GuardValue::string(value)))
+                    .or_else(|| {
+                        if args.len() != 1 {
+                            return None;
+                        }
+                        let format = literal_printf_format(args)?;
+                        piped_dispatch.as_ref()?.printf_string(format)
+                    });
+                let result = EvalResult::with_effects(current.value, effects);
+                match dispatch {
+                    Some(dispatch) => result.with_scalar_dispatch(dispatch),
+                    None => result,
+                }
             }
             "join" => eval_join_pipeline(current, args, env, resolver),
             "split" if matches!(args.as_slice(), [separator] if is_nonempty_string_literal(separator)) => {

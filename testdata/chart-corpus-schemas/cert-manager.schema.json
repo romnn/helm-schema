@@ -6,29 +6,6 @@
       }
     },
     "10": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      ]
-    },
-    "11": {
       "if": {
         "allOf": [
           {
@@ -82,7 +59,7 @@
       },
       "then": false
     },
-    "12": {
+    "11": {
       "additionalProperties": false,
       "description": "DeploymentStrategy describes how to replace existing pods with new ones.",
       "properties": {
@@ -138,7 +115,7 @@
       },
       "type": "object"
     },
-    "13": {
+    "12": {
       "allOf": [
         {
           "properties": {
@@ -190,7 +167,7 @@
         }
       ]
     },
-    "14": {
+    "13": {
       "allOf": [
         {
           "properties": {
@@ -240,7 +217,7 @@
         }
       ]
     },
-    "15": {
+    "14": {
       "additionalProperties": false,
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
@@ -258,7 +235,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "16": {
+    "15": {
       "if": {
         "anyOf": [
           {
@@ -289,12 +266,12 @@
       },
       "then": false
     },
-    "17": {
+    "16": {
       "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
       "format": "int32",
       "type": "null"
     },
-    "18": {
+    "17": {
       "properties": {
         "cainjector": {
           "properties": {
@@ -310,6 +287,25 @@
       },
       "required": [
         "cainjector"
+      ],
+      "type": "object"
+    },
+    "18": {
+      "properties": {
+        "webhook": {
+          "properties": {
+            "config": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "config"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhook"
       ],
       "type": "object"
     },
@@ -9186,25 +9182,6 @@
       "type": "object"
     },
     "H": {
-      "properties": {
-        "webhook": {
-          "properties": {
-            "config": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "config"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "webhook"
-      ],
-      "type": "object"
-    },
-    "I": {
       "anyOf": [
         {
           "not": {
@@ -9232,7 +9209,7 @@
         }
       ]
     },
-    "J": {
+    "I": {
       "properties": {
         "nodeSelector": {
           "anyOf": [
@@ -9250,14 +9227,14 @@
       ],
       "type": "object"
     },
-    "K": {
+    "J": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "L": {
+    "K": {
       "description": "Specifies whether a service account should be created."
     },
-    "M": {
+    "L": {
       "anyOf": [
         {
           "type": "object"
@@ -9267,7 +9244,7 @@
         }
       ]
     },
-    "N": {
+    "M": {
       "additionalProperties": {},
       "properties": {
         "serviceAccount": {
@@ -9427,7 +9404,7 @@
         }
       }
     },
-    "O": {
+    "N": {
       "additionalProperties": false,
       "description": "ResourceRequirements describes the compute resource requirements.",
       "properties": {
@@ -9508,7 +9485,7 @@
       },
       "type": "object"
     },
-    "P": {
+    "O": {
       "description": "List of environment variables to set in the container. Cannot be updated.",
       "items": {
         "additionalProperties": false,
@@ -9678,7 +9655,7 @@
       "x-kubernetes-patch-merge-key": "name",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "Q": {
+    "P": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -9840,7 +9817,7 @@
       ],
       "description": "Kubernetes imagePullPolicy on Deployment."
     },
-    "R": {
+    "Q": {
       "anyOf": [
         {
           "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -9849,6 +9826,36 @@
         },
         {
           "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ]
+    },
+    "R": {
+      "anyOf": [
+        {
+          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
           "format": "int32",
           "type": "null"
         },
@@ -9871,36 +9878,6 @@
       ]
     },
     "S": {
-      "anyOf": [
-        {
-          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        }
-      ]
-    },
-    "T": {
       "if": {
         "allOf": [
           {
@@ -9998,7 +9975,7 @@
       },
       "then": false
     },
-    "U": {
+    "T": {
       "anyOf": [
         {
           "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
@@ -10028,7 +10005,7 @@
         }
       ]
     },
-    "V": {
+    "U": {
       "anyOf": [
         {
           "description": "EnableServiceLinks indicates whether information about services should be injected into pod's environment variables, matching the syntax of Docker links. Optional: Defaults to true.",
@@ -10057,7 +10034,7 @@
       ],
       "description": "enableServiceLinks indicates whether information about services should be\ninjected into the pod's environment variables, matching the syntax of Docker\nlinks."
     },
-    "W": {
+    "V": {
       "additionalProperties": {},
       "properties": {
         "automountServiceAccountToken": {
@@ -10091,7 +10068,7 @@
         }
       }
     },
-    "X": {
+    "W": {
       "anyOf": [
         {
           "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -10121,7 +10098,7 @@
         }
       ]
     },
-    "Y": {
+    "X": {
       "allOf": [
         {
           "properties": {
@@ -10200,7 +10177,7 @@
         }
       ]
     },
-    "Z": {
+    "Y": {
       "anyOf": [
         {
           "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
@@ -10227,6 +10204,29 @@
         {
           "pattern": "^[ \\t]*(#.*)?$",
           "type": "string"
+        }
+      ]
+    },
+    "Z": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "type": [
+            "object",
+            "null"
+          ]
         }
       ]
     },
@@ -21975,7 +21975,7 @@
           "acmesolver": {
             "properties": {
               "image": {
-                "$ref": "#/$defs/M"
+                "$ref": "#/$defs/L"
               }
             },
             "required": [
@@ -22215,7 +22215,7 @@
           {
             "properties": {
               "cainjector": {
-                "$ref": "#/$defs/J"
+                "$ref": "#/$defs/I"
               }
             },
             "required": [
@@ -22276,7 +22276,7 @@
         "additionalProperties": {},
         "properties": {
           "cainjector": {
-            "$ref": "#/$defs/N"
+            "$ref": "#/$defs/M"
           }
         }
       }
@@ -22391,7 +22391,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/18"
+            "$ref": "#/$defs/17"
           },
           {
             "allOf": [
@@ -22435,13 +22435,13 @@
             "$ref": "#/$defs/C"
           },
           {
-            "$ref": "#/$defs/13"
+            "$ref": "#/$defs/12"
           },
           {
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/18"
           },
           {
             "$ref": "#/$defs/23"
@@ -22624,7 +22624,7 @@
             "$ref": "#/$defs/C"
           },
           {
-            "$ref": "#/$defs/Y"
+            "$ref": "#/$defs/X"
           },
           {
             "anyOf": [
@@ -22681,10 +22681,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/18"
+            "$ref": "#/$defs/17"
           },
           {
-            "$ref": "#/$defs/14"
+            "$ref": "#/$defs/13"
           },
           {
             "$ref": "#/$defs/F"
@@ -22702,7 +22702,7 @@
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/18"
           },
           {
             "$ref": "#/$defs/G"
@@ -22800,7 +22800,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/14"
+            "$ref": "#/$defs/13"
           },
           {
             "$ref": "#/$defs/q"
@@ -22840,7 +22840,7 @@
                   {
                     "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
                     "items": {
-                      "$ref": "#/$defs/15"
+                      "$ref": "#/$defs/14"
                     },
                     "type": "array"
                   },
@@ -22900,7 +22900,7 @@
                   {
                     "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
                     "items": {
-                      "$ref": "#/$defs/15"
+                      "$ref": "#/$defs/14"
                     },
                     "type": "array",
                     "x-kubernetes-patch-merge-key": "name",
@@ -22928,7 +22928,7 @@
               "global": {
                 "properties": {
                   "leaderElection": {
-                    "$ref": "#/$defs/M"
+                    "$ref": "#/$defs/L"
                   }
                 },
                 "required": [
@@ -23027,7 +23027,7 @@
       "if": {
         "properties": {
           "livenessProbe": {
-            "$ref": "#/$defs/M"
+            "$ref": "#/$defs/L"
           }
         },
         "required": [
@@ -23061,7 +23061,7 @@
             "$ref": "#/$defs/y"
           },
           {
-            "$ref": "#/$defs/13"
+            "$ref": "#/$defs/12"
           },
           {
             "$ref": "#/$defs/q"
@@ -23084,7 +23084,7 @@
             "$ref": "#/$defs/C"
           },
           {
-            "$ref": "#/$defs/Y"
+            "$ref": "#/$defs/X"
           }
         ]
       },
@@ -23164,10 +23164,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/18"
+            "$ref": "#/$defs/17"
           },
           {
-            "$ref": "#/$defs/14"
+            "$ref": "#/$defs/13"
           },
           {
             "$ref": "#/$defs/F"
@@ -23188,7 +23188,7 @@
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/18"
           },
           {
             "$ref": "#/$defs/23"
@@ -23363,7 +23363,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/J"
+        "$ref": "#/$defs/I"
       },
       "then": {
         "$ref": "#/$defs/D"
@@ -23613,7 +23613,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/Y"
+        "$ref": "#/$defs/X"
       },
       "then": {
         "allOf": [
@@ -23690,7 +23690,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/13"
+        "$ref": "#/$defs/12"
       },
       "then": {
         "allOf": [
@@ -23865,13 +23865,13 @@
       "then": {
         "allOf": [
           {
-            "$ref": "#/$defs/N"
+            "$ref": "#/$defs/M"
           },
           {
             "additionalProperties": {},
             "properties": {
               "webhook": {
-                "$ref": "#/$defs/N"
+                "$ref": "#/$defs/M"
               }
             }
           }
@@ -23926,7 +23926,7 @@
           {
             "properties": {
               "startupapicheck": {
-                "$ref": "#/$defs/J"
+                "$ref": "#/$defs/I"
               }
             },
             "required": [
@@ -23963,7 +23963,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/10"
+                            "$ref": "#/$defs/Z"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -23994,7 +23994,7 @@
             "additionalProperties": {},
             "properties": {
               "startupapicheck": {
-                "$ref": "#/$defs/N"
+                "$ref": "#/$defs/M"
               }
             }
           }
@@ -24105,16 +24105,9 @@
             "$ref": "#/$defs/7"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/$defs/H"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/1W"
-                }
-              }
-            ]
+            "not": {
+              "$ref": "#/$defs/1W"
+            }
           }
         ]
       },
@@ -24137,7 +24130,7 @@
       "if": {
         "properties": {
           "webhook": {
-            "$ref": "#/$defs/J"
+            "$ref": "#/$defs/I"
           }
         },
         "required": [
@@ -24216,7 +24209,7 @@
             "$ref": "#/$defs/c"
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           }
         ]
       },
@@ -24249,10 +24242,10 @@
       "then": false
     },
     {
-      "$ref": "#/$defs/11"
+      "$ref": "#/$defs/10"
     },
     {
-      "$ref": "#/$defs/T"
+      "$ref": "#/$defs/S"
     },
     {
       "if": {
@@ -24313,7 +24306,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/I"
+        "$ref": "#/$defs/H"
       },
       "then": false
     },
@@ -24349,7 +24342,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           }
         ]
       },
@@ -24387,7 +24380,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           }
         ]
       },
@@ -24510,7 +24503,7 @@
       "$ref": "#/$defs/2p"
     },
     {
-      "$ref": "#/$defs/16"
+      "$ref": "#/$defs/15"
     },
     {
       "if": {
@@ -25020,7 +25013,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "enableServiceLinks": {
-                    "$ref": "#/$defs/V"
+                    "$ref": "#/$defs/U"
                   }
                 }
               },
@@ -25049,7 +25042,7 @@
                   "extraEnv": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/P"
+                        "$ref": "#/$defs/O"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -25070,7 +25063,7 @@
                     "description": "The container registry to pull the cainjector image from.\n+docs:property\nregistry: quay.io",
                     "properties": {
                       "pullPolicy": {
-                        "$ref": "#/$defs/Q"
+                        "$ref": "#/$defs/P"
                       }
                     }
                   }
@@ -25104,7 +25097,7 @@
                         "$ref": "#/$defs/1a"
                       },
                       {
-                        "$ref": "#/$defs/17"
+                        "$ref": "#/$defs/16"
                       },
                       {
                         "$ref": "#/$defs/3"
@@ -25129,7 +25122,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/O"
+                        "$ref": "#/$defs/N"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -25170,7 +25163,7 @@
                   "strategy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/12"
+                        "$ref": "#/$defs/11"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -25228,7 +25221,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "serviceAccount": {
-                    "$ref": "#/$defs/W"
+                    "$ref": "#/$defs/V"
                   }
                 }
               },
@@ -25289,10 +25282,10 @@
           "$ref": "#/$defs/1S"
         },
         {
-          "$ref": "#/$defs/11"
+          "$ref": "#/$defs/10"
         },
         {
-          "$ref": "#/$defs/T"
+          "$ref": "#/$defs/S"
         },
         {
           "if": {
@@ -25301,7 +25294,7 @@
           "then": false
         },
         {
-          "$ref": "#/$defs/16"
+          "$ref": "#/$defs/15"
         }
       ],
       "properties": {
@@ -25381,7 +25374,7 @@
               "$ref": "#/$defs/1g"
             },
             "create": {
-              "$ref": "#/$defs/L"
+              "$ref": "#/$defs/K"
             },
             "labels": {},
             "name": {}
@@ -25462,7 +25455,7 @@
       "description": "When this flag is enabled, secrets will be automatically removed when the certificate resource is deleted."
     },
     "enableServiceLinks": {
-      "$ref": "#/$defs/V"
+      "$ref": "#/$defs/U"
     },
     "enabled": {
       "description": "Field that can be used as a condition when cert-manager is a dependency.\nThis definition is only here as a placeholder such that it is included in\nthe json schema.\nSee https://helm.sh/docs/chart_best_practices/dependencies/#conditions-and-tags\nfor more info.\n+docs:hidden"
@@ -25484,7 +25477,7 @@
     "extraEnv": {
       "anyOf": [
         {
-          "$ref": "#/$defs/P"
+          "$ref": "#/$defs/O"
         },
         {
           "$ref": "#/$defs/1"
@@ -25814,7 +25807,7 @@
       "properties": {
         "digest": {},
         "pullPolicy": {
-          "$ref": "#/$defs/Q"
+          "$ref": "#/$defs/P"
         },
         "registry": {},
         "repository": {
@@ -25843,7 +25836,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/M"
+                "$ref": "#/$defs/L"
               },
               {
                 "$ref": "#/$defs/8"
@@ -25856,7 +25849,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/X"
+                    "$ref": "#/$defs/W"
                   }
                 }
               },
@@ -25864,7 +25857,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "initialDelaySeconds": {
-                    "$ref": "#/$defs/S"
+                    "$ref": "#/$defs/R"
                   }
                 }
               },
@@ -25872,7 +25865,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/Z"
+                    "$ref": "#/$defs/Y"
                   }
                 }
               },
@@ -25880,7 +25873,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/T"
                   }
                 }
               },
@@ -25888,7 +25881,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "timeoutSeconds": {
-                    "$ref": "#/$defs/R"
+                    "$ref": "#/$defs/Q"
                   }
                 }
               }
@@ -26252,7 +26245,7 @@
                             "$ref": "#/$defs/2B"
                           },
                           {
-                            "$ref": "#/$defs/K"
+                            "$ref": "#/$defs/J"
                           }
                         ],
                         "description": "Keep labels from scraped data, overriding server-side labels."
@@ -26639,7 +26632,7 @@
                             "$ref": "#/$defs/2D"
                           },
                           {
-                            "$ref": "#/$defs/K"
+                            "$ref": "#/$defs/J"
                           }
                         ],
                         "description": "Keep labels from scraped data, overriding server-side labels."
@@ -27113,7 +27106,7 @@
           "$ref": "#/$defs/1a"
         },
         {
-          "$ref": "#/$defs/17"
+          "$ref": "#/$defs/16"
         },
         {
           "$ref": "#/$defs/3"
@@ -27133,7 +27126,7 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/O"
+          "$ref": "#/$defs/N"
         },
         {
           "$ref": "#/$defs/g"
@@ -27186,7 +27179,7 @@
           "then": {
             "allOf": [
               {
-                "$ref": "#/$defs/W"
+                "$ref": "#/$defs/V"
               },
               {
                 "$ref": "#/$defs/1B"
@@ -27204,7 +27197,7 @@
           "$ref": "#/$defs/1g"
         },
         "create": {
-          "$ref": "#/$defs/L"
+          "$ref": "#/$defs/K"
         },
         "labels": {},
         "name": {
@@ -27299,7 +27292,7 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/J"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -27337,7 +27330,7 @@
                   "extraEnv": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/P"
+                        "$ref": "#/$defs/O"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -27358,7 +27351,7 @@
                     "description": "The container registry to pull the startupapicheck image from.\n+docs:property\nregistry: quay.io",
                     "properties": {
                       "pullPolicy": {
-                        "$ref": "#/$defs/Q"
+                        "$ref": "#/$defs/P"
                       }
                     }
                   }
@@ -27370,7 +27363,7 @@
                   "jobAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/10"
+                        "$ref": "#/$defs/Z"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -27405,7 +27398,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/O"
+                        "$ref": "#/$defs/N"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -27474,7 +27467,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/10"
+                            "$ref": "#/$defs/Z"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -27504,7 +27497,7 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/K"
+                            "$ref": "#/$defs/J"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -27607,7 +27600,7 @@
               "description": "Automount API credentials for a Service Account.\n+docs:property"
             },
             "create": {
-              "$ref": "#/$defs/L"
+              "$ref": "#/$defs/K"
             },
             "labels": {},
             "name": {}
@@ -27631,7 +27624,7 @@
     "strategy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/12"
+          "$ref": "#/$defs/11"
         },
         {
           "$ref": "#/$defs/g"
@@ -27858,7 +27851,7 @@
                         "$ref": "#/$defs/1N"
                       },
                       {
-                        "$ref": "#/$defs/W"
+                        "$ref": "#/$defs/V"
                       },
                       {
                         "$ref": "#/$defs/1B"
@@ -27874,10 +27867,10 @@
           }
         },
         {
-          "$ref": "#/$defs/11"
+          "$ref": "#/$defs/10"
         },
         {
-          "$ref": "#/$defs/T"
+          "$ref": "#/$defs/S"
         },
         {
           "$ref": "#/$defs/2p"
@@ -27928,7 +27921,7 @@
           "then": false
         },
         {
-          "$ref": "#/$defs/16"
+          "$ref": "#/$defs/15"
         },
         {
           "if": {
@@ -28023,7 +28016,7 @@
           "description": "enableClientVerification turns on client verification of requests\nmade to the webhook server"
         },
         "enableServiceLinks": {
-          "$ref": "#/$defs/V"
+          "$ref": "#/$defs/U"
         },
         "extraArgs": {
           "anyOf": [
@@ -28042,7 +28035,7 @@
         "extraEnv": {
           "anyOf": [
             {
-              "$ref": "#/$defs/P"
+              "$ref": "#/$defs/O"
             },
             {
               "$ref": "#/$defs/1"
@@ -28065,7 +28058,7 @@
           "properties": {
             "digest": {},
             "pullPolicy": {
-              "$ref": "#/$defs/Q"
+              "$ref": "#/$defs/P"
             },
             "registry": {},
             "repository": {
@@ -28080,19 +28073,19 @@
           "description": "Liveness probe values.\nFor more information, see [Container probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes).\n+docs:property",
           "properties": {
             "failureThreshold": {
-              "$ref": "#/$defs/X"
+              "$ref": "#/$defs/W"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/S"
+              "$ref": "#/$defs/R"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/Z"
+              "$ref": "#/$defs/Y"
             },
             "successThreshold": {
-              "$ref": "#/$defs/U"
+              "$ref": "#/$defs/T"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/R"
+              "$ref": "#/$defs/Q"
             }
           },
           "type": "object"
@@ -28240,19 +28233,19 @@
           "description": "Readiness probe values.\nFor more information, see [Container probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes).\n+docs:property",
           "properties": {
             "failureThreshold": {
-              "$ref": "#/$defs/X"
+              "$ref": "#/$defs/W"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/S"
+              "$ref": "#/$defs/R"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/Z"
+              "$ref": "#/$defs/Y"
             },
             "successThreshold": {
-              "$ref": "#/$defs/U"
+              "$ref": "#/$defs/T"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/R"
+              "$ref": "#/$defs/Q"
             }
           },
           "type": "object"
@@ -28263,7 +28256,7 @@
               "$ref": "#/$defs/1a"
             },
             {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/16"
             },
             {
               "$ref": "#/$defs/3"
@@ -28283,7 +28276,7 @@
         "resources": {
           "anyOf": [
             {
-              "$ref": "#/$defs/O"
+              "$ref": "#/$defs/N"
             },
             {
               "$ref": "#/$defs/g"
@@ -28322,7 +28315,7 @@
               "$ref": "#/$defs/1g"
             },
             "create": {
-              "$ref": "#/$defs/L"
+              "$ref": "#/$defs/K"
             },
             "labels": {},
             "name": {
@@ -28454,7 +28447,7 @@
         "strategy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/12"
+              "$ref": "#/$defs/11"
             },
             {
               "$ref": "#/$defs/g"
@@ -29144,7 +29137,7 @@
                 "imagePullSecrets": {
                   "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
                   "items": {
-                    "$ref": "#/$defs/15"
+                    "$ref": "#/$defs/14"
                   },
                   "type": [
                     "array",

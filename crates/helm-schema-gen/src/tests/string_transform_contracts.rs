@@ -918,49 +918,54 @@ fn opaque_formatter_default_primary_keeps_fallback_consumers_conditional() {
         beta: setb
         omega: fallo
     "};
-    for (expression, selected_number_accepted) in [
+    for (expression, selected_number_accepted, raw_falsy_number_accepted) in [
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | b64enc"#,
+            false,
+            true,
+        ),
+        (
+            r#"printf "%q" .Values.alpha | default .Values.omega | b64enc"#,
+            true,
             true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | trunc 5"#,
+            false,
             true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | sha256sum"#,
+            false,
             true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | quote"#,
             true,
+            true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | trimSuffix "-x""#,
+            false,
             true,
         ),
         (
             r#"(printf "%s" .Values.alpha) | default .Values.omega | b64enc"#,
+            false,
             true,
         ),
         (
             r#"default .Values.omega (printf "%s" .Values.alpha) | b64enc"#,
+            false,
             true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.beta | default .Values.omega | b64enc"#,
             false,
+            true,
         ),
     ] {
-        let src = formatdoc! {r"
-            apiVersion: v1
-            kind: ConfigMap
-            metadata:
-              name: test
-            data:
-              token: {{{{ {expression} }}}}
-        "};
-        let schema = schema_for_values_yaml(parse_ir(&src), Some(values_yaml));
+        let schema = schema_for_formatter_default_expression(expression, values_yaml);
         for (overrides, want, label) in [
             (
                 serde_json::json!({ "omega": null }),
@@ -971,6 +976,16 @@ fn opaque_formatter_default_primary_keeps_fallback_consumers_conditional() {
                 serde_json::json!({ "omega": 7 }),
                 true,
                 "non-string dormant fallback",
+            ),
+            (
+                serde_json::json!({ "omega": false }),
+                true,
+                "falsy dormant fallback",
+            ),
+            (
+                serde_json::json!({ "alpha": false, "beta": "", "omega": 7 }),
+                raw_falsy_number_accepted,
+                "raw-falsy formatter operand renders a truthy string",
             ),
             (
                 serde_json::json!({ "alpha": "", "beta": "", "omega": "selected" }),
@@ -991,6 +1006,89 @@ fn opaque_formatter_default_primary_keeps_fallback_consumers_conditional() {
             );
         }
     }
+}
+
+fn schema_for_formatter_default_expression(expression: &str, values_yaml: &str) -> Value {
+    let src = formatdoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          token: {{{{ {expression} }}}}
+    "};
+    schema_for_values_yaml(parse_ir(&src), Some(values_yaml))
+}
+
+#[test]
+fn literal_default_primaries_have_exact_fallback_reachability() {
+    let values_yaml = indoc! {"
+        choose: false
+        omega: fallo
+    "};
+    for (primary, selected) in [
+        ("\"\"", true),
+        ("\"x\"", false),
+        (r#"ternary "" "" .Values.choose"#, true),
+        (r#"ternary "x" "y" .Values.choose"#, false),
+    ] {
+        let src = formatdoc! {r"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              token: {{{{ ({primary}) | default .Values.omega | b64enc }}}}
+        "};
+        let schema = schema_for_values_yaml(parse_ir(&src), Some(values_yaml));
+        for (overrides, want, label) in [
+            (
+                serde_json::json!({ "omega": null }),
+                !selected,
+                "deleted fallback",
+            ),
+            (
+                serde_json::json!({ "omega": 7 }),
+                !selected,
+                "numeric fallback",
+            ),
+            (
+                serde_json::json!({ "omega": "selected" }),
+                true,
+                "string fallback",
+            ),
+        ] {
+            let instance = composed_instance(values_yaml, overrides);
+            assert!(
+                schema_accepts_instance(&schema, &instance) == want,
+                "literal default primary ({label}): primary={primary}; instance={instance}; \
+                 want={want}; schema={schema}"
+            );
+        }
+    }
+}
+
+#[test]
+fn dead_literal_fallback_keeps_eager_argument_failures() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          token: {{ "live" | default (required "omega is required" .Values.omega) | b64enc }}
+    "#};
+    let values_yaml = "omega: fallback\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(!schema_accepts_instance(
+        &schema,
+        &composed_instance(values_yaml, serde_json::json!({ "omega": null }))
+    ));
+    assert!(schema_accepts_instance(
+        &schema,
+        &composed_instance(values_yaml, serde_json::json!({ "omega": 7 }))
+    ));
 }
 
 #[test]
@@ -1706,6 +1804,51 @@ fn self_guarded_string_transform_keeps_every_falsy_spelling() {
             values_yaml,
             serde_json::json!({ "enabled": true, "nameOverride": value }),
         );
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn default_before_string_transform_keeps_falsy_primary_spellings() {
+    let direct = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ default "fallback" .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+    "#};
+    let values_yaml = indoc! {"
+        nameOverride: ''
+    "};
+    let schema = schema_for_values_yaml(parse_ir(direct), Some(values_yaml));
+
+    for (value, want, label) in [
+        (serde_json::json!(false), true, "false selects the fallback"),
+        (serde_json::json!(0), true, "zero selects the fallback"),
+        (
+            serde_json::json!([]),
+            true,
+            "an empty list selects the fallback",
+        ),
+        (
+            serde_json::json!({}),
+            true,
+            "an empty mapping selects the fallback",
+        ),
+        (
+            serde_json::json!("custom"),
+            true,
+            "a string reaches the transform",
+        ),
+        (
+            serde_json::json!({ "member": "value" }),
+            false,
+            "a truthy mapping reaches the string transform",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, serde_json::json!({ "nameOverride": value }));
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "{label}: instance={instance}; schema={schema}"

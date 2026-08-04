@@ -546,16 +546,15 @@ fn printf_integer_directive_emits_exact_candidate() {
 }
 
 #[test]
-fn default_choice_does_not_emit_fallback_as_exact_identity() {
+fn statically_truthy_default_primary_emits_only_its_exact_identity() {
     let helpers = index_with(indoc! {r#"
         {{- define "x.apiVersion" -}}
         {{- default "policy/v1beta1" "policy/v1" -}}
         {{- end -}}
     "#});
-    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
-    assert!(
-        outs.is_empty(),
-        "resource identity literal evaluation must abstain on expression choices; got {outs:?}"
+    sim_assert_eq!(
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
+        want: vec!["policy/v1"]
     );
 }
 

@@ -15,6 +15,11 @@ pub(crate) enum ScalarValue {
     Identity(String),
     /// Text already rendered by a helper body.
     Rendered(Vec<ScalarRenderPart>),
+    /// Output of `printf "%s"` over one raw scalar identity.
+    ///
+    /// Non-string inputs render Go's non-empty format-mismatch spelling, so
+    /// only the empty-output preimage is exact without modeling that grammar.
+    PrintfStringIdentity(String),
     /// The number of segments produced by splitting one scalar value on a
     /// literal separator.
     SplitLength {
@@ -72,6 +77,34 @@ impl ScalarValueDispatch {
         }
     }
 
+    /// Return the exact dispatch-arm conditions that select one raw identity.
+    ///
+    /// An incomplete dispatch may omit an unknown arm, so it cannot safely
+    /// qualify a formatter capture.
+    pub(crate) fn identity_selection_conditions(
+        &self,
+        path: &str,
+    ) -> Option<Vec<helm_schema_core::Predicate>> {
+        if !self.complete {
+            return None;
+        }
+        let conditions = self
+            .arms
+            .iter()
+            .filter(
+                |(_, value)| matches!(value, ScalarValue::Identity(identity) if identity == path),
+            )
+            .map(|(condition, _)| condition.clone())
+            .collect::<Vec<_>>();
+        (!conditions.is_empty()).then_some(conditions)
+    }
+
+    pub(crate) fn has_printf_string_identity(&self) -> bool {
+        self.arms
+            .iter()
+            .any(|(_, value)| matches!(value, ScalarValue::PrintfStringIdentity(_)))
+    }
+
     /// Render every known arm through Sprig's total `toString` conversion.
     ///
     /// The conversion changes runtime value semantics without changing
@@ -89,6 +122,46 @@ impl ScalarValueDispatch {
             })
             .collect();
         Self { arms, complete }
+    }
+
+    /// Render one scalar argument through a literal `printf "%s"` format.
+    ///
+    /// Other formats abstain because their mismatch and padding languages
+    /// need a separate typed preimage before they can drive control flow.
+    pub(crate) fn printf_string(&self, format: &str) -> Option<Self> {
+        if format != "%s" {
+            return None;
+        }
+        let mut complete = self.complete;
+        let arms = self
+            .arms
+            .iter()
+            .filter_map(|(condition, value)| {
+                let rendered = match value {
+                    ScalarValue::Literal(value) => helm_schema_ast::render_printf_scalar_values(
+                        format,
+                        std::slice::from_ref(value),
+                    )
+                    .map(|value| ScalarValue::Literal(helm_schema_core::GuardValue::string(value))),
+                    ScalarValue::Identity(path) => {
+                        Some(ScalarValue::PrintfStringIdentity(path.clone()))
+                    }
+                    ScalarValue::Rendered(parts) => rendered_constant(parts).and_then(|value| {
+                        helm_schema_ast::render_printf_scalar_values(
+                            format,
+                            &[helm_schema_core::GuardValue::string(value)],
+                        )
+                        .map(|value| {
+                            ScalarValue::Literal(helm_schema_core::GuardValue::string(value))
+                        })
+                    }),
+                    ScalarValue::PrintfStringIdentity(_) | ScalarValue::SplitLength { .. } => None,
+                };
+                complete &= rendered.is_some();
+                rendered.map(|value| (condition.clone(), value))
+            })
+            .collect::<Vec<_>>();
+        (!arms.is_empty()).then_some(Self { arms, complete })
     }
 
     /// Apply one exact `trimPrefix`/`trimSuffix` transform to every scalar
@@ -321,6 +394,9 @@ impl ScalarValue {
                 lexical_escapes: BTreeSet::new(),
             }],
             Self::Rendered(parts) => parts.clone(),
+            Self::PrintfStringIdentity(path) => {
+                return Some(Self::PrintfStringIdentity(path.clone()));
+            }
             Self::SplitLength { .. } => return None,
         };
         Some(Self::Rendered(parts))
@@ -339,7 +415,7 @@ impl ScalarValue {
             Self::Literal(helm_schema_core::GuardValue::String(text)) => Some(Self::Literal(
                 helm_schema_core::GuardValue::string(trim(text)),
             )),
-            Self::Literal(_) | Self::SplitLength { .. } => None,
+            Self::Literal(_) | Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => None,
             Self::Identity(path) => {
                 let escape = if prefix {
                     crate::helper_meta::LexicalEscape::TrimPrefix(token.to_string())
@@ -399,7 +475,7 @@ impl ScalarValue {
                 lexical_escapes: BTreeSet::new(),
             }],
             Self::Rendered(parts) => parts.clone(),
-            Self::SplitLength { .. } => return None,
+            Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => return None,
         };
         Some(parts)
     }
@@ -407,7 +483,7 @@ impl ScalarValue {
     fn constant_value(&self) -> Option<helm_schema_core::GuardValue> {
         match self {
             Self::Literal(value) => Some(value.clone()),
-            Self::Identity(_) | Self::SplitLength { .. } => None,
+            Self::Identity(_) | Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => None,
             Self::Rendered(parts) => {
                 rendered_constant(parts).map(helm_schema_core::GuardValue::string)
             }
@@ -450,6 +526,21 @@ impl ScalarValue {
                 };
                 rendered_identity_equals(path, *stringified, lexical_escapes, target)
             }
+            Self::PrintfStringIdentity(path) => {
+                let GuardValue::String(target) = target else {
+                    return TruthCondition::exact(Predicate::False);
+                };
+                let predicate = Predicate::from(Guard::MatchesPattern {
+                    path: path.clone(),
+                    pattern: format!("^{}$", crate::escape_regex_literal(target)),
+                    templated: false,
+                });
+                if target.is_empty() {
+                    TruthCondition::exact(predicate)
+                } else {
+                    TruthCondition::from_subsets(predicate, Predicate::False, false)
+                }
+            }
             Self::SplitLength { value, separator } => {
                 let GuardValue::Int(length) = target else {
                     return TruthCondition::exact(Predicate::False);
@@ -480,6 +571,14 @@ impl ScalarValue {
                     helm_schema_core::Predicate::True
                 }
             }),
+            Self::PrintfStringIdentity(path) => Some(
+                helm_schema_core::Predicate::from(helm_schema_core::Guard::MatchesPattern {
+                    path: path.clone(),
+                    pattern: "^$".to_string(),
+                    templated: false,
+                })
+                .negated(),
+            ),
             Self::SplitLength { .. } => Some(helm_schema_core::Predicate::True),
         }
     }
@@ -498,7 +597,9 @@ impl ScalarValue {
                     Predicate::False
                 })
             }
-            Self::Literal(_) | Self::SplitLength { .. } => TruthCondition::Unknown,
+            Self::Literal(_) | Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => {
+                TruthCondition::Unknown
+            }
             Self::Identity(path) => TruthCondition::exact(Predicate::from(Guard::MatchesPattern {
                 path: path.clone(),
                 pattern: pattern.to_string(),
@@ -583,7 +684,10 @@ impl ScalarValue {
         let constant = match self {
             Self::Literal(GuardValue::String(value)) => Some(value.clone()),
             Self::Rendered(parts) => rendered_constant(parts),
-            _ => None,
+            Self::Literal(_)
+            | Self::Identity(_)
+            | Self::PrintfStringIdentity(_)
+            | Self::SplitLength { .. } => None,
         };
         if let Some(value) = constant {
             return match helm_schema_ast::semver_constraint_matches_version(constraint, &value) {

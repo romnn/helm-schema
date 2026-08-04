@@ -58,8 +58,12 @@ impl SchemaDocument {
         }
     }
 
-    pub(crate) fn replace_path_schema(&mut self, path_segments: &[String], schema: SchemaNode) {
-        replace_schema_at_parts(&mut self.root, path_segments, schema);
+    pub(crate) fn replace_path_schema(
+        &mut self,
+        path_segments: &[String],
+        schema: SchemaNode,
+    ) -> usize {
+        replace_schema_at_parts(&mut self.root, path_segments, schema)
     }
 
     /// Conjoins an unconditional generator constraint at an existing values
@@ -414,10 +418,10 @@ pub(crate) fn insert_path_schema_value(
     root_schema: Value,
     path_segments: &[String],
     schema: Value,
-) -> Value {
+) -> (Value, usize) {
     let mut root = SchemaNode::foreign(root_schema);
-    insert_schema_at_parts(&mut root, path_segments, SchemaNode::foreign(schema));
-    root.into_value()
+    let abstentions = insert_schema_at_parts(&mut root, path_segments, SchemaNode::foreign(schema));
+    (root.into_value(), abstentions)
 }
 
 /// Conjoins one member schema with every array-item and map-value lane.
@@ -1028,38 +1032,34 @@ fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
     }
 }
 
-fn replace_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf: SchemaNode) {
+fn replace_schema_at_parts(
+    node: &mut SchemaNode,
+    path_segments: &[String],
+    leaf: SchemaNode,
+) -> usize {
     let Some((head, tail)) = path_segments.split_first() else {
         *node = leaf;
-        return;
+        return 0;
     };
 
     let head = head.as_str();
     let replaced = match node {
-        SchemaNode::Object { properties, .. } => {
-            if let Some(child) = properties.get_mut(head) {
-                replace_schema_at_parts(child, tail, leaf.clone());
-                true
-            } else {
-                false
-            }
-        }
-        SchemaNode::Array { items, .. } if head == "*" => {
-            if let Some(child) = items.as_deref_mut() {
-                replace_schema_at_parts(child, tail, leaf.clone());
-                true
-            } else {
-                false
-            }
-        }
+        SchemaNode::Object { properties, .. } => properties
+            .get_mut(head)
+            .map(|child| replace_schema_at_parts(child, tail, leaf.clone())),
+        SchemaNode::Array { items, .. } if head == "*" => items
+            .as_deref_mut()
+            .map(|child| replace_schema_at_parts(child, tail, leaf.clone())),
         SchemaNode::Foreign(value) => {
             replace_schema_value_at_path(value, path_segments, &leaf.clone().into_value())
+                .then_some(0)
         }
-        _ => false,
+        _ => None,
     };
 
-    if !replaced {
-        insert_schema_at_parts(node, path_segments, leaf);
+    match replaced {
+        Some(abstentions) => abstentions,
+        None => insert_schema_at_parts(node, path_segments, leaf),
     }
 }
 
@@ -1515,14 +1515,12 @@ fn multi_arm_object_union_has_equivalent_descendant(
                 .is_some_and(|descendant| descendant == first)
         }));
     }
-    object
-        .get("allOf")
-        .and_then(Value::as_array)
-        .and_then(|arms| {
-            arms.iter().find_map(|arm| {
-                multi_arm_object_union_has_equivalent_descendant(arm, path_segments)
-            })
-        })
+    let arms = object.get("allOf").and_then(Value::as_array)?;
+    let mut verdicts = arms
+        .iter()
+        .filter_map(|arm| multi_arm_object_union_has_equivalent_descendant(arm, path_segments));
+    let first = verdicts.next()?;
+    Some(first && verdicts.all(|verdict| verdict == first))
 }
 
 fn schema_descendant_at_path<'a>(

@@ -403,8 +403,9 @@ fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
 )]
 pub(crate) fn fail_requirement_schema<'a>(
     implications: impl IntoIterator<Item = &'a helm_schema_core::ContractFailImplication>,
-) -> Value {
+) -> (Value, usize) {
     let mut parts = Vec::new();
+    let mut insertion_abstentions = 0;
     for implication in implications {
         let requirement = fail_value_requirement_schema(
             &implication.requirements,
@@ -562,11 +563,12 @@ pub(crate) fn fail_requirement_schema<'a>(
                 };
                 let guard =
                     required_object_path_schema(guard_path, serde_json::json!({ "const": value }));
-                let target = crate::schema_tree::insert_path_schema_value(
+                let (target, abstentions) = crate::schema_tree::insert_path_schema_value(
                     empty_schema(),
                     target_path,
                     requirement,
                 );
+                insertion_abstentions += abstentions;
                 let member = serde_json::json!({ "if": guard, "then": target });
                 parts.push(serde_json::json!({
                     "anyOf": [
@@ -659,7 +661,7 @@ pub(crate) fn fail_requirement_schema<'a>(
             }
         }
     }
-    merge_schema_list(parts)
+    (merge_schema_list(parts), insertion_abstentions)
 }
 
 /// Like [`required_object_path_schema`], but the LEAF member stays

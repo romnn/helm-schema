@@ -30,16 +30,18 @@ pub(super) fn eval_printf(
     let mut widened_paths = BTreeSet::new();
     let mut values = Vec::with_capacity(args.len());
     let mut scalar_values = Vec::with_capacity(args.len());
+    let mut scalar_dispatches = Vec::with_capacity(args.len());
     let token_initial_string_argument = token_initial_printf_string_argument(args);
 
     for (index, arg) in args.iter().enumerate() {
-        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        let mut result = eval_expr_with_helper_calls(arg, env, resolver);
         scalar_values.push(
             result
                 .scalar_dispatch
                 .as_ref()
                 .and_then(crate::scalar_value::ScalarValueDispatch::constant_value),
         );
+        scalar_dispatches.push(result.scalar_dispatch.clone());
         let identity_paths = identity_value_paths(result.value.as_ref());
         let plain_slot_format_paths = if token_initial_string_argument == Some(index) {
             identity_paths
@@ -59,6 +61,11 @@ pub(super) fn eval_printf(
         } else {
             BTreeSet::new()
         };
+        conjoin_formatter_operand_selection(
+            &plain_slot_format_paths,
+            result.scalar_dispatch.as_ref(),
+            &mut result.effects,
+        );
         widened_paths.extend(
             value_paths(result.value.as_ref())
                 .difference(&identity_paths)
@@ -100,15 +107,7 @@ pub(super) fn eval_printf(
             })
     });
 
-    let scalar_dispatch = rendered.as_ref().and_then(|rendered| {
-        let mut values = rendered.iter();
-        match (values.next(), values.next()) {
-            (Some(value), None) => Some(crate::scalar_value::ScalarValueDispatch::constant(
-                helm_schema_core::GuardValue::string(value.clone()),
-            )),
-            _ => None,
-        }
-    });
+    let scalar_dispatch = printf_scalar_dispatch(args, rendered.as_ref(), &scalar_dispatches);
     let mut values = Vec::new();
     if let Some(rendered) = rendered {
         values.push(AbstractValue::StringSet(rendered));
@@ -116,8 +115,8 @@ pub(super) fn eval_printf(
     if let Some(paths) = AbstractValue::path_choices(provenance_paths) {
         values.push(paths);
     }
-    // Influence stays widened: the format arguments flowed through an unknown
-    // call, so they attribute the rendered text without becoming identities.
+    // Non-identity influence stays widened because formatted output is not
+    // structurally identical to a nested value that contributed text.
     if let Some(widened) = AbstractValue::widened(widened_paths) {
         values.push(widened);
     }
@@ -125,6 +124,63 @@ pub(super) fn eval_printf(
     match scalar_dispatch {
         Some(dispatch) => result.with_scalar_dispatch(dispatch),
         None => result,
+    }
+}
+
+fn printf_scalar_dispatch(
+    args: &[TemplateExpr],
+    rendered: Option<&BTreeSet<String>>,
+    scalar_dispatches: &[Option<crate::scalar_value::ScalarValueDispatch>],
+) -> Option<crate::scalar_value::ScalarValueDispatch> {
+    if let Some(rendered) = rendered {
+        let mut values = rendered.iter();
+        if let (Some(value), None) = (values.next(), values.next()) {
+            return Some(crate::scalar_value::ScalarValueDispatch::constant(
+                helm_schema_core::GuardValue::string(value.clone()),
+            ));
+        }
+    }
+    let format = literal_printf_format(args)?;
+    let [_, Some(subject)] = scalar_dispatches else {
+        return None;
+    };
+    subject.printf_string(format)
+}
+
+pub(super) fn conjoin_formatter_operand_selection(
+    paths: &BTreeSet<String>,
+    dispatch: Option<&crate::scalar_value::ScalarValueDispatch>,
+    effects: &mut Effects,
+) {
+    let Some(dispatch) = dispatch else {
+        return;
+    };
+    for path in paths {
+        let Some(conditions) = dispatch.identity_selection_conditions(path) else {
+            continue;
+        };
+        if conditions
+            .iter()
+            .any(|condition| matches!(condition, helm_schema_core::Predicate::True))
+        {
+            continue;
+        }
+        let meta = effects.local_output_meta.entry(path.clone()).or_default();
+        let existing = if meta.predicates.is_empty() {
+            BTreeSet::from([BTreeSet::new()])
+        } else {
+            std::mem::take(&mut meta.predicates)
+        };
+        meta.predicates = existing
+            .into_iter()
+            .flat_map(|branch| {
+                conditions.iter().map(move |condition| {
+                    let mut selected = branch.clone();
+                    selected.insert(condition.clone());
+                    selected
+                })
+            })
+            .collect();
     }
 }
 

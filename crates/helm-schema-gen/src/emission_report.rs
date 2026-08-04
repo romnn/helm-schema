@@ -60,6 +60,17 @@ pub struct CanonicalizationCounts {
     pub default_backfill_abstentions: usize,
 }
 
+/// Ambiguous-union insertion abstentions grouped by the phase that requested them.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct InsertionAbstentionCounts {
+    /// Base path insertions skipped while materializing a projected document.
+    pub base_document: usize,
+    /// Member-descendant projections skipped while lowering conditional overlays.
+    pub conditional_member_projection: usize,
+    /// Nested requirement targets skipped while lowering fail implications.
+    pub requirement_target: usize,
+}
+
 /// Fact and carrier accounting produced alongside a generated schema.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct EmissionReport {
@@ -72,6 +83,8 @@ pub struct EmissionReport {
     pub carriers: CarrierCounts,
     /// Canonical-emission accounting.
     pub canonicalization: CanonicalizationCounts,
+    /// Ambiguous-union insertions that deliberately retained their original schema.
+    pub insertion_abstentions: InsertionAbstentionCounts,
 }
 
 #[derive(Clone, Copy)]

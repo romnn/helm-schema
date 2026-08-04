@@ -19,6 +19,18 @@ fn jsonschema_resolver_decodes_the_whole_uri_fragment_before_pointer_splitting()
     sim_assert_eq!(have: validator.is_valid(&json!("nested")), want: true);
     sim_assert_eq!(have: validator.is_valid(&json!("flat")), want: false);
 
+    let encoded_tilde_escape = json!({
+        "$defs": {
+            "a/b": { "const": "slash" },
+            "a~1b": { "const": "literal-tilde" },
+        },
+        "$ref": "#/$defs/a%7E1b",
+    });
+    let validator = jsonschema::validator_for(&encoded_tilde_escape)
+        .map_err(|error| eyre::eyre!("compile encoded-tilde schema: {error}"))?;
+    sim_assert_eq!(have: validator.is_valid(&json!("slash")), want: true);
+    sim_assert_eq!(have: validator.is_valid(&json!("literal-tilde")), want: false);
+
     let encoded_pointer = json!({
         "$defs": {
             "name": { "const": "decoded" },
@@ -149,6 +161,26 @@ fn late_prune_decodes_percent_encoded_definition_refs() {
     let removed = prune_unreachable_owned_definitions(&mut schema, &owned);
 
     sim_assert_eq!(have: removed, want: 0);
+}
+
+#[test]
+fn late_prune_percent_decodes_before_json_pointer_tilde_decoding() {
+    let mut schema = json!({
+        "$defs": {
+            "a/b": { "type": "string" },
+            "a~1b": { "type": "integer" },
+        },
+        "$ref": "#/$defs/a%7E1b",
+    });
+    let owned = OwnedDefinitions::capture(&schema).retain_unchanged(&schema);
+
+    let removed = prune_unreachable_owned_definitions(&mut schema, &owned);
+
+    sim_assert_eq!(have: removed, want: 1);
+    sim_assert_eq!(
+        have: schema.get("$defs"),
+        want: Some(&json!({ "a/b": { "type": "string" } }))
+    );
 }
 
 #[test]

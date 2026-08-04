@@ -532,13 +532,12 @@ fn helper_type_dispatch_keeps_or_candidate_selection_on_each_row() {
 
 #[test]
 fn opaque_include_guard_abstains_from_provider_schema_evidence() {
-    // The arm renders a VALUES-dependent token, so the helper is not a
-    // literal dispatch and the include guard stays undecodable. (A pure
-    // literal arm now decodes exactly and no longer exercises abstention.)
+    // The arm uses an unknown function whose output grammar is not modeled,
+    // so the include guard stays undecodable.
     let helpers = indoc! {r#"
         {{- define "resource.enabled" -}}
         {{- if .Values.enabled -}}
-        {{ .Values.marker }}
+        {{ mystery .Values.marker }}
         {{- end -}}
         {{- end -}}
     "#};

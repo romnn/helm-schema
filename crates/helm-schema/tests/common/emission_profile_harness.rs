@@ -19,6 +19,13 @@ const MAX_GUARD_ARMS_ATTEMPTED_PER_CHART: usize = 24;
 const MAX_GUARD_WITNESS_CANDIDATES_PER_CHART: usize = 128;
 const MAX_COMPOSITE_STATE_PAIRS_PER_CHART: usize = 8;
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
+pub(crate) enum GuardSamplingStrategy {
+    /// Samples the first guards in deterministic serialized schema order.
+    #[default]
+    SchemaOrderPrefix,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 pub(crate) struct ProbeCoverage {
     pub(crate) label: String,
@@ -29,6 +36,7 @@ pub(crate) struct ProbeCoverage {
     pub(crate) third_level_emitted: usize,
     pub(crate) third_level_dropped: usize,
     pub(crate) guards_discovered: usize,
+    pub(crate) guard_sampling_strategy: GuardSamplingStrategy,
     pub(crate) guards_attempted: usize,
     pub(crate) guard_pairs_emitted: usize,
     pub(crate) guards_skipped_by_cap: usize,
@@ -118,6 +126,22 @@ impl ProfileSchemas {
     pub(crate) fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
         let instance = self.compose(probe);
         (self.full.is_valid(&instance), self.lean.is_valid(&instance))
+    }
+
+    pub(crate) fn candidate_errors(&self, probe: &ProbeInstance) -> Vec<String> {
+        let instance = self.compose(probe);
+        self.lean
+            .iter_errors(&instance)
+            .map(|error| format!("{}: {error}", error.instance_path()))
+            .collect()
+    }
+
+    pub(crate) fn baseline_errors(&self, probe: &ProbeInstance) -> Vec<String> {
+        let instance = self.compose(probe);
+        self.full
+            .iter_errors(&instance)
+            .map(|error| format!("{}: {error}", error.instance_path()))
+            .collect()
     }
 
     pub(crate) fn assert_monotone<'a>(

@@ -1369,6 +1369,25 @@ fn unsupported_conditional_row_does_not_promote_sink_evidence() {
 }
 
 #[test]
+fn unlowerable_output_selection_does_not_claim_a_path_wide_string_consumer() -> eyre::Result<()> {
+    let signals = signals_for_template(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          token: {{ printf "%q" .Values.alpha | default .Values.omega | b64enc }}
+    "#});
+    let evidence = signals.evidence_for("omega").ok_or_eyre("omega evidence")?;
+
+    assert!(
+        !evidence.facts.has_non_self_guarded_string_contract,
+        "an unlowerable output selector must not become a path-wide raw consumer: {evidence:#?}"
+    );
+    Ok(())
+}
+
+#[test]
 fn foreign_range_does_not_globalize_strict_consumer() {
     let signals = signals_for_template(indoc! {r#"
         apiVersion: v1

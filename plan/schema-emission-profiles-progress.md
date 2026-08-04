@@ -1727,3 +1727,164 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 charts complete.
   - `task tokei:core`: exit 0; 60,893 production Rust LOC.
 - Commit: `f3939c3` (`fix(schema): close round-73 review findings`).
+
+## Round 74 — rendered-default truthiness and accounting closure
+
+- Status: landed; commit pending.
+- Measured results:
+  - `printf "%s"` now has one typed scalar-dispatch representation for the
+    rendered output of a raw identity. A raw-falsy non-string such as `false`
+    renders as a non-empty Go format-mismatch string, while the raw empty
+    string alone has an exactly decodable empty output. Chained `default`
+    selection therefore consults rendered-output truthiness instead of
+    independently decoding the raw operand.
+  - The Round 73 formatter/default matrix now covers nine consumer and syntax
+    shapes in the deleted, dormant wrong-type, selected valid, selected
+    wrong-type, and raw-falsy composite states. In the reported three-path
+    state (`alpha=false`, `beta=""`, `omega=7`), every generated schema
+    accepts because the first formatter output is truthy. Helm 4.2.3 renders
+    seven shapes; bare `trunc` and `trimSuffix` leave the Go mismatch spelling
+    beginning with `%` in a plain YAML slot, so Helm rejects the rendered
+    manifest. Those two disclosed false accepts are an output-language
+    abstention, not the reported fallback false rejection. Exact identity-only
+    chains keep rejecting a wrong-typed final fallback when it is selected.
+  - Literal and finite-string-set primaries use their statically known
+    truthiness: an empty primary selects its fallback unconditionally, and a
+    non-empty primary removes the dead fallback. Both directions are pinned
+    against Helm. A dead fallback's value does not flow onward, but its eager
+    argument-evaluation failures remain; deleting a nested `required` operand
+    still fails while a present operand renders.
+  - Ambiguous descendant insertion abstentions are now counted for base
+    document materialization, conditional member projection, and nested
+    requirement targets in addition to the existing completion-backfill
+    count. The `allOf` descendant walker abstains when its conjuncts return
+    conflicting equivalence verdicts instead of accepting the first one.
+  - The coverage checker independently requires zero base-probe truncation
+    and zero third-level truncation. An always-running synthetic truncation
+    test proves those assertions can fail. The machine report records the
+    deterministic `SchemaOrderPrefix` guard sampling strategy rather than
+    presenting the 427 sampled pairs as an unbiased population.
+  - The final report covers 60 fixture lanes and 121,059 emitted probes:
+    112,260 of 112,260 base candidates, 7,465 of 7,465 third-level
+    candidates, 427 guard pairs, and 240 composite pairs. It discloses
+    17,166 discovered guards, 16,629 prefix-cap skips, 110 sampled guards
+    without a bounded witness pair, 37,550 omitted witness candidates, 2,267
+    composite targets dropped by the pair cap, and 39 targets without a
+    bounded nonconforming payload.
+  - One clean final-build dump runs 62 tests and writes exactly 84 artifacts.
+    Eleven schema fixtures re-encode: ten chart-corpus schemas plus the SigNoz
+    Zookeeper generator fixture. The compiled comparison against `6e9966b`
+    finds zero acceptance flips at full depth. Two of 18 clean IR artifacts,
+    SigNoz PostgreSQL secrets and Zookeeper StatefulSet, remove statically dead
+    fallback-output provenance and simplify its guarded dispatch while keeping
+    evaluation-time failures; the other 16 are byte-identical.
+  - Production Rust is 61,262 LOC (`+369` from Round 73). The expanded live
+    and acceptance matrices remain under `tests/` and are excluded from this
+    count.
+- Deviations and corrections:
+  - The first IR dump located the surviving `omega` tooth in scalar dispatch,
+    not in the Round 73 approximate-marker lane. Two preliminary implementations
+    added a parallel formatter-provenance flag to contract and helper metadata.
+    The full battery rejected that design with false rejections in MinIO and,
+    after one narrowing attempt, External Secrets, Jaeger, MetalLB, Metrics
+    Server, MinIO, and Sealed Secrets. Those flags were deleted. The landed
+    implementation keeps rendered truthiness solely in `ScalarValueDispatch`,
+    so selection has one semantic model rather than another hint channel.
+  - A marker-only `Approximate { OutputSelection, None }` capture no longer
+    sets `has_non_self_guarded_string_contract`. The direct bite control keeps
+    every Helm-falsy primary spelling open and rejects a truthy map only when
+    the downstream string transform actually consumes it. No corpus
+    acceptance flip depends on this completeness correction.
+  - The coverage report intentionally samples a deterministic prefix of
+    schema traversal order. This is reproducible but biased; it is disclosed
+    in the report and remains an input to the v3 battery review.
+  - The expensive Helm matrices and old/new corpus comparison remain ignored
+    maintenance lanes gated by their environment variables. Their commands
+    and final results are recorded below; the ordinary unit suite does not
+    silently claim to execute them.
+  - The frozen emission plan, Round 71 YAML-key veto, and duplicate-alias
+    limitation remain unchanged.
+- Adjudication evidence:
+  - Helm 4.2.3 and the generated schema agree on deletion, dormant numeric
+    fallbacks, selected strings, truly consumed numeric fallbacks, and seven
+    of nine raw-falsy composite shapes. The `trunc` and `trimSuffix` cells are
+    schema-open/Helm-abort for the plain-slot `%!s(bool=false)` spelling
+    described above; neither rejects a document Helm renders. Literal-primary
+    controls agree in both always-selected and never-selected directions,
+    including eager evaluation of a dead fallback expression.
+  - The final clean dump re-encodes eleven fixtures but changes no acceptance
+    verdict across 121,059 default-composed, null-deletion-aware probes. There
+    is therefore no corpus TIGHTEN or LOOSEN to adopt individually. The
+    maintenance lane was run with `ADJUDICATE_WITH_HELM=1`, so any detected
+    flip would have required an equal Helm render verdict before the test
+    could pass.
+  - The abandoned formatter-provenance attempts were not adopted: their
+    battery tightenings rejected documents Helm renders. This preflight is
+    the evidence for removing the parallel flag rather than narrowing it a
+    third time.
+- Review dossier:
+  - Rendered truthiness, opaque selection, literal selection, and exact-chain
+    preservation: `cargo nextest run -p helm-schema-ir -p helm-schema-gen -E
+    'test(formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback) |
+    test(opaque_formatter_default_primary_keeps_fallback_consumers_conditional) |
+    test(literal_default_primaries_have_exact_fallback_reachability) |
+    test(dead_literal_fallback_keeps_eager_argument_failures) |
+    test(identity_default_chain_keeps_exact_final_fallback_selection) |
+    test(default_before_string_transform_keeps_falsy_primary_spellings)'`.
+  - Both-direction Helm matrices: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profile_live -E
+    'test(replay_opaque_formatter_default_against_helm) |
+    test(replay_literal_default_primary_reachability_against_helm)'
+    --run-ignored ignored-only --no-capture`.
+  - Marker-only abstention, all insertion counters, and conflicting-`allOf`
+    equality: `cargo nextest run -p helm-schema-ir -p helm-schema-gen -E
+    'test(unlowerable_output_selection_does_not_claim_a_path_wide_string_consumer) |
+    test(emission_report_conserves_facts_and_keeps_mandatory_facts) |
+    test(member_projection_reports_ambiguous_descendant_insertion) |
+    test(all_of_union_equivalence_abstains_when_conjunct_verdicts_conflict)'`.
+  - Falsifiable coverage accounting and targeted guard/composite controls:
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(probe_coverage_validation_rejects_synthetic_truncation) |
+    test(guard_battery_synthesizes_composite_guard_and_payload_states) |
+    test(current_profiles_obey_monotonicity_and_semantic_controls) |
+    test(temporal_wrapper_pairwise_matrix_is_monotone)'`.
+  - Percent-then-tilde composition: `cargo nextest run -p helm-schema -E
+    'test(late_prune_percent_decodes_before_json_pointer_tilde_decoding)'`.
+  - Single clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/round74-final-dump-4
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+  - Full-depth zero-flip proof with enforced coverage accounting:
+    `TMPDIR=/home/roman/dev/helm-schema/target/round74-prober-tmp-4
+    SCHEMA_ACCEPTANCE_BASELINE_REF=6e9966b
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round74-final-dump-4
+    SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/round74-probe-coverage-4.json
+    ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+    --test schema_emission_profiles -E
+    'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=121059 flips=0`.
+  - Complete clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/round74-final-ir-dump-4
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; two of
+    18 artifacts remove the dead fallback-output provenance described above.
+- Gates on the final Round 74 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; the full workspace Clippy pass and all three
+    ast-grep checks complete without warnings.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets complete with zero errors and zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,211 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0 on the final fixture tree; 565 tests pass
+    and 21 are skipped by the integration profile.
+  - `task test:all`: exit 0; 1,780 tests pass and 21 are skipped by the CI
+    profile, including the live-network lane.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; all 32 downstream charts complete.
+  - `task tokei:core`: exit 0; 61,262 production Rust LOC.
+- Commit: pending.

@@ -1,11 +1,15 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-08-04 after the seventy-third round made opaque-default
-selection abstention structural, required every object-union arm to resolve a
-descendant before claiming equality, aligned reference reachability with the
-measured resolver, and replaced relabeled guard probes with targeted and
-composite witnesses plus machine-readable cap accounting. Six fixtures
-re-encode with zero flips across 121,059 full-depth probes. The seventy-second
+Last reconciled 2026-08-04 after the seventy-fourth round unified formatter-
+derived default selection on rendered scalar truthiness, made probe truncation
+assertions independently falsifiable, counted every generator insertion
+abstention lane, and disclosed deterministic prefix sampling. Eleven schema
+fixtures and two IR fixtures re-encode with zero flips across 121,059 full-depth
+probes. The seventy-third
+round made opaque-default selection abstention structural, required every
+object-union arm to resolve a descendant before claiming equality, aligned
+reference reachability with the measured resolver, and replaced relabeled
+guard probes with targeted and composite witnesses. The seventy-second
 round restored override IO precedence, same-target namespace deduplication,
 and vendored dependency protection. The seventy-first round stopped at its
 measurement veto because Helm's mixed quoted/legacy Boolean-key collision is
@@ -127,6 +131,17 @@ part and a separately listed residual. Detailed round history remains in
 
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
+
+- **Rendered-default truthiness and accounting closure (seventy-fourth
+  round).** Formatter-derived `default` chains select through rendered scalar
+  truthiness, including the raw-falsy/non-empty `printf "%s"` boundary, while
+  literal primaries and exact identities keep their exact arms. Marker-only
+  approximate captures abstain from path-wide string typing. All insertion
+  abstention lanes report their losses, conflicting `allOf` descendant
+  verdicts abstain, and coverage pins zero base/depth-three truncation plus
+  its schema-order prefix bias. Eleven schema fixtures and two IR fixtures
+  re-encode with zero acceptance flips across 121,059 probes. The live matrix
+  records two plain-slot formatter false accepts and no false rejection.
 
 - **Second-review findings closure (seventy-third round).** Opaque formatter
   fallbacks carry an unlowerable output-selection marker, exact identity

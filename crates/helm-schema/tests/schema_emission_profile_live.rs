@@ -242,7 +242,7 @@ fn replay_opaque_formatter_default_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
     let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join("target/round73-live");
+        .join("target/round74-live");
     std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
     let chart = tempfile::Builder::new()
         .prefix("opaque-formatter-default-")
@@ -266,41 +266,59 @@ fn replay_opaque_formatter_default_against_helm() -> eyre::Result<()> {
         "},
     )?;
 
-    for (expression, selected_number_renders) in [
+    for (expression, selected_number_renders, raw_falsy_number_renders) in [
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | b64enc"#,
             false,
+            true,
+        ),
+        (
+            r#"printf "%q" .Values.alpha | default .Values.omega | b64enc"#,
+            true,
+            true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | trunc 5"#,
+            false,
             false,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | sha256sum"#,
             false,
+            true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | quote"#,
+            true,
             true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | trimSuffix "-x""#,
             false,
+            false,
         ),
         (
             r#"(printf "%s" .Values.alpha) | default .Values.omega | b64enc"#,
             false,
+            true,
         ),
         (
             r#"default .Values.omega (printf "%s" .Values.alpha) | b64enc"#,
             false,
+            true,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.beta | default .Values.omega | b64enc"#,
             false,
+            true,
         ),
     ] {
-        replay_opaque_formatter_expression(chart.path(), expression, selected_number_renders)?;
+        replay_opaque_formatter_expression(
+            chart.path(),
+            expression,
+            selected_number_renders,
+            raw_falsy_number_renders,
+        )?;
     }
     Ok(())
 }
@@ -309,6 +327,7 @@ fn replay_opaque_formatter_expression(
     chart: &Path,
     expression: &str,
     selected_number_renders: bool,
+    raw_falsy_number_renders: bool,
 ) -> eyre::Result<()> {
     std::fs::write(
         chart.join("templates/configmap.yaml"),
@@ -319,6 +338,13 @@ fn replay_opaque_formatter_expression(
     for (string_overrides, typed_overrides, renders, label) in [
         (None, Some("omega=null"), true, "deleted dormant fallback"),
         (None, Some("omega=7"), true, "numeric dormant fallback"),
+        (None, Some("omega=false"), true, "falsy dormant fallback"),
+        (
+            Some("beta="),
+            Some("alpha=false,omega=7"),
+            raw_falsy_number_renders,
+            "raw-falsy formatter operand renders a truthy string",
+        ),
         (
             Some("alpha=,beta=,omega=selected"),
             None,
@@ -349,6 +375,100 @@ fn replay_opaque_formatter_expression(
         eyre::ensure!(
             output.status.success() == renders,
             "opaque fallback {label}: expression={expression}; renders={}; want={renders}; stderr={}",
+            output.status.success(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_literal_default_primary_reachability_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join("target/round74-live");
+    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
+    let chart = tempfile::Builder::new()
+        .prefix("literal-default-primary-")
+        .tempdir_in(scratch_root)
+        .wrap_err("create literal-default chart")?;
+    std::fs::create_dir(chart.path().join("templates"))?;
+    std::fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc! {"
+            apiVersion: v2
+            name: literal-default-primary
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("values.yaml"),
+        indoc! {"
+            choose: false
+            omega: fallo
+        "},
+    )?;
+
+    for (primary, selected) in [
+        ("\"\"", true),
+        ("\"x\"", false),
+        (r#"ternary "" "" .Values.choose"#, true),
+        (r#"ternary "x" "y" .Values.choose"#, false),
+    ] {
+        std::fs::write(
+            chart.path().join("templates/configmap.yaml"),
+            format!(
+                "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: literal-default-primary\ndata:\n  token: {{{{ ({primary}) | default .Values.omega | b64enc }}}}\n"
+            ),
+        )?;
+        for (set_values, renders, label) in [
+            ("omega=null", !selected, "deleted fallback"),
+            ("omega=7", !selected, "numeric fallback"),
+            ("omega=selected", true, "string fallback"),
+        ] {
+            let output = Command::new("helm")
+                .args(["template", "literal-default-primary"])
+                .arg(chart.path())
+                .arg("--skip-schema-validation")
+                .args(["--set", set_values])
+                .output()
+                .wrap_err("render literal default control")?;
+            eyre::ensure!(
+                output.status.success() == renders,
+                "literal primary {primary} {label}: renders={}; want={renders}; stderr={}",
+                output.status.success(),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+    }
+
+    std::fs::write(
+        chart.path().join("templates/configmap.yaml"),
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: literal-default-primary
+            data:
+              token: {{ "live" | default (required "omega is required" .Values.omega) | b64enc }}
+        "#},
+    )?;
+    for (set_values, renders, label) in [
+        ("omega=null", false, "eager fallback argument deleted"),
+        ("omega=7", true, "eager fallback argument present"),
+    ] {
+        let output = Command::new("helm")
+            .args(["template", "literal-default-primary"])
+            .arg(chart.path())
+            .arg("--skip-schema-validation")
+            .args(["--set", set_values])
+            .output()
+            .wrap_err("render eager literal-default fallback control")?;
+        eyre::ensure!(
+            output.status.success() == renders,
+            "literal primary {label}: renders={}; want={renders}; stderr={}",
             output.status.success(),
             String::from_utf8_lossy(&output.stderr)
         );

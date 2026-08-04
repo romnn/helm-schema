@@ -1306,13 +1306,17 @@ fn record_fail_conjunction(
     } = &capture.kind
     {
         // The path-wide contract set intentionally loses execution scope.
-        // Only this exact capture can distinguish a raw consumer from one
-        // skipped by the operand's own truthiness guard.
+        // Only this capture's conjunction can distinguish a raw consumer
+        // from one skipped by its own guard or an unlowerable output selector.
         if schema_type == "string"
             && !capture
                 .conjunction
                 .iter()
                 .any(|predicate| predicate_skips_falsy_source(predicate, path))
+            && !matches!(
+                capture.conjunction.as_slice(),
+                [predicate] if predicate_is_unlowerable_output_selection(predicate)
+            )
         {
             path_accumulator(paths, path)
                 .facts
@@ -4510,6 +4514,17 @@ fn predicate_skips_falsy_source(predicate: &Predicate, source_expr: &str) -> boo
         Predicate::Guard(
             Guard::Truthy { path } | Guard::Range { path } | Guard::With { path }
         ) if path == source_expr
+    )
+}
+
+fn predicate_is_unlowerable_output_selection(predicate: &Predicate) -> bool {
+    matches!(
+        predicate,
+        Predicate::Approximate {
+            role: ApproximationRole::OutputSelection,
+            sound_subset: None,
+            ..
+        }
     )
 }
 

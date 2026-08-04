@@ -144,6 +144,12 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
     );
     assert!(lean_mandatory.selected > 0);
     assert!(full.facts.selected > lean.facts.selected);
+    for report in [&full, &lean] {
+        sim_assert_eq!(
+            have: report.insertion_abstentions,
+            want: crate::InsertionAbstentionCounts::default()
+        );
+    }
     for class in [
         crate::emission_policy::EmissionClassKind::OrdinaryRoot,
         crate::emission_policy::EmissionClassKind::KindPartitionRoot,
@@ -156,6 +162,58 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
     let lean_local =
         lean.counts_for_class(crate::emission_policy::EmissionClassKind::OrdinaryLocal);
     sim_assert_eq!(have: lean_local.selected, want: lean_local.lowered);
+}
+
+#[test]
+fn member_projection_reports_ambiguous_descendant_insertion() {
+    use crate::overlay_lowering::member_descendant_projection;
+    use crate::path_resolver::ResolvedPathSchema;
+
+    let root = ResolvedPathSchema {
+        value_path: "items.*".to_string(),
+        path_segments: vec!["items".to_string(), "*".to_string()],
+        schema: serde_json::json!({}),
+        structural_schema: serde_json::json!({
+            "anyOf": [
+                {
+                    "properties": { "member": { "type": "integer" } },
+                    "required": ["member"],
+                    "type": "object",
+                },
+                {
+                    "properties": { "member": { "type": "boolean" } },
+                    "required": ["member"],
+                    "type": "object",
+                },
+            ],
+        }),
+        values_yaml_schema: serde_json::json!({}),
+        provider_schema_candidate: None,
+        used_as_serialized: false,
+        used_as_pathless_fragment: false,
+        accepted_dependency_values_root_fragment: false,
+    };
+    let descendant = ResolvedPathSchema {
+        value_path: "items.*.member".to_string(),
+        path_segments: vec!["items".to_string(), "*".to_string(), "member".to_string()],
+        schema: serde_json::json!({ "type": "string" }),
+        structural_schema: serde_json::json!({ "type": "string" }),
+        values_yaml_schema: serde_json::json!({}),
+        provider_schema_candidate: None,
+        used_as_serialized: false,
+        used_as_pathless_fragment: false,
+        accepted_dependency_values_root_fragment: false,
+    };
+    let mut abstentions = 0;
+
+    let projected = member_descendant_projection(
+        &["items".to_string()],
+        &[&root, &descendant],
+        &mut abstentions,
+    );
+
+    sim_assert_eq!(have: abstentions, want: 1);
+    sim_assert_eq!(have: projected, want: Some(root.structural_schema));
 }
 
 #[test]

@@ -5208,16 +5208,6 @@
             "start": 718
           },
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.configmapName"
-          ],
-          "span": {
-            "end": 3490,
-            "start": 3435
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
         }
       ],
       "resource": {
@@ -7305,34 +7295,26 @@
       "condition": [
         [
           {
-            "paths": [
-              "global",
-              "image.registry"
-            ],
-            "type": "or"
+            "path": "global",
+            "type": "truthy"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global.imageRegistry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
+            "path": "image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "global.imageRegistry",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not"
           }
         ]
       ],
@@ -7403,11 +7385,16 @@
       "condition": [
         [
           {
-            "paths": [
-              "global",
-              "image.registry"
-            ],
-            "type": "or"
+            "path": "global",
+            "type": "truthy"
+          },
+          {
+            "path": "image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "global.imageRegistry",
+            "type": "not"
           },
           {
             "paths": [
@@ -7415,29 +7402,23 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "image.registry",
+            "type": "truthy"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global.imageRegistry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ]
+            "path": "global",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
             ],
-            "type": "any_of"
+            "type": "or"
           }
         ]
       ],
@@ -7506,69 +7487,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "path": "global.imageRegistry",
-                  "type": "not"
-                },
-                {
-                  "path": "image.registry",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                },
-                {
-                  "path": "image.registry",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "global",
-              "image.registry"
-            ],
-            "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global.imageRegistry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
+        []
       ],
       "kind": "Serialized",
       "path": [
@@ -7652,74 +7571,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "path": "global.imageRegistry",
-                  "type": "not"
-                },
-                {
-                  "path": "image.registry",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                },
-                {
-                  "path": "image.registry",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "global",
-              "image.registry"
-            ],
-            "type": "or"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global.imageRegistry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -10551,16 +10402,6 @@
             "start": 953
           },
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.configmapName"
-          ],
-          "span": {
-            "end": 3490,
-            "start": 3435
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
         }
       ],
       "resource": {
@@ -18753,6 +18594,10 @@
       "condition": [
         [
           {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
             "path": "persistence.enabled",
             "type": "truthy"
           },
@@ -18761,34 +18606,30 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "global",
-              "volumePermissions.image.registry"
-            ],
-            "type": "or"
+            "path": "volumePermissions.image.registry",
+            "type": "truthy"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global.imageRegistry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.registry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
+            "path": "global.imageRegistry",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.image.registry",
+            "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not"
           }
         ]
       ],
@@ -18865,75 +18706,6 @@
           {
             "path": "volumePermissions.enabled",
             "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "path": "global.imageRegistry",
-                  "type": "not"
-                },
-                {
-                  "path": "volumePermissions.image.registry",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                },
-                {
-                  "path": "volumePermissions.image.registry",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.enabled",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "global",
-              "volumePermissions.image.registry"
-            ],
-            "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global.imageRegistry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.registry",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],

@@ -37,7 +37,8 @@ pub use emission_policy::{
     SchemaProfile,
 };
 pub use emission_report::{
-    CanonicalizationCounts, CarrierCounts, EmissionReport, FactCounts, MandatoryOutcomes,
+    CanonicalizationCounts, CarrierCounts, EmissionReport, FactCounts, InsertionAbstentionCounts,
+    MandatoryOutcomes,
 };
 
 /// Inputs for JSON Schema generation from the current contract schema signals.

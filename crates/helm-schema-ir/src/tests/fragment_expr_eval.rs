@@ -1532,6 +1532,32 @@ fn helper_output_retains_a_token_initial_printf_argument() {
 }
 
 #[test]
+fn guarded_formatter_assignment_does_not_emit_dead_fallback_failures() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "image" -}}
+            {{- $image := "repository:tag" -}}
+            {{- if or .Values.local .Values.global -}}
+            {{- $image = printf "%s/%s" (.Values.local | default .Values.global) $image -}}
+            {{- end -}}
+            {{- $image -}}
+            {{- end -}}
+        "#},
+    );
+    let symbolic = crate::SymbolicIrContext::new(&defines);
+    let signals = symbolic
+        .generate_contract_ir(r#"image: {{ include "image" . }}"#)
+        .finalize()
+        .into_schema_signals();
+    sim_assert_eq!(
+        have: signals.terminal_clauses(),
+        want: &[] as &[Vec<helm_schema_core::ConditionalGuard>]
+    );
+}
+
+#[test]
 fn helper_scalar_output_retains_known_arms_beside_an_unknown_arm() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(

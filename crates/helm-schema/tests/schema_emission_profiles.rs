@@ -1,7 +1,7 @@
 //! Monotonicity and semantic-oracle harness for schema emission profiles.
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
@@ -9,23 +9,82 @@ use test_util::prelude::sim_assert_eq;
 mod harness;
 
 use harness::{
-    ContractVerdict, ControlCategory, ProbeCoverage, ProbeInstance, ProfileSchemas,
-    SemanticControl, Transport, generate_profile_outputs, generate_profile_schemas,
+    ContractVerdict, ControlCategory, GuardSamplingStrategy, ProbeCoverage, ProbeInstance,
+    ProfileSchemas, SemanticControl, Transport, generate_profile_outputs, generate_profile_schemas,
     read_chart_schema_fixture, read_json_fixture, read_root_defaults, sparse_override,
     structural_probe_battery, structural_probe_battery_with_coverage,
 };
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 struct ProbeCoverageReport {
     baseline_ref: String,
     charts: Vec<ProbeCoverage>,
 }
 
+fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
+    eyre::ensure!(
+        chart.base_dropped == 0,
+        "base probes were truncated: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.third_level_dropped == 0,
+        "depth-three probes were truncated: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.base_candidates == chart.base_emitted,
+        "base probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.third_level_candidates == chart.third_level_emitted,
+        "depth-three probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guards_discovered == chart.guards_attempted + chart.guards_skipped_by_cap,
+        "guard accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guards_attempted == chart.guard_pairs_emitted + chart.guards_without_witness_pair,
+        "guard witness accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.composite_targets
+            == chart.composite_pairs_emitted
+                + chart.composite_targets_without_payload
+                + chart.composite_pairs_dropped_by_cap,
+        "composite probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guard_sampling_strategy == GuardSamplingStrategy::SchemaOrderPrefix,
+        "undisclosed guard sampling strategy: {chart:?}"
+    );
+    eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
+    Ok(())
+}
+
+#[test]
+fn probe_coverage_validation_rejects_synthetic_truncation() {
+    let coverage = ProbeCoverage {
+        label: "synthetic truncation".to_string(),
+        base_candidates: 2,
+        base_emitted: 1,
+        base_dropped: 1,
+        third_level_candidates: 2,
+        third_level_emitted: 1,
+        third_level_dropped: 1,
+        total_emitted: 2,
+        ..ProbeCoverage::default()
+    };
+
+    assert!(validate_probe_coverage(&coverage).is_err());
+}
+
 #[derive(Default)]
 struct AcceptanceComparison {
+    charts_checked: usize,
     probes_checked: usize,
     flips: Vec<String>,
     coverage: Vec<ProbeCoverage>,
+    helm_adjudication_failures: Vec<String>,
 }
 
 const LEAN_FIXTURE_CHARTS: &[&str] = &[
@@ -875,30 +934,7 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     let _guard = test_util::builder().with_tracing(false).build()?;
     let (charts_checked, probes_checked, flips, coverage) = corpus_acceptance_flips()?;
     for chart in &coverage {
-        eyre::ensure!(
-            chart.base_candidates == chart.base_emitted + chart.base_dropped,
-            "base probe accounting mismatch: {chart:?}"
-        );
-        eyre::ensure!(
-            chart.third_level_candidates == chart.third_level_emitted + chart.third_level_dropped,
-            "depth-three probe accounting mismatch: {chart:?}"
-        );
-        eyre::ensure!(
-            chart.guards_discovered == chart.guards_attempted + chart.guards_skipped_by_cap,
-            "guard accounting mismatch: {chart:?}"
-        );
-        eyre::ensure!(
-            chart.guards_attempted == chart.guard_pairs_emitted + chart.guards_without_witness_pair,
-            "guard witness accounting mismatch: {chart:?}"
-        );
-        eyre::ensure!(
-            chart.composite_targets
-                == chart.composite_pairs_emitted
-                    + chart.composite_targets_without_payload
-                    + chart.composite_pairs_dropped_by_cap,
-            "composite probe accounting mismatch: {chart:?}"
-        );
-        eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
+        validate_probe_coverage(chart)?;
     }
     let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
         .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
@@ -917,11 +953,6 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     bytes.push(b'\n');
     std::fs::write(&report_path, bytes)
         .wrap_err_with(|| format!("write {}", report_path.display()))?;
-    let recorded: ProbeCoverageReport = serde_json::from_slice(
-        &std::fs::read(&report_path).wrap_err_with(|| format!("read {}", report_path.display()))?,
-    )
-    .wrap_err("parse recorded probe coverage")?;
-    sim_assert_eq!(have: recorded, want: report);
     eyre::ensure!(
         flips.is_empty(),
         "round 73 changed fixture acceptance:\n{}",
@@ -931,7 +962,73 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     Ok(())
 }
 
+#[test]
+#[ignore = "maintenance: compares the Round 74 dump and records probe coverage"]
+fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    if std::env::var("ADJUDICATE_WITH_HELM").is_ok() {
+        let version = std::process::Command::new("helm")
+            .args(["version", "--template", "{{.Version}}"])
+            .output()
+            .wrap_err("read Helm version for Round 74 adjudication")?;
+        eyre::ensure!(version.status.success(), "helm version failed");
+        eyre::ensure!(
+            String::from_utf8(version.stdout)?.trim() == "v4.2.3",
+            "Round 74 adjudication requires Helm v4.2.3"
+        );
+    }
+    let AcceptanceComparison {
+        charts_checked,
+        probes_checked,
+        flips,
+        coverage,
+        helm_adjudication_failures,
+    } = corpus_acceptance_comparison()?;
+    for chart in &coverage {
+        validate_probe_coverage(chart)?;
+    }
+    let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
+        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+    let report = ProbeCoverageReport {
+        baseline_ref,
+        charts: coverage,
+    };
+    let report_path = std::path::PathBuf::from(
+        std::env::var_os("SCHEMA_PROBE_COVERAGE_REPORT")
+            .ok_or_eyre("SCHEMA_PROBE_COVERAGE_REPORT must name the report file")?,
+    );
+    if let Some(parent) = report_path.parent() {
+        std::fs::create_dir_all(parent).wrap_err_with(|| format!("create {}", parent.display()))?;
+    }
+    let mut bytes = serde_json::to_vec_pretty(&report).wrap_err("serialize probe coverage")?;
+    bytes.push(b'\n');
+    std::fs::write(&report_path, bytes)
+        .wrap_err_with(|| format!("write {}", report_path.display()))?;
+    eyre::ensure!(
+        helm_adjudication_failures.is_empty(),
+        "Round 74 Helm adjudication failures:\n{}",
+        helm_adjudication_failures.join("\n")
+    );
+    eyre::ensure!(
+        flips.is_empty(),
+        "round 74 changed fixture acceptance:\n{}",
+        flips.join("\n")
+    );
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
 fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<ProbeCoverage>)> {
+    let comparison = corpus_acceptance_comparison()?;
+    Ok((
+        comparison.charts_checked,
+        comparison.probes_checked,
+        comparison.flips,
+        comparison.coverage,
+    ))
+}
+
+fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
     let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
         .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
     let fixture_dir = test_util::workspace_testdata().join("chart-corpus-schemas");
@@ -942,7 +1039,7 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<Pro
     fixture_paths.sort();
 
     let mut comparison = AcceptanceComparison::default();
-    let mut charts_checked = 0;
+    let chart_filter = std::env::var("SCHEMA_ACCEPTANCE_CHART").ok();
     for fixture_path in fixture_paths {
         let Some(filename) = fixture_path.file_name().and_then(|name| name.to_str()) else {
             continue;
@@ -950,6 +1047,12 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<Pro
         let Some(chart) = filename.strip_suffix(".schema.json") else {
             continue;
         };
+        if chart_filter
+            .as_deref()
+            .is_some_and(|filter| filter != chart)
+        {
+            continue;
+        }
         let relative_path = format!("testdata/chart-corpus-schemas/{filename}");
         let baseline = read_schema_at_ref(&baseline_ref, &relative_path)?;
         let dump_filename = format!("helm-schema.cli.chart-corpus.{chart}.schema.json");
@@ -963,10 +1066,13 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<Pro
             &defaults,
             &mut comparison,
         )?;
-        charts_checked += 1;
+        comparison.charts_checked += 1;
     }
     let lean_fixture_dir = test_util::workspace_testdata().join("emission-profile-schemas/lean");
     for chart in LEAN_FIXTURE_CHARTS {
+        if chart_filter.is_some() {
+            continue;
+        }
         let filename = format!("{chart}.schema.json");
         let fixture_path = lean_fixture_dir.join(&filename);
         let relative_path = format!("testdata/emission-profile-schemas/lean/{filename}");
@@ -986,15 +1092,10 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<Pro
             &defaults,
             &mut comparison,
         )?;
-        charts_checked += 1;
+        comparison.charts_checked += 1;
     }
 
-    Ok((
-        charts_checked,
-        comparison.probes_checked,
-        comparison.flips,
-        comparison.coverage,
-    ))
+    Ok(comparison)
 }
 
 fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serde_json::Value> {
@@ -1045,12 +1146,65 @@ fn collect_acceptance_flips(
         comparison.probes_checked += 1;
         let (before, after) = profiles.verdicts(&probe);
         if before != after {
+            if std::env::var("ADJUDICATE_WITH_HELM").is_ok()
+                && let Err(error) = adjudicate_round74_flip(
+                    label,
+                    &probe_name,
+                    &probe,
+                    after,
+                    &profiles.baseline_errors(&probe),
+                    &profiles.candidate_errors(&probe),
+                )
+            {
+                comparison
+                    .helm_adjudication_failures
+                    .push(error.to_string());
+            }
             comparison.flips.push(format!(
                 "{label}: {probe_name}: before={before}, after={after}"
             ));
         }
     }
     comparison.coverage.push(chart_coverage);
+    Ok(())
+}
+
+fn adjudicate_round74_flip(
+    chart: &str,
+    probe_name: &str,
+    probe: &ProbeInstance,
+    schema_accepts: bool,
+    baseline_errors: &[String],
+    candidate_errors: &[String],
+) -> eyre::Result<()> {
+    let values = probe.helm_values_file().ok_or_else(|| {
+        eyre::eyre!("{chart}: {probe_name}: coalesced-only probe cannot be replayed by Helm")
+    })?;
+    let scratch_root = test_util::workspace_root().join("target/round74-helm-adjudication");
+    std::fs::create_dir_all(&scratch_root)
+        .wrap_err_with(|| format!("create {}", scratch_root.display()))?;
+    let scratch = tempfile::Builder::new()
+        .prefix("probe-")
+        .tempdir_in(&scratch_root)
+        .wrap_err("create Round 74 Helm scratch directory")?;
+    let values_path = scratch.path().join("values.json");
+    std::fs::write(&values_path, serde_json::to_vec(&values)?)
+        .wrap_err("write Round 74 Helm values file")?;
+    let chart_path = test_util::workspace_testdata().join("charts").join(chart);
+    let rendered = std::process::Command::new("helm")
+        .args(["template", "round74"])
+        .arg(chart_path)
+        .arg("--skip-schema-validation")
+        .arg("-f")
+        .arg(values_path)
+        .output()
+        .wrap_err_with(|| format!("render {chart}: {probe_name}"))?;
+    eyre::ensure!(
+        rendered.status.success() == schema_accepts,
+        "{chart}: {probe_name}: candidate schema accepts={schema_accepts}, Helm renders={}; baseline errors={baseline_errors:?}; candidate errors={candidate_errors:?}; {}",
+        rendered.status.success(),
+        String::from_utf8_lossy(&rendered.stderr)
+    );
     Ok(())
 }
 
