@@ -1730,7 +1730,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Round 74 — rendered-default truthiness and accounting closure
 
-- Status: landed; commit pending.
+- Status: landed.
 - Measured results:
   - `printf "%s"` now has one typed scalar-dispatch representation for the
     rendered output of a raw identity. A raw-falsy non-string such as `false`
@@ -1887,4 +1887,4 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; all 32 downstream charts complete.
   - `task tokei:core`: exit 0; 61,262 production Rust LOC.
-- Commit: pending.
+- Commit: `6a9e37b` (`fix(schema): close round-74 review findings`).
