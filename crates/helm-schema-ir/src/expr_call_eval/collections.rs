@@ -47,22 +47,32 @@ pub(super) fn eval_default(
         .filter(|expr| matches!(expr, TemplateExpr::Literal(_)))
         .and_then(expression_schema_type)
     {
-        effects.add_fallback_type_hints(primary_paths, schema_type);
+        effects.add_fallback_type_hints(primary_paths.clone(), schema_type);
     }
     let mut values = primary.value.into_iter().collect::<Vec<_>>();
     let mut fallback_paths = BTreeSet::new();
     let mut fallback_dispatch = None;
     for fallback in fallback_args {
         let mut result = eval_expr_with_helper_calls(fallback, env, resolver);
-        if let DefaultPrimarySelection::Exact(primary_selection_paths) = &primary_selection {
-            let selection = primary_selection_paths
+        let selection = match &primary_selection {
+            DefaultPrimarySelection::Exact(primary_selection_paths) => primary_selection_paths
                 .iter()
                 .cloned()
                 .map(Predicate::truthy_path)
                 .map(|predicate| predicate.negated())
-                .collect();
-            super::conjoin_result_selection(&mut result, &selection);
-        }
+                .collect(),
+            DefaultPrimarySelection::Opaque => {
+                BTreeSet::from([Predicate::approximate_output_selection(
+                    "default fallback after opaque primary",
+                    primary_paths.clone(),
+                    Predicate::False,
+                )])
+            }
+        };
+        // An opaque primary still selects its fallback conditionally.
+        // Keeping an unlowerable selection marker prevents later consumers
+        // from mistaking the fallback for an unconditional raw operand.
+        super::conjoin_result_selection(&mut result, &selection);
         fallback_dispatch = result.scalar_dispatch.clone();
         fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);

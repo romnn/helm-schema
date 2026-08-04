@@ -1,8 +1,39 @@
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
 use super::{OwnedDefinitions, prune_unreachable_owned_definitions};
+
+#[test]
+fn jsonschema_resolver_decodes_the_whole_uri_fragment_before_pointer_splitting() -> eyre::Result<()>
+{
+    let encoded_separator = json!({
+        "$defs": {
+            "a": { "b": { "const": "nested" } },
+            "a/b": { "const": "flat" },
+        },
+        "$ref": "#/$defs/a%2Fb",
+    });
+    let validator = jsonschema::validator_for(&encoded_separator)
+        .map_err(|error| eyre::eyre!("compile encoded-separator schema: {error}"))?;
+    sim_assert_eq!(have: validator.is_valid(&json!("nested")), want: true);
+    sim_assert_eq!(have: validator.is_valid(&json!("flat")), want: false);
+
+    let encoded_pointer = json!({
+        "$defs": {
+            "name": { "const": "decoded" },
+        },
+        "$ref": "#%2F$defs%2Fname",
+    });
+    let error = jsonschema::validator_for(&encoded_pointer)
+        .err()
+        .ok_or_eyre("encoded anchor unexpectedly compiled as a JSON Pointer")?;
+    sim_assert_eq!(
+        have: error.to_string().contains("Anchor '%2F$defs%2Fname' does not exist"),
+        want: true
+    );
+    Ok(())
+}
 
 #[test]
 fn late_prune_closes_transitive_reachability_and_removes_only_orphans() {
@@ -121,10 +152,16 @@ fn late_prune_decodes_percent_encoded_definition_refs() {
 }
 
 #[test]
-fn late_prune_decodes_percent_encoding_within_each_pointer_segment() {
+fn late_prune_decodes_the_whole_fragment_before_splitting_pointer_segments() {
     let mut schema = json!({
         "$defs": {
-            "provider/name": { "type": "string" },
+            "provider": {
+                "properties": {
+                    "name": { "type": "string" },
+                },
+                "type": "object",
+            },
+            "provider/name": { "type": "boolean" },
             "orphan": { "type": "integer" },
         },
         "$ref": "#/%24defs/provider%2Fname",
@@ -133,11 +170,16 @@ fn late_prune_decodes_percent_encoding_within_each_pointer_segment() {
 
     let removed = prune_unreachable_owned_definitions(&mut schema, &owned);
 
-    sim_assert_eq!(have: removed, want: 1);
+    sim_assert_eq!(have: removed, want: 2);
     sim_assert_eq!(
         have: schema.get("$defs"),
         want: Some(&json!({
-            "provider/name": { "type": "string" },
+            "provider": {
+                "properties": {
+                    "name": { "type": "string" },
+                },
+                "type": "object",
+            },
         }))
     );
 }

@@ -56,6 +56,8 @@ pub struct CanonicalizationCounts {
     pub redundant: usize,
     /// Facts handled by the general fallback.
     pub fallback: usize,
+    /// Default backfills skipped because object-union arms cannot expose an equivalent descendant.
+    pub default_backfill_abstentions: usize,
 }
 
 /// Fact and carrier accounting produced alongside a generated schema.

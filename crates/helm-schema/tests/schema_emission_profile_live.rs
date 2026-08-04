@@ -242,7 +242,7 @@ fn replay_opaque_formatter_default_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
     let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join("target/round70-live");
+        .join("target/round73-live");
     std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
     let chart = tempfile::Builder::new()
         .prefix("opaque-formatter-default-")
@@ -260,35 +260,132 @@ fn replay_opaque_formatter_default_against_helm() -> eyre::Result<()> {
     std::fs::write(
         chart.path().join("values.yaml"),
         indoc! {"
-            a: set
-            z: fallback
+            alpha: seta
+            beta: setb
+            omega: fallo
         "},
     )?;
-    std::fs::write(
-        chart.path().join("templates/configmap.yaml"),
-        indoc! {r#"
-            apiVersion: v1
-            kind: ConfigMap
-            metadata:
-              name: opaque-formatter-default
-            data:
-              plain: {{ printf "%s" .Values.a | default .Values.z }}
-              encoded: {{ printf "%s" .Values.a | default .Values.z | b64enc }}
-        "#},
-    )?;
 
-    let output = Command::new("helm")
-        .args(["template", "opaque-formatter-default"])
-        .arg(chart.path())
-        .arg("--skip-schema-validation")
-        .args(["--set", "z=null"])
-        .output()
-        .wrap_err("render opaque formatter default control")?;
-    eyre::ensure!(
-        output.status.success(),
-        "Helm rejected a dormant opaque fallback: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
+    for (expression, selected_number_renders) in [
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | b64enc"#,
+            false,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | trunc 5"#,
+            false,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | sha256sum"#,
+            false,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | quote"#,
+            true,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | trimSuffix "-x""#,
+            false,
+        ),
+        (
+            r#"(printf "%s" .Values.alpha) | default .Values.omega | b64enc"#,
+            false,
+        ),
+        (
+            r#"default .Values.omega (printf "%s" .Values.alpha) | b64enc"#,
+            false,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.beta | default .Values.omega | b64enc"#,
+            false,
+        ),
+    ] {
+        replay_opaque_formatter_expression(chart.path(), expression, selected_number_renders)?;
+    }
+    Ok(())
+}
+
+fn replay_opaque_formatter_expression(
+    chart: &Path,
+    expression: &str,
+    selected_number_renders: bool,
+) -> eyre::Result<()> {
+    std::fs::write(
+        chart.join("templates/configmap.yaml"),
+        format!(
+            "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: opaque-formatter-default\ndata:\n  token: {{{{ {expression} }}}}\n"
+        ),
+    )?;
+    for (string_overrides, typed_overrides, renders, label) in [
+        (None, Some("omega=null"), true, "deleted dormant fallback"),
+        (None, Some("omega=7"), true, "numeric dormant fallback"),
+        (
+            Some("alpha=,beta=,omega=selected"),
+            None,
+            true,
+            "selected string fallback",
+        ),
+        (
+            Some("alpha=,beta="),
+            Some("omega=7"),
+            selected_number_renders,
+            "selected numeric fallback",
+        ),
+    ] {
+        let mut command = Command::new("helm");
+        command
+            .args(["template", "opaque-formatter-default"])
+            .arg(chart)
+            .arg("--skip-schema-validation");
+        if let Some(overrides) = string_overrides {
+            command.args(["--set-string", overrides]);
+        }
+        if let Some(overrides) = typed_overrides {
+            command.args(["--set", overrides]);
+        }
+        let output = command
+            .output()
+            .wrap_err("render opaque formatter default control")?;
+        eyre::ensure!(
+            output.status.success() == renders,
+            "opaque fallback {label}: expression={expression}; renders={}; want={renders}; stderr={}",
+            output.status.success(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_oauth2_proxy_tpl_default_eagerness_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let chart = test_util::workspace_testdata().join("charts/oauth2-proxy");
+    for (image_registry, global_registry, renders, label) in [
+        ("", "7", false, "selected non-string fallback"),
+        (
+            "quay.io",
+            "7",
+            false,
+            "non-string fallback is still evaluated eagerly",
+        ),
+        ("", "ghcr.io", true, "selected string fallback"),
+    ] {
+        let output = Command::new("helm")
+            .args(["template", "oauth2-proxy"])
+            .arg(&chart)
+            .arg("--skip-schema-validation")
+            .args(["--set-string", &format!("image.registry={image_registry}")])
+            .args(["--set", &format!("global.imageRegistry={global_registry}")])
+            .output()
+            .wrap_err("render oauth2-proxy tpl default control")?;
+        eyre::ensure!(
+            output.status.success() == renders,
+            "oauth2-proxy {label}: renders={}; want={renders}; stderr={}",
+            output.status.success(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
     Ok(())
 }
 

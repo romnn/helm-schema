@@ -175,6 +175,31 @@ fn canonical_empty_required_entries_still_type_an_untyped_object_host() -> eyre:
 }
 
 #[test]
+fn canonical_empty_required_entries_leave_a_typed_foreign_host_untouched() {
+    let mut schema = SchemaDocument::new_root_object();
+    schema.insert_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(json!({
+            "description": "provider-owned",
+            "properties": { "member": { "type": "string" } },
+            "type": "object",
+        })),
+    );
+    let before = schema.clone().into_value();
+
+    let outcome = schema.canonicalize_constraint_at_path(
+        &["value".to_string()],
+        &json!({ "type": "object", "required": [] }),
+    );
+
+    sim_assert_eq!(
+        have: outcome,
+        want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant)
+    );
+    sim_assert_eq!(have: schema.into_value(), want: before);
+}
+
+#[test]
 fn canonicalization_falls_back_without_mutating_a_missing_closed_root_slot() {
     let mut schema = SchemaDocument::new_root_object();
     schema.insert_path_schema(&["known".to_string()], SchemaNode::type_named("string"));
@@ -377,9 +402,12 @@ fn multi_arm_object_union_abstains_from_ambiguous_default_backfill() -> eyre::Re
         &["value".to_string()],
         SchemaNode::foreign(provider_payload),
     );
-    schema.insert_path_schema(
-        &["value".to_string(), "member".to_string()],
-        SchemaNode::foreign(json!({ "type": "string" })),
+    sim_assert_eq!(
+        have: schema.insert_path_schema(
+            &["value".to_string(), "member".to_string()],
+            SchemaNode::foreign(json!({ "type": "string" })),
+        ),
+        want: 1
     );
     let schema = schema.into_value();
     let validator = jsonschema::validator_for(&schema)
@@ -397,6 +425,115 @@ fn multi_arm_object_union_abstains_from_ambiguous_default_backfill() -> eyre::Re
     assert!(!validator.is_valid(&json!({
         "value": { "member": "default", "variant": "integer" },
     })));
+    Ok(())
+}
+
+#[test]
+fn multi_arm_object_union_abstains_when_a_wildcard_hides_descendants() -> eyre::Result<()> {
+    let provider_payload = json!({
+        "anyOf": [
+            {
+                "properties": {
+                    "entries": {
+                        "additionalProperties": {
+                            "properties": { "member": { "type": "integer" } },
+                            "required": ["member"],
+                            "type": "object",
+                        },
+                        "type": "object",
+                    },
+                },
+                "required": ["entries"],
+                "type": "object",
+            },
+            {
+                "properties": {
+                    "entries": {
+                        "additionalProperties": {
+                            "properties": { "member": { "type": "boolean" } },
+                            "required": ["member"],
+                            "type": "object",
+                        },
+                        "type": "object",
+                    },
+                },
+                "required": ["entries"],
+                "type": "object",
+            },
+        ],
+    });
+    let mut schema = SchemaDocument::new_root_object();
+    schema.insert_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(provider_payload),
+    );
+
+    sim_assert_eq!(
+        have: schema.insert_path_schema(
+            &[
+                "value".to_string(),
+                "entries".to_string(),
+                "*".to_string(),
+                "member".to_string(),
+            ],
+            SchemaNode::type_named("string"),
+        ),
+        want: 1
+    );
+    let schema = schema.into_value();
+    let validator = jsonschema::validator_for(&schema)
+        .map_err(|error| eyre::eyre!("compile wildcard-arm schema: {error}"))?;
+    assert!(validator.is_valid(&json!({
+        "value": { "entries": { "one": { "member": 1 } } },
+    })));
+    assert!(validator.is_valid(&json!({
+        "value": { "entries": { "one": { "member": true } } },
+    })));
+    assert!(!validator.is_valid(&json!({
+        "value": { "entries": { "one": { "member": "default" } } },
+    })));
+    Ok(())
+}
+
+#[test]
+fn multi_arm_object_union_abstains_when_all_of_hides_descendants() -> eyre::Result<()> {
+    let provider_payload = json!({
+        "anyOf": [
+            {
+                "allOf": [{
+                    "properties": { "member": { "type": "integer" } },
+                    "required": ["member"],
+                    "type": "object",
+                }],
+            },
+            {
+                "allOf": [{
+                    "properties": { "member": { "type": "boolean" } },
+                    "required": ["member"],
+                    "type": "object",
+                }],
+            },
+        ],
+    });
+    let mut schema = SchemaDocument::new_root_object();
+    schema.insert_path_schema(
+        &["value".to_string()],
+        SchemaNode::foreign(provider_payload),
+    );
+
+    sim_assert_eq!(
+        have: schema.insert_path_schema(
+            &["value".to_string(), "member".to_string()],
+            SchemaNode::type_named("string"),
+        ),
+        want: 1
+    );
+    let schema = schema.into_value();
+    let validator = jsonschema::validator_for(&schema)
+        .map_err(|error| eyre::eyre!("compile nested-allOf schema: {error}"))?;
+    assert!(validator.is_valid(&json!({ "value": { "member": 1 } })));
+    assert!(validator.is_valid(&json!({ "value": { "member": true } })));
+    assert!(!validator.is_valid(&json!({ "value": { "member": "default" } })));
     Ok(())
 }
 

@@ -187,18 +187,17 @@ fn definition_id_from_reference(reference: &str) -> Result<Option<DefinitionId>,
     let Some(fragment) = reference.strip_prefix('#') else {
         return Ok(None);
     };
-    let decoded_segments = fragment
+    if !fragment.starts_with('/') {
+        return Ok(None);
+    }
+    if has_invalid_percent_encoding(fragment) {
+        return Err(());
+    }
+    let decoded_fragment = percent_decode_str(fragment).decode_utf8().map_err(|_| ())?;
+    let decoded_segments = decoded_fragment
         .split('/')
-        .map(|segment| {
-            if has_invalid_percent_encoding(segment) {
-                return Err(());
-            }
-            percent_decode_str(segment)
-                .decode_utf8()
-                .map(|segment| decode_json_pointer_segment(&segment))
-                .map_err(|_| ())
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+        .map(decode_json_pointer_segment)
+        .collect::<Vec<_>>();
     let [root, keyword, name, ..] = decoded_segments.as_slice() else {
         return Ok(None);
     };

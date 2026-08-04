@@ -912,28 +912,127 @@ fn printf_plain_slot_contract_follows_chained_default_selection() {
 }
 
 #[test]
-fn opaque_formatter_default_primary_abstains_from_scoping_the_fallback() {
-    let src = indoc! {r#"
+fn opaque_formatter_default_primary_keeps_fallback_consumers_conditional() {
+    let values_yaml = indoc! {"
+        alpha: seta
+        beta: setb
+        omega: fallo
+    "};
+    for (expression, selected_number_accepted) in [
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | b64enc"#,
+            true,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | trunc 5"#,
+            true,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | sha256sum"#,
+            true,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | quote"#,
+            true,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.omega | trimSuffix "-x""#,
+            true,
+        ),
+        (
+            r#"(printf "%s" .Values.alpha) | default .Values.omega | b64enc"#,
+            true,
+        ),
+        (
+            r#"default .Values.omega (printf "%s" .Values.alpha) | b64enc"#,
+            true,
+        ),
+        (
+            r#"printf "%s" .Values.alpha | default .Values.beta | default .Values.omega | b64enc"#,
+            false,
+        ),
+    ] {
+        let src = formatdoc! {r"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              token: {{{{ {expression} }}}}
+        "};
+        let schema = schema_for_values_yaml(parse_ir(&src), Some(values_yaml));
+        for (overrides, want, label) in [
+            (
+                serde_json::json!({ "omega": null }),
+                true,
+                "deleted dormant fallback",
+            ),
+            (
+                serde_json::json!({ "omega": 7 }),
+                true,
+                "non-string dormant fallback",
+            ),
+            (
+                serde_json::json!({ "alpha": "", "beta": "", "omega": "selected" }),
+                true,
+                "selected string fallback",
+            ),
+            (
+                serde_json::json!({ "alpha": "", "beta": "", "omega": 7 }),
+                selected_number_accepted,
+                "selected numeric fallback follows the recoverable selection boundary",
+            ),
+        ] {
+            let instance = composed_instance(values_yaml, overrides);
+            assert!(
+                schema_accepts_instance(&schema, &instance) == want,
+                "opaque formatter fallback ({label}): expression={expression}; \
+                 instance={instance}; want={want}; schema={schema}"
+            );
+        }
+    }
+}
+
+#[test]
+fn identity_default_chain_keeps_exact_final_fallback_selection() {
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
         data:
-          plain: {{ printf "%s" .Values.a | default .Values.z }}
-          encoded: {{ printf "%s" .Values.a | default .Values.z | b64enc }}
-    "#};
+          token: {{ .Values.alpha | default .Values.beta | default .Values.omega | b64enc }}
+    "};
     let values_yaml = indoc! {"
-        a: set
-        z: fallback
+        alpha: seta
+        beta: setb
+        omega: fallo
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    let instance = composed_instance(values_yaml, serde_json::json!({ "z": null }));
 
-    assert!(
-        schema_accepts_instance(&schema, &instance),
-        "a formatter-derived primary does not make its dormant fallback mandatory: \
-         instance={instance}; schema={schema}"
-    );
+    for (overrides, want, label) in [
+        (
+            serde_json::json!({ "omega": 7 }),
+            true,
+            "a live first identity leaves the numeric fallback dormant",
+        ),
+        (
+            serde_json::json!({ "alpha": "", "beta": "", "omega": "selected" }),
+            true,
+            "the final identity fallback supplies valid text",
+        ),
+        (
+            serde_json::json!({ "alpha": "", "beta": "", "omega": 7 }),
+            false,
+            "the selected numeric fallback violates the string consumer",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "exact identity selection ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
 }
 
 /// A helper-local fallback keeps the formatter contract on the arm that
@@ -1510,6 +1609,20 @@ fn tpl_program_contract_survives_default_chain() {
         // The eagerly evaluated fallback arm parses its own program too
         (
             serde_json::json!({ "global": { "imageRegistry": {} } }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "image": { "registry": "" },
+                "global": { "imageRegistry": 7 },
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "image": { "registry": "quay.io" },
+                "global": { "imageRegistry": 7 },
+            }),
             false,
         ),
         (

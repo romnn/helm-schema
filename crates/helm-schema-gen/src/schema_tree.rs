@@ -38,8 +38,12 @@ impl SchemaDocument {
         self.root.visit_foreign_values(visit);
     }
 
-    pub(crate) fn insert_path_schema(&mut self, path_segments: &[String], schema: SchemaNode) {
-        insert_schema_at_parts(&mut self.root, path_segments, schema);
+    pub(crate) fn insert_path_schema(
+        &mut self,
+        path_segments: &[String],
+        schema: SchemaNode,
+    ) -> usize {
+        insert_schema_at_parts(&mut self.root, path_segments, schema)
     }
 
     /// Opens the root `global` property. Helm shares `global` values across
@@ -127,7 +131,7 @@ impl SchemaDocument {
         values_yaml_doc: &YamlValue,
         root_paths: &[Vec<String>],
         skip_paths: &BTreeSet<Vec<String>>,
-    ) {
+    ) -> usize {
         let mut insertions = Vec::new();
         for root_path in root_paths {
             let Some(yaml) = yaml_value_at_segments(values_yaml_doc, root_path) else {
@@ -141,9 +145,10 @@ impl SchemaDocument {
                 &mut insertions,
             );
         }
-        for (path, schema) in insertions {
-            self.insert_path_schema(&path, schema);
-        }
+        insertions
+            .into_iter()
+            .map(|(path, schema)| self.insert_path_schema(&path, schema))
+            .sum()
     }
 
     pub(crate) fn into_value(self) -> Value {
@@ -286,6 +291,11 @@ fn apply_required_entries(
                 });
             if !all_slots_exist {
                 return Some(CanonicalConstraintOutcome::NotApplicable);
+            }
+            if required.is_empty() {
+                return Some(CanonicalConstraintOutcome::Applied(
+                    CanonicalConstraintApplication::Redundant,
+                ));
             }
             let existing = object
                 .entry("required".to_string())
@@ -1071,16 +1081,10 @@ fn insert_map_member_row(
     node: &mut SchemaNode,
     path_segments: &[String],
     leaf: &SchemaNode,
+    ambiguous_union_abstentions: &mut usize,
 ) -> bool {
     let Some((_, tail)) = path_segments.split_first() else {
         return false;
-    };
-    let insert = |member: &mut SchemaNode| {
-        if tail.is_empty() {
-            merge_into_schema_slot(member, leaf.clone());
-        } else {
-            insert_schema_at_parts(member, tail, leaf.clone());
-        }
     };
     match node {
         SchemaNode::Object {
@@ -1091,7 +1095,7 @@ fn insert_map_member_row(
             if member.is_false_schema() {
                 return false;
             }
-            insert(member.as_mut());
+            insert_map_member_schema(member.as_mut(), tail, leaf, ambiguous_union_abstentions);
             true
         }
         SchemaNode::Foreign(Value::Object(object))
@@ -1104,7 +1108,7 @@ fn insert_map_member_row(
                 .get("additionalProperties")
                 .cloned()
                 .map_or_else(SchemaNode::empty, SchemaNode::foreign);
-            insert(&mut member);
+            insert_map_member_schema(&mut member, tail, leaf, ambiguous_union_abstentions);
             object.insert("additionalProperties".to_string(), member.into_value());
             true
         }
@@ -1129,14 +1133,24 @@ fn insert_map_member_row(
                             .get("items")
                             .cloned()
                             .map_or_else(SchemaNode::empty, SchemaNode::foreign);
-                        insert(&mut items);
+                        insert_map_member_schema(
+                            &mut items,
+                            tail,
+                            leaf,
+                            ambiguous_union_abstentions,
+                        );
                         arm_object.insert("items".to_string(), items.into_value());
                         hosted = true;
                         continue;
                     }
                 }
                 let mut arm_node = SchemaNode::foreign(std::mem::take(arm));
-                hosted |= insert_map_member_row(&mut arm_node, path_segments, leaf);
+                hosted |= insert_map_member_row(
+                    &mut arm_node,
+                    path_segments,
+                    leaf,
+                    ambiguous_union_abstentions,
+                );
                 *arm = arm_node.into_value();
             }
             hosted
@@ -1145,7 +1159,35 @@ fn insert_map_member_row(
     }
 }
 
-fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf: SchemaNode) {
+fn insert_map_member_schema(
+    member: &mut SchemaNode,
+    tail: &[String],
+    leaf: &SchemaNode,
+    ambiguous_union_abstentions: &mut usize,
+) {
+    if tail.is_empty() {
+        merge_into_schema_slot(member, leaf.clone());
+    } else {
+        insert_schema_at_parts_tracking(member, tail, leaf.clone(), ambiguous_union_abstentions);
+    }
+}
+
+fn insert_schema_at_parts(
+    node: &mut SchemaNode,
+    path_segments: &[String],
+    leaf: SchemaNode,
+) -> usize {
+    let mut ambiguous_union_abstentions = 0;
+    insert_schema_at_parts_tracking(node, path_segments, leaf, &mut ambiguous_union_abstentions);
+    ambiguous_union_abstentions
+}
+
+fn insert_schema_at_parts_tracking(
+    node: &mut SchemaNode,
+    path_segments: &[String],
+    leaf: SchemaNode,
+    ambiguous_union_abstentions: &mut usize,
+) {
     let Some((head, tail)) = path_segments.split_first() else {
         return;
     };
@@ -1154,54 +1196,19 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
     // means "each member value" of whatever container the node already is:
     // an object-shaped node hosts it under `additionalProperties` instead
     // of growing an array alternative.
-    if head == "*" && insert_map_member_row(node, path_segments, &leaf) {
+    if head == "*" && insert_map_member_row(node, path_segments, &leaf, ambiguous_union_abstentions)
+    {
         return;
     }
 
-    if matches!(node, SchemaNode::Foreign(_)) && !node.is_empty_slot() {
-        // Descend through properties the resolved value already declares, so
-        // the descendant merges at the deepest existing node and that node's
-        // own openness decides the outcome (a top-level merge of a nested
-        // carrier would let the carrier's materialized closure shut an open
-        // map one level down).
-        if !tail.is_empty()
-            && head != "*"
-            && let SchemaNode::Foreign(value) = node
-            && let Some(child_value) = value
-                .get_mut("properties")
-                .and_then(|properties| properties.get_mut(head))
-        {
-            let mut child_node = SchemaNode::foreign(std::mem::take(child_value));
-            insert_schema_at_parts(&mut child_node, tail, leaf);
-            *child_value = child_node.into_value();
-            return;
-        }
-        if insert_into_canonical_object_conjunct(node, head, tail, &leaf) {
-            return;
-        }
-        // A union base (an off-state arm plus one open object arm, e.g. a
-        // declared-empty serialized map) hosts descendants in its open arm:
-        // merging a carrier at the union level would replace the open arm
-        // with the carrier's materialized closure.
-        if head != "*"
-            && let SchemaNode::Foreign(value) = node
-            && let Some(arms) = value.get_mut("anyOf").and_then(Value::as_array_mut)
-        {
-            let arm_is_open_object = |arm: &Value| {
-                arm.get("additionalProperties")
-                    .is_some_and(|ap| ap.as_bool() != Some(false))
-            };
-            let mut open_arms = arms.iter_mut().filter(|arm| arm_is_open_object(arm));
-            if let (Some(arm), None) = (open_arms.next(), open_arms.next()) {
-                let mut arm_node = SchemaNode::foreign(std::mem::take(arm));
-                insert_schema_at_parts(&mut arm_node, path_segments, leaf);
-                *arm = arm_node.into_value();
-                return;
-            }
-        }
-        let mut fragment = SchemaNode::empty();
-        insert_schema_at_parts(&mut fragment, path_segments, leaf);
-        merge_into_schema_slot(node, fragment);
+    if insert_into_nonempty_foreign_slot(
+        node,
+        path_segments,
+        head,
+        tail,
+        &leaf,
+        ambiguous_union_abstentions,
+    ) {
         return;
     }
 
@@ -1217,14 +1224,20 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
                     { "additionalProperties": {}, "type": "object" },
                 ]
             }));
-            let hosted = insert_map_member_row(node, path_segments, &leaf);
+            let hosted =
+                insert_map_member_row(node, path_segments, &leaf, ambiguous_union_abstentions);
             debug_assert!(hosted, "two-lane member seed must host the row");
             return;
         }
         if !node.is_array_like() {
             let existing = std::mem::replace(node, SchemaNode::empty());
             let mut array_variant = new_array_slot();
-            insert_schema_at_parts(&mut array_variant, path_segments, leaf);
+            insert_schema_at_parts_tracking(
+                &mut array_variant,
+                path_segments,
+                leaf,
+                ambiguous_union_abstentions,
+            );
             *node = SchemaNode::any_of(vec![existing, array_variant]);
             return;
         }
@@ -1232,7 +1245,7 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         if tail.is_empty() {
             merge_into_schema_slot(items, leaf);
         } else {
-            insert_schema_at_parts(items, tail, leaf);
+            insert_schema_at_parts_tracking(items, tail, leaf, ambiguous_union_abstentions);
         }
         return;
     }
@@ -1270,7 +1283,79 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
     if !next_is_array {
         child.clear_exact_empty_constraint_for_descendant();
     }
-    insert_schema_at_parts(child, tail, leaf);
+    insert_schema_at_parts_tracking(child, tail, leaf, ambiguous_union_abstentions);
+}
+
+fn insert_into_nonempty_foreign_slot(
+    node: &mut SchemaNode,
+    path_segments: &[String],
+    head: &str,
+    tail: &[String],
+    leaf: &SchemaNode,
+    ambiguous_union_abstentions: &mut usize,
+) -> bool {
+    if !matches!(node, SchemaNode::Foreign(_)) || node.is_empty_slot() {
+        return false;
+    }
+    // Descend through properties the resolved value already declares, so
+    // the descendant merges at the deepest existing node and that node's
+    // own openness decides the outcome (a top-level merge of a nested
+    // carrier would let the carrier's materialized closure shut an open
+    // map one level down).
+    if !tail.is_empty()
+        && head != "*"
+        && let SchemaNode::Foreign(value) = node
+        && let Some(child_value) = value
+            .get_mut("properties")
+            .and_then(|properties| properties.get_mut(head))
+    {
+        let mut child_node = SchemaNode::foreign(std::mem::take(child_value));
+        insert_schema_at_parts_tracking(
+            &mut child_node,
+            tail,
+            leaf.clone(),
+            ambiguous_union_abstentions,
+        );
+        *child_value = child_node.into_value();
+        return true;
+    }
+    if insert_into_canonical_object_conjunct(node, head, tail, leaf, ambiguous_union_abstentions) {
+        return true;
+    }
+    // A union base (an off-state arm plus one open object arm, e.g. a
+    // declared-empty serialized map) hosts descendants in its open arm:
+    // merging a carrier at the union level would replace the open arm
+    // with the carrier's materialized closure.
+    if head != "*"
+        && let SchemaNode::Foreign(value) = node
+        && let Some(arms) = value.get_mut("anyOf").and_then(Value::as_array_mut)
+    {
+        let arm_is_open_object = |arm: &Value| {
+            arm.get("additionalProperties")
+                .is_some_and(|additional| additional.as_bool() != Some(false))
+        };
+        let mut open_arms = arms.iter_mut().filter(|arm| arm_is_open_object(arm));
+        if let (Some(arm), None) = (open_arms.next(), open_arms.next()) {
+            let mut arm_node = SchemaNode::foreign(std::mem::take(arm));
+            insert_schema_at_parts_tracking(
+                &mut arm_node,
+                path_segments,
+                leaf.clone(),
+                ambiguous_union_abstentions,
+            );
+            *arm = arm_node.into_value();
+            return true;
+        }
+    }
+    let mut fragment = SchemaNode::empty();
+    insert_schema_at_parts_tracking(
+        &mut fragment,
+        path_segments,
+        leaf.clone(),
+        ambiguous_union_abstentions,
+    );
+    merge_into_schema_slot(node, fragment);
+    true
 }
 
 fn insert_into_canonical_object_conjunct(
@@ -1278,6 +1363,7 @@ fn insert_into_canonical_object_conjunct(
     head: &str,
     tail: &[String],
     leaf: &SchemaNode,
+    ambiguous_union_abstentions: &mut usize,
 ) -> bool {
     // A canonical object constraint may leave the slot's type inside
     // `allOf`. Descendant default evidence still belongs to that same
@@ -1286,7 +1372,8 @@ fn insert_into_canonical_object_conjunct(
     let SchemaNode::Foreign(value) = node else {
         return false;
     };
-    if insert_into_canonical_mixed_object_lane(value, head, tail, leaf) {
+    if insert_into_canonical_mixed_object_lane(value, head, tail, leaf, ambiguous_union_abstentions)
+    {
         return true;
     }
     let mut path_segments = Vec::with_capacity(tail.len() + 1);
@@ -1296,6 +1383,7 @@ fn insert_into_canonical_object_conjunct(
         // Default backfill cannot identify which alternative supplied a
         // branch-specific member constraint. Retaining the structural
         // alternatives is safer than conjoining the default across them.
+        *ambiguous_union_abstentions += 1;
         return true;
     }
     if !schema_only_allows_object(value) {
@@ -1323,7 +1411,12 @@ fn insert_into_canonical_object_conjunct(
         merge_into_schema_slot(&mut child, leaf.clone());
     } else {
         child.clear_exact_empty_constraint_for_descendant();
-        insert_schema_at_parts(&mut child, tail, leaf.clone());
+        insert_schema_at_parts_tracking(
+            &mut child,
+            tail,
+            leaf.clone(),
+            ambiguous_union_abstentions,
+        );
     }
     properties.insert(head.to_string(), child.into_value());
     true
@@ -1341,6 +1434,7 @@ fn insert_into_canonical_mixed_object_lane(
     head: &str,
     tail: &[String],
     leaf: &SchemaNode,
+    ambiguous_union_abstentions: &mut usize,
 ) -> bool {
     let Some(conjuncts) = schema.get_mut("allOf").and_then(Value::as_array_mut) else {
         return false;
@@ -1382,7 +1476,12 @@ fn insert_into_canonical_mixed_object_lane(
         arm.insert("type".to_string(), schema_type.clone());
         let mut arm = SchemaNode::foreign(Value::Object(arm));
         if schema_type == "object" {
-            insert_schema_at_parts(&mut arm, &path_segments, leaf.clone());
+            insert_schema_at_parts_tracking(
+                &mut arm,
+                &path_segments,
+                leaf.clone(),
+                ambiguous_union_abstentions,
+            );
         }
         arms.push(arm);
     }
@@ -1405,14 +1504,16 @@ fn multi_arm_object_union_has_equivalent_descendant(
         if arms.len() <= 1 || !arms.iter().all(schema_only_allows_object) {
             continue;
         }
-        let first = arms
+        let Some(first) = arms
             .first()
-            .and_then(|arm| schema_descendant_at_path(arm, path_segments));
-        return Some(
-            arms.iter()
-                .skip(1)
-                .all(|arm| schema_descendant_at_path(arm, path_segments) == first),
-        );
+            .and_then(|arm| schema_descendant_at_path(arm, path_segments))
+        else {
+            return Some(false);
+        };
+        return Some(arms.iter().skip(1).all(|arm| {
+            schema_descendant_at_path(arm, path_segments)
+                .is_some_and(|descendant| descendant == first)
+        }));
     }
     object
         .get("allOf")

@@ -12428,3 +12428,28 @@ default-composed/null-deletion documents and reports zero acceptance flips.
 The 105-probe reduction from the prior round is the explicit dependency-root
 correction. No fixture-direction verdict requires Helm adjudication, and the
 live Helm/provider controls and downstream 32-chart gate remain green.
+
+## Second-review findings closure (2026-08-04, seventy-third round)
+
+Opaque `default` primaries now keep their fallback consumers behind an
+unlowerable structural selection marker, preventing dormant wrong-typed
+fallbacks from becoming path-wide contracts. Exact identity chains retain
+their selected-arm teeth. Helm 4.2.3 pins eight consumer/syntax shapes in the
+deleted, dormant wrong-type, selected valid, and selected wrong-type states.
+
+Canonical descendant insertion abstains whenever any object-union arm cannot
+resolve the compared descendant, including wildcard and nested-`allOf` paths;
+the resulting completeness loss is counted in the emission report. Late
+reachability follows measured whole-fragment percent decoding before JSON
+Pointer splitting while preserving undecodable references conservatively.
+Empty required carriers leave typed foreign object hosts byte-untouched, GNU
+`./` archive roots receive the same dependency protection, and ordered
+override-set sharing is documented at its preparation boundary.
+
+The compiled battery now synthesizes guard witnesses and paired guard/payload
+states, with an asserted JSON report for every emitted and dropped category.
+One clean dump writes 84 artifacts. Six corpus schemas re-encode, but the
+121,059-document comparison against `d78aa30` finds zero acceptance flips;
+the 18-case IR dump is byte-identical. The oauth2-proxy retro-check also finds
+no Round 70 widening: both old and new schemas retain the unconditional eager
+`tpl` string tooth, matching Helm's abort in both composite guard states.

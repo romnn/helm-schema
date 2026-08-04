@@ -256,7 +256,7 @@ impl LoweredEmissionPlan {
             fact_accounting,
             mut provider_definitions,
         } = projected;
-        let emission_report = fact_accounting.emission_report;
+        let mut emission_report = fact_accounting.emission_report;
         if completion_pass == CompletionPass::Projected {
             return finish_generated(document.into_value(), emission_report);
         }
@@ -264,11 +264,14 @@ impl LoweredEmissionPlan {
         let fill_span = tracing::info_span!("default_fill_and_finish").entered();
         {
             let _span = tracing::info_span!("merge_missing_defaults").entered();
-            document.merge_missing_values_yaml_defaults_under_roots(
-                &self.documents.input_defaults,
-                &self.support.accepted_values_root_paths,
-                &self.support.default_fill_skip_paths,
-            );
+            emission_report
+                .canonicalization
+                .default_backfill_abstentions += document
+                .merge_missing_values_yaml_defaults_under_roots(
+                    &self.documents.input_defaults,
+                    &self.support.accepted_values_root_paths,
+                    &self.support.default_fill_skip_paths,
+                );
         }
         if completion_pass == CompletionPass::ValuesDefaultBackfill {
             return finish_generated(document.into_value(), emission_report);

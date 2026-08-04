@@ -1,6 +1,7 @@
 //! Monotonicity and semantic-oracle harness for schema emission profiles.
 
-use color_eyre::eyre::{self, WrapErr as _};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
@@ -8,10 +9,24 @@ use test_util::prelude::sim_assert_eq;
 mod harness;
 
 use harness::{
-    ContractVerdict, ControlCategory, ProbeInstance, ProfileSchemas, SemanticControl, Transport,
-    generate_profile_outputs, generate_profile_schemas, read_chart_schema_fixture,
-    read_json_fixture, read_root_defaults, sparse_override, structural_probe_battery,
+    ContractVerdict, ControlCategory, ProbeCoverage, ProbeInstance, ProfileSchemas,
+    SemanticControl, Transport, generate_profile_outputs, generate_profile_schemas,
+    read_chart_schema_fixture, read_json_fixture, read_root_defaults, sparse_override,
+    structural_probe_battery, structural_probe_battery_with_coverage,
 };
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+struct ProbeCoverageReport {
+    baseline_ref: String,
+    charts: Vec<ProbeCoverage>,
+}
+
+#[derive(Default)]
+struct AcceptanceComparison {
+    probes_checked: usize,
+    flips: Vec<String>,
+    coverage: Vec<ProbeCoverage>,
+}
 
 const LEAN_FIXTURE_CHARTS: &[&str] = &[
     "schema-emission-controls",
@@ -496,7 +511,8 @@ fn structural_battery_samples_depth_three_and_guard_states() -> eyre::Result<()>
     let chart = "schema-emission-controls";
     let defaults = read_root_defaults(chart)?;
     let (full, lean) = generate_profile_schemas(chart)?;
-    let probes = structural_probe_battery(chart, &defaults, &[&full, &lean])?;
+    let (probes, coverage) =
+        structural_probe_battery_with_coverage(chart, &defaults, &[&full, &lean])?;
 
     eyre::ensure!(
         probes
@@ -507,16 +523,70 @@ fn structural_battery_samples_depth_three_and_guard_states() -> eyre::Result<()>
     eyre::ensure!(
         probes
             .iter()
-            .any(|(name, _)| name.starts_with("root guard ") && name.contains(" satisfied via ")),
+            .any(|(name, _)| name.starts_with("root guard ")
+                && name.contains(" satisfied [targeted:")),
         "the guard-state lane produced no satisfying witness"
     );
     eyre::ensure!(
         probes
             .iter()
-            .any(|(name, _)| name.starts_with("root guard ") && name.contains(" violated via ")),
+            .any(|(name, _)| name.starts_with("root guard ")
+                && name.contains(" violated [targeted:")),
         "the guard-state lane produced no violating witness"
     );
+    eyre::ensure!(
+        coverage.guard_pairs_emitted > 0
+            && coverage.guards_discovered
+                == coverage.guards_attempted + coverage.guards_skipped_by_cap,
+        "guard coverage accounting is incomplete: {coverage:?}"
+    );
     Ok(())
+}
+
+#[test]
+fn guard_battery_synthesizes_composite_guard_and_payload_states() -> eyre::Result<()> {
+    let defaults = json!({ "enabled": false, "payload": "valid" });
+    let schema = json!({
+        "allOf": [{
+            "if": {
+                "properties": { "enabled": { "const": true } },
+                "required": ["enabled"],
+                "type": "object",
+            },
+            "then": {
+                "properties": { "payload": { "type": "string" } },
+                "required": ["payload"],
+                "type": "object",
+            },
+        }],
+    });
+    let mut coverage = harness::ProbeCoverage::default();
+
+    let probes = harness::guard_state_probes(&defaults, &[&schema], &mut coverage)?;
+
+    sim_assert_eq!(have: coverage.guard_pairs_emitted, want: 1);
+    sim_assert_eq!(have: coverage.composite_pairs_emitted, want: 1);
+    eyre::ensure!(
+        probes
+            .iter()
+            .filter(|(name, _)| name.contains("[composite "))
+            .count()
+            == 2,
+        "composite witnesses were not emitted as a guard-state pair: {probes:?}"
+    );
+    Ok(())
+}
+
+#[test]
+fn archive_dependency_depth_ignores_a_leading_current_directory_component() {
+    sim_assert_eq!(
+        have: harness::archive_entry_depth(std::path::Path::new("./vendored/Chart.yaml")),
+        want: 2
+    );
+    sim_assert_eq!(
+        have: harness::archive_entry_depth(std::path::Path::new("vendored/Chart.yaml")),
+        want: 2
+    );
 }
 
 #[test]
@@ -683,7 +753,7 @@ fn local_kind_partition_is_a_local_policy_fact() -> eyre::Result<()> {
 #[ignore = "maintenance: compares current full and lean fixtures with a baseline ref"]
 fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    let (charts_checked, probes_checked, flips, _) = corpus_acceptance_flips()?;
     eyre::ensure!(
         flips.is_empty(),
         "step 3 changed fixture acceptance:\n{}",
@@ -697,7 +767,7 @@ fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<
 #[ignore = "maintenance: compares the Round 68 dump with its baseline ref"]
 fn round68_fixture_flips_match_the_helm_adjudicated_list() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    let (charts_checked, probes_checked, flips, _) = corpus_acceptance_flips()?;
     let expected = vec![
         "airflow: fullnameOverride <- false: before=false, after=true",
         "airflow: fullnameOverride <- true: before=false, after=true",
@@ -728,7 +798,7 @@ fn round68_fixture_flips_match_the_helm_adjudicated_list() -> eyre::Result<()> {
 #[ignore = "maintenance: compares the Round 69 dump with its baseline ref"]
 fn round69_override_bundling_is_corpus_acceptance_equivalent() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    let (charts_checked, probes_checked, flips, _) = corpus_acceptance_flips()?;
     eyre::ensure!(
         flips.is_empty(),
         "round 69 changed fixture acceptance:\n{}",
@@ -742,7 +812,7 @@ fn round69_override_bundling_is_corpus_acceptance_equivalent() -> eyre::Result<(
 #[ignore = "maintenance: compares the Round 70 dump with its baseline ref"]
 fn round70_partition_and_canonicalization_changes_are_acceptance_equivalent() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    let (charts_checked, probes_checked, flips, _) = corpus_acceptance_flips()?;
     eyre::ensure!(
         flips.is_empty(),
         "round 70 changed fixture acceptance:\n{}",
@@ -753,10 +823,43 @@ fn round70_partition_and_canonicalization_changes_are_acceptance_equivalent() ->
 }
 
 #[test]
+#[ignore = "maintenance: retro-adjudicates the Round 70 oauth2-proxy schema change"]
+fn round70_oauth2_proxy_tpl_change_kept_the_eager_string_tooth() -> eyre::Result<()> {
+    let baseline = read_schema_at_ref(
+        "34e58cc",
+        "testdata/chart-corpus-schemas/oauth2-proxy.schema.json",
+    )?;
+    let current = read_chart_schema_fixture("oauth2-proxy")?;
+    let defaults = read_root_defaults("oauth2-proxy")?;
+    let transition = ProfileSchemas::compile(&baseline, &current, defaults)?;
+
+    for (name, probe) in [
+        (
+            "selected non-string tpl fallback",
+            sparse_override(&["global", "imageRegistry"], serde_json::Value::from(7)),
+        ),
+        (
+            "eager non-string tpl fallback behind a live primary",
+            ProbeInstance::SparseOverride(json!({
+                "image": { "registry": "quay.io" },
+                "global": { "imageRegistry": 7 },
+            })),
+        ),
+    ] {
+        sim_assert_eq!(
+            have: transition.verdicts(&probe),
+            want: (false, false),
+            "{name} must remain rejected by the unconditional tpl program contract"
+        );
+    }
+    Ok(())
+}
+
+#[test]
 #[ignore = "maintenance: compares the Round 72 dump with its baseline ref"]
 fn round72_pipeline_changes_are_acceptance_equivalent() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let (charts_checked, probes_checked, flips) = corpus_acceptance_flips()?;
+    let (charts_checked, probes_checked, flips, _) = corpus_acceptance_flips()?;
     eyre::ensure!(
         flips.is_empty(),
         "round 72 changed fixture acceptance:\n{}",
@@ -766,7 +869,69 @@ fn round72_pipeline_changes_are_acceptance_equivalent() -> eyre::Result<()> {
     Ok(())
 }
 
-fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>)> {
+#[test]
+#[ignore = "maintenance: compares the Round 73 dump and records probe coverage"]
+fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let (charts_checked, probes_checked, flips, coverage) = corpus_acceptance_flips()?;
+    for chart in &coverage {
+        eyre::ensure!(
+            chart.base_candidates == chart.base_emitted + chart.base_dropped,
+            "base probe accounting mismatch: {chart:?}"
+        );
+        eyre::ensure!(
+            chart.third_level_candidates == chart.third_level_emitted + chart.third_level_dropped,
+            "depth-three probe accounting mismatch: {chart:?}"
+        );
+        eyre::ensure!(
+            chart.guards_discovered == chart.guards_attempted + chart.guards_skipped_by_cap,
+            "guard accounting mismatch: {chart:?}"
+        );
+        eyre::ensure!(
+            chart.guards_attempted == chart.guard_pairs_emitted + chart.guards_without_witness_pair,
+            "guard witness accounting mismatch: {chart:?}"
+        );
+        eyre::ensure!(
+            chart.composite_targets
+                == chart.composite_pairs_emitted
+                    + chart.composite_targets_without_payload
+                    + chart.composite_pairs_dropped_by_cap,
+            "composite probe accounting mismatch: {chart:?}"
+        );
+        eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
+    }
+    let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
+        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+    let report = ProbeCoverageReport {
+        baseline_ref,
+        charts: coverage,
+    };
+    let report_path = std::path::PathBuf::from(
+        std::env::var_os("SCHEMA_PROBE_COVERAGE_REPORT")
+            .ok_or_eyre("SCHEMA_PROBE_COVERAGE_REPORT must name the report file")?,
+    );
+    if let Some(parent) = report_path.parent() {
+        std::fs::create_dir_all(parent).wrap_err_with(|| format!("create {}", parent.display()))?;
+    }
+    let mut bytes = serde_json::to_vec_pretty(&report).wrap_err("serialize probe coverage")?;
+    bytes.push(b'\n');
+    std::fs::write(&report_path, bytes)
+        .wrap_err_with(|| format!("write {}", report_path.display()))?;
+    let recorded: ProbeCoverageReport = serde_json::from_slice(
+        &std::fs::read(&report_path).wrap_err_with(|| format!("read {}", report_path.display()))?,
+    )
+    .wrap_err("parse recorded probe coverage")?;
+    sim_assert_eq!(have: recorded, want: report);
+    eyre::ensure!(
+        flips.is_empty(),
+        "round 73 changed fixture acceptance:\n{}",
+        flips.join("\n")
+    );
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
+fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<ProbeCoverage>)> {
     let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
         .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
     let fixture_dir = test_util::workspace_testdata().join("chart-corpus-schemas");
@@ -776,8 +941,7 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>)> {
         .collect::<std::io::Result<Vec<_>>>()?;
     fixture_paths.sort();
 
-    let mut probes_checked = 0;
-    let mut flips = Vec::new();
+    let mut comparison = AcceptanceComparison::default();
     let mut charts_checked = 0;
     for fixture_path in fixture_paths {
         let Some(filename) = fixture_path.file_name().and_then(|name| name.to_str()) else {
@@ -797,8 +961,7 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>)> {
             &baseline,
             &current,
             &defaults,
-            &mut probes_checked,
-            &mut flips,
+            &mut comparison,
         )?;
         charts_checked += 1;
     }
@@ -821,13 +984,17 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>)> {
             &baseline,
             &current,
             &defaults,
-            &mut probes_checked,
-            &mut flips,
+            &mut comparison,
         )?;
         charts_checked += 1;
     }
 
-    Ok((charts_checked, probes_checked, flips))
+    Ok((
+        charts_checked,
+        comparison.probes_checked,
+        comparison.flips,
+        comparison.coverage,
+    ))
 }
 
 fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serde_json::Value> {
@@ -865,21 +1032,25 @@ fn collect_acceptance_flips(
     baseline: &serde_json::Value,
     current: &serde_json::Value,
     defaults: &serde_json::Value,
-    probes_checked: &mut usize,
-    flips: &mut Vec<String>,
+    comparison: &mut AcceptanceComparison,
 ) -> eyre::Result<()> {
     let profiles = ProfileSchemas::compile(baseline, current, defaults.clone())?;
-    for (probe_name, probe) in
-        structural_probe_battery(chart_relative_path, defaults, &[baseline, current])?
-    {
-        *probes_checked += 1;
+    let (probes, mut chart_coverage) = structural_probe_battery_with_coverage(
+        chart_relative_path,
+        defaults,
+        &[baseline, current],
+    )?;
+    chart_coverage.label = label.to_string();
+    for (probe_name, probe) in probes {
+        comparison.probes_checked += 1;
         let (before, after) = profiles.verdicts(&probe);
         if before != after {
-            flips.push(format!(
+            comparison.flips.push(format!(
                 "{label}: {probe_name}: before={before}, after={after}"
             ));
         }
     }
+    comparison.coverage.push(chart_coverage);
     Ok(())
 }
 

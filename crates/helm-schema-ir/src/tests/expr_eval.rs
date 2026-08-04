@@ -700,23 +700,6 @@ fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
 }
 
 #[test]
-fn opaque_default_primary_does_not_scope_its_fallback_as_an_exact_arm() {
-    let result = eval_expr(
-        &single_expr(r#"printf "%s" .Values.a | default .Values.z"#),
-        &EvalEnv::default(),
-    );
-
-    sim_assert_eq!(
-        have: result
-            .effects
-            .local_output_meta
-            .get("z")
-            .map(|meta| &meta.predicates),
-        want: None,
-    );
-}
-
-#[test]
 fn go_regex_literal_escaping_leaves_re2_hyphens_bare() {
     sim_assert_eq!(
         have: crate::escape_regex_literal("prefix-with.+symbols"),
@@ -1104,6 +1087,29 @@ fn chained_default_records_the_composed_primary_selection_on_the_final_fallback(
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("x").negated(),
             Predicate::truthy_path("y").negated(),
+        ])])),
+    );
+}
+
+#[test]
+fn opaque_default_primary_records_an_unlowerable_fallback_selection() {
+    let result = eval_expr(
+        &single_expr(r#"printf "%s" .Values.alpha | default .Values.omega"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("omega")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::approximate_output_selection(
+                "default fallback after opaque primary",
+                BTreeSet::from(["alpha".to_string()]),
+                Predicate::False,
+            ),
         ])])),
     );
 }

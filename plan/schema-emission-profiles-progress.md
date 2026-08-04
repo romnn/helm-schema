@@ -1581,3 +1581,149 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 downstream charts passed.
   - `task tokei:core`: exit 0; 60,785 production Rust LOC.
 - Commit: `ac36c7b` (`fix(schema): close round-72 pipeline findings`).
+
+## Round 73 — second-review findings closure
+
+- Status: landed; commit pending.
+- Measured results:
+  - An opaque `default` primary now stamps its fallback with an unlowerable
+    output-selection predicate. Downstream string consumers therefore retain
+    conditional fail captures instead of promoting the fallback to a
+    path-wide string contract. Eight expression shapes cover `b64enc`,
+    `trunc`, `sha256sum`, `quote`, `trimSuffix`, parenthesized and call-form
+    defaults, and a mixed exact/opaque chain.
+  - The live Helm 4.2.3 matrix covers four states per expression: deleted
+    dormant fallback, numeric dormant fallback, selected string fallback,
+    and selected numeric fallback. Every dormant case and every selected
+    string renders. Selected numeric values abort in the string-only
+    consumers and render through `quote`; the schema deliberately stays open
+    only where the opaque selection predicate has no sound lowerable subset.
+    A separate exact-identity chain still rejects its selected numeric final
+    fallback while accepting that value when dormant.
+  - Multi-arm descendant equality now requires every arm to resolve the
+    compared descendant. Wildcard segments and members hidden under nested
+    `allOf` therefore abstain instead of treating `None == None` as an
+    equivalence proof. Default-insertion abstentions are counted in
+    `EmissionReport::canonicalization.default_backfill_abstentions`.
+  - Guard probes are synthesized directly over null-deletion-composed chart
+    defaults instead of relabeling existing single-path probes. Each sampled
+    guard has a satisfying and violating witness where the bounded search can
+    find both. A second bounded lane pairs those states with the same
+    nonconforming payload on a different constrained path.
+  - The asserted JSON coverage report records 121,059 emitted probes across
+    60 full/lean fixture lanes: 112,260 base probes, 7,465 third-level
+    deletions, 427 guard pairs, and 240 composite pairs. It also records
+    13,828 discovered guards, 13,291 guard-cap skips, 110 guards without a
+    bounded witness pair, 37,550 omitted witness candidates, 2,267 composite
+    targets dropped by the pair cap, and 39 targets without a bounded
+    nonconforming payload. No base or third-level probe was dropped.
+  - The one clean final-build dump runs 62 tests and writes exactly 84
+    artifacts. Airflow, Argo CD, Datadog, ingress-nginx, Jenkins, and Traefik
+    re-encode; the compiled comparison against `d78aa30` finds zero acceptance
+    flips at the expanded depth. All 18 clean IR dump artifacts are
+    byte-identical.
+  - Production Rust is 60,893 LOC (`+108` from Round 72). The larger battery
+    and its coverage-report machinery live under `tests/` and are excluded
+    from that production count.
+- Deviations and corrections:
+  - The review's oauth2-proxy acceptance-widening claim does not reproduce.
+    Helm aborts when `global.imageRegistry` is numeric both with an empty and
+    a live `image.registry`, confirming eager `tpl` argument evaluation.
+    However, compiled schemas from both `34e58cc` and the final tree reject
+    both composite documents through the unconditional `tpl` program-string
+    contract. The Round 70 conditional deletion was therefore structurally
+    visible but acceptance-redundant; restoring it by treating formatter
+    outputs as exact identities would reintroduce Round 73's confirmed false
+    rejection. The live and two-validator controls pin this disposition.
+  - Reachability now follows the consuming resolver rather than Round 72's
+    incorrect split-before-percent-decode instruction. Measured with the
+    repository's `jsonschema` version, `#/$defs/a%2Fb` resolves through the
+    nested `a/b` pointer after whole-fragment decoding, while
+    `#%2F$defs%2Fname` remains an unresolved anchor because its raw fragment
+    does not start with `/`. Undecodable pointer fragments still preserve all
+    generator-owned definitions conservatively.
+  - Duplicate dependency names with multiple aliases remain a shared harness
+    and production limitation: both maps key metadata by the dependency's
+    chart name and keep the last alias. Correcting it requires measuring and
+    modeling Helm's installed-entry-to-alias association, not replacing one
+    last-write rule with an unverified guess. No corpus chart exercises the
+    shape, so it is recorded rather than patched in this round.
+  - The frozen emission plan and the Round 71 YAML boolean-key veto are
+    unchanged.
+- Adjudication evidence:
+  - The eight-expression opaque-default live matrix and its schema matrix
+    exercise deletion, dormant wrong type, selected valid type, and selected
+    wrong type in both directions. The six re-encoded corpus fixtures produce
+    zero TIGHTEN and zero LOOSEN at the full battery depth, so there is no
+    corpus acceptance direction to adopt. The live mechanism controls pass
+    before the fixture bytes are adopted.
+  - oauth2-proxy's empty/live-primary composite states both abort Helm on a
+    numeric eager fallback. Both the pre-Round-70 and final compiled schemas
+    reject the same documents, while the selected string state renders.
+  - The wildcard and nested-`allOf` canonical controls accept each original
+    integer/Boolean branch and reject the unrelated inserted-string state;
+    each reports one visible abstention instead of conjoining a leaf across
+    branch-specific alternatives.
+- Review dossier:
+  - Opaque-selection structure and both-direction schema matrix: `cargo
+    nextest run -p helm-schema-ir -p helm-schema-gen -E
+    'test(opaque_default_primary_records_an_unlowerable_fallback_selection) |
+    test(opaque_formatter_default_primary_keeps_fallback_consumers_conditional) |
+    test(identity_default_chain_keeps_exact_final_fallback_selection)'`.
+  - Opaque-default and oauth2-proxy Helm replay: `cargo nextest run -P
+    integration -p helm-schema --test schema_emission_profile_live -E
+    'test(/replay_(opaque_formatter_default|oauth2_proxy_tpl_default_eagerness)_against_helm/)'
+    --run-ignored ignored-only --no-capture`.
+  - oauth2-proxy two-validator retro-check: `cargo nextest run -P integration
+    -p helm-schema --test schema_emission_profiles -E
+    'test(round70_oauth2_proxy_tpl_change_kept_the_eager_string_tooth)'
+    --run-ignored ignored-only --no-capture`.
+  - Multi-arm boundaries, abstention accounting, and degenerate required
+    carrier: `cargo nextest run -p helm-schema-gen -E
+    'test(multi_arm_object_union_abstains) |
+    test(canonical_empty_required_entries_leave_a_typed_foreign_host_untouched)'`.
+  - Resolver measurement and reachability alignment: `cargo nextest run -p
+    helm-schema -E 'test(output_pipeline::reachability)'`.
+  - Targeted guard/composite controls and hermetic profile laws: `cargo
+    nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+    test(temporal_wrapper_pairwise_matrix_is_monotone) |
+    test(guard_battery_synthesizes_composite_guard_and_payload_states)'`.
+  - Single clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/round73-final-dump
+    SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+    helm-schema-gen -p helm-schema-cli -p helm-schema -E
+    'test(schema_fixtures_match) | binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+  - Expanded zero-flip proof with asserted coverage disclosure:
+    `TMPDIR=/home/roman/dev/helm-schema/target/round73-prober-tmp
+    SCHEMA_ACCEPTANCE_BASELINE_REF=d78aa30
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/round73-final-dump
+    SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/round73-probe-coverage.json
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `charts_checked=60 probes_checked=121059 flips=0` and round-trips the JSON
+    coverage report before passing.
+  - Complete clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/round73-ir-final-dump
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; all 18
+    artifacts are byte-identical.
+- Gates on the final Round 73 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; the full workspace Clippy pass and all three
+    ast-grep checks complete.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets complete with zero errors and zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,201 tests pass.
+  - `task test:integration`: exit 0; 564 tests pass and 19 are skipped by the
+    integration profile.
+  - `task test:all`: exit 0; 1,769 tests pass and 19 are skipped by the CI
+    profile, including the live-network lane.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts complete.
+  - `task tokei:core`: exit 0; 60,893 production Rust LOC.
+- Commit: pending.

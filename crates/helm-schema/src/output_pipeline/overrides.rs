@@ -110,7 +110,9 @@ pub(crate) fn load_emit_request(
 ///
 /// Overrides must not reference generator-owned definitions in the inferred
 /// document's `$defs`; their names and presence are private implementation
-/// details. An override that needs a definition must carry that definition.
+/// details. Prepared overrides form an ordered set: a later override may
+/// reference a same-URI definition carried by an earlier override after
+/// namespace deduplication. They must not be consumed independently or reordered.
 ///
 /// # Errors
 ///

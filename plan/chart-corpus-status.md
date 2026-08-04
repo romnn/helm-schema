@@ -1,18 +1,18 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-08-03 after the seventieth round extended the compiled
-prober through third-level deletions and bounded guard-state pairs, preserved
-all selector-independent branch facts during kind partitioning, and hardened
-canonical descendant insertion at multi-arm and mixed-type boundaries. Two
-fixtures re-encode with zero flips across 120,540 final-depth probes; replaying
-from `34e58cc` finds only the same 16 Helm-adjudicated Round 68 loosenings. The
-sixty-ninth round gave independently bundled overrides one base-and-override-wide
-definition namespace, closing a pre-existing collision without changing any
-of the 84 emission fixtures or 112,356 probed acceptances. The sixty-eighth
-round closed the independent
-emission review: composed formatter fallbacks, canonical carrier preservation,
-kind-partition separation, caller-rooted/URI-decoded reachability, successor
-`else with` truth, diagnostic provenance, and the hardened Helm 4 probe model.
+Last reconciled 2026-08-04 after the seventy-third round made opaque-default
+selection abstention structural, required every object-union arm to resolve a
+descendant before claiming equality, aligned reference reachability with the
+measured resolver, and replaced relabeled guard probes with targeted and
+composite witnesses plus machine-readable cap accounting. Six fixtures
+re-encode with zero flips across 121,059 full-depth probes. The seventy-second
+round restored override IO precedence, same-target namespace deduplication,
+and vendored dependency protection. The seventy-first round stopped at its
+measurement veto because Helm's mixed quoted/legacy Boolean-key collision is
+nondeterministic. The seventieth through sixty-eighth rounds closed the prior
+emission reviews, canonical and partition boundaries, reachability, control
+flow, diagnostics, and the Helm 4 probe model.
+
 The preceding emission rounds landed the frozen profile harness, immutable
 plan, lean selector, canonical output, configuration surface, and benchmark.
 The preceding fifty-eighth round closed the seven
@@ -127,6 +127,24 @@ part and a separately listed residual. Detailed round history remains in
 
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
+
+- **Second-review findings closure (seventy-third round).** Opaque formatter
+  fallbacks carry an unlowerable output-selection marker, exact identity
+  chains retain their selected-arm constraints, and both directions are
+  pinned against Helm. Multi-arm descendant insertion abstains on wildcard,
+  nested-composition, or otherwise unresolved paths and reports the loss.
+  Reachability matches whole-fragment resolver decoding; degenerate required
+  carriers and GNU archive roots keep their sound boundaries. The targeted
+  guard/composite battery writes and verifies its coverage report. Six
+  fixtures re-encode with zero acceptance flips across 121,059 probes.
+
+- **Pipeline/session and harness hygiene (seventy-second round).** Override
+  files fail before chart generation while bundling retains the generated
+  base namespace; equal external targets deduplicate across ordered
+  overrides. Empty required carriers type untyped hosts, and installed
+  directory/archive dependencies are protected from root-deletion probes.
+  All 84 artifacts remain byte-identical with zero flips across 120,435
+  probes.
 
 - **Deeper probes and canonical partition boundaries (seventieth round).**
   The compiled battery adds third-level deletions and bounded root-guard state
@@ -2604,7 +2622,16 @@ the narrower entries below:
 
 ## In progress
 
-None.
+- **Helm YAML Boolean-key composition.** Round 71 measured stable YAML 1.1
+  alias normalization but a nondeterministic winner when a normalized legacy
+  key collides with a quoted canonical `"true"` or `"false"` key. The task's
+  veto branch stopped implementation. Its disposition remains an input to the
+  v3 reconciliation and must not be replaced with an arbitrary winner.
+- **Duplicate dependency names with multiple aliases.** Production discovery
+  and the acceptance harness both key dependency metadata by chart name, so
+  repeated names retain the last alias. No corpus chart exercises the shape.
+  A fix remains gated on measuring Helm's installed-entry-to-alias association
+  rather than guessing a different collision rule.
 
 ## Rejected (invalid or won't fix by design)
 

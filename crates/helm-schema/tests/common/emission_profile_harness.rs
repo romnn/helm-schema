@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 use std::io::Read as _;
-use std::path::Path;
+use std::path::{Component, Path};
 
 use color_eyre::eyre::{self, WrapErr as _};
 use flate2::read::GzDecoder;
@@ -8,6 +8,7 @@ use helm_schema::AnalysisSession;
 use helm_schema::generation::{GenerateOptions, GeneratedSchema, SchemaProfile};
 use helm_schema::provider::ProviderOptions;
 use jsonschema::Validator;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vfs::VfsPath;
 
@@ -16,6 +17,31 @@ const MAX_THIRD_LEVEL_DELETIONS_PER_CHART: usize = 2_048;
 const MAX_GUARD_STATE_PAIRS_PER_CHART: usize = 8;
 const MAX_GUARD_ARMS_ATTEMPTED_PER_CHART: usize = 24;
 const MAX_GUARD_WITNESS_CANDIDATES_PER_CHART: usize = 128;
+const MAX_COMPOSITE_STATE_PAIRS_PER_CHART: usize = 8;
+
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
+pub(crate) struct ProbeCoverage {
+    pub(crate) label: String,
+    pub(crate) base_candidates: usize,
+    pub(crate) base_emitted: usize,
+    pub(crate) base_dropped: usize,
+    pub(crate) third_level_candidates: usize,
+    pub(crate) third_level_emitted: usize,
+    pub(crate) third_level_dropped: usize,
+    pub(crate) guards_discovered: usize,
+    pub(crate) guards_attempted: usize,
+    pub(crate) guard_pairs_emitted: usize,
+    pub(crate) guards_skipped_by_cap: usize,
+    pub(crate) guards_without_witness_pair: usize,
+    pub(crate) guard_witness_candidates: usize,
+    pub(crate) guard_witness_candidates_dropped: usize,
+    pub(crate) composite_targets: usize,
+    pub(crate) composite_pairs_emitted: usize,
+    pub(crate) composite_targets_without_payload: usize,
+    pub(crate) composite_pairs_dropped_by_cap: usize,
+    pub(crate) total_emitted: usize,
+    pub(crate) total_dropped: usize,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ContractVerdict {
@@ -224,6 +250,15 @@ pub(crate) fn structural_probe_battery(
     defaults: &Value,
     schemas: &[&Value],
 ) -> eyre::Result<Vec<(String, ProbeInstance)>> {
+    structural_probe_battery_with_coverage(chart_relative_path, defaults, schemas)
+        .map(|(probes, _)| probes)
+}
+
+pub(crate) fn structural_probe_battery_with_coverage(
+    chart_relative_path: &str,
+    defaults: &Value,
+    schemas: &[&Value],
+) -> eyre::Result<(Vec<(String, ProbeInstance)>, ProbeCoverage)> {
     let dependency_roots = chart_dependency_roots(chart_relative_path)?;
     let retained_dependency_defaults = defaults
         .as_object()
@@ -238,7 +273,7 @@ pub(crate) fn structural_probe_battery(
                 .collect()
         })
         .unwrap_or_default();
-    let mut probes = vec![
+    let mut base_probes = vec![
         ("defaults".to_string(), ProbeInstance::Defaults),
         (
             "all declared keys deleted".to_string(),
@@ -266,7 +301,7 @@ pub(crate) fn structural_probe_battery(
         for replacement in &replacements {
             let mut patch = Value::Object(Map::new());
             set_path(&mut patch, &path, replacement.clone());
-            probes.push((
+            base_probes.push((
                 format!("{display} <- {}", value_shape(replacement)),
                 ProbeInstance::SparseOverride(patch),
             ));
@@ -281,75 +316,99 @@ pub(crate) fn structural_probe_battery(
         &dependency_roots,
         &mut third_level_paths,
     );
-    let dropped_third_level = third_level_paths
-        .len()
-        .saturating_sub(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
+    let third_level_candidates = third_level_paths.len();
+    let dropped_third_level =
+        third_level_candidates.saturating_sub(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
     third_level_paths.truncate(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
+    let mut third_level_probes = Vec::new();
     for path in third_level_paths {
         let mut patch = Value::Object(Map::new());
         set_path(&mut patch, &path, Value::Null);
-        probes.push((
+        third_level_probes.push((
             format!("{} <- null deletion [depth 3]", path.join(".")),
             ProbeInstance::SparseOverride(patch),
         ));
     }
 
-    let guard_probes = guard_state_probes(chart_relative_path, defaults, schemas, &probes)?;
-    probes.extend(guard_probes);
+    let mut coverage = ProbeCoverage {
+        label: chart_relative_path.to_string(),
+        base_candidates: base_probes.len(),
+        third_level_candidates,
+        third_level_dropped: dropped_third_level,
+        ..ProbeCoverage::default()
+    };
+    let targeted_probes = guard_state_probes(defaults, schemas, &mut coverage)?;
+    let non_target_capacity = MAX_PROBES_PER_CHART.saturating_sub(targeted_probes.len());
+    coverage.base_emitted = base_probes.len().min(non_target_capacity);
+    coverage.base_dropped = base_probes.len().saturating_sub(coverage.base_emitted);
+    let remaining = non_target_capacity.saturating_sub(coverage.base_emitted);
+    coverage.third_level_emitted = third_level_probes.len().min(remaining);
+    coverage.third_level_dropped += third_level_probes
+        .len()
+        .saturating_sub(coverage.third_level_emitted);
 
-    let dropped_total = probes.len().saturating_sub(MAX_PROBES_PER_CHART);
-    probes.truncate(MAX_PROBES_PER_CHART);
-    if dropped_third_level > 0 || dropped_total > 0 {
-        eprintln!(
-            "probe cap for {chart_relative_path}: dropped_third_level={dropped_third_level} dropped_total={dropped_total}"
-        );
-    }
-    Ok(probes)
+    let mut probes = Vec::with_capacity(
+        coverage.base_emitted + coverage.third_level_emitted + targeted_probes.len(),
+    );
+    probes.extend(base_probes.into_iter().take(coverage.base_emitted));
+    probes.extend(
+        third_level_probes
+            .into_iter()
+            .take(coverage.third_level_emitted),
+    );
+    probes.extend(targeted_probes);
+    coverage.total_emitted = probes.len();
+    coverage.total_dropped = coverage.base_dropped
+        + coverage.third_level_dropped
+        + 2 * coverage.guards_skipped_by_cap
+        + 2 * coverage.guards_without_witness_pair
+        + 2 * coverage.composite_targets_without_payload
+        + 2 * coverage.composite_pairs_dropped_by_cap;
+    Ok((probes, coverage))
 }
 
-fn guard_state_probes(
-    chart_relative_path: &str,
+pub(crate) fn guard_state_probes(
     defaults: &Value,
     schemas: &[&Value],
-    candidates: &[(String, ProbeInstance)],
+    coverage: &mut ProbeCoverage,
 ) -> eyre::Result<Vec<(String, ProbeInstance)>> {
     let mut guards = Vec::new();
     let mut seen = BTreeSet::new();
     for schema in schemas {
-        for condition in root_if_conditions(schema) {
-            let key = serde_json::to_string(condition).wrap_err("serialize root guard")?;
+        for (condition, then_schema) in root_if_arms(schema) {
+            let key = serde_json::to_string(&(condition, then_schema))
+                .wrap_err("serialize root guard arm")?;
             if seen.insert(key) {
-                guards.push((*schema, condition));
+                guards.push((*schema, condition, then_schema));
             }
         }
     }
 
-    let total_guards = guards.len();
-
+    coverage.guards_discovered = guards.len();
     let mut normalized_defaults = defaults.clone();
     drop_null_map_entries(&mut normalized_defaults);
-    let witness_candidates = bounded_guard_witness_candidates(candidates);
     let mut probes = Vec::new();
-    let mut unresolved = 0;
-    let mut attempted = 0;
-    for (index, (schema, condition)) in guards
+    for (index, (schema, condition, then_schema)) in guards
         .into_iter()
         .take(MAX_GUARD_ARMS_ATTEMPTED_PER_CHART)
         .enumerate()
     {
-        if probes.len() / 2 == MAX_GUARD_STATE_PAIRS_PER_CHART {
+        if coverage.guard_pairs_emitted == MAX_GUARD_STATE_PAIRS_PER_CHART {
             break;
         }
-        attempted += 1;
-        let validator = compile_root_guard(schema, condition)?;
+        coverage.guards_attempted += 1;
+        let guard_validator = compile_root_guard(schema, condition)?;
+        let (witness_candidates, omitted_candidates) =
+            synthesized_guard_witness_candidates(&normalized_defaults, schema, condition);
+        coverage.guard_witness_candidates += witness_candidates.len() + omitted_candidates;
+        coverage.guard_witness_candidates_dropped += omitted_candidates;
         let mut satisfied = None;
         let mut violated = None;
-        for (name, probe) in &witness_candidates {
-            let instance = compose_probe(&normalized_defaults, probe);
-            if validator.is_valid(&instance) {
-                satisfied.get_or_insert((name, probe));
+        for (name, instance) in witness_candidates {
+            if guard_validator.is_valid(&instance) {
+                satisfied.get_or_insert((name, instance));
             } else {
-                violated.get_or_insert((name, probe));
+                violated.get_or_insert((name, instance));
             }
             if satisfied.is_some() && violated.is_some() {
                 break;
@@ -358,65 +417,261 @@ fn guard_state_probes(
         let (Some((satisfied_name, satisfied_probe)), Some((violated_name, violated_probe))) =
             (satisfied, violated)
         else {
-            unresolved += 1;
+            coverage.guards_without_witness_pair += 1;
             continue;
         };
         probes.push((
-            format!("root guard {index} satisfied via {satisfied_name}"),
-            satisfied_probe.clone(),
+            format!("root guard {index} satisfied [targeted: {satisfied_name}]"),
+            ProbeInstance::Coalesced(satisfied_probe.clone()),
         ));
         probes.push((
-            format!("root guard {index} violated via {violated_name}"),
-            violated_probe.clone(),
+            format!("root guard {index} violated [targeted: {violated_name}]"),
+            ProbeInstance::Coalesced(violated_probe.clone()),
         ));
+        coverage.guard_pairs_emitted += 1;
+        append_composite_state_probes(
+            index,
+            (schema, condition, then_schema),
+            &guard_validator,
+            (&satisfied_probe, &violated_probe),
+            coverage,
+            &mut probes,
+        )?;
     }
 
-    let dropped_by_cap = total_guards.saturating_sub(attempted);
-    let dropped_witness_candidates = candidates
-        .len()
-        .saturating_sub(MAX_GUARD_WITNESS_CANDIDATES_PER_CHART);
-    if dropped_by_cap > 0 || unresolved > 0 || dropped_witness_candidates > 0 {
-        eprintln!(
-            "guard sampling for {chart_relative_path}: sampled_pairs={} dropped_by_cap={dropped_by_cap} dropped_without_bounded_witness={unresolved} witness_candidates_omitted={dropped_witness_candidates}",
-            probes.len() / 2
-        );
-    }
+    coverage.guards_skipped_by_cap = coverage
+        .guards_discovered
+        .saturating_sub(coverage.guards_attempted);
     Ok(probes)
 }
 
-fn bounded_guard_witness_candidates(
-    candidates: &[(String, ProbeInstance)],
-) -> Vec<&(String, ProbeInstance)> {
-    let retained = candidates.len().min(MAX_GUARD_WITNESS_CANDIDATES_PER_CHART);
-    if retained == candidates.len() {
-        return candidates.iter().collect();
+fn append_composite_state_probes(
+    guard_index: usize,
+    (schema, condition, then_schema): (&Value, &Value, &Value),
+    guard_validator: &Validator,
+    (satisfied, violated): (&Value, &Value),
+    coverage: &mut ProbeCoverage,
+    probes: &mut Vec<(String, ProbeInstance)>,
+) -> eyre::Result<()> {
+    let guard_paths = schema_paths(schema, condition);
+    let constrained_paths = schema_paths(schema, then_schema)
+        .into_iter()
+        .filter(|path| {
+            !guard_paths
+                .iter()
+                .any(|guard_path| paths_overlap(path, guard_path))
+        })
+        .collect::<Vec<_>>();
+    coverage.composite_targets += constrained_paths.len();
+    let then_validator = compile_root_guard(schema, then_schema)?;
+    for (target_index, path) in constrained_paths.into_iter().enumerate() {
+        if coverage.composite_pairs_emitted == MAX_COMPOSITE_STATE_PAIRS_PER_CHART {
+            coverage.composite_pairs_dropped_by_cap += 1;
+            continue;
+        }
+        let Some((payload, satisfied_composite, violated_composite)) =
+            nonconforming_composite_payload(
+                guard_validator,
+                &then_validator,
+                satisfied,
+                violated,
+                &path,
+            )
+        else {
+            coverage.composite_targets_without_payload += 1;
+            continue;
+        };
+        let path_display = path.join(".");
+        probes.push((
+            format!(
+                "root guard {guard_index} satisfied + {path_display} <- {} [composite {target_index}]",
+                value_shape(&payload)
+            ),
+            ProbeInstance::Coalesced(satisfied_composite),
+        ));
+        probes.push((
+            format!(
+                "root guard {guard_index} violated + {path_display} <- {} [composite {target_index}]",
+                value_shape(&payload)
+            ),
+            ProbeInstance::Coalesced(violated_composite),
+        ));
+        coverage.composite_pairs_emitted += 1;
     }
-
-    let prefix_len = retained / 2;
-    let spread_len = retained - prefix_len;
-    let mut selected = candidates.iter().take(prefix_len).collect::<Vec<_>>();
-    selected.extend(
-        (0..spread_len)
-            .map(|slot| prefix_len + slot * (candidates.len() - prefix_len - 1) / (spread_len - 1))
-            .filter_map(|index| candidates.get(index)),
-    );
-    selected
+    Ok(())
 }
 
-fn root_if_conditions(schema: &Value) -> Vec<&Value> {
-    let mut conditions = Vec::new();
-    if let Some(condition) = schema.get("if") {
-        conditions.push(condition);
+fn synthesized_guard_witness_candidates(
+    defaults: &Value,
+    schema: &Value,
+    condition: &Value,
+) -> (Vec<(String, Value)>, usize) {
+    let paths = schema_paths(schema, condition);
+    let replacements = [
+        Value::Null,
+        Value::Bool(false),
+        Value::Bool(true),
+        Value::from(0),
+        Value::String(String::new()),
+        Value::String("guard-witness".to_string()),
+        Value::Array(Vec::new()),
+        Value::Object(Map::new()),
+    ];
+    let mut candidates = vec![("defaults".to_string(), defaults.clone())];
+    let mut total = 1_usize;
+    for path in &paths {
+        for replacement in &replacements {
+            total += 1;
+            if candidates.len() < MAX_GUARD_WITNESS_CANDIDATES_PER_CHART {
+                candidates.push((
+                    format!("{} <- {}", path.join("."), value_shape(replacement)),
+                    compose_assignments(defaults, &[(path, replacement)]),
+                ));
+            }
+        }
     }
-    conditions.extend(
+    let paired_paths = paths.iter().take(8).collect::<Vec<_>>();
+    for (left_index, left) in paired_paths.iter().enumerate() {
+        for right in paired_paths.iter().skip(left_index + 1) {
+            for left_value in [Value::Null, Value::Bool(false), Value::Bool(true)] {
+                for right_value in [Value::Null, Value::Bool(false), Value::Bool(true)] {
+                    total += 1;
+                    if candidates.len() < MAX_GUARD_WITNESS_CANDIDATES_PER_CHART {
+                        candidates.push((
+                            format!("{} + {}", left.join("."), right.join(".")),
+                            compose_assignments(
+                                defaults,
+                                &[(left, &left_value), (right, &right_value)],
+                            ),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    let omitted = total.saturating_sub(candidates.len());
+    (candidates, omitted)
+}
+
+fn compose_assignments(defaults: &Value, assignments: &[(&Vec<String>, &Value)]) -> Value {
+    let mut patch = Value::Object(Map::new());
+    for (path, value) in assignments {
+        set_path(&mut patch, path, (*value).clone());
+    }
+    let mut composed = defaults.clone();
+    merge_override(&mut composed, patch);
+    composed
+}
+
+fn root_if_arms(schema: &Value) -> Vec<(&Value, &Value)> {
+    let mut arms = Vec::new();
+    if let (Some(condition), Some(then_schema)) = (schema.get("if"), schema.get("then")) {
+        arms.push((condition, then_schema));
+    }
+    arms.extend(
         schema
             .get("allOf")
             .and_then(Value::as_array)
             .into_iter()
             .flatten()
-            .filter_map(|arm| arm.get("if")),
+            .filter_map(|arm| Some((arm.get("if")?, arm.get("then")?))),
     );
-    conditions
+    arms
+}
+
+fn schema_paths(root: &Value, schema: &Value) -> Vec<Vec<String>> {
+    let mut paths = BTreeSet::new();
+    collect_schema_paths(
+        root,
+        schema,
+        &mut Vec::new(),
+        &mut BTreeSet::new(),
+        &mut paths,
+    );
+    paths.into_iter().collect()
+}
+
+fn collect_schema_paths(
+    root: &Value,
+    schema: &Value,
+    prefix: &mut Vec<String>,
+    visited_refs: &mut BTreeSet<String>,
+    paths: &mut BTreeSet<Vec<String>>,
+) {
+    if let Some(reference) = schema.get("$ref").and_then(Value::as_str)
+        && let Some(pointer) = reference.strip_prefix('#')
+        && visited_refs.insert(reference.to_string())
+    {
+        if let Some(target) = root.pointer(pointer) {
+            collect_schema_paths(root, target, prefix, visited_refs, paths);
+        }
+        visited_refs.remove(reference);
+    }
+    if let Some(properties) = schema.get("properties").and_then(Value::as_object) {
+        for (name, child) in properties {
+            prefix.push(name.clone());
+            paths.insert(prefix.clone());
+            collect_schema_paths(root, child, prefix, visited_refs, paths);
+            prefix.pop();
+        }
+    }
+    if let Some(required) = schema.get("required").and_then(Value::as_array) {
+        for name in required.iter().filter_map(Value::as_str) {
+            prefix.push(name.to_string());
+            paths.insert(prefix.clone());
+            prefix.pop();
+        }
+    }
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        for child in schema
+            .get(keyword)
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            collect_schema_paths(root, child, prefix, visited_refs, paths);
+        }
+    }
+    for keyword in ["not", "if", "then", "else"] {
+        if let Some(child) = schema.get(keyword) {
+            collect_schema_paths(root, child, prefix, visited_refs, paths);
+        }
+    }
+}
+
+fn paths_overlap(left: &[String], right: &[String]) -> bool {
+    left.starts_with(right) || right.starts_with(left)
+}
+
+fn nonconforming_composite_payload(
+    guard: &Validator,
+    then_schema: &Validator,
+    satisfied: &Value,
+    violated: &Value,
+    path: &[String],
+) -> Option<(Value, Value, Value)> {
+    for payload in [
+        Value::Bool(false),
+        Value::Bool(true),
+        Value::from(0),
+        Value::from(1.5),
+        Value::String(String::new()),
+        Value::String("not-a-value".to_string()),
+        Value::Array(Vec::new()),
+        Value::Object(Map::new()),
+    ] {
+        let mut satisfied_composite = satisfied.clone();
+        set_path(&mut satisfied_composite, path, payload.clone());
+        let mut violated_composite = violated.clone();
+        set_path(&mut violated_composite, path, payload.clone());
+        if guard.is_valid(&satisfied_composite)
+            && !guard.is_valid(&violated_composite)
+            && !then_schema.is_valid(&satisfied_composite)
+        {
+            return Some((payload, satisfied_composite, violated_composite));
+        }
+    }
+    None
 }
 
 fn compile_root_guard(schema: &Value, condition: &Value) -> eyre::Result<Validator> {
@@ -429,18 +684,6 @@ fn compile_root_guard(schema: &Value, condition: &Value) -> eyre::Result<Validat
     wrapper.insert("allOf".to_string(), Value::Array(vec![condition.clone()]));
     jsonschema::validator_for(&Value::Object(wrapper))
         .map_err(|error| eyre::eyre!("compile root guard: {error}"))
-}
-
-fn compose_probe(defaults: &Value, probe: &ProbeInstance) -> Value {
-    match probe {
-        ProbeInstance::Defaults => defaults.clone(),
-        ProbeInstance::SparseOverride(value) => {
-            let mut composed = defaults.clone();
-            merge_override(&mut composed, value.clone());
-            composed
-        }
-        ProbeInstance::Coalesced(value) => value.clone(),
-    }
 }
 
 fn chart_dependency_roots(chart_relative_path: &str) -> eyre::Result<BTreeSet<String>> {
@@ -527,7 +770,7 @@ fn chart_name_from_archive(path: &Path) -> eyre::Result<Option<String>> {
         if !matches!(file_name, Some("Chart.yaml" | "Chart.template.yaml")) {
             continue;
         }
-        let depth = entry_path.components().count();
+        let depth = archive_entry_depth(&entry_path);
         if depth > 2 {
             continue;
         }
@@ -558,6 +801,12 @@ fn chart_name_from_archive(path: &Path) -> eyre::Result<Option<String>> {
         return Ok(None);
     };
     chart_name_from_manifest_bytes(&bytes, &format!("{}:{manifest_path}", path.display()))
+}
+
+pub(crate) fn archive_entry_depth(path: &Path) -> usize {
+    path.components()
+        .filter(|component| !matches!(component, Component::CurDir))
+        .count()
 }
 
 fn chart_name_from_manifest_bytes(bytes: &[u8], source: &str) -> eyre::Result<Option<String>> {
