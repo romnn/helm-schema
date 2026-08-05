@@ -738,7 +738,7 @@ adjudication.
 
 ## Step 6a — typed selection reachability with adapters
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: representation-only; no existing producer or consumer may change
   semantic behavior in this step.
 - Acceptance baseline: `888f274`.
@@ -853,4 +853,19 @@ adjudication.
     /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 charts complete.
   - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta +129.
-- Commit: pending.
+- Commit: `779b64d` (`refactor(ir): add selection reachability carrier`).
+
+## Wave 1 summary
+
+- Landed sequence: Step 1 `44472dd`; Step 2 `7817568`; Step 3a `34e49a6`;
+  Step 3b `a0a9e3e`; Step 4 `02e8e4a`; Step 5 `888f274`; Step 6a
+  `779b64d`.
+- Final production Rust LOC: 61,308, a net +46 LOC from the 61,262 campaign
+  baseline.
+- Every representation-only step kept its schema and IR fixtures identical.
+  The behavior-bearing steps adopted no corpus acceptance flip; Step 2's
+  separately measured large-chart widening followed its frozen stop-branch
+  protocol and live Helm adjudication.
+- The final wave tree passes the full-depth 60-lane, 121,059-probe battery
+  with zero flips, every repository gate, and the 32-chart downstream luup2
+  gate. Wave 2 remains unstarted pending external review and D5 row decisions.
