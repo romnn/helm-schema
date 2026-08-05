@@ -89,7 +89,7 @@ impl ProbeInstance {
     }
 }
 
-fn sparse_override_for_composed(defaults: &Value, composed: &Value) -> Option<Value> {
+pub(super) fn sparse_override_for_composed(defaults: &Value, composed: &Value) -> Option<Value> {
     match (defaults, composed) {
         (Value::Object(defaults), Value::Object(composed)) => {
             let mut patch = Map::new();
@@ -952,7 +952,7 @@ fn chart_path(chart_relative_path: &str) -> std::path::PathBuf {
         .join(Path::new(chart_relative_path))
 }
 
-fn merge_override(base: &mut Value, override_value: Value) {
+pub(super) fn merge_override(base: &mut Value, override_value: Value) {
     let overrides = match override_value {
         Value::Object(overrides) => overrides,
         mut value => {
@@ -1070,32 +1070,5 @@ fn value_shape(value: &Value) -> &'static str {
         Value::Array(_) => "empty object item",
         Value::Object(value) if value.is_empty() => "empty object",
         Value::Object(_) => "unknown object member",
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use test_util::prelude::sim_assert_eq;
-
-    #[test]
-    fn composed_probe_sparse_override_round_trips_null_deletion_and_replacement() {
-        let defaults = serde_json::json!({
-            "guard": true,
-            "nested": { "deleted": "x", "kept": 1 },
-            "scalar": "old",
-        });
-        let composed = serde_json::json!({
-            "guard": false,
-            "nested": { "kept": 1, "added": 2 },
-            "scalar": { "replacement": true },
-        });
-        let patch = sparse_override_for_composed(&defaults, &composed)
-            .expect("different documents must produce an override");
-        let mut round_trip = defaults;
-
-        merge_override(&mut round_trip, patch);
-
-        sim_assert_eq!(have: round_trip, want: composed);
     }
 }

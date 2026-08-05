@@ -74,6 +74,56 @@ struct CallInvocation<'a> {
     piped: Option<PipedOperand>,
 }
 
+/// Special forms whose evaluation order belongs to the dispatcher but which
+/// carry no shared semantic facet in the function catalog.
+pub(crate) const INTENTIONAL_DISPATCH_EXCEPTIONS: &[&str] = &[
+    "and",
+    "cat",
+    "coalesce",
+    "default",
+    "dict",
+    "dig",
+    "empty",
+    "eq",
+    "fromJson",
+    "fromJsonArray",
+    "has",
+    "include",
+    "join",
+    "kindIs",
+    "list",
+    "mustToJson",
+    "mustToRawJson",
+    "ne",
+    "not",
+    "or",
+    "print",
+    "required",
+    "set",
+    "sortAlpha",
+    "template",
+    "toJson",
+    "toRawJson",
+    "tuple",
+    "typeIs",
+];
+
+/// Reports whether a name may reach a dispatcher special-form arm.
+pub(crate) fn has_catalog_or_dispatch_exception(function: &str) -> bool {
+    function_semantics(function).is_known() || INTENTIONAL_DISPATCH_EXCEPTIONS.contains(&function)
+}
+
+/// Reports whether a sequence operand retains direct field-access nil behavior.
+///
+/// Go appends a pipeline result as an evaluated final argument, so a piped
+/// operand is never a direct access even when the pipeline primary was one.
+pub(crate) const fn sequence_operand_direct_access(
+    had_piped_operand: bool,
+    is_direct_values_path: bool,
+) -> bool {
+    !had_piped_operand && is_direct_values_path
+}
+
 pub(crate) fn eval_call_with_helper_calls(
     function: &str,
     args: &[TemplateExpr],
@@ -101,6 +151,12 @@ fn eval_invocation(
         args,
         mut piped,
     } = invocation;
+    if !has_catalog_or_dispatch_exception(function) {
+        return match piped {
+            Some(piped) => eval_unknown_call(args, piped.result.effects, env, resolver),
+            None => eval_unknown_call(args, Effects::default(), env, resolver),
+        };
+    }
     let operand_count = args.len() + usize::from(piped.is_some());
     match function {
         function
@@ -288,11 +344,8 @@ fn eval_sequence_invocation(
         // non-nil kind copies, so the operand carries a presence claim and no kind claim at all.
         record_operand_presence_result(&operand, &mut result.effects);
     } else {
-        let nil_aborts = if matches!(function, "uniq" | "mustUniq") {
-            function_semantics(function).nil_aborts(false)
-        } else {
-            function_semantics(function).nil_aborts(is_direct_values_path)
-        };
+        let direct_access = sequence_operand_direct_access(had_piped, is_direct_values_path);
+        let nil_aborts = function_semantics(function).nil_aborts(direct_access);
         record_strict_kind_result(&operand, "array", nil_aborts, &mut result.effects);
     }
     result

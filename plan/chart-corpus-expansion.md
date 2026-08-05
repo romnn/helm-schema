@@ -12628,3 +12628,14 @@ full-depth comparison checks 121,059 default-composed, null-deletion-aware,
 guard-state, and composite probes against `9fdd812` with zero flips, zero
 candidate-accepts/Helm-aborts cells, and no undisclosed base or third-level
 truncation. No fixture or Helm disposition changes.
+
+## Architecture Review v3 Wave 2 R6 (2026-08-05)
+
+R6 catalog and hygiene cleanup used acceptance baseline `70bc42d`. The initial
+dispatcher-exception preflight omitted `required`; the
+battery exposed 18 Kyverno widenings, and live Helm replay rejected 16 of
+them. That batch was discarded. After restoring `required`, one authoritative
+clean schema dump writes all 84 artifacts and one clean IR dump writes all 18
+artifacts byte-identically. The repaired full-depth comparison checks 121,059
+probes with zero flips, zero candidate-accepts/Helm-aborts cells, and no
+undisclosed truncation. No fixture or Helm disposition change is adopted.

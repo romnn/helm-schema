@@ -12,7 +12,7 @@ use harness::{
     ContractVerdict, ControlCategory, GuardSamplingStrategy, ProbeCoverage, ProbeInstance,
     ProfileSchemas, SemanticControl, Transport, generate_profile_outputs, generate_profile_schemas,
     read_chart_schema_fixture, read_json_fixture, read_root_defaults, sparse_override,
-    structural_probe_battery, structural_probe_battery_with_coverage,
+    sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
 };
 
 #[derive(Serialize)]
@@ -114,6 +114,28 @@ fn helm_adjudication_validation_rejects_unregistered_accepted_abort() {
     };
 
     assert!(validate_helm_adjudication_coverage(&coverage).is_err());
+}
+
+#[test]
+fn composed_probe_sparse_override_round_trips_null_deletion_and_replacement() -> eyre::Result<()> {
+    let defaults = serde_json::json!({
+        "guard": true,
+        "nested": { "deleted": "x", "kept": 1 },
+        "scalar": "old",
+    });
+    let composed = serde_json::json!({
+        "guard": false,
+        "nested": { "kept": 1, "added": 2 },
+        "scalar": { "replacement": true },
+    });
+    let patch = sparse_override_for_composed(&defaults, &composed)
+        .ok_or_eyre("different documents must produce an override")?;
+    let mut round_trip = defaults;
+
+    harness::merge_override(&mut round_trip, patch);
+
+    sim_assert_eq!(have: round_trip, want: composed);
+    Ok(())
 }
 
 #[derive(Default)]

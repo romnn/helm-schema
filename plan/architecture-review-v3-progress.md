@@ -1350,7 +1350,7 @@ adjudication.
 
 ## Wave 2 R2 — harden the selection carrier
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: representation-only; harden the Step 6a carrier's exactness,
   complement, truth-source ownership, and forgotten-producer state without
   migrating a producer or changing schema/IR fixture bytes.
@@ -1483,4 +1483,162 @@ adjudication.
     schema/IR bytes and acceptance verdicts are unchanged.
   - `task tokei:core`: exit 0; 61,376 production Rust LOC, delta +68.
 - Measured production LOC delta: +68 (61,308 to 61,376).
+- Commit: `70bc42d` (`refactor(ir): harden selection carrier`).
+
+## Wave 2 R6 — catalog and hygiene cleanups
+
+- Status: landed; commit pending.
+- Contract: reconcile or remove unused catalog shape facts; add a checked
+  dispatcher-to-catalog boundary; use existing semantic helpers; correct and
+  pin sequence nil-abort directness; and move the test-support inline module
+  to the repository's mandated test layout. Adjudicate any behavior-bearing
+  delta.
+- Acceptance baseline: `70bc42d`.
+- Baseline production Rust LOC: 61,376.
+- Measured results:
+  - The unconsumed `CollectionShape::Sequence` and `Mapping` variants and all
+    writes to them are deleted. The retained `Merge` and `StringSplit` facets
+    are both consumed by direct and pipeline evaluation; sequence routing
+    remains operational dispatch rather than a second catalog partition.
+  - A dispatcher entry boundary now permits special-form evaluation only for
+    catalogued functions or names in a maintained intentional-exceptions
+    table. The table contains evaluation-order forms that own no shared
+    semantic facet; focused tests require each exception to remain outside the
+    catalog and prove arbitrary unknown names take the generic path.
+  - Assignment-derived-text classification uses the catalog's
+    `is_string_transform` helper. Sequence nil behavior has no `uniq`
+    special-case: a pipeline result is explicitly non-direct, while a direct
+    call retains directness only for an actual values path. Focused tests pin
+    all three direct/piped states.
+  - The sparse-override round-trip test moved from an inline module in test
+    support to `schema_emission_profiles.rs`; setup now returns
+    `eyre::Result` and uses `ok_or_eyre`.
+  - The repaired authoritative schema dump writes 84 artifacts and the IR
+    dump writes 18 artifacts, all byte-identical. The full-depth comparison
+    checks 60 lanes and 121,059 probes against `70bc42d` with zero flips and
+    zero undisclosed truncation. Production Rust is 61,408 LOC, delta +32.
+- Deviations:
+  - Failed preflight, discarded rather than adopted: the first dispatcher
+    exception table omitted the `required` special form. The first battery run
+    exposed 18 Kyverno acceptance widenings; live Helm replay showed 16
+    candidate-accepts/Helm-aborts cells on the two `sigstoreVolume` paths and
+    only the object-member cells rendered. The zero allowance rejected the
+    run with exit 100. `required` was added to the intentional exceptions,
+    the invalid dump/IR/prober batch was deleted, and the single authoritative
+    batch was regenerated from the repaired tree. The focused Kyverno corpus
+    test and final battery then returned to byte-identical/zero-flip results.
+  - No final-tree contract deviation or semantic delta. The executable
+    dispatcher boundary adds +32 LOC rather than deleting code, but it makes
+    catalog drift behaviorally test-visible and leaves no unconsumed catalog
+    facet.
+- Adjudication evidence:
+  - The failed preflight Helm-adjudicated both directions of the accidental
+    `required` widening: boolean, numeric, string, array, and empty-object
+    replacements aborted; a populated object rendered. The widening was not
+    registered or retained.
+  - On the repaired tree, fixture bytes and the full-depth 121,059-probe
+    acceptance surface match `70bc42d`, so no final fixture flip or Helm
+    disposition is available or required. Hermetic monotonicity, semantic
+    controls, guard/composite synthesis, Temporal monotonicity, and both
+    falsifiable accounting checks pass.
+  - Self-adversarial pass: the inherited exception inventory was not trusted;
+    its first omission was caught and repaired. The final boundary makes any
+    non-catalog/non-exception name return through generic evaluation before a
+    special arm can run. The catalog facet deletion was audited by `rg`, the
+    pipeline directness rule has an explicit three-state test, and the final
+    measurements disclose the failed first design and positive LOC delta. No
+    remaining contract-in-letter-only result or undisclosed semantic change
+    was found.
+
+### Review dossier
+
+- Catalog deletion and retained consumers: `rg -n
+  'CollectionShape|with_collection' crates/helm-schema-ir/src --glob '*.rs'`;
+  shows only None, Merge, and StringSplit, with the latter two consumed in
+  direct/pipeline dispatch and expression evaluation.
+- Executable dispatcher boundary: `sed -n '45,150p'
+  crates/helm-schema-ir/src/expr_call_eval/mod.rs`; shows the maintained
+  exceptions, known-or-exception classifier, early generic return, and piped
+  final-argument handling.
+- Focused catalog/directness proof: `cargo nextest run -p helm-schema-ir -E
+  'test(function_semantics) |
+  test(piped_sequence_operands_are_never_direct_accesses) |
+  test(dispatcher_special_forms_are_catalogued_or_intentional_exceptions)'`;
+  exit 0, four tests pass.
+- Moved harness proof: `cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(composed_probe_sparse_override_round_trips_null_deletion_and_replacement)'`;
+  exit 0, one test passes through `eyre::Result` setup.
+- Failed-preflight reproducer: run the full-depth command below on the
+  pre-repair tree with `required` removed from
+  `INTENTIONAL_DISPATCH_EXCEPTIONS`; exit 100 and its machine/live output
+  reports 18 Kyverno flips and 16 candidate-accepts/Helm-aborts cells across
+  `admissionController.sigstoreVolume` and
+  `reportsController.sigstoreVolume`.
+- Repaired Kyverno control: `cargo nextest run -P integration -p
+  helm-schema-cli --test chart_corpus -E 'test(kyverno)'`; exit 0, one test
+  passes.
+- Clean schema dump proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r6-final-dump`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r6-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written byte-identically.
+- Clean IR dump proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r6-final-ir`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r6-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written byte-identically.
+- Full-depth acceptance proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r6-prober`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r6-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=70bc42d
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r6-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r6-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Machine accounting: `jq '{baseline_ref, helm_adjudication, totals: {base:
+  (.charts | map(.base_emitted) | add), third_level: (.charts |
+  map(.third_level_emitted) | add), guard_pairs: (.charts |
+  map(.guard_pairs_emitted) | add), composite_pairs: (.charts |
+  map(.composite_pairs_emitted) | add), base_dropped: (.charts |
+  map(.base_dropped) | add), third_level_dropped: (.charts |
+  map(.third_level_dropped) | add)}}'
+  target/arch-v3-wave2-r6-probe-coverage.json`; reports baseline `70bc42d`,
+  live adjudication enabled, zero adjudicated flips, zero accepted-abort cells,
+  allowance zero, 112,260 base probes, 7,465 third-level probes, 427 guard
+  pairs, 240 composite pairs, and no base or third-level drops.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+- Gates on the final R6 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,228 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 567 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,799 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream luup2: not required because the final R6 tree is byte- and
+    acceptance-identical to its baseline.
+  - `task tokei:core`: exit 0; 61,408 production Rust LOC, delta +32.
+- Measured production LOC delta: +32 (61,376 to 61,408).
 - Commit: pending.

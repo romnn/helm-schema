@@ -36,8 +36,6 @@ pub(crate) enum OutputSemantics {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum CollectionShape {
     None,
-    Sequence,
-    Mapping,
     Merge,
     StringSplit,
 }
@@ -149,7 +147,7 @@ impl FunctionSemantics {
 /// that can drift apart.
 #[must_use]
 pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
-    use CollectionShape::{Mapping, Merge, Sequence, StringSplit};
+    use CollectionShape::{Merge, StringSplit};
     use NilBehavior::{AlwaysAborts, DirectAccessAborts};
     use OutputSemantics::{
         Checksum, CoercingArithmetic, StringTransform, TotalNumericCast, TotalStringification,
@@ -218,18 +216,14 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
             KNOWN.with_nil(DirectAccessAborts).with_collection(Merge)
         }
         "first" | "last" | "initial" | "rest" | "compact" | "reverse" | "append" | "push"
-        | "prepend" | "concat" | "slice" | "mustSlice" => {
-            KNOWN.with_nil(AlwaysAborts).with_collection(Sequence)
+        | "prepend" | "concat" | "slice" | "mustSlice" | "index" | "len" | "ternary" | "unset" => {
+            KNOWN.with_nil(AlwaysAborts)
         }
-        "uniq" | "mustUniq" => KNOWN
-            .with_nil(AlwaysAborts)
-            .with_collection(Sequence)
-            .with_provenance(Preserve),
-        "deepCopy" | "mustDeepCopy" => KNOWN.with_nil(AlwaysAborts).with_provenance(Preserve),
-        "index" | "len" | "ternary" => KNOWN.with_nil(AlwaysAborts),
-        "unset" => KNOWN.with_nil(AlwaysAborts).with_collection(Mapping),
+        "uniq" | "mustUniq" | "deepCopy" | "mustDeepCopy" => {
+            KNOWN.with_nil(AlwaysAborts).with_provenance(Preserve)
+        }
         "hasKey" | "pick" | "omit" | "keys" | "values" | "pluck" | "get" => {
-            KNOWN.with_nil(DirectAccessAborts).with_collection(Mapping)
+            KNOWN.with_nil(DirectAccessAborts)
         }
         "toYaml" | "fromYaml" | "tpl" => KNOWN.with_provenance(Preserve),
         "printf" => KNOWN
@@ -244,7 +238,6 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
 }
 
 impl FunctionSemantics {
-    #[cfg(test)]
     #[must_use]
     pub(crate) const fn is_known(self) -> bool {
         self.known

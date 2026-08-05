@@ -2,6 +2,10 @@ use std::collections::BTreeSet;
 
 use test_util::prelude::sim_assert_eq;
 
+use crate::expr_call_eval::{
+    INTENTIONAL_DISPATCH_EXCEPTIONS, has_catalog_or_dispatch_exception,
+    sequence_operand_direct_access,
+};
 use crate::function_semantics::{
     CollectionShape, NilBehavior, OutputSemantics, PredicateSemantics, ProvenanceBehavior,
     StringOperands, function_semantics, strict_collection_item_pattern,
@@ -116,6 +120,45 @@ fn every_known_function_has_one_catalog_row() {
         sim_assert_eq!(have: function_semantics(function).is_known(), want: true);
     }
     sim_assert_eq!(have: function_semantics("notCatalogued").is_known(), want: false);
+}
+
+#[test]
+fn dispatcher_special_forms_are_catalogued_or_intentional_exceptions() {
+    let mut seen = BTreeSet::new();
+    for function in KNOWN_FUNCTIONS {
+        sim_assert_eq!(
+            have: has_catalog_or_dispatch_exception(function),
+            want: true
+        );
+    }
+    for function in INTENTIONAL_DISPATCH_EXCEPTIONS {
+        sim_assert_eq!(have: seen.insert(*function), want: true);
+        sim_assert_eq!(have: function_semantics(function).is_known(), want: false);
+        sim_assert_eq!(
+            have: has_catalog_or_dispatch_exception(function),
+            want: true
+        );
+    }
+    sim_assert_eq!(
+        have: has_catalog_or_dispatch_exception("notCatalogued"),
+        want: false
+    );
+}
+
+#[test]
+fn piped_sequence_operands_are_never_direct_accesses() {
+    sim_assert_eq!(
+        have: sequence_operand_direct_access(false, true),
+        want: true
+    );
+    sim_assert_eq!(
+        have: sequence_operand_direct_access(false, false),
+        want: false
+    );
+    sim_assert_eq!(
+        have: sequence_operand_direct_access(true, true),
+        want: false
+    );
 }
 
 #[test]
