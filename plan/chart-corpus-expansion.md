@@ -12541,3 +12541,19 @@ comparison checks 121,059 default-composed, null-deletion-aware, guard-state,
 and composite probes against `34e49a6` with zero acceptance flips and zero
 undisclosed base or third-level truncation. No fixture or Helm disposition
 changes.
+
+## Architecture Review v3 Step 4 (2026-08-05)
+
+Direct calls and pipeline stages now share one typed invocation carrier and
+one semantic dispatcher for sequence, comparison, ternary, replacement,
+trim-affix, decode, join, split, and generic string-consumer families. The
+authoritative clean dump writes all 84 schema artifacts and all 18 IR artifacts
+byte-identically. The full-depth compiled comparison checks 121,059
+default-composed, null-deletion-aware, guard-state, and composite probes against
+`a0a9e3e` with zero acceptance flips and zero undisclosed truncation.
+
+The shared strict-parser evaluator corrects the old direct/pipeline `split`
+mismatch. Helm 4.2.3 aborts both spellings for deleted/null and present numeric
+operands and renders both for a present string operand. A nine-family live
+matrix records the same three-direction contract for every migrated family; no
+corpus fixture changes are adopted.

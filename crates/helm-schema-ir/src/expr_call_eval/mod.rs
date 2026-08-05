@@ -27,28 +27,26 @@ mod traversal;
 mod value_facts;
 
 use collections::{
-    eval_append, eval_coalesce, eval_concat, eval_default, eval_dict, eval_first,
-    eval_first_result, eval_last, eval_last_result, eval_list, eval_merge, eval_nonempty_split,
-    eval_nonempty_split_pipeline, eval_omit, eval_pick, eval_pluck, eval_prepend, eval_regex_split,
-    eval_reverse, eval_reverse_result, eval_split_list, is_nonempty_string_literal,
+    eval_append, eval_coalesce, eval_concat, eval_default, eval_dict, eval_first_result,
+    eval_last_result, eval_list, eval_merge, eval_nonempty_split, eval_omit, eval_pick, eval_pluck,
+    eval_prepend, eval_regex_split, eval_reverse_result, eval_split_list,
+    is_nonempty_string_literal,
 };
-use comparisons::{eval_comparison, eval_pipeline_comparison, eval_ternary, eval_type_is};
+use comparisons::{eval_comparison, eval_ternary, eval_type_is};
 use root_mutation::eval_set_call;
 use serialization::{
-    conjoin_formatter_operand_selection, eval_cat, eval_from_json, eval_from_json_pipeline,
-    eval_from_yaml, eval_from_yaml_pipeline, eval_join, eval_join_pipeline, eval_print,
-    eval_printf, eval_regex_replace, eval_repeat, eval_replace, eval_replace_pipeline,
-    eval_to_json, eval_to_json_result, eval_to_yaml, eval_to_yaml_result, eval_tpl,
-    eval_trim_affix, eval_trim_affix_pipeline, record_printf_argument_effects,
-    record_total_conversion_effects,
+    conjoin_formatter_operand_selection, eval_cat, eval_from_json, eval_from_yaml, eval_join,
+    eval_print, eval_printf, eval_regex_replace, eval_repeat, eval_replace, eval_to_json,
+    eval_to_json_result, eval_to_yaml, eval_to_yaml_result, eval_tpl, eval_trim_affix,
+    record_printf_argument_effects, record_total_conversion_effects,
 };
 use strict_operands::{
-    pipeline_string_operand_facts, push_fail_capture, record_collection_item_kind_result,
-    record_length_bearing_operand, record_length_bearing_result, record_operand_presence_operands,
-    record_operand_presence_result, record_raw_range_key_string_consumer_paths,
-    record_strict_kind_operands, record_strict_kind_result, record_strict_parser_call,
-    record_strict_parser_pipeline, record_string_call_consumers, record_string_consumer_effects,
-    record_string_transform_effects, string_call_operand_facts,
+    push_fail_capture, record_collection_item_kind_result, record_length_bearing_operand,
+    record_length_bearing_result, record_operand_presence_result,
+    record_raw_range_key_string_consumer_paths, record_strict_kind_operands,
+    record_strict_kind_result, record_strict_parser_invocation, record_string_call_consumers,
+    record_string_consumer_effects, record_string_transform_effects,
+    string_invocation_operand_facts,
 };
 use traversal::{eval_dig, eval_index};
 use value_facts::{
@@ -56,11 +54,242 @@ use value_facts::{
     mark_stringified_identities,
 };
 
+struct PipedOperand {
+    result: EvalResult,
+    is_direct_values_path: bool,
+}
+
+struct CallInvocation<'a> {
+    function: &'a str,
+    args: &'a [TemplateExpr],
+    piped: Option<PipedOperand>,
+}
+
+pub(crate) fn eval_call_with_helper_calls(
+    function: &str,
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    eval_invocation(
+        CallInvocation {
+            function,
+            args,
+            piped: None,
+        },
+        env,
+        resolver,
+    )
+}
+
+fn eval_invocation(
+    invocation: CallInvocation<'_>,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let CallInvocation {
+        function,
+        args,
+        mut piped,
+    } = invocation;
+    let operand_count = args.len() + usize::from(piped.is_some());
+    match function {
+        function
+            if matches!(
+                function,
+                "first"
+                    | "last"
+                    | "initial"
+                    | "rest"
+                    | "compact"
+                    | "reverse"
+                    | "deepCopy"
+                    | "mustDeepCopy"
+            ) && operand_count == 1
+                || matches!(function, "uniq" | "mustUniq")
+                    && (piped.is_some() || args.len() == 1) =>
+        {
+            return eval_sequence_invocation(function, args, piped.take(), env, resolver);
+        }
+        "eq" | "ne" if operand_count >= 2 => {
+            let piped = piped
+                .take()
+                .map(|piped| (piped.result, piped.is_direct_values_path));
+            return eval_comparison(function, args, piped, env, resolver);
+        }
+        "ternary" => {
+            let piped = piped
+                .take()
+                .map(|piped| (piped.result, piped.is_direct_values_path));
+            return eval_ternary(args, piped, env, resolver);
+        }
+        "replace" if operand_count == 3 => {
+            return eval_replace(args, piped.take().map(|piped| piped.result), env, resolver);
+        }
+        "trimPrefix" | "trimSuffix" if operand_count == 2 => {
+            return eval_trim_affix(
+                function,
+                args,
+                piped.take().map(|piped| piped.result),
+                env,
+                resolver,
+            );
+        }
+        "fromYaml" if operand_count == 1 => {
+            return eval_from_yaml(args, piped.take().map(|piped| piped.result), env, resolver);
+        }
+        "fromJson" | "fromJsonArray" if operand_count == 1 => {
+            return eval_from_json(args, piped.take().map(|piped| piped.result), env, resolver);
+        }
+        "join" if operand_count == 2 => {
+            return eval_join(args, piped.take().map(|piped| piped.result), env, resolver);
+        }
+        "split" if operand_count == 2 && args.first().is_some_and(is_nonempty_string_literal) => {
+            return eval_nonempty_split(
+                args,
+                piped.take().map(|piped| piped.result),
+                env,
+                resolver,
+            );
+        }
+        function
+            if is_string_transform_function(function)
+                && (piped.is_some()
+                    || !matches!(
+                        (function, args.len()),
+                        ("repeat", 2)
+                            | (
+                                "regexReplaceAll"
+                                    | "mustRegexReplaceAll"
+                                    | "regexReplaceAllLiteral"
+                                    | "mustRegexReplaceAllLiteral",
+                                3
+                            )
+                    )) =>
+        {
+            return eval_string_transform_invocation(
+                function,
+                args,
+                piped.take().map(|piped| piped.result),
+                env,
+                resolver,
+            );
+        }
+        _ => {}
+    }
+    if let Some(piped) = piped {
+        return eval_piped_invocation(function, args, piped, env, resolver);
+    }
+    eval_direct_invocation(function, args, env, resolver)
+}
+
+fn eval_string_transform_invocation(
+    function: &str,
+    args: &[TemplateExpr],
+    piped: Option<EvalResult>,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let (result, piped_for_facts) = match piped {
+        Some(result) => {
+            let piped_for_facts = result.clone();
+            (result, Some(piped_for_facts))
+        }
+        None => (eval_all_args(args, env, resolver), None),
+    };
+    let scalar_dispatch = if function == "toString" {
+        result
+            .scalar_dispatch
+            .as_ref()
+            .map(ScalarValueDispatch::stringified)
+    } else {
+        None
+    };
+    let (string_paths, raw_range_key_paths) =
+        string_invocation_operand_facts(function, args, piped_for_facts.as_ref(), env, resolver);
+    let mut effects = result.effects;
+    if piped_for_facts.is_some() {
+        for arg in args {
+            let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
+            if function == "b64enc" {
+                effects.add_encoded_paths(identity_value_paths(arg_result.value.as_ref()));
+            }
+            effects.merge(arg_result.effects);
+        }
+    }
+    record_string_transform_effects(
+        function,
+        result.value.as_ref(),
+        &string_paths,
+        &raw_range_key_paths,
+        &mut effects,
+    );
+    let value = if matches!(function, "quote" | "squote") {
+        result
+            .value
+            .map(AbstractValue::clear_plain_slot_string_format)
+    } else if function == "toString" {
+        mark_stringified_identities(result.value)
+    } else {
+        result.value
+    };
+    let result = EvalResult::with_effects(derive_value_text(value), effects);
+    match scalar_dispatch {
+        Some(dispatch) => result.with_scalar_dispatch(dispatch),
+        None => result,
+    }
+}
+
+fn eval_sequence_invocation(
+    function: &str,
+    args: &[TemplateExpr],
+    piped: Option<PipedOperand>,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let had_piped = piped.is_some();
+    let (operand, is_direct_values_path) = if let Some(piped) = piped {
+        (piped.result, piped.is_direct_values_path)
+    } else {
+        let Some(arg) = args.first() else {
+            return EvalResult::none();
+        };
+        (
+            eval_expr_with_helper_calls(arg, env, resolver),
+            direct_values_path(arg).is_some(),
+        )
+    };
+    let mut result = match function {
+        "first" => eval_first_result(operand.clone()),
+        "last" => eval_last_result(operand.clone()),
+        "reverse" => eval_reverse_result(operand.clone()),
+        "uniq" | "mustUniq" => {
+            let mut effects = operand.effects.clone();
+            if had_piped {
+                merge_arg_effects(args, env, resolver, &mut effects);
+            }
+            EvalResult::with_effects(operand.value.clone(), effects)
+        }
+        _ => operand.clone(),
+    };
+    if matches!(function, "deepCopy" | "mustDeepCopy") {
+        record_operand_presence_result(&operand, &mut result.effects);
+    } else {
+        let nil_aborts = if matches!(function, "uniq" | "mustUniq") {
+            strict_operand_nil_aborts(function, false)
+        } else {
+            strict_operand_nil_aborts(function, is_direct_values_path)
+        };
+        record_strict_kind_result(&operand, "array", nil_aborts, &mut result.effects);
+    }
+    result
+}
+
 #[expect(
     clippy::too_many_lines,
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
-pub(crate) fn eval_call_with_helper_calls(
+fn eval_direct_invocation(
     function: &str,
     args: &[TemplateExpr],
     env: &EvalEnv,
@@ -119,56 +348,6 @@ pub(crate) fn eval_call_with_helper_calls(
         } else {
             Predicate::True
         }),
-        "deepCopy" | "mustDeepCopy" if matches!(args, [_]) => {
-            let Some(arg) = args.first() else {
-                return EvalResult::none();
-            };
-            // `copystructure` walks the operand with reflection and faults
-            // on a zero value, but any non-nil KIND copies, so the operand
-            // carries a presence claim and no kind claim at all.
-            let mut result = eval_expr_with_helper_calls(arg, env, resolver);
-            record_operand_presence_operands(args, env, resolver, &mut result.effects);
-            result
-        }
-        "first" if args.len() == 1 => {
-            let mut result = eval_first(args, env, resolver);
-            record_strict_kind_operands(
-                function,
-                args,
-                "array",
-                env,
-                resolver,
-                &mut result.effects,
-            );
-            result
-        }
-        "last" if args.len() == 1 => {
-            let mut result = eval_last(args, env, resolver);
-            record_strict_kind_operands(
-                function,
-                args,
-                "array",
-                env,
-                resolver,
-                &mut result.effects,
-            );
-            result
-        }
-        "initial" | "rest" | "compact" if matches!(args, [_]) => {
-            let Some(arg) = args.first() else {
-                return EvalResult::none();
-            };
-            let mut result = eval_expr_with_helper_calls(arg, env, resolver);
-            record_strict_kind_operands(
-                function,
-                args,
-                "array",
-                env,
-                resolver,
-                &mut result.effects,
-            );
-            result
-        }
         "slice" | "mustSlice" if (2..=3).contains(&args.len()) => {
             let Some((subject, bounds)) = args.split_first() else {
                 return EvalResult::none();
@@ -185,25 +364,10 @@ pub(crate) fn eval_call_with_helper_calls(
             merge_arg_effects(bounds, env, resolver, &mut result.effects);
             result
         }
-        "reverse" if args.len() == 1 => {
-            let mut result = eval_reverse(args, env, resolver);
-            record_strict_kind_operands(
-                function,
-                args,
-                "array",
-                env,
-                resolver,
-                &mut result.effects,
-            );
-            result
-        }
         "splitList" if args.len() == 2 => {
             let mut result = eval_split_list(args, env, resolver);
             record_string_call_consumers("splitList", args, env, resolver, &mut result.effects);
             result
-        }
-        "split" if matches!(args.first(), Some(separator) if args.len() == 2 && is_nonempty_string_literal(separator)) => {
-            eval_nonempty_split(args, env, resolver)
         }
         "append" => {
             let mut result = eval_append(args, env, resolver);
@@ -287,7 +451,6 @@ pub(crate) fn eval_call_with_helper_calls(
             }
             EvalResult::with_effects(None, effects)
         }
-        "eq" | "ne" if args.len() >= 2 => eval_comparison(function, args, env, resolver),
         // These stay on eval_unknown_call's widened-value semantics: their
         // results (a count, a membership bool, a rebuilt list) are dataflow
         // through the call, not the operand's identity, so downstream string
@@ -537,24 +700,8 @@ pub(crate) fn eval_call_with_helper_calls(
             }
             result
         }
-        "uniq" | "mustUniq" if args.len() == 1 => {
-            let mut result = eval_all_args(args, env, resolver);
-            let operand = result.clone();
-            record_strict_kind_result(
-                &operand,
-                "array",
-                strict_operand_nil_aborts(function, false),
-                &mut result.effects,
-            );
-            result
-        }
-        "ternary" => eval_ternary(args, None, env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
-        "replace" if args.len() == 3 => eval_replace(args, env, resolver),
-        "trimPrefix" | "trimSuffix" if args.len() == 2 => {
-            eval_trim_affix(function, args, env, resolver)
-        }
         "regexReplaceAll"
         | "mustRegexReplaceAll"
         | "regexReplaceAllLiteral"
@@ -566,7 +713,7 @@ pub(crate) fn eval_call_with_helper_calls(
         "repeat" if args.len() == 2 => {
             let mut result = eval_repeat(args, env, resolver);
             let (string_paths, raw_range_key_paths) =
-                string_call_operand_facts("repeat", args, env, resolver);
+                string_invocation_operand_facts("repeat", args, None, env, resolver);
             record_string_transform_effects(
                 "repeat",
                 result.value.as_ref(),
@@ -612,13 +759,10 @@ pub(crate) fn eval_call_with_helper_calls(
             subject
         }
         "typeIs" | "kindIs" if args.len() >= 2 => eval_type_is(function, args, env, resolver),
-        "fromYaml" if args.len() == 1 => eval_from_yaml(args, env, resolver),
         "toYaml" if args.len() == 1 => eval_to_yaml(args, env, resolver),
-        "fromJson" | "fromJsonArray" if args.len() == 1 => eval_from_json(args, env, resolver),
         "toJson" | "mustToJson" | "toRawJson" | "mustToRawJson" if args.len() == 1 => {
             eval_to_json(args, env, resolver)
         }
-        "join" if args.len() == 2 => eval_join(args, env, resolver),
         "regexSplit" if args.len() == 3 => eval_regex_split(args, env, resolver),
         function if is_total_numeric_cast_function(function) && args.len() == 1 => {
             let result = eval_all_args(args, env, resolver);
@@ -628,41 +772,6 @@ pub(crate) fn eval_call_with_helper_calls(
                 &mut effects,
             );
             EvalResult::with_effects(derive_value_text(result.value), effects)
-        }
-        function if is_string_transform_function(function) => {
-            let result = eval_all_args(args, env, resolver);
-            let scalar_dispatch = if function == "toString" {
-                result
-                    .scalar_dispatch
-                    .as_ref()
-                    .map(ScalarValueDispatch::stringified)
-            } else {
-                None
-            };
-            let mut effects = result.effects;
-            let (string_paths, raw_range_key_paths) =
-                string_call_operand_facts(function, args, env, resolver);
-            record_string_transform_effects(
-                function,
-                result.value.as_ref(),
-                &string_paths,
-                &raw_range_key_paths,
-                &mut effects,
-            );
-            let value = if matches!(function, "quote" | "squote") {
-                result
-                    .value
-                    .map(AbstractValue::clear_plain_slot_string_format)
-            } else if function == "toString" {
-                mark_stringified_identities(result.value)
-            } else {
-                result.value
-            };
-            let result = EvalResult::with_effects(derive_value_text(value), effects);
-            match scalar_dispatch {
-                Some(dispatch) => result.with_scalar_dispatch(dispatch),
-                None => result,
-            }
         }
         // Subject-last string consumers with non-string output (`splitList`,
         // `semverCompare`): the LAST argument must be a Go string; the
@@ -690,7 +799,7 @@ pub(crate) fn eval_call_with_helper_calls(
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
             record_string_call_consumers(function, args, env, resolver, &mut effects);
-            record_strict_parser_call(function, args, env, resolver, &mut effects);
+            record_strict_parser_invocation(function, args, None, env, resolver, &mut effects);
             let widened = AbstractValue::widened(
                 result
                     .value
@@ -754,6 +863,290 @@ fn record_values_root_helper_include(
     clippy::too_many_lines,
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
+fn eval_piped_invocation(
+    function: &str,
+    args: &[TemplateExpr],
+    piped: PipedOperand,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let PipedOperand {
+        result: current,
+        is_direct_values_path: piped_is_direct_values_path,
+    } = piped;
+    match function {
+        "default" => eval_default(current, args, env, resolver),
+        function if is_merge_function(function) => {
+            let piped_operand = current.clone();
+            let mut result = eval_merge(function, args, current, env, resolver);
+            record_strict_kind_result(
+                &piped_operand,
+                "object",
+                strict_operand_nil_aborts(function, false),
+                &mut result.effects,
+            );
+            record_strict_kind_operands(
+                function,
+                args,
+                "object",
+                env,
+                resolver,
+                &mut result.effects,
+            );
+            result
+        }
+        "slice" | "mustSlice" if (1..=2).contains(&args.len()) => {
+            let operand = current.clone();
+            let mut result = current;
+            record_strict_kind_result(
+                &operand,
+                "array",
+                strict_operand_nil_aborts(function, false),
+                &mut result.effects,
+            );
+            merge_arg_effects(args, env, resolver, &mut result.effects);
+            result
+        }
+        "len" if args.is_empty() => {
+            let operand = current.clone();
+            let mut result = eval_unknown_call(args, current.effects, env, resolver);
+            record_length_bearing_result(&operand, &mut result.effects);
+            record_total_conversion_effects(
+                identity_value_paths(operand.value.as_ref()),
+                &mut result.effects,
+            );
+            if let Some(length) = operand.value.as_ref().and_then(concrete_collection_len) {
+                result.value = Some(AbstractValue::StringSet(
+                    [length.to_string()].into_iter().collect(),
+                ));
+            }
+            result
+        }
+        // The piped checksum subject keeps unknown-stage value
+        // semantics (see the call form above) while gaining its
+        // strict-string contract (redis' sentinel
+        // `coalesce … | sha256sum` lane).
+        function if is_checksum_function(function) && args.is_empty() => {
+            let (string_paths, raw_range_key_paths) =
+                string_invocation_operand_facts(function, args, Some(&current), env, resolver);
+            // The digest shares no text or shape with its subject —
+            // same erasure as the call form above.
+            let subject_identities = identity_value_paths(current.value.as_ref());
+            let mut result = eval_unknown_call(args, current.effects, env, resolver);
+            result.effects.add_shape_erased_paths(subject_identities);
+            record_string_consumer_effects(&string_paths, &mut result.effects);
+            record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut result.effects);
+            result
+        }
+        "printf" => {
+            let piped_dispatch = current.scalar_dispatch.clone();
+            let mut effects = current.effects;
+            let piped_scalar = piped_dispatch
+                .as_ref()
+                .and_then(ScalarValueDispatch::constant_value);
+            // The piped value is printf's FINAL data argument; `args`
+            // hold the format plus any leading data arguments.
+            let piped = identity_value_paths(current.value.as_ref());
+            let token_initial_string_argument = token_initial_printf_string_argument(args);
+            if token_initial_string_argument == Some(args.len()) {
+                conjoin_formatter_operand_selection(&piped, piped_dispatch.as_ref(), &mut effects);
+            }
+            record_printf_argument_effects(false, &piped, &mut effects);
+            let mut scalar_values = Vec::with_capacity(args.len());
+            for (index, arg) in args.iter().enumerate() {
+                let mut result = eval_expr_with_helper_calls(arg, env, resolver);
+                let identity_paths = identity_value_paths(result.value.as_ref());
+                if token_initial_string_argument == Some(index) {
+                    conjoin_formatter_operand_selection(
+                        &identity_paths,
+                        result.scalar_dispatch.as_ref(),
+                        &mut result.effects,
+                    );
+                }
+                if index > 0 {
+                    scalar_values.push(
+                        result
+                            .scalar_dispatch
+                            .as_ref()
+                            .and_then(ScalarValueDispatch::constant_value),
+                    );
+                }
+                effects.merge(result.effects);
+                record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
+            }
+            scalar_values.push(piped_scalar);
+            let dispatch = literal_printf_format(args)
+                .and_then(|format| {
+                    scalar_values
+                        .into_iter()
+                        .collect::<Option<Vec<_>>>()
+                        .and_then(|values| render_printf_scalar_values(format, &values))
+                })
+                .map(|value| ScalarValueDispatch::constant(GuardValue::string(value)))
+                .or_else(|| {
+                    if args.len() != 1 {
+                        return None;
+                    }
+                    let format = literal_printf_format(args)?;
+                    piped_dispatch.as_ref()?.printf_string(format)
+                });
+            let result = EvalResult::with_effects(current.value, effects);
+            match dispatch {
+                Some(dispatch) => result.with_scalar_dispatch(dispatch),
+                None => result,
+            }
+        }
+        function if is_total_numeric_cast_function(function) => {
+            let mut effects = current.effects;
+            record_total_conversion_effects(
+                identity_value_paths(current.value.as_ref()),
+                &mut effects,
+            );
+            merge_arg_effects(args, env, resolver, &mut effects);
+            EvalResult::with_effects(current.value, effects)
+        }
+        // The piped operand and every explicit operand of a coercing
+        // arithmetic stage are coerced before the computation: their raw
+        // kinds are unconstrained (`… | mulf $percentage`).
+        function if is_coercing_arithmetic_function(function) => {
+            let mut effects = current.effects;
+            record_total_conversion_effects(
+                identity_value_paths(current.value.as_ref()),
+                &mut effects,
+            );
+            for arg in args {
+                let operand = eval_expr_with_helper_calls(arg, env, resolver);
+                record_total_conversion_effects(
+                    identity_value_paths(operand.value.as_ref()),
+                    &mut effects,
+                );
+                effects.merge(operand.effects);
+            }
+            let value = AbstractValue::widened(
+                current
+                    .value
+                    .as_ref()
+                    .map(AbstractValue::paths)
+                    .unwrap_or_default(),
+            );
+            EvalResult::with_effects(value, effects)
+        }
+        function
+            if is_string_splitting_function(function) || is_string_predicate_function(function) =>
+        {
+            let scalar_truth =
+                scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref());
+            let piped = current.clone();
+            let (string_paths, raw_range_key_paths) =
+                string_invocation_operand_facts(function, args, Some(&current), env, resolver);
+            let mut effects = current.effects;
+            merge_arg_effects(args, env, resolver, &mut effects);
+            record_string_consumer_effects(&string_paths, &mut effects);
+            record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
+            record_strict_parser_invocation(
+                function,
+                args,
+                Some((&piped, piped_is_direct_values_path)),
+                env,
+                resolver,
+                &mut effects,
+            );
+            let widened = AbstractValue::widened(
+                current
+                    .value
+                    .as_ref()
+                    .map(AbstractValue::paths)
+                    .unwrap_or_default(),
+            );
+            let mut result = EvalResult::with_effects(widened, effects);
+            if let Some(truth) = scalar_truth {
+                result.truth = truth;
+            }
+            result
+        }
+        "toYaml" => {
+            let mut result = eval_to_yaml_result(current);
+            merge_arg_effects(args, env, resolver, &mut result.effects);
+            result
+        }
+        "toJson" | "mustToJson" | "toRawJson" | "mustToRawJson" => {
+            let mut result = eval_to_json_result(current);
+            merge_arg_effects(args, env, resolver, &mut result.effects);
+            result
+        }
+        "concat" => {
+            let piped_operand = current.clone();
+            let mut result = eval_unknown_call(args, current.effects, env, resolver);
+            record_strict_kind_result(
+                &piped_operand,
+                "array",
+                strict_operand_nil_aborts(function, false),
+                &mut result.effects,
+            );
+            record_strict_kind_operands(
+                function,
+                args,
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
+            result
+        }
+        "has" if args.len() == 1 => {
+            let piped_operand = current.clone();
+            let mut result = eval_unknown_call(args, current.effects, env, resolver);
+            record_strict_kind_result(
+                &piped_operand,
+                "array",
+                strict_operand_nil_aborts(function, false),
+                &mut result.effects,
+            );
+            record_total_conversion_effects(
+                identity_value_paths(piped_operand.value.as_ref()),
+                &mut result.effects,
+            );
+            result
+        }
+        "keys" | "values" if args.is_empty() => {
+            let operand = current.clone();
+            let mut result = eval_unknown_call(args, current.effects, env, resolver);
+            record_strict_kind_result(
+                &operand,
+                "object",
+                strict_operand_nil_aborts(function, false),
+                &mut result.effects,
+            );
+            record_total_conversion_effects(
+                identity_value_paths(operand.value.as_ref()),
+                &mut result.effects,
+            );
+            if function == "keys"
+                && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
+                    &operand.value
+            {
+                result.value = Some(AbstractValue::KeysList(path.clone()));
+            }
+            result
+        }
+        // `sortAlpha` stringifies and reorders items; a keys list
+        // survives (its items are already strings), other operands keep
+        // the widened-stage semantics.
+        "sortAlpha" if args.is_empty() => match &current.value {
+            Some(AbstractValue::KeysList(_)) => current,
+            _ => eval_unknown_call(args, current.effects, env, resolver),
+        },
+        function if is_provenance_preserving_function(function) => {
+            let mut effects = current.effects;
+            merge_arg_effects(args, env, resolver, &mut effects);
+            EvalResult::with_effects(current.value, effects)
+        }
+        // An unknown stage widens the pipeline value, but everything
+        // that flowed into the pipeline so far still influences it.
+        _ => eval_unknown_call(args, current.effects, env, resolver),
+    }
+}
+
 pub(crate) fn eval_pipeline_with_helper_calls(
     stages: &[TemplateExpr],
     env: &EvalEnv,
@@ -774,436 +1167,18 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             continue;
         };
 
-        let piped_is_direct_values_path = current_is_direct_values_path;
-        current = match function.as_str() {
-            "default" => eval_default(current, args, env, resolver),
-            function if is_merge_function(function) => {
-                let piped_operand = current.clone();
-                let mut result = eval_merge(function, args, current, env, resolver);
-                record_strict_kind_result(
-                    &piped_operand,
-                    "object",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                record_strict_kind_operands(
-                    function,
-                    args,
-                    "object",
-                    env,
-                    resolver,
-                    &mut result.effects,
-                );
-                result
-            }
-            "first" if args.is_empty() => {
-                let operand = current.clone();
-                let mut result = eval_first_result(current);
-                record_strict_kind_result(
-                    &operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                result
-            }
-            "last" if args.is_empty() => {
-                let operand = current.clone();
-                let mut result = eval_last_result(current);
-                record_strict_kind_result(
-                    &operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                result
-            }
-            "initial" | "rest" | "compact" if args.is_empty() => {
-                let operand = current.clone();
-                let mut result = current;
-                record_strict_kind_result(
-                    &operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                result
-            }
-            "slice" | "mustSlice" if (1..=2).contains(&args.len()) => {
-                let operand = current.clone();
-                let mut result = current;
-                record_strict_kind_result(
-                    &operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                merge_arg_effects(args, env, resolver, &mut result.effects);
-                result
-            }
-            "reverse" if args.is_empty() => {
-                let operand = current.clone();
-                let mut result = eval_reverse_result(current);
-                record_strict_kind_result(
-                    &operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                result
-            }
-            "len" if args.is_empty() => {
-                let operand = current.clone();
-                let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                record_length_bearing_result(&operand, &mut result.effects);
-                record_total_conversion_effects(
-                    identity_value_paths(operand.value.as_ref()),
-                    &mut result.effects,
-                );
-                if let Some(length) = operand.value.as_ref().and_then(concrete_collection_len) {
-                    result.value = Some(AbstractValue::StringSet(
-                        [length.to_string()].into_iter().collect(),
-                    ));
-                }
-                result
-            }
-            "eq" | "ne" if !args.is_empty() => eval_pipeline_comparison(
+        current = eval_invocation(
+            CallInvocation {
                 function,
-                current,
-                piped_is_direct_values_path,
                 args,
-                env,
-                resolver,
-            ),
-            // The piped ternary operand is the condition: its strict Boolean
-            // contract and effects flow, but its value is not a result arm.
-            "ternary" => eval_ternary(
-                args,
-                Some((current, piped_is_direct_values_path)),
-                env,
-                resolver,
-            ),
-            "replace" if args.len() == 2 => eval_replace_pipeline(current, args, env, resolver),
-            "trimPrefix" | "trimSuffix" if args.len() == 1 => {
-                eval_trim_affix_pipeline(function, current, args, env, resolver)
-            }
-            // The piped checksum subject keeps unknown-stage value
-            // semantics (see the call form above) while gaining its
-            // strict-string contract (redis' sentinel
-            // `coalesce … | sha256sum` lane).
-            function if is_checksum_function(function) && args.is_empty() => {
-                let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
-                    function,
-                    args,
-                    current.value.as_ref(),
-                    &current.effects,
-                    env,
-                    resolver,
-                );
-                // The digest shares no text or shape with its subject —
-                // same erasure as the call form above.
-                let subject_identities = identity_value_paths(current.value.as_ref());
-                let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                result.effects.add_shape_erased_paths(subject_identities);
-                record_string_consumer_effects(&string_paths, &mut result.effects);
-                record_raw_range_key_string_consumer_paths(
-                    &raw_range_key_paths,
-                    &mut result.effects,
-                );
-                result
-            }
-            function if is_string_transform_function(function) => {
-                let scalar_dispatch = if function == "toString" {
-                    current
-                        .scalar_dispatch
-                        .as_ref()
-                        .map(ScalarValueDispatch::stringified)
-                } else {
-                    None
-                };
-                let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
-                    function,
-                    args,
-                    current.value.as_ref(),
-                    &current.effects,
-                    env,
-                    resolver,
-                );
-                let mut effects = current.effects;
-                for arg in args {
-                    let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
-                    if function == "b64enc" {
-                        effects.add_encoded_paths(identity_value_paths(arg_result.value.as_ref()));
-                    }
-                    effects.merge(arg_result.effects);
-                }
-                record_string_transform_effects(
-                    function,
-                    current.value.as_ref(),
-                    &string_paths,
-                    &raw_range_key_paths,
-                    &mut effects,
-                );
-                let value = if matches!(function, "quote" | "squote") {
-                    current
-                        .value
-                        .map(AbstractValue::clear_plain_slot_string_format)
-                } else if function == "toString" {
-                    mark_stringified_identities(current.value)
-                } else {
-                    current.value
-                };
-                let result = EvalResult::with_effects(derive_value_text(value), effects);
-                match scalar_dispatch {
-                    Some(dispatch) => result.with_scalar_dispatch(dispatch),
-                    None => result,
-                }
-            }
-            "fromYaml" => eval_from_yaml_pipeline(current, args, env, resolver),
-            "fromJson" | "fromJsonArray" => eval_from_json_pipeline(current, args, env, resolver),
-            "printf" => {
-                let piped_dispatch = current.scalar_dispatch.clone();
-                let mut effects = current.effects;
-                let piped_scalar = piped_dispatch
-                    .as_ref()
-                    .and_then(ScalarValueDispatch::constant_value);
-                // The piped value is printf's FINAL data argument; `args`
-                // hold the format plus any leading data arguments.
-                let piped = identity_value_paths(current.value.as_ref());
-                let token_initial_string_argument = token_initial_printf_string_argument(args);
-                if token_initial_string_argument == Some(args.len()) {
-                    conjoin_formatter_operand_selection(
-                        &piped,
-                        piped_dispatch.as_ref(),
-                        &mut effects,
-                    );
-                }
-                record_printf_argument_effects(false, &piped, &mut effects);
-                let mut scalar_values = Vec::with_capacity(args.len());
-                for (index, arg) in args.iter().enumerate() {
-                    let mut result = eval_expr_with_helper_calls(arg, env, resolver);
-                    let identity_paths = identity_value_paths(result.value.as_ref());
-                    if token_initial_string_argument == Some(index) {
-                        conjoin_formatter_operand_selection(
-                            &identity_paths,
-                            result.scalar_dispatch.as_ref(),
-                            &mut result.effects,
-                        );
-                    }
-                    if index > 0 {
-                        scalar_values.push(
-                            result
-                                .scalar_dispatch
-                                .as_ref()
-                                .and_then(ScalarValueDispatch::constant_value),
-                        );
-                    }
-                    effects.merge(result.effects);
-                    record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
-                }
-                scalar_values.push(piped_scalar);
-                let dispatch = literal_printf_format(args)
-                    .and_then(|format| {
-                        scalar_values
-                            .into_iter()
-                            .collect::<Option<Vec<_>>>()
-                            .and_then(|values| render_printf_scalar_values(format, &values))
-                    })
-                    .map(|value| ScalarValueDispatch::constant(GuardValue::string(value)))
-                    .or_else(|| {
-                        if args.len() != 1 {
-                            return None;
-                        }
-                        let format = literal_printf_format(args)?;
-                        piped_dispatch.as_ref()?.printf_string(format)
-                    });
-                let result = EvalResult::with_effects(current.value, effects);
-                match dispatch {
-                    Some(dispatch) => result.with_scalar_dispatch(dispatch),
-                    None => result,
-                }
-            }
-            "join" => eval_join_pipeline(current, args, env, resolver),
-            "split" if matches!(args.as_slice(), [separator] if is_nonempty_string_literal(separator)) => {
-                eval_nonempty_split_pipeline(current, args, env, resolver)
-            }
-            function if is_total_numeric_cast_function(function) => {
-                let mut effects = current.effects;
-                record_total_conversion_effects(
-                    identity_value_paths(current.value.as_ref()),
-                    &mut effects,
-                );
-                merge_arg_effects(args, env, resolver, &mut effects);
-                EvalResult::with_effects(current.value, effects)
-            }
-            // The piped operand and every explicit operand of a coercing
-            // arithmetic stage are coerced before the computation: their raw
-            // kinds are unconstrained (`… | mulf $percentage`).
-            function if is_coercing_arithmetic_function(function) => {
-                let mut effects = current.effects;
-                record_total_conversion_effects(
-                    identity_value_paths(current.value.as_ref()),
-                    &mut effects,
-                );
-                for arg in args {
-                    let operand = eval_expr_with_helper_calls(arg, env, resolver);
-                    record_total_conversion_effects(
-                        identity_value_paths(operand.value.as_ref()),
-                        &mut effects,
-                    );
-                    effects.merge(operand.effects);
-                }
-                let value = AbstractValue::widened(
-                    current
-                        .value
-                        .as_ref()
-                        .map(AbstractValue::paths)
-                        .unwrap_or_default(),
-                );
-                EvalResult::with_effects(value, effects)
-            }
-            function
-                if is_string_splitting_function(function)
-                    || is_string_predicate_function(function) =>
-            {
-                let scalar_truth =
-                    scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref());
-                let piped = current.clone();
-                let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
-                    function,
-                    args,
-                    current.value.as_ref(),
-                    &current.effects,
-                    env,
-                    resolver,
-                );
-                let mut effects = current.effects;
-                merge_arg_effects(args, env, resolver, &mut effects);
-                record_string_consumer_effects(&string_paths, &mut effects);
-                record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
-                record_strict_parser_pipeline(
-                    function,
-                    args,
-                    &piped,
-                    piped_is_direct_values_path,
-                    env,
-                    resolver,
-                    &mut effects,
-                );
-                let widened = AbstractValue::widened(
-                    current
-                        .value
-                        .as_ref()
-                        .map(AbstractValue::paths)
-                        .unwrap_or_default(),
-                );
-                let mut result = EvalResult::with_effects(widened, effects);
-                if let Some(truth) = scalar_truth {
-                    result.truth = truth;
-                }
-                result
-            }
-            "toYaml" => {
-                let mut result = eval_to_yaml_result(current);
-                merge_arg_effects(args, env, resolver, &mut result.effects);
-                result
-            }
-            "toJson" | "mustToJson" | "toRawJson" | "mustToRawJson" => {
-                let mut result = eval_to_json_result(current);
-                merge_arg_effects(args, env, resolver, &mut result.effects);
-                result
-            }
-            "concat" => {
-                let piped_operand = current.clone();
-                let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                record_strict_kind_result(
-                    &piped_operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                record_strict_kind_operands(
-                    function,
-                    args,
-                    "array",
-                    env,
-                    resolver,
-                    &mut result.effects,
-                );
-                result
-            }
-            "has" if args.len() == 1 => {
-                let piped_operand = current.clone();
-                let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                record_strict_kind_result(
-                    &piped_operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                record_total_conversion_effects(
-                    identity_value_paths(piped_operand.value.as_ref()),
-                    &mut result.effects,
-                );
-                result
-            }
-            "keys" | "values" if args.is_empty() => {
-                let operand = current.clone();
-                let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                record_strict_kind_result(
-                    &operand,
-                    "object",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                record_total_conversion_effects(
-                    identity_value_paths(operand.value.as_ref()),
-                    &mut result.effects,
-                );
-                if function == "keys"
-                    && let Some(
-                        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path),
-                    ) = &operand.value
-                {
-                    result.value = Some(AbstractValue::KeysList(path.clone()));
-                }
-                result
-            }
-            // `sortAlpha` stringifies and reorders items; a keys list
-            // survives (its items are already strings), other operands keep
-            // the widened-stage semantics.
-            "sortAlpha" if args.is_empty() => match &current.value {
-                Some(AbstractValue::KeysList(_)) => current,
-                _ => eval_unknown_call(args, current.effects, env, resolver),
+                piped: Some(PipedOperand {
+                    result: current,
+                    is_direct_values_path: current_is_direct_values_path,
+                }),
             },
-            "uniq" | "mustUniq" => {
-                let piped_operand = current.clone();
-                let mut effects = current.effects;
-                merge_arg_effects(args, env, resolver, &mut effects);
-                let mut result = EvalResult::with_effects(current.value, effects);
-                record_strict_kind_result(
-                    &piped_operand,
-                    "array",
-                    strict_operand_nil_aborts(function, false),
-                    &mut result.effects,
-                );
-                result
-            }
-            "deepCopy" | "mustDeepCopy" if args.is_empty() => {
-                let operand = current.clone();
-                let mut result = current;
-                record_operand_presence_result(&operand, &mut result.effects);
-                result
-            }
-            function if is_provenance_preserving_function(function) => {
-                let mut effects = current.effects;
-                merge_arg_effects(args, env, resolver, &mut effects);
-                EvalResult::with_effects(current.value, effects)
-            }
-            // An unknown stage widens the pipeline value, but everything
-            // that flowed into the pipeline so far still influences it.
-            _ => eval_unknown_call(args, current.effects, env, resolver),
-        };
+            env,
+            resolver,
+        );
         current_is_direct_values_path = false;
     }
 

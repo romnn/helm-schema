@@ -77,47 +77,25 @@ pub(super) fn record_string_transform_effects(
     }
 }
 
-pub(super) fn string_call_operand_facts(
+pub(super) fn string_invocation_operand_facts(
     function: &str,
     args: &[TemplateExpr],
+    piped: Option<&EvalResult>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> (BTreeSet<String>, BTreeSet<String>) {
     let mut paths = BTreeSet::new();
     let mut range_key_paths = BTreeSet::new();
-    for index in string_operand_indices(function, args.len()) {
-        let Some(arg) = args.get(index) else {
-            continue;
-        };
-        let result = eval_expr_with_helper_calls(arg, env, resolver);
-        paths.extend(identity_value_paths(result.value.as_ref()));
-        let keys = identity_range_key_paths(result.value.as_ref());
-        range_key_paths.extend(
-            keys.difference(&result.effects.derived_range_key_paths)
-                .cloned(),
-        );
-    }
-    (paths, range_key_paths)
-}
-
-pub(super) fn pipeline_string_operand_facts(
-    function: &str,
-    args: &[TemplateExpr],
-    piped_value: Option<&AbstractValue>,
-    piped_effects: &Effects,
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> (BTreeSet<String>, BTreeSet<String>) {
-    let mut paths = BTreeSet::new();
-    let mut range_key_paths = BTreeSet::new();
-    for index in string_operand_indices(function, args.len() + 1) {
+    for index in string_operand_indices(function, args.len() + usize::from(piped.is_some())) {
         if index == args.len() {
-            paths.extend(identity_value_paths(piped_value));
-            let keys = identity_range_key_paths(piped_value);
-            range_key_paths.extend(
-                keys.difference(&piped_effects.derived_range_key_paths)
-                    .cloned(),
-            );
+            if let Some(piped) = piped {
+                paths.extend(identity_value_paths(piped.value.as_ref()));
+                let keys = identity_range_key_paths(piped.value.as_ref());
+                range_key_paths.extend(
+                    keys.difference(&piped.effects.derived_range_key_paths)
+                        .cloned(),
+                );
+            }
         } else if let Some(arg) = args.get(index) {
             let result = eval_expr_with_helper_calls(arg, env, resolver);
             paths.extend(identity_value_paths(result.value.as_ref()));
@@ -138,7 +116,8 @@ pub(super) fn record_string_call_consumers(
     resolver: &mut impl HelperCallValueResolver,
     effects: &mut Effects,
 ) {
-    let (paths, raw_range_key_paths) = string_call_operand_facts(function, args, env, resolver);
+    let (paths, raw_range_key_paths) =
+        string_invocation_operand_facts(function, args, None, env, resolver);
     record_string_consumer_effects(&paths, effects);
     for index in string_operand_indices(function, args.len()) {
         let Some(arg) = args.get(index) else {
@@ -155,22 +134,37 @@ pub(super) fn record_string_call_consumers(
 /// an `include`'s rendered text, a `default` chain) only carries paths as
 /// influences: it renders whatever the derivation produced, so those paths'
 /// own absence is not what the consumer reads.
-fn record_nil_strict_identity_operand(value: Option<&AbstractValue>, effects: &mut Effects) {
+pub(super) fn record_nil_strict_identity_operand(
+    value: Option<&AbstractValue>,
+    effects: &mut Effects,
+) {
     if let Some(AbstractValue::ValuesPath(path)) = value {
         effects.nil_strict_identity_paths.insert(path.clone());
     }
 }
 
-pub(super) fn record_strict_parser_call(
+pub(super) fn record_strict_parser_invocation(
     function: &str,
     args: &[TemplateExpr],
+    piped: Option<(&EvalResult, bool)>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
     effects: &mut Effects,
 ) {
-    let Some((index, pattern)) = strict_parser_operand_pattern(function, args.len()) else {
+    let Some((index, pattern)) =
+        strict_parser_operand_pattern(function, args.len() + usize::from(piped.is_some()))
+    else {
         return;
     };
+    if index == args.len() {
+        let Some((piped, piped_is_direct_values_path)) = piped else {
+            return;
+        };
+        if piped_is_direct_values_path || parser_operand_has_partitioned_identity(piped, false) {
+            record_strict_parser_result(piped, pattern, false, effects);
+        }
+        return;
+    }
     let Some(arg) = args.get(index) else {
         return;
     };
@@ -178,31 +172,6 @@ pub(super) fn record_strict_parser_call(
     let total_string_preimage = function == "mustDateModify" && is_to_string_expression(arg);
     if parser_operand_has_partitioned_identity(&operand, total_string_preimage) {
         record_strict_parser_result(&operand, pattern, total_string_preimage, effects);
-    }
-}
-
-pub(super) fn record_strict_parser_pipeline(
-    function: &str,
-    args: &[TemplateExpr],
-    piped: &EvalResult,
-    piped_is_direct_values_path: bool,
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-    effects: &mut Effects,
-) {
-    let Some((index, pattern)) = strict_parser_operand_pattern(function, args.len() + 1) else {
-        return;
-    };
-    if index == args.len() {
-        if piped_is_direct_values_path || parser_operand_has_partitioned_identity(piped, false) {
-            record_strict_parser_result(piped, pattern, false, effects);
-        }
-    } else if let Some(arg) = args.get(index) {
-        let operand = eval_expr_with_helper_calls(arg, env, resolver);
-        let total_string_preimage = function == "mustDateModify" && is_to_string_expression(arg);
-        if parser_operand_has_partitioned_identity(&operand, total_string_preimage) {
-            record_strict_parser_result(&operand, pattern, total_string_preimage, effects);
-        }
     }
 }
 
@@ -567,18 +536,6 @@ pub(super) fn record_strict_kind_result(
 /// Helm-falsy, so that capture's own guard excuses exactly the state that
 /// aborts. [`helm_schema_ast::strict_operand_nil_aborts`] decides which
 /// positions carry the claim.
-pub(super) fn record_operand_presence_operands(
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-    effects: &mut Effects,
-) {
-    for arg in args {
-        let operand = eval_expr_with_helper_calls(arg, env, resolver);
-        record_operand_presence_result(&operand, effects);
-    }
-}
-
 pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut Effects) {
     // Only an operand that IS one raw values path carries the claim, the
     // same rule [`record_nil_strict_identity_operand`] applies to the

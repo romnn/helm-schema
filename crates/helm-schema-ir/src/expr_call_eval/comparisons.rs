@@ -316,35 +316,21 @@ fn bool_predicate(value: bool) -> Predicate {
 pub(super) fn eval_comparison(
     function: &str,
     args: &[TemplateExpr],
+    piped: Option<(EvalResult, bool)>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let literal_kind = comparison_literal_kind(args);
-    let operands = args
-        .iter()
-        .map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
-        .collect();
-    let raw_identity_operands: Vec<bool> = args.iter().map(direct_comparison_identity).collect();
-    eval_comparison_operands(function, operands, &raw_identity_operands, literal_kind)
-}
-
-pub(super) fn eval_pipeline_comparison(
-    function: &str,
-    current: EvalResult,
-    current_is_direct_identity: bool,
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let literal_kind = comparison_literal_kind(args);
-    let mut operands = Vec::with_capacity(args.len() + 1);
-    operands.push(current);
+    let mut operands = Vec::with_capacity(args.len() + usize::from(piped.is_some()));
+    let mut raw_identity_operands = Vec::with_capacity(args.len() + usize::from(piped.is_some()));
+    if let Some((piped, is_direct_identity)) = piped {
+        operands.push(piped);
+        raw_identity_operands.push(is_direct_identity);
+    }
     operands.extend(
         args.iter()
             .map(|arg| eval_expr_with_helper_calls(arg, env, resolver)),
     );
-    let mut raw_identity_operands = Vec::with_capacity(args.len() + 1);
-    raw_identity_operands.push(current_is_direct_identity);
     raw_identity_operands.extend(args.iter().map(direct_comparison_identity));
     eval_comparison_operands(function, operands, &raw_identity_operands, literal_kind)
 }

@@ -414,7 +414,7 @@ adjudication.
 
 ## Step 3b — builder wrapper deletion
 
-- Status: landed; commit pending.
+- Status: landed.
 - Acceptance baseline: `34e49a6`.
 - Baseline production Rust LOC: 61,376.
 - Measured results:
@@ -498,17 +498,125 @@ adjudication.
     with byte-identical schemas and zero acceptance flips; it remains
     mandatory on the final Wave 1 tree.
   - `task tokei:core`: exit 0; 61,336 production Rust LOC, delta -40.
-- Commit: pending.
+- Commit: `a0a9e3e` (`refactor(ir): inline phase-local signal helpers`).
 
 ## Step 4 — unified call invocation
 
-- Status: pending.
-- Acceptance baseline: pending.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed; commit pending.
+- Acceptance baseline: `a0a9e3e`.
+- Baseline production Rust LOC: 61,336.
+- Measured results:
+  - `CallInvocation` now carries one function name, explicit argument slice,
+    and optional evaluated pipeline operand. Direct calls and pipeline stages
+    enter the same semantic dispatcher after the pipeline driver has done only
+    sequencing and primary evaluation (`expr_call_eval/mod.rs:52-96,866-956,
+    1150-1195`).
+  - Sequence, comparison, ternary, replacement, trim-affix, YAML/JSON decode,
+    join, split, and generic string-consumer families use shared evaluators.
+    The pipeline-specific evaluator twins and their duplicate operand-fact
+    helpers are deleted from `collections.rs`, `comparisons.rs`,
+    `serialization.rs`, and `strict_operands.rs`.
+  - A table-driven IR regression compares the complete `EvalResult` for the
+    direct and pipeline spellings of every migrated family
+    (`src/tests/expr_eval.rs:997-1032`). A public-surface regression pins full
+    schema equality for direct and pipeline `split`
+    (`helm-schema/tests/public_surface.rs:162-264`).
+  - The authoritative schema dump contains all 84 artifacts and the IR dump
+    all 18 artifacts, byte-identical to committed fixtures. The full-depth
+    comparison checks 60 lanes and 121,059 probes with zero flips and zero
+    undisclosed base or third-level truncation.
+  - Production Rust is 61,110 LOC, -226 from this step's baseline and -152
+    from the 61,262 campaign baseline.
+- Deviations:
+  - The measured -226 LOC is 24 lines above the frozen -400..-250 estimate.
+    The remaining direct-only special forms are intentionally explicit under
+    the frozen contract; deleting them to meet an estimate would merge syntax
+    recognition with semantic evaluation. The single dispatcher and all
+    duplicated migrated-family evaluators are nevertheless landed.
+  - The unified strict-parser evaluator exposed a pre-existing semantic
+    mismatch: direct `split` recorded nil-strictness while pipeline `split`
+    did not. This is behavior-bearing rather than a mechanical preservation,
+    so it was preflighted in all three adjacent states and pinned explicitly.
+- Adjudication evidence:
+  - Helm 4.2.3 returns exit 1 for both direct and pipeline `split` when the
+    selected operand is deleted/null, exit 1 for a present numeric operand,
+    and exit 0 for a present string operand. The unified evaluator therefore
+    preserves a real strict-consumption tooth instead of widening the pipeline
+    spelling.
+  - The ignored live family matrix exercises direct and pipeline spellings of
+    nine families in deleted, present-wrong-type, and truly-consumed states
+    (`schema_emission_profile_live.rs:130-294`). All 54 Helm cells match their
+    pinned render/abort verdicts.
+  - No corpus schema or IR fixture changes, and no full-depth acceptance flips,
+    were eligible for adoption. Hermetic monotonicity, semantic controls,
+    guard/composite synthesis, and the Temporal pairwise matrix pass.
+
+### Review dossier
+
+- Unified carrier and dispatcher: `rg -n 'struct CallInvocation|fn
+  eval_invocation|fn eval_piped_invocation|fn eval_pipeline_with_helper_calls'
+  crates/helm-schema-ir/src/expr_call_eval/mod.rs`; the carrier and three
+  structural entry points are at lines 62, 85, 866, and 1150.
+- Deleted twins: `rg -n
+  'eval_pipeline_(comparison|replace|trim|from_yaml|from_json|join|split)|pipeline_string_operand_facts|record_operand_presence_operands'
+  crates/helm-schema-ir/src/expr_call_eval`; exit 1 confirms the parallel
+  family implementations are gone.
+- Direct/pipeline IR identity: `cargo nextest run -p helm-schema-ir -E
+  'test(migrated_invocation_families_match_between_call_and_pipeline_syntax)'`;
+  one table-driven test passes for nine migrated families.
+- `split` full-schema pin: `cargo nextest run -p helm-schema -E
+  'test(split_call_and_pipeline_emit_the_same_nil_strict_schema)'`; one test
+  passes.
+- Live three-direction matrix: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step4-live
+  cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profile_live -E
+  'test(replay_call_and_pipeline_invocation_families_against_helm)'
+  --run-ignored ignored-only --no-capture`; all 54 direct/pipeline Helm cells
+  pass across nine families.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step4-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step4-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; one test
+  passes and all 18 artifacts remain byte-identical.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step4-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=a0a9e3e
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-step4-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-step4-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; 60 lanes and 121,059 probes yield
+  zero flips.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; four
+  tests pass.
+- Frozen-plan check: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+- Gates on the final Step 4 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks finish
+    without warnings.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets finish with zero errors and zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,216 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 568 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,788 tests pass and 24 are skipped, including
+    the live-network lane.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - Downstream luup2 `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts complete.
+  - `task tokei:core`: exit 0; 61,110 production Rust LOC, delta -226.
 - Commit: pending.
 
 ## Step 5 — typed function semantics

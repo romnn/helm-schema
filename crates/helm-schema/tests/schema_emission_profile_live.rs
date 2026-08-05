@@ -33,6 +33,90 @@ struct LiveControl {
     sink: SinkVerdict,
 }
 
+struct InvocationFamily {
+    name: &'static str,
+    direct: &'static str,
+    pipeline: &'static str,
+    deleted_renders: bool,
+    wrong_renders: bool,
+    valid_value: &'static str,
+}
+
+const INVOCATION_FAMILIES: &[InvocationFamily] = &[
+    InvocationFamily {
+        name: "sequence",
+        direct: "first .Values.input",
+        pipeline: ".Values.input | first",
+        deleted_renders: false,
+        wrong_renders: false,
+        valid_value: r#"["selected"]"#,
+    },
+    InvocationFamily {
+        name: "comparison",
+        direct: r#"eq .Values.input "active""#,
+        pipeline: r#".Values.input | eq "active""#,
+        deleted_renders: true,
+        wrong_renders: false,
+        valid_value: r#""active""#,
+    },
+    InvocationFamily {
+        name: "ternary",
+        direct: r#"ternary "yes" "no" .Values.input"#,
+        pipeline: r#".Values.input | ternary "yes" "no""#,
+        deleted_renders: false,
+        wrong_renders: false,
+        valid_value: "true",
+    },
+    InvocationFamily {
+        name: "replace",
+        direct: r#"replace "old" "new" .Values.input"#,
+        pipeline: r#".Values.input | replace "old" "new""#,
+        deleted_renders: false,
+        wrong_renders: false,
+        valid_value: r#""selected""#,
+    },
+    InvocationFamily {
+        name: "trim affix",
+        direct: r#"trimSuffix "x" .Values.input"#,
+        pipeline: r#".Values.input | trimSuffix "x""#,
+        deleted_renders: false,
+        wrong_renders: false,
+        valid_value: r#""selected""#,
+    },
+    InvocationFamily {
+        name: "decode",
+        direct: "fromJson .Values.input",
+        pipeline: ".Values.input | fromJson",
+        deleted_renders: false,
+        wrong_renders: false,
+        valid_value: r#""{\"key\":\"value\"}""#,
+    },
+    InvocationFamily {
+        name: "join",
+        direct: r#"join "," .Values.input"#,
+        pipeline: r#".Values.input | join ",""#,
+        deleted_renders: true,
+        wrong_renders: true,
+        valid_value: r#"["selected"]"#,
+    },
+    InvocationFamily {
+        name: "split",
+        direct: r#"split "," .Values.input"#,
+        pipeline: r#".Values.input | split ",""#,
+        deleted_renders: false,
+        wrong_renders: false,
+        valid_value: r#""selected""#,
+    },
+    InvocationFamily {
+        name: "string transform",
+        direct: "b64enc .Values.input",
+        pipeline: ".Values.input | b64enc",
+        deleted_renders: false,
+        wrong_renders: false,
+        valid_value: r#""selected""#,
+    },
+];
+
 #[test]
 #[ignore = "live maintenance lane: requires pinned Helm and kubeconform"]
 fn replay_semantic_controls_against_helm_and_provider() -> eyre::Result<()> {
@@ -127,6 +211,69 @@ fn replay_structural_helper_widening_matrix_against_helm() -> eyre::Result<()> {
             rendered.status.success(),
             String::from_utf8_lossy(&rendered.stderr)
         );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_call_and_pipeline_invocation_families_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join("target/arch-v3-step4-live");
+    std::fs::create_dir_all(&scratch_root).wrap_err("create Step 4 live scratch root")?;
+    let chart = tempfile::Builder::new()
+        .prefix("invocation-families-")
+        .tempdir_in(scratch_root)
+        .wrap_err("create invocation-family chart")?;
+    std::fs::create_dir(chart.path().join("templates"))?;
+    std::fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc! {"
+            apiVersion: v2
+            name: invocation-families
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(chart.path().join("values.yaml"), "input: selected\n")?;
+
+    for family in INVOCATION_FAMILIES {
+        for (syntax, expression) in [("call", family.direct), ("pipeline", family.pipeline)] {
+            std::fs::write(
+                chart.path().join("templates/current.yaml"),
+                format!(
+                    "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: invocation-families\ndata:\n  value: {{{{ ({expression}) | quote }}}}\n"
+                ),
+            )?;
+            for (state, value, renders) in [
+                ("deleted", "null", family.deleted_renders),
+                ("present wrong type", "7", family.wrong_renders),
+                ("truly consumed", family.valid_value, true),
+            ] {
+                let values_path = chart.path().join("probe-values.json");
+                let value: Value = serde_json::from_str(value)?;
+                std::fs::write(
+                    &values_path,
+                    serde_json::to_vec(&json!({ "input": value }))?,
+                )?;
+                let output = Command::new("helm")
+                    .args(["template", "invocation-families"])
+                    .arg(chart.path())
+                    .arg("--skip-schema-validation")
+                    .arg("-f")
+                    .arg(values_path)
+                    .output()
+                    .wrap_err("render invocation-family control")?;
+                eyre::ensure!(
+                    output.status.success() == renders,
+                    "{} {syntax} {state}: renders={}; want={renders}; stderr={}",
+                    family.name,
+                    output.status.success(),
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+        }
     }
     Ok(())
 }

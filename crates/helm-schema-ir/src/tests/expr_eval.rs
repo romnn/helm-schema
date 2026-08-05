@@ -994,6 +994,42 @@ fn strict_pipeline_calls_match_direct_operand_contracts() {
 }
 
 #[test]
+fn migrated_invocation_families_match_between_call_and_pipeline_syntax() {
+    for (direct, pipeline) in [
+        ("first .Values.input", ".Values.input | first"),
+        (
+            r#"eq .Values.input "active""#,
+            r#".Values.input | eq "active""#,
+        ),
+        (
+            r#"ternary "yes" "no" .Values.input"#,
+            r#".Values.input | ternary "yes" "no""#,
+        ),
+        (
+            r#"replace "old" "new" .Values.input"#,
+            r#".Values.input | replace "old" "new""#,
+        ),
+        (
+            r#"trimSuffix "x" .Values.input"#,
+            r#".Values.input | trimSuffix "x""#,
+        ),
+        ("fromJson .Values.input", ".Values.input | fromJson"),
+        (r#"join "," .Values.input"#, r#".Values.input | join ",""#),
+        (r#"split "," .Values.input"#, r#".Values.input | split ",""#),
+        ("b64enc .Values.input", ".Values.input | b64enc"),
+    ] {
+        let direct_result = eval_expr(&single_expr(direct), &EvalEnv::default());
+        let pipeline_result = eval_expr(&single_expr(pipeline), &EvalEnv::default());
+
+        sim_assert_eq!(
+            have: pipeline_result,
+            want: direct_result,
+            "invocation semantics diverged for {pipeline}"
+        );
+    }
+}
+
+#[test]
 fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
     let captures = |action: &str| {
         eval_expr(&single_expr(action), &EvalEnv::default())

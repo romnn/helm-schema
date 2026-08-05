@@ -159,6 +159,109 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
 }
 
 #[test]
+fn split_call_and_pipeline_emit_the_same_nil_strict_schema() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: invocation-parity
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            call: selected
+            pipeline: selected
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/configmap.yaml")?,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: invocation-parity
+            data:
+              call: {{ split "," .Values.call | quote }}
+              pipeline: {{ .Values.pipeline | split "," | quote }}
+        "#},
+    )?;
+
+    let schema = generate_values_schema_for_chart(&GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: SchemaProfile::default().into(),
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    })?;
+
+    sim_assert_eq!(
+        have: schema,
+        want: json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": { "call": {} },
+                                    "required": ["call"],
+                                    "type": "object",
+                                },
+                            },
+                            {
+                                "properties": { "call": { "enum": [null] } },
+                                "required": ["call"],
+                                "type": "object",
+                            },
+                        ],
+                    },
+                    "then": false,
+                },
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": { "pipeline": {} },
+                                    "required": ["pipeline"],
+                                    "type": "object",
+                                },
+                            },
+                            {
+                                "properties": { "pipeline": { "enum": [null] } },
+                                "required": ["pipeline"],
+                                "type": "object",
+                            },
+                        ],
+                    },
+                    "then": false,
+                },
+            ],
+            "properties": {
+                "call": { "type": "string" },
+                "pipeline": { "type": "string" },
+            },
+            "type": "object",
+        })
+    );
+    Ok(())
+}
+
+#[test]
 fn analysis_session_exposes_contract_and_generated_schema() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 

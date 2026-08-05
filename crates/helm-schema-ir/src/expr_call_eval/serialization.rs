@@ -247,15 +247,32 @@ pub(super) fn eval_print(
 
 pub(super) fn eval_replace(
     args: &[TemplateExpr],
+    piped: Option<EvalResult>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let [old, new, subject] = args else {
-        return eval_all_args(args, env, resolver);
+    let (old, new, mut subject, piped_for_facts) = match (piped, args) {
+        (None, [old, new, subject]) => (
+            eval_expr_with_helper_calls(old, env, resolver),
+            eval_expr_with_helper_calls(new, env, resolver),
+            eval_expr_with_helper_calls(subject, env, resolver),
+            None,
+        ),
+        (Some(subject), [old, new]) => {
+            let piped_for_facts = subject.clone();
+            (
+                eval_expr_with_helper_calls(old, env, resolver),
+                eval_expr_with_helper_calls(new, env, resolver),
+                subject,
+                Some(piped_for_facts),
+            )
+        }
+        (None, _) => return eval_all_args(args, env, resolver),
+        (Some(mut subject), _) => {
+            merge_arg_effects(args, env, resolver, &mut subject.effects);
+            return subject;
+        }
     };
-    let old = eval_expr_with_helper_calls(old, env, resolver);
-    let new = eval_expr_with_helper_calls(new, env, resolver);
-    let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
     let subject_effects = subject.effects.clone();
     subject.effects.merge(old.effects);
     subject.effects.merge(new.effects);
@@ -263,7 +280,13 @@ pub(super) fn eval_replace(
     let old_values = value_strings(old.value.as_ref());
     let new_values = value_strings(new.value.as_ref());
     let (string_paths, raw_range_key_paths) =
-        super::strict_operands::string_call_operand_facts("replace", args, env, resolver);
+        super::strict_operands::string_invocation_operand_facts(
+            "replace",
+            args,
+            piped_for_facts.as_ref(),
+            env,
+            resolver,
+        );
     // A single nonempty literal OLD keeps a raw-identity subject's path
     // qualified by OLD as a lexical escape instead of degrading it
     // to derived text: the subject still must be a Go string, but its raw
@@ -288,88 +311,6 @@ pub(super) fn eval_replace(
     let subject_values = value_strings(subject.value.as_ref());
     let value = if old_values.is_empty() || new_values.is_empty() || subject_values.is_empty() {
         super::value_facts::derive_value_text(subject.value)
-    } else {
-        let mut rendered = BTreeSet::new();
-        for subject in subject_values {
-            for old in &old_values {
-                for new in &new_values {
-                    rendered.insert(subject.replace(old, new));
-                }
-            }
-        }
-        Some(AbstractValue::StringSet(rendered))
-    };
-    // `replace` renders the subject's own characters except OLD → NEW, so an
-    // unquoted slot's lexical language still projects back onto a ranged KEY
-    // when neither token can introduce or remove a token-ending character
-    // (crossplane's `replace "." "_"` over ranged env var keys).
-    if replace_preserves_plain_token_language(&old_values, &new_values) {
-        effects
-            .plain_text_range_key_paths
-            .extend(raw_range_key_paths.iter().cloned());
-    }
-    super::strict_operands::record_string_transform_effects(
-        "replace",
-        value.as_ref(),
-        &string_paths,
-        &raw_range_key_paths,
-        &mut effects,
-    );
-    EvalResult::with_effects(value, effects)
-}
-
-pub(super) fn eval_replace_pipeline(
-    current: EvalResult,
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let [old, new] = args else {
-        let mut current = current;
-        merge_arg_effects(args, env, resolver, &mut current.effects);
-        return current;
-    };
-    let piped_value = current.value;
-    let piped_effects = current.effects.clone();
-    let old = eval_expr_with_helper_calls(old, env, resolver);
-    let new = eval_expr_with_helper_calls(new, env, resolver);
-    let mut effects = current.effects;
-    effects.merge(old.effects);
-    effects.merge(new.effects);
-    let old_values = value_strings(old.value.as_ref());
-    let new_values = value_strings(new.value.as_ref());
-    let (string_paths, raw_range_key_paths) = super::strict_operands::pipeline_string_operand_facts(
-        "replace",
-        args,
-        piped_value.as_ref(),
-        &piped_effects,
-        env,
-        resolver,
-    );
-    // Same lexical-escape rule as the direct call.
-    if let Some(old_token) = single_replace_token(&old_values)
-        && let Some(value) = piped_value.as_ref().and_then(|value| {
-            super::value_facts::replace_transformed_value(
-                value,
-                &piped_effects,
-                old_token,
-                &new_values,
-            )
-        })
-    {
-        super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);
-        super::strict_operands::record_raw_range_key_string_consumer_paths(
-            &raw_range_key_paths,
-            &mut effects,
-        );
-        return EvalResult::with_effects(Some(value), effects);
-    }
-    let subject_values = piped_value
-        .as_ref()
-        .map(AbstractValue::strings)
-        .unwrap_or_default();
-    let value = if old_values.is_empty() || new_values.is_empty() || subject_values.is_empty() {
-        super::value_facts::derive_value_text(piped_value)
     } else {
         let mut rendered = BTreeSet::new();
         for subject in subject_values {
@@ -559,9 +500,15 @@ pub(super) fn expression_applies_to_yaml(expr: &TemplateExpr) -> bool {
 
 pub(super) fn eval_from_yaml(
     args: &[TemplateExpr],
+    piped: Option<EvalResult>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    if let Some(piped) = piped {
+        let mut result = eval_from_yaml_result(piped);
+        merge_arg_effects(args, env, resolver, &mut result.effects);
+        return result;
+    }
     let Some(arg) = args.first() else {
         return eval_all_args(args, env, resolver);
     };
@@ -598,9 +545,15 @@ pub(super) fn eval_to_yaml_result(result: EvalResult) -> EvalResult {
 
 pub(super) fn eval_from_json(
     args: &[TemplateExpr],
+    piped: Option<EvalResult>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    if let Some(piped) = piped {
+        let mut result = eval_from_json_result(piped);
+        merge_arg_effects(args, env, resolver, &mut result.effects);
+        return result;
+    }
     let Some(arg) = args.first() else {
         return eval_all_args(args, env, resolver);
     };
@@ -627,17 +580,6 @@ pub(super) fn eval_to_json_result(result: EvalResult) -> EvalResult {
     let mut serialized = EvalResult::with_effects(result.value, effects);
     serialized.json_payload_truth = payload_truth;
     serialized
-}
-
-pub(super) fn eval_from_json_pipeline(
-    current: EvalResult,
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let mut result = eval_from_json_result(current);
-    merge_arg_effects(args, env, resolver, &mut result.effects);
-    result
 }
 
 pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
@@ -668,17 +610,6 @@ pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
     let mut decoded = EvalResult::with_effects(value, effects);
     decoded.truth = payload_truth;
     decoded
-}
-
-pub(super) fn eval_from_yaml_pipeline(
-    current: EvalResult,
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let mut result = eval_from_yaml_result(current);
-    merge_arg_effects(args, env, resolver, &mut result.effects);
-    result
 }
 
 #[derive(Clone, Copy)]
@@ -823,9 +754,15 @@ fn is_structurally_rendered_yaml_value(value: &AbstractValue) -> bool {
 
 pub(super) fn eval_join(
     args: &[TemplateExpr],
+    piped: Option<EvalResult>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    if let Some(mut piped) = piped {
+        merge_arg_effects(args, env, resolver, &mut piped.effects);
+        erase_join_input_shape(&mut piped);
+        return piped;
+    }
     let [separator, subject] = args else {
         return eval_all_args(args, env, resolver);
     };
@@ -834,17 +771,6 @@ pub(super) fn eval_join(
     result.effects.merge(separator.effects);
     erase_join_input_shape(&mut result);
     result
-}
-
-pub(super) fn eval_join_pipeline(
-    mut current: EvalResult,
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    merge_arg_effects(args, env, resolver, &mut current.effects);
-    erase_join_input_shape(&mut current);
-    current
 }
 
 /// `join` is a total stringification like `toString`: Sprig's `strslice`
@@ -918,20 +844,42 @@ pub(super) fn rendered_content_value(value: AbstractValue) -> Option<AbstractVal
 pub(super) fn eval_trim_affix(
     function: &str,
     args: &[TemplateExpr],
+    piped: Option<EvalResult>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let [affix, subject] = args else {
-        return eval_all_args(args, env, resolver);
+    let (affix, mut subject, piped_for_facts) = match (piped, args) {
+        (None, [affix, subject]) => (
+            eval_expr_with_helper_calls(affix, env, resolver),
+            eval_expr_with_helper_calls(subject, env, resolver),
+            None,
+        ),
+        (Some(subject), [affix]) => {
+            let piped_for_facts = subject.clone();
+            (
+                eval_expr_with_helper_calls(affix, env, resolver),
+                subject,
+                Some(piped_for_facts),
+            )
+        }
+        (None, _) => return eval_all_args(args, env, resolver),
+        (Some(mut subject), _) => {
+            merge_arg_effects(args, env, resolver, &mut subject.effects);
+            return subject;
+        }
     };
-    let affix = eval_expr_with_helper_calls(affix, env, resolver);
-    let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
     let subject_dispatch = subject.scalar_dispatch.clone();
     let subject_effects = subject.effects.clone();
     subject.effects.merge(affix.effects);
     let mut effects = subject.effects;
     let (string_paths, raw_range_key_paths) =
-        super::strict_operands::string_call_operand_facts(function, args, env, resolver);
+        super::strict_operands::string_invocation_operand_facts(
+            function,
+            args,
+            piped_for_facts.as_ref(),
+            env,
+            resolver,
+        );
     // A single nonempty literal affix keeps a raw-identity subject's path
     // qualified by it as a lexical escape: trimming is the identity on
     // strings that do not contain the affix.
@@ -976,73 +924,6 @@ pub(super) fn eval_trim_affix(
     }
 }
 
-pub(super) fn eval_trim_affix_pipeline(
-    function: &str,
-    current: EvalResult,
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let [affix] = args else {
-        let mut current = current;
-        merge_arg_effects(args, env, resolver, &mut current.effects);
-        return current;
-    };
-    let piped_value = current.value;
-    let piped_dispatch = current.scalar_dispatch.clone();
-    let piped_effects = current.effects.clone();
-    let affix = eval_expr_with_helper_calls(affix, env, resolver);
-    let mut effects = current.effects;
-    effects.merge(affix.effects);
-    let (string_paths, raw_range_key_paths) = super::strict_operands::pipeline_string_operand_facts(
-        function,
-        args,
-        piped_value.as_ref(),
-        &piped_effects,
-        env,
-        resolver,
-    );
-    let affix_values = value_strings(affix.value.as_ref());
-    let token = single_replace_token(&affix_values);
-    let scalar_dispatch = token
-        .zip(piped_dispatch.as_ref())
-        .map(|(token, dispatch)| dispatch.trimmed(token, function == "trimPrefix"));
-    if let Some(token) = token
-        && let Some(value) = piped_value.as_ref().and_then(|value| {
-            super::value_facts::trim_affix_transformed_value(
-                value,
-                &piped_effects,
-                token,
-                function == "trimPrefix",
-            )
-        })
-    {
-        super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);
-        super::strict_operands::record_raw_range_key_string_consumer_paths(
-            &raw_range_key_paths,
-            &mut effects,
-        );
-        let result = EvalResult::with_effects(Some(value), effects);
-        return match scalar_dispatch {
-            Some(dispatch) => result.with_scalar_dispatch(dispatch),
-            None => result,
-        };
-    }
-    let value = super::value_facts::derive_value_text(piped_value);
-    super::strict_operands::record_string_transform_effects(
-        function,
-        value.as_ref(),
-        &string_paths,
-        &raw_range_key_paths,
-        &mut effects,
-    );
-    let result = EvalResult::with_effects(value, effects);
-    match scalar_dispatch {
-        Some(dispatch) => result.with_scalar_dispatch(dispatch),
-        None => result,
-    }
-}
-
 /// `regexReplaceAll REGEX SUBJECT REPLACEMENT` (and its literal/must
 /// variants): when the pattern carries a mandatory literal, the call is the
 /// identity on subjects not containing it, so a raw-identity subject keeps
@@ -1067,7 +948,9 @@ pub(super) fn eval_regex_replace(
     subject.effects.merge(replacement.effects);
     let mut effects = subject.effects;
     let (string_paths, raw_range_key_paths) =
-        super::strict_operands::string_call_operand_facts(function, args, env, resolver);
+        super::strict_operands::string_invocation_operand_facts(
+            function, args, None, env, resolver,
+        );
     let pattern_strings = value_strings(pattern.value.as_ref());
     let escape = pattern_strings
         .iter()

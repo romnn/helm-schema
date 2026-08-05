@@ -11,9 +11,8 @@ use helm_schema_ast::expression_schema_type;
 use helm_schema_core::{GuardValue, Predicate};
 
 use super::strict_operands::{
-    pipeline_string_operand_facts, record_range_key_string_consumer_effects,
-    record_raw_range_key_string_consumer_paths, record_string_call_consumers,
-    record_string_consumer_effects,
+    record_range_key_string_consumer_effects, record_raw_range_key_string_consumer_paths,
+    record_string_call_consumers, record_string_consumer_effects, string_invocation_operand_facts,
 };
 use super::value_facts::{identity_value_paths, split_transformed_value, value_strings};
 use super::{eval_all_args, eval_unknown_call, merge_arg_effects, merge_arg_values};
@@ -590,17 +589,6 @@ pub(super) fn eval_pluck(
     eval_unknown_call(args, Effects::default(), env, resolver)
 }
 
-pub(super) fn eval_first(
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let Some(arg) = args.first() else {
-        return eval_all_args(args, env, resolver);
-    };
-    eval_first_result(eval_expr_with_helper_calls(arg, env, resolver))
-}
-
 pub(super) fn eval_first_result(result: EvalResult) -> EvalResult {
     let value = match result.value {
         Some(AbstractValue::List(items)) => items.first().cloned(),
@@ -620,17 +608,6 @@ pub(super) fn eval_first_result(result: EvalResult) -> EvalResult {
     EvalResult::with_effects(value, result.effects)
 }
 
-pub(super) fn eval_last(
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let Some(arg) = args.first() else {
-        return eval_all_args(args, env, resolver);
-    };
-    eval_last_result(eval_expr_with_helper_calls(arg, env, resolver))
-}
-
 pub(super) fn eval_last_result(result: EvalResult) -> EvalResult {
     let value = match result.value {
         Some(AbstractValue::List(items)) => items.last().cloned(),
@@ -648,17 +625,6 @@ pub(super) fn eval_last_result(result: EvalResult) -> EvalResult {
         None => None,
     };
     EvalResult::with_effects(value, result.effects)
-}
-
-pub(super) fn eval_reverse(
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let Some(arg) = args.first() else {
-        return eval_all_args(args, env, resolver);
-    };
-    eval_reverse_result(eval_expr_with_helper_calls(arg, env, resolver))
 }
 
 pub(super) fn eval_reverse_result(result: EvalResult) -> EvalResult {
@@ -788,17 +754,44 @@ fn is_literal_regex(pattern: &str) -> bool {
 
 pub(super) fn eval_nonempty_split(
     args: &[TemplateExpr],
+    piped: Option<EvalResult>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let [separator, subject] = args else {
-        return eval_all_args(args, env, resolver);
+    let (separator, mut subject, piped_for_facts) = match (piped, args) {
+        (None, [separator, subject]) => (
+            eval_expr_with_helper_calls(separator, env, resolver),
+            eval_expr_with_helper_calls(subject, env, resolver),
+            None,
+        ),
+        (Some(subject), [separator]) => {
+            let piped_for_facts = subject.clone();
+            (
+                eval_expr_with_helper_calls(separator, env, resolver),
+                subject,
+                Some(piped_for_facts),
+            )
+        }
+        (None, _) => return eval_all_args(args, env, resolver),
+        (Some(mut subject), _) => {
+            merge_arg_effects(args, env, resolver, &mut subject.effects);
+            return subject;
+        }
     };
-    let separator = eval_expr_with_helper_calls(separator, env, resolver);
-    let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
     subject.effects.merge(separator.effects);
     let mut effects = subject.effects;
-    record_string_call_consumers("split", args, env, resolver, &mut effects);
+    if let Some(piped) = piped_for_facts.as_ref() {
+        let (string_paths, raw_range_key_paths) =
+            string_invocation_operand_facts("split", args, Some(piped), env, resolver);
+        record_string_consumer_effects(&string_paths, &mut effects);
+        super::strict_operands::record_nil_strict_identity_operand(
+            piped.value.as_ref(),
+            &mut effects,
+        );
+        record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
+    } else {
+        record_string_call_consumers("split", args, env, resolver, &mut effects);
+    }
     let separator = value_strings(separator.value.as_ref());
     let value = single_string(separator).and_then(|separator| {
         // A raw-identity subject keeps its path through `._0` qualified by
@@ -810,38 +803,6 @@ pub(super) fn eval_nonempty_split(
             .and_then(|value| split_transformed_value(value, &effects, &separator))
             .or_else(|| nonempty_split_map(subject.value.as_ref(), &separator))
     });
-    EvalResult::with_effects(value, effects)
-}
-
-pub(super) fn eval_nonempty_split_pipeline(
-    current: EvalResult,
-    args: &[TemplateExpr],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
-    let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
-        "split",
-        args,
-        current.value.as_ref(),
-        &current.effects,
-        env,
-        resolver,
-    );
-    let separator = args
-        .first()
-        .map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
-        .and_then(|result| single_string(value_strings(result.value.as_ref())));
-    let value = separator.as_deref().and_then(|separator| {
-        current
-            .value
-            .as_ref()
-            .and_then(|value| split_transformed_value(value, &current.effects, separator))
-            .or_else(|| nonempty_split_map(current.value.as_ref(), separator))
-    });
-    let mut effects = current.effects;
-    merge_arg_effects(args, env, resolver, &mut effects);
-    record_string_consumer_effects(&string_paths, &mut effects);
-    record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
     EvalResult::with_effects(value, effects)
 }
 
