@@ -12570,3 +12570,17 @@ default-composed, null-deletion-aware, guard-state, and composite probes against
 The nine-family direct/pipeline live matrix replays 54 deleted,
 present-wrong-type, and truly-consumed Helm cells after the catalog migration;
 every established verdict passes. No corpus fixture change is adopted.
+
+## Architecture Review v3 Step 6a (2026-08-05)
+
+A typed selection-reachability carrier now sits beside `EvalResult`, with
+adapters for the existing truth condition, rendered scalar dispatch, and
+default-primary classification. No producer or consumer migrates in this
+representation-only step. One clean dump writes all 84 schema artifacts and
+all 18 IR artifacts byte-identically.
+
+The compiled full-depth comparison checks 121,059 default-composed,
+null-deletion-aware, guard-state, and composite probes against `888f274` with
+zero acceptance flips and zero undisclosed base or third-level truncation. The
+Round 73/74 opaque-formatter, literal-primary, and oauth2-proxy live matrices
+remain green against Helm 4.2.3. No corpus fixture change is adopted.

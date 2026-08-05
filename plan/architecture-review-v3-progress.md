@@ -621,7 +621,7 @@ adjudication.
 
 ## Step 5 — typed function semantics
 
-- Status: landed; commit pending.
+- Status: landed.
 - Acceptance baseline: `02e8e4a`.
 - Baseline production Rust LOC: 61,110.
 - Measured results:
@@ -734,15 +734,123 @@ adjudication.
     /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 charts complete.
   - `task tokei:core`: exit 0; 61,179 production Rust LOC, delta +69.
-- Commit: pending.
+- Commit: `888f274` (`refactor(ir): centralize function semantics`).
 
 ## Step 6a — typed selection reachability with adapters
 
-- Status: pending.
-- Acceptance baseline: pending.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed; commit pending.
+- Contract: representation-only; no existing producer or consumer may change
+  semantic behavior in this step.
+- Acceptance baseline: `888f274`.
+- Baseline production Rust LOC: 61,179.
+- Measured results:
+  - `SelectionReachability` beside `EvalResult` now represents always selected,
+    never selected, exact-predicate selection, and approximate selection with
+    an optional sound subset (`eval_effect.rs:806-948`). Its independent
+    `SelectionTruthSource` distinguishes raw input truth from rendered scalar
+    truth.
+  - Standard adapters translate existing `TruthCondition` and
+    `ScalarValueDispatch` facts without changing them
+    (`eval_effect.rs:910-941`). The scalar-dispatch adapter owns the
+    rendered-truth distinction. The existing local
+    `DefaultPrimarySelection` classification has an adapter at
+    `expr_call_eval/collections.rs:222-241`.
+  - `EvalResult` constructors initialize the new carrier to always-selected
+    raw-input truth. No producer writes it and no consumer reads it in this
+    step; eager `Effects` remain independent even when a test sets output
+    reachability to never selected (`src/tests/selection_reachability.rs`).
+  - Four focused tests cover exact truth and complement polarity, partial
+    sound subsets without invalid complement inversion, all four default
+    selection states, raw-versus-rendered truth, and eager effects under dead
+    output selection.
+  - The authoritative clean dump contains 84 schema artifacts and 18 IR
+    artifacts, all byte-identical to committed fixtures. The full-depth
+    comparison covers 60 lanes and 121,059 probes with zero flips. Coverage
+    reports zero dropped base probes and zero dropped third-level probes;
+    bounded guard/composite omissions remain explicitly recorded.
+  - Production Rust is 61,308 LOC, +129 from this step's baseline and +46 from
+    the 61,262 Wave 1 campaign baseline. The result is inside the frozen
+    +50..+150 Step 6a estimate.
+- Deviations: none. D3 option 1 is implemented as the frozen plan specifies,
+  and no producer migration from Step 6b is included.
+- Adjudication evidence:
+  - This is representation-only. The authoritative fixtures are byte-identical
+    and the baseline battery reports `charts_checked=60
+    probes_checked=121059 flips=0`; there is no acceptance flip requiring a
+    new Helm verdict or fixture update.
+  - The Round 73/74 opaque-formatter, literal-primary, and oauth2-proxy live
+    matrices all replay successfully against Helm 4.2.3. Hermetic
+    monotonicity, three-category semantic controls, guard/composite synthesis,
+    falsifiable truncation accounting, and the Temporal pairwise matrix also
+    pass.
+
+### Review dossier
+
+- Typed states and truth source: `nl -ba
+  crates/helm-schema-ir/src/eval_effect.rs | sed -n '806,948p'`; the output
+  shows the four states, optional sound subset, raw/rendered source, and the
+  carrier beside `EvalResult`.
+- Adapters: `nl -ba crates/helm-schema-ir/src/eval_effect.rs | sed -n
+  '910,941p'; nl -ba
+  crates/helm-schema-ir/src/expr_call_eval/collections.rs | sed -n
+  '222,241p'`; the existing three fact shapes each map into the carrier.
+- No producer migration: `rg -n 'selection_reachability'
+  crates/helm-schema-ir/src --glob '*.rs' --glob '!**/tests/**'`; only the
+  `EvalResult` field and its two default constructor initializations are
+  listed.
+- Focused invariants: `cargo nextest run -p helm-schema-ir -E
+  'test(selection_reachability)'`; four tests pass.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step6a-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step6a-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; one test
+  passes and all 18 artifacts remain byte-identical.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step6a-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=888f274
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-step6a-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-step6a-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; 60 lanes and 121,059 probes yield
+  zero flips.
+- Round 73/74 live matrices:
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step6a-live cargo
+  nextest run -P integration -p helm-schema --test
+  schema_emission_profile_live -E
+  'test(replay_opaque_formatter_default_against_helm) |
+  test(replay_literal_default_primary_reachability_against_helm) |
+  test(replay_oauth2_proxy_tpl_default_eagerness_against_helm)'
+  --run-ignored ignored-only --no-capture`; all three matrices pass against
+  Helm 4.2.3.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; four
+  tests pass.
+- Frozen-plan check: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+- Gates on the final Step 6a tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks finish
+    without warnings.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets finish with zero errors and zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,224 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 566 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,794 tests pass and 24 are skipped, including
+    the live-network lane.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - Downstream luup2 `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts complete.
+  - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta +129.
 - Commit: pending.

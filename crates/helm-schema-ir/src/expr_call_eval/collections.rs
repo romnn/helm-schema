@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult};
+use crate::eval_effect::{Effects, EvalResult, SelectionReachability, SelectionTruthSource};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
@@ -219,11 +219,25 @@ fn apply_default_primary_formatter_selection(
     }
 }
 
-enum DefaultPrimarySelection {
+pub(crate) enum DefaultPrimarySelection {
     AlwaysFallback,
     NeverFallback,
     Conditional(BTreeSet<Predicate>),
     Opaque,
+}
+
+impl From<(&DefaultPrimarySelection, SelectionTruthSource)> for SelectionReachability {
+    fn from((selection, truth_source): (&DefaultPrimarySelection, SelectionTruthSource)) -> Self {
+        match selection {
+            DefaultPrimarySelection::AlwaysFallback => Self::always(truth_source),
+            DefaultPrimarySelection::NeverFallback => Self::never(truth_source),
+            DefaultPrimarySelection::Conditional(predicates) => Self::exact(
+                Predicate::all(predicates.iter().cloned().collect()),
+                truth_source,
+            ),
+            DefaultPrimarySelection::Opaque => Self::approximate(None, truth_source),
+        }
+    }
 }
 
 fn default_primary_selection(result: &EvalResult) -> DefaultPrimarySelection {
