@@ -12520,3 +12520,13 @@ default-composed, null-deletion-aware, guard-state, and composite probes against
 `44472dd` with zero acceptance flips and zero undisclosed truncation. A local
 three-direction chart pins deletion, present-wrong-type, and truly-consumed
 behavior against Helm 4.2.3.
+
+## Architecture Review v3 Step 3a (2026-08-05)
+
+The contract-signal builder's five compiler phases now live in directly named
+modules, with only the existing derive entry point exposed from the directory.
+This is a representation-only move: one authoritative clean dump writes all 84
+schema artifacts and all 18 IR artifacts byte-identically. The full-depth
+compiled comparison checks 121,059 default-composed, null-deletion-aware,
+guard-state, and composite probes against `7817568` with zero acceptance flips
+and zero undisclosed truncation. No fixture or Helm disposition changes.

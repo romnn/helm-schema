@@ -176,7 +176,7 @@ adjudication.
 
 ## Step 2 — structural bounded widening
 
-- Status: landed; commit pending.
+- Status: landed.
 - Acceptance baseline: `44472dd`.
 - Baseline production Rust LOC: 61,212.
 - Measured results:
@@ -317,17 +317,99 @@ adjudication.
     /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 charts complete.
   - `task tokei:core`: exit 0; 61,293 production Rust LOC, delta +81.
-- Commit: pending.
+- Commit: `7817568` (`fix(ir): bound helper config analysis structurally`).
 
 ## Step 3a — pure builder split
 
-- Status: pending.
-- Acceptance baseline: pending.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed; commit pending.
+- Acceptance baseline: `7817568`.
+- Baseline production Rust LOC: 61,293.
+- Measured results:
+  - The 4,746-line builder is split into five directly named phase modules:
+    input-channel ingestion (143 lines), contract-row/capture lowering (1,116
+    lines), requirement/fail lowering (2,216 lines), conditional-overlay
+    assembly (993 lines), and final signal construction (327 lines). The
+    38-line root declares the phase graph and exposes only
+    `derive_schema_signals_from_contract_parts` outside the directory
+    (`contract_signal_builder/mod.rs:12-38`).
+  - Function bodies and their comments moved without semantic edits. The only
+    required source-level changes are sibling-module visibility bounded to
+    `pub(super)` and explicit imports demanded by workspace Clippy; no wildcard
+    lint suppression was added.
+  - The final production count is 61,376 Rust LOC, +83 from the step baseline
+    and +114 from the campaign baseline. This step intentionally pays the
+    module/import seam before Step 3b deletes now-visible wrappers; the frozen
+    -100..-40 estimate applies after 3b, not to this pure-move half.
+  - The authoritative final-build schema dump contains all 84 artifacts and
+    the IR dump all 18 artifacts, byte-identical to committed fixtures. The
+    compiled comparison checks 60 lanes and 121,059 probes with zero flips and
+    zero undisclosed base or third-level truncation.
+- Deviations:
+  - None from the Step 3a contract. The module root is 38 lines rather than a
+    one-item facade because it owns the explicit sibling imports; its only
+    outward item remains the requested derive function. No function body,
+    fixture, or acceptance behavior changed.
+- Adjudication evidence:
+  - This is representation-only. The acceptance battery reports zero flips,
+    so there is no fixture or Helm verdict to adopt. Hermetic monotonicity,
+    three-category controls, guard/composite synthesis, and the Temporal
+    pairwise matrix all pass on the final tree.
+
+### Review dossier
+
+- Phase boundaries and sole outward export: `wc -l
+  crates/helm-schema-ir/src/contract_signal_builder/*.rs && rg -n
+  '^mod |^pub\(crate\) use|^pub\(crate\) fn'
+  crates/helm-schema-ir/src/contract_signal_builder/{mod.rs,input_channels.rs}`;
+  the five modules and only the derive export are listed.
+- Mechanical-move review: `git diff --find-renames=20% 7817568 --
+  crates/helm-schema-ir/src/contract_signal_builder`; the diff consists of the
+  old builder deletion, phase-file additions, sibling visibility, and explicit
+  imports. Semantic identity is independently pinned by the dump and battery
+  commands below.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step3a-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step3a-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; the 18
+  artifacts remain byte-identical.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step3a-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=7817568
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-step3a-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-step3a-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; 60 lanes and 121,059 probes yield
+  zero flips.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; four
+  tests pass.
+- Frozen-plan check: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+- Gates on the final Step 3a tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; the workspace Clippy and all three ast-grep checks
+    complete without warnings.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets complete with zero errors and zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,215 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 567 tests pass and 23 are skipped.
+  - `task test:all`: exit 0; 1,786 tests pass and 23 are skipped, including
+    the live-network lane.
+  - Downstream luup2: not required because the step is representation-only
+    with byte-identical schemas and zero acceptance flips; it remains
+    mandatory on the final Wave 1 tree.
+  - `task tokei:core`: exit 0; 61,376 production Rust LOC, delta +83.
 - Commit: pending.
 
 ## Step 3b — builder wrapper deletion
