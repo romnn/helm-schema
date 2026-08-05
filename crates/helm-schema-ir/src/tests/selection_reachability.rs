@@ -3,12 +3,12 @@ use std::collections::BTreeSet;
 use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
 
+use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
-    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionState,
-    SelectionTruthSource,
+    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
 };
-use crate::expr_call_eval::DefaultPrimarySelection;
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::expr_call_eval::default_primary_selection;
+use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition};
 
 #[test]
 fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
@@ -20,10 +20,7 @@ fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
     ));
     sim_assert_eq!(
         have: exact,
-        want: SelectionReachability {
-            state: SelectionState::Exact(raw_truth.clone()),
-            truth_source: SelectionTruthSource::RawInput,
-        }
+        want: SelectionReachability::exact(raw_truth.clone(), SelectionTruthSource::RawInput)
     );
 
     let falsy = SelectionReachability::from((
@@ -33,10 +30,10 @@ fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
     ));
     sim_assert_eq!(
         have: falsy,
-        want: SelectionReachability {
-            state: SelectionState::Exact(raw_truth.negated()),
-            truth_source: SelectionTruthSource::RawInput,
-        }
+        want: SelectionReachability::exact(
+            raw_truth.negated(),
+            SelectionTruthSource::RawInput,
+        )
     );
 
     let rendered = SelectionReachability::from((
@@ -44,7 +41,7 @@ fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
         SelectionPolarity::Truthy,
     ));
     sim_assert_eq!(
-        have: rendered.truth_source,
+        have: rendered.truth_source(),
         want: SelectionTruthSource::RenderedScalar
     );
 }
@@ -60,12 +57,10 @@ fn partial_truth_becomes_approximate_without_inverting_its_sound_subset() {
     ));
     sim_assert_eq!(
         have: selected,
-        want: SelectionReachability {
-            state: SelectionState::Approximate {
-                sound_subset: Some(subset),
-            },
-            truth_source: SelectionTruthSource::RenderedScalar,
-        }
+        want: SelectionReachability::approximate(
+            Some(subset),
+            SelectionTruthSource::RenderedScalar,
+        )
     );
 
     let unproven_complement = SelectionReachability::from((
@@ -74,32 +69,120 @@ fn partial_truth_becomes_approximate_without_inverting_its_sound_subset() {
         SelectionTruthSource::RenderedScalar,
     ));
     sim_assert_eq!(
-        have: unproven_complement.state,
-        want: SelectionState::Approximate { sound_subset: None }
+        have: unproven_complement,
+        want: SelectionReachability::approximate(
+            None,
+            SelectionTruthSource::RenderedScalar,
+        )
     );
 }
 
 #[test]
-fn default_selection_adapter_exposes_all_four_reachability_states() {
-    let source = SelectionTruthSource::RawInput;
+fn exactness_demotes_approximation_and_canonicalizes_true_subsets() {
+    let subset = Predicate::truthy_path("alpha");
+    let approximate = Predicate::approximate_with_sound_predicate(
+        "computed output selection",
+        BTreeSet::from(["alpha".to_string()]),
+        subset.clone(),
+    );
     sim_assert_eq!(
-        have: SelectionReachability::from((&DefaultPrimarySelection::AlwaysFallback, source)),
+        have: SelectionReachability::exact(
+            approximate,
+            SelectionTruthSource::RenderedScalar,
+        ),
+        want: SelectionReachability::approximate(
+            Some(subset),
+            SelectionTruthSource::RenderedScalar,
+        )
+    );
+    sim_assert_eq!(
+        have: SelectionReachability::approximate(
+            Some(Predicate::True),
+            SelectionTruthSource::RawInput,
+        ),
+        want: SelectionReachability::always(SelectionTruthSource::RawInput)
+    );
+}
+
+#[test]
+fn complement_preserves_only_invertible_selection_knowledge() {
+    let source = SelectionTruthSource::RawInput;
+    let predicate = Predicate::truthy_path("primary").negated();
+    sim_assert_eq!(
+        have: SelectionReachability::always(source).complement(),
+        want: SelectionReachability::never(source)
+    );
+    sim_assert_eq!(
+        have: SelectionReachability::never(source).complement(),
         want: SelectionReachability::always(source)
     );
     sim_assert_eq!(
-        have: SelectionReachability::from((&DefaultPrimarySelection::NeverFallback, source)),
-        want: SelectionReachability::never(source)
+        have: SelectionReachability::exact(predicate.clone(), source).complement(),
+        want: SelectionReachability::exact(predicate.negated(), source)
+    );
+    sim_assert_eq!(
+        have: SelectionReachability::approximate(
+            Some(Predicate::truthy_path("primary")),
+            source,
+        )
+        .complement(),
+        want: SelectionReachability::approximate(None, source)
+    );
+}
+
+#[test]
+fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
+    let always = EvalResult::from_value(AbstractValue::StringSet(BTreeSet::from([String::new()])));
+    sim_assert_eq!(
+        have: SelectionReachability::from(&default_primary_selection(&always)),
+        want: SelectionReachability::always(SelectionTruthSource::RawInput)
     );
 
-    let predicate = Predicate::truthy_path("primary").negated();
-    let conditional = DefaultPrimarySelection::Conditional(BTreeSet::from([predicate.clone()]));
+    let never =
+        EvalResult::from_value(AbstractValue::StringSet(BTreeSet::from(
+            ["set".to_string()],
+        )));
     sim_assert_eq!(
-        have: SelectionReachability::from((&conditional, source)),
-        want: SelectionReachability::exact(predicate, source)
+        have: SelectionReachability::from(&default_primary_selection(&never)),
+        want: SelectionReachability::never(SelectionTruthSource::RawInput)
     );
+
+    let raw = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()));
     sim_assert_eq!(
-        have: SelectionReachability::from((&DefaultPrimarySelection::Opaque, source)),
-        want: SelectionReachability::approximate(None, source)
+        have: SelectionReachability::from(&default_primary_selection(&raw)),
+        want: SelectionReachability::exact(
+            Predicate::truthy_path("alpha").negated(),
+            SelectionTruthSource::RawInput,
+        )
+    );
+
+    let opaque = EvalResult::from_value(AbstractValue::Unknown);
+    sim_assert_eq!(
+        have: SelectionReachability::from(&default_primary_selection(&opaque)),
+        want: SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
+    );
+
+    let dispatch = ScalarValueDispatch {
+        arms: vec![(
+            Predicate::True,
+            ScalarValue::PrintfStringIdentity("alpha".to_string()),
+        )],
+        complete: true,
+    };
+    let rendered = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()))
+        .with_scalar_dispatch(dispatch.clone());
+    sim_assert_eq!(
+        have: SelectionReachability::from(&default_primary_selection(&rendered)),
+        want: SelectionReachability::from((&dispatch, SelectionPolarity::Falsy))
+    );
+
+    let chain = EvalResult::from_value(AbstractValue::FirstTruthy(vec![
+        AbstractValue::ValuesPath("alpha".to_string()),
+        AbstractValue::JsonDecodedPath("beta".to_string()),
+    ]));
+    sim_assert_eq!(
+        have: SelectionReachability::from(&default_primary_selection(&chain)).truth_source(),
+        want: SelectionTruthSource::RawInput
     );
 }
 
@@ -108,12 +191,19 @@ fn dead_output_selection_retains_eager_effects() {
     let mut effects = Effects::default();
     effects.add_default_paths(BTreeSet::from(["fallback".to_string()]));
     let mut result = EvalResult::with_effects(None, effects);
-    result.selection_reachability =
-        SelectionReachability::never(SelectionTruthSource::RenderedScalar);
+    sim_assert_eq!(have: result.selection_reachability, want: None);
+    result.selection_reachability = Some(SelectionReachability::never(
+        SelectionTruthSource::RenderedScalar,
+    ));
 
     sim_assert_eq!(
         have: result.effects.defaults,
         want: BTreeSet::from(["fallback".to_string()])
     );
-    sim_assert_eq!(have: result.selection_reachability.state, want: SelectionState::Never);
+    sim_assert_eq!(
+        have: result.selection_reachability,
+        want: Some(SelectionReachability::never(
+            SelectionTruthSource::RenderedScalar,
+        ))
+    );
 }

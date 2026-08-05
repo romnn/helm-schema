@@ -12618,3 +12618,13 @@ byte-identically. The full-depth comparison checks 121,059 probes against
 `78cb7c7` with zero flips; its machine report explicitly records live Helm
 adjudication enabled with zero candidate-accepts/Helm-aborts cells against the
 pre-registered zero allowance. No corpus fixture change is adopted.
+
+## Architecture Review v3 Wave 2 R2 (2026-08-05)
+
+R2 hardens the representation-only selection carrier before any producer
+migration. One authoritative clean schema dump writes all 84 artifacts and one
+clean IR dump writes all 18 artifacts byte-identically. The compiled
+full-depth comparison checks 121,059 default-composed, null-deletion-aware,
+guard-state, and composite probes against `9fdd812` with zero flips, zero
+candidate-accepts/Helm-aborts cells, and no undisclosed base or third-level
+truncation. No fixture or Helm disposition changes.

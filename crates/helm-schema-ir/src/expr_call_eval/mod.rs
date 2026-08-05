@@ -26,7 +26,7 @@ mod traversal;
 mod value_facts;
 
 #[cfg(test)]
-pub(crate) use collections::DefaultPrimarySelection;
+pub(crate) use collections::default_primary_selection;
 
 use collections::{
     eval_append, eval_coalesce, eval_concat, eval_default, eval_dict, eval_first_result,

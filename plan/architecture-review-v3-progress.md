@@ -1227,7 +1227,7 @@ adjudication.
 
 ## Wave 2 R4 — restore battery exactness
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: test infrastructure only; make candidate-accepts/Helm-aborts
   acceptance flips an explicitly counted machine-report category and reject a
   count above the source-controlled, pre-registered per-step allowance, which
@@ -1346,4 +1346,141 @@ adjudication.
     infrastructure, not schema semantics.
   - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
 - Measured production LOC delta: 0 (61,308 to 61,308).
+- Commit: `9fdd812` (`test(harness): account helm-aborting widenings`).
+
+## Wave 2 R2 — harden the selection carrier
+
+- Status: landed; commit pending.
+- Contract: representation-only; harden the Step 6a carrier's exactness,
+  complement, truth-source ownership, and forgotten-producer state without
+  migrating a producer or changing schema/IR fixture bytes.
+- Acceptance baseline: `9fdd812`.
+- Baseline production Rust LOC: 61,308.
+- Measured results:
+  - `SelectionReachability::exact` now routes approximation-containing
+    predicates through the `TruthCondition` exactness boundary, yielding an
+    `Approximate` carrier with only its sound subset instead of minting an
+    invertible `Exact` state.
+  - The carrier owns its private state and truth source. Its `complement`
+    operation is the sole inversion spelling: Always/Never swap, Exact
+    negates, and Approximate deliberately discards its one-way sound subset.
+    `approximate(Some(True))` canonicalizes to Always, and the unused polarity
+    negation implementation is deleted.
+  - `DefaultPrimarySelection` owns the truth source for every arm. Literal,
+    ValuesPath, JsonDecodedPath, OutputPath, and FirstTruthy arms are labeled
+    raw-input truth; printf-identity arms are labeled rendered-scalar truth.
+    The adapter no longer accepts a caller-supplied source that could mislabel
+    an arm.
+  - `EvalResult.selection_reachability` is now optional. Both construction
+    paths initialize it to `None`, making a forgotten producer distinguishable
+    from a proved Always selection before the Step 6b family migrations.
+  - Six focused tests cover approximation demotion, true-subset
+    canonicalization, all complement states, all default-selection states and
+    truth sources, and the forgotten-producer/eager-effect boundary.
+  - One clean schema dump writes 84 artifacts and one clean IR dump writes 18
+    artifacts, all byte-identical. The full-depth comparison checks 60 lanes
+    and 121,059 probes against `9fdd812` with zero flips and no undisclosed
+    truncation. Production Rust is 61,376 LOC, delta +68.
+- Deviations:
+  - Process-only: the baseline commit and 61,308-LOC measurement were verified
+    before editing, but this section was appended after the focused carrier
+    edits and tests rather than before the first edit. The acceptance baseline
+    itself remained `9fdd812` throughout.
+- Adjudication evidence:
+  - R2 changes a dormant representation and its adapters only; no producer or
+    consumer is migrated. The authoritative schema and IR fixture dumps are
+    byte-identical, and the compiled battery reports zero acceptance flips, so
+    no Helm document disposition or fixture update is available or required.
+  - Hermetic monotonicity, three-category semantic controls,
+    guard/composite synthesis, Temporal pairwise monotonicity, and both
+    falsifiable accounting checks pass together.
+  - Self-adversarial pass: `rg` finds no production write of
+    `selection_reachability`; the only constructor values are `None` and the
+    only explicit `Some` is in the focused forgotten-producer test. Private
+    state prevents field-level sound-subset inversion, `complement` drops
+    approximate subsets, and the default adapter obtains its source from the
+    classified arm rather than its caller. The inherited raw/rendered labels
+    were checked against each classifier branch rather than copied from the
+    old adapter. No contract-in-letter-only result, acceptance delta, or
+    favorable measurement framing was found.
+
+### Review dossier
+
+- Carrier exactness and forgotten-producer proof: `sed -n '800,1030p'
+  crates/helm-schema-ir/src/eval_effect.rs`; shows private carrier state,
+  approximation demotion, canonicalization, the sole complement operation,
+  optional `EvalResult` storage, and `None` initialization.
+- Truth-source ownership: `sed -n '220,375p'
+  crates/helm-schema-ir/src/expr_call_eval/collections.rs`; shows each
+  default-selection arm carrying its own source and the source-free adapter,
+  including rendered truth for printf identity and raw truth for identities
+  and FirstTruthy.
+- Producer audit: `rg -n 'selection_reachability' crates/helm-schema-ir/src
+  --glob '*.rs'`; finds the field, its two `None` constructors, the focused
+  test assignment, and no migrated production producer.
+- Focused state/source proof: `cargo nextest run -p helm-schema-ir -E
+  'test(selection_reachability)'`; exit 0, six tests pass.
+- Clean schema dump proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r2-final-dump`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r2-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written byte-identically.
+- Clean IR dump proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r2-final-ir`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r2-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written byte-identically.
+- Full-depth acceptance proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r2-prober`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=9fdd812
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r2-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r2-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Machine accounting: `jq '{baseline_ref, helm_adjudication, totals: {base:
+  (.charts | map(.base_emitted) | add), third_level: (.charts |
+  map(.third_level_emitted) | add), guard_pairs: (.charts |
+  map(.guard_pairs_emitted) | add), composite_pairs: (.charts |
+  map(.composite_pairs_emitted) | add), base_dropped: (.charts |
+  map(.base_dropped) | add), third_level_dropped: (.charts |
+  map(.third_level_dropped) | add)}}'
+  target/arch-v3-wave2-r2-probe-coverage.json`; reports baseline `9fdd812`,
+  live adjudication enabled, zero adjudicated flips, zero accepted-abort cells,
+  allowance zero, 112,260 base probes, 7,465 third-level probes, 427 guard
+  pairs, 240 composite pairs, and no base or third-level drops.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+- Gates on the final R2 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,226 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 567 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,797 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream luup2: not required because R2 is representation-only and all
+    schema/IR bytes and acceptance verdicts are unchanged.
+  - `task tokei:core`: exit 0; 61,376 production Rust LOC, delta +68.
+- Measured production LOC delta: +68 (61,308 to 61,376).
 - Commit: pending.

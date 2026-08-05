@@ -52,7 +52,10 @@ pub(super) fn eval_default(
     {
         effects.add_fallback_type_hints(primary_paths.clone(), schema_type);
     }
-    let mut values = if matches!(primary_selection, DefaultPrimarySelection::AlwaysFallback) {
+    let mut values = if matches!(
+        primary_selection,
+        DefaultPrimarySelection::AlwaysFallback { .. }
+    ) {
         Vec::new()
     } else {
         primary.value.into_iter().collect::<Vec<_>>()
@@ -61,22 +64,24 @@ pub(super) fn eval_default(
     let mut fallback_dispatch = None;
     for fallback in fallback_args {
         let mut result = eval_expr_with_helper_calls(fallback, env, resolver);
-        if matches!(primary_selection, DefaultPrimarySelection::NeverFallback) {
+        if matches!(
+            primary_selection,
+            DefaultPrimarySelection::NeverFallback { .. }
+        ) {
             effects.merge(result.effects.execution_only());
             continue;
         }
         let selection = match &primary_selection {
-            DefaultPrimarySelection::Conditional(selection) => selection.clone(),
-            DefaultPrimarySelection::Opaque => {
+            DefaultPrimarySelection::Conditional { predicates, .. } => predicates.clone(),
+            DefaultPrimarySelection::Opaque { .. } => {
                 BTreeSet::from([Predicate::approximate_output_selection(
                     "default fallback after opaque primary",
                     primary_paths.clone(),
                     Predicate::False,
                 )])
             }
-            DefaultPrimarySelection::AlwaysFallback | DefaultPrimarySelection::NeverFallback => {
-                BTreeSet::new()
-            }
+            DefaultPrimarySelection::AlwaysFallback { .. }
+            | DefaultPrimarySelection::NeverFallback { .. } => BTreeSet::new(),
         };
         // An opaque primary still selects its fallback conditionally.
         // Keeping an unlowerable selection marker prevents later consumers
@@ -118,7 +123,8 @@ pub(super) fn eval_default(
     }
     if matches!(
         primary_selection,
-        DefaultPrimarySelection::AlwaysFallback | DefaultPrimarySelection::Conditional(_)
+        DefaultPrimarySelection::AlwaysFallback { .. }
+            | DefaultPrimarySelection::Conditional { .. }
     ) {
         for path in fallback_paths {
             let meta = effects.local_output_meta.entry(path).or_default();
@@ -156,13 +162,17 @@ fn finish_default_dispatch(
     fallback_dispatch: Option<ScalarValueDispatch>,
     fallback_args: &[TemplateExpr],
 ) -> EvalResult {
-    if matches!(primary_selection, DefaultPrimarySelection::AlwaysFallback)
-        && let Some(fallback) = fallback_dispatch
+    if matches!(
+        primary_selection,
+        DefaultPrimarySelection::AlwaysFallback { .. }
+    ) && let Some(fallback) = fallback_dispatch
     {
         return result.with_scalar_dispatch(fallback);
     }
-    if matches!(primary_selection, DefaultPrimarySelection::NeverFallback)
-        && let Some(primary) = primary_dispatch
+    if matches!(
+        primary_selection,
+        DefaultPrimarySelection::NeverFallback { .. }
+    ) && let Some(primary) = primary_dispatch
     {
         return result.with_scalar_dispatch(primary);
     }
@@ -220,73 +230,107 @@ fn apply_default_primary_formatter_selection(
 }
 
 pub(crate) enum DefaultPrimarySelection {
-    AlwaysFallback,
-    NeverFallback,
-    Conditional(BTreeSet<Predicate>),
-    Opaque,
+    AlwaysFallback {
+        truth_source: SelectionTruthSource,
+    },
+    NeverFallback {
+        truth_source: SelectionTruthSource,
+    },
+    Conditional {
+        predicates: BTreeSet<Predicate>,
+        truth_source: SelectionTruthSource,
+    },
+    Opaque {
+        truth_source: SelectionTruthSource,
+    },
 }
 
-impl From<(&DefaultPrimarySelection, SelectionTruthSource)> for SelectionReachability {
-    fn from((selection, truth_source): (&DefaultPrimarySelection, SelectionTruthSource)) -> Self {
+impl From<&DefaultPrimarySelection> for SelectionReachability {
+    fn from(selection: &DefaultPrimarySelection) -> Self {
         match selection {
-            DefaultPrimarySelection::AlwaysFallback => Self::always(truth_source),
-            DefaultPrimarySelection::NeverFallback => Self::never(truth_source),
-            DefaultPrimarySelection::Conditional(predicates) => Self::exact(
-                Predicate::all(predicates.iter().cloned().collect()),
+            DefaultPrimarySelection::AlwaysFallback { truth_source } => Self::always(*truth_source),
+            DefaultPrimarySelection::NeverFallback { truth_source } => Self::never(*truth_source),
+            DefaultPrimarySelection::Conditional {
+                predicates,
                 truth_source,
+            } => Self::exact(
+                Predicate::all(predicates.iter().cloned().collect()),
+                *truth_source,
             ),
-            DefaultPrimarySelection::Opaque => Self::approximate(None, truth_source),
+            DefaultPrimarySelection::Opaque { truth_source } => {
+                Self::approximate(None, *truth_source)
+            }
         }
     }
 }
 
-fn default_primary_selection(result: &EvalResult) -> DefaultPrimarySelection {
+pub(crate) fn default_primary_selection(result: &EvalResult) -> DefaultPrimarySelection {
     if let Some(dispatch) = result.scalar_dispatch.as_ref()
         && dispatch.has_printf_string_identity()
         && dispatch.truth_condition().predicate().is_some()
     {
-        return exact_default_selection(dispatch.truth_condition().when_false());
+        return exact_default_selection(
+            dispatch.truth_condition().when_false(),
+            SelectionTruthSource::RenderedScalar,
+        );
     }
     let Some(value) = result.value.as_ref() else {
-        return DefaultPrimarySelection::Opaque;
+        return DefaultPrimarySelection::Opaque {
+            truth_source: SelectionTruthSource::RawInput,
+        };
     };
     if let Some(truthy) = known_literal_truthiness(value) {
         return if truthy {
-            DefaultPrimarySelection::NeverFallback
+            DefaultPrimarySelection::NeverFallback {
+                truth_source: SelectionTruthSource::RawInput,
+            }
         } else {
-            DefaultPrimarySelection::AlwaysFallback
+            DefaultPrimarySelection::AlwaysFallback {
+                truth_source: SelectionTruthSource::RawInput,
+            }
         };
     }
     match value {
-        AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_) => result
-            .exact_input_identity()
-            .map_or(DefaultPrimarySelection::Opaque, |path| {
-                DefaultPrimarySelection::Conditional(BTreeSet::from([
-                    Predicate::truthy_path(path).negated()
-                ]))
-            }),
-        AbstractValue::OutputPath(_, meta) if meta.is_input_identity() => result
-            .exact_input_identity()
-            .map_or(DefaultPrimarySelection::Opaque, |path| {
-                DefaultPrimarySelection::Conditional(BTreeSet::from([
-                    Predicate::truthy_path(path).negated()
-                ]))
-            }),
+        AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_) => {
+            result.exact_input_identity().map_or_else(
+                || DefaultPrimarySelection::Opaque {
+                    truth_source: SelectionTruthSource::RawInput,
+                },
+                |path| DefaultPrimarySelection::Conditional {
+                    predicates: BTreeSet::from([Predicate::truthy_path(path).negated()]),
+                    truth_source: SelectionTruthSource::RawInput,
+                },
+            )
+        }
+        AbstractValue::OutputPath(_, meta) if meta.is_input_identity() => {
+            result.exact_input_identity().map_or_else(
+                || DefaultPrimarySelection::Opaque {
+                    truth_source: SelectionTruthSource::RawInput,
+                },
+                |path| DefaultPrimarySelection::Conditional {
+                    predicates: BTreeSet::from([Predicate::truthy_path(path).negated()]),
+                    truth_source: SelectionTruthSource::RawInput,
+                },
+            )
+        }
         AbstractValue::FirstTruthy(candidates) => candidates
             .iter()
             .map(AbstractValue::direct_values_identity)
             .collect::<Option<Vec<_>>>()
-            .map(|paths| {
-                DefaultPrimarySelection::Conditional(
-                    paths
-                        .into_iter()
-                        .map(Predicate::truthy_path)
-                        .map(|predicate| predicate.negated())
-                        .collect(),
-                )
+            .map(|paths| DefaultPrimarySelection::Conditional {
+                predicates: paths
+                    .into_iter()
+                    .map(Predicate::truthy_path)
+                    .map(|predicate| predicate.negated())
+                    .collect(),
+                truth_source: SelectionTruthSource::RawInput,
             })
-            .unwrap_or(DefaultPrimarySelection::Opaque),
-        _ => DefaultPrimarySelection::Opaque,
+            .unwrap_or(DefaultPrimarySelection::Opaque {
+                truth_source: SelectionTruthSource::RawInput,
+            }),
+        _ => DefaultPrimarySelection::Opaque {
+            truth_source: SelectionTruthSource::RawInput,
+        },
     }
 }
 
@@ -310,11 +354,17 @@ fn known_literal_truthiness(value: &AbstractValue) -> Option<bool> {
     }
 }
 
-fn exact_default_selection(predicate: Predicate) -> DefaultPrimarySelection {
+fn exact_default_selection(
+    predicate: Predicate,
+    truth_source: SelectionTruthSource,
+) -> DefaultPrimarySelection {
     match predicate {
-        Predicate::True => DefaultPrimarySelection::AlwaysFallback,
-        Predicate::False => DefaultPrimarySelection::NeverFallback,
-        predicate => DefaultPrimarySelection::Conditional(BTreeSet::from([predicate])),
+        Predicate::True => DefaultPrimarySelection::AlwaysFallback { truth_source },
+        Predicate::False => DefaultPrimarySelection::NeverFallback { truth_source },
+        predicate => DefaultPrimarySelection::Conditional {
+            predicates: BTreeSet::from([predicate]),
+            truth_source,
+        },
     }
 }
 

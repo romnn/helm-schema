@@ -816,26 +816,22 @@ pub(crate) enum SelectionTruthSource {
 
 /// Which polarity of a truth condition selects an expression result.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "R2 hardens the adapter before Step 6b migrates production selection producers"
+    )
+)]
 pub(crate) enum SelectionPolarity {
     Truthy,
     Falsy,
 }
 
-impl std::ops::Not for SelectionPolarity {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        match self {
-            Self::Truthy => Self::Falsy,
-            Self::Falsy => Self::Truthy,
-        }
-    }
-}
-
 /// Static knowledge about whether one evaluated value supplies an
 /// expression's output.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum SelectionState {
+enum SelectionState {
     Always,
     Never,
     Exact(helm_schema_core::Predicate),
@@ -852,14 +848,8 @@ pub(crate) enum SelectionState {
 /// Go-template arguments are evaluated before their result is discarded.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct SelectionReachability {
-    pub(crate) state: SelectionState,
-    pub(crate) truth_source: SelectionTruthSource,
-}
-
-impl Default for SelectionReachability {
-    fn default() -> Self {
-        Self::always(SelectionTruthSource::RawInput)
-    }
+    state: SelectionState,
+    truth_source: SelectionTruthSource,
 }
 
 impl SelectionReachability {
@@ -881,6 +871,10 @@ impl SelectionReachability {
         predicate: helm_schema_core::Predicate,
         truth_source: SelectionTruthSource,
     ) -> Self {
+        if predicate.contains_approximation() {
+            let condition = TruthCondition::exact(predicate);
+            return Self::from((&condition, SelectionPolarity::Truthy, truth_source));
+        }
         let state = match predicate {
             helm_schema_core::Predicate::True => SelectionState::Always,
             helm_schema_core::Predicate::False => SelectionState::Never,
@@ -896,6 +890,9 @@ impl SelectionReachability {
         sound_subset: Option<helm_schema_core::Predicate>,
         truth_source: SelectionTruthSource,
     ) -> Self {
+        if sound_subset.as_ref() == Some(&helm_schema_core::Predicate::True) {
+            return Self::always(truth_source);
+        }
         let sound_subset = sound_subset.filter(|predicate| {
             !matches!(predicate, helm_schema_core::Predicate::False)
                 && !predicate.contains_approximation()
@@ -904,6 +901,26 @@ impl SelectionReachability {
             state: SelectionState::Approximate { sound_subset },
             truth_source,
         }
+    }
+
+    pub(crate) fn complement(&self) -> Self {
+        match &self.state {
+            SelectionState::Always => Self::never(self.truth_source),
+            SelectionState::Never => Self::always(self.truth_source),
+            SelectionState::Exact(predicate) => Self::exact(predicate.negated(), self.truth_source),
+            SelectionState::Approximate { .. } => Self::approximate(None, self.truth_source),
+        }
+    }
+
+    #[cfg_attr(
+        not(test),
+        expect(
+            dead_code,
+            reason = "R2 pins truth-source ownership before Step 6b migrates production consumers"
+        )
+    )]
+    pub(crate) const fn truth_source(&self) -> SelectionTruthSource {
+        self.truth_source
     }
 }
 
@@ -916,11 +933,11 @@ impl From<(&TruthCondition, SelectionPolarity, SelectionTruthSource)> for Select
         ),
     ) -> Self {
         if let Some(predicate) = condition.predicate() {
-            let predicate = match polarity {
-                SelectionPolarity::Truthy => predicate.clone(),
-                SelectionPolarity::Falsy => predicate.negated(),
+            let selection = Self::exact(predicate.clone(), truth_source);
+            return match polarity {
+                SelectionPolarity::Truthy => selection,
+                SelectionPolarity::Falsy => selection.complement(),
             };
-            return Self::exact(predicate, truth_source);
         }
         let sound_subset = match polarity {
             SelectionPolarity::Truthy => condition.when_true(),
@@ -945,7 +962,7 @@ pub(crate) struct EvalResult {
     pub(crate) value: Option<AbstractValue>,
     pub(crate) effects: Effects,
     pub(crate) truth: TruthCondition,
-    pub(crate) selection_reachability: SelectionReachability,
+    pub(crate) selection_reachability: Option<SelectionReachability>,
     /// Truthiness of the typed payload retained across a JSON encode/decode
     /// round trip. The serialized text has different Helm truthiness.
     pub(crate) json_payload_truth: TruthCondition,
@@ -981,7 +998,7 @@ impl EvalResult {
             effects: Effects::from_value(&value),
             value: Some(value),
             truth,
-            selection_reachability: SelectionReachability::default(),
+            selection_reachability: None,
             json_payload_truth: TruthCondition::Unknown,
             scalar_dispatch,
             field_scalar_dispatches: BTreeMap::new(),
@@ -996,7 +1013,7 @@ impl EvalResult {
             value,
             effects,
             truth: TruthCondition::Unknown,
-            selection_reachability: SelectionReachability::default(),
+            selection_reachability: None,
             json_payload_truth: TruthCondition::Unknown,
             scalar_dispatch: None,
             field_scalar_dispatches: BTreeMap::new(),
