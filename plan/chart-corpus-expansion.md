@@ -12584,3 +12584,11 @@ null-deletion-aware, guard-state, and composite probes against `888f274` with
 zero acceptance flips and zero undisclosed base or third-level truncation. The
 Round 73/74 opaque-formatter, literal-primary, and oauth2-proxy live matrices
 remain green against Helm 4.2.3. No corpus fixture change is adopted.
+
+## Architecture Review v3 Wave 2 R0 (2026-08-05)
+
+The Wave 2 remediation contract is frozen at `5ef11aa`. This documentation-only
+boundary writes all 84 schema artifacts and all 18 IR artifacts
+byte-identically. The full-depth comparison checks 121,059 probes against
+`0ed9bec` with zero flips and zero undisclosed base or third-level truncation.
+No corpus fixture change is adopted.

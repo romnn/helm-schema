@@ -869,3 +869,73 @@ adjudication.
 - The final wave tree passes the full-depth 60-lane, 121,059-probe battery
   with zero flips, every repository gate, and the 32-chart downstream luup2
   gate. Wave 2 remains unstarted pending external review and D5 row decisions.
+
+## Wave 2 R0 — freeze remediation contract
+
+- Status: landed.
+- Contract: documentation-only; freeze the complete R1–R7 remediation
+  contract before implementation.
+- Acceptance baseline: `0ed9bec`.
+- Baseline production Rust LOC: 61,308.
+- Frozen Wave 2 addendum: `plan/architecture-review-v3-wave2.md` at
+  `5ef11aa`.
+- Measured results:
+  - The addendum records all seven remediation contracts, acceptance criteria,
+    reporting-integrity rules, self-adversarial obligations, and stop
+    conditions. No production or test file changes.
+  - One clean schema dump writes 84 artifacts and one clean IR dump writes 18
+    artifacts, all byte-identical to their fixtures.
+  - The compiled comparison checks 60 lanes and 121,059 probes against
+    `0ed9bec` with zero flips and zero undisclosed base or third-level
+    truncation.
+  - Production Rust remains 61,308 LOC, delta 0.
+- Deviations: none.
+- Adjudication evidence: this is documentation-only. There is no acceptance
+  delta to adjudicate. Hermetic monotonicity, semantic controls,
+  guard/composite synthesis, falsifiable truncation accounting, and Temporal
+  pairwise monotonicity all pass.
+
+### Review dossier
+
+- Frozen addendum: `git show --stat --oneline 5ef11aa`; the commit contains
+  only `plan/architecture-review-v3-wave2.md`.
+- Existing frozen plans: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+- Wave 2 addendum: `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r0-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r0-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; one test
+  passes and 18 artifacts are written.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r0-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=0ed9bec
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r0-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r0-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; 60 lanes and 121,059 probes yield
+  zero flips.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; four
+  tests pass.
+- Gates on the final R0 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 feature combinations pass with no warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,224 tests pass.
+  - `task test:integration`: exit 0; 566 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,794 tests pass and 24 are skipped.
+  - Downstream luup2: not required because R0 changes documentation only.
+  - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
+- Commit: `5ef11aa` (`chore(plan): freeze wave 2 remediation contract`).
