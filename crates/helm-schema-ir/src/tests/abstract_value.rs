@@ -1,4 +1,5 @@
 use super::*;
+use crate::analysis_db::{BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT, widen_large_config_value};
 use test_util::prelude::sim_assert_eq;
 
 fn path(value: &str) -> AbstractValue {
@@ -18,6 +19,57 @@ fn paths(values: &[&str]) -> BTreeSet<String> {
 
 fn join(values: Vec<AbstractValue>) -> AbstractValue {
     AbstractValue::join_all(values).expect("join should produce a value")
+}
+
+fn dictionary_with_width(width: usize) -> AbstractValue {
+    AbstractValue::Dict(
+        (0..width)
+            .map(|index| (format!("key-{index}"), path(&format!("value-{index}"))))
+            .collect(),
+    )
+}
+
+#[test]
+fn structural_width_counts_leaf_alternatives_without_charging_depth() {
+    let nested = AbstractValue::Dict(BTreeMap::from([(
+        "outer".to_string(),
+        AbstractValue::Dict(BTreeMap::from([("inner".to_string(), path("value"))])),
+    )]));
+    let alternatives = AbstractValue::Choice(BTreeSet::from([nested.clone(), path("fallback")]));
+
+    sim_assert_eq!(have: nested.structural_width(), want: 1);
+    sim_assert_eq!(have: alternatives.structural_width(), want: 2);
+}
+
+#[test]
+fn bound_helper_config_budget_keeps_the_boundary_and_widens_its_sibling() {
+    let at_limit = dictionary_with_width(BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT);
+    let over_limit = dictionary_with_width(BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT + 1);
+
+    sim_assert_eq!(
+        have: widen_large_config_value(
+            &at_limit,
+            "opentelemetry-collector.applyBelowBudget"
+        ),
+        want: None
+    );
+    assert!(
+        matches!(
+            widen_large_config_value(&over_limit, "renamed.applyAboveBudget"),
+            Some(AbstractValue::Top)
+        ),
+        "a large config must widen independently of the helper name"
+    );
+}
+
+#[test]
+fn bound_helper_config_widening_is_name_independent() {
+    let value = dictionary_with_width(BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT + 1);
+
+    sim_assert_eq!(
+        have: widen_large_config_value(&value, "opentelemetry-collector.applyConfig"),
+        want: widen_large_config_value(&value, "unrelated.applyConfig")
+    );
 }
 
 #[test]

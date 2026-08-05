@@ -161,6 +161,24 @@ fn current_profiles_obey_monotonicity_and_semantic_controls() -> eyre::Result<()
 }
 
 #[test]
+fn structural_helper_widening_abstains_in_all_adjacent_input_states() -> eyre::Result<()> {
+    let (full, _) = generate_profile_schemas("structural-helper-widening")?;
+    let defaults = read_root_defaults("structural-helper-widening")?;
+    let schemas = ProfileSchemas::compile(&full, &full, defaults)?;
+    let verdicts = [
+        ProbeInstance::Defaults,
+        ProbeInstance::SparseOverride(json!({ "focus": 7 })),
+        ProbeInstance::SparseOverride(json!({ "focus": "selected" })),
+    ]
+    .iter()
+    .map(|probe| schemas.verdicts(probe).0)
+    .collect::<Vec<_>>();
+
+    sim_assert_eq!(have: verdicts, want: vec![true, true, true]);
+    Ok(())
+}
+
+#[test]
 fn lean_profile_obeys_the_middle_point_fact_floor() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
     for chart in [
@@ -1018,6 +1036,70 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     Ok(())
 }
 
+#[test]
+#[ignore = "maintenance: compares an external chart schema pair at full probe depth"]
+fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    eyre::ensure!(
+        std::env::var("ADJUDICATE_WITH_HELM").is_ok(),
+        "external schema comparison requires ADJUDICATE_WITH_HELM"
+    );
+    let chart = std::path::PathBuf::from(
+        std::env::var_os("SCHEMA_ACCEPTANCE_EXTERNAL_CHART")
+            .ok_or_eyre("SCHEMA_ACCEPTANCE_EXTERNAL_CHART must name the chart directory")?,
+    );
+    let baseline: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(
+            std::env::var_os("SCHEMA_ACCEPTANCE_BASELINE_SCHEMA")
+                .ok_or_eyre("SCHEMA_ACCEPTANCE_BASELINE_SCHEMA must name a schema")?,
+        )
+        .wrap_err("read external baseline schema")?,
+    )
+    .wrap_err("parse external baseline schema")?;
+    let candidate: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(
+            std::env::var_os("SCHEMA_ACCEPTANCE_CANDIDATE_SCHEMA")
+                .ok_or_eyre("SCHEMA_ACCEPTANCE_CANDIDATE_SCHEMA must name a schema")?,
+        )
+        .wrap_err("read external candidate schema")?,
+    )
+    .wrap_err("parse external candidate schema")?;
+    let defaults: serde_json::Value = serde_yaml::from_str(
+        &std::fs::read_to_string(chart.join("values.yaml"))
+            .wrap_err("read external chart defaults")?,
+    )
+    .wrap_err("parse external chart defaults")?;
+    let chart = chart
+        .to_str()
+        .ok_or_eyre("external chart path must be UTF-8")?;
+    let mut comparison = AcceptanceComparison::default();
+    collect_acceptance_flips(
+        "external",
+        chart,
+        &baseline,
+        &candidate,
+        &defaults,
+        &mut comparison,
+    )?;
+    for coverage in &comparison.coverage {
+        validate_probe_coverage(coverage)?;
+    }
+    eyre::ensure!(
+        comparison.helm_adjudication_failures.is_empty(),
+        "external Helm adjudication failures:\n{}",
+        comparison.helm_adjudication_failures.join("\n")
+    );
+    eprintln!(
+        "probes_checked={} flips={}",
+        comparison.probes_checked,
+        comparison.flips.len()
+    );
+    for flip in comparison.flips {
+        eprintln!("ADJUDICATED {flip}");
+    }
+    Ok(())
+}
+
 fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<ProbeCoverage>)> {
     let comparison = corpus_acceptance_comparison()?;
     Ok((
@@ -1148,9 +1230,10 @@ fn collect_acceptance_flips(
         if before != after {
             if std::env::var("ADJUDICATE_WITH_HELM").is_ok()
                 && let Err(error) = adjudicate_round74_flip(
-                    label,
+                    chart_relative_path,
                     &probe_name,
                     &probe,
+                    defaults,
                     after,
                     &profiles.baseline_errors(&probe),
                     &profiles.candidate_errors(&probe),
@@ -1173,13 +1256,12 @@ fn adjudicate_round74_flip(
     chart: &str,
     probe_name: &str,
     probe: &ProbeInstance,
+    defaults: &serde_json::Value,
     schema_accepts: bool,
     baseline_errors: &[String],
     candidate_errors: &[String],
 ) -> eyre::Result<()> {
-    let values = probe.helm_values_file().ok_or_else(|| {
-        eyre::eyre!("{chart}: {probe_name}: coalesced-only probe cannot be replayed by Helm")
-    })?;
+    let values = probe.helm_values_file(defaults);
     let scratch_root = test_util::workspace_root().join("target/round74-helm-adjudication");
     std::fs::create_dir_all(&scratch_root)
         .wrap_err_with(|| format!("create {}", scratch_root.display()))?;
@@ -1200,10 +1282,16 @@ fn adjudicate_round74_flip(
         .output()
         .wrap_err_with(|| format!("render {chart}: {probe_name}"))?;
     eyre::ensure!(
-        rendered.status.success() == schema_accepts,
-        "{chart}: {probe_name}: candidate schema accepts={schema_accepts}, Helm renders={}; baseline errors={baseline_errors:?}; candidate errors={candidate_errors:?}; {}",
-        rendered.status.success(),
-        String::from_utf8_lossy(&rendered.stderr)
+        schema_accepts || !rendered.status.success(),
+        "{chart}: {probe_name}: tightening rejects a document Helm renders; baseline errors={baseline_errors:?}; candidate errors={candidate_errors:?}"
+    );
+    eprintln!(
+        "HELM_{} {chart}: {probe_name}: candidate_accepts={schema_accepts}",
+        if rendered.status.success() {
+            "RENDER"
+        } else {
+            "ABORT"
+        }
     );
     Ok(())
 }
@@ -1256,7 +1344,7 @@ fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<(
             match (legacy, middle) {
                 (true, false) => {
                     if adjudicate_live {
-                        adjudicate_transition_tightening(chart, &probe_name, &probe)?;
+                        adjudicate_transition_tightening(chart, &probe_name, &probe, &defaults)?;
                     }
                     tightenings.push(format!("{chart}: {probe_name}"));
                 }
@@ -1289,10 +1377,9 @@ fn adjudicate_transition_tightening(
     chart: &str,
     probe_name: &str,
     probe: &ProbeInstance,
+    defaults: &serde_json::Value,
 ) -> eyre::Result<()> {
-    let values = probe
-        .helm_values_file()
-        .ok_or_else(|| eyre::eyre!("{chart}: {probe_name} is not a Helm values-file probe"))?;
+    let values = probe.helm_values_file(defaults);
     let tempdir = tempfile::tempdir().wrap_err("create live adjudication directory")?;
     let values_path = tempdir.path().join("values.json");
     std::fs::write(&values_path, serde_json::to_vec(&values)?)

@@ -87,6 +87,51 @@ fn flattened_merge_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
 }
 
 impl AbstractValue {
+    /// Number of leaf alternatives a structural consumer would copy while
+    /// descending this value.
+    ///
+    /// The count deliberately ignores container depth: a single deeply
+    /// nested path stays precise, while wide dictionaries and choices pay for
+    /// every independently propagated leaf.
+    pub(crate) fn structural_width(&self) -> usize {
+        match self {
+            Self::Dict(entries) => entries
+                .values()
+                .map(Self::structural_width)
+                .sum::<usize>()
+                .max(1),
+            Self::List(items) | Self::FirstTruthy(items) | Self::MergedLayers(items) => items
+                .iter()
+                .map(Self::structural_width)
+                .sum::<usize>()
+                .max(1),
+            Self::Overlay { entries, fallback } => entries
+                .values()
+                .map(Self::structural_width)
+                .chain(std::iter::once(fallback.structural_width()))
+                .sum::<usize>()
+                .max(1),
+            Self::Choice(choices) => choices
+                .iter()
+                .map(Self::structural_width)
+                .sum::<usize>()
+                .max(1),
+            Self::StringSet(strings) => strings.len().max(1),
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::RangeKey(_)
+            | Self::KeysList(_)
+            | Self::OutputPath(_, _)
+            | Self::RootContext
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
+            | Self::Widened(_) => 1,
+        }
+    }
+
     pub(crate) fn values_root() -> Self {
         Self::ValuesPath(String::new())
     }

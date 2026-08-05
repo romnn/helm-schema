@@ -101,6 +101,38 @@ fn replay_unconditional_fail_against_helm() -> eyre::Result<()> {
 
 #[test]
 #[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_structural_helper_widening_matrix_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let chart = test_util::workspace_testdata().join("charts/structural-helper-widening");
+    let controls = [
+        ("deleted", LiveTransport::ValuesFileJson(json!({})), false),
+        (
+            "present wrong type",
+            LiveTransport::ValuesFileJson(json!({ "focus": 7 })),
+            false,
+        ),
+        (
+            "truly consumed",
+            LiveTransport::ValuesFileJson(json!({ "focus": "selected" })),
+            true,
+        ),
+    ];
+
+    for (name, transport, expected) in controls {
+        let rendered = render_control(&chart, &transport)
+            .wrap_err_with(|| format!("render structural-widening {name}"))?;
+        eyre::ensure!(
+            rendered.status.success() == expected,
+            "structural-widening {name}: Helm success={}, expected {expected}; {}",
+            rendered.status.success(),
+            String::from_utf8_lossy(&rendered.stderr)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_else_with_successor_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
     let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))

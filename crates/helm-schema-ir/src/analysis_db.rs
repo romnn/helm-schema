@@ -8,8 +8,8 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::bindings_for_helper_arg_with;
-use crate::fragment_eval::BodyEvalFacts;
 use crate::fragment_eval::summary::{FragmentSummary, eval_bound_helper_fragment};
+use crate::fragment_eval::{BodyEvalFacts, ValueRead};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
 };
@@ -1076,13 +1076,28 @@ fn resolve_bound_helper_call(
         )
     });
 
-    if helper_uses_large_config_arg(params.helper_name) {
-        if let Some(binding) = bindings.remove("config") {
-            bindings.insert("config".to_string(), abstract_config_binding(&binding));
-        }
-        helper_body_dot = helper_body_dot.map(abstract_config_entry_in_binding);
-        helper_fragment_dot = helper_fragment_dot.map(abstract_config_entry_in_binding);
-    }
+    let mut widened_paths = BTreeSet::new();
+    widen_large_config_binding(&mut bindings, params.helper_name, &mut widened_paths);
+    helper_body_dot = helper_body_dot.map(|binding| {
+        widen_large_config_entry_in_binding(binding, params.helper_name, &mut widened_paths)
+    });
+    helper_fragment_dot = helper_fragment_dot.map(|binding| {
+        widen_large_config_entry_in_binding(binding, params.helper_name, &mut widened_paths)
+    });
+    // Widening discards member-to-path correspondence, not the fact that the
+    // eager argument read those paths. Total-shape dependency rows keep a
+    // closed root schema from turning that resource abstention into a false
+    // rejection; they do not claim that YAML serialization actually ran.
+    argument_effects
+        .helper_reads
+        .extend(widened_paths.into_iter().map(|values_path| ValueRead {
+            values_path,
+            kind: crate::ValueKind::YamlSerialized,
+            condition: helm_schema_core::GuardDnf::default(),
+            resource: None,
+            provenance: Vec::new(),
+            dependency: true,
+        }));
 
     // Root condition facts apply only when the body's dot IS the caller's
     // root context: only then does a body-level `.field` read resolve
@@ -1117,21 +1132,53 @@ fn resolve_bound_helper_call(
     }
 }
 
-fn helper_uses_large_config_arg(name: &str) -> bool {
-    name.starts_with("opentelemetry-collector.apply")
+pub(crate) const BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT: usize = 32;
+
+fn widen_large_config_binding(
+    bindings: &mut HashMap<String, AbstractValue>,
+    helper_name: &str,
+    widened_paths: &mut BTreeSet<String>,
+) {
+    let Some(binding) = bindings.get("config") else {
+        return;
+    };
+    let Some(widened) = widen_large_config_value(binding, helper_name) else {
+        return;
+    };
+    widened_paths.extend(binding.paths());
+    bindings.insert("config".to_string(), widened);
 }
 
-fn abstract_config_binding(binding: &AbstractValue) -> AbstractValue {
-    // `path_choices` yields `None` only for an empty path set, so a pathless
-    // config binding widens straight to `Top`.
-    AbstractValue::path_choices(binding.paths()).unwrap_or(AbstractValue::Top)
+pub(crate) fn widen_large_config_value(
+    binding: &AbstractValue,
+    helper_name: &str,
+) -> Option<AbstractValue> {
+    let width = binding.structural_width();
+    if width <= BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT {
+        return None;
+    }
+
+    tracing::debug!(
+        helper = helper_name,
+        structural_width = width,
+        structural_width_limit = BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT,
+        "widening bound helper config"
+    );
+    Some(AbstractValue::Top)
 }
 
-fn abstract_config_entry_in_binding(binding: AbstractValue) -> AbstractValue {
+fn widen_large_config_entry_in_binding(
+    binding: AbstractValue,
+    helper_name: &str,
+    widened_paths: &mut BTreeSet<String>,
+) -> AbstractValue {
     match binding {
         AbstractValue::Dict(mut entries) => {
-            if let Some(config) = entries.remove("config") {
-                entries.insert("config".to_string(), abstract_config_binding(&config));
+            if let Some(config) = entries.get("config")
+                && let Some(widened) = widen_large_config_value(config, helper_name)
+            {
+                widened_paths.extend(config.paths());
+                entries.insert("config".to_string(), widened);
             }
             AbstractValue::Dict(entries)
         }

@@ -12503,3 +12503,20 @@ guard-state, and composite probes against `44aa758` and reports zero flips.
 The D5 feature-cost audit is recorded in
 `plan/architecture-review-v3-progress.md`. Every semantic vertical remains
 enabled; no feature-pruning fixture is adopted in this wave.
+
+## Architecture Review v3 Step 2 (2026-08-05)
+
+Bound-helper configuration widening is now based on a deterministic structural
+width of 32 rather than an OpenTelemetry helper name. The pinned upstream
+OpenTelemetry Collector chart v0.166.0 falls from 34.85 seconds and 1,069,640
+KiB maximum RSS to 2.72 seconds and 84,224 KiB. Its full-depth 1,942-probe
+comparison yields five widenings and no tightenings: Helm renders four widened
+states, while one empty-object-item state is the explicitly accepted
+resource-bound completeness loss.
+
+The repository's clean dump writes all 84 schema artifacts and all 18 IR
+artifacts byte-identically. The compiled 60-lane battery compares 121,059
+default-composed, null-deletion-aware, guard-state, and composite probes against
+`44472dd` with zero acceptance flips and zero undisclosed truncation. A local
+three-direction chart pins deletion, present-wrong-type, and truly-consumed
+behavior against Helm 4.2.3.

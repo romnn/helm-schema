@@ -79,12 +79,41 @@ pub(crate) enum ProbeInstance {
 }
 
 impl ProbeInstance {
-    pub(crate) fn helm_values_file(&self) -> Option<Value> {
+    pub(crate) fn helm_values_file(&self, defaults: &Value) -> Value {
         match self {
-            Self::Defaults => Some(Value::Object(Map::new())),
-            Self::SparseOverride(value) => Some(value.clone()),
-            Self::Coalesced(_) => None,
+            Self::Defaults => Value::Object(Map::new()),
+            Self::SparseOverride(value) => value.clone(),
+            Self::Coalesced(value) => sparse_override_for_composed(defaults, value)
+                .unwrap_or_else(|| Value::Object(Map::new())),
         }
+    }
+}
+
+fn sparse_override_for_composed(defaults: &Value, composed: &Value) -> Option<Value> {
+    match (defaults, composed) {
+        (Value::Object(defaults), Value::Object(composed)) => {
+            let mut patch = Map::new();
+            for (key, default) in defaults {
+                match composed.get(key) {
+                    Some(value) => {
+                        if let Some(value) = sparse_override_for_composed(default, value) {
+                            patch.insert(key.clone(), value);
+                        }
+                    }
+                    None => {
+                        patch.insert(key.clone(), Value::Null);
+                    }
+                }
+            }
+            for (key, value) in composed {
+                if !defaults.contains_key(key) {
+                    patch.insert(key.clone(), value.clone());
+                }
+            }
+            (!patch.is_empty()).then_some(Value::Object(patch))
+        }
+        _ if defaults == composed => None,
+        _ => Some(composed.clone()),
     }
 }
 
@@ -1041,5 +1070,32 @@ fn value_shape(value: &Value) -> &'static str {
         Value::Array(_) => "empty object item",
         Value::Object(value) if value.is_empty() => "empty object",
         Value::Object(_) => "unknown object member",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_util::prelude::sim_assert_eq;
+
+    #[test]
+    fn composed_probe_sparse_override_round_trips_null_deletion_and_replacement() {
+        let defaults = serde_json::json!({
+            "guard": true,
+            "nested": { "deleted": "x", "kept": 1 },
+            "scalar": "old",
+        });
+        let composed = serde_json::json!({
+            "guard": false,
+            "nested": { "kept": 1, "added": 2 },
+            "scalar": { "replacement": true },
+        });
+        let patch = sparse_override_for_composed(&defaults, &composed)
+            .expect("different documents must produce an override");
+        let mut round_trip = defaults;
+
+        merge_override(&mut round_trip, patch);
+
+        sim_assert_eq!(have: round_trip, want: composed);
     }
 }
