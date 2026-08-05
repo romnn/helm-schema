@@ -12600,3 +12600,12 @@ code. One clean schema dump writes all 84 artifacts and one clean IR dump
 writes all 18 artifacts byte-identically. The full-depth compiled comparison
 checks 121,059 probes against `d3d9ad5` with zero flips and zero undisclosed
 base or third-level truncation. No corpus fixture change is adopted.
+
+## Architecture Review v3 Wave 2 R7 (2026-08-05)
+
+R7 corrects the Wave 1 ledger and refreshes the campaign LOC forecast without
+changing production or test code. One clean schema dump writes all 84
+artifacts and one clean IR dump writes all 18 artifacts byte-identically. The
+full-depth comparison checks 121,059 probes against `0df0748` with zero flips
+and zero undisclosed base or third-level truncation. No corpus fixture change
+is adopted.

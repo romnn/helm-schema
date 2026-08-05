@@ -893,7 +893,11 @@ adjudication.
 - Adjudication evidence: this is documentation-only. There is no acceptance
   delta to adjudicate. Hermetic monotonicity, semantic controls,
   guard/composite synthesis, falsifiable truncation accounting, and Temporal
-  pairwise monotonicity all pass.
+  pairwise monotonicity all pass. A target-local Helm 4.2.3 chart independently
+  replays the five Step 4 malformed-arity spellings: piped `fromYaml`,
+  `fromJson`, and `fromJsonArray` with one extra explicit argument, plus piped
+  `join` with zero and two explicit arguments. Each exits 1 with Helm's
+  wrong-number-of-arguments diagnostic for the named function.
 
 ### Review dossier
 
@@ -942,7 +946,7 @@ adjudication.
 
 ## Wave 2 R5 — restore comments and documentation
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: representation-only; restore or re-home the nine documentation
   invariants listed in the frozen Wave 2 addendum without changing executable
   behavior or fixture bytes.
@@ -1051,5 +1055,172 @@ adjudication.
     the live-network lane.
   - Downstream luup2: not required because R5 changes comments and
     documentation only.
+  - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
+- Commit: `0df0748` (`docs(ir): restore semantic invariants`).
+
+## Wave 2 R7 — ledger corrections and LOC re-forecast
+
+- Status: landed; commit pending.
+- Contract: documentation-only; append the independent Wave 1 review's
+  corrections without rewriting the historical step records.
+- Acceptance baseline: `0df0748`.
+- Baseline production Rust LOC: 61,308.
+- Measured results:
+  - All five Wave 1 review corrections are recorded below, including the
+    like-for-like Step 3 miss, the reproducible capability band, the Step 4/5
+    semantic deltas, remaining AST semantic evaluators, and an evidence-based
+    campaign re-forecast.
+  - One clean schema dump writes 84 artifacts and one clean IR dump writes 18
+    artifacts, all byte-identical. The compiled comparison checks 60 lanes and
+    121,059 probes against `0df0748` with zero flips, zero dropped base probes,
+    and zero dropped third-level probes.
+  - Production Rust remains 61,308 LOC, delta 0.
+- Deviations: none. Historical step sections remain unchanged; this section
+  explicitly supersedes only the reviewed claims and estimates named below.
+- Adjudication evidence: this is documentation-only. There is no acceptance
+  delta to adjudicate. Hermetic monotonicity, semantic controls,
+  guard/composite synthesis, falsifiable truncation accounting, and Temporal
+  pairwise monotonicity all pass.
+
+### Wave 1 review corrections
+
+1. The Step 3 estimate was a whole-step estimate, not a Step 3b estimate.
+   Step 3 moved from 61,293 to 61,336 production Rust LOC, a measured net +43
+   against the frozen -100..-40 band. The result misses that band by 83 lines
+   at its upper edge and 143 at its lower edge. Step 3b's isolated -40 does
+   not satisfy the whole-step estimate.
+2. The D5 capability-oracle row's original 850..1,050 band is superseded by
+   700..900. The cited directly owned files measure 723 production Rust LOC;
+   the narrower band retains only a modest allowance for co-owned call sites
+   rather than presenting those sites as reproduced by the file-only command.
+3. Step 4 also changed malformed-arity semantics for piped `fromYaml`,
+   `fromJson`/`fromJsonArray`, and `join`: the former pipeline-specific arms
+   decoded or erased input shape regardless of explicit-argument arity, while
+   the unified invocation routes malformed arities through passthrough or
+   widening. Helm 4.2.3 aborts every such malformed spelling, so the delta
+   does not change a renderable input, but it is nevertheless a semantic
+   delta and the earlier disclosure was incomplete.
+4. Step 5 also carried three micro-deltas. `urlquery` began reporting string
+   operand indices; `mustUniq` and `mustDeepCopy` gained provenance
+   preservation; and `mustDateModify` began claiming its first string operand
+   without the former arity-at-least-two guard. The clean fixtures and
+   full-depth battery did not expose an acceptance flip, but these changes
+   belong in the semantic record.
+5. The statement that AST retains only parsing and syntax classification was
+   too broad. `TemplateExpr::renders_yaml_fragment` and
+   `TemplateExpr::fragment_indent_width` remain public semantic evaluators in
+   `expr.rs:138-166`; the public printf renderers remain in
+   `printf_eval.rs:8-115`; and the public semver constraint evaluators remain
+   in `semver_constraint.rs:49-179`. They are known ownership debt for a later
+   wave, not part of this remediation.
+
+### Campaign LOC re-forecast
+
+- Wave 1 measured +46 LOC against its like-for-like frozen aggregate band of
+  -910..-390. The miss came from typed carrier/catalog seams and preserved
+  measured semantic documentation, while the deletion steps also delivered
+  less removal than forecast. The frozen estimates remain the immutable plan
+  contract, but they are no longer used as the execution forecast.
+- From the current 61,308-LOC tree, the execution forecast for the remaining
+  remediation plus Steps 6b through 11 is -1,120..+580 LOC, placing campaign
+  completion at roughly 60,188..61,888 LOC (a total -1,074..+626 from the
+  61,262 campaign baseline). The corresponding Wave 2 remainder through Step
+  8 is -620..+380 LOC. These bands deliberately include adapter retention and
+  typed-seam growth observed in Wave 1; feature pruning remains excluded by
+  D5.
+- The remaining-step working bands are: unfinished remediation +50..+200;
+  Step 6b -250..+50; Step 7a +80..+180; Step 7b -400..-100; Step 8
+  -100..+50; Step 9 -350..-50; Step 10 -150..+50; and Step 11 0..+200.
+  They are a ledger forecast, not amendments to the frozen plan.
+
+### Review dossier
+
+- Step 3 like-for-like arithmetic: `sed -n '322,501p'
+  plan/architecture-review-v3-progress.md`; the recorded baseline is 61,293
+  and the final Step 3b tree is 61,336, so the whole-step delta is +43.
+- Capability lower bound: `tokei
+  crates/helm-schema-core/src/capability.rs
+  crates/helm-schema-core/src/capability_liveness.rs
+  crates/helm-schema-k8s/src/kubernetes_openapi/capability_probe.rs
+  crates/helm-schema-k8s/src/kubernetes_openapi/provider.rs --exclude tests`;
+  reports 723 production Rust LOC.
+- Step 4 edge-arity diff: `git diff a0a9e3e 02e8e4a --
+  crates/helm-schema-ir/src/expr_call_eval/mod.rs
+  crates/helm-schema-ir/src/expr_call_eval/serialization.rs | rg -n -C 5
+  'fromYaml|fromJson|join'`; shows the former unconditional pipeline arms and
+  the unified operand-count gates.
+- Step 4 live edge-arity adjudication: after creating the target-local chart
+  recorded in this dossier, `helm version --short` reports
+  `v4.2.3+g43e8b7f`. The exact replay commands are `helm template wave2-r7
+  target/arch-v3-wave2-r7-live-arity --show-only
+  templates/from-yaml-extra.yaml --set-string case=from-yaml-extra
+  --skip-schema-validation`, with the same command using
+  `templates/from-json-extra.yaml` and `case=from-json-extra`,
+  `templates/from-json-array-extra.yaml` and
+  `case=from-json-array-extra`, `templates/join-missing.yaml` and
+  `case=join-missing`, then `templates/join-extra.yaml` and
+  `case=join-extra`. Their exit codes are respectively 1, 1, 1, 1, and 1;
+  each diagnostic names the selected function and its actual versus required
+  argument count.
+- Step 5 micro-deltas: `git diff 02e8e4a 888f274 --
+  crates/helm-schema-ir/src | rg -n -C 4
+  'urlquery|mustUniq|mustDeepCopy|mustDateModify'`.
+- Remaining AST semantics: `rg -n '^pub fn|pub fn
+  (renders_yaml_fragment|fragment_indent_width)'
+  crates/helm-schema-ast/src/{expr.rs,printf_eval.rs,semver_constraint.rs}`.
+- Forecast arithmetic: `jq -n '[[50,200],[-250,50],[80,180],[-400,-100],[-100,50],[-350,-50],[-150,50],[0,200]]
+  | [map(.[0]) | add, map(.[1]) | add]'`; reports `[-1120,580]`.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r7-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r7-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r7-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=0df0748
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r7-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r7-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Coverage accounting: `jq '(.charts | map(.base_emitted) | add),
+  (.charts | map(.third_level_emitted) | add),
+  (.charts | map(.guard_pairs_emitted) | add),
+  (.charts | map(.composite_pairs_emitted) | add),
+  (.charts | map(.base_dropped) | add),
+  (.charts | map(.third_level_dropped) | add)'
+  target/arch-v3-wave2-r7-probe-coverage.json`; reports 112,260 base, 7,465
+  third-level, 427 guard-pair, and 240 composite-pair probes, with both
+  undisclosed-drop counts zero.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, four tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+- Gates on the final R7 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,224 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 566 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,794 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream luup2: not required because R7 changes campaign documentation
+    only.
   - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
 - Commit: pending.
