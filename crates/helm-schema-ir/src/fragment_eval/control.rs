@@ -644,7 +644,7 @@ impl Interpreter<'_> {
     ///
     /// The nil-TOLERANT stringifications never reach this lane — `quote`,
     /// `squote`, `toString`, and `urlquery` return from
-    /// `string_call_operand_facts` before any string contract is recorded.
+    /// `record_string_transform_effects` before any string contract is recorded.
     pub(super) fn absorb_string_consumer_presence_captures(&mut self, paths: &BTreeSet<String>) {
         let captures: Vec<crate::eval_effect::FailCapture> = paths
             .iter()

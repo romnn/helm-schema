@@ -5,6 +5,7 @@ mod capability_liveness;
 mod contract_signals;
 mod contract_use;
 mod guard;
+/// Normalization helpers for conjunction and disjunction guard sets.
 mod guard_algebra;
 mod guard_dnf;
 mod output_path;

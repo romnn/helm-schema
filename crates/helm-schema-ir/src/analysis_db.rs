@@ -1132,6 +1132,11 @@ fn resolve_bound_helper_call(
     }
 }
 
+/// Caps bound helper values before recursive structure causes combinatorial expansion.
+///
+/// Corpus measurement placed the nearest precise value at width 31 and the first widened value at
+/// width 58.
+/// A synthetic 256-leaf value reproduced the preflight blowup this bound prevents.
 pub(crate) const BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT: usize = 32;
 
 fn widen_large_config_binding(

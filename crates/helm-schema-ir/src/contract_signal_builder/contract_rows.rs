@@ -765,6 +765,8 @@ pub(super) fn record_contract_use_conjunction(
         } else if contract_use
             .path
             .0
+            // A one-segment path cannot name both `metadata` and one of its recognized fields, so
+            // saturating the parent index to zero cannot make this branch classify that path.
             .get(contract_use.path.0.len().saturating_sub(2))
             .is_some_and(|segment| segment == "metadata")
         {

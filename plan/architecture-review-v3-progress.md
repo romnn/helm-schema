@@ -939,3 +939,117 @@ adjudication.
   - Downstream luup2: not required because R0 changes documentation only.
   - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
 - Commit: `5ef11aa` (`chore(plan): freeze wave 2 remediation contract`).
+
+## Wave 2 R5 — restore comments and documentation
+
+- Status: landed; commit pending.
+- Contract: representation-only; restore or re-home the nine documentation
+  invariants listed in the frozen Wave 2 addendum without changing executable
+  behavior or fixture bytes.
+- Acceptance baseline: `d3d9ad5`.
+- Baseline production Rust LOC: 61,308.
+- Measured results:
+  - The nil-behavior explanation now belongs to `NilBehavior` and
+    `FunctionSemantics::nil_aborts`; `strict_parser_operand_pattern` again has
+    only its parser-language contract (`function_semantics.rs:18-23`,
+    `:266-332`, `:397-403`).
+  - The catalog again states why total stringifiers participate in operand
+    position selection, why division and modulo are outside coercing
+    arithmetic, and that `argument_count` includes a pipeline input
+    (`function_semantics.rs:162-166`, `:213-217`, `:303-309`).
+  - `CallInvocation` and `PipedOperand` now state the already-evaluated,
+    final-argument invariant. The unified ternary arm and sequence evaluator
+    retain the piped-condition and `copystructure` rationales
+    (`expr_call_eval/mod.rs:59-76`, `:130-137`, `:287-292`).
+  - The stale string-consumer reference, guard-algebra module description,
+    `.Files.Get` helper description, structural-width measurement, and
+    metadata-field single-segment reliance are current at their authoritative
+    definitions.
+  - One clean schema dump writes 84 artifacts and one clean IR dump writes 18
+    artifacts, all byte-identical to committed fixtures. The compiled
+    comparison checks 60 lanes and 121,059 probes against `d3d9ad5` with zero
+    flips, zero dropped base probes, and zero dropped third-level probes.
+  - Production Rust remains 61,308 LOC, delta 0.
+- Deviations: none. Every executable token remains unchanged; the metadata
+  short-circuit equivalence is documented rather than rewritten, preserving
+  the comments-only contract.
+- Adjudication evidence: this is representation-only. There is no acceptance
+  delta to adjudicate. Hermetic monotonicity, semantic controls,
+  guard/composite synthesis, falsifiable truncation accounting, and Temporal
+  pairwise monotonicity all pass.
+
+### Review dossier
+
+- Documentation-only diff: `git diff --word-diff=porcelain d3d9ad5 --
+  crates/helm-schema-core/src/lib.rs crates/helm-schema-ir/src/analysis_db.rs
+  crates/helm-schema-ir/src/contract_signal_builder/contract_rows.rs
+  crates/helm-schema-ir/src/expr_call_eval/mod.rs
+  crates/helm-schema-ir/src/fragment_eval/control.rs
+  crates/helm-schema-ir/src/function_semantics.rs`; every addition or removal
+  is a Rust comment or doc comment.
+- Nil and function-catalog invariants: `nl -ba
+  crates/helm-schema-ir/src/function_semantics.rs | sed -n '1,35p;155,225p;255,335p;390,410p'`.
+- Invocation invariants: `nl -ba
+  crates/helm-schema-ir/src/expr_call_eval/mod.rs | sed -n
+  '55,80p;120,145p;275,300p'`.
+- Restored boundary documentation: `nl -ba
+  crates/helm-schema-core/src/lib.rs | sed -n '1,15p'; nl -ba
+  crates/helm-schema-ir/src/analysis_db.rs | sed -n '1128,1148p'; nl -ba
+  crates/helm-schema-ir/src/fragment_eval/control.rs | sed -n '638,652p';
+  nl -ba
+  crates/helm-schema-ir/src/contract_signal_builder/contract_rows.rs | sed -n
+  '758,780p'`.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r5-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r5-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r5-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=d3d9ad5
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r5-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r5-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Coverage accounting: `jq '(.charts | map(.base_emitted) | add),
+  (.charts | map(.third_level_emitted) | add),
+  (.charts | map(.guard_pairs_emitted) | add),
+  (.charts | map(.composite_pairs_emitted) | add),
+  (.charts | map(.base_dropped) | add),
+  (.charts | map(.third_level_dropped) | add)'
+  target/arch-v3-wave2-r5-probe-coverage.json`; reports 112,260 base, 7,465
+  third-level, 427 guard-pair, and 240 composite-pair probes, with both
+  undisclosed-drop counts zero.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, four tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+- Gates on the final R5 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,224 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 566 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,794 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream luup2: not required because R5 changes comments and
+    documentation only.
+  - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
+- Commit: pending.

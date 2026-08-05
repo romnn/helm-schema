@@ -56,11 +56,18 @@ use value_facts::{
     mark_stringified_identities,
 };
 
+/// An already-evaluated pipeline value in Go's final-argument position.
+///
+/// Consumers must reuse `result`; evaluating the source expression again would duplicate effects.
 struct PipedOperand {
     result: EvalResult,
     is_direct_values_path: bool,
 }
 
+/// One direct-call or pipeline-stage invocation.
+///
+/// `piped`, when present, is already evaluated and plays Go's final-argument role.
+/// It must never be evaluated again.
 struct CallInvocation<'a> {
     function: &'a str,
     args: &'a [TemplateExpr],
@@ -120,6 +127,8 @@ fn eval_invocation(
             return eval_comparison(function, args, piped, env, resolver);
         }
         "ternary" => {
+            // The piped operand is the condition: its strict Boolean contract and effects flow,
+            // but its value is not a result arm.
             let piped = piped
                 .take()
                 .map(|piped| (piped.result, piped.is_direct_values_path));
@@ -275,6 +284,8 @@ fn eval_sequence_invocation(
         _ => operand.clone(),
     };
     if matches!(function, "deepCopy" | "mustDeepCopy") {
+        // `copystructure` walks the operand with reflection and faults on a zero value, but any
+        // non-nil kind copies, so the operand carries a presence claim and no kind claim at all.
         record_operand_presence_result(&operand, &mut result.effects);
     } else {
         let nil_aborts = if matches!(function, "uniq" | "mustUniq") {

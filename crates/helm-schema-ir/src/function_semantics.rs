@@ -1,5 +1,6 @@
 use helm_schema_ast::{Literal, TemplateExpr};
 
+/// Reports whether a function is Helm's `.Files.Get` method, including a receiver-qualified call.
 pub(crate) fn is_files_get(function: &str) -> bool {
     function == "Files.Get" || function.ends_with(".Files.Get")
 }
@@ -14,6 +15,7 @@ pub(crate) enum StringOperands {
     FirstTwo,
 }
 
+/// Classifies whether a nil operand aborts, including the direct-access distinction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum NilBehavior {
     Tolerates,
@@ -157,6 +159,8 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
     use StringOperands::{All, First, FirstAndLast, FirstTwo, Last};
 
     match function {
+        // Total stringifiers are included so consumers can share the operand-position catalog
+        // while deciding separately whether the input is strict.
         "quote" | "squote" | "toString" | "urlquery" => {
             KNOWN.with_strings(All).with_output(TotalStringification)
         }
@@ -206,6 +210,8 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
             .with_output(TotalNumericCast)
             .with_provenance(Preserve),
         "int64" | "float64" => KNOWN.with_output(TotalNumericCast),
+        // Division and modulo stay excluded because a zero denominator is a genuine
+        // precondition and must not be widened by analogy with total coercing arithmetic.
         "add" | "add1" | "sub" | "mul" | "max" | "min" | "floor" | "ceil" | "round" | "addf"
         | "add1f" | "subf" | "mulf" | "maxf" | "minf" => KNOWN.with_output(CoercingArithmetic),
         "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
@@ -257,6 +263,34 @@ impl FunctionSemantics {
         matches!(self.output, OutputSemantics::TotalStringification)
     }
 
+    /// Reports whether a nil operand aborts at a strict-kind position.
+    ///
+    /// `direct_access` says how nil reaches the parameter, which decides one whole class of
+    /// these functions.
+    /// A missing key read as a field (`.Values.x`, or a `range` member variable, which comes
+    /// straight from `MapIndex`) arrives as a valid `interface{}` holding nil.
+    /// Anything that passed through a pipeline stage or a `:=` binding arrives invalid instead.
+    /// Go stores both through a step that unwraps the interface, and `validateType` then
+    /// substitutes the parameter's zero value whenever the declared type can be nil.
+    ///
+    /// Three mechanisms decide the verdict:
+    ///
+    /// * A declared map parameter aborts on the interface spelling and silently takes an empty
+    ///   map on the invalid one.
+    ///   `hasKey $local "k"` renders false where `hasKey .Values.absent "k"` aborts.
+    ///   `set` aborts in both spellings, but it is deliberately absent from this table because a
+    ///   chart's own earlier `set` routinely creates the destination and nothing here proves that
+    ///   mutation did not run.
+    /// * A declared non-nilable parameter such as `string` or `bool` aborts either way.
+    /// * Sprig's reflection faults either way too: its list helpers inspect the raw operand,
+    ///   `deepCopy` walks it with `copystructure`, and Go's `index` and `len` reject an untyped nil
+    ///   subject outright.
+    ///   `has` is the exception because it tests `haystack == nil` first and answers false.
+    ///
+    /// The verdicts are measured against Helm 4.2.3 rather than inferred from signatures because
+    /// the mechanisms cross.
+    /// `len` declares `interface{}` yet rejects nil, while `join` declares `[]interface{}` yet
+    /// renders empty text for it.
     #[must_use]
     pub(crate) const fn nil_aborts(self, direct_access: bool) -> bool {
         match self.nil_behavior {
@@ -266,6 +300,11 @@ impl FunctionSemantics {
         }
     }
 
+    /// Returns the argument positions that must be Go strings.
+    ///
+    /// `argument_count` includes a pipeline input, which Go templates append as the final
+    /// argument.
+    /// An empty result means the function has no catalogued string operands.
     #[must_use]
     pub(crate) fn string_operand_indices(self, argument_count: usize) -> Vec<usize> {
         if argument_count == 0 {
@@ -355,41 +394,6 @@ pub(crate) fn type_descriptor_call_subject<'a>(
     }
 }
 
-/// Reports whether a NIL operand — an absent key, or one the user
-/// null-deleted — aborts rendering at a position the strict-kind recorders
-/// already type.
-///
-/// `direct_access` says HOW nil reaches the parameter, which decides one
-/// whole class of these functions. A missing key read as a field
-/// (`.Values.x`, or a `range` member variable, which comes straight from
-/// `MapIndex`) arrives as a valid `interface{}` holding nil. Anything that
-/// passed through a pipeline stage or a `:=` binding arrives INVALID
-/// instead — Go stores both through a step that unwraps the interface —
-/// and `validateType` then substitutes the parameter's zero value whenever
-/// the declared type can be nil.
-///
-/// So three mechanisms decide the verdict:
-///
-/// * A declared MAP parameter aborts on the interface spelling
-///   ("wrong type for value; expected map[string]interface {}; got
-///   interface {}") and silently takes an empty map on the invalid one —
-///   `hasKey $local "k"` renders false where `hasKey .Values.absent "k"`
-///   aborts. (`set` aborts in BOTH spellings — it survives the type check
-///   and then panics assigning into the nil map — but it is deliberately
-///   absent from this table: a chart's own earlier `set` routinely CREATES
-///   the destination, and nothing here proves that mutation did not run.)
-/// * A declared non-nilable parameter — `string`, `bool` — aborts either
-///   way, the invalid spelling with "invalid value; expected string".
-/// * Sprig's own reflection faults either way too: its list helpers read
-///   `reflect.TypeOf(list).Kind()` off the raw operand, `deepCopy` walks
-///   it with `copystructure`, and Go's `index`/`len` reject an untyped nil
-///   subject outright. `has` is the exception — it tests
-///   `haystack == nil` before anything else and answers false.
-///
-/// The verdicts are measured against Helm 4.2.3 rather than read off the
-/// signatures, because the mechanisms cross: `len` declares `interface{}`
-/// yet rejects nil, while `join` declares `[]interface{}` yet renders
-/// empty text for it.
 /// Returns the lexical language required by a strict string parser operand.
 ///
 /// The pattern is a conservative superset of every string accepted by the
