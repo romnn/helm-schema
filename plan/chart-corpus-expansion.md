@@ -12530,3 +12530,14 @@ schema artifacts and all 18 IR artifacts byte-identically. The full-depth
 compiled comparison checks 121,059 default-composed, null-deletion-aware,
 guard-state, and composite probes against `7817568` with zero acceptance flips
 and zero undisclosed truncation. No fixture or Helm disposition changes.
+
+## Architecture Review v3 Step 3b (2026-08-05)
+
+Ten single-caller, phase-local contract-builder wrappers are inlined and
+deleted after the Step 3a split exposed their ownership. This is
+representation-only: one authoritative clean dump writes all 84 schema
+artifacts and all 18 IR artifacts byte-identically. The full-depth compiled
+comparison checks 121,059 default-composed, null-deletion-aware, guard-state,
+and composite probes against `34e49a6` with zero acceptance flips and zero
+undisclosed base or third-level truncation. No fixture or Helm disposition
+changes.

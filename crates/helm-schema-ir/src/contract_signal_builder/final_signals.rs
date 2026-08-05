@@ -2,7 +2,7 @@ use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, ContractPathAccumulator,
     ContractPathSchemaEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
     PathSchemaFactsAccumulator, ProviderSchemaUse, collect_paths_with_descendants,
-    partition_compatible_hints, record_member_access_implications,
+    record_member_access_implications,
 };
 
 pub(super) fn finish_schema_signals(
@@ -266,8 +266,28 @@ impl ContractPathAccumulator {
                     } else {
                         &overlay_type_hints
                     };
-                let branch_hints =
-                    partition_compatible_hints(branch_hint_pool, &guards, value_path.as_str());
+                // Keep only the subset of observed hints compatible with the
+                // overlay branch's own type partition. A positive
+                // `TypeIs(T)` key keeps only `T`; a negated one drops `T`;
+                // foreign guards leave the hints untouched.
+                let mut branch_hints = branch_hint_pool.clone();
+                for guard in &guards {
+                    match guard {
+                        ConditionalGuard::TypeIs { path, schema_type }
+                            if path == value_path.as_str() =>
+                        {
+                            branch_hints.retain(|hint| hint == schema_type);
+                        }
+                        ConditionalGuard::Not(inner) => {
+                            if let ConditionalGuard::TypeIs { path, schema_type } = inner.as_ref()
+                                && path == value_path.as_str()
+                            {
+                                branch_hints.retain(|hint| hint != schema_type);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
                 ConditionalPathOverlay {
                     guards,
                     evidence: branch.conditional_overlay_evidence(facts, branch_hints),
@@ -310,18 +330,5 @@ impl ContractPathAccumulator {
             conditional_overlays,
             fail_implications,
         }
-    }
-}
-
-pub(super) fn metadata_field_kind_from_yaml_path(path: &[String]) -> Option<MetadataFieldKind> {
-    if path.get(path.len().checked_sub(2)?)?.as_str() != "metadata" {
-        return None;
-    }
-
-    match path.last()?.as_str() {
-        "labels" | "annotations" => Some(MetadataFieldKind::StringMap),
-        "name" => Some(MetadataFieldKind::Name),
-        "namespace" => Some(MetadataFieldKind::Namespace),
-        _ => None,
     }
 }

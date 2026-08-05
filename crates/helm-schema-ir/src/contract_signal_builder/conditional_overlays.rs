@@ -1,18 +1,8 @@
 use super::{
-    ApproximationRole, BTreeMap, BTreeSet, ConditionalGuard, ContractFailImplication,
-    ContractPathAccumulator, ContractRequirementTarget, ContractUse, FailValueRequirement, Guard,
-    Predicate, ProviderSchemaUse, ValueKind, path_accumulator,
+    BTreeMap, BTreeSet, ConditionalGuard, ContractFailImplication, ContractPathAccumulator,
+    ContractRequirementTarget, ContractUse, FailValueRequirement, Guard, Predicate,
+    ProviderSchemaUse, ValueKind, path_accumulator,
 };
-
-pub(super) fn conditional_guard_predicates(predicates: &[Predicate]) -> Vec<ConditionalGuard> {
-    let mut guards = predicates
-        .iter()
-        .filter_map(|predicate| predicate_to_guard(predicate, None))
-        .collect::<Vec<_>>();
-    guards.sort();
-    guards.dedup();
-    guards
-}
 
 /// Paths tested under a HARD negation of the predicate: every
 /// `Predicate::Not` subtree except plain presence (`¬Absent`), whose
@@ -68,15 +58,6 @@ pub(super) fn lowerable_conditional_guard_set(
     guards.sort();
     guards.dedup();
     Some(guards)
-}
-
-/// The collection a wildcard merge layer iterates: everything before its
-/// first `*`. A layer spelled entirely concretely has none.
-pub(super) fn wildcard_collection_path(layer: &str) -> Option<String> {
-    let segments: Vec<&str> = layer.split('.').collect();
-    let wildcard = segments.iter().position(|segment| *segment == "*")?;
-    let prefix = segments.get(..wildcard)?;
-    (!prefix.is_empty()).then(|| prefix.join("."))
 }
 
 /// Collapse per-layer spellings of one merged read out of an arm gate.
@@ -139,9 +120,17 @@ pub(super) fn collapse_layered_truthy_gates(
     // collection HAS members, so the layer contributes that collection's
     // non-emptiness. It is implied by every state the real layer holds in,
     // which is what an arm gate needs.
+    //
+    // The collection is everything before the layer's first `*`. A layer
+    // spelled entirely concretely contributes no wildcard collection.
     let wildcard_collections: Vec<String> = roots
         .iter()
-        .filter_map(|layer| wildcard_collection_path(layer))
+        .filter_map(|layer| {
+            let segments: Vec<&str> = layer.split('.').collect();
+            let wildcard = segments.iter().position(|segment| *segment == "*")?;
+            let prefix = segments.get(..wildcard)?;
+            (!prefix.is_empty()).then(|| prefix.join("."))
+        })
         .collect();
     let mut suffix_members: BTreeMap<&str, BTreeSet<usize>> = BTreeMap::new();
     for (index, guard) in guards.iter().enumerate() {
@@ -736,47 +725,12 @@ pub(super) fn guard_to_conditional_guard(
     }
 }
 
-pub(super) fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool {
-    matches!(
-        predicate,
-        Predicate::Guard(
-            Guard::Truthy { path }
-                | Guard::Eq { path, .. }
-                | Guard::Range { path }
-                | Guard::With { path }
-                | Guard::Default { path }
-        ) if path == source_expr
-    )
-}
-
 pub(super) fn predicate_skips_falsy_source(predicate: &Predicate, source_expr: &str) -> bool {
     matches!(
         predicate,
         Predicate::Guard(
             Guard::Truthy { path } | Guard::Range { path } | Guard::With { path }
         ) if path == source_expr
-    )
-}
-
-pub(super) fn predicate_is_unlowerable_output_selection(predicate: &Predicate) -> bool {
-    matches!(
-        predicate,
-        Predicate::Approximate {
-            role: ApproximationRole::OutputSelection,
-            sound_subset: None,
-            ..
-        }
-    )
-}
-
-pub(super) fn predicate_is_self_presence(predicate: &Predicate, source_expr: &str) -> bool {
-    matches!(
-        predicate,
-        Predicate::Not(inner)
-            if matches!(
-                inner.as_ref(),
-                Predicate::Guard(Guard::Absent { path }) if path == source_expr
-            )
     )
 }
 
@@ -866,16 +820,6 @@ pub(super) fn predicate_is_self_type_partition(
     }
 }
 
-pub(super) fn predicate_is_positive_header(predicate: &Predicate, source_expr: &str) -> bool {
-    matches!(
-        predicate,
-        Predicate::Guard(Guard::Truthy { path }
-            | Guard::With { path }
-            | Guard::Eq { path, .. }
-            | Guard::TypeIs { path, .. }) if path == source_expr
-    )
-}
-
 pub(super) fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {
     if path == target_value_path {
         return None;
@@ -901,16 +845,6 @@ pub(super) fn path_contains_wildcard(path: &str) -> bool {
         .any(|segment| segment == "*")
 }
 
-/// The member-relative field `path` names, when it addresses one field of
-/// `collection`'s ranged members (`users.*.existingSecret` under `users`).
-/// A deeper wildcard abstains: it names members of that field, not the
-/// field itself.
-pub(super) fn member_relative_field(collection: &str, path: &str) -> Option<Vec<String>> {
-    let suffix = path.strip_prefix(collection)?.strip_prefix(".*.")?;
-    (!suffix.is_empty() && !suffix.contains('*'))
-        .then(|| helm_schema_core::split_value_path(suffix))
-}
-
 /// A truthiness gate over one field of `collection`'s ranged members, which
 /// selects WHICH members reach the consumer. It can never become an outer
 /// guard — the document level has no way to name "this member" — but the
@@ -928,7 +862,13 @@ pub(super) fn member_local_truthy_selector(
     if constrained == Some(path.as_str()) {
         return None;
     }
-    member_relative_field(collection, path)
+    // The suffix is the member-relative field when `path` addresses one
+    // field of `collection`'s ranged members
+    // (`users.*.existingSecret` under `users`). A deeper wildcard abstains:
+    // it names members of that field, not the field itself.
+    let suffix = path.strip_prefix(collection)?.strip_prefix(".*.")?;
+    (!suffix.is_empty() && !suffix.contains('*'))
+        .then(|| helm_schema_core::split_value_path(suffix))
 }
 
 pub(super) fn ranged_member_parent(path: &str) -> Option<&str> {

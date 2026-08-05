@@ -321,7 +321,7 @@ adjudication.
 
 ## Step 3a — pure builder split
 
-- Status: landed; commit pending.
+- Status: landed.
 - Acceptance baseline: `7817568`.
 - Baseline production Rust LOC: 61,293.
 - Measured results:
@@ -410,17 +410,94 @@ adjudication.
     with byte-identical schemas and zero acceptance flips; it remains
     mandatory on the final Wave 1 tree.
   - `task tokei:core`: exit 0; 61,376 production Rust LOC, delta +83.
-- Commit: pending.
+- Commit: `34e49a6` (`refactor(ir): split contract signal builder phases`).
 
 ## Step 3b — builder wrapper deletion
 
-- Status: pending.
-- Acceptance baseline: pending.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed; commit pending.
+- Acceptance baseline: `34e49a6`.
+- Baseline production Rust LOC: 61,376.
+- Measured results:
+  - Ten phase-local, single-caller wrappers are deleted from the split builder:
+    compatible-hint partitioning, conditional-guard collection, wildcard
+    collection extraction, ranged-member field extraction, metadata-field
+    classification, guarded-range recording, three self/header predicate
+    classifiers, and the unlowerable-output-selection classifier. Each body is
+    now expressed directly at its sole use site
+    (`contract_rows.rs:220-239,553-571,685-701,762-781,907-920,1065-1099`;
+    `conditional_overlays.rs:120-136,862-871`; `final_signals.rs:266-294`;
+    `requirements.rs:80-91`).
+  - Explanatory comments moved with the logic they describe. The directory
+    root no longer imports or re-exports the deleted wrappers
+    (`contract_signal_builder/mod.rs:19-34`).
+  - Production Rust is 61,336 LOC, -40 from the step baseline and +74 from the
+    61,262 campaign baseline. This lands at the lower boundary of the frozen
+    -100..-40 estimate.
+  - The authoritative final-build schema dump contains all 84 artifacts and
+    the IR dump all 18 artifacts, byte-identical to committed fixtures. The
+    full-depth comparison checks 60 lanes and 121,059 probes with zero flips;
+    every base and third-level candidate is emitted and the machine report
+    discloses the bounded guard/composite sampling categories.
+- Deviations:
+  - None. This is the frozen representation-only wrapper-deletion contract;
+    no fixture or acceptance behavior changes.
+- Adjudication evidence:
+  - The acceptance battery reports zero flips, so no Helm verdict or fixture
+    update is eligible for adoption. The hermetic monotonicity, semantic,
+    Temporal pairwise, falsifiable-cap, and guard/composite controls pass on
+    the final tree.
+
+### Review dossier
+
+- Deleted-wrapper proof: `rg -n
+  'fn (partition_compatible_hints|conditional_guard_predicates|wildcard_collection_path|member_relative_field|metadata_field_kind_from_yaml_path|record_guarded_range_requirement|predicate_is_self_guarding|predicate_is_self_presence|predicate_is_positive_header|predicate_is_unlowerable_output_selection)'
+  crates/helm-schema-ir/src/contract_signal_builder`; exit 1 confirms no
+  definitions remain. `git diff --stat 34e49a6 --
+  crates/helm-schema-ir/src/contract_signal_builder` reports 138 insertions
+  and 187 deletions across five files.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step3b-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step3b-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; one test
+  passes and all 18 artifacts remain byte-identical.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step3b-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=34e49a6
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-step3b-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-step3b-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; 60 lanes and 121,059 probes yield
+  zero flips.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; four
+  tests pass.
+- Frozen-plan check: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+- Gates on the final Step 3b tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks finish
+    without warnings.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets finish with zero errors and zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,215 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 567 tests pass and 23 are skipped.
+  - `task test:all`: exit 0; 1,786 tests pass and 23 are skipped, including
+    the live-network lane.
+  - Downstream luup2: not required because the step is representation-only
+    with byte-identical schemas and zero acceptance flips; it remains
+    mandatory on the final Wave 1 tree.
+  - `task tokei:core`: exit 0; 61,336 production Rust LOC, delta -40.
 - Commit: pending.
 
 ## Step 4 — unified call invocation

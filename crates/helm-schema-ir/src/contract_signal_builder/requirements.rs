@@ -3,9 +3,9 @@ use super::{
     ContractRequirementTarget, FailValueRequirement, Guard, GuardDnf, GuardValue,
     MemberAccessConditions, Predicate, TruthCondition, has_selection_chain_marker_stamp,
     lowerable_range_outer_guards, member_local_truthy_selector, path_accumulator,
-    path_contains_wildcard, predicate_is_truthy_disjunction_over,
-    predicate_is_unlowerable_output_selection, predicate_skips_falsy_source, predicate_to_guard,
-    record_range_input_capture, remove_redundant_approximate_conditions, terminal_clause_guard,
+    path_contains_wildcard, predicate_is_truthy_disjunction_over, predicate_skips_falsy_source,
+    predicate_to_guard, record_range_input_capture, remove_redundant_approximate_conditions,
+    terminal_clause_guard,
 };
 
 /// Lower one `fail` conjunction into a path requirement: rendering aborts
@@ -82,7 +82,11 @@ pub(super) fn record_fail_conjunction(
                 .any(|predicate| predicate_skips_falsy_source(predicate, path))
             && !matches!(
                 capture.conjunction.as_slice(),
-                [predicate] if predicate_is_unlowerable_output_selection(predicate)
+                [Predicate::Approximate {
+                    role: super::ApproximationRole::OutputSelection,
+                    sound_subset: None,
+                    ..
+                }]
             )
         {
             path_accumulator(paths, path)
