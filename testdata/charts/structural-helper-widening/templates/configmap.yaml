@@ -1,4 +1,5 @@
 {{- define "renamed.applyConfig" -}}
+{{- if .config.guard.deep.flag }}enabled:{{ end -}}
 {{- .config.focus | b64enc -}}
 {{- end -}}
 apiVersion: v1
@@ -6,4 +7,4 @@ kind: ConfigMap
 metadata:
   name: structural-helper-widening
 data:
-  token: {{ include "renamed.applyConfig" (dict "config" (dict "focus" .Values.focus "k01" "x" "k02" "x" "k03" "x" "k04" "x" "k05" "x" "k06" "x" "k07" "x" "k08" "x" "k09" "x" "k10" "x" "k11" "x" "k12" "x" "k13" "x" "k14" "x" "k15" "x" "k16" "x" "k17" "x" "k18" "x" "k19" "x" "k20" "x" "k21" "x" "k22" "x" "k23" "x" "k24" "x" "k25" "x" "k26" "x" "k27" "x" "k28" "x" "k29" "x" "k30" "x" "k31" "x" "k32" "x")) | quote }}
+  token: {{ include "renamed.applyConfig" (dict "config" (dict "focus" .Values.focus "guard" .Values.guard "k01" "x" "k02" "x" "k03" "x" "k04" "x" "k05" "x" "k06" "x" "k07" "x" "k08" "x" "k09" "x" "k10" "x" "k11" "x" "k12" "x" "k13" "x" "k14" "x" "k15" "x" "k16" "x" "k17" "x" "k18" "x" "k19" "x" "k20" "x" "k21" "x" "k22" "x" "k23" "x" "k24" "x" "k25" "x" "k26" "x" "k27" "x" "k28" "x" "k29" "x" "k30" "x" "k31" "x" "k32" "x")) | quote }}

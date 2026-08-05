@@ -200,6 +200,30 @@ fn replay_structural_helper_widening_matrix_against_helm() -> eyre::Result<()> {
             LiveTransport::ValuesFileJson(json!({ "focus": "selected" })),
             true,
         ),
+        (
+            "guard deleted with consumer live",
+            LiveTransport::ValuesFileJson(json!({
+                "focus": "selected",
+                "guard": { "deep": { "flag": null } }
+            })),
+            true,
+        ),
+        (
+            "guard wrong default type with consumer live",
+            LiveTransport::ValuesFileJson(json!({
+                "focus": "selected",
+                "guard": { "deep": { "flag": "wrong-default-type" } }
+            })),
+            true,
+        ),
+        (
+            "guard active declared type with consumer live",
+            LiveTransport::ValuesFileJson(json!({
+                "focus": "selected",
+                "guard": { "deep": { "flag": 1 } }
+            })),
+            true,
+        ),
     ];
 
     for (name, transport, expected) in controls {

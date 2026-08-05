@@ -25,6 +25,12 @@ pub enum ValueKind {
     /// template actions may replace constrained string leaves before the
     /// provider consumes them.
     TemplatedYamlSerialized = 5,
+    /// A resource-bound helper analysis retained only that this values path
+    /// was part of the eagerly evaluated input.
+    ///
+    /// This admits the path beneath closed roots without claiming a rendered
+    /// shape, serialization transform, or non-control use.
+    WidenedDependency = 6,
 }
 
 /// One arm of a values-predicate-selected `kind:` chain

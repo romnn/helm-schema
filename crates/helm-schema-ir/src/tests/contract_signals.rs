@@ -1336,6 +1336,33 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
 }
 
 #[test]
+fn widened_dependencies_only_admit_paths_beneath_closed_roots() -> eyre::Result<()> {
+    let signals = signals_for(vec![ContractUse::new(
+        "guard.deep.flag".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::WidenedDependency,
+        Vec::new(),
+        None,
+    )]);
+    let evidence = signals
+        .evidence_for("guard.deep.flag")
+        .ok_or_eyre("widened dependency evidence")?;
+
+    assert!(
+        signals.referenced_value_paths().contains("guard.deep.flag"),
+        "the dependency must keep its path admitted beneath a closed root"
+    );
+    assert!(
+        !evidence.facts.has_non_control_use
+            && !evidence.facts.used_as_yaml_serialized
+            && !evidence.facts.used_as_fragment
+            && evidence.provider_schema_uses.is_empty(),
+        "the widened dependency must not masquerade as a render fact: {evidence:#?}"
+    );
+    Ok(())
+}
+
+#[test]
 fn unsupported_conditional_row_does_not_promote_sink_evidence() {
     let signals = signals_for_template(indoc! {r"
         {{- if mystery .Values.version }}

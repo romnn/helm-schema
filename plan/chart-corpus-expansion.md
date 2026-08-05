@@ -12654,3 +12654,20 @@ artifacts. The full-depth comparison checks 121,059 probes against `eaeb7df`
 with zero acceptance flips, zero accepted-abort cells, and no undisclosed
 truncation; the fixture deltas are structural re-encoding within the sampled
 acceptance surface.
+
+## Architecture Review v3 Wave 2 R3 (2026-08-05)
+
+R3 generalizes the structural width budget from the literal `config` binding
+to every helper binding and helper/fragment dot value. Widened dependency
+paths now have an admission-only fact kind instead of masquerading as genuine
+YAML serialization. The pinned OpenTelemetry chart remains bounded at 2.34
+seconds and 91,616 KiB, and its 1,934-probe old/new comparison has zero flips.
+
+The repository corpus changes only Kyverno fixture bytes: three vacuous open-
+object definitions disappear and definition interning renumbers the file. One
+authoritative clean schema dump writes 84 artifacts, the IR dump writes 18
+byte-identical artifacts, and the full-depth comparison checks 121,059 probes
+against `b6d9c6f` with zero acceptance flips, zero accepted-abort cells, and no
+undisclosed truncation. The dedicated structural-helper control live-
+adjudicates deleted, present-wrong-type, truly-consumed, and composite guard
+states against Helm 4.2.3 before the Kyverno re-encoding is adopted.

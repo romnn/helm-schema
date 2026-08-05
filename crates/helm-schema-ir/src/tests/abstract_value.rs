@@ -1,5 +1,9 @@
 use super::*;
-use crate::analysis_db::{BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT, widen_large_config_value};
+use std::collections::HashMap;
+
+use crate::analysis_db::{
+    BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT, widen_large_bound_value_ref, widen_large_bound_values,
+};
 use test_util::prelude::sim_assert_eq;
 
 fn path(value: &str) -> AbstractValue {
@@ -47,15 +51,20 @@ fn bound_helper_config_budget_keeps_the_boundary_and_widens_its_sibling() {
     let over_limit = dictionary_with_width(BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT + 1);
 
     sim_assert_eq!(
-        have: widen_large_config_value(
+        have: widen_large_bound_value_ref(
             &at_limit,
-            "opentelemetry-collector.applyBelowBudget"
+            "opentelemetry-collector.applyBelowBudget",
+            &mut BTreeSet::new(),
         ),
         want: None
     );
     assert!(
         matches!(
-            widen_large_config_value(&over_limit, "renamed.applyAboveBudget"),
+            widen_large_bound_value_ref(
+                &over_limit,
+                "renamed.applyAboveBudget",
+                &mut BTreeSet::new(),
+            ),
             Some(AbstractValue::Top)
         ),
         "a large config must widen independently of the helper name"
@@ -63,12 +72,30 @@ fn bound_helper_config_budget_keeps_the_boundary_and_widens_its_sibling() {
 }
 
 #[test]
-fn bound_helper_config_widening_is_name_independent() {
-    let value = dictionary_with_width(BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT + 1);
+fn bound_helper_budget_widens_a_non_config_binding() {
+    let mut bindings = HashMap::from([
+        (
+            "payload".to_string(),
+            dictionary_with_width(BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT + 1),
+        ),
+        ("small".to_string(), path("small")),
+    ]);
+    let mut widened_paths = BTreeSet::new();
+
+    widen_large_bound_values(&mut bindings, "unrelated.applyPayload", &mut widened_paths);
 
     sim_assert_eq!(
-        have: widen_large_config_value(&value, "opentelemetry-collector.applyConfig"),
-        want: widen_large_config_value(&value, "unrelated.applyConfig")
+        have: bindings,
+        want: HashMap::from([
+            ("payload".to_string(), AbstractValue::Top),
+            ("small".to_string(), path("small")),
+        ])
+    );
+    sim_assert_eq!(
+        have: widened_paths,
+        want: (0..=BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT)
+            .map(|index| format!("value-{index}"))
+            .collect()
     );
 }
 

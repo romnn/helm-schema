@@ -213,7 +213,7 @@ impl ResolvePolicy {
                     .then(|| crate::schema_model::type_union_schema(["array", "object"]))
             }
             ValueKind::Fragment => schema_allows_type(schema, "array").then(|| schema.clone()),
-            ValueKind::PartialScalar | ValueKind::Serialized => None,
+            ValueKind::PartialScalar | ValueKind::Serialized | ValueKind::WidenedDependency => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
                 ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
             }

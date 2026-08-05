@@ -1645,7 +1645,7 @@ adjudication.
 
 ## Wave 2 R1 — correct `unset` nil behavior
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: behavior-bearing; replace the inherited `unset => AlwaysAborts`
   catalog row with the live-Helm `DirectAccessAborts` fact, pin direct and
   local-binding spellings, pre-register expected IR/schema effects, and run
@@ -1802,4 +1802,204 @@ adjudication.
     check:local`; exit 0 across all 32 charts.
   - `task tokei:core`: exit 0; 61,409 production Rust LOC, delta +1.
 - Measured production LOC delta: +1 (61,408 to 61,409).
+- Commit: `b6d9c6f` (`fix(ir): correct unset nil behavior`).
+
+## Wave 2 R3 — harden structural bound-helper widening
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing; apply the structural width budget to every
+  helper binding and helper/fragment dot value, keep the Step 2 bounded-runtime
+  stop branch binding, separate widened-abstention dependency reads from real
+  YAML serialization, and replace the name-only test with a non-`config`
+  binding-level control.
+- Acceptance baseline: `b6d9c6f`.
+- Baseline production Rust LOC: 61,409.
+- Measured results:
+  - Every named helper binding and both helper/fragment dot values now pass
+    through the same structural-width budget (`analysis_db.rs:1080-1086,
+    1140-1178`). Width 32 remains exact; width 33 widens independently of the
+    binding and helper names. The replacement test exercises a non-`config`
+    `payload` binding and verifies every lost values path is retained.
+  - Widening-preservation reads use the dedicated
+    `ValueKind::WidenedDependency` (`types.rs:33`, `analysis_db.rs:1093`). The
+    contract-signal builder consumes that kind only by marking the values path
+    referenced (`contract_rows.rs:414-419`), so it cannot set
+    `has_non_control_use`, `used_as_yaml_serialized`, provider facts, or a
+    rendered-shape fact. A focused contract test pins this boundary.
+  - On OpenTelemetry Collector 0.166.0, the R1 baseline takes 2.27 seconds and
+    88,616 KiB maximum RSS; R3 takes 2.34 seconds and 91,616 KiB. Both remain
+    below the Step 2 final measurement of 2.72 seconds / 84,224 KiB to normal
+    run-to-run variance, and far below the 64.63-second / 2,388,640-KiB
+    256-leaf blowup. The frozen stop branch does not trigger. The external
+    compiled comparison checks 1,934 probes and finds zero acceptance flips.
+  - The local structural-helper chart now carries a guard-only third-level
+    `guard.deep.flag` with integer default beside the truly consumed `focus`
+    path. With `focus=selected`, the R1 schema rejects a string flag as
+    integer-only, R3 accepts it, and Helm renders it. The final six-cell matrix
+    pins deleted/wrong/consumed focus plus deleted/string/integer guard states,
+    with the required composite state in every guard cell.
+  - The corpus preflight changes only Kyverno fixture bytes. Canonical
+    definition-set comparison shows that R3 removes three vacuous schemas:
+    open objects listing `enabled/mirror/root/rootRaw`, `eventTypes`, and
+    `namespace`; there is no candidate-only definition. Definition interning
+    consequently renumbers the file. The full-depth comparison checks 60
+    lanes and 121,059 probes with zero acceptance flips, zero accepted-abort
+    cells, and zero undisclosed truncation. IR fixtures remain byte-identical.
+- Deviations:
+  - The first corpus preflight stopped with 55 passes and one Kyverno fixture
+    mismatch. The expected fixture-identical assumption was not adopted. A
+    clean candidate dump, canonical definition-set comparison, and full-depth
+    battery established the three removed definitions are vacuous and the
+    sampled acceptance surface is unchanged before the fixture was copied.
+  - A first generic external comparison of the local widening control failed
+    the R4 zero allowance: single-path mutations replaced the `guard` or
+    `guard.deep` host while leaving `focus` absent/non-string, so the candidate
+    resource-bound schema accepted 18/26 documents that Helm aborted in the
+    independent `b64enc` consumer. This was a probe-composition failure, not
+    registered parity. The final control uses explicit `focus=selected`
+    composites and pins the three adjacent guard states directly.
+  - OpenTelemetry output bytes change by removal of a conditional `nodePort`
+    definition from one interned union, but the definition's remaining union
+    alternatives preserve all 1,934 sampled verdicts. This re-encoding is
+    disclosed rather than described as byte identity.
+  - Production Rust is 61,404 LOC, delta -5. R3 has no separate frozen LOC
+    estimate; the frozen Step 2 estimate is not reused for this remediation
+    step.
+- Adjudication evidence:
+  - The guard composite live matrix uses real Helm 4.2.3 with
+    `--skip-schema-validation`: deleted flag, present string flag, and active
+    integer flag all render when `focus=selected`. The compiled R3 schema
+    accepts the same cells. A compiled `jv` comparison independently shows
+    R1 rejects the string cell at `/guard/deep/flag` while R3 accepts it.
+  - The original focus lane remains explicit: deleted and numeric focus abort
+    in Helm while the resource-bound schema accepts them as disclosed
+    completeness loss; present-string focus renders and is accepted. R3 does
+    not claim parity for the bounded-abstention lane.
+  - No corpus acceptance flip is available for Helm disposition. Kyverno's
+    three removed definitions are JSON-Schema-vacuous, and both the 121,059-
+    probe corpus comparison and luup2 remain green.
+  - Self-adversarial pass: the inherited `config` scope was eliminated rather
+    than renamed; small-value preservation was measured at the boundary and on
+    the pinned chart; the false-positive results from non-composite generic
+    probes are recorded above rather than hidden; and the Kyverno byte change
+    was reduced to its canonical semantic difference before adoption. No
+    inherited fact, intent-only contract, false-rejection direction, or
+    favorable ledger framing remains unexamined.
+
+### Review dossier
+
+- Width ownership and marker path: `rg -n
+  'WidenedDependency|widen_large_bound_values|widen_large_bound_value_ref|BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT'
+  crates/helm-schema-core/src/types.rs crates/helm-schema-ir/src/analysis_db.rs
+  crates/helm-schema-ir/src/contract_signal_builder/contract_rows.rs`; shows
+  the generic binding/dot calls, path-preserving marker creation, and the
+  admission-only consumer.
+- Focused representation proof: `cargo nextest run -p helm-schema-ir -E
+  'test(bound_helper_config_budget_keeps_the_boundary_and_widens_its_sibling) |
+  test(bound_helper_budget_widens_a_non_config_binding) |
+  test(widened_dependencies_only_admit_paths_beneath_closed_roots)'`; exit 0,
+  three tests pass.
+- Pinned upstream input: `helm repo add open-telemetry
+  https://open-telemetry.github.io/opentelemetry-helm-charts
+  --repository-config target/arch-v3-wave2-r3-preflight/repository/repositories.yaml
+  --repository-cache target/arch-v3-wave2-r3-preflight/cache`, then `helm pull
+  open-telemetry/opentelemetry-collector --version 0.166.0 --untar
+  --untardir target/arch-v3-wave2-r3-preflight/charts
+  --repository-config target/arch-v3-wave2-r3-preflight/repository/repositories.yaml
+  --repository-cache target/arch-v3-wave2-r3-preflight/cache`; both exit 0.
+- Bounded-runtime measurement: `/usr/bin/time -v target/release/helm-schema
+  target/arch-v3-wave2-r3-preflight/charts/opentelemetry-collector --output
+  target/arch-v3-wave2-r3-preflight/otel-r3-candidate.schema.json`; exit 0,
+  elapsed 2.34 seconds and maximum RSS 91,616 KiB. The same command with the
+  `b6d9c6f` binary writes `otel-r1-baseline.schema.json` in 2.27 seconds and
+  88,616 KiB.
+- Upstream acceptance comparison: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-preflight/tmp
+  SCHEMA_ACCEPTANCE_EXTERNAL_CHART=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-preflight/charts/opentelemetry-collector
+  SCHEMA_ACCEPTANCE_BASELINE_SCHEMA=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-preflight/otel-r1-baseline.schema.json
+  SCHEMA_ACCEPTANCE_CANDIDATE_SCHEMA=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-preflight/otel-r3-candidate.schema.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(external_schema_pair_flips_are_helm_adjudicated)' --run-ignored
+  ignored-only --no-capture`; exit 0, 1,934 probes and zero flips.
+- Composite schema control: `cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(structural_helper_widening_abstains_in_all_adjacent_input_states)'`;
+  exit 0, six schema cells pass.
+- Composite live control: `cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profile_live -E
+  'test(replay_structural_helper_widening_matrix_against_helm)'
+  --run-ignored ignored-only --no-capture`; exit 0, six Helm cells pass.
+- Old/new guard tooth: after generating the structural-helper schema with the
+  `b6d9c6f` and R3 binaries over defaults containing `focus: selected`, run
+  `jv target/arch-v3-wave2-r3-preflight/structural-helper-focus-r1.schema.json
+  target/arch-v3-wave2-r3-preflight/guard-string-instance.json`; exit 1 at
+  `/guard/deep/flag` (want integer). The same command with
+  `structural-helper-focus-r3.schema.json` exits 0.
+- Kyverno semantic diff: `LC_ALL=C comm -3 <(jq -S -c '."$defs"[]'
+  target/arch-v3-wave2-r3-preflight/kyverno-baseline.schema.json | LC_ALL=C
+  sort) <(jq -S -c '."$defs"[]'
+  testdata/chart-corpus-schemas/kyverno.schema.json | LC_ALL=C sort)`; prints
+  only three baseline-side vacuous open-object definitions and no
+  candidate-side definition.
+- Clean schema dump proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written.
+- Clean IR dump proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written byte-identically.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=b6d9c6f
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r3-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Machine accounting: `jq '{baseline_ref, helm_adjudication, totals: {base:
+  (.charts | map(.base_emitted) | add), third_level: (.charts |
+  map(.third_level_emitted) | add), guard_pairs: (.charts |
+  map(.guard_pairs_emitted) | add), composite_pairs: (.charts |
+  map(.composite_pairs_emitted) | add), base_dropped: (.charts |
+  map(.base_dropped) | add), third_level_dropped: (.charts |
+  map(.third_level_dropped) | add)}}'
+  target/arch-v3-wave2-r3-probe-coverage.json`; reports baseline `b6d9c6f`,
+  live adjudication enabled, zero flips, zero accepted-abort cells against
+  allowance zero, 112,260 base probes, 7,465 third-level probes, 427 guard
+  pairs, 240 composite pairs, and no base or third-level drops.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states) |
+  test(structural_helper_widening_abstains_in_all_adjacent_input_states)'`;
+  exit 0, six tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+- Gates on the final R3 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,230 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 568 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,802 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream install: `cargo install --path
+    ./crates/helm-schema-cli/`; exit 0.
+  - Downstream luup2: `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`; exit 0 across all 32 charts.
+  - `task tokei:core`: exit 0; 61,404 production Rust LOC, delta -5.
+- Measured production LOC delta: -5 (61,409 to 61,404).
 - Commit: pending.

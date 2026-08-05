@@ -230,12 +230,24 @@ fn structural_helper_widening_abstains_in_all_adjacent_input_states() -> eyre::R
         ProbeInstance::Defaults,
         ProbeInstance::SparseOverride(json!({ "focus": 7 })),
         ProbeInstance::SparseOverride(json!({ "focus": "selected" })),
+        ProbeInstance::SparseOverride(json!({
+            "focus": "selected",
+            "guard": { "deep": { "flag": null } }
+        })),
+        ProbeInstance::SparseOverride(json!({
+            "focus": "selected",
+            "guard": { "deep": { "flag": "wrong-default-type" } }
+        })),
+        ProbeInstance::SparseOverride(json!({
+            "focus": "selected",
+            "guard": { "deep": { "flag": 1 } }
+        })),
     ]
     .iter()
     .map(|probe| schemas.verdicts(probe).0)
     .collect::<Vec<_>>();
 
-    sim_assert_eq!(have: verdicts, want: vec![true, true, true]);
+    sim_assert_eq!(have: verdicts, want: vec![true, true, true, true, true, true]);
     Ok(())
 }
 

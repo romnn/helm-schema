@@ -1077,13 +1077,11 @@ fn resolve_bound_helper_call(
     });
 
     let mut widened_paths = BTreeSet::new();
-    widen_large_config_binding(&mut bindings, params.helper_name, &mut widened_paths);
-    helper_body_dot = helper_body_dot.map(|binding| {
-        widen_large_config_entry_in_binding(binding, params.helper_name, &mut widened_paths)
-    });
-    helper_fragment_dot = helper_fragment_dot.map(|binding| {
-        widen_large_config_entry_in_binding(binding, params.helper_name, &mut widened_paths)
-    });
+    widen_large_bound_values(&mut bindings, params.helper_name, &mut widened_paths);
+    helper_body_dot = helper_body_dot
+        .map(|binding| widen_large_bound_value(binding, params.helper_name, &mut widened_paths));
+    helper_fragment_dot = helper_fragment_dot
+        .map(|binding| widen_large_bound_value(binding, params.helper_name, &mut widened_paths));
     // Widening discards member-to-path correspondence, not the fact that the
     // eager argument read those paths. Total-shape dependency rows keep a
     // closed root schema from turning that resource abstention into a false
@@ -1092,7 +1090,7 @@ fn resolve_bound_helper_call(
         .helper_reads
         .extend(widened_paths.into_iter().map(|values_path| ValueRead {
             values_path,
-            kind: crate::ValueKind::YamlSerialized,
+            kind: crate::ValueKind::WidenedDependency,
             condition: helm_schema_core::GuardDnf::default(),
             resource: None,
             provenance: Vec::new(),
@@ -1139,24 +1137,23 @@ fn resolve_bound_helper_call(
 /// A synthetic 256-leaf value reproduced the preflight blowup this bound prevents.
 pub(crate) const BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT: usize = 32;
 
-fn widen_large_config_binding(
+pub(crate) fn widen_large_bound_values(
     bindings: &mut HashMap<String, AbstractValue>,
     helper_name: &str,
     widened_paths: &mut BTreeSet<String>,
 ) {
-    let Some(binding) = bindings.get("config") else {
-        return;
-    };
-    let Some(widened) = widen_large_config_value(binding, helper_name) else {
-        return;
-    };
-    widened_paths.extend(binding.paths());
-    bindings.insert("config".to_string(), widened);
+    for binding in bindings.values_mut() {
+        let Some(widened) = widen_large_bound_value_ref(binding, helper_name, widened_paths) else {
+            continue;
+        };
+        *binding = widened;
+    }
 }
 
-pub(crate) fn widen_large_config_value(
+pub(crate) fn widen_large_bound_value_ref(
     binding: &AbstractValue,
     helper_name: &str,
+    widened_paths: &mut BTreeSet<String>,
 ) -> Option<AbstractValue> {
     let width = binding.structural_width();
     if width <= BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT {
@@ -1167,28 +1164,18 @@ pub(crate) fn widen_large_config_value(
         helper = helper_name,
         structural_width = width,
         structural_width_limit = BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT,
-        "widening bound helper config"
+        "widening bound helper value"
     );
+    widened_paths.extend(binding.paths());
     Some(AbstractValue::Top)
 }
 
-fn widen_large_config_entry_in_binding(
+fn widen_large_bound_value(
     binding: AbstractValue,
     helper_name: &str,
     widened_paths: &mut BTreeSet<String>,
 ) -> AbstractValue {
-    match binding {
-        AbstractValue::Dict(mut entries) => {
-            if let Some(config) = entries.get("config")
-                && let Some(widened) = widen_large_config_value(config, helper_name)
-            {
-                widened_paths.extend(config.paths());
-                entries.insert("config".to_string(), widened);
-            }
-            AbstractValue::Dict(entries)
-        }
-        other => other,
-    }
+    widen_large_bound_value_ref(&binding, helper_name, widened_paths).unwrap_or(binding)
 }
 
 struct CachedDefineBody {

@@ -411,6 +411,12 @@ pub(super) fn record_contract_use_conjunction(
 ) {
     let kind_resolved = kind_branch_resolved_use(contract_use, predicates);
     let contract_use = kind_resolved.as_ref().unwrap_or(contract_use);
+    if contract_use.kind == ValueKind::WidenedDependency {
+        if !contract_use.source_expr.trim().is_empty() {
+            path_accumulator(paths, &contract_use.source_expr).referenced = true;
+        }
+        return;
+    }
     // An approximate ambient conjunct means the row's exact firing states
     // are unknown, so its NARROWING evidence (sink typing, provider uses,
     // nullability) must abstain — but the conjunction's widen-only evidence
