@@ -3,7 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult, SelectionReachability, SelectionTruthSource};
+use crate::eval_effect::{
+    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
+};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
@@ -20,21 +22,23 @@ use super::{eval_all_args, eval_unknown_call, merge_arg_effects, merge_arg_value
 /// the primary's identity paths become defaulted (typed by a literal
 /// fallback), and the value is the choice of primary and fallback values.
 pub(super) fn eval_default(
-    primary: EvalResult,
+    mut primary: EvalResult,
     fallback_args: &[TemplateExpr],
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let primary_dispatch = primary.scalar_dispatch.clone();
-    let primary_selection = default_primary_selection(&primary);
-    let mut effects = primary.effects;
-    apply_default_primary_formatter_selection(
-        primary.value.as_ref(),
-        primary_dispatch.as_ref(),
-        &mut effects,
-    );
+    let fallback_reachability = default_primary_selection(&primary);
+    let primary_reachability = fallback_reachability.complement();
     let primary_paths = identity_value_paths(primary.value.as_ref());
+    primary.selection_reachability = Some(primary_reachability.clone());
+    apply_default_primary_formatter_reachability(
+        primary.value.as_ref(),
+        &primary_reachability,
+        &mut primary.effects,
+    );
     let primary_identity = direct_raw_identity_path(primary.value.as_ref());
+    let mut effects = primary.effects;
     effects.add_default_paths(primary_paths.clone());
     // Only a LITERAL fallback types the path: `default "x" .Values.name`
     // documents a string-shaped input. A call fallback (`default (include
@@ -52,10 +56,7 @@ pub(super) fn eval_default(
     {
         effects.add_fallback_type_hints(primary_paths.clone(), schema_type);
     }
-    let mut values = if matches!(
-        primary_selection,
-        DefaultPrimarySelection::AlwaysFallback { .. }
-    ) {
+    let mut values = if fallback_reachability.is_always() {
         Vec::new()
     } else {
         primary.value.into_iter().collect::<Vec<_>>()
@@ -64,29 +65,19 @@ pub(super) fn eval_default(
     let mut fallback_dispatch = None;
     for fallback in fallback_args {
         let mut result = eval_expr_with_helper_calls(fallback, env, resolver);
-        if matches!(
-            primary_selection,
-            DefaultPrimarySelection::NeverFallback { .. }
-        ) {
+        if fallback_reachability.is_never() {
             effects.merge(result.effects.execution_only());
             continue;
         }
-        let selection = match &primary_selection {
-            DefaultPrimarySelection::Conditional { predicates, .. } => predicates.clone(),
-            DefaultPrimarySelection::Opaque { .. } => {
-                BTreeSet::from([Predicate::approximate_output_selection(
-                    "default fallback after opaque primary",
-                    primary_paths.clone(),
-                    Predicate::False,
-                )])
-            }
-            DefaultPrimarySelection::AlwaysFallback { .. }
-            | DefaultPrimarySelection::NeverFallback { .. } => BTreeSet::new(),
-        };
         // An opaque primary still selects its fallback conditionally.
         // Keeping an unlowerable selection marker prevents later consumers
         // from mistaking the fallback for an unconditional raw operand.
-        super::conjoin_result_selection(&mut result, &selection);
+        super::conjoin_result_reachability(
+            &mut result,
+            &fallback_reachability,
+            "default fallback after opaque primary",
+            primary_paths.clone(),
+        );
         fallback_dispatch = result.scalar_dispatch.clone();
         fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);
@@ -102,9 +93,13 @@ pub(super) fn eval_default(
                 .entry(primary_path.clone())
                 .or_default();
             meta.input_identity = true;
-            meta.conjoin_branches(&BTreeSet::from([Predicate::truthy_path(
-                primary_path.clone(),
-            )]));
+            // The legacy capture lane still uses raw truthiness here. For a
+            // plain `%s` formatter it is the capture's faithfulness boundary;
+            // for an opaque formatter it keeps eager strict-consumer effects
+            // separate from selected output. The carrier owns the actual
+            // output reachability until Step 6b.4 removes this projection.
+            let primary_predicates = BTreeSet::from([Predicate::truthy_path(primary_path.clone())]);
+            meta.conjoin_branches(&primary_predicates);
             // A scalar literal fallback is the binding's exact value on
             // every Helm-falsy input; equality decoding needs the literal
             // itself to spell the fallback arm. Floats abstain (their
@@ -121,11 +116,7 @@ pub(super) fn eval_default(
             }
         }
     }
-    if matches!(
-        primary_selection,
-        DefaultPrimarySelection::AlwaysFallback { .. }
-            | DefaultPrimarySelection::Conditional { .. }
-    ) {
+    if fallback_reachability.has_proven_selection_condition() {
         for path in fallback_paths {
             let meta = effects.local_output_meta.entry(path).or_default();
             meta.input_identity = true;
@@ -138,7 +129,7 @@ pub(super) fn eval_default(
     let result = EvalResult::with_effects(AbstractValue::first_truthy(values), effects);
     finish_default_dispatch(
         result,
-        &primary_selection,
+        &fallback_reachability,
         primary_dispatch,
         fallback_dispatch,
         fallback_args,
@@ -157,22 +148,18 @@ fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
 
 fn finish_default_dispatch(
     result: EvalResult,
-    primary_selection: &DefaultPrimarySelection,
+    fallback_reachability: &SelectionReachability,
     primary_dispatch: Option<ScalarValueDispatch>,
     fallback_dispatch: Option<ScalarValueDispatch>,
     fallback_args: &[TemplateExpr],
 ) -> EvalResult {
-    if matches!(
-        primary_selection,
-        DefaultPrimarySelection::AlwaysFallback { .. }
-    ) && let Some(fallback) = fallback_dispatch
+    if fallback_reachability.is_always()
+        && let Some(fallback) = fallback_dispatch
     {
         return result.with_scalar_dispatch(fallback);
     }
-    if matches!(
-        primary_selection,
-        DefaultPrimarySelection::NeverFallback { .. }
-    ) && let Some(primary) = primary_dispatch
+    if fallback_reachability.is_never()
+        && let Some(primary) = primary_dispatch
     {
         return result.with_scalar_dispatch(primary);
     }
@@ -185,9 +172,9 @@ fn finish_default_dispatch(
     result
 }
 
-fn apply_default_primary_formatter_selection(
+fn apply_default_primary_formatter_reachability(
     value: Option<&AbstractValue>,
-    dispatch: Option<&ScalarValueDispatch>,
+    reachability: &SelectionReachability,
     effects: &mut Effects,
 ) {
     let Some(value) = value else {
@@ -197,30 +184,10 @@ fn apply_default_primary_formatter_selection(
     if formatter_meta.is_empty() {
         return;
     }
-    let paths = value.paths();
-    let selection = dispatch.map_or_else(
-        || {
-            Predicate::approximate_output_selection(
-                "default primary after formatter output",
-                paths.clone(),
-                Predicate::False,
-            )
-        },
-        |dispatch| {
-            let truth = dispatch.truth_condition();
-            if truth.predicate().is_some() {
-                truth.when_true()
-            } else {
-                Predicate::approximate_output_selection(
-                    "default primary after formatter output",
-                    paths.clone(),
-                    truth.when_true(),
-                )
-            }
-        },
-    );
+    let predicates = reachability
+        .output_selection_conjunction("default primary after formatter output", value.paths());
     for (path, meta) in &mut formatter_meta {
-        meta.conjoin_branches(&BTreeSet::from([selection.clone()]));
+        meta.conjoin_branches(&predicates);
         effects
             .local_output_meta
             .entry(path.clone())
@@ -229,87 +196,47 @@ fn apply_default_primary_formatter_selection(
     }
 }
 
-pub(crate) enum DefaultPrimarySelection {
-    AlwaysFallback {
-        truth_source: SelectionTruthSource,
-    },
-    NeverFallback {
-        truth_source: SelectionTruthSource,
-    },
-    Conditional {
-        predicates: BTreeSet<Predicate>,
-        truth_source: SelectionTruthSource,
-    },
-    Opaque {
-        truth_source: SelectionTruthSource,
-    },
-}
-
-impl From<&DefaultPrimarySelection> for SelectionReachability {
-    fn from(selection: &DefaultPrimarySelection) -> Self {
-        match selection {
-            DefaultPrimarySelection::AlwaysFallback { truth_source } => Self::always(*truth_source),
-            DefaultPrimarySelection::NeverFallback { truth_source } => Self::never(*truth_source),
-            DefaultPrimarySelection::Conditional {
-                predicates,
-                truth_source,
-            } => Self::exact(
-                Predicate::all(predicates.iter().cloned().collect()),
-                *truth_source,
-            ),
-            DefaultPrimarySelection::Opaque { truth_source } => {
-                Self::approximate(None, *truth_source)
-            }
-        }
-    }
-}
-
-pub(crate) fn default_primary_selection(result: &EvalResult) -> DefaultPrimarySelection {
+pub(crate) fn default_primary_selection(result: &EvalResult) -> SelectionReachability {
     if let Some(dispatch) = result.scalar_dispatch.as_ref()
-        && dispatch.has_printf_string_identity()
-        && dispatch.truth_condition().predicate().is_some()
+        && (dispatch.has_printf_string_identity()
+            || result.value.as_ref().is_some_and(|value| {
+                !value
+                    .paths()
+                    .is_disjoint(&result.effects.derived_text_paths)
+            }))
     {
-        return exact_default_selection(
-            dispatch.truth_condition().when_false(),
-            SelectionTruthSource::RenderedScalar,
-        );
+        return SelectionReachability::from((dispatch, SelectionPolarity::Falsy));
     }
     let Some(value) = result.value.as_ref() else {
-        return DefaultPrimarySelection::Opaque {
-            truth_source: SelectionTruthSource::RawInput,
-        };
+        return SelectionReachability::approximate(None, SelectionTruthSource::RawInput);
     };
     if let Some(truthy) = known_literal_truthiness(value) {
         return if truthy {
-            DefaultPrimarySelection::NeverFallback {
-                truth_source: SelectionTruthSource::RawInput,
-            }
+            SelectionReachability::never(SelectionTruthSource::RawInput)
         } else {
-            DefaultPrimarySelection::AlwaysFallback {
-                truth_source: SelectionTruthSource::RawInput,
-            }
+            SelectionReachability::always(SelectionTruthSource::RawInput)
         };
     }
     match value {
         AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_) => {
             result.exact_input_identity().map_or_else(
-                || DefaultPrimarySelection::Opaque {
-                    truth_source: SelectionTruthSource::RawInput,
-                },
-                |path| DefaultPrimarySelection::Conditional {
-                    predicates: BTreeSet::from([Predicate::truthy_path(path).negated()]),
-                    truth_source: SelectionTruthSource::RawInput,
+                || SelectionReachability::approximate(None, SelectionTruthSource::RawInput),
+                |path| {
+                    SelectionReachability::exact(
+                        Predicate::truthy_path(path).negated(),
+                        SelectionTruthSource::RawInput,
+                    )
                 },
             )
         }
         AbstractValue::OutputPath(_, meta) if meta.is_input_identity() => {
             result.exact_input_identity().map_or_else(
-                || DefaultPrimarySelection::Opaque {
-                    truth_source: SelectionTruthSource::RawInput,
-                },
-                |path| DefaultPrimarySelection::Conditional {
-                    predicates: BTreeSet::from([Predicate::truthy_path(path).negated()]),
-                    truth_source: SelectionTruthSource::RawInput,
+                || SelectionReachability::approximate(None, SelectionTruthSource::RawInput),
+                |path| {
+                    SelectionReachability::exact(
+                        Predicate::truthy_path(path).negated(),
+                        SelectionTruthSource::RawInput,
+                    )
                 },
             )
         }
@@ -317,20 +244,22 @@ pub(crate) fn default_primary_selection(result: &EvalResult) -> DefaultPrimarySe
             .iter()
             .map(AbstractValue::direct_values_identity)
             .collect::<Option<Vec<_>>>()
-            .map(|paths| DefaultPrimarySelection::Conditional {
-                predicates: paths
-                    .into_iter()
-                    .map(Predicate::truthy_path)
-                    .map(|predicate| predicate.negated())
-                    .collect(),
-                truth_source: SelectionTruthSource::RawInput,
+            .map(|paths| {
+                SelectionReachability::exact(
+                    Predicate::all(
+                        paths
+                            .into_iter()
+                            .map(Predicate::truthy_path)
+                            .map(|predicate| predicate.negated())
+                            .collect(),
+                    ),
+                    SelectionTruthSource::RawInput,
+                )
             })
-            .unwrap_or(DefaultPrimarySelection::Opaque {
-                truth_source: SelectionTruthSource::RawInput,
+            .unwrap_or_else(|| {
+                SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
             }),
-        _ => DefaultPrimarySelection::Opaque {
-            truth_source: SelectionTruthSource::RawInput,
-        },
+        _ => SelectionReachability::approximate(None, SelectionTruthSource::RawInput),
     }
 }
 
@@ -354,20 +283,6 @@ fn known_literal_truthiness(value: &AbstractValue) -> Option<bool> {
     }
 }
 
-fn exact_default_selection(
-    predicate: Predicate,
-    truth_source: SelectionTruthSource,
-) -> DefaultPrimarySelection {
-    match predicate {
-        Predicate::True => DefaultPrimarySelection::AlwaysFallback { truth_source },
-        Predicate::False => DefaultPrimarySelection::NeverFallback { truth_source },
-        predicate => DefaultPrimarySelection::Conditional {
-            predicates: BTreeSet::from([predicate]),
-            truth_source,
-        },
-    }
-}
-
 pub(super) fn direct_raw_identity_path(value: Option<&AbstractValue>) -> Option<String> {
     match value? {
         AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
@@ -385,43 +300,39 @@ pub(super) fn eval_coalesce(
     let mut effects = Effects::default();
     let mut values = Vec::new();
     let mut default_paths = BTreeSet::new();
-    let mut candidate_paths = Vec::with_capacity(args.len());
     let mut candidate_truths = Vec::with_capacity(args.len());
+    let mut candidates = Vec::with_capacity(args.len());
+    let mut candidate_dispatches = Vec::with_capacity(args.len());
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         candidate_truths.push(result.truth.clone());
         default_paths.extend(identity_value_paths(result.value.as_ref()));
-        let candidate_path = matches!(
-            arg.deparen(),
-            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-        )
-        .then(|| direct_raw_identity_path(result.value.as_ref()))
-        .flatten()
-        .filter(|path| !path.is_empty());
-        candidate_paths.push(candidate_path);
-        effects.merge(result.effects);
-        if let Some(value) = result.value {
-            values.push(value);
-        }
+        let reachability = empty_fold_candidate_reachability(&result)
+            .unwrap_or_else(|| result.output_reachability(SelectionPolarity::Truthy));
+        candidate_dispatches.push(result.scalar_dispatch.clone());
+        candidates.push((result, reachability));
     }
     // `coalesce` selects only non-empty candidates. Downstream strict consumers therefore see
     // each source path only while it is truthy, just as they see a `default` primary.
     effects.add_default_paths(default_paths);
-    // A computed candidate makes every later arm depend on a truthiness test
-    // we cannot name, so only claim ordered selection when every arm has a
-    // direct identity.
-    if candidate_paths.iter().all(Option::is_some) {
-        let mut previous_false = BTreeSet::new();
-        let mut seen = BTreeSet::new();
-        for path in candidate_paths.into_iter().flatten() {
-            if seen.insert(path.clone()) {
-                let mut selection = previous_false.clone();
-                selection.insert(Predicate::truthy_path(path.clone()));
-                let meta = effects.local_output_meta.entry(path.clone()).or_default();
-                meta.input_identity = true;
-                meta.conjoin_branches(&selection);
-            }
-            previous_false.insert(Predicate::truthy_path(path).negated());
+    let mut previous_falsy = Vec::new();
+    for (mut result, reachability) in candidates {
+        let involved_paths = identity_value_paths(result.value.as_ref());
+        let selected = reachability.conjoin_predicates(previous_falsy.iter().cloned());
+        super::conjoin_result_reachability(
+            &mut result,
+            &selected,
+            "coalesce candidate selection",
+            involved_paths.clone(),
+        );
+        previous_falsy.push(
+            reachability
+                .complement()
+                .output_selection_predicate("coalesce prior candidate selection", involved_paths),
+        );
+        effects.merge(result.effects);
+        if let Some(value) = result.value {
+            values.push(value);
         }
     }
     // A constant final fallback rescues the Helm-empty rendering of a
@@ -453,7 +364,45 @@ pub(super) fn eval_coalesce(
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
     result.truth = TruthCondition::any(candidate_truths);
+    if let Some(dispatch) = candidate_dispatches
+        .into_iter()
+        .collect::<Option<Vec<_>>>()
+        .and_then(|dispatches| {
+            let mut dispatches = dispatches.into_iter().rev();
+            let mut selected = dispatches.next()?;
+            for primary in dispatches {
+                selected = ScalarValueDispatch::select_default(&primary, &selected)?;
+            }
+            Some(selected)
+        })
+    {
+        result = result.with_scalar_dispatch(dispatch);
+    }
     result
+}
+
+fn empty_fold_candidate_reachability(result: &EvalResult) -> Option<SelectionReachability> {
+    let rescues = empty_rescue_paths(result.value.as_ref()?, &result.effects)?;
+    let [(path, spellings)] = rescues.as_slice() else {
+        return None;
+    };
+    let falsy = Predicate::Or(
+        spellings
+            .iter()
+            .cloned()
+            .map(|value| {
+                Predicate::from(helm_schema_core::Guard::Eq {
+                    path: path.clone(),
+                    value,
+                })
+            })
+            .collect(),
+    )
+    .normalize_boolean();
+    Some(SelectionReachability::exact(
+        falsy.negated(),
+        SelectionTruthSource::RenderedScalar,
+    ))
 }
 
 /// The per-path [`crate::helper_meta::EmptyRescue`] spellings for a
@@ -489,7 +438,14 @@ fn empty_rescue_paths(
             AbstractValue::ValuesPath(path) => (path, None),
             _ => return None,
         };
-        let stringified = meta.is_some_and(|meta| meta.stringified) || stringified_in_effects(path);
+        // `empty_fold_spellings` is produced only for the exact
+        // stringified-local-to-empty normalization recognized by the
+        // control-flow join. It therefore preserves the stringification
+        // proof even when the joined OutputPath no longer carries the
+        // original transform flags.
+        let stringified = meta
+            .is_some_and(|meta| meta.stringified || meta.empty_fold_spellings.is_some())
+            || stringified_in_effects(path);
         if !stringified {
             return None;
         }

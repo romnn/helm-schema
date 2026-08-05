@@ -1163,14 +1163,14 @@ fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
             .local_output_meta
             .get("omega")
             .map(|meta| &meta.predicates),
-        want: Some(&BTreeSet::from([BTreeSet::from([Predicate::all(vec![
+        want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::from(Guard::MatchesPattern {
                 path: "alpha".to_string(),
                 pattern: "^$".to_string(),
                 templated: false,
             }),
             Predicate::truthy_path("beta").negated(),
-        ])])])),
+        ])])),
     );
 }
 

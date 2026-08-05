@@ -78,6 +78,41 @@ fn partial_truth_becomes_approximate_without_inverting_its_sound_subset() {
 }
 
 #[test]
+fn approximate_reachability_lowers_distinct_output_and_execution_roles() {
+    let subset = Predicate::truthy_path("alpha");
+    let paths = BTreeSet::from(["alpha".to_string()]);
+    let reachability = SelectionReachability::approximate(
+        Some(subset.clone()),
+        SelectionTruthSource::RenderedScalar,
+    );
+
+    sim_assert_eq!(
+        have: reachability.output_selection_predicate("selected arm", paths.clone()),
+        want: Predicate::approximate_output_selection(
+            "selected arm",
+            paths.clone(),
+            subset.clone(),
+        )
+    );
+    sim_assert_eq!(
+        have: reachability.execution_predicate("executed arm", paths.clone()),
+        want: Predicate::approximate_with_sound_predicate("executed arm", paths, subset)
+    );
+    sim_assert_eq!(
+        have: reachability.has_proven_selection_condition(),
+        want: false
+    );
+    sim_assert_eq!(
+        have: SelectionReachability::exact(
+            Predicate::truthy_path("alpha"),
+            SelectionTruthSource::RawInput,
+        )
+        .has_proven_selection_condition(),
+        want: true
+    );
+}
+
+#[test]
 fn exactness_demotes_approximation_and_canonicalizes_true_subsets() {
     let subset = Predicate::truthy_path("alpha");
     let approximate = Predicate::approximate_with_sound_predicate(
@@ -134,7 +169,7 @@ fn complement_preserves_only_invertible_selection_knowledge() {
 fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
     let always = EvalResult::from_value(AbstractValue::StringSet(BTreeSet::from([String::new()])));
     sim_assert_eq!(
-        have: SelectionReachability::from(&default_primary_selection(&always)),
+        have: default_primary_selection(&always),
         want: SelectionReachability::always(SelectionTruthSource::RawInput)
     );
 
@@ -143,13 +178,13 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
             ["set".to_string()],
         )));
     sim_assert_eq!(
-        have: SelectionReachability::from(&default_primary_selection(&never)),
+        have: default_primary_selection(&never),
         want: SelectionReachability::never(SelectionTruthSource::RawInput)
     );
 
     let raw = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()));
     sim_assert_eq!(
-        have: SelectionReachability::from(&default_primary_selection(&raw)),
+        have: default_primary_selection(&raw),
         want: SelectionReachability::exact(
             Predicate::truthy_path("alpha").negated(),
             SelectionTruthSource::RawInput,
@@ -158,7 +193,7 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
 
     let opaque = EvalResult::from_value(AbstractValue::Unknown);
     sim_assert_eq!(
-        have: SelectionReachability::from(&default_primary_selection(&opaque)),
+        have: default_primary_selection(&opaque),
         want: SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
     );
 
@@ -172,7 +207,7 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
     let rendered = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()))
         .with_scalar_dispatch(dispatch.clone());
     sim_assert_eq!(
-        have: SelectionReachability::from(&default_primary_selection(&rendered)),
+        have: default_primary_selection(&rendered),
         want: SelectionReachability::from((&dispatch, SelectionPolarity::Falsy))
     );
 
@@ -181,7 +216,7 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
         AbstractValue::JsonDecodedPath("beta".to_string()),
     ]));
     sim_assert_eq!(
-        have: SelectionReachability::from(&default_primary_selection(&chain)).truth_source(),
+        have: default_primary_selection(&chain).truth_source(),
         want: SelectionTruthSource::RawInput
     );
 }

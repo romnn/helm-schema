@@ -12671,3 +12671,19 @@ against `b6d9c6f` with zero acceptance flips, zero accepted-abort cells, and no
 undisclosed truncation. The dedicated structural-helper control live-
 adjudicates deleted, present-wrong-type, truly-consumed, and composite guard
 states against Helm 4.2.3 before the Kyverno re-encoding is adopted.
+
+## Architecture Review v3 Step 6b.1 (2026-08-05)
+
+Against acceptance baseline `ba48ded`, this behavior-bearing step migrates
+default, coalesce, ternary, and short-circuit selection to the typed
+reachability carrier. Ten corpus fixtures (`airflow`, `bitnami-postgresql`,
+`bitnami-redis`, `cilium`, `datadog`, `kube-prometheus-stack`, `kyverno`,
+`prometheus`, `reloader`, and `signoz-signoz`) re-encode; the lean lane and all
+18 IR fixtures are byte-identical.
+
+The authoritative schema dump writes 84 artifacts. The full-depth comparison
+checks 121,059 probes across all 60 lanes against `ba48ded` with zero
+acceptance flips, zero candidate-accepts/Helm-aborts cells, and no undisclosed
+base or third-level truncation. The five live default/composite matrices pass
+against Helm 4.2.3, so the fixture deltas are adopted as structural
+re-encoding within the sampled acceptance surface.

@@ -15,7 +15,7 @@ use harness::{
     sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
 };
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct ProbeCoverageReport {
     baseline_ref: String,
     charts: Vec<ProbeCoverage>,
@@ -24,6 +24,7 @@ struct ProbeCoverageReport {
 
 // A non-zero allowance must land before the live run whose widening relies on it.
 const PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE: usize = 0;
+const PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE: usize = 0;
 
 #[derive(Debug, Default, Serialize)]
 struct HelmAdjudicationCoverage {
@@ -1118,11 +1119,18 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     );
     validate_helm_adjudication_coverage(&report.helm_adjudication)?;
     eyre::ensure!(
-        flips.is_empty(),
-        "round 74 changed fixture acceptance:\n{}",
+        report.helm_adjudication.flips_adjudicated == flips.len(),
+        "fixture flips were not all live-adjudicated: {report:?}"
+    );
+    eyre::ensure!(
+        flips.len() == PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE,
+        "fixture acceptance flips differ from the pre-registered count:\n{}",
         flips.join("\n")
     );
-    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    eprintln!(
+        "charts_checked={charts_checked} probes_checked={probes_checked} flips={}",
+        flips.len()
+    );
     Ok(())
 }
 

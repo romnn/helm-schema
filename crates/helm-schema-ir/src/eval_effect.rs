@@ -816,13 +816,6 @@ pub(crate) enum SelectionTruthSource {
 
 /// Which polarity of a truth condition selects an expression result.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "R2 hardens the adapter before Step 6b migrates production selection producers"
-    )
-)]
 pub(crate) enum SelectionPolarity {
     Truthy,
     Falsy,
@@ -907,18 +900,124 @@ impl SelectionReachability {
         match &self.state {
             SelectionState::Always => Self::never(self.truth_source),
             SelectionState::Never => Self::always(self.truth_source),
-            SelectionState::Exact(predicate) => Self::exact(predicate.negated(), self.truth_source),
+            SelectionState::Exact(predicate) => Self::exact(
+                TruthCondition::exact(predicate.clone()).when_false(),
+                self.truth_source,
+            ),
             SelectionState::Approximate { .. } => Self::approximate(None, self.truth_source),
         }
     }
 
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "R2 pins truth-source ownership before Step 6b migrates production consumers"
+    pub(crate) const fn is_always(&self) -> bool {
+        matches!(self.state, SelectionState::Always)
+    }
+
+    pub(crate) const fn is_never(&self) -> bool {
+        matches!(self.state, SelectionState::Never)
+    }
+
+    pub(crate) const fn has_proven_selection_condition(&self) -> bool {
+        matches!(
+            self.state,
+            SelectionState::Always | SelectionState::Exact(_)
         )
-    )]
+    }
+
+    pub(crate) fn conjoin_predicates(
+        &self,
+        predicates: impl IntoIterator<Item = helm_schema_core::Predicate>,
+    ) -> Self {
+        let predicates = predicates.into_iter().collect::<Vec<_>>();
+        if predicates.is_empty() {
+            return self.clone();
+        }
+        match &self.state {
+            SelectionState::Always => Self::exact(
+                helm_schema_core::Predicate::all(predicates),
+                self.truth_source,
+            ),
+            SelectionState::Never => Self::never(self.truth_source),
+            SelectionState::Exact(selection) => Self::exact(
+                helm_schema_core::Predicate::all(
+                    std::iter::once(selection.clone())
+                        .chain(predicates)
+                        .collect(),
+                ),
+                self.truth_source,
+            ),
+            SelectionState::Approximate { sound_subset } => {
+                let sound_subset = sound_subset.as_ref().map(|selection| {
+                    helm_schema_core::Predicate::all(
+                        std::iter::once(selection.clone())
+                            .chain(predicates)
+                            .collect(),
+                    )
+                });
+                Self::approximate(sound_subset, self.truth_source)
+            }
+        }
+    }
+
+    pub(crate) fn output_selection_predicate(
+        &self,
+        marker: &'static str,
+        mut involved_paths: BTreeSet<String>,
+    ) -> helm_schema_core::Predicate {
+        match &self.state {
+            SelectionState::Always => helm_schema_core::Predicate::True,
+            SelectionState::Never => helm_schema_core::Predicate::False,
+            SelectionState::Exact(predicate) => predicate.clone(),
+            SelectionState::Approximate { sound_subset } => {
+                if let Some(sound_subset) = sound_subset {
+                    involved_paths.extend(sound_subset.value_paths());
+                }
+                helm_schema_core::Predicate::approximate_output_selection(
+                    marker,
+                    involved_paths,
+                    sound_subset
+                        .clone()
+                        .unwrap_or(helm_schema_core::Predicate::False),
+                )
+            }
+        }
+    }
+
+    pub(crate) fn output_selection_conjunction(
+        &self,
+        marker: &'static str,
+        involved_paths: BTreeSet<String>,
+    ) -> BTreeSet<helm_schema_core::Predicate> {
+        match self.output_selection_predicate(marker, involved_paths) {
+            helm_schema_core::Predicate::True => BTreeSet::new(),
+            helm_schema_core::Predicate::And(predicates) => predicates.into_iter().collect(),
+            predicate => BTreeSet::from([predicate]),
+        }
+    }
+
+    pub(crate) fn execution_predicate(
+        &self,
+        marker: &'static str,
+        mut involved_paths: BTreeSet<String>,
+    ) -> helm_schema_core::Predicate {
+        match &self.state {
+            SelectionState::Always => helm_schema_core::Predicate::True,
+            SelectionState::Never => helm_schema_core::Predicate::False,
+            SelectionState::Exact(predicate) => predicate.clone(),
+            SelectionState::Approximate { sound_subset } => {
+                if let Some(sound_subset) = sound_subset {
+                    involved_paths.extend(sound_subset.value_paths());
+                }
+                helm_schema_core::Predicate::approximate_with_sound_predicate(
+                    marker,
+                    involved_paths,
+                    sound_subset
+                        .clone()
+                        .unwrap_or(helm_schema_core::Predicate::False),
+                )
+            }
+        }
+    }
+
     pub(crate) const fn truth_source(&self) -> SelectionTruthSource {
         self.truth_source
     }
@@ -1029,6 +1128,13 @@ impl EvalResult {
         self.truth = dispatch.truth_condition();
         self.scalar_dispatch = Some(dispatch);
         self
+    }
+
+    pub(crate) fn output_reachability(&self, polarity: SelectionPolarity) -> SelectionReachability {
+        self.scalar_dispatch.as_ref().map_or_else(
+            || SelectionReachability::from((&self.truth, polarity, SelectionTruthSource::RawInput)),
+            |dispatch| SelectionReachability::from((dispatch, polarity)),
+        )
     }
 
     pub(crate) fn exact_input_identity(&self) -> Option<String> {

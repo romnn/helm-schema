@@ -1806,7 +1806,7 @@ adjudication.
 
 ## Wave 2 R3 — harden structural bound-helper widening
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: behavior-bearing; apply the structural width budget to every
   helper binding and helper/fragment dot value, keep the Step 2 bounded-runtime
   stop branch binding, separate widened-abstention dependency reads from real
@@ -2002,4 +2002,195 @@ adjudication.
     check:local`; exit 0 across all 32 charts.
   - `task tokei:core`: exit 0; 61,404 production Rust LOC, delta -5.
 - Measured production LOC delta: -5 (61,409 to 61,404).
+- Commit: `ba48ded` (`fix(ir): harden bound helper widening`).
+
+## Step 6b.1 — migrate expression selection reachability
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing; migrate `default`, `coalesce`, `or`, ternary,
+  and short-circuit selection producers and consumers to the Step 6a carrier,
+  preserving eager execution while keeping raw-input and rendered-scalar
+  truth sources distinct. Remove the local default-selection representation.
+- Acceptance baseline: `ba48ded`.
+- Baseline production Rust LOC: 61,404.
+- Measured results:
+  - `DefaultPrimarySelection` is deleted. `default`, `coalesce`, ternary,
+    `and`, and `or` now derive output selection and eager-execution predicates
+    through `SelectionReachability` (`eval_effect.rs:900-1138`,
+    `collections.rs:22-389`, `comparisons.rs:21-110`, and
+    `expr_call_eval/mod.rs:1264-1351`). Approximate selection lowers to an
+    output-selection marker, while approximate execution lowers to a control
+    marker; exact predicates retain invertible polarity.
+  - Raw-input and rendered-scalar truth stay distinct. Direct values paths and
+    literal primaries use raw truth; formatter-backed defaults use the scalar
+    dispatch's rendered truth. The bounded exact empty-fold idiom used by
+    Bitnami `toString`/`coalesce` helpers reconstructs rendered truth only when
+    one path and its complete empty-spelling set are proved.
+  - One authoritative clean schema dump writes 84 artifacts. Ten corpus
+    fixtures re-encode (`airflow`, `bitnami-postgresql`, `bitnami-redis`,
+    `cilium`, `datadog`, `kube-prometheus-stack`, `kyverno`, `prometheus`,
+    `reloader`, and `signoz-signoz`); the lean lane is byte-identical. One
+    clean IR dump writes 18 byte-identical corpus artifacts.
+  - The final full-depth comparison against `ba48ded` checks all 60 lanes and
+    121,059 probes with zero acceptance flips, zero candidate-accepts/Helm-
+    aborts cells, and allowances fixed at zero. The fixture changes are
+    structural re-encoding within the sampled acceptance surface.
+  - Machine coverage records 112,260/112,260 base probes and
+    7,465/7,465 third-level probes, with zero drops in both mandatory lanes;
+    16,251 guards discovered, 537 attempted, 427 witness pairs emitted, and
+    15,714 skipped by the deterministic cap; 83,519 witness candidates with
+    37,550 dropped; and 2,546 composite targets with 240 pairs emitted, 39
+    without payload, and 2,267 dropped by the cap. Total disclosure is
+    121,059 emitted and 36,260 dropped.
+- Deviations:
+  - The first carrier edits began after the baseline commit and LOC were
+    verified but before this in-progress section was appended. No test,
+    fixture, dump, or adjudication ran in that interval. This section records
+    the unchanged baseline before the first compile.
+  - A first formatter-primary rewrite replaced the formatter-specific
+    `plain_slot_string_format` metadata with generic branch stamping. The
+    existing six-state schema matrix caught a false rejection for raw `false`
+    through `printf "%s" ... | default ... | trunc`; the design was discarded.
+    The formatter metadata now consumes the carrier's rendered selection while
+    retaining its separate raw-faithfulness guard until the Step 6b.4 capture
+    migration.
+  - A second design converted every `ScalarValue::Rendered` primary into
+    rendered-output truth. The full battery exposed a false rejection for
+    numeric `kubeVersion` in Bitnami PostgreSQL and Redis. That generic rule
+    was discarded; the final exact rendered-truth reconstruction is limited
+    to the proved single-path empty-fold shape. Focused reruns cover 3,479
+    PostgreSQL probes and 3,797 Redis probes with zero flips.
+  - Before those two regressions were found, the broader design produced 24
+    candidate-accepts/Helm-aborts cells (eight Cilium and sixteen Harbor) and
+    briefly used an allowance of 24. That result is not the landed contract:
+    the final allowance is zero and the final battery has zero such cells.
+    This correction deliberately replaces the earlier in-progress wording
+    rather than preserving a favorable description of a rejected design.
+  - The first preflight TMPDIR parent did not exist, so two final-output tests
+    failed before generation. The rerun creates its target-owned parent and
+    both tests pass; no `/tmp` or repository sibling scratch is used.
+  - Step 6b.1 adds +86 production Rust LOC instead of reducing code. The
+    frozen -500..-250 estimate covers all five 6b family commits, not this
+    family alone; the like-for-like comparison is deferred through 6b.5.
+- Adjudication evidence:
+  - The five live matrices pass against Helm 4.2.3: chained defaults, opaque
+    formatter defaults, literal primaries, oauth2-proxy `tpl` default
+    eagerness, and call/pipeline families. They cover deleted, dormant wrong
+    type, truly consumed, raw-falsy formatted, and multi-path composite
+    states.
+  - The authoritative full-depth live comparison finds no acceptance flip to
+    adjudicate. The temporary Signoz fixture created by the rejected generic
+    design was separately checked at 2,918 probes with zero flips, then
+    disappeared after the design was narrowed; it is not a final fixture
+    change.
+
+### Producer coverage
+
+| Family | Construction sites decided | Carrier disposition |
+|---|---|---|
+| `default` | primary and every evaluated fallback in `eval_default`; final result in `finish_default_dispatch` | Primary gets the complement of fallback reachability; each live fallback gets fallback reachability. Dead fallbacks retain execution effects only. Raw and rendered truth sources are explicit. |
+| `coalesce` | every argument result and the final joined result in `eval_coalesce` | Each argument is selected under its own truth and all prior falsy predicates. The exact empty-fold formatter idiom carries rendered truth; other candidates use their own raw/dispatch reachability. |
+| ternary | explicit and piped conditions plus both result arms in `eval_ternary` | Condition truth is raw; true and false arms receive exact/complement reachability, and an absent condition receives approximate reachability. |
+| `and` / `or` | every operand and final result in `eval_short_circuit_args` | Output selection and eager execution use distinct carrier lowerings; the last operand is always the result once reached. |
+| Outside 6b.1 | all remaining `EvalResult` construction sites | They remain `None`, the Step R2 forgotten-producer state, because their producer families are explicitly deferred to 6b.2-6b.4. Consumers must abstain on `None`. |
+
+### Review dossier
+
+- Carrier unit controls: `cargo nextest run -p helm-schema-ir -E
+  'test(default_selection_adapter_exposes_all_states_with_owned_truth_sources)
+  | test(approximate_reachability_lowers_distinct_output_and_execution_roles)
+  | test(formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback)'`;
+  exit 0, three tests pass.
+- Precision-tooth controls: `cargo nextest run -p helm-schema-gen -E
+  'test(stringified_equality_binds_the_tostring_preimage) |
+  test(strict_tpl_in_composed_scalar_keeps_its_input_type)'`; exit 0, two
+  tests pass.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b1-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b1-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 byte-identical artifacts are written.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b1-final-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=ba48ded
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b1-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b1-final-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Machine accounting: `jq '{baseline_ref, helm_adjudication, totals: {base:
+  (.charts | map(.base_emitted) | add), third_level: (.charts |
+  map(.third_level_emitted) | add), guard_pairs: (.charts |
+  map(.guard_pairs_emitted) | add), composite_pairs: (.charts |
+  map(.composite_pairs_emitted) | add), base_dropped: (.charts |
+  map(.base_dropped) | add), third_level_dropped: (.charts |
+  map(.third_level_dropped) | add), total_emitted: (.charts |
+  map(.total_emitted) | add), total_dropped: (.charts |
+  map(.total_dropped) | add)}}'
+  target/arch-v3-wave2-step6b1-final-coverage.json`; reports baseline
+  `ba48ded`, live adjudication enabled, zero flips and accepted-abort cells,
+  112,260 base probes, 7,465 third-level probes, 427 guard pairs, 240
+  composite pairs, 121,059 total emitted, 36,260 disclosed drops, and no base
+  or third-level drops.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Live controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profile_live -E
+  'test(replay_chained_default_printf_against_helm) |
+  test(replay_opaque_formatter_default_against_helm) |
+  test(replay_literal_default_primary_reachability_against_helm) |
+  test(replay_oauth2_proxy_tpl_default_eagerness_against_helm) |
+  test(replay_call_and_pipeline_invocation_families_against_helm)'
+  --run-ignored ignored-only --no-capture`; exit 0, five tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+
+### Self-adversarial pass
+
+- Inherited fact: the first rewrite trusted the legacy formatter projection
+  as interchangeable with carrier output selection. The existing raw-falsy
+  formatter matrix disproved that assumption; the projection remains
+  explicitly temporary until 6b.4.
+- Letter versus intent: a generic rendered-scalar rule satisfied the carrier
+  type but over-claimed which renderings have a decoded truth language. The
+  PostgreSQL/Redis adjacent wrong-type states exposed the false rejection;
+  only the structurally proved empty-fold idiom remains exact.
+- Reporting bias: the initial 24 widening cells were real measurements of a
+  rejected intermediate tree, not benefits of the landed design. They are
+  disclosed above and excluded from the final zero-flip claim. No other
+  inherited row, skipped adjacent state, or favorably framed measurement was
+  found after the final gates.
+
+- Gates on the final Step 6b.1 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,231 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 568 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,803 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream install: `cargo install --path
+    ./crates/helm-schema-cli/`; exit 0.
+  - Downstream luup2: `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`; exit 0 across all 32 charts.
+  - `task tokei:core`: exit 0; 61,490 production Rust LOC, delta +86.
+- Measured production LOC delta: +86 (61,404 to 61,490).
 - Commit: pending.

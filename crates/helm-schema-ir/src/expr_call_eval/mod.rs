@@ -7,7 +7,7 @@ use helm_schema_ast::{
 use helm_schema_core::{GuardDnf, GuardValue, Predicate, escape_regex_literal};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult};
+use crate::eval_effect::{Effects, EvalResult, SelectionPolarity, SelectionReachability};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
@@ -1281,22 +1281,36 @@ fn eval_short_circuit_args(
         // subset: positive-only consumers may use it, while member-domain
         // ownership and other complement-sensitive consumers abstain.
         let operand_truth = result.truth.clone();
+        let operand_reachability = result.output_reachability(SelectionPolarity::Truthy);
         operand_conditions.push(operand_truth.clone());
-        let mut selection = execution_predicates.clone();
-        if index + 1 < args.len() {
+        let selection = if index + 1 < args.len() {
             // The chain's VALUE is this operand's exactly when the chain
             // stops here, which is the operand's condition inverted for
             // `and` and held for `or`.
-            let predicate = if previous_truthy {
-                short_circuit_polarity(&operand_truth, false, "and operand selection")
+            if previous_truthy {
+                operand_reachability.complement()
             } else {
-                short_circuit_polarity(&operand_truth, true, "or operand selection")
-            };
-            if predicate != Predicate::True {
-                selection.insert(predicate);
+                operand_reachability.clone()
             }
+        } else {
+            SelectionReachability::always(operand_reachability.truth_source())
         }
-        conjoin_result_selection(&mut result, &selection);
+        .conjoin_predicates(execution_predicates.iter().cloned());
+        conjoin_result_reachability(
+            &mut result,
+            &selection,
+            if previous_truthy {
+                "and operand selection"
+            } else {
+                "or operand selection"
+            },
+            operand_truth
+                .when_true()
+                .value_paths()
+                .union(&operand_truth.when_false().value_paths())
+                .cloned()
+                .collect(),
+        );
         if let Some(value) = result.value {
             values.push(value);
         }
@@ -1305,11 +1319,24 @@ fn eval_short_circuit_args(
         if index + 1 == args.len() {
             break;
         }
-        let next_condition = if previous_truthy {
-            short_circuit_polarity(&operand_truth, true, "and operand execution")
+        let execution_reachability = if previous_truthy {
+            operand_reachability
         } else {
-            short_circuit_polarity(&operand_truth, false, "or operand execution")
+            operand_reachability.complement()
         };
+        let next_condition = execution_reachability.execution_predicate(
+            if previous_truthy {
+                "and operand execution"
+            } else {
+                "or operand execution"
+            },
+            operand_truth
+                .when_true()
+                .value_paths()
+                .union(&operand_truth.when_false().value_paths())
+                .cloned()
+                .collect(),
+        );
         if next_condition != Predicate::True {
             execution_predicates.insert(next_condition);
         }
@@ -1320,19 +1347,6 @@ fn eval_short_circuit_args(
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
     result.truth = combined_short_circuit_truth(&operand_conditions, previous_truthy);
     result
-}
-
-fn short_circuit_polarity(truth: &TruthCondition, truthy: bool, marker: &str) -> Predicate {
-    let subset = if truthy {
-        truth.when_true()
-    } else {
-        truth.when_false()
-    };
-    if truth.predicate().is_some() {
-        return subset;
-    }
-    let paths = subset.value_paths();
-    Predicate::approximate_with_sound_predicate(marker, paths, subset)
 }
 
 fn split_length_dispatch(
@@ -1515,6 +1529,17 @@ pub(super) fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTr
     for row in &mut result.effects.helper_rendered {
         row.meta.conjoin_branches(predicates);
     }
+}
+
+pub(super) fn conjoin_result_reachability(
+    result: &mut EvalResult,
+    reachability: &SelectionReachability,
+    marker: &'static str,
+    involved_paths: BTreeSet<String>,
+) {
+    result.selection_reachability = Some(reachability.clone());
+    let predicates = reachability.output_selection_conjunction(marker, involved_paths);
+    conjoin_result_selection(result, &predicates);
 }
 
 fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicate>) {

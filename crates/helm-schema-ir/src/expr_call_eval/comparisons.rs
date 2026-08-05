@@ -4,7 +4,9 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use helm_schema_core::{Guard, GuardValue, Predicate};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult};
+use crate::eval_effect::{
+    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
+};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::function_semantics::{function_semantics, type_is_schema_type};
@@ -25,6 +27,7 @@ pub(super) fn eval_ternary(
     let mut effects = Effects::default();
     let has_piped_condition = piped_condition.is_some();
     let condition_truth;
+    let condition_reachability;
     if let Some((condition, _is_direct_values_path)) = piped_condition {
         // Derived Boolean values carry no raw identity, so this records a
         // contract only for direct selectors and aliases of direct selectors.
@@ -35,6 +38,11 @@ pub(super) fn eval_ternary(
             &mut effects,
         );
         condition_truth = condition.truth.clone();
+        condition_reachability = SelectionReachability::from((
+            &condition_truth,
+            SelectionPolarity::Truthy,
+            SelectionTruthSource::RawInput,
+        ));
         effects.merge(condition.effects.consumed_as_predicate());
     } else if let Some(condition_arg) = args.get(2) {
         let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
@@ -45,9 +53,16 @@ pub(super) fn eval_ternary(
             &mut effects,
         );
         condition_truth = condition.truth.clone();
+        condition_reachability = SelectionReachability::from((
+            &condition_truth,
+            SelectionPolarity::Truthy,
+            SelectionTruthSource::RawInput,
+        ));
         effects.merge(condition.effects.consumed_as_predicate());
     } else {
         condition_truth = TruthCondition::Unknown;
+        condition_reachability =
+            SelectionReachability::approximate(None, SelectionTruthSource::RawInput);
     }
     // The strict-kind capture and predicate contracts above describe
     // consuming the condition. Its returned identity never reaches the
@@ -60,9 +75,21 @@ pub(super) fn eval_ternary(
         }
         let mut result = eval_expr_with_helper_calls(arg, env, resolver);
         if index < 2 {
-            super::conjoin_result_selection(
+            let reachability = if index == 0 {
+                condition_reachability.clone()
+            } else {
+                condition_reachability.complement()
+            };
+            super::conjoin_result_reachability(
                 &mut result,
-                &BTreeSet::from([ternary_selection_predicate(&condition_truth, index == 0)]),
+                &reachability,
+                "ternary output selection",
+                condition_truth
+                    .when_true()
+                    .value_paths()
+                    .union(&condition_truth.when_false().value_paths())
+                    .cloned()
+                    .collect(),
             );
         }
         effects.merge(result.effects);
@@ -82,22 +109,6 @@ pub(super) fn eval_ternary(
         return result.with_scalar_dispatch(dispatch);
     }
     result
-}
-
-fn ternary_selection_predicate(condition: &TruthCondition, when_true: bool) -> Predicate {
-    let subset = if when_true {
-        condition.when_true()
-    } else {
-        condition.when_false()
-    };
-    if condition.predicate().is_some() {
-        return subset;
-    }
-    Predicate::approximate_output_selection(
-        "ternary output selection",
-        subset.value_paths(),
-        subset,
-    )
 }
 
 pub(super) fn eval_type_is(
