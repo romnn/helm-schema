@@ -1060,7 +1060,7 @@ adjudication.
 
 ## Wave 2 R7 — ledger corrections and LOC re-forecast
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: documentation-only; append the independent Wave 1 review's
   corrections without rewriting the historical step records.
 - Acceptance baseline: `0df0748`.
@@ -1223,4 +1223,127 @@ adjudication.
   - Downstream luup2: not required because R7 changes campaign documentation
     only.
   - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
+- Commit: `78cb7c7` (`docs(plan): correct wave 1 review record`).
+
+## Wave 2 R4 — restore battery exactness
+
+- Status: landed; commit pending.
+- Contract: test infrastructure only; make candidate-accepts/Helm-aborts
+  acceptance flips an explicitly counted machine-report category and reject a
+  count above the source-controlled, pre-registered per-step allowance, which
+  defaults to zero.
+- Acceptance baseline: `78cb7c7`.
+- Baseline production Rust LOC: 61,308.
+- Measured results:
+  - `ProbeCoverageReport` now carries a `helm_adjudication` object with whether
+    live replay was enabled, the number of flip cells replayed, the count and
+    identities of candidate-accepts/Helm-aborts cells, and the pre-registered
+    allowance.
+  - The allowance is a source-controlled constant and defaults to zero. The
+    report is written before validation, then count-to-case accounting and the
+    allowance are enforced. A synthetic one-cell/zero-allowance test proves
+    the enforcement fails rather than merely round-tripping its own values.
+  - The authoritative full-depth run checks 60 lanes and 121,059 probes
+    against `78cb7c7` with zero flips. Its machine report records live Helm
+    adjudication enabled, zero replayed flip cells, zero
+    candidate-accepts/Helm-aborts cells, allowance zero, and an empty case
+    list.
+  - One clean schema dump writes 84 artifacts and one clean IR dump writes 18
+    artifacts, all byte-identical. Production Rust remains 61,308 LOC.
+- Deviations:
+  - No contract deviation. The first schema-dump invocation omitted creation
+    of its target-local `TMPDIR`; it exited nonzero before writing any
+    artifacts. After creating the empty directory, the single authoritative
+    dump ran from that clean destination and passed. This was command setup,
+    not a fixture or implementation failure.
+- Adjudication evidence:
+  - R4 changes only test accounting, not schema acceptance. The full-depth
+    comparison has zero flips, so no Helm document verdict is available or
+    required. The live lane is nevertheless enabled in the report, which
+    prevents a zero-flip run from being mislabeled as an adjudication-disabled
+    run.
+  - Hermetic monotonicity, three-category semantic controls, guard/composite
+    synthesis, both falsifiable accounting checks, and Temporal pairwise
+    monotonicity pass in a five-test run.
+  - Self-adversarial pass: the inherited `accepted || !rendered` outcome was
+    not trusted. Candidate-accepts/Helm-aborts now returns a distinct verdict;
+    every such verdict increments a count and records the exact chart/probe
+    identity; mismatched count and case-list length fails; count above the
+    compile-time allowance fails; and the report is persisted before either
+    failure. No unaccounted path or favorable measurement framing was found.
+
+### Review dossier
+
+- Accounting implementation: `sed -n '1,130p;980,1100p;1260,1390p'
+  crates/helm-schema/tests/schema_emission_profiles.rs`; shows the report
+  fields, source-controlled zero allowance, falsifiable unit test, report
+  write-before-validation order, distinct adjudication verdict, and counting
+  path.
+- Falsifiable enforcement: `cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(helm_adjudication_validation_rejects_unregistered_accepted_abort)'`;
+  exit 0 and the deliberately over-budget synthetic value is rejected.
+- Clean schema dump setup and proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r4-final-dump`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r4-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written.
+- Clean IR dump setup and proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r4-final-ir`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r4-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written.
+- Full-depth acceptance proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r4-prober`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r4-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=78cb7c7
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r4-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r4-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Machine accounting: `jq '{baseline_ref, helm_adjudication, totals: {base:
+  (.charts | map(.base_emitted) | add), third_level: (.charts |
+  map(.third_level_emitted) | add), guard_pairs: (.charts |
+  map(.guard_pairs_emitted) | add), composite_pairs: (.charts |
+  map(.composite_pairs_emitted) | add), base_dropped: (.charts |
+  map(.base_dropped) | add), third_level_dropped: (.charts |
+  map(.third_level_dropped) | add)}}'
+  target/arch-v3-wave2-r4-probe-coverage.json`; reports baseline `78cb7c7`,
+  live adjudication enabled, zero adjudicated flips, zero accepted-abort cells,
+  allowance zero, 112,260 base probes, 7,465 third-level probes, 427 guard
+  pairs, 240 composite pairs, and no base or third-level drops.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa -- plan/architecture-review-v3-wave2.md`;
+  exit 0.
+- Gates on the final R4 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,224 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 567 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,795 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream luup2: not required because R4 changes only test
+    infrastructure, not schema semantics.
+  - `task tokei:core`: exit 0; 61,308 production Rust LOC, delta 0.
+- Measured production LOC delta: 0 (61,308 to 61,308).
 - Commit: pending.

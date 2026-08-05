@@ -19,6 +19,31 @@ use harness::{
 struct ProbeCoverageReport {
     baseline_ref: String,
     charts: Vec<ProbeCoverage>,
+    helm_adjudication: HelmAdjudicationCoverage,
+}
+
+// A non-zero allowance must land before the live run whose widening relies on it.
+const PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE: usize = 0;
+
+#[derive(Debug, Default, Serialize)]
+struct HelmAdjudicationCoverage {
+    enabled: bool,
+    flips_adjudicated: usize,
+    candidate_accepts_helm_aborts: usize,
+    candidate_accepts_helm_abort_allowance: usize,
+    candidate_accepts_helm_abort_cases: Vec<String>,
+}
+
+fn validate_helm_adjudication_coverage(coverage: &HelmAdjudicationCoverage) -> eyre::Result<()> {
+    eyre::ensure!(
+        coverage.candidate_accepts_helm_aborts == coverage.candidate_accepts_helm_abort_cases.len(),
+        "accepted-but-Helm-aborting accounting mismatch: {coverage:?}"
+    );
+    eyre::ensure!(
+        coverage.candidate_accepts_helm_aborts <= coverage.candidate_accepts_helm_abort_allowance,
+        "accepted-but-Helm-aborting cells exceed the pre-registered allowance: {coverage:?}"
+    );
+    Ok(())
 }
 
 fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
@@ -78,6 +103,19 @@ fn probe_coverage_validation_rejects_synthetic_truncation() {
     assert!(validate_probe_coverage(&coverage).is_err());
 }
 
+#[test]
+fn helm_adjudication_validation_rejects_unregistered_accepted_abort() {
+    let coverage = HelmAdjudicationCoverage {
+        enabled: true,
+        flips_adjudicated: 1,
+        candidate_accepts_helm_aborts: 1,
+        candidate_accepts_helm_abort_allowance: 0,
+        candidate_accepts_helm_abort_cases: vec!["chart: probe".to_string()],
+    };
+
+    assert!(validate_helm_adjudication_coverage(&coverage).is_err());
+}
+
 #[derive(Default)]
 struct AcceptanceComparison {
     charts_checked: usize,
@@ -85,6 +123,7 @@ struct AcceptanceComparison {
     flips: Vec<String>,
     coverage: Vec<ProbeCoverage>,
     helm_adjudication_failures: Vec<String>,
+    helm_adjudication: HelmAdjudicationCoverage,
 }
 
 const LEAN_FIXTURE_CHARTS: &[&str] = &[
@@ -950,7 +989,14 @@ fn round72_pipeline_changes_are_acceptance_equivalent() -> eyre::Result<()> {
 #[ignore = "maintenance: compares the Round 73 dump and records probe coverage"]
 fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let (charts_checked, probes_checked, flips, coverage) = corpus_acceptance_flips()?;
+    let AcceptanceComparison {
+        charts_checked,
+        probes_checked,
+        flips,
+        coverage,
+        helm_adjudication_failures,
+        helm_adjudication,
+    } = corpus_acceptance_comparison()?;
     for chart in &coverage {
         validate_probe_coverage(chart)?;
     }
@@ -959,6 +1005,7 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     let report = ProbeCoverageReport {
         baseline_ref,
         charts: coverage,
+        helm_adjudication,
     };
     let report_path = std::path::PathBuf::from(
         std::env::var_os("SCHEMA_PROBE_COVERAGE_REPORT")
@@ -971,6 +1018,12 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     bytes.push(b'\n');
     std::fs::write(&report_path, bytes)
         .wrap_err_with(|| format!("write {}", report_path.display()))?;
+    eyre::ensure!(
+        helm_adjudication_failures.is_empty(),
+        "Round 73 Helm adjudication failures:\n{}",
+        helm_adjudication_failures.join("\n")
+    );
+    validate_helm_adjudication_coverage(&report.helm_adjudication)?;
     eyre::ensure!(
         flips.is_empty(),
         "round 73 changed fixture acceptance:\n{}",
@@ -1001,6 +1054,7 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         flips,
         coverage,
         helm_adjudication_failures,
+        helm_adjudication,
     } = corpus_acceptance_comparison()?;
     for chart in &coverage {
         validate_probe_coverage(chart)?;
@@ -1010,6 +1064,7 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     let report = ProbeCoverageReport {
         baseline_ref,
         charts: coverage,
+        helm_adjudication,
     };
     let report_path = std::path::PathBuf::from(
         std::env::var_os("SCHEMA_PROBE_COVERAGE_REPORT")
@@ -1027,6 +1082,7 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         "Round 74 Helm adjudication failures:\n{}",
         helm_adjudication_failures.join("\n")
     );
+    validate_helm_adjudication_coverage(&report.helm_adjudication)?;
     eyre::ensure!(
         flips.is_empty(),
         "round 74 changed fixture acceptance:\n{}",
@@ -1089,6 +1145,7 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
         "external Helm adjudication failures:\n{}",
         comparison.helm_adjudication_failures.join("\n")
     );
+    validate_helm_adjudication_coverage(&comparison.helm_adjudication)?;
     eprintln!(
         "probes_checked={} flips={}",
         comparison.probes_checked,
@@ -1217,6 +1274,11 @@ fn collect_acceptance_flips(
     defaults: &serde_json::Value,
     comparison: &mut AcceptanceComparison,
 ) -> eyre::Result<()> {
+    let adjudicate_live = std::env::var("ADJUDICATE_WITH_HELM").is_ok();
+    comparison.helm_adjudication.enabled |= adjudicate_live;
+    comparison
+        .helm_adjudication
+        .candidate_accepts_helm_abort_allowance = PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE;
     let profiles = ProfileSchemas::compile(baseline, current, defaults.clone())?;
     let (probes, mut chart_coverage) = structural_probe_battery_with_coverage(
         chart_relative_path,
@@ -1228,8 +1290,9 @@ fn collect_acceptance_flips(
         comparison.probes_checked += 1;
         let (before, after) = profiles.verdicts(&probe);
         if before != after {
-            if std::env::var("ADJUDICATE_WITH_HELM").is_ok()
-                && let Err(error) = adjudicate_round74_flip(
+            if adjudicate_live {
+                comparison.helm_adjudication.flips_adjudicated += 1;
+                match adjudicate_round74_flip(
                     chart_relative_path,
                     &probe_name,
                     &probe,
@@ -1237,11 +1300,19 @@ fn collect_acceptance_flips(
                     after,
                     &profiles.baseline_errors(&probe),
                     &profiles.candidate_errors(&probe),
-                )
-            {
-                comparison
-                    .helm_adjudication_failures
-                    .push(error.to_string());
+                ) {
+                    Ok(HelmFlipVerdict::Matched) => {}
+                    Ok(HelmFlipVerdict::CandidateAcceptsHelmAborts) => {
+                        comparison.helm_adjudication.candidate_accepts_helm_aborts += 1;
+                        comparison
+                            .helm_adjudication
+                            .candidate_accepts_helm_abort_cases
+                            .push(format!("{label}: {probe_name}"));
+                    }
+                    Err(error) => comparison
+                        .helm_adjudication_failures
+                        .push(error.to_string()),
+                }
             }
             comparison.flips.push(format!(
                 "{label}: {probe_name}: before={before}, after={after}"
@@ -1252,6 +1323,12 @@ fn collect_acceptance_flips(
     Ok(())
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum HelmFlipVerdict {
+    Matched,
+    CandidateAcceptsHelmAborts,
+}
+
 fn adjudicate_round74_flip(
     chart: &str,
     probe_name: &str,
@@ -1260,7 +1337,7 @@ fn adjudicate_round74_flip(
     schema_accepts: bool,
     baseline_errors: &[String],
     candidate_errors: &[String],
-) -> eyre::Result<()> {
+) -> eyre::Result<HelmFlipVerdict> {
     let values = probe.helm_values_file(defaults);
     let scratch_root = test_util::workspace_root().join("target/round74-helm-adjudication");
     std::fs::create_dir_all(&scratch_root)
@@ -1293,7 +1370,11 @@ fn adjudicate_round74_flip(
             "ABORT"
         }
     );
-    Ok(())
+    if schema_accepts && !rendered.status.success() {
+        Ok(HelmFlipVerdict::CandidateAcceptsHelmAborts)
+    } else {
+        Ok(HelmFlipVerdict::Matched)
+    }
 }
 
 #[test]
