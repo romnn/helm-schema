@@ -7,7 +7,6 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
-use helm_schema_ast::expression_schema_type;
 use helm_schema_core::{GuardValue, Predicate};
 
 use super::strict_operands::{
@@ -49,7 +48,7 @@ pub(super) fn eval_default(
         .first()
         .map(TemplateExpr::deparen)
         .filter(|expr| matches!(expr, TemplateExpr::Literal(_)))
-        .and_then(expression_schema_type)
+        .and_then(literal_schema_type)
     {
         effects.add_fallback_type_hints(primary_paths.clone(), schema_type);
     }
@@ -138,6 +137,16 @@ pub(super) fn eval_default(
         fallback_dispatch,
         fallback_args,
     )
+}
+
+fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
+    match expr {
+        TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_)) => Some("string"),
+        TemplateExpr::Literal(Literal::Int(_)) => Some("integer"),
+        TemplateExpr::Literal(Literal::Float(_)) => Some("number"),
+        TemplateExpr::Literal(Literal::Bool(_)) => Some("boolean"),
+        _ => None,
+    }
 }
 
 fn finish_default_dispatch(

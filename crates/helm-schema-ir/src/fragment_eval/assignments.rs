@@ -16,6 +16,9 @@ use crate::bound_value_analysis::parse_get_binding_from_exprs;
 use crate::eval_effect::MemberHostConversion;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::function_semantics::{
+    OutputSemantics, function_semantics, type_descriptor_call_subject,
+};
 use crate::helper_meta::merge_rendered_row_meta;
 use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
@@ -33,7 +36,7 @@ pub(super) fn type_descriptor_sources(
     let TemplateExpr::Call { function, args } = expr.deparen() else {
         return None;
     };
-    let subject = helm_schema_ast::type_descriptor_call_subject(function, args)?.deparen();
+    let subject = type_descriptor_call_subject(function, args)?.deparen();
     let mut sources = interpreter
         .value_path_context()
         .type_descriptor_subject_sources(subject)?;
@@ -59,12 +62,13 @@ pub(super) fn rhs_produces_derived_text(expr: &TemplateExpr) -> bool {
     let TemplateExpr::Call { function, .. } = stage else {
         return false;
     };
-    helm_schema_ast::is_total_stringification_function(function)
-        || helm_schema_ast::is_string_transform_function(function)
-        || matches!(
-            function.as_str(),
-            "join" | "printf" | "print" | "println" | "cat"
-        )
+    matches!(
+        function_semantics(function).output,
+        OutputSemantics::StringTransform | OutputSemantics::TotalStringification
+    ) || matches!(
+        function.as_str(),
+        "join" | "printf" | "print" | "println" | "cat"
+    )
 }
 
 pub(super) fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variable: &str) -> bool {

@@ -7,8 +7,8 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::function_semantics::{function_semantics, type_is_schema_type};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
-use helm_schema_ast::{strict_operand_nil_aborts, type_is_schema_type};
 
 use super::collections::direct_raw_identity_path;
 use super::strict_operands::{record_comparable_kind_result, record_strict_kind_result};
@@ -31,7 +31,7 @@ pub(super) fn eval_ternary(
         record_strict_kind_result(
             &condition,
             "boolean",
-            strict_operand_nil_aborts("ternary", false),
+            function_semantics("ternary").nil_aborts(false),
             &mut effects,
         );
         condition_truth = condition.truth.clone();
@@ -41,7 +41,7 @@ pub(super) fn eval_ternary(
         record_strict_kind_result(
             &condition,
             "boolean",
-            strict_operand_nil_aborts("ternary", false),
+            function_semantics("ternary").nil_aborts(false),
             &mut effects,
         );
         condition_truth = condition.truth.clone();

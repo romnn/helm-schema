@@ -6,8 +6,8 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::{eval_call_with_helper_calls, eval_pipeline_with_helper_calls};
+use crate::function_semantics::{CollectionShape, function_semantics};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
-use helm_schema_ast::is_merge_function;
 use helm_schema_core::Predicate;
 
 pub(crate) trait HelperCallValueResolver {
@@ -515,7 +515,9 @@ pub(crate) fn bindings_for_helper_arg_with(
         TemplateExpr::Field(path) if path.is_empty() => {
             (outer.cloned().unwrap_or_default(), BTreeMap::new())
         }
-        TemplateExpr::Call { function, args } if is_merge_function(function) => {
+        TemplateExpr::Call { function, args }
+            if function_semantics(function).collection == CollectionShape::Merge =>
+        {
             let mut merged = HashMap::new();
             let mut scalar_dispatches = BTreeMap::new();
             for arg in args {

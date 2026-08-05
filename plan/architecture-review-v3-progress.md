@@ -502,7 +502,7 @@ adjudication.
 
 ## Step 4 — unified call invocation
 
-- Status: landed; commit pending.
+- Status: landed.
 - Acceptance baseline: `a0a9e3e`.
 - Baseline production Rust LOC: 61,336.
 - Measured results:
@@ -617,17 +617,123 @@ adjudication.
     /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0; 32 charts complete.
   - `task tokei:core`: exit 0; 61,110 production Rust LOC, delta -226.
-- Commit: pending.
+- Commit: `02e8e4a` (`refactor(ir): unify call and pipeline invocation`).
 
 ## Step 5 — typed function semantics
 
-- Status: pending.
-- Acceptance baseline: pending.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed; commit pending.
+- Acceptance baseline: `02e8e4a`.
+- Baseline production Rust LOC: 61,110.
+- Measured results:
+  - `FunctionSemantics` is now the single IR-owned row for a recognized
+    Helm/Sprig function's string operand roles, nil behavior, output
+    conversion, collection shape, provenance behavior, supported predicate
+    semantics, strict parser, and strict collection-item language
+    (`function_semantics.rs:8-277,399-598`). One exhaustive match owns every
+    recognized name; unknown functions retain the explicit all-unknown row.
+  - AST no longer exposes semantic function classifiers or expression output
+    typing. The former URL/IP/parser tests moved beside the crate-private IR
+    catalog; AST retains only parsing and syntax classification.
+  - Every former `is_*_function`, nil table, operand-position table, parser
+    pattern, and collection-item consumer now reads the typed catalog. Special
+    evaluation remains in explicit match arms; no registry, macro DSL, or
+    order-dependent production list was introduced.
+  - The catalog test enumerates 97 recognized names exactly once and pins the
+    intentional overlapping rows for total stringification, transformed
+    provenance, numeric provenance, strict predicates, string splitting,
+    merge nil behavior, and certificate item parsing
+    (`src/tests/function_semantics.rs:10-155`).
+  - The authoritative schema dump contains all 84 artifacts and the IR dump
+    all 18 artifacts, byte-identical to committed fixtures. The compiled
+    comparison checks 60 lanes and 121,059 probes with zero flips and zero
+    undisclosed base or third-level truncation.
+  - Production Rust is 61,179 LOC, +69 from this step's baseline and -83 from
+    the 61,262 campaign baseline.
+- Deviations:
+  - The measured +69 LOC does not meet the frozen -180..-100 estimate. The
+    estimate omitted the ownership transfer of the existing 532-line AST
+    semantic catalog (including its fully measured URL, semver, duration,
+    IPv4, and IPv6 languages) and the typed facet/coverage rows needed to make
+    drift compiler-visible. Packing those facets into flags or deleting the
+    measured parser documentation would reduce the metric at the cost of the
+    plan's typed and auditability contracts, so the direct enum-based catalog
+    is retained. No production test bodies moved into the LOC count.
+  - The AST `expression_schema_type` helper had no remaining workspace caller
+    except Step 5's literal-only `default` lane. It is deleted rather than
+    moved; that lane now has a private literal-kind match at
+    `expr_call_eval/collections.rs:142-150`. This preserves the exact existing
+    scope and prevents the parser crate from retaining semantic output facts.
+- Adjudication evidence:
+  - Catalog migration is behavior-bearing by contract, but its authoritative
+    schema and IR fixtures are byte-identical and the full-depth battery finds
+    zero acceptance flips. There is therefore no corpus fixture or new Helm
+    verdict to adopt.
+  - The nine-family direct/pipeline live matrix replays 54 deleted,
+    present-wrong-type, and truly-consumed Helm cells after catalog migration;
+    every pinned render/abort verdict passes. Hermetic monotonicity, semantic,
+    guard/composite, truncation, and Temporal controls also pass.
+
+### Review dossier
+
+- Single catalog: `rg -n 'struct FunctionSemantics|pub\(crate\) fn
+  function_semantics|enum (StringOperands|NilBehavior|OutputSemantics|CollectionShape|ProvenanceBehavior|PredicateSemantics)'
+  crates/helm-schema-ir/src/function_semantics.rs`; the typed facets and sole
+  exhaustive match are listed.
+- Deleted parallel predicates: `rg -n
+  'expr_function_catalog|is_(checksum|coercing|merge|provenance_preserving|string_predicate|string_splitting|string_transform|total_numeric_cast|total_stringification)_function|strict_operand_nil_aborts'
+  crates --glob '*.rs'`; exit 1 confirms no former independent classifier or
+  parser-owned catalog remains.
+- Row completeness and intentional overlaps: `cargo nextest run -p
+  helm-schema-ir -E 'test(function_semantics)'`; two table-driven tests pass.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step5-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step5-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; one test
+  passes and all 18 artifacts remain byte-identical.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step5-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=02e8e4a
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-step5-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-step5-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; 60 lanes and 121,059 probes yield
+  zero flips.
+- Live three-direction replay: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-step5-live
+  cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profile_live -E
+  'test(replay_call_and_pipeline_invocation_families_against_helm)'
+  --run-ignored ignored-only --no-capture`; all 54 Helm cells pass.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; four
+  tests pass.
+- Frozen-plan check: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+- Gates on the final Step 5 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks finish
+    without warnings.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets finish with zero errors and zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,220 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 566 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,790 tests pass and 24 are skipped, including
+    the live-network lane.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - Downstream luup2 `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts complete.
+  - `task tokei:core`: exit 0; 61,179 production Rust LOC, delta +69.
 - Commit: pending.
 
 ## Step 6a — typed selection reachability with adapters

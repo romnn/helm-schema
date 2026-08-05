@@ -4,8 +4,11 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::expr_eval::eval_expr;
+use crate::function_semantics::{
+    function_semantics, go_type_descriptor_spellings, go_type_schema_type,
+    type_descriptor_call_subject, type_is_schema_type,
+};
 use crate::{Guard, GuardValue};
-use helm_schema_ast::type_is_schema_type;
 use helm_schema_core::Predicate;
 
 use super::ValuePathContext;
@@ -87,7 +90,7 @@ fn subject_is_total_stringification(subject: &TemplateExpr) -> bool {
     matches!(
         stage,
         TemplateExpr::Call { function, .. }
-            if helm_schema_ast::is_total_stringification_function(function)
+            if function_semantics(function).is_total_stringification()
     )
 }
 
@@ -2725,10 +2728,9 @@ impl ValuePathContext<'_> {
     ) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
         match expr.deparen() {
             TemplateExpr::Call { function, args }
-                if helm_schema_ast::type_descriptor_call_subject(function, args).is_some() =>
+                if type_descriptor_call_subject(function, args).is_some() =>
             {
-                let subject =
-                    helm_schema_ast::type_descriptor_call_subject(function, args)?.deparen();
+                let subject = type_descriptor_call_subject(function, args)?.deparen();
                 self.type_descriptor_subject_sources(subject)
             }
             TemplateExpr::Variable(name) => self
@@ -2834,7 +2836,7 @@ impl ValuePathContext<'_> {
         let regex = regex::Regex::new(pattern).ok()?;
         let mut matched_types = Vec::new();
         for schema_type in ["array", "boolean", "integer", "number", "object", "string"] {
-            let spellings = helm_schema_ast::go_type_descriptor_spellings(schema_type);
+            let spellings = go_type_descriptor_spellings(schema_type);
             let matches = spellings
                 .iter()
                 .filter(|spelling| regex.is_match(spelling))
@@ -2915,7 +2917,7 @@ impl ValuePathContext<'_> {
             (None, Some(sources)) => (sources, type_literal(left)?),
             _ => return None,
         };
-        let schema_type = helm_schema_ast::go_type_schema_type(type_name);
+        let schema_type = go_type_schema_type(type_name);
         if type_name != "invalid" && schema_type.is_none() {
             return None;
         }

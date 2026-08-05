@@ -12,10 +12,9 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 
-use helm_schema_ast::{
-    is_checksum_function, is_coercing_arithmetic_function, is_merge_function,
-    is_provenance_preserving_function, is_string_predicate_function, is_string_splitting_function,
-    is_string_transform_function, is_total_numeric_cast_function, strict_operand_nil_aborts,
+use crate::function_semantics::{
+    CollectionShape, OutputSemantics, PredicateSemantics, ProvenanceBehavior, function_semantics,
+    strict_collection_item_pattern,
 };
 
 mod collections;
@@ -153,7 +152,7 @@ fn eval_invocation(
             );
         }
         function
-            if is_string_transform_function(function)
+            if function_semantics(function).is_string_transform()
                 && (piped.is_some()
                     || !matches!(
                         (function, args.len()),
@@ -276,9 +275,9 @@ fn eval_sequence_invocation(
         record_operand_presence_result(&operand, &mut result.effects);
     } else {
         let nil_aborts = if matches!(function, "uniq" | "mustUniq") {
-            strict_operand_nil_aborts(function, false)
+            function_semantics(function).nil_aborts(false)
         } else {
-            strict_operand_nil_aborts(function, is_direct_values_path)
+            function_semantics(function).nil_aborts(is_direct_values_path)
         };
         record_strict_kind_result(&operand, "array", nil_aborts, &mut result.effects);
     }
@@ -312,7 +311,7 @@ fn eval_direct_invocation(
             record_strict_kind_result(
                 &operand,
                 "object",
-                strict_operand_nil_aborts(function, direct_values_path(target).is_some()),
+                function_semantics(function).nil_aborts(direct_values_path(target).is_some()),
                 &mut effects,
             );
             EvalResult::with_effects(operand.value, effects)
@@ -397,7 +396,7 @@ fn eval_direct_invocation(
             }
             result
         }
-        function if is_merge_function(function) => {
+        function if function_semantics(function).collection == CollectionShape::Merge => {
             let mut result = eval_merge(function, args, EvalResult::none(), env, resolver);
             record_strict_kind_operands(
                 function,
@@ -423,7 +422,7 @@ fn eval_direct_invocation(
                 record_strict_kind_result(
                     operand,
                     "string",
-                    strict_operand_nil_aborts(function, false),
+                    function_semantics(function).nil_aborts(false),
                     &mut effects,
                 );
             }
@@ -431,13 +430,13 @@ fn eval_direct_invocation(
                 record_strict_kind_result(
                     operand,
                     "array",
-                    strict_operand_nil_aborts(function, false),
+                    function_semantics(function).nil_aborts(false),
                     &mut effects,
                 );
                 record_collection_item_kind_result(
                     operand,
                     "string",
-                    helm_schema_ast::strict_collection_item_pattern(function, index),
+                    strict_collection_item_pattern(function_semantics(function), index),
                     &mut effects,
                 );
             }
@@ -445,7 +444,7 @@ fn eval_direct_invocation(
                 record_strict_kind_result(
                     operand,
                     "integer",
-                    strict_operand_nil_aborts(function, false),
+                    function_semantics(function).nil_aborts(false),
                     &mut effects,
                 );
             }
@@ -471,7 +470,10 @@ fn eval_direct_invocation(
         // digest. Unknown-call value semantics (not a string transform) keep
         // an `include … | sha256sum` annotation's serialized placement
         // intact while the subject gains its strict-string contract.
-        function if is_checksum_function(function) && args.len() == 1 => {
+        function
+            if function_semantics(function).output == OutputSemantics::Checksum
+                && args.len() == 1 =>
+        {
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
             record_string_call_consumers(function, args, env, resolver, &mut result.effects);
             // The digest shares no text or shape with its subject, so a
@@ -522,7 +524,7 @@ fn eval_direct_invocation(
         // about the raw operand's kind (a numeric string or junk that
         // coerces to zero all render); the result is derived numeric
         // content. Traefik's `goMemLimitPercentage` reaches `mulf` this way.
-        function if is_coercing_arithmetic_function(function) => {
+        function if function_semantics(function).output == OutputSemantics::CoercingArithmetic => {
             let mut result = eval_all_args(args, env, resolver);
             for arg in args {
                 let operand = eval_expr_with_helper_calls(arg, env, resolver);
@@ -596,7 +598,7 @@ fn eval_direct_invocation(
             record_strict_kind_result(
                 &subject,
                 "object",
-                strict_operand_nil_aborts(function, direct_values_path(subject_expr).is_some()),
+                function_semantics(function).nil_aborts(direct_values_path(subject_expr).is_some()),
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -645,7 +647,7 @@ fn eval_direct_invocation(
             record_strict_kind_result(
                 &operand,
                 "object",
-                strict_operand_nil_aborts(function, direct_values_path(arg).is_some()),
+                function_semantics(function).nil_aborts(direct_values_path(arg).is_some()),
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -764,7 +766,10 @@ fn eval_direct_invocation(
             eval_to_json(args, env, resolver)
         }
         "regexSplit" if args.len() == 3 => eval_regex_split(args, env, resolver),
-        function if is_total_numeric_cast_function(function) && args.len() == 1 => {
+        function
+            if function_semantics(function).output == OutputSemantics::TotalNumericCast
+                && args.len() == 1 =>
+        {
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
             record_total_conversion_effects(
@@ -777,8 +782,8 @@ fn eval_direct_invocation(
         // `semverCompare`): the LAST argument must be a Go string; the
         // output carries the subject's influence without its identity.
         function
-            if (is_string_splitting_function(function)
-                || is_string_predicate_function(function))
+            if (function_semantics(function).collection == CollectionShape::StringSplit
+                || function_semantics(function).predicate == PredicateSemantics::String)
                 && !args.is_empty() =>
         {
             let scalar_truth = args.last().and_then(|subject_expr| {
@@ -814,7 +819,7 @@ fn eval_direct_invocation(
             }
             result
         }
-        function if is_provenance_preserving_function(function) => {
+        function if function_semantics(function).provenance == ProvenanceBehavior::Preserve => {
             eval_all_args(args, env, resolver)
         }
         _ => eval_unknown_call(args, Effects::default(), env, resolver),
@@ -876,13 +881,13 @@ fn eval_piped_invocation(
     } = piped;
     match function {
         "default" => eval_default(current, args, env, resolver),
-        function if is_merge_function(function) => {
+        function if function_semantics(function).collection == CollectionShape::Merge => {
             let piped_operand = current.clone();
             let mut result = eval_merge(function, args, current, env, resolver);
             record_strict_kind_result(
                 &piped_operand,
                 "object",
-                strict_operand_nil_aborts(function, false),
+                function_semantics(function).nil_aborts(false),
                 &mut result.effects,
             );
             record_strict_kind_operands(
@@ -901,7 +906,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &operand,
                 "array",
-                strict_operand_nil_aborts(function, false),
+                function_semantics(function).nil_aborts(false),
                 &mut result.effects,
             );
             merge_arg_effects(args, env, resolver, &mut result.effects);
@@ -926,7 +931,10 @@ fn eval_piped_invocation(
         // semantics (see the call form above) while gaining its
         // strict-string contract (redis' sentinel
         // `coalesce … | sha256sum` lane).
-        function if is_checksum_function(function) && args.is_empty() => {
+        function
+            if function_semantics(function).output == OutputSemantics::Checksum
+                && args.is_empty() =>
+        {
             let (string_paths, raw_range_key_paths) =
                 string_invocation_operand_facts(function, args, Some(&current), env, resolver);
             // The digest shares no text or shape with its subject —
@@ -996,7 +1004,7 @@ fn eval_piped_invocation(
                 None => result,
             }
         }
-        function if is_total_numeric_cast_function(function) => {
+        function if function_semantics(function).output == OutputSemantics::TotalNumericCast => {
             let mut effects = current.effects;
             record_total_conversion_effects(
                 identity_value_paths(current.value.as_ref()),
@@ -1008,7 +1016,7 @@ fn eval_piped_invocation(
         // The piped operand and every explicit operand of a coercing
         // arithmetic stage are coerced before the computation: their raw
         // kinds are unconstrained (`… | mulf $percentage`).
-        function if is_coercing_arithmetic_function(function) => {
+        function if function_semantics(function).output == OutputSemantics::CoercingArithmetic => {
             let mut effects = current.effects;
             record_total_conversion_effects(
                 identity_value_paths(current.value.as_ref()),
@@ -1032,7 +1040,8 @@ fn eval_piped_invocation(
             EvalResult::with_effects(value, effects)
         }
         function
-            if is_string_splitting_function(function) || is_string_predicate_function(function) =>
+            if function_semantics(function).collection == CollectionShape::StringSplit
+                || function_semantics(function).predicate == PredicateSemantics::String =>
         {
             let scalar_truth =
                 scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref());
@@ -1080,7 +1089,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &piped_operand,
                 "array",
-                strict_operand_nil_aborts(function, false),
+                function_semantics(function).nil_aborts(false),
                 &mut result.effects,
             );
             record_strict_kind_operands(
@@ -1099,7 +1108,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &piped_operand,
                 "array",
-                strict_operand_nil_aborts(function, false),
+                function_semantics(function).nil_aborts(false),
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -1114,7 +1123,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &operand,
                 "object",
-                strict_operand_nil_aborts(function, false),
+                function_semantics(function).nil_aborts(false),
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -1136,7 +1145,7 @@ fn eval_piped_invocation(
             Some(AbstractValue::KeysList(_)) => current,
             _ => eval_unknown_call(args, current.effects, env, resolver),
         },
-        function if is_provenance_preserving_function(function) => {
+        function if function_semantics(function).provenance == ProvenanceBehavior::Preserve => {
             let mut effects = current.effects;
             merge_arg_effects(args, env, resolver, &mut effects);
             EvalResult::with_effects(current.value, effects)

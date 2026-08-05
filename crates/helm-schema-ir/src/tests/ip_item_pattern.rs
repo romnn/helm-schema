@@ -4,12 +4,12 @@
 //! so an accepted spelling rejected here is a false rejection and an
 //! accepted invalid spelling would let a render abort through the schema.
 
-use helm_schema_ast::strict_collection_item_pattern;
+use crate::function_semantics::{function_semantics, strict_collection_item_pattern};
 
 #[test]
 fn ip_item_pattern_is_the_parse_ip_language() {
-    let pattern =
-        strict_collection_item_pattern("genSignedCert", 1).expect("ip item pattern catalogued");
+    let pattern = strict_collection_item_pattern(function_semantics("genSignedCert"), 1)
+        .expect("ip item pattern catalogued");
     let regex = regex::Regex::new(pattern).expect("valid regex");
 
     let accepted = [

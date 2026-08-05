@@ -11,9 +11,7 @@ use helm_schema_core::Predicate;
 
 use super::serialization::record_total_conversion_effects;
 use super::value_facts::{identity_range_key_paths, identity_value_paths};
-use helm_schema_ast::{
-    is_total_stringification_function, strict_parser_operand_pattern, string_operand_indices,
-};
+use crate::function_semantics::{function_semantics, strict_parser_operand_pattern};
 
 pub(super) fn record_string_transform_effects(
     function: &str,
@@ -23,7 +21,7 @@ pub(super) fn record_string_transform_effects(
     effects: &mut Effects,
 ) {
     let influence_paths = value.map(AbstractValue::paths).unwrap_or_default();
-    if is_total_stringification_function(function) {
+    if function_semantics(function).is_total_stringification() {
         // Sprig's `strval` fallback renders ANY input (maps, lists, nil), so
         // a total stringification constrains nothing about its input and the
         // sink observes only the rendered text, never the input shape.
@@ -86,7 +84,9 @@ pub(super) fn string_invocation_operand_facts(
 ) -> (BTreeSet<String>, BTreeSet<String>) {
     let mut paths = BTreeSet::new();
     let mut range_key_paths = BTreeSet::new();
-    for index in string_operand_indices(function, args.len() + usize::from(piped.is_some())) {
+    for index in function_semantics(function)
+        .string_operand_indices(args.len() + usize::from(piped.is_some()))
+    {
         if index == args.len() {
             if let Some(piped) = piped {
                 paths.extend(identity_value_paths(piped.value.as_ref()));
@@ -119,7 +119,7 @@ pub(super) fn record_string_call_consumers(
     let (paths, raw_range_key_paths) =
         string_invocation_operand_facts(function, args, None, env, resolver);
     record_string_consumer_effects(&paths, effects);
-    for index in string_operand_indices(function, args.len()) {
+    for index in function_semantics(function).string_operand_indices(args.len()) {
         let Some(arg) = args.get(index) else {
             continue;
         };
@@ -151,9 +151,10 @@ pub(super) fn record_strict_parser_invocation(
     resolver: &mut impl HelperCallValueResolver,
     effects: &mut Effects,
 ) {
-    let Some((index, pattern)) =
-        strict_parser_operand_pattern(function, args.len() + usize::from(piped.is_some()))
-    else {
+    let Some((index, pattern)) = strict_parser_operand_pattern(
+        function_semantics(function),
+        args.len() + usize::from(piped.is_some()),
+    ) else {
         return;
     };
     if index == args.len() {
@@ -498,10 +499,8 @@ pub(super) fn record_strict_kind_operands(
         // `:=`-bound local all reach it invalid instead. A with-scoped dot
         // member does abort at runtime but cannot resolve here, so it
         // abstains.
-        let nil_aborts = helm_schema_ast::strict_operand_nil_aborts(
-            function,
-            crate::expr_eval::direct_values_path(arg).is_some(),
-        );
+        let nil_aborts = function_semantics(function)
+            .nil_aborts(crate::expr_eval::direct_values_path(arg).is_some());
         record_strict_kind_result(&operand, schema_type, nil_aborts, effects);
     }
 }
@@ -534,8 +533,8 @@ pub(super) fn record_strict_kind_result(
 ///
 /// The truthy⇒kind capture beside this one cannot state it — absence is
 /// Helm-falsy, so that capture's own guard excuses exactly the state that
-/// aborts. [`helm_schema_ast::strict_operand_nil_aborts`] decides which
-/// positions carry the claim.
+/// aborts. The function catalog's `nil_aborts` facet decides which positions
+/// carry the claim.
 pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut Effects) {
     // Only an operand that IS one raw values path carries the claim, the
     // same rule [`record_nil_strict_identity_operand`] applies to the

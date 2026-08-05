@@ -4,8 +4,11 @@ mod expr_eval;
 mod expr_eval_helper_hooks;
 mod fragment_expr_eval;
 mod fragment_scope_eval;
+mod function_semantics;
+mod ip_item_pattern;
 mod resource_identity;
 mod symbolic_local_state;
+mod url_parse_pattern;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use color_eyre::eyre;

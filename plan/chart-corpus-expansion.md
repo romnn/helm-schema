@@ -12557,3 +12557,16 @@ mismatch. Helm 4.2.3 aborts both spellings for deleted/null and present numeric
 operands and renders both for a present string operand. A nine-family live
 matrix records the same three-direction contract for every migrated family; no
 corpus fixture changes are adopted.
+
+## Architecture Review v3 Step 5 (2026-08-05)
+
+Helm/Sprig semantic function facts now have one typed, exhaustive IR catalog;
+the AST crate retains syntax analysis and no longer exports semantic function
+facets. One clean dump writes all 84 schema artifacts and all 18 IR artifacts
+byte-identically. The full-depth compiled comparison checks 121,059
+default-composed, null-deletion-aware, guard-state, and composite probes against
+`02e8e4a` with zero acceptance flips and zero undisclosed truncation.
+
+The nine-family direct/pipeline live matrix replays 54 deleted,
+present-wrong-type, and truly-consumed Helm cells after the catalog migration;
+every established verdict passes. No corpus fixture change is adopted.
