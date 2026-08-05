@@ -12639,3 +12639,18 @@ clean schema dump writes all 84 artifacts and one clean IR dump writes all 18
 artifacts byte-identically. The repaired full-depth comparison checks 121,059
 probes with zero flips, zero candidate-accepts/Helm-aborts cells, and no
 undisclosed truncation. No fixture or Helm disposition change is adopted.
+
+## Architecture Review v3 Wave 2 R1 (2026-08-05)
+
+R1 corrects `unset` from an inherited always-aborts claim to the measured
+direct-access-only nil-abort contract. The clean corpus run changes NACK and
+nats-kafka because both pass a values subtree through a helper-local dot before
+calling `unset`. Deleted, present-numeric, present-string, null-host, and
+scalar-host states were replayed with Helm 4.2.3 and pinned with a compiled
+schema regression before the two fixtures were adopted.
+
+The authoritative schema dump writes 84 artifacts and the IR dump writes 18
+artifacts. The full-depth comparison checks 121,059 probes against `eaeb7df`
+with zero acceptance flips, zero accepted-abort cells, and no undisclosed
+truncation; the fixture deltas are structural re-encoding within the sampled
+acceptance surface.

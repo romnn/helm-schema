@@ -1487,7 +1487,7 @@ adjudication.
 
 ## Wave 2 R6 — catalog and hygiene cleanups
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: reconcile or remove unused catalog shape facts; add a checked
   dispatcher-to-catalog boundary; use existing semantic helpers; correct and
   pin sequence nil-abort directness; and move the test-support inline module
@@ -1641,4 +1641,165 @@ adjudication.
     acceptance-identical to its baseline.
   - `task tokei:core`: exit 0; 61,408 production Rust LOC, delta +32.
 - Measured production LOC delta: +32 (61,376 to 61,408).
+- Commit: `eaeb7df` (`refactor(ir): reconcile function dispatch`).
+
+## Wave 2 R1 — correct `unset` nil behavior
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing; replace the inherited `unset => AlwaysAborts`
+  catalog row with the live-Helm `DirectAccessAborts` fact, pin direct and
+  local-binding spellings, pre-register expected IR/schema effects, and run
+  the full behavior-bearing protocol with live adjudication.
+- Acceptance baseline: `eaeb7df`.
+- Baseline production Rust LOC: 61,408.
+- Measured results:
+  - Pre-change Helm 4.2.3 measurement: direct `unset .Values.absent "k"`
+    aborts with an expected-map/got-interface error (exit 1), while assigning
+    the same missing value to `$x` and calling `unset $x "k"` renders a
+    ConfigMap (exit 0). This pins `DirectAccessAborts`, not `AlwaysAborts`.
+  - The catalog now classifies `unset` as `DirectAccessAborts`. A focused IR
+    test pins the direct missing-values path's `AbsenceAborts` and null-aborting
+    object type while the equivalent local binding keeps only a non-null-
+    aborting object type.
+  - Pre-registered change set: focused IR/effect fixtures for the local-binding
+    spelling could lose only the unconditional nil-abort tooth; direct access
+    had to remain strict. The initial corpus expectation was byte identity.
+    The clean run instead found two schema fixture deltas, NACK and nats-kafka,
+    because both pass a values subtree through a helper-local dot to `unset`.
+    Both were stopped, inspected, and live-adjudicated before adoption.
+  - NACK's adjacent-state matrix renders when `jetstream.pullPolicy` is
+    deleted, numeric, or a consumed string, and aborts when the helper host
+    `jetstream` is deleted or scalar. nats-kafka has the same verdict matrix
+    for `image.tagOverride` and its `image` host. A compiled Rust chart test
+    pins the generated schema to those Helm verdicts.
+  - The authoritative schema dump writes 84 artifacts and the IR dump writes
+    18 artifacts. The full-depth comparison checks 60 lanes and 121,059
+    probes against `eaeb7df` with zero acceptance flips, zero accepted-abort
+    cells, and zero undisclosed truncation. The fixture changes are therefore
+    structural re-encoding under the sampled acceptance surface, not a
+    registered acceptance change.
+- Deviations:
+  - The pre-registered assertion that no corpus chart exercised helper-local
+    `unset` was false. The first final-tree integration gate stopped with exit
+    100 after 565 passes and two fixture mismatches. File inspection traced
+    those deltas to NACK's `.Values.jetstream` and nats-kafka's `.Values.image`
+    helper contexts. The fixtures were adopted only after the five-cell live
+    matrix for each chart passed and the compiled regression was added.
+  - The first focused regression expected deletion of NACK's whole
+    `jetstream` host to report `/jetstream`; the generated root terminal
+    correctly rejects at the document root, matching Helm's nil-pointer
+    abort. The test expectation was corrected before the final gates.
+  - Production Rust grows by one LOC rather than deleting code. No malformed-
+    arity or other semantic delta was observed; only the inherited `unset`
+    nil classification changed.
+- Adjudication evidence:
+  - Helm 4.2.3 exits 1 for direct `unset .Values.absent "k"` and exits 0 for
+    `$x := .Values.absent` followed by `unset $x "k"`. This is the corrected
+    live fact used by the catalog.
+  - NACK exits 0 for deleted/null, numeric, and present-string
+    `jetstream.pullPolicy`; it exits 1 for null or numeric `jetstream` hosts.
+    nats-kafka exits 0 for the corresponding three `image.tagOverride`
+    states and exits 1 for null or numeric `image` hosts. All Helm calls used
+    `--skip-schema-validation`; the compiled schema control matches every
+    verdict.
+  - Hermetic monotonicity, semantic controls, guard/composite synthesis,
+    Temporal monotonicity, and both falsifiable accounting checks pass. The
+    final full-depth live battery has no flip requiring an additional
+    disposition.
+  - Self-adversarial pass: the inherited catalog row was measured rather than
+    trusted; the helper-local corpus uses invalidated the favorable initial
+    byte-identity claim and are disclosed here. Deleted, present-wrong-type,
+    truly-consumed, and invalid-host composite states were probed. No
+    contract-in-letter-only result, unadjudicated acceptance change, or more
+    favorable ledger framing remains.
+
+### Review dossier
+
+- Direct/local Helm fact: `helm template unset-nil-control
+  target/arch-v3-wave2-r1-live --set mode=direct
+  --skip-schema-validation` exits 1; the same command with `--set mode=local`
+  exits 0.
+- Focused IR proof: `cargo nextest run -p helm-schema-ir -E
+  'test(unset_nil_behavior_distinguishes_direct_access_from_a_local_binding)'`;
+  exit 0, one test passes.
+- NACK live matrix: run `helm template nack testdata/charts/nack
+  --skip-schema-validation` separately with `--set
+  jetstream.pullPolicy=null`, `--set jetstream.pullPolicy=7`, `--set-string
+  jetstream.pullPolicy=Always`, `--set jetstream=null`, and `--set
+  jetstream=7`; exits are 0, 0, 0, 1, and 1.
+- nats-kafka live matrix: run `helm template nats-kafka
+  testdata/charts/nats-kafka --skip-schema-validation` separately with `--set
+  image.tagOverride=null`, `--set image.tagOverride=7`, `--set-string
+  image.tagOverride=changed`, `--set image=null`, and `--set image=7`; exits
+  are 0, 0, 0, 1, and 1.
+- Compiled schema matrix: `cargo nextest run -P integration -p
+  helm-schema-cli --test chart_reaudit -E
+  'test(unset_helper_contexts_preserve_guarded_values_and_reject_invalid_hosts)'`;
+  exit 0, one test passes.
+- Clean schema dump proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r1-final-dump`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r1-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written.
+- Clean IR dump proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r1-final-ir`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r1-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written.
+- Full-depth acceptance proof: `mkdir -p
+  /home/roman/dev/helm-schema/target/arch-v3-wave2-r1-prober`, then
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-r1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=eaeb7df
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-r1-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-r1-probe-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Machine accounting: `jq '{baseline_ref, helm_adjudication, totals: {base:
+  (.charts | map(.base_emitted) | add), third_level: (.charts |
+  map(.third_level_emitted) | add), guard_pairs: (.charts |
+  map(.guard_pairs_emitted) | add), composite_pairs: (.charts |
+  map(.composite_pairs_emitted) | add), base_dropped: (.charts |
+  map(.base_dropped) | add), third_level_dropped: (.charts |
+  map(.third_level_dropped) | add)}}'
+  target/arch-v3-wave2-r1-probe-coverage.json`; reports baseline `eaeb7df`,
+  live adjudication enabled, zero flips, zero accepted-abort cells against
+  allowance zero, 112,260 base probes, 7,465 third-level probes, 427 guard
+  pairs, 240 composite pairs, and no base or third-level drops.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+- Gates on the final R1 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,229 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 568 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,801 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream install: `cargo install --path
+    ./crates/helm-schema-cli/`; exit 0.
+  - Downstream luup2: `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`; exit 0 across all 32 charts.
+  - `task tokei:core`: exit 0; 61,409 production Rust LOC, delta +1.
+- Measured production LOC delta: +1 (61,408 to 61,409).
 - Commit: pending.

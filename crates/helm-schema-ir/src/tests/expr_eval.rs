@@ -1423,6 +1423,54 @@ fn truth_only_locals_drive_short_circuit_execution() {
 }
 
 #[test]
+fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
+    let direct = eval_expr(
+        &single_expr(r#"unset .Values.absent "k""#),
+        &EvalEnv::default(),
+    );
+    let direct_failures = direct
+        .effects
+        .helper_fails
+        .into_iter()
+        .map(|capture| capture.kind)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: direct_failures,
+        want: BTreeSet::from([
+            crate::eval_effect::CaptureKind::ValueType {
+                path: "absent".to_string(),
+                schema_type: "object".to_string(),
+                null_aborts: true,
+            },
+            crate::eval_effect::CaptureKind::AbsenceAborts {
+                path: "absent".to_string(),
+            },
+        ]),
+    );
+
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "x".to_string(),
+        AbstractValue::ValuesPath("absent".to_string()),
+    );
+    let local = eval_expr(&single_expr(r#"unset $x "k""#), &env);
+    let local_failures = local
+        .effects
+        .helper_fails
+        .into_iter()
+        .map(|capture| capture.kind)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: local_failures,
+        want: BTreeSet::from([crate::eval_effect::CaptureKind::ValueType {
+            path: "absent".to_string(),
+            schema_type: "object".to_string(),
+            null_aborts: false,
+        }]),
+    );
+}
+
+#[test]
 fn local_selector_truth_comes_from_the_selected_value() {
     let mut env = EvalEnv::default();
     env.locals.insert(

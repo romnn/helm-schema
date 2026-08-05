@@ -3655,6 +3655,52 @@ fn cilium_scalar_domain_validators_reject_out_of_domain_values() -> eyre::Result
     )
 }
 
+#[test]
+fn unset_helper_contexts_preserve_guarded_values_and_reject_invalid_hosts() -> eyre::Result<()> {
+    assert_chart_cases(
+        "nack",
+        vec![
+            SemanticCase::accepted(
+                "deleted legacy pull policy",
+                json!({ "jetstream": { "pullPolicy": null } }),
+            ),
+            SemanticCase::accepted(
+                "non-string legacy pull policy bypasses the fixup",
+                json!({ "jetstream": { "pullPolicy": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "string legacy pull policy is moved then unset",
+                json!({ "jetstream": { "pullPolicy": "Always" } }),
+            ),
+            SemanticCase::rejected("deleted helper host", "", json!({ "jetstream": null })),
+            SemanticCase::rejected(
+                "scalar helper host",
+                "/jetstream",
+                json!({ "jetstream": 7 }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "nats-kafka",
+        vec![
+            SemanticCase::accepted(
+                "deleted tag override",
+                json!({ "image": { "tagOverride": null } }),
+            ),
+            SemanticCase::accepted(
+                "numeric tag override is rendered by printf",
+                json!({ "image": { "tagOverride": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "string tag override is moved then unset",
+                json!({ "image": { "tagOverride": "changed" } }),
+            ),
+            SemanticCase::rejected("deleted helper host", "", json!({ "image": null })),
+            SemanticCase::rejected("scalar helper host", "/image", json!({ "image": 7 })),
+        ],
+    )
+}
+
 /// cilium's validators bound integer domains through `ge`/`le` chains: the
 /// envoy `baseID` window rejects both sides via the De Morgan'd
 /// `not (and (ge …) (le …))` fail, and the ENI/AlibabaCloud policy-drop

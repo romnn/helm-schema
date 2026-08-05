@@ -216,12 +216,15 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
             KNOWN.with_nil(DirectAccessAborts).with_collection(Merge)
         }
         "first" | "last" | "initial" | "rest" | "compact" | "reverse" | "append" | "push"
-        | "prepend" | "concat" | "slice" | "mustSlice" | "index" | "len" | "ternary" | "unset" => {
+        | "prepend" | "concat" | "slice" | "mustSlice" | "index" | "len" | "ternary" => {
             KNOWN.with_nil(AlwaysAborts)
         }
         "uniq" | "mustUniq" | "deepCopy" | "mustDeepCopy" => {
             KNOWN.with_nil(AlwaysAborts).with_provenance(Preserve)
         }
+        // Go's delete is a no-op on the zero map supplied after a local binding unwraps nil.
+        // A direct missing field arrives as a nil interface and fails map argument validation.
+        "unset" => KNOWN.with_nil(DirectAccessAborts),
         "hasKey" | "pick" | "omit" | "keys" | "values" | "pluck" | "get" => {
             KNOWN.with_nil(DirectAccessAborts)
         }
