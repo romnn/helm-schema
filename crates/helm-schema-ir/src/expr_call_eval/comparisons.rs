@@ -151,7 +151,7 @@ pub(super) fn eval_type_is(
         effects.add_tested_type_hints(tested_paths, &schema_type);
     }
     let mut result = EvalResult::with_effects(None, effects);
-    result.truth = truth;
+    result.set_truth_condition(truth, crate::eval_effect::SelectionTruthSource::RawInput);
     result
 }
 
@@ -378,7 +378,7 @@ pub(super) fn eval_comparison_operands(
     };
     let Some(literal_kind) = literal_kind else {
         let mut result = merge_operand_results(operands, comparison_effects);
-        result.truth = truth;
+        result.set_truth_condition(truth, crate::eval_effect::SelectionTruthSource::RawInput);
         return result;
     };
     for operand in &operands {
@@ -390,7 +390,7 @@ pub(super) fn eval_comparison_operands(
         record_comparable_kind_result(operand, literal_kind, &mut comparison_effects);
     }
     let mut result = merge_operand_results(operands, comparison_effects);
-    result.truth = truth;
+    result.set_truth_condition(truth, crate::eval_effect::SelectionTruthSource::RawInput);
     result
 }
 

@@ -7,7 +7,9 @@ use helm_schema_ast::{
 use helm_schema_core::{GuardDnf, GuardValue, Predicate, escape_regex_literal};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult, SelectionPolarity, SelectionReachability};
+use crate::eval_effect::{
+    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
+};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
@@ -401,7 +403,7 @@ fn eval_direct_invocation(
             let effects = operand.effects;
             let value = Some(AbstractValue::DerivedBoolean(effects.output_paths.clone()));
             let mut result = EvalResult::with_effects(value, effects);
-            result.truth = truth;
+            result.set_truth_condition(truth, SelectionTruthSource::RawInput);
             result
         }
         "dict" => eval_dict(args, env, resolver).with_truth(if args.is_empty() {
@@ -687,7 +689,10 @@ fn eval_direct_invocation(
                     crate::value_path_context::value_has_key(subject, key)
                 })
             {
-                result.truth = TruthCondition::exact(predicate);
+                result.set_truth_condition(
+                    TruthCondition::exact(predicate),
+                    SelectionTruthSource::RawInput,
+                );
             }
             result
         }
@@ -882,7 +887,7 @@ fn eval_direct_invocation(
             let result = EvalResult::with_effects(widened, effects);
             let mut result = result;
             if let Some(truth) = scalar_truth {
-                result.truth = truth;
+                result.set_truth_condition(truth, SelectionTruthSource::RawInput);
             }
             result
         }
@@ -1136,7 +1141,7 @@ fn eval_piped_invocation(
             );
             let mut result = EvalResult::with_effects(widened, effects);
             if let Some(truth) = scalar_truth {
-                result.truth = truth;
+                result.set_truth_condition(truth, SelectionTruthSource::RawInput);
             }
             result
         }
@@ -1345,7 +1350,10 @@ fn eval_short_circuit_args(
             .with_predicate_constraints(arg, previous_truthy);
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
-    result.truth = combined_short_circuit_truth(&operand_conditions, previous_truthy);
+    result.set_truth_condition(
+        combined_short_circuit_truth(&operand_conditions, previous_truthy),
+        SelectionTruthSource::RawInput,
+    );
     result
 }
 

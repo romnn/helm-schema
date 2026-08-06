@@ -12705,3 +12705,19 @@ against `3f6c829` with zero acceptance flips, zero candidate-accepts/Helm-
 aborts cells, and no undisclosed base or third-level truncation. Seven live
 control families replay the deleted, present-wrong-type, truly consumed, and
 composite states against Helm 4.2.3; no fixture change is adopted.
+
+## Architecture Review v3 Step 6b.3 (2026-08-05)
+
+Against acceptance baseline `c6721b8`, this behavior-bearing step makes
+helper, root/local scalar-dispatch, and the previously migrated expression
+truth producers publish through the optional selection-reachability carrier.
+An initial consumer-first preflight changed 35 fixture tests because prior
+families had left some producer writes unsynchronized; that design and its
+artifacts were rejected.
+
+After the complete producer audit, the authoritative schema dump writes 84
+byte-identical artifacts and the IR dump writes 18 byte-identical artifacts.
+The full-depth comparison checks 121,059 probes with zero acceptance flips,
+zero candidate-accepts/Helm-aborts cells, and no undisclosed base or third-
+level truncation. Seven live control families replay the adjacent and
+composite states against Helm 4.2.3. No fixture change is adopted.

@@ -1178,11 +1178,25 @@ impl EvalResult {
             .as_ref()
             .map(ScalarValueDispatch::truth_condition)
             .unwrap_or_else(|| truth_for_value(Some(&value)));
+        let selection_reachability = scalar_dispatch.as_ref().map(|dispatch| {
+            if matches!(
+                &value,
+                AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_)
+            ) {
+                SelectionReachability::from((
+                    &truth,
+                    SelectionPolarity::Truthy,
+                    SelectionTruthSource::RawInput,
+                ))
+            } else {
+                SelectionReachability::from((dispatch, SelectionPolarity::Truthy))
+            }
+        });
         Self {
             effects: Effects::from_value(&value),
             value: Some(value),
             truth,
-            selection_reachability: None,
+            selection_reachability,
             json_payload_truth: TruthCondition::Unknown,
             scalar_dispatch,
             field_scalar_dispatches: BTreeMap::new(),
@@ -1205,22 +1219,47 @@ impl EvalResult {
     }
 
     pub(crate) fn with_truth(mut self, predicate: helm_schema_core::Predicate) -> Self {
-        self.truth = TruthCondition::exact(predicate);
+        self.set_truth_condition(
+            TruthCondition::exact(predicate),
+            SelectionTruthSource::RawInput,
+        );
         self
     }
 
     pub(crate) fn with_scalar_dispatch(mut self, dispatch: ScalarValueDispatch) -> Self {
-        self.truth = dispatch.truth_condition();
-        self.scalar_dispatch = Some(dispatch);
+        self.set_scalar_dispatch(dispatch);
         self
     }
 
+    pub(crate) fn set_truth_condition(
+        &mut self,
+        truth: TruthCondition,
+        truth_source: SelectionTruthSource,
+    ) {
+        self.selection_reachability = Some(SelectionReachability::from((
+            &truth,
+            SelectionPolarity::Truthy,
+            truth_source,
+        )));
+        self.truth = truth;
+    }
+
+    pub(crate) fn set_scalar_dispatch(&mut self, dispatch: ScalarValueDispatch) {
+        self.selection_reachability = Some(SelectionReachability::from((
+            &dispatch,
+            SelectionPolarity::Truthy,
+        )));
+        self.truth = dispatch.truth_condition();
+        self.scalar_dispatch = Some(dispatch);
+    }
+
     pub(crate) fn output_reachability(&self, polarity: SelectionPolarity) -> SelectionReachability {
-        match (&self.scalar_dispatch, self.exact_input_identity()) {
-            (Some(dispatch), None) => SelectionReachability::from((dispatch, polarity)),
-            _ => {
-                SelectionReachability::from((&self.truth, polarity, SelectionTruthSource::RawInput))
-            }
+        let selected = self.selection_reachability.clone().unwrap_or_else(|| {
+            SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
+        });
+        match polarity {
+            SelectionPolarity::Truthy => selected,
+            SelectionPolarity::Falsy => selected.complement(),
         }
     }
 

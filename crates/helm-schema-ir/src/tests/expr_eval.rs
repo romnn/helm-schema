@@ -1,5 +1,5 @@
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::EvalResult;
+use crate::eval_effect::{EvalResult, SelectionPolarity, SelectionTruthSource};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{
     apply_local_set_mutations_expr, bindings_for_helper_arg_with, direct_values_path, eval_expr,
@@ -1722,6 +1722,28 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
 
     env.root_truthy_predicates
         .extend(server.effects.root_set_predicates);
+    let server_enabled = eval_expr(&single_expr(".serverEnabled"), &env);
+    sim_assert_eq!(
+        have: server_enabled
+            .output_reachability(SelectionPolarity::Truthy)
+            .truth_source(),
+        want: SelectionTruthSource::RenderedScalar
+    );
+    env.root_fields.insert(
+        "mode".to_string(),
+        AbstractValue::StringSet(BTreeSet::from(["server".to_string()])),
+    );
+    env.root_value_dispatches.insert(
+        "mode".to_string(),
+        ScalarValueDispatch::constant(GuardValue::string("server")),
+    );
+    let mode = eval_expr(&single_expr(".mode"), &env);
+    sim_assert_eq!(
+        have: mode
+            .output_reachability(SelectionPolarity::Truthy)
+            .truth_source(),
+        want: SelectionTruthSource::RenderedScalar
+    );
     let service = eval_expr(
         &single_expr(indoc! {r#"
             set . "serverServiceEnabled"

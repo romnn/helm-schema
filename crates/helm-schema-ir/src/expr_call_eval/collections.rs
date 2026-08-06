@@ -363,7 +363,10 @@ pub(super) fn eval_coalesce(
         }
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
-    result.truth = TruthCondition::any(candidate_truths);
+    result.set_truth_condition(
+        TruthCondition::any(candidate_truths),
+        SelectionTruthSource::RawInput,
+    );
     if let Some(dispatch) = candidate_dispatches
         .into_iter()
         .collect::<Option<Vec<_>>>()

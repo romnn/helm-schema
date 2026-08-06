@@ -2197,7 +2197,7 @@ adjudication.
 
 ## Step 6b.2 — migrate control-flow truth decoding
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: behavior-bearing; migrate condition, `with`, and `range` truth
   decoding to the Step 6a carrier, preserving exact/approximate polarity,
   explicit raw-versus-rendered truth sources, header execution effects, and
@@ -2384,4 +2384,173 @@ adjudication.
     check:local`; exit 0 across all 32 charts.
   - `task tokei:core`: exit 0; 61,625 production Rust LOC, delta +135.
 - Measured production LOC delta: +135 (61,490 to 61,625).
+- Commit: `c6721b8` (`refactor(ir): migrate control truth reachability`).
+
+## Step 6b.3 — migrate helper and root scalar dispatch
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing; make helper-return and root/local scalar-dispatch
+  producers publish their raw-versus-rendered selection truth through the
+  Step 6a carrier, and make downstream truth consumers abstain when a producer
+  has not decided the optional carrier. Preserve eager effects and the frozen
+  family order; do not migrate strict string consumers or builder lowering.
+- Acceptance baseline: `c6721b8`.
+- Baseline production Rust LOC: 61,625.
+- Measured results:
+  - `EvalResult` now publishes raw identity truth at `from_value`, rendered
+    scalar truth at `set_scalar_dispatch`, and explicitly sourced computed
+    truth at `set_truth_condition`. `output_reachability` reads only the
+    optional carrier; a forgotten producer becomes `Approximate { None }`
+    instead of silently reconstructing a claim from the legacy fields
+    (`eval_effect.rs:1167-1264`).
+  - Helper summaries enter expression evaluation through
+    `with_scalar_dispatch`; local scalar/reduction reads and root-field
+    dispatch/predicate reads use the same synchronized setters
+    (`fragment_expr_eval/bound_helper_resolver.rs:124-129`,
+    `expr_eval.rs:580-695`). Raw `.Values` identities and rendered helper/root
+    results are pinned to distinct truth sources.
+  - The compiler/audit pass found legacy direct `truth` writes left by 6b.1
+    and 6b.2. Coalesce, comparisons, predicate calls, short-circuit calls, and
+    JSON payload decoding now use `set_truth_condition`; the only remaining
+    direct writes are inside the synchronized setters and the deliberate
+    three-field reset of an unclassified pipeline-bound local.
+  - An initial consumer-first draft, before that producer audit, changed 35
+    of the 62 schema fixture tests. It was rejected. Completing the producer
+    decisions restored all 84 schema artifacts and all 18 IR artifacts to
+    byte identity.
+  - The authoritative full-depth comparison checks 60 lanes and 121,059
+    probes against `c6721b8` with zero acceptance flips, zero candidate-
+    accepts/Helm-aborts cells, and the allowance fixed at zero. Coverage is
+    112,260 base probes, 7,465 third-level probes, 427 guard pairs, and 240
+    composite pairs; mandatory-lane drops are zero and 29,170 bounded drops
+    are disclosed.
+  - Production Rust is 61,681 LOC, delta +56. The frozen −500..−250 estimate
+    covers all of Step 6b; the cumulative 6b delta through 6b.3 is +277 LOC
+    against the 61,404 pre-6b baseline.
+- Deviations:
+  - Cross-family catch-up: Steps 6b.1 and 6b.2 migrated consumers while some
+    expression producers still updated only `EvalResult.truth`. Making the
+    R2 `Option` abstention operative therefore exposed 35 fixture drifts in
+    the first 6b.3 preflight. The final tree synchronizes those previously
+    migrated producers before enabling consumer abstention. This is recorded
+    here rather than attributing the recovery to helper/root dispatch alone.
+  - The final tree has no behavior or fixture delta. Step 6b.3 adds 56 LOC
+    because the legacy truth/scalar fields remain until their downstream
+    consumers migrate in 6b.4/6b.5; the like-for-like frozen estimate is not
+    evaluated until all five family commits have landed.
+- Adjudication evidence:
+  - The rejected consumer-first draft was a representation preflight, not an
+    adoptable fixture batch: 35 chart/fixture tests changed when undecided
+    carriers abstained. No dump from that code state was retained.
+  - The final schema and IR artifacts are byte-identical, and the compiled
+    battery finds zero acceptance flips, so there is no final-tree fixture
+    flip to adopt or separately adjudicate.
+  - Seven live Helm 4.2.3 controls replay default-chain, opaque formatter,
+    literal-primary, oauth2-proxy composite, call/pipeline, else-with, and
+    ranged-provider states. Together they cover deleted, dormant wrong-type,
+    truly consumed, raw-falsy formatted, and composite states and all pass.
+
+### Producer coverage
+
+| Producer family | Construction sites audited | Carrier decision |
+|---|---|---|
+| Raw values | `EvalResult::from_value` | Direct `ValuesPath` and `JsonDecodedPath` identities publish raw-input reachability; singleton computed string sets publish their scalar dispatch as rendered truth. Values without a proved scalar/truth model leave the carrier unset. |
+| Helper output | `BoundHelperValueResolver::resolve_helper_call` and `with_scalar_dispatch` | A complete helper scalar summary publishes rendered-scalar reachability. A helper without a scalar summary remains `None`; eager argument and body effects survive independently. |
+| Root and local dispatch | `local_value_result`, `attach_named_root_field_semantics` | Joined scalar dispatches and reduced root/local predicates publish rendered-result reachability. A pipeline-bound fragment provenance value is explicitly cleared to `None` until a separately tracked dispatch/reduction exists. |
+| 6b.1 expression results | `eval_coalesce`, comparison/type/predicate results, `eval_short_circuit_args` | Every legacy `truth` mutation now calls `set_truth_condition`; complete scalar dispatches replace that raw condition with rendered-scalar reachability through the single setter. |
+| Serialization | `eval_from_json_result` | The retained decoded payload truth publishes raw-input reachability; an unknown payload stays approximate through the typed conversion. |
+| Explicit arm selection | `eval_default` and `conjoin_result_reachability` | The already-migrated selected arm continues to write its exact/approximate carrier directly; the producer audit confirms those are the only production writes outside the synchronized setters. |
+| Truly undecided | `EvalResult::with_effects`, recursive-cycle/unknown results | Carrier remains `None`. `output_reachability` abstains and never reconstructs from legacy `truth` or dispatch fields. |
+
+### Review dossier
+
+- Synchronized owner proof: `sed -n '1144,1265p'
+  crates/helm-schema-ir/src/eval_effect.rs`; shows raw/rendered construction,
+  the two synchronized setters, optional forgotten-producer state, and the
+  carrier-only consumer.
+- Producer audit: `rg -n '\.truth\s*=|\.scalar_dispatch\s*=|selection_reachability\s*='
+  crates/helm-schema-ir/src --glob '*.rs'`; finds direct writes only inside
+  the synchronized setters, the deliberate pipeline-local reset, and the two
+  explicitly selected-arm producers (plus the focused test write).
+- Focused source/abstention proof: `cargo nextest run -p helm-schema-ir -E
+  'test(condition_reachability_distinguishes_raw_identities_from_rendered_scalars)
+  | test(dead_output_selection_retains_eager_effects) |
+  test(negated_include_uses_the_rendered_scalar_dispatch_truthiness) |
+  test(root_set_truth_predicates_feed_later_root_field_assignments)'`; exit 0,
+  four tests pass.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b3-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 byte-identical
+  artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b3-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 byte-identical artifacts are written.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b3-final-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=c6721b8
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b3-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b3-final-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Live controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profile_live -E
+  'test(replay_call_and_pipeline_invocation_families_against_helm) |
+  test(replay_chained_default_printf_against_helm) |
+  test(replay_else_with_successor_against_helm) |
+  test(replay_literal_default_primary_reachability_against_helm) |
+  test(replay_oauth2_proxy_tpl_default_eagerness_against_helm) |
+  test(replay_opaque_formatter_default_against_helm) |
+  test(replay_selector_independent_ranged_provider_use_against_helm)'
+  --run-ignored ignored-only --no-capture`; exit 0, seven tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+
+### Self-adversarial pass
+
+- Inherited fact: the first draft trusted “producer already migrated” from
+  the prior family labels. The 35-fixture preflight disproved it; the grep
+  audit found and synchronized every legacy direct truth write.
+- Letter versus intent: merely changing `output_reachability` to abstain met
+  the R2 wording but erased valid facts because the producer side was
+  incomplete. The final design makes forgotten-producer safety operational
+  only after the construction sites have made an explicit decision.
+- Reporting bias: the 35 changed fixture tests belong to a rejected
+  intermediate tree, not to the landed result. They are disclosed as the
+  producer-coverage failure that shaped the final implementation. Deleted,
+  present-wrong-type, truly consumed, raw-falsy, and composite controls were
+  replayed; no final-tree issue or unreported semantic delta was found.
+
+- Gates on the final Step 6b.3 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,233 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 568 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,805 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream install: `cargo install --path
+    ./crates/helm-schema-cli/`; exit 0.
+  - Downstream luup2: `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`; exit 0 across all 32 charts.
+  - `task tokei:core`: exit 0; 61,681 production Rust LOC, delta +56.
+- Measured production LOC delta: +56 (61,625 to 61,681).
 - Commit: pending.

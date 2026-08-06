@@ -51,20 +51,32 @@ fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
 fn condition_reachability_distinguishes_raw_identities_from_rendered_scalars() {
     let raw = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()));
     sim_assert_eq!(
+        have: raw.selection_reachability.as_ref(),
+        want: Some(&SelectionReachability::exact(
+            Predicate::truthy_path("alpha"),
+            SelectionTruthSource::RawInput,
+        ))
+    );
+    sim_assert_eq!(
         have: raw
             .output_reachability(SelectionPolarity::Truthy)
             .truth_source(),
         want: SelectionTruthSource::RawInput
     );
 
+    let dispatch = ScalarValueDispatch {
+        arms: vec![(
+            Predicate::True,
+            ScalarValue::PrintfStringIdentity("alpha".to_string()),
+        )],
+        complete: true,
+    };
     let rendered =
-        EvalResult::from_value(AbstractValue::Unknown).with_scalar_dispatch(ScalarValueDispatch {
-            arms: vec![(
-                Predicate::True,
-                ScalarValue::PrintfStringIdentity("alpha".to_string()),
-            )],
-            complete: true,
-        });
+        EvalResult::from_value(AbstractValue::Unknown).with_scalar_dispatch(dispatch.clone());
+    sim_assert_eq!(
+        have: rendered.selection_reachability.as_ref(),
+        want: Some(&SelectionReachability::from((&dispatch, SelectionPolarity::Truthy)))
+    );
     sim_assert_eq!(
         have: rendered
             .output_reachability(SelectionPolarity::Truthy)
@@ -276,6 +288,10 @@ fn dead_output_selection_retains_eager_effects() {
     effects.add_default_paths(BTreeSet::from(["fallback".to_string()]));
     let mut result = EvalResult::with_effects(None, effects);
     sim_assert_eq!(have: result.selection_reachability, want: None);
+    sim_assert_eq!(
+        have: result.output_reachability(SelectionPolarity::Truthy),
+        want: SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
+    );
     result.selection_reachability = Some(SelectionReachability::never(
         SelectionTruthSource::RenderedScalar,
     ));

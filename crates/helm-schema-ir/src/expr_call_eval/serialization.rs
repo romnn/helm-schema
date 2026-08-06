@@ -608,7 +608,10 @@ pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
         None
     };
     let mut decoded = EvalResult::with_effects(value, effects);
-    decoded.truth = payload_truth;
+    decoded.set_truth_condition(
+        payload_truth,
+        crate::eval_effect::SelectionTruthSource::RawInput,
+    );
     decoded
 }
 

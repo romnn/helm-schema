@@ -8,7 +8,7 @@ use helm_schema_core::{
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::eval_effect::{CaptureKind, EvalResult};
+use crate::eval_effect::{CaptureKind, EvalResult, SelectionPolarity, SelectionTruthSource};
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
@@ -783,6 +783,22 @@ fn negated_include_uses_the_rendered_scalar_dispatch_truthiness() {
         AbstractValue::ValuesPath(String::new()),
     )]);
     let expr = single_expr(r#"not (include "container-runtime-support-enabled" .)"#);
+    let include_expr = single_expr(r#"include "container-runtime-support-enabled" ."#);
+    let mut include_seen = HashSet::new();
+    let include_result = helper_result_from_expr_with_fragment_locals(
+        &include_expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut include_seen,
+    );
+    sim_assert_eq!(
+        have: include_result
+            .output_reachability(SelectionPolarity::Truthy)
+            .truth_source(),
+        want: SelectionTruthSource::RenderedScalar
+    );
     let mut seen = HashSet::new();
 
     let result = helper_result_from_expr_with_fragment_locals(

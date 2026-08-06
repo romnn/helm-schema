@@ -592,6 +592,7 @@ fn local_value_result(
         // Only the separately tracked semantic domains below may recover
         // truthiness or scalar dispatch for such a binding.
         result.truth = TruthCondition::Unknown;
+        result.selection_reachability = None;
         result.scalar_dispatch = None;
     }
     result.effects.local_source_paths = source_paths;
@@ -614,14 +615,16 @@ fn local_value_result(
     }
     if selected_paths.is_none() {
         if let Some(dispatch) = local_scalar_dispatch(var, env) {
-            result.truth = dispatch.truth_condition();
-            result.scalar_dispatch = Some(dispatch.clone());
+            result.set_scalar_dispatch(dispatch.clone());
         } else if let Some(predicate) = env
             .local_truthy_reductions
             .get(var)
             .or_else(|| env.local_truthy_reductions.get(var.trim_start_matches('$')))
         {
-            result.truth = TruthCondition::exact(predicate.clone());
+            result.set_truth_condition(
+                TruthCondition::exact(predicate.clone()),
+                crate::eval_effect::SelectionTruthSource::RenderedScalar,
+            );
         }
     }
     result
@@ -682,10 +685,12 @@ fn attach_root_field_semantics(result: &mut EvalResult, path: &[String], env: &E
 
 fn attach_named_root_field_semantics(result: &mut EvalResult, field: &str, env: &EvalEnv) {
     if let Some(dispatch) = env.root_value_dispatches.get(field) {
-        result.truth = dispatch.truth_condition();
-        result.scalar_dispatch = Some(dispatch.clone());
+        result.set_scalar_dispatch(dispatch.clone());
     } else if let Some(predicate) = env.root_truthy_predicates.get(field) {
-        result.truth = TruthCondition::exact(predicate.clone());
+        result.set_truth_condition(
+            TruthCondition::exact(predicate.clone()),
+            crate::eval_effect::SelectionTruthSource::RenderedScalar,
+        );
     }
 }
 
