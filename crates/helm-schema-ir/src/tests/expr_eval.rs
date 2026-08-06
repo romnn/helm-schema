@@ -1175,6 +1175,32 @@ fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
 }
 
 #[test]
+fn generated_default_chain_keeps_truthy_primary_string_consumption() {
+    let result = eval_expr(
+        &single_expr(
+            r#".Values.secret | default (include "existing" .) | default (randAlphaNum 16) | b64enc"#,
+        ),
+        &EvalEnv::default(),
+    );
+
+    assert!(
+        result.effects.helper_fails.iter().any(|capture| {
+            matches!(
+                &capture.kind,
+                crate::eval_effect::CaptureKind::ValueType {
+                    path,
+                    schema_type,
+                    ..
+                } if path == "secret" && schema_type == "string"
+            ) && capture
+                .conjunction
+                .contains(&Predicate::truthy_path("secret"))
+        }),
+        "a truthy raw primary reaches the strict b64enc consumer: {result:#?}"
+    );
+}
+
+#[test]
 fn literal_and_string_set_default_primaries_record_exact_fallback_reachability() {
     for (expression, predicates) in [
         (r#""" | default .Values.omega"#, Some(BTreeSet::new())),

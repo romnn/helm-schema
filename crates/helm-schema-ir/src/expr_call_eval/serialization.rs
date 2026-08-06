@@ -301,7 +301,11 @@ pub(super) fn eval_replace(
             )
         })
     {
-        super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);
+        super::strict_operands::record_string_consumer_effects(
+            subject.value.as_ref(),
+            &string_paths,
+            &mut effects,
+        );
         super::strict_operands::record_raw_range_key_string_consumer_paths(
             &raw_range_key_paths,
             &mut effects,
@@ -463,7 +467,7 @@ pub(super) fn eval_tpl(
         // dot) carries the same runtime string contract as any other
         // string-only consumer.
         let subject_paths = identity_value_paths(template.value.as_ref());
-        record_string_consumer_effects(&subject_paths, &mut effects);
+        record_string_consumer_effects(template.value.as_ref(), &subject_paths, &mut effects);
         if let Some(path) = template.value.as_ref().and_then(|value| match value {
             AbstractValue::ValuesPath(path) => Some(path),
             AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path),
@@ -901,7 +905,11 @@ pub(super) fn eval_trim_affix(
             )
         })
     {
-        super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);
+        super::strict_operands::record_string_consumer_effects(
+            subject.value.as_ref(),
+            &string_paths,
+            &mut effects,
+        );
         super::strict_operands::record_raw_range_key_string_consumer_paths(
             &raw_range_key_paths,
             &mut effects,
@@ -977,7 +985,11 @@ pub(super) fn eval_regex_replace(
             super::value_facts::regex_replace_transformed_value(value, &subject_effects, &escape)
         })
     {
-        super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);
+        super::strict_operands::record_string_consumer_effects(
+            subject.value.as_ref(),
+            &string_paths,
+            &mut effects,
+        );
         super::strict_operands::record_raw_range_key_string_consumer_paths(
             &raw_range_key_paths,
             &mut effects,

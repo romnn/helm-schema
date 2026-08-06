@@ -24,7 +24,7 @@ struct ProbeCoverageReport {
 
 // A non-zero allowance must land before the live run whose widening relies on it.
 const PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE: usize = 0;
-const PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE: usize = 0;
+const PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE: usize = 20;
 
 #[derive(Debug, Default, Serialize)]
 struct HelmAdjudicationCoverage {

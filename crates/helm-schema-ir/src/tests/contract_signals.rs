@@ -1604,8 +1604,8 @@ fn direct_ranged_nested_sentinel_retains_its_member_contract() {
             )
         });
     assert!(
-        evidence.facts.has_string_contract,
-        "tpl must retain its strict string contract on the nested sentinel: {evidence:#?}"
+        evidence.facts.has_non_self_guarded_string_contract,
+        "tpl must retain its scoped string contract on the nested sentinel: {evidence:#?}"
     );
     assert!(signals.evidence_for("$tplYaml").is_none());
     assert!(signals.evidence_for("$tplYaml.*").is_none());

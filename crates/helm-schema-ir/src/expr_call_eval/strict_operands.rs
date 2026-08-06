@@ -48,7 +48,7 @@ pub(super) fn record_string_transform_effects(
             .extend(identity_range_key_paths(value));
         return;
     }
-    record_string_consumer_effects(string_paths, effects);
+    record_string_consumer_effects(value, string_paths, effects);
     record_nil_strict_identity_operand(value, effects);
     record_raw_range_key_string_consumer_paths(raw_range_key_paths, effects);
     if matches!(function, "lower" | "upper") {
@@ -116,15 +116,20 @@ pub(super) fn record_string_call_consumers(
     resolver: &mut impl HelperCallValueResolver,
     effects: &mut Effects,
 ) {
-    let (paths, raw_range_key_paths) =
-        string_invocation_operand_facts(function, args, None, env, resolver);
-    record_string_consumer_effects(&paths, effects);
+    let mut raw_range_key_paths = BTreeSet::new();
     for index in function_semantics(function).string_operand_indices(args.len()) {
         let Some(arg) = args.get(index) else {
             continue;
         };
         let operand = eval_expr_with_helper_calls(arg, env, resolver);
+        let paths = identity_value_paths(operand.value.as_ref());
+        record_string_consumer_effects(operand.value.as_ref(), &paths, effects);
         record_nil_strict_identity_operand(operand.value.as_ref(), effects);
+        let keys = identity_range_key_paths(operand.value.as_ref());
+        raw_range_key_paths.extend(
+            keys.difference(&operand.effects.derived_range_key_paths)
+                .cloned(),
+        );
     }
     record_raw_range_key_string_consumer_paths(&raw_range_key_paths, effects);
 }
@@ -410,7 +415,11 @@ fn parser_output_metas(
 /// consumed only on its selected arm, so its contract is captured as a
 /// conditional fail-class implication instead of an unconditional row
 /// contract.
-pub(super) fn record_string_consumer_effects(paths: &BTreeSet<String>, effects: &mut Effects) {
+pub(super) fn record_string_consumer_effects(
+    value: Option<&AbstractValue>,
+    paths: &BTreeSet<String>,
+    effects: &mut Effects,
+) {
     for path in paths {
         if effects.derived_text_paths.contains(path)
             || effects
@@ -420,25 +429,20 @@ pub(super) fn record_string_consumer_effects(paths: &BTreeSet<String>, effects: 
         {
             continue;
         }
-        let has_selection_condition = effects.defaults.contains(path)
-            || effects.local_default_paths.contains(path)
-            || effects
-                .local_output_meta
-                .get(path)
-                .is_some_and(|meta| !meta.predicates.is_empty());
-        if has_selection_condition {
-            for conjunction in operand_selection_conjunctions(effects, path) {
-                push_value_type_capture(
-                    conjunction,
-                    path.clone(),
-                    "string".to_string(),
-                    false,
-                    effects,
-                );
-            }
-        } else {
+        let conjunctions = string_operand_selection_conjunctions(value, effects, path);
+        if matches!(conjunctions.as_slice(), [conjunction] if conjunction.is_empty()) {
             effects.string_contract_paths.insert(path.clone());
             effects.direct_string_consumer_paths.insert(path.clone());
+            continue;
+        }
+        for conjunction in conjunctions {
+            push_value_type_capture(
+                conjunction,
+                path.clone(),
+                "string".to_string(),
+                false,
+                effects,
+            );
         }
     }
 }
@@ -978,6 +982,33 @@ pub(super) fn operand_selection_conjunctions(effects: &Effects, path: &str) -> V
             conjunction.into_iter().collect()
         })
         .collect()
+}
+
+fn string_operand_selection_conjunctions(
+    value: Option<&AbstractValue>,
+    effects: &Effects,
+    path: &str,
+) -> Vec<Vec<Predicate>> {
+    let output_metas = parser_output_metas(value, path);
+    if output_metas.is_empty() {
+        return operand_selection_conjunctions(effects, path);
+    }
+    let mut conjunctions = output_metas
+        .iter()
+        .flat_map(|meta| {
+            if meta.predicates.is_empty() {
+                vec![Vec::new()]
+            } else {
+                meta.predicates
+                    .iter()
+                    .map(|branch| branch.iter().cloned().collect())
+                    .collect()
+            }
+        })
+        .collect::<Vec<_>>();
+    conjunctions.sort();
+    conjunctions.dedup();
+    conjunctions
 }
 
 /// `len` requires a length-bearing value (string, list, or map): numeric

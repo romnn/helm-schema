@@ -31,6 +31,7 @@ pub(super) fn eval_default(
     let fallback_reachability = default_primary_selection(&primary);
     let primary_reachability = fallback_reachability.complement();
     let primary_paths = identity_value_paths(primary.value.as_ref());
+    let exact_primary_identity = primary.exact_input_identity();
     primary.selection_reachability = Some(primary_reachability.clone());
     apply_default_primary_formatter_reachability(
         primary.value.as_ref(),
@@ -93,13 +94,24 @@ pub(super) fn eval_default(
                 .entry(primary_path.clone())
                 .or_default();
             meta.input_identity = true;
-            // The legacy capture lane still uses raw truthiness here. For a
-            // plain `%s` formatter it is the capture's faithfulness boundary;
-            // for an opaque formatter it keeps eager strict-consumer effects
-            // separate from selected output. The carrier owns the actual
-            // output reachability until Step 6b.4 removes this projection.
-            let primary_predicates = BTreeSet::from([Predicate::truthy_path(primary_path.clone())]);
-            meta.conjoin_branches(&primary_predicates);
+            // Only an exact raw identity selects by its own truthiness. A
+            // formatter can retain the same provenance path while selecting
+            // by RENDERED text (`printf "%s" false` is truthy), and a prior
+            // default can retain exact arm predicates that the composed
+            // result's approximate carrier must not overwrite.
+            if exact_primary_identity.as_ref() == Some(&primary_path) {
+                let primary_predicates =
+                    BTreeSet::from([Predicate::truthy_path(primary_path.clone())]);
+                meta.conjoin_branches(&primary_predicates);
+            } else if meta.predicates.is_empty()
+                && primary_reachability.has_proven_selection_condition()
+            {
+                let primary_predicates = primary_reachability.output_selection_conjunction(
+                    "default primary selection",
+                    primary_paths.clone(),
+                );
+                meta.conjoin_branches(&primary_predicates);
+            }
             // A scalar literal fallback is the binding's exact value on
             // every Helm-falsy input; equality decoding needs the literal
             // itself to spell the fallback arm. Floats abstain (their
@@ -701,6 +713,7 @@ pub(super) fn eval_split_list(
     // produces: the literal-split fast path below is value refinement on
     // top of that contract, not a replacement for it.
     record_string_consumer_effects(
+        result.value.as_ref(),
         &identity_value_paths(result.value.as_ref()),
         &mut result.effects,
     );
@@ -815,7 +828,7 @@ pub(super) fn eval_nonempty_split(
     if let Some(piped) = piped_for_facts.as_ref() {
         let (string_paths, raw_range_key_paths) =
             string_invocation_operand_facts("split", args, Some(piped), env, resolver);
-        record_string_consumer_effects(&string_paths, &mut effects);
+        record_string_consumer_effects(piped.value.as_ref(), &string_paths, &mut effects);
         super::strict_operands::record_nil_strict_identity_operand(
             piped.value.as_ref(),
             &mut effects,

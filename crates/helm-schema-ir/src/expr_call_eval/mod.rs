@@ -552,9 +552,11 @@ fn eval_direct_invocation(
             // payload).
             if let Some(subject) = args.first() {
                 let subject = eval_expr_with_helper_calls(subject, env, resolver);
+                let subject_paths = identity_value_paths(subject.value.as_ref());
+                result.effects.add_shape_erased_paths(subject_paths.clone());
                 result
                     .effects
-                    .add_shape_erased_paths(identity_value_paths(subject.value.as_ref()));
+                    .clear_plain_slot_string_format_paths(&subject_paths);
             }
             result
         }
@@ -1013,8 +1015,17 @@ fn eval_piped_invocation(
             // same erasure as the call form above.
             let subject_identities = identity_value_paths(current.value.as_ref());
             let mut result = eval_unknown_call(args, current.effects, env, resolver);
-            result.effects.add_shape_erased_paths(subject_identities);
-            record_string_consumer_effects(&string_paths, &mut result.effects);
+            result
+                .effects
+                .add_shape_erased_paths(subject_identities.clone());
+            record_string_consumer_effects(
+                current.value.as_ref(),
+                &string_paths,
+                &mut result.effects,
+            );
+            result
+                .effects
+                .clear_plain_slot_string_format_paths(&subject_identities);
             record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut result.effects);
             result
         }
@@ -1122,7 +1133,7 @@ fn eval_piped_invocation(
                 string_invocation_operand_facts(function, args, Some(&current), env, resolver);
             let mut effects = current.effects;
             merge_arg_effects(args, env, resolver, &mut effects);
-            record_string_consumer_effects(&string_paths, &mut effects);
+            record_string_consumer_effects(current.value.as_ref(), &string_paths, &mut effects);
             record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
             record_strict_parser_invocation(
                 function,

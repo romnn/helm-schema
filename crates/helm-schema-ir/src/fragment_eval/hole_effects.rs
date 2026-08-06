@@ -529,14 +529,10 @@ impl Interpreter<'_> {
             self.string_contract_paths
                 .extend(effects.string_contract_paths.iter().cloned());
         }
-        // Under ambient predicates the row lanes only hint (and hints
-        // about a path under its OWN guard stay row-anchored); the
-        // truthy⇒string capture carries the enforceable conditional arm
-        // through the fail machinery (ambient guards join at absorption).
-        // Predicate-free sites stay row-only: the unconditional row typing
-        // already states the requirement. Only DIRECT consumer subjects
-        // qualify — a called helper's contract flags lost their
-        // body-internal guards (its own fail lane carries the captures).
+        // A locally unconditional consumer becomes a fail capture only
+        // after the enclosing control-flow predicates are known. Selected
+        // expression arms already arrive as captures and never enter this
+        // compatibility lane.
         if !self.active_predicates.is_empty() {
             self.absorb_condition_string_captures(&effects.direct_string_consumer_paths.clone());
         }
@@ -551,7 +547,6 @@ impl Interpreter<'_> {
             .cloned()
             .collect();
         self.absorb_string_consumer_presence_captures(&presence_paths);
-
         let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
         for path in bound_reads {
             self.push_read(&path, &[]);

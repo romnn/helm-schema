@@ -932,7 +932,7 @@ fn opaque_formatter_default_primary_keeps_fallback_consumers_conditional() {
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | trunc 5"#,
             false,
-            true,
+            false,
         ),
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | sha256sum"#,
@@ -947,7 +947,7 @@ fn opaque_formatter_default_primary_keeps_fallback_consumers_conditional() {
         (
             r#"printf "%s" .Values.alpha | default .Values.omega | trimSuffix "-x""#,
             false,
-            true,
+            false,
         ),
         (
             r#"(printf "%s" .Values.alpha) | default .Values.omega | b64enc"#,

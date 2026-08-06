@@ -158,7 +158,7 @@ impl ContractPathAccumulator {
             guarded_type_hints,
             fallback_type_hints,
             guarded_fallback_type_hints,
-            conditional_overlay_branches,
+            mut conditional_overlay_branches,
             mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
             mut fail_implications,
@@ -182,6 +182,24 @@ impl ContractPathAccumulator {
             .chain(guarded_type_hints.iter())
             .cloned()
             .collect();
+        // A selected string transform and a YAML-serialized render are two
+        // views of the same raw string domain. The serialized route quotes
+        // scalar-looking spellings before the sink sees them, so a
+        // stringified scalar provider preimage from a sibling route cannot
+        // narrow that shared input domain. Keep direct raw provider uses and
+        // retain the exact selection predicate on the fail implication.
+        if path_facts.facts.used_as_yaml_serialized
+            && has_self_truthy_string_requirement(&value_path, &fail_implications)
+        {
+            path_facts.provider_schema_uses.retain(|provider_use| {
+                provider_use.kind != crate::ValueKind::Scalar || !provider_use.stringified
+            });
+            for branch in conditional_overlay_branches.values_mut() {
+                branch.provider_schema_uses.retain(|provider_use| {
+                    provider_use.kind != crate::ValueKind::Scalar || !provider_use.stringified
+                });
+            }
+        }
         let mut evidence_groups: Vec<(PathSchemaFactsAccumulator, Vec<Vec<ConditionalGuard>>)> =
             Vec::new();
         for (guards, branch) in conditional_overlay_branches {
@@ -331,4 +349,27 @@ impl ContractPathAccumulator {
             fail_implications,
         }
     }
+}
+
+fn has_self_truthy_string_requirement(
+    value_path: &str,
+    implications: &[helm_schema_core::ContractFailImplication],
+) -> bool {
+    implications.iter().any(|implication| {
+        matches!(
+            implication.target,
+            helm_schema_core::ContractRequirementTarget::Value
+        ) && implication.requirements.iter().any(|requirement| {
+            matches!(
+                requirement,
+                helm_schema_core::FailValueRequirement::SchemaType(schema_type)
+                    if schema_type == "string"
+            )
+        }) && implication.outer_guards.iter().any(|guard| {
+            matches!(
+                guard,
+                ConditionalGuard::Truthy { path } if path == value_path
+            )
+        })
+    })
 }

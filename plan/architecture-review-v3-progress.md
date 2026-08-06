@@ -2388,7 +2388,7 @@ adjudication.
 
 ## Step 6b.3 — migrate helper and root scalar dispatch
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: behavior-bearing; make helper-return and root/local scalar-dispatch
   producers publish their raw-versus-rendered selection truth through the
   Step 6a carrier, and make downstream truth consumers abstain when a producer
@@ -2553,4 +2553,250 @@ adjudication.
     check:local`; exit 0 across all 32 charts.
   - `task tokei:core`: exit 0; 61,681 production Rust LOC, delta +56.
 - Measured production LOC delta: +56 (61,625 to 61,681).
+- Commit: `add353e` (`refactor(ir): migrate scalar dispatch reachability`).
+
+## Step 6b.4 — migrate strict string-consumer scope and fail captures
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing; make strict string consumers and fail captures
+  preserve typed selection reachability through conditional captures, remove
+  legacy default-marker reconstruction and path-wide promotion that can erase
+  execution scope, and leave builder-side lowering for Step 6b.5. Exercise the
+  Round 68/73/74 chains, oauth2-proxy composite state, kind predicates, and
+  every string-consumer family in the deleted, dormant wrong-type, truly
+  consumed, and raw-falsy formatted directions.
+- Acceptance baseline: `add353e`.
+- Baseline production Rust LOC: 61,681.
+- Pre-registered acceptance expectations:
+  - Existing exact default/coalesce/or/ternary selection teeth remain exact;
+    dormant fallback values of the wrong type remain accepted when Helm does
+    not consume them, while truly consumed wrong-type values keep rejecting.
+  - Approximate/opaque selection remains an explicit conditional capture and
+    never becomes a path-wide string requirement merely because no exact
+    predicate can be inverted.
+  - Direct strict string consumers remain unconditional: deleted and wrong-
+    type direct operands keep the same Helm-adjudicated teeth.
+  - Any corpus or battery flip outside those registered rows stops the step
+    for individual Helm adjudication before a fixture is changed.
+- Measured results:
+  - String consumers now evaluate each catalog-declared operand and consult
+    that evaluated value's per-arm `OutputPath` metadata before the aggregate
+    effect fallback. An unselected arm therefore retains its selection
+    predicate until it becomes a conditional `ValueType(string)` capture;
+    only a locally unconditional operand enters the path-wide direct-consumer
+    row (`strict_operands.rs:112-132,410-453,989-1016`).
+  - Fragment lowering receives selected requirements as conditional
+    `ValueType(string)` captures. Locally unconditional consumers still become
+    path-wide rows, and an enclosing control-flow guard is absorbed at the
+    fragment boundary (`strict_operands.rs:415-452`,
+    `fragment_eval/hole_effects.rs:524-551`). No builder-side metadata merge is
+    needed in this family.
+  - A composed default preserves an existing raw arm's exact predicates
+    rather than replacing them with the outer result's approximate
+    reachability. Only an exact raw identity is scoped by raw truth; a
+    formatter-derived primary uses proved rendered-output reachability, and an
+    opaque `tpl` primary with no sound subset abstains. Regressions pin the
+    four Harbor secret teeth and the strict `tpl` boundary
+    (`collections.rs:88-117`, `helm-schema/src/tests/analysis.rs:336-382`,
+    `helm-schema-gen/src/tests/string_transform_contracts.rs:2109-2179`).
+  - Direct and piped checksum dispatch clears a consumed formatter's
+    plain-slot capture only after retaining the checksum function's strict
+    string-input requirement. This distinguishes a digest, which cannot
+    expose the formatter token, from `trunc`/`trimSuffix`, which can preserve
+    the token and still make Helm abort (`expr_call_eval/mod.rs:543-563,
+    1011-1032`).
+  - The authoritative clean dumps produce 84 schema artifacts and 18 IR
+    artifacts. Fifteen chart-corpus schemas and two per-template generator
+    schemas re-encode; IR, lean, and final-output policy fixtures do not
+    change.
+  - The full-depth comparison checks 60 lanes and 121,059 probes against
+    `add353e`. It finds 20 flips: 19 Helm-rendering widenings and one
+    Helm-aborting tightening. There are zero candidate-
+    accepts/Helm-aborts cells against the zero allowance.
+  - Coverage is 112,260 base probes and 7,465 third-level probes with zero
+    drops in either mandatory category, 427 guard pairs, and 240 composite
+    pairs. The report discloses 37,582 bounded guard-witness-candidate drops,
+    2,267 bounded composite-pair drops, and 43,938 total drops across all
+    disclosed categories.
+  - Production Rust is 61,781 LOC, delta +100. The frozen -500..-250 estimate
+    covers all five Step 6b commits; the cumulative delta through 6b.4 is +377
+    against the 61,404 pre-6b baseline and is not yet a like-for-like estimate
+    comparison.
+- Deviations:
+  - The existing `nil_strict_identity_paths` absorption remains as a temporary
+    compatibility lane until builder-side lowering migrates in 6b.5. Removing
+    it in 6b.4 admitted multiple Helm-aborting nil states; retaining an
+    independently verified real tooth is required by the behavior-bearing
+    contract, even though the frozen plan ultimately deletes the parallel
+    marker interpretation.
+  - Four early preflight designs were rejected before the authoritative dump. Broad
+    unconditional value-type captures produced 20 false-rejection candidates;
+    changing the shared operand-selection helper leaked string-specific scope
+    into comparison/collection lanes and rejected Cilium/NATS states; deleting
+    nil absorption admitted Helm-aborting states; and stamping the outer
+    approximate result over exact inner arms admitted 16 Helm-aborting Harbor
+    secret states. The subsequent workspace preflight caught the adjacent
+    boundaries the focused set had skipped: an approximation-only `tpl`
+    primary lost a real strict-consumer tooth, and checksum functions retained
+    a dead plain-slot formatter capture. The final design abstains for the
+    former and clears the formatter channel in both checksum dispatcher arms
+    for the latter. No artifact from any rejected code state was adopted.
+  - The final fixture change is intentionally broad re-encoding: it moves
+    selected string requirements from path-wide rows into conditional
+    captures. Acceptance claims are limited to the measured battery surface
+    and live adjudication below, not described as byte normalization.
+  - Two later compatibility preflights were also rejected. Treating every
+    selected strict-string capture as a path-wide Boolean erased the AWS load
+    balancer controller's provider-lexical tooth. Restricting the compatibility
+    adjustment to the base path missed the same provider preimages after they
+    had moved into conditional overlays and falsely rejected Bitnami Redis's
+    rendered `nameOverride: "3"` state. The final rule is derived from the
+    exact self-truthy string predicate and runs before overlay grouping, so it
+    removes only the serialized/plain provider preimages made unreachable by
+    that predicate. The general builder-side migration remains Step 6b.5.
+- Adjudication evidence:
+  - Nineteen widenings render under Helm 4.2.3: coercible-string
+    `nameOverride` values in Bitnami PostgreSQL and Falco; false, integer,
+    empty-array, and empty-object values for both Bitnami Redis and Datadog
+    name overrides; and one Bitnami Redis composite guard state.
+  - The sole tightening is `kyverno: config.resourceFilters <- empty object
+    item`; Helm aborts and the candidate rejects it. Thus every one of the 20
+    changed cells agrees with Helm, including deleted/present-wrong-type/
+    truly-consumed and sampled composite directions, and the fixture batch is
+    adopted.
+  - Focused schema/IR regressions pin exact chained-default primary teeth,
+    dormant selected string arms, direct/derived consumer boundaries, the
+    strict `tpl` boundary, and the checksum-versus-text-preserving split. The
+    seven live matrices replay call/pipeline, chained-default, else-with,
+    literal-primary, oauth2-proxy composite, opaque formatter, and ranged-
+    provider states against Helm 4.2.3.
+
+### Producer coverage
+
+| Producer family | Construction sites audited | Carrier/scoping decision |
+|---|---|---|
+| Direct string transforms | `record_string_transform_effects` and direct dispatcher arms | The evaluated operand value supplies its embedded arm metadata. Derived text stays exempt; an unconditional raw identity retains the direct path-wide tooth. Checksum arms retain the strict input requirement but clear the formatter slot channel after digesting it. |
+| Catalog-declared call operands | `record_string_call_consumers` and all direct call sites | Each declared operand is evaluated separately, so one operand's selection metadata cannot be flattened into another's aggregate effects. Missing arity remains the catalog's established no-operand fact. |
+| Pipeline consumers | `eval_piped_invocation` strict-parser and unknown-string arms | The already-evaluated pipeline value is passed into the same scoping function; it is never re-evaluated and keeps final-argument semantics. |
+| Split/list families | `eval_split_list`, `eval_nonempty_split`, and catalog split calls | Literal-split refinement and raw range-key handling remain separate; only the string-consumed value enters selected capture lowering. |
+| Serialization/templates | `eval_to_yaml`/`tpl`/serializer call sites in `serialization.rs` | Every migrated call passes its evaluated template/subject value. Legacy direct-only rows that model distinct serializer semantics remain outside this family for 6b.5 auditing. |
+| Default arm construction | `eval_default`, `conjoin_result_reachability`, and formatter reachability | Existing exact inner-arm predicates win over an outer composed approximation. Raw identities use raw truth; proved formatter predicates use rendered truth; an undecidable `Approximate { None }` arm abstains and cannot become an unconditional contract. |
+| Fragment fail capture | `lower_value`, `absorb_condition_string_captures`, and `scope_execution` | Selected output metadata becomes a conditional capture. The nil-presence compatibility tooth remains explicit until 6b.5; no forgotten producer is promoted from absent metadata. |
+| Final signal compatibility | `adjust_serialized_provider_routes` before conditional-overlay grouping | An exact self-truthy string predicate removes stringified provider preimages from both base and conditional branches; approximation and non-self guards abstain. This preserves serialized/plain routes without reintroducing a path-wide string flag. |
+
+### Review dossier
+
+- Consumer-scoping proof: `sed -n '100,155p;400,455p;980,1020p'
+  crates/helm-schema-ir/src/expr_call_eval/strict_operands.rs`; shows per-
+  operand evaluation, direct-versus-selected classification, and the embedded
+  metadata preference.
+- Default-chain proof: `sed -n '20,130p'
+  crates/helm-schema-ir/src/expr_call_eval/collections.rs`; shows typed
+  reachability on both arms and preservation of an already-scoped primary.
+- Focused boundary proof: `cargo nextest run --workspace -E
+  'test(/(opaque_formatter_default_primary_keeps_fallback_consumers_conditional|strict_tpl_in_composed_scalar_keeps_its_input_type|dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback|generated_default_chain_keeps_truthy_primary_string_consumption)/)'`;
+  exit 0, four tests pass together. The first test contains the
+  live-adjudicated `b64enc`, `trunc`, `sha256sum`, `quote`, and `trimSuffix`
+  call/pipeline matrix.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b4-final5-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 artifacts are
+  written in one batch.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b4-final5-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 artifacts are written in one batch.
+- Full-depth acceptance and Helm proof:
+  `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b4-final5-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=add353e
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b4-final5-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b4-final5-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --config-file
+  target/arch-v3-wave2-step6b4-nextest.toml -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes, 121,059 probes,
+  20 live-adjudicated flips, and zero unallowed accepted-abort cells. The
+  step-local nextest config raises only the slow timeout because host
+  contention exceeded the repository's 60-second default.
+- Coverage-accounting proof: `jq '{baseline_ref, chart_count:(.charts|length),
+  base_dropped:([.charts[].base_dropped]|add),
+  third_level_dropped:([.charts[].third_level_dropped]|add),
+  guard_witness_candidates_dropped:
+  ([.charts[].guard_witness_candidates_dropped]|add),
+  composite_pairs_dropped_by_cap:
+  ([.charts[].composite_pairs_dropped_by_cap]|add),
+  total_emitted:([.charts[].total_emitted]|add),
+  total_dropped:([.charts[].total_dropped]|add), helm_adjudication}'
+  target/arch-v3-wave2-step6b4-final5-coverage.json`; reproduces baseline
+  `add353e`, 60 charts, zero mandatory drops, 121,059 emitted probes, 43,938
+  disclosed bounded drops, 20 adjudications, and zero accepted-abort cells.
+- Exact flip inventory: `sed -n '/HELM_/p'
+  target/arch-v3-wave2-step6b4-final5-prober.log`; reproduces all 19
+  `HELM_RENDER` widenings and the one Kyverno `HELM_ABORT` tightening.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Live controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profile_live -E
+  'test(replay_call_and_pipeline_invocation_families_against_helm) |
+  test(replay_chained_default_printf_against_helm) |
+  test(replay_else_with_successor_against_helm) |
+  test(replay_literal_default_primary_reachability_against_helm) |
+  test(replay_oauth2_proxy_tpl_default_eagerness_against_helm) |
+  test(replay_opaque_formatter_default_against_helm) |
+  test(replay_selector_independent_ranged_provider_use_against_helm)'
+  --run-ignored ignored-only --no-capture`; exit 0, seven tests pass.
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+
+### Self-adversarial pass
+
+- Inherited fact: nil strictness looked like obsolete marker reconstruction,
+  but deleting it admitted Helm-aborting documents. It remains until 6b.5 can
+  replace it without losing the measured tooth. Conversely, the inherited
+  assumption that every strict transform preserves a formatter slot was
+  re-adjudicated: checksums do not, while `trunc` and `trimSuffix` can.
+- Letter versus intent: routing every constraint through the new conjunction
+  helper met the superficial “typed selection” wording but contaminated
+  non-string comparison/collection semantics. The final helper is string-
+  specific and leaves adjacent constraint kinds unchanged.
+- Reporting bias: the 15 chart fixtures and 20 acceptance flips are reported
+  as semantic re-scoping, not favorable “normalization.” Rejected preflights,
+  bounded probe drops, the one tightening, and the temporary compatibility
+  lane are all disclosed. The final workspace preflight failures are also
+  recorded rather than erased from the narrative. Adjacent deleted,
+  wrong-type, consumed, raw-falsy, and composite states found no additional
+  final-tree defect after the `tpl` and checksum refinements.
+
+- Gates on the final Step 6b.4 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 feature/target combinations pass with zero
+    warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,237 tests pass.
+  - `task test:integration`: exit 0; 568 tests pass, 24 are skipped by the
+    integration profile.
+  - `task test:all`: exit 0; 1,809 tests pass, 24 are skipped by the CI
+    profile.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; all 32 downstream charts pass.
+  - `task tokei:core`: exit 0; 61,781 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +100 (61,681 to 61,781).
 - Commit: pending.

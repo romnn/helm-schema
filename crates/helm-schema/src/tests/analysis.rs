@@ -1,7 +1,7 @@
 use color_eyre::eyre;
 use indoc::indoc;
 
-use helm_schema_ir::{Guard, ResourceRef, YamlPath};
+use helm_schema_ir::{Guard, ResourceRef, ValueKind, YamlPath};
 use helm_schema_k8s::{ChartLocalCrdSchemaProvider, Diagnostic, DiagnosticSink, K8sSchemaProvider};
 use serde_json::json;
 use vfs::VfsPath;
@@ -276,6 +276,162 @@ fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped() -> eyre:
         "every string implication rides the operand's own truthiness; \
          implications={string_implications:?}"
     );
+
+    Ok(())
+}
+
+#[test]
+fn bitnami_redis_existing_secret_string_contract_stays_branch_scoped() -> eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("bitnami-redis");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
+    )?;
+    let path = "auth.existingSecret";
+    let signals = contract_schema_signals!(collection);
+    let Some(evidence) = signals.evidence_for(path) else {
+        return Err(eyre::eyre!("missing evidence for {path}"));
+    };
+    let string_implications =
+        evidence
+            .fail_implications
+            .iter()
+            .filter(|implication| {
+                implication.requirements.contains(
+                    &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
+                )
+            })
+            .collect::<Vec<_>>();
+
+    assert!(
+        !string_implications.is_empty()
+            && string_implications.iter().all(|implication| {
+                implication.outer_guards.iter().any(|guard| {
+                    matches!(
+                        guard,
+                        helm_schema_core::ConditionalGuard::Truthy { path: guard_path }
+                            if guard_path == path
+                    )
+                })
+            }),
+        "tpl executes only on the truthy secret-name arm: {evidence:#?}"
+    );
+    assert!(
+        !evidence.facts.has_non_self_guarded_string_contract,
+        "a self-guarded tpl call must leave the Helm-falsy input set open: {evidence:#?}"
+    );
+    Ok(())
+}
+
+#[test]
+fn selected_string_contract_preserves_serialized_and_plain_provider_routes() -> eyre::Result<()> {
+    for (chart_name, yaml_serialized_route) in [
+        ("bitnami-redis", true),
+        ("aws-load-balancer-controller", false),
+    ] {
+        let chart_dir = test_util::workspace_testdata()
+            .join("charts")
+            .join(chart_name);
+        let chart_dir_str = chart_dir.to_string_lossy().to_string();
+        let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+        let charts = chart::discover_chart_contexts(&chart_dir)?;
+        let defines = chart::build_define_index(&charts, false)?;
+        let collection = analyze_charts(
+            &charts,
+            &defines,
+            false,
+            &crate::values_roots::ValuesRoots::from_values_yaml(None),
+            None,
+        )?;
+        let signals = contract_schema_signals!(collection);
+        let Some(evidence) = signals.evidence_for("nameOverride") else {
+            return Err(eyre::eyre!(
+                "missing nameOverride evidence for {chart_name}"
+            ));
+        };
+        assert!(
+            evidence.fail_implications.iter().any(|implication| {
+                implication.requirements.iter().any(|requirement| {
+                    matches!(
+                        requirement,
+                        helm_schema_core::FailValueRequirement::SchemaType(schema_type)
+                            if schema_type == "string"
+                    )
+                }) && implication.outer_guards.iter().any(|guard| {
+                    matches!(
+                        guard,
+                        helm_schema_core::ConditionalGuard::Truthy { path }
+                            if path == "nameOverride"
+                    )
+                })
+            }),
+            "the selected transform must retain its exact string requirement: {evidence:#?}"
+        );
+        let has_stringified_scalar_provider = evidence
+            .provider_schema_uses
+            .iter()
+            .any(|use_| use_.kind == ValueKind::Scalar && use_.stringified);
+        assert!(
+            has_stringified_scalar_provider != yaml_serialized_route,
+            "a YAML-serialized sibling owns coercible string spellings, while a plain-only route retains its provider preimage: {evidence:#?}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn harbor_defaulted_secret_string_contract_keeps_its_truthy_tooth() -> eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("harbor");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
+    )?;
+    let signals = contract_schema_signals!(collection);
+
+    for path in [
+        "core.secret",
+        "core.xsrfKey",
+        "jobservice.secret",
+        "registry.secret",
+    ] {
+        let Some(evidence) = signals.evidence_for(path) else {
+            return Err(eyre::eyre!("missing evidence for {path}"));
+        };
+        let keeps_truthy_string_tooth =
+            evidence.fail_implications.iter().any(|implication| {
+                implication.requirements.contains(
+                    &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
+                ) && implication.outer_guards.iter().any(|guard| {
+                    matches!(
+                        guard,
+                        helm_schema_core::ConditionalGuard::Truthy { path: guard_path }
+                            if guard_path == path
+                    )
+                })
+            });
+        assert!(
+            keeps_truthy_string_tooth,
+            "the selected default primary still reaches b64enc when truthy: {evidence:#?}"
+        );
+    }
 
     Ok(())
 }

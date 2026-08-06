@@ -12721,3 +12721,23 @@ The full-depth comparison checks 121,059 probes with zero acceptance flips,
 zero candidate-accepts/Helm-aborts cells, and no undisclosed base or third-
 level truncation. Seven live control families replay the adjacent and
 composite states against Helm 4.2.3. No fixture change is adopted.
+
+## Architecture Review v3 Step 6b.4 (2026-08-05)
+
+Against acceptance baseline `add353e`, this behavior-bearing step migrates
+strict string-consumer scope into selection-conditioned captures. Fifteen
+chart-corpus schemas and two per-template generator fixtures re-encode from
+the same single clean schema and IR dumps; IR, lean, and final-output policy
+fixtures remain byte-identical.
+
+The full-depth comparison checks 121,059 probes across all 60 lanes and finds
+20 acceptance flips. Nineteen are widenings that Helm 4.2.3 renders: the
+Bitnami PostgreSQL and Falco coercible-string overrides plus the explicitly
+sampled Bitnami Redis and Datadog falsy/non-string name overrides. The sole
+tightening is Kyverno's
+`config.resourceFilters <- empty object item`; Helm aborts and the candidate
+rejects it. All 20 flips were live-adjudicated, and there are zero candidate-
+accepts/Helm-aborts cells. Mandatory base and third-level probe drops remain
+zero; the machine report discloses 37,582 bounded guard-witness-candidate
+drops, 2,267 bounded composite-pair drops, and 43,938 total drops across every
+disclosed category.
