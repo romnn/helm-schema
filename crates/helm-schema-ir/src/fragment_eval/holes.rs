@@ -10,7 +10,7 @@ use helm_schema_ast::{TemplateExpr, parse_expr_text};
 use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::Effects;
+use crate::eval_effect::{Effects, SelectionReachability};
 use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -35,6 +35,7 @@ pub(super) struct HoleEval {
     pub(super) value: Option<AbstractValue>,
     pub(super) effects: Effects,
     pub(super) truth: TruthCondition,
+    pub(super) truth_reachability: SelectionReachability,
     pub(super) json_payload_truth: TruthCondition,
     pub(super) scalar_dispatch: Option<ScalarValueDispatch>,
 }

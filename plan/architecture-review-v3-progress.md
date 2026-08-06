@@ -2006,7 +2006,7 @@ adjudication.
 
 ## Step 6b.1 — migrate expression selection reachability
 
-- Status: landed; commit pending.
+- Status: landed.
 - Contract: behavior-bearing; migrate `default`, `coalesce`, `or`, ternary,
   and short-circuit selection producers and consumers to the Step 6a carrier,
   preserving eager execution while keeping raw-input and rendered-scalar
@@ -2193,4 +2193,195 @@ adjudication.
     check:local`; exit 0 across all 32 charts.
   - `task tokei:core`: exit 0; 61,490 production Rust LOC, delta +86.
 - Measured production LOC delta: +86 (61,404 to 61,490).
+- Commit: `3f6c829` (`refactor(ir): migrate expression selection reachability`).
+
+## Step 6b.2 — migrate control-flow truth decoding
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing; migrate condition, `with`, and `range` truth
+  decoding to the Step 6a carrier, preserving exact/approximate polarity,
+  explicit raw-versus-rendered truth sources, header execution effects, and
+  the existing adjacent-state and composite controls.
+- Acceptance baseline: `3f6c829`.
+- Baseline production Rust LOC: 61,490.
+- Measured results:
+  - A rejected broad-consumption preflight completed all 60 live chart lanes
+    and 121,059 probes against `3f6c829`. It found 67 acceptance flips and
+    two candidate-accepts/Helm-aborts cells, so the exact-battery allowance
+    remained zero and the run failed as designed.
+  - The preflight exposed a representation boundary the one-polarity draft
+    missed: `TruthCondition::Partial` owns independent sound subsets for its
+    truthy and falsy outcomes, while complementing an approximate
+    `SelectionReachability` must discard the subset. The final
+    `SelectionTruthReachability` is a typed pair of the same carrier, not a
+    parallel truth model; it preserves both one-way proofs without making
+    either invertible (`eval_effect.rs:848-910`).
+  - Structural and inline `if` chains, `with` headers, and range subjects now
+    produce and combine the typed reachability pair. Raw input identities and
+    rendered scalar dispatch remain labeled separately. The still-unmigrated
+    `SymbolicLocalState` join receives a reconstructed legacy
+    `TruthCondition` only at its boundary (`fragment_eval/control.rs:75-165`,
+    `fragment_eval/inline_regions.rs:90-139`).
+  - One authoritative clean schema dump writes 84 artifacts and one clean IR
+    dump writes 18 artifacts; both sets are byte-identical to the tracked
+    fixtures. The final full-depth comparison checks 60 lanes and 121,059
+    probes against `3f6c829` with zero flips, zero candidate-accepts/Helm-
+    aborts cells, and the allowance fixed at zero.
+  - Machine coverage records 112,260 base probes, 7,465 third-level probes,
+    427 guard pairs, and 240 composite pairs. Both mandatory lanes have zero
+    drops; total disclosure is 121,059 emitted and 29,170 dropped.
+  - Production Rust is 61,625 LOC, delta +135. The frozen −500..−250 estimate
+    covers the whole of 6b.1–6b.5; the like-for-like comparison is deferred
+    through 6b.5. The cumulative 6b delta through this family is +221 LOC
+    against the 61,404 pre-6b baseline.
+- Deviations:
+  - The first design consumed exact `with` and `range` reachability in the
+    legacy scalar-local join adapter and complemented inline range
+    alternatives. Live adjudication showed false-rejection tightenings in
+    Bitnami PostgreSQL, Bitnami Redis, Datadog, and Sealed Secrets, including
+    present-wrong-type values that Helm renders. The design is rejected;
+    no fixture from it is adopted. Step 6b.2 retains the typed producers but
+    keeps those legacy consumers explicitly abstaining until the downstream
+    family that can preserve branch scope is migrated.
+  - The first correction retained only the truthy sound subset. It removed 67
+    legacy false-side facts and caused the same false-rejection family. The
+    final bipolar carrier preserves independently proved true and false
+    subsets and returns every fixture to byte identity. This is recorded as a
+    rejected design, not framed as progress on the final tree.
+  - An intermediate final candidate re-encoded Datadog while showing zero
+    acceptance flips over its 3,767 probes. Restoring the full partial
+    condition at the sole legacy adapter removed that re-encoding, so the
+    landed tree makes no fixture claim beyond byte identity.
+  - Step 6b.2 adds +135 production LOC. No per-family estimate exists; the
+    whole-Step-6b estimate is compared only after all five family commits.
+- Adjudication evidence:
+  - The rejected broad design was live-adjudicated by the compiled battery.
+    Its Bitnami PostgreSQL, Bitnami Redis, Datadog, and Sealed Secrets
+    tightenings include present-wrong-type states that Helm renders; the two
+    widening cells accept documents Helm aborts. The design was discarded and
+    its zero allowance was never raised.
+  - The final tree has no fixture or acceptance flip to adopt. The chained-
+    default, opaque-formatter, literal-primary, oauth2-proxy composite,
+    call/pipeline, `else with`, and selector-independent ranged-provider live
+    controls all pass against Helm 4.2.3.
+  - Hermetic monotonicity, semantic controls, guard/composite synthesis,
+    Temporal monotonicity, and both falsifiable accounting checks pass.
+
+### Producer coverage
+
+| Family | Construction sites decided | Carrier disposition |
+|---|---|---|
+| Structural `if` | `activate_if`, `activate_arm`, and the arm join in `fragment_eval/control.rs` | The evaluated header supplies a source-labeled pair. Exact structural recovery replaces an unknown evaluator result; partial true and false subsets survive independently. |
+| Inline `if` | `activate_inline_if` and the inline arm join in `fragment_eval/inline_regions.rs` | Uses the same pair and legacy-boundary reconstruction as structural control; prior-arm negation is derived from the paired legacy adapter, never by complementing one approximate subset. |
+| `with` | Structural and inline header activation | Header truth is carried, but the scalar-local join deliberately receives unknown reachability because the legacy join cannot preserve branch-local provider scope. Dot binding and execution effects remain unchanged. |
+| `range` | `RangeSubject` in `value_path_context/path_resolution.rs` and structural/inline range activation | The subject owns source-labeled truthy reachability; exact positive predicates drive body execution. The alternative stays conservatively unguarded where the legacy join cannot preserve complement scope. |
+| Header holes | `eval_hole_exprs` and `absorb_header_execution_effects` in `fragment_eval/hole_effects.rs` | A single expression derives reachability from its `EvalResult`; the condition pair is created before effects are absorbed. Multi-expression holes remain unknown, matching the existing value join. |
+| Outside 6b.2 | `EvalResult` producers audited by `rg` | Expression selection sites migrated in 6b.1 lower their per-arm carrier immediately into metadata. Helper/root scalar dispatch and strict-consumer sites remain for 6b.3/6b.4; no 6b.2 producer asserts their fact. |
+
+### Review dossier
+
+- Bipolar carrier proof: `sed -n '810,1135p'
+  `crates/helm-schema-ir/src/eval_effect.rs`; shows one selection carrier,
+  independent truthy/falsy instances, exact complement, and the sole legacy
+  `TruthCondition` reconstruction.
+- Producer audit: `rg -n
+  'SelectionTruthReachability|truth_reachability|output_reachability'
+  crates/helm-schema-ir/src/{fragment_eval,value_path_context} --glob '*.rs'`;
+  enumerates every migrated condition, `with`, range, header-hole, and inline
+  producer/consumer site.
+- Focused polarity/source proof: `cargo nextest run -p helm-schema-ir -E
+  'test(condition_reachability_distinguishes_raw_identities_from_rendered_scalars)
+  | test(condition_polarities_preserve_independent_partial_proofs)'`; exit 0,
+  two tests pass.
+- Clean schema dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b2-final-dump
+  SCHEMA_DUMP=1 cargo nextest run -P integration --no-fail-fast -p
+  helm-schema-gen -p helm-schema-cli -p helm-schema -E
+  'test(schema_fixtures_match) | binary(chart_corpus) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(final_output_policy)'`; exit 0, 62 tests pass and 84 byte-identical
+  artifacts are written.
+- Clean IR dump: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b2-final-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run -P integration -p
+  helm-schema-ir --test corpus -E 'test(ir_corpus_fixtures_match)'`; exit 0,
+  one test passes and 18 byte-identical artifacts are written. The explicit
+  `cmp` loop pairs those dumps with all 18 files under
+  `crates/helm-schema-ir/tests/fixtures` and exits 0.
+- Full-depth acceptance proof: `TMPDIR=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b2-final-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=3f6c829
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b2-final-dump
+  SCHEMA_PROBE_COVERAGE_REPORT=/home/roman/dev/helm-schema/target/arch-v3-wave2-step6b2-final-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+  --test schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes and 121,059
+  probes yield zero flips.
+- Machine accounting: `jq '{baseline_ref, helm_adjudication, totals: {base:
+  ([.charts[].base_emitted] | add), third_level:
+  ([.charts[].third_level_emitted] | add), guard_pairs:
+  ([.charts[].guard_pairs_emitted] | add), composite_pairs:
+  ([.charts[].composite_pairs_emitted] | add), base_dropped:
+  ([.charts[].base_dropped] | add), third_level_dropped:
+  ([.charts[].third_level_dropped] | add), total_emitted:
+  ([.charts[].total_emitted] | add), total_dropped:
+  ([.charts[].total_dropped] | add)}}'
+  target/arch-v3-wave2-step6b2-final-coverage.json`; reports baseline
+  `3f6c829`, live adjudication enabled, zero flips and accepted-abort cells,
+  112,260 base probes, 7,465 third-level probes, 427 guard pairs, 240
+  composite pairs, 121,059 total emitted, 29,170 disclosed drops, and no base
+  or third-level drops.
+- Hermetic controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profiles -E
+  'test(current_profiles_obey_monotonicity_and_semantic_controls) |
+  test(temporal_wrapper_pairwise_matrix_is_monotone) |
+  test(probe_coverage_validation_rejects_synthetic_truncation) |
+  test(helm_adjudication_validation_rejects_unregistered_accepted_abort) |
+  test(guard_battery_synthesizes_composite_guard_and_payload_states)'`; exit
+  0, five tests pass.
+- Live controls: `cargo nextest run -P integration -p helm-schema --test
+  schema_emission_profile_live -E
+  'test(replay_call_and_pipeline_invocation_families_against_helm) |
+  test(replay_chained_default_printf_against_helm) |
+  test(replay_else_with_successor_against_helm) |
+  test(replay_literal_default_primary_reachability_against_helm) |
+  test(replay_oauth2_proxy_tpl_default_eagerness_against_helm) |
+  test(replay_opaque_formatter_default_against_helm) |
+  test(replay_selector_independent_ranged_provider_use_against_helm)'
+  --run-ignored ignored-only --no-capture`; exit 0, seven tests pass (the
+  ranged-provider control was also run alone and passed).
+- Frozen-reference checks: `git diff --exit-code 44aa758 --
+  plan/architecture-review-v3.md plan/schema-emission-profiles.md`; exit 0.
+  `git diff --exit-code 5ef11aa --
+  plan/architecture-review-v3-wave2.md`; exit 0.
+
+### Self-adversarial pass
+
+- Inherited fact: the first draft assumed one approximate sound subset could
+  represent a condition and its complement. The 67-flip battery disproved
+  that inherited simplification; the final pair retains each proved polarity.
+- Letter versus intent: merely wrapping header truth in the carrier still let
+  the legacy scalar join erase branch scope. The final adapter abstains for
+  `with`/range and reconstructs the complete partial condition only where the
+  join already preserved its semantics.
+- Reporting bias: the rejected 67-flip tree and intermediate Datadog
+  re-encoding are disclosed above and excluded from the final byte-identity
+  and zero-flip claims. Deleted, present-wrong-type, truly consumed, and
+  composite live controls were replayed; no final-tree issue was found.
+
+- Gates on the final Step 6b.2 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; workspace Clippy and all three ast-grep checks pass.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets pass with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,233 tests pass and none are
+    skipped.
+  - `task test:integration`: exit 0; 568 tests pass and 24 are skipped.
+  - `task test:all`: exit 0; 1,805 tests pass and 24 are skipped, including
+    the live-network lane.
+  - Downstream install: `cargo install --path
+    ./crates/helm-schema-cli/`; exit 0.
+  - Downstream luup2: `task -t
+    /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`; exit 0 across all 32 charts.
+  - `task tokei:core`: exit 0; 61,625 production Rust LOC, delta +135.
+- Measured production LOC delta: +135 (61,490 to 61,625).
 - Commit: pending.

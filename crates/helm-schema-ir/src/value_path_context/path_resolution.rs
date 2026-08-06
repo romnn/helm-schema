@@ -5,11 +5,11 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
+use crate::eval_effect::{SelectionPolarity, SelectionReachability, SelectionTruthSource};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{direct_values_path, eval_expr, eval_exprs_effects};
 use crate::fragment_expr_eval::{document_result_from_expr, fragment_context_value};
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::TruthCondition;
 
 use super::{RangeSubject, RangeSubjectIdentity, ValuePathContext};
 
@@ -114,6 +114,7 @@ impl ValuePathContext<'_> {
             self.fragment_context,
             &mut seen,
         );
+        let evaluated_truth_reachability = evaluated.output_reachability(SelectionPolarity::Truthy);
         let mut influence_paths = evaluated.effects.output_value_paths();
         let value = self
             .with_body_fragment_value_expr(expr)
@@ -122,16 +123,22 @@ impl ValuePathContext<'_> {
         if let Some(value) = &value {
             influence_paths.extend(value.paths());
         }
-        let truth = match (
+        let truth_source = evaluated_truth_reachability.truth_source();
+        let truth_reachability = match (
             &evaluated.truth,
             value.as_ref().and_then(AbstractValue::static_truthiness),
         ) {
-            (TruthCondition::Unknown, Some(truthy)) => TruthCondition::exact(if truthy {
-                helm_schema_core::Predicate::True
-            } else {
-                helm_schema_core::Predicate::False
-            }),
-            (truth, _) => truth.clone(),
+            (crate::scalar_value::TruthCondition::Unknown, Some(true)) => {
+                SelectionReachability::always(SelectionTruthSource::RawInput)
+            }
+            (crate::scalar_value::TruthCondition::Unknown, Some(false)) => {
+                SelectionReachability::never(SelectionTruthSource::RawInput)
+            }
+            _ => SelectionReachability::from((
+                &evaluated.truth,
+                SelectionPolarity::Truthy,
+                truth_source,
+            )),
         };
         let input_identity = value
             .as_ref()
@@ -146,7 +153,7 @@ impl ValuePathContext<'_> {
         RangeSubject {
             influence_paths,
             value,
-            truth,
+            truth_reachability,
             input_identity,
             member_identity,
             member_value,

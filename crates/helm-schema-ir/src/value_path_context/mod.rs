@@ -2,9 +2,10 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::GetBinding;
+use crate::eval_effect::SelectionReachability;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::ScalarValueDispatch;
 use crate::symbolic_local_state::IntCastSource;
 use helm_schema_core::Predicate;
 
@@ -33,7 +34,7 @@ pub(crate) struct RangeSubjectIdentity {
 pub(crate) struct RangeSubject {
     pub(crate) influence_paths: BTreeSet<String>,
     pub(crate) value: Option<AbstractValue>,
-    pub(crate) truth: TruthCondition,
+    pub(crate) truth_reachability: SelectionReachability,
     pub(crate) input_identity: Option<RangeSubjectIdentity>,
     pub(crate) member_identity: Option<RangeSubjectIdentity>,
     pub(crate) member_value: Option<AbstractValue>,

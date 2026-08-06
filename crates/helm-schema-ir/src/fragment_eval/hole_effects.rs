@@ -243,9 +243,15 @@ impl Interpreter<'_> {
     pub(super) fn absorb_header_execution_effects(
         &mut self,
         expr: &TemplateExpr,
-    ) -> (std::collections::BTreeSet<String>, TruthCondition) {
+    ) -> (
+        std::collections::BTreeSet<String>,
+        crate::eval_effect::SelectionTruthReachability,
+    ) {
         let hole = self.eval_hole_exprs_for_condition(expr);
-        let truth = hole.truth;
+        let truth_reachability = crate::eval_effect::SelectionTruthReachability::from_condition(
+            &hole.truth,
+            hole.truth_reachability.truth_source(),
+        );
         let mut effects = hole.effects;
         effects.bound_output_paths.clear();
         let strict_paths: std::collections::BTreeSet<String> = effects
@@ -291,7 +297,7 @@ impl Interpreter<'_> {
                 .filter(|path| !helm_schema_core::values_path_has_descendant(path, &claims))
                 .cloned()
                 .collect(),
-            truth,
+            truth_reachability,
         )
     }
 
@@ -340,6 +346,10 @@ impl Interpreter<'_> {
         let mut values = Vec::new();
         let mut effects = Effects::default();
         let mut truth = TruthCondition::Unknown;
+        let mut truth_reachability = crate::eval_effect::SelectionReachability::approximate(
+            None,
+            crate::eval_effect::SelectionTruthSource::RawInput,
+        );
         let mut json_payload_truth = TruthCondition::Unknown;
         let mut scalar_dispatch = None;
         for expr in exprs {
@@ -353,6 +363,8 @@ impl Interpreter<'_> {
             );
             if exprs.len() == 1 {
                 truth = result.truth.clone();
+                truth_reachability =
+                    result.output_reachability(crate::eval_effect::SelectionPolarity::Truthy);
                 json_payload_truth = result.json_payload_truth.clone();
                 scalar_dispatch = result.scalar_dispatch.clone();
             }
@@ -363,6 +375,7 @@ impl Interpreter<'_> {
             value: AbstractValue::choice(values).map(|value| value.to_context_value()),
             effects,
             truth,
+            truth_reachability,
             json_payload_truth,
             scalar_dispatch,
         }

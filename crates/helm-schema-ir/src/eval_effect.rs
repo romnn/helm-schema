@@ -845,6 +845,71 @@ pub(crate) struct SelectionReachability {
     truth_source: SelectionTruthSource,
 }
 
+/// Reachability for both outcomes of one decoded truth condition.
+///
+/// Partial truth analysis may prove disjoint subsets for the truthy and falsy
+/// outcomes. Keeping two instances of the same carrier preserves both proofs
+/// without making an approximate subset invertible.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct SelectionTruthReachability {
+    when_true: SelectionReachability,
+    when_false: SelectionReachability,
+}
+
+impl SelectionTruthReachability {
+    pub(crate) fn from_condition(
+        condition: &TruthCondition,
+        truth_source: SelectionTruthSource,
+    ) -> Self {
+        Self {
+            when_true: SelectionReachability::from((
+                condition,
+                SelectionPolarity::Truthy,
+                truth_source,
+            )),
+            when_false: SelectionReachability::from((
+                condition,
+                SelectionPolarity::Falsy,
+                truth_source,
+            )),
+        }
+    }
+
+    pub(crate) fn exact(
+        predicate: helm_schema_core::Predicate,
+        truth_source: SelectionTruthSource,
+    ) -> Self {
+        let when_true = SelectionReachability::exact(predicate, truth_source);
+        let when_false = when_true.complement();
+        Self {
+            when_true,
+            when_false,
+        }
+    }
+
+    pub(crate) fn unknown(truth_source: SelectionTruthSource) -> Self {
+        Self {
+            when_true: SelectionReachability::approximate(None, truth_source),
+            when_false: SelectionReachability::approximate(None, truth_source),
+        }
+    }
+
+    pub(crate) fn when_true(&self) -> &SelectionReachability {
+        &self.when_true
+    }
+
+    pub(crate) fn truth_condition(&self) -> TruthCondition {
+        if let Some(predicate) = self.when_true.exact_predicate() {
+            return TruthCondition::exact(predicate);
+        }
+        TruthCondition::from_subsets(
+            self.when_true.proven_selected_subset(),
+            self.when_false.proven_selected_subset(),
+            false,
+        )
+    }
+}
+
 impl SelectionReachability {
     pub(crate) const fn always(truth_source: SelectionTruthSource) -> Self {
         Self {
@@ -923,6 +988,26 @@ impl SelectionReachability {
         )
     }
 
+    pub(crate) fn exact_predicate(&self) -> Option<helm_schema_core::Predicate> {
+        match &self.state {
+            SelectionState::Always => Some(helm_schema_core::Predicate::True),
+            SelectionState::Never => Some(helm_schema_core::Predicate::False),
+            SelectionState::Exact(predicate) => Some(predicate.clone()),
+            SelectionState::Approximate { .. } => None,
+        }
+    }
+
+    pub(crate) fn proven_selected_subset(&self) -> helm_schema_core::Predicate {
+        match &self.state {
+            SelectionState::Always => helm_schema_core::Predicate::True,
+            SelectionState::Never => helm_schema_core::Predicate::False,
+            SelectionState::Exact(predicate) => predicate.clone(),
+            SelectionState::Approximate { sound_subset } => sound_subset
+                .clone()
+                .unwrap_or(helm_schema_core::Predicate::False),
+        }
+    }
+
     pub(crate) fn conjoin_predicates(
         &self,
         predicates: impl IntoIterator<Item = helm_schema_core::Predicate>,
@@ -960,7 +1045,7 @@ impl SelectionReachability {
 
     pub(crate) fn output_selection_predicate(
         &self,
-        marker: &'static str,
+        marker: impl Into<String>,
         mut involved_paths: BTreeSet<String>,
     ) -> helm_schema_core::Predicate {
         match &self.state {
@@ -984,7 +1069,7 @@ impl SelectionReachability {
 
     pub(crate) fn output_selection_conjunction(
         &self,
-        marker: &'static str,
+        marker: impl Into<String>,
         involved_paths: BTreeSet<String>,
     ) -> BTreeSet<helm_schema_core::Predicate> {
         match self.output_selection_predicate(marker, involved_paths) {
@@ -996,7 +1081,7 @@ impl SelectionReachability {
 
     pub(crate) fn execution_predicate(
         &self,
-        marker: &'static str,
+        marker: impl Into<String>,
         mut involved_paths: BTreeSet<String>,
     ) -> helm_schema_core::Predicate {
         match &self.state {
@@ -1131,10 +1216,12 @@ impl EvalResult {
     }
 
     pub(crate) fn output_reachability(&self, polarity: SelectionPolarity) -> SelectionReachability {
-        self.scalar_dispatch.as_ref().map_or_else(
-            || SelectionReachability::from((&self.truth, polarity, SelectionTruthSource::RawInput)),
-            |dispatch| SelectionReachability::from((dispatch, polarity)),
-        )
+        match (&self.scalar_dispatch, self.exact_input_identity()) {
+            (Some(dispatch), None) => SelectionReachability::from((dispatch, polarity)),
+            _ => {
+                SelectionReachability::from((&self.truth, polarity, SelectionTruthSource::RawInput))
+            }
+        }
     }
 
     pub(crate) fn exact_input_identity(&self) -> Option<String> {

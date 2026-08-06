@@ -12687,3 +12687,21 @@ acceptance flips, zero candidate-accepts/Helm-aborts cells, and no undisclosed
 base or third-level truncation. The five live default/composite matrices pass
 against Helm 4.2.3, so the fixture deltas are adopted as structural
 re-encoding within the sampled acceptance surface.
+
+## Architecture Review v3 Step 6b.2 (2026-08-05)
+
+Against acceptance baseline `3f6c829`, this behavior-bearing step migrates
+condition, `with`, and range truth decoding to the typed reachability carrier.
+A rejected broad-consumption preflight produced 67 flips, including
+false-rejection tightenings in Bitnami PostgreSQL, Bitnami Redis, Datadog, and
+Sealed Secrets; none of those fixtures was adopted.
+
+The final bipolar representation preserves independent sound subsets for the
+truthy and falsy outcomes while the still-unmigrated scalar-local join
+explicitly abstains where it cannot preserve branch scope. The authoritative
+schema dump writes 84 byte-identical artifacts and the IR dump writes 18
+byte-identical artifacts. The full-depth comparison checks 121,059 probes
+against `3f6c829` with zero acceptance flips, zero candidate-accepts/Helm-
+aborts cells, and no undisclosed base or third-level truncation. Seven live
+control families replay the deleted, present-wrong-type, truly consumed, and
+composite states against Helm 4.2.3; no fixture change is adopted.

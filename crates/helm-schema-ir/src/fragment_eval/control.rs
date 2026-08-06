@@ -11,6 +11,7 @@ use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
+use crate::eval_effect::{SelectionTruthReachability, SelectionTruthSource};
 use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates};
 use crate::value_path_context::{guard_value_is_truthy, predicate_any};
 use crate::{Guard, ValueKind};
@@ -81,7 +82,7 @@ impl Interpreter<'_> {
         let mut outcomes = Vec::new();
         let mut arm_header_exprs: Vec<Option<TemplateExpr>> = Vec::new();
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
-        let mut prior_truth_conditions: Vec<TruthCondition> = Vec::new();
+        let mut prior_semantic_reachability: Vec<SelectionTruthReachability> = Vec::new();
         let mut has_unconditional_else = false;
         let mut promote_body_outcome = false;
 
@@ -117,7 +118,7 @@ impl Interpreter<'_> {
             // region intersects (none when it spans several documents).
             let region_site = self.region_site(region.span);
             let previous_site = std::mem::replace(&mut self.current_site, region_site);
-            let (own_condition, extra, iterations, own_truth) =
+            let (own_condition, extra, iterations, own_reachability) =
                 self.activate_arm(&arm, nodes, region.span.start, index);
             self.current_site = previous_site;
             // The value-dispatch join needs mutually exclusive, total arm
@@ -138,15 +139,25 @@ impl Interpreter<'_> {
                 }
             }
             let semantic_arm_truth = if region.kind == ControlKind::If {
-                let own_truth = own_truth.unwrap_or_else(|| TruthCondition::exact(Predicate::True));
+                let join_reachability = if matches!(arm, ArmSpec::With(_) | ArmSpec::Range { .. }) {
+                    // The carrier owns the decoded truth, but scalar-local
+                    // joins still consume the legacy condition shape until
+                    // Step 6b.3. Keep that adapter abstaining: promoting a
+                    // with/range condition here lets a branch-local provider
+                    // shape become a path-wide input contract.
+                    SelectionTruthReachability::unknown(own_reachability.when_true().truth_source())
+                } else {
+                    own_reachability.clone()
+                };
                 let truth = TruthCondition::all(
-                    prior_truth_conditions
+                    prior_semantic_reachability
                         .iter()
-                        .map(TruthCondition::negated)
-                        .chain(std::iter::once(own_truth.clone())),
+                        .map(SelectionTruthReachability::truth_condition)
+                        .map(|truth| truth.negated())
+                        .chain(std::iter::once(join_reachability.truth_condition())),
                 );
                 if matches!(arm, ArmSpec::If(_) | ArmSpec::With(_)) {
-                    prior_truth_conditions.push(own_truth);
+                    prior_semantic_reachability.push(join_reachability);
                 }
                 Some(truth)
             } else {
@@ -507,33 +518,32 @@ impl Interpreter<'_> {
         Option<PathCondition>,
         Contributions,
         Option<RangeIterations>,
-        Option<TruthCondition>,
+        SelectionTruthReachability,
     ) {
         match arm {
             ArmSpec::Else => (
                 None,
                 Contributions::default(),
                 None,
-                Some(TruthCondition::exact(Predicate::True)),
+                SelectionTruthReachability::exact(Predicate::True, SelectionTruthSource::RawInput),
             ),
             ArmSpec::If(header) => {
                 let (condition, truth) =
                     self.activate_if(header.as_ref(), region_start, branch_index);
-                (condition, Contributions::default(), None, Some(truth))
+                (condition, Contributions::default(), None, truth)
             }
-            ArmSpec::With(header) => (
-                self.activate_with(header.as_ref(), region_start, branch_index),
-                Contributions::default(),
-                None,
-                Some(TruthCondition::Unknown),
-            ),
+            ArmSpec::With(header) => {
+                let (condition, truth) =
+                    self.activate_with(header.as_ref(), region_start, branch_index);
+                (condition, Contributions::default(), None, truth)
+            }
             ArmSpec::Range {
                 header,
                 destructured,
                 value_variable,
                 key_variable,
             } => {
-                let (condition, contributions, iterations) = self.activate_range(
+                let (condition, contributions, iterations, truth) = self.activate_range(
                     header.as_ref(),
                     *destructured,
                     value_variable.as_deref(),
@@ -541,7 +551,7 @@ impl Interpreter<'_> {
                     nodes,
                     region_start,
                 );
-                (condition, contributions, iterations, None)
+                (condition, contributions, iterations, truth)
             }
         }
     }
@@ -662,9 +672,12 @@ impl Interpreter<'_> {
         header: Option<&TemplateHeader>,
         region_start: usize,
         branch_index: usize,
-    ) -> (Option<PathCondition>, TruthCondition) {
+    ) -> (Option<PathCondition>, SelectionTruthReachability) {
         let Some(header) = header else {
-            return (None, TruthCondition::Unknown);
+            return (
+                None,
+                SelectionTruthReachability::unknown(SelectionTruthSource::RawInput),
+            );
         };
         let (mut predicate, mut faithful, bound_values) = {
             let context = self.value_path_context();
@@ -675,9 +688,9 @@ impl Interpreter<'_> {
             )
         };
         let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
-        let evaluated_truth_is_unknown = evaluated_truth.predicate().is_none();
-        if let Some(exact) = evaluated_truth.predicate() {
-            predicate = exact.clone();
+        let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
+        if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
+            predicate = exact;
             faithful = true;
         }
         // A member condition over a local-dict OVERLAY's ranged member is
@@ -705,7 +718,7 @@ impl Interpreter<'_> {
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
             let evaluated_subset = (!overlay_entry_is_partial)
-                .then(|| evaluated_truth.when_true())
+                .then(|| evaluated_truth.when_true().proven_selected_subset())
                 .filter(|subset| *subset != Predicate::False);
             predicate = self.approximate_arm_predicate(
                 header.expr(),
@@ -761,8 +774,9 @@ impl Interpreter<'_> {
                 self.push_predicate(conjunct);
             }
         }
-        let semantic_truth = if evaluated_truth.predicate().is_none() && faithful {
-            TruthCondition::exact(predicate.clone())
+        let semantic_truth = if evaluated_truth.when_true().exact_predicate().is_none() && faithful
+        {
+            SelectionTruthReachability::exact(predicate.clone(), SelectionTruthSource::RawInput)
         } else {
             evaluated_truth
         };
@@ -874,10 +888,13 @@ impl Interpreter<'_> {
         header: Option<&TemplateHeader>,
         region_start: usize,
         branch_index: usize,
-    ) -> Option<PathCondition> {
+    ) -> (Option<PathCondition>, SelectionTruthReachability) {
         let Some(header) = header else {
             self.dot_stack.push(None);
-            return None;
+            return (
+                None,
+                SelectionTruthReachability::unknown(SelectionTruthSource::RawInput),
+            );
         };
         let (mut predicate, mut faithful, bound_values, dot) = {
             let context = self.value_path_context();
@@ -891,9 +908,9 @@ impl Interpreter<'_> {
             )
         };
         let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
-        let evaluated_truth_is_unknown = evaluated_truth.predicate().is_none();
-        if let Some(exact) = evaluated_truth.predicate() {
-            predicate = exact.clone();
+        let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
+        if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
+            predicate = exact;
             faithful = true;
         }
         if evaluated_truth_is_unknown
@@ -946,7 +963,13 @@ impl Interpreter<'_> {
                 .insert(name.trim_start_matches('$').to_string(), binding.clone());
         }
         self.dot_stack.push(dot);
-        Some(predicate)
+        let semantic_truth = if evaluated_truth.when_true().exact_predicate().is_none() && faithful
+        {
+            SelectionTruthReachability::exact(predicate.clone(), SelectionTruthSource::RawInput)
+        } else {
+            evaluated_truth
+        };
+        (Some(predicate), semantic_truth)
     }
 
     #[expect(
@@ -965,10 +988,16 @@ impl Interpreter<'_> {
         Option<PathCondition>,
         Contributions,
         Option<RangeIterations>,
+        SelectionTruthReachability,
     ) {
         let Some(header) = header else {
             self.dot_stack.push(None);
-            return (None, Contributions::default(), None);
+            return (
+                None,
+                Contributions::default(),
+                None,
+                SelectionTruthReachability::unknown(SelectionTruthSource::RawInput),
+            );
         };
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
@@ -990,7 +1019,7 @@ impl Interpreter<'_> {
         let derived_range_condition = range_subject
             .input_identity
             .is_none()
-            .then(|| range_subject.truth.predicate().cloned())
+            .then(|| range_subject.truth_reachability.exact_predicate())
             .flatten();
         let source_paths = range_subject
             .influence_paths
@@ -1143,8 +1172,13 @@ impl Interpreter<'_> {
         let iterations = iterable_value.as_ref().and_then(|iterable| {
             Self::exact_range_iterations(iterable, header, value_variable, key_variable)
         });
+        let own_condition = Predicate::all(own);
+        let truth = SelectionTruthReachability::exact(
+            own_condition.clone(),
+            SelectionTruthSource::RawInput,
+        );
         if let Some(iterations) = iterations {
-            return (Some(Predicate::all(own)), extra, Some(iterations));
+            return (Some(own_condition), extra, Some(iterations), truth);
         }
         if let Some(identity) = &member_identity {
             self.active_range_modes.push((
@@ -1213,7 +1247,7 @@ impl Interpreter<'_> {
                 .insert(variable.to_string(), AbstractValue::RangeKey(path));
         }
         self.dot_stack.push(dot);
-        (Some(Predicate::all(own)), extra, None)
+        (Some(own_condition), extra, None, truth)
     }
 
     fn exact_range_iterations(

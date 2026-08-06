@@ -5,7 +5,8 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
-    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
+    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthReachability,
+    SelectionTruthSource,
 };
 use crate::expr_call_eval::default_primary_selection;
 use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition};
@@ -47,6 +48,32 @@ fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
 }
 
 #[test]
+fn condition_reachability_distinguishes_raw_identities_from_rendered_scalars() {
+    let raw = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()));
+    sim_assert_eq!(
+        have: raw
+            .output_reachability(SelectionPolarity::Truthy)
+            .truth_source(),
+        want: SelectionTruthSource::RawInput
+    );
+
+    let rendered =
+        EvalResult::from_value(AbstractValue::Unknown).with_scalar_dispatch(ScalarValueDispatch {
+            arms: vec![(
+                Predicate::True,
+                ScalarValue::PrintfStringIdentity("alpha".to_string()),
+            )],
+            complete: true,
+        });
+    sim_assert_eq!(
+        have: rendered
+            .output_reachability(SelectionPolarity::Truthy)
+            .truth_source(),
+        want: SelectionTruthSource::RenderedScalar
+    );
+}
+
+#[test]
 fn partial_truth_becomes_approximate_without_inverting_its_sound_subset() {
     let subset = Predicate::truthy_path("alpha");
     let partial = TruthCondition::from_subsets(subset.clone(), Predicate::False, false);
@@ -75,6 +102,28 @@ fn partial_truth_becomes_approximate_without_inverting_its_sound_subset() {
             SelectionTruthSource::RenderedScalar,
         )
     );
+}
+
+#[test]
+fn condition_polarities_preserve_independent_partial_proofs() {
+    let when_true = Predicate::truthy_path("enabled");
+    let when_false = Predicate::truthy_path("disabled");
+    let partial = TruthCondition::from_subsets(when_true.clone(), when_false.clone(), false);
+    let reachability =
+        SelectionTruthReachability::from_condition(&partial, SelectionTruthSource::RawInput);
+
+    sim_assert_eq!(
+        have: reachability.when_true(),
+        want: &SelectionReachability::approximate(
+            Some(when_true),
+            SelectionTruthSource::RawInput,
+        )
+    );
+    sim_assert_eq!(
+        have: reachability.when_true().complement(),
+        want: SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
+    );
+    sim_assert_eq!(have: reachability.truth_condition(), want: partial);
 }
 
 #[test]
