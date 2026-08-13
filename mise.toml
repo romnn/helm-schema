@@ -12,7 +12,11 @@ actionlint = "latest"
 "github:romnn/cooldown" = { version = "latest", minimum_release_age = "0" }
 "github:romnn/bumpversion" = { version = "latest", matching = "bumpversion", minimum_release_age = "0" }
 helm = "latest"
-tokei = "latest"
+# Explicit aqua backend and exact pin: the bare `tokei` registry name resolves to
+# `cargo:tokei`, which needs a source build (or cargo-binstall) on every install.
+# Upstream stopped attaching release binaries after v12.1.2, so that is also the
+# newest version any prebuilt backend can serve.
+"aqua:XAMPPRocky/tokei" = "12.1.2"
 sccache = "latest"
 
 # Documentation site (docs/, Hugo + hugo-book theme).
