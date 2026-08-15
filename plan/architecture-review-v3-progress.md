@@ -3599,7 +3599,7 @@ adjudication.
 
 ## Step 8 — place kind, shape, and action facts in their producer phases
 
-- Status: in progress; commit pending.
+- Status: landed in `f88932eb`.
 - Contract: representation-only; make contract construction emit typed
   Ordinary and per-kind conditional evidence, repair valueless mapping-header
   shape while the fragment tree is constructed, and retain structural branch
@@ -3846,4 +3846,65 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +13 (61,558 to 61,571).
-- Commit: pending.
+- Commit: `f88932eb` (`refactor(ir): place structural facts at producers`).
+
+## Post-Step-8 checkpoint — second-wave consolidation estimate
+
+- Status: recorded after Step 8; campaign stops here for the Step 9 handoff.
+- Measurements:
+  - `crates/helm-schema-ir/src/contract_signal_builder/` is 4,969 physical
+    lines across six files: 911 conditional-overlay lines, 1,074 contract-row
+    lines, 440 final-signal lines, 189 input-channel lines, 34 module lines,
+    and 2,321 requirement lines.
+  - `crates/helm-schema-gen/src/overlay_lowering.rs` is 2,192 physical lines.
+  - The measured consolidation surface is therefore 7,161 physical lines,
+    close to the frozen checkpoint's approximate 4.7K + 2.3K estimate.
+- Verdict: **the two representations are genuinely distinct**. No
+  cross-phase representation consolidation is proposed.
+- Boundary evidence:
+  - Contract-signal construction is an analysis-phase reduction. Its public
+    entry takes `ContractUse`, `ObservedFacts`, and dependency values-root
+    fragments and returns provider-independent `ContractSchemaSignals`. It
+    owns path facts, exact guard alternatives, requirement implications,
+    provider lookup intent, requiredness evidence, and terminal clauses. It
+    does not read composed values documents, call a schema provider, construct
+    JSON Schema values, or choose emission policy.
+  - Overlay lowering is an emission-phase operation. Its public entry takes
+    resolved path schemas, `ContractSchemaSignals`, composed chart and
+    subchart defaults, and a `ResourceSchemaOracle`, then returns
+    `LoweredConjunct` values plus insertion-abstention accounting. It resolves
+    provider candidates, evaluates guards against defaults, projects member
+    schemas, constructs JSON Schema fragments, assigns base ownership, and
+    classifies emission scope and policy.
+  - Step 8 already establishes the direct typed seam the checkpoint asked
+    about: `ConditionalPathOverlay` flows from `ContractSchemaSignals` into
+    overlay lowering with producer-owned `Ordinary`/`KindBranch` flavor. The
+    generator no longer reconstructs kind partitions. What remains on either
+    side is a phase-specific representation, not two projections of the same
+    fact.
+  - Making the builder emit `LoweredConjunct` would pull values/default
+    evaluation, provider I/O, JSON Schema values, abstention metrics, base
+    ownership, and emission policy into IR. Making gen rebuild the contract
+    rows would move semantic analysis out of IR and recreate the parallel-fact
+    architecture removed by Steps 6–8. Either direction weakens the current
+    compiler-style boundary.
+- Consolidation accounting:
+  - The measured scan finds no compatibility facade between the two phases to
+    delete: `ContractSchemaSignals` is the single semantic artifact and
+    `LoweredConjunct` is the single emission carrier consumed by base-schema,
+    provider-definition, and emission-plan code.
+  - The size of `overlay_lowering.rs` still justifies local file decomposition
+    if Step 9 or a later cleanup needs it, but a file split is not a semantic
+    representation merge and carries no honest deletion estimate by itself.
+  - The checkpoint therefore records no second-wave LOC promise. Future
+    deletion should target duplicated rules discovered inside a phase, not
+    erase the necessary typed boundary between analysis facts and emission
+    decisions.
+- Measurement commands:
+  - `wc -l crates/helm-schema-ir/src/contract_signal_builder/*.rs
+    crates/helm-schema-gen/src/overlay_lowering.rs`: exit 0; 7,161 total lines.
+  - `rg -n
+    'derive_schema_signals_from_contract_parts|collect_conditional_schemas|ContractSchemaSignals|ConditionalPathOverlay|LoweredConjunct'
+    crates/helm-schema-ir/src crates/helm-schema-gen/src`: exit 0; confirms one
+    semantic producer, one typed cross-crate artifact, and one emission
+    lowering carrier with downstream emission consumers.
