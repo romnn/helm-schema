@@ -81,11 +81,6 @@ pub struct ContractUse {
     /// Template locations and helper chains that produced the use.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub provenance: Vec<ContractProvenance>,
-    /// A string-consuming transform (`trunc`, `b64enc`, a dynamic `printf`
-    /// format) produced this rendered text: rendering fails for non-string
-    /// values, but only where THIS row's condition holds.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub has_string_contract: bool,
     /// Go template execution rendered the source through its `%v` spelling,
     /// so a provider slot observes text rather than the raw input shape.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -150,8 +145,6 @@ impl<'de> Deserialize<'de> for ContractUse {
             #[serde(default)]
             provenance: Vec<ContractProvenance>,
             #[serde(default)]
-            has_string_contract: bool,
-            #[serde(default)]
             stringified: bool,
             #[serde(default)]
             template_supplied_member_keys: std::collections::BTreeSet<String>,
@@ -179,7 +172,6 @@ impl<'de> Deserialize<'de> for ContractUse {
             condition: wire.condition,
             resource: wire.resource,
             provenance: wire.provenance,
-            has_string_contract: wire.has_string_contract,
             stringified: wire.stringified,
             template_supplied_member_keys: wire.template_supplied_member_keys,
             split_segment: wire.split_segment,
@@ -242,7 +234,6 @@ impl ContractUse {
             condition,
             resource,
             provenance: provenance.into_iter().collect(),
-            has_string_contract: false,
             stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::new(),
             split_segment: None,

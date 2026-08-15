@@ -2418,7 +2418,6 @@ fn compound_sound_subset_scopes_provider_payloads() {
         ]),
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
-        has_string_contract: false,
         stringified: false,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
@@ -2539,7 +2538,6 @@ fn textual_rows_are_not_inherently_falsy_tolerant() -> eyre::Result<()> {
         condition: helm_schema_core::GuardDnf::default(),
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
-        has_string_contract: false,
         stringified: false,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
@@ -2574,7 +2572,6 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         }]),
         resource: None,
         provenance: Vec::new(),
-        has_string_contract: false,
         stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
@@ -2621,7 +2618,6 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
             "Service".to_string(),
         )),
         provenance: Vec::new(),
-        has_string_contract: false,
         stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
@@ -2974,7 +2970,6 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
                 "ServiceMonitor".to_string(),
             )),
             provenance: Vec::new(),
-            has_string_contract: false,
             stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
@@ -3001,7 +2996,6 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
                 "ServiceMonitor".to_string(),
             )),
             provenance: Vec::new(),
-            has_string_contract: false,
             stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
@@ -3074,7 +3068,6 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: Some(resource.clone()),
             provenance: Vec::new(),
-            has_string_contract: false,
             stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
@@ -3092,7 +3085,6 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
             resource: Some(resource),
             provenance: Vec::new(),
-            has_string_contract: false,
             stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
@@ -3147,7 +3139,6 @@ fn values_yaml_comments_override_provider_descriptions() {
             "ConfigMap".to_string(),
         )),
         provenance: Vec::new(),
-        has_string_contract: false,
         stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
@@ -4039,6 +4030,52 @@ fn positive_member_guard_scopes_required_provider_leaf_presence() {
             "{label}: instance={instance}; schema={schema}"
         );
     }
+}
+
+/// A YAML roundtrip around a helper-projected composed scalar must not turn
+/// the scalar's contributing values splice into a full string provider use.
+#[test]
+fn composed_scalars_stay_partial_through_the_pod_template_projection() {
+    let helpers = indoc! {r#"
+        {{- define "test.podTemplate" }}
+        metadata:
+          labels:
+            app: test
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              args:
+              {{- range $name, $config := .Values.ports }}
+                - "--port={{ $config.port }}"
+              {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template: {{ include "test.podTemplate" . | fromYaml | toYaml | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {r"
+        ports:
+          web:
+            port: 8080
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "ports": { "web": { "port": 8080 } } }),
+        ),
+        "the composed argument accepts the integer value Helm renders: {schema}"
+    );
 }
 
 /// The helper-projection variant of the presence binding: the range lives

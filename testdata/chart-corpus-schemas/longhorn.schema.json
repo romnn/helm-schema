@@ -507,22 +507,9 @@
       ]
     },
     "1B": {
-      "properties": {
-        "ui": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "ui"
-      ],
-      "type": "object"
-    },
-    "1C": {
       "description": "Node selector for system-managed Longhorn components."
     },
-    "1D": {
+    "1C": {
       "properties": {
         "attacher": {}
       },
@@ -531,7 +518,7 @@
       ],
       "type": "object"
     },
-    "1E": {
+    "1D": {
       "properties": {
         "manager": {}
       },
@@ -540,7 +527,7 @@
       ],
       "type": "object"
     },
-    "1F": {
+    "1E": {
       "properties": {
         "resizer": {}
       },
@@ -549,15 +536,7 @@
       ],
       "type": "object"
     },
-    "1G": {
-      "additionalProperties": {},
-      "properties": {
-        "key": {
-          "type": "string"
-        }
-      }
-    },
-    "1H": {
+    "1F": {
       "oneOf": [
         {
           "type": [
@@ -573,7 +552,7 @@
         }
       ]
     },
-    "1I": {
+    "1G": {
       "properties": {
         "engine": {}
       },
@@ -582,7 +561,7 @@
       ],
       "type": "object"
     },
-    "1J": {
+    "1H": {
       "properties": {
         "log": {}
       },
@@ -591,7 +570,7 @@
       ],
       "type": "object"
     },
-    "1K": {
+    "1I": {
       "properties": {
         "ui": {}
       },
@@ -600,7 +579,7 @@
       ],
       "type": "object"
     },
-    "1L": {
+    "1J": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -767,7 +746,7 @@
       ],
       "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
     },
-    "1M": {
+    "1K": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -940,11 +919,11 @@
         }
       }
     },
-    "1N": {
+    "1L": {
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "null"
     },
-    "1O": {
+    "1M": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
         "additionalProperties": false,
@@ -986,7 +965,7 @@
         "null"
       ]
     },
-    "1P": {
+    "1N": {
       "description": "A list of node selector requirements by node's labels.",
       "items": {
         "additionalProperties": false,
@@ -1028,7 +1007,7 @@
         "null"
       ]
     },
-    "1Q": {
+    "1O": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -1091,7 +1070,7 @@
         }
       }
     },
-    "1R": {
+    "1P": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "type": [
@@ -1105,7 +1084,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "1S": {
+    "1Q": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "type": [
@@ -1119,21 +1098,21 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "1T": {
+    "1R": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "integer"
     },
-    "1U": {
+    "1S": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "null"
     },
-    "1V": {
+    "1T": {
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
       "type": "null"
     },
-    "1W": {
+    "1U": {
       "additionalProperties": {},
       "properties": {
         "sectionName": {
@@ -1206,7 +1185,7 @@
         }
       }
     },
-    "1X": {
+    "1V": {
       "additionalProperties": false,
       "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
       "properties": {
@@ -1271,7 +1250,7 @@
       },
       "type": "object"
     },
-    "1Y": {
+    "1W": {
       "additionalProperties": {},
       "properties": {
         "namespace": {
@@ -1344,7 +1323,7 @@
         }
       }
     },
-    "1Z": {
+    "1X": {
       "allOf": [
         {
           "not": {
@@ -1399,6 +1378,135 @@
       ],
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "string"
+    },
+    "1Y": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
+    "1Z": {
+      "additionalProperties": {},
+      "properties": {
+        "group": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                  }
+                }
+              ],
+              "default": "gateway.networking.k8s.io",
+              "description": "Group is the group of the referent.\nWhen unspecified, \"gateway.networking.k8s.io\" is inferred.\nTo set the core API group (such as for a \"Service\" kind referent),\nGroup must be explicitly set to \"\" (empty string).\n\nSupport: Core",
+              "maxLength": 253,
+              "pattern": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+              "type": "string"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            }
+          ]
+        }
+      }
     },
     "1a": {
       "properties": {
@@ -1487,14 +1595,6 @@
       "type": "object"
     },
     "1i": {
-      "additionalProperties": {},
-      "properties": {
-        "certificate": {
-          "type": "string"
-        }
-      }
-    },
-    "1j": {
       "properties": {
         "log": {
           "enum": [
@@ -1507,12 +1607,25 @@
       ],
       "type": "object"
     },
-    "1k": {
+    "1j": {
       "properties": {
         "openshift": {}
       },
       "required": [
         "openshift"
+      ],
+      "type": "object"
+    },
+    "1k": {
+      "properties": {
+        "ui": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "ui"
       ],
       "type": "object"
     },
@@ -1753,135 +1866,6 @@
       "type": "object"
     },
     "20": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "string"
-    },
-    "21": {
-      "additionalProperties": {},
-      "properties": {
-        "group": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                  }
-                }
-              ],
-              "default": "gateway.networking.k8s.io",
-              "description": "Group is the group of the referent.\nWhen unspecified, \"gateway.networking.k8s.io\" is inferred.\nTo set the core API group (such as for a \"Service\" kind referent),\nGroup must be explicitly set to \"\" (empty string).\n\nSupport: Core",
-              "maxLength": 253,
-              "pattern": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
-              "type": "string"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "22": {
       "additionalProperties": {},
       "properties": {
         "kind": {
@@ -1955,7 +1939,7 @@
         }
       }
     },
-    "23": {
+    "21": {
       "not": {
         "properties": {
           "longhornManager": {
@@ -1966,6 +1950,48 @@
             },
             "required": [
               "nodeSelector"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "longhornManager"
+        ],
+        "type": "object"
+      }
+    },
+    "22": {
+      "not": {
+        "properties": {
+          "longhornDriver": {
+            "properties": {
+              "nodeSelector": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "nodeSelector"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "longhornDriver"
+        ],
+        "type": "object"
+      }
+    },
+    "23": {
+      "not": {
+        "properties": {
+          "longhornManager": {
+            "properties": {
+              "tolerations": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "tolerations"
             ],
             "type": "object"
           }
@@ -1981,12 +2007,12 @@
         "properties": {
           "longhornDriver": {
             "properties": {
-              "nodeSelector": {
+              "tolerations": {
                 "$ref": "#/$defs/t"
               }
             },
             "required": [
-              "nodeSelector"
+              "tolerations"
             ],
             "type": "object"
           }
@@ -1998,48 +2024,6 @@
       }
     },
     "25": {
-      "not": {
-        "properties": {
-          "longhornManager": {
-            "properties": {
-              "tolerations": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "tolerations"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "longhornManager"
-        ],
-        "type": "object"
-      }
-    },
-    "26": {
-      "not": {
-        "properties": {
-          "longhornDriver": {
-            "properties": {
-              "tolerations": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "tolerations"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "longhornDriver"
-        ],
-        "type": "object"
-      }
-    },
-    "27": {
       "properties": {
         "privateRegistry": {
           "properties": {
@@ -2058,7 +2042,7 @@
       ],
       "type": "object"
     },
-    "28": {
+    "26": {
       "additionalProperties": {
         "type": [
           "string",
@@ -2071,7 +2055,7 @@
         "null"
       ]
     },
-    "29": {
+    "27": {
       "properties": {
         "global": {
           "properties": {
@@ -2106,7 +2090,7 @@
       ],
       "type": "object"
     },
-    "2a": {
+    "28": {
       "not": {
         "properties": {
           "longhornUI": {
@@ -2127,7 +2111,7 @@
         "type": "object"
       }
     },
-    "2b": {
+    "29": {
       "not": {
         "properties": {
           "longhornUI": {
@@ -2148,7 +2132,7 @@
         "type": "object"
       }
     },
-    "2c": {
+    "2a": {
       "properties": {
         "ui": {
           "properties": {
@@ -2167,11 +2151,11 @@
       ],
       "type": "object"
     },
-    "2d": {
+    "2b": {
       "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
       "type": "string"
     },
-    "2e": {
+    "2c": {
       "anyOf": [
         {
           "not": {
@@ -2199,7 +2183,7 @@
         }
       ]
     },
-    "2f": {
+    "2d": {
       "properties": {
         "createSecret": {
           "$ref": "#/$defs/t"
@@ -2210,11 +2194,11 @@
       ],
       "type": "object"
     },
-    "2g": {
+    "2e": {
       "description": "key is the label key that the selector applies to.",
       "type": "string"
     },
-    "2h": {
+    "2f": {
       "properties": {
         "longhorn": {
           "enum": [
@@ -2227,7 +2211,7 @@
       ],
       "type": "object"
     },
-    "2i": {
+    "2g": {
       "properties": {
         "longhorn": {}
       },
@@ -2236,7 +2220,7 @@
       ],
       "type": "object"
     },
-    "2j": {
+    "2h": {
       "allOf": [
         {
           "anyOf": [
@@ -2404,7 +2388,7 @@
         }
       ]
     },
-    "2k": {
+    "2i": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -2565,7 +2549,7 @@
         }
       ]
     },
-    "2l": {
+    "2j": {
       "allOf": [
         {
           "not": {
@@ -2621,7 +2605,7 @@
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "2m": {
+    "2k": {
       "allOf": [
         {
           "not": {
@@ -2677,7 +2661,7 @@
       "description": "host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nhost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
       "type": "string"
     },
-    "2n": {
+    "2l": {
       "description": "host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nhost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
       "type": "null"
     },
@@ -2724,12 +2708,12 @@
     },
     "8": {
       "not": {
-        "pattern": "[ \\t]#"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "9": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+        "pattern": "^[-?:]([ \\t]|$)"
       }
     },
     "A": {
@@ -5891,17 +5875,17 @@
     },
     "a": {
       "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
+        "pattern": ":[ \\t]|:$"
       }
     },
     "b": {
       "not": {
-        "pattern": ":[ \\t]|:$"
+        "pattern": "[\\r\\n]"
       }
     },
     "c": {
       "not": {
-        "pattern": "[\\r\\n]"
+        "pattern": "[ \\t]#"
       }
     },
     "d": {
@@ -6535,7 +6519,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/29"
+        "$ref": "#/$defs/27"
       },
       "then": {
         "additionalProperties": {},
@@ -6609,13 +6593,13 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/24"
+            "$ref": "#/$defs/22"
           },
           {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/21"
           },
           {
-            "$ref": "#/$defs/2a"
+            "$ref": "#/$defs/28"
           }
         ]
       },
@@ -6649,13 +6633,13 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/26"
+            "$ref": "#/$defs/24"
           },
           {
-            "$ref": "#/$defs/25"
+            "$ref": "#/$defs/23"
           },
           {
-            "$ref": "#/$defs/2b"
+            "$ref": "#/$defs/29"
           }
         ]
       },
@@ -7846,19 +7830,19 @@
                         "propertyNames": {
                           "allOf": [
                             {
+                              "$ref": "#/$defs/8"
+                            },
+                            {
                               "$ref": "#/$defs/9"
                             },
                             {
                               "$ref": "#/$defs/a"
                             },
                             {
-                              "$ref": "#/$defs/b"
-                            },
-                            {
-                              "$ref": "#/$defs/8"
-                            },
-                            {
                               "$ref": "#/$defs/c"
+                            },
+                            {
+                              "$ref": "#/$defs/b"
                             }
                           ]
                         },
@@ -8300,7 +8284,7 @@
         "additionalProperties": {},
         "properties": {
           "namespaceOverride": {
-            "$ref": "#/$defs/1L"
+            "$ref": "#/$defs/1J"
           }
         }
       }
@@ -8460,7 +8444,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/27"
+            "$ref": "#/$defs/25"
           },
           {
             "$ref": "#/$defs/T"
@@ -8503,7 +8487,7 @@
                     "$ref": "#/$defs/2"
                   },
                   {
-                    "$ref": "#/$defs/2l"
+                    "$ref": "#/$defs/2j"
                   },
                   {
                     "$ref": "#/$defs/6"
@@ -8590,7 +8574,7 @@
                 "not": {
                   "properties": {
                     "image": {
-                      "$ref": "#/$defs/1k"
+                      "$ref": "#/$defs/1j"
                     }
                   },
                   "required": [
@@ -8970,7 +8954,7 @@
                     "image": {
                       "properties": {
                         "csi": {
-                          "$ref": "#/$defs/1D"
+                          "$ref": "#/$defs/1C"
                         }
                       },
                       "required": [
@@ -9186,7 +9170,7 @@
                     "image": {
                       "properties": {
                         "csi": {
-                          "$ref": "#/$defs/1F"
+                          "$ref": "#/$defs/1E"
                         }
                       },
                       "required": [
@@ -9361,7 +9345,7 @@
                     "image": {
                       "properties": {
                         "longhorn": {
-                          "$ref": "#/$defs/1I"
+                          "$ref": "#/$defs/1G"
                         }
                       },
                       "required": [
@@ -9469,7 +9453,7 @@
                     "image": {
                       "properties": {
                         "longhorn": {
-                          "$ref": "#/$defs/1E"
+                          "$ref": "#/$defs/1D"
                         }
                       },
                       "required": [
@@ -9631,7 +9615,7 @@
                     "image": {
                       "properties": {
                         "longhorn": {
-                          "$ref": "#/$defs/1K"
+                          "$ref": "#/$defs/1I"
                         }
                       },
                       "required": [
@@ -9651,7 +9635,7 @@
                   "image": {
                     "properties": {
                       "longhorn": {
-                        "$ref": "#/$defs/1B"
+                        "$ref": "#/$defs/1k"
                       }
                     },
                     "required": [
@@ -9720,7 +9704,7 @@
                 "not": {
                   "properties": {
                     "longhornDriver": {
-                      "$ref": "#/$defs/1J"
+                      "$ref": "#/$defs/1H"
                     }
                   },
                   "required": [
@@ -9732,7 +9716,7 @@
               {
                 "properties": {
                   "longhornDriver": {
-                    "$ref": "#/$defs/1j"
+                    "$ref": "#/$defs/1i"
                   }
                 },
                 "required": [
@@ -9764,7 +9748,7 @@
                 "not": {
                   "properties": {
                     "longhornManager": {
-                      "$ref": "#/$defs/1J"
+                      "$ref": "#/$defs/1H"
                     }
                   },
                   "required": [
@@ -9776,7 +9760,7 @@
               {
                 "properties": {
                   "longhornManager": {
-                    "$ref": "#/$defs/1j"
+                    "$ref": "#/$defs/1i"
                   }
                 },
                 "required": [
@@ -9904,7 +9888,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/1k"
+              "$ref": "#/$defs/1j"
             }
           },
           {
@@ -10022,7 +10006,7 @@
                 "not": {
                   "properties": {
                     "service": {
-                      "$ref": "#/$defs/1E"
+                      "$ref": "#/$defs/1D"
                     }
                   },
                   "required": [
@@ -10060,7 +10044,7 @@
                 "not": {
                   "properties": {
                     "service": {
-                      "$ref": "#/$defs/1K"
+                      "$ref": "#/$defs/1I"
                     }
                   },
                   "required": [
@@ -10072,7 +10056,7 @@
               {
                 "properties": {
                   "service": {
-                    "$ref": "#/$defs/1B"
+                    "$ref": "#/$defs/1k"
                   }
                 },
                 "required": [
@@ -10148,13 +10132,13 @@
               "$ref": "#/$defs/2"
             },
             {
-              "$ref": "#/$defs/20"
+              "$ref": "#/$defs/1Y"
             },
             {
               "$ref": "#/$defs/6"
             },
             {
-              "$ref": "#/$defs/1V"
+              "$ref": "#/$defs/1T"
             },
             {
               "$ref": "#/$defs/1"
@@ -10180,13 +10164,13 @@
               "$ref": "#/$defs/2"
             },
             {
-              "$ref": "#/$defs/20"
+              "$ref": "#/$defs/1Y"
             },
             {
               "$ref": "#/$defs/6"
             },
             {
-              "$ref": "#/$defs/1V"
+              "$ref": "#/$defs/1T"
             },
             {
               "$ref": "#/$defs/1"
@@ -10508,7 +10492,7 @@
           "description": "Resource limits for system-managed CSI components.\nThis setting allows you to configure CPU and memory requests/limits for CSI attacher, provisioner, resizer, snapshotter, and plugin components.\nSupported components: csi-attacher, csi-provisioner, csi-resizer, csi-snapshotter, longhorn-csi-plugin, node-driver-registrar, longhorn-liveness-probe.\nNotice that changing resource limits will cause CSI components to restart, which may temporarily affect volume provisioning and attach/detach operations until the components are ready. The value should be a JSON object with component names as keys and ResourceRequirements as values."
         },
         "systemManagedComponentsNodeSelector": {
-          "$ref": "#/$defs/1C"
+          "$ref": "#/$defs/1B"
         },
         "systemManagedPodsImagePullPolicy": {
           "description": "Image pull policy for system-managed pods, such as Instance Manager, engine images, and CSI Driver. Changes to the image pull policy are applied only after the system-managed pods restart."
@@ -10715,7 +10699,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "systemManagedComponentsNodeSelector": {
-                      "$ref": "#/$defs/1C"
+                      "$ref": "#/$defs/1B"
                     },
                     "taintToleration": {
                       "description": "Toleration for system-managed Longhorn components."
@@ -10847,19 +10831,19 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
                             "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
                             "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/h"
@@ -10898,19 +10882,19 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
                             "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
                             "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/h"
@@ -10986,11 +10970,11 @@
                 "properties": {
                   "parentRefs": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/21"
+                      "$ref": "#/$defs/1Z"
                     },
                     "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
                     "items": {
-                      "$ref": "#/$defs/21"
+                      "$ref": "#/$defs/1Z"
                     }
                   }
                 }
@@ -11000,11 +10984,11 @@
                 "properties": {
                   "parentRefs": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/22"
+                      "$ref": "#/$defs/20"
                     },
                     "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
                     "items": {
-                      "$ref": "#/$defs/22"
+                      "$ref": "#/$defs/20"
                     }
                   }
                 }
@@ -11014,25 +10998,11 @@
                 "properties": {
                   "parentRefs": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1Q"
+                      "$ref": "#/$defs/1O"
                     },
                     "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
                     "items": {
-                      "$ref": "#/$defs/1Q"
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "parentRefs": {
-                    "additionalProperties": {
-                      "$ref": "#/$defs/1Y"
-                    },
-                    "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
-                    "items": {
-                      "$ref": "#/$defs/1Y"
+                      "$ref": "#/$defs/1O"
                     }
                   }
                 }
@@ -11047,6 +11017,20 @@
                     "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
                     "items": {
                       "$ref": "#/$defs/1W"
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "parentRefs": {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/1U"
+                    },
+                    "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
+                    "items": {
+                      "$ref": "#/$defs/1U"
                     }
                   }
                 }
@@ -11094,7 +11078,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/1D"
+                          "$ref": "#/$defs/1C"
                         }
                       },
                       {
@@ -11190,7 +11174,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/1F"
+                          "$ref": "#/$defs/1E"
                         }
                       },
                       {
@@ -11233,11 +11217,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/2i"
+                  "$ref": "#/$defs/2g"
                 }
               },
               {
-                "$ref": "#/$defs/2h"
+                "$ref": "#/$defs/2f"
               }
             ]
           },
@@ -11277,7 +11261,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/1I"
+                          "$ref": "#/$defs/1G"
                         }
                       },
                       {
@@ -11623,19 +11607,19 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/8"
+                },
+                {
                   "$ref": "#/$defs/9"
                 },
                 {
                   "$ref": "#/$defs/a"
                 },
                 {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
                   "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/b"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -11743,13 +11727,13 @@
                         "$ref": "#/$defs/2"
                       },
                       {
-                        "$ref": "#/$defs/2m"
+                        "$ref": "#/$defs/2k"
                       },
                       {
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/2n"
+                        "$ref": "#/$defs/2l"
                       },
                       {
                         "$ref": "#/$defs/4"
@@ -11776,19 +11760,19 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
                             "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
                             "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/h"
@@ -11886,39 +11870,11 @@
                 "properties": {
                   "secrets": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1i"
+                      "$ref": "#/$defs/1K"
                     },
                     "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses.",
                     "items": {
-                      "$ref": "#/$defs/1i"
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "secrets": {
-                    "additionalProperties": {
-                      "$ref": "#/$defs/1G"
-                    },
-                    "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses.",
-                    "items": {
-                      "$ref": "#/$defs/1G"
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "secrets": {
-                    "additionalProperties": {
-                      "$ref": "#/$defs/1M"
-                    },
-                    "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses.",
-                    "items": {
-                      "$ref": "#/$defs/1M"
+                      "$ref": "#/$defs/1K"
                     }
                   }
                 }
@@ -12036,19 +11992,19 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
                             "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
                             "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/h"
@@ -12393,12 +12349,12 @@
                       "description": "Spec to control the desired behavior of daemon set rolling update.",
                       "properties": {
                         "maxSurge": {
-                          "$ref": "#/$defs/1H"
+                          "$ref": "#/$defs/1F"
                         },
                         "maxUnavailable": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/1H"
+                              "$ref": "#/$defs/1F"
                             },
                             {
                               "type": "string"
@@ -12457,10 +12413,10 @@
                             "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                             "properties": {
                               "matchExpressions": {
-                                "$ref": "#/$defs/1P"
+                                "$ref": "#/$defs/1N"
                               },
                               "matchFields": {
-                                "$ref": "#/$defs/1O"
+                                "$ref": "#/$defs/1M"
                               }
                             },
                             "type": "object",
@@ -12497,10 +12453,10 @@
                             "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                             "properties": {
                               "matchExpressions": {
-                                "$ref": "#/$defs/1P"
+                                "$ref": "#/$defs/1N"
                               },
                               "matchFields": {
-                                "$ref": "#/$defs/1O"
+                                "$ref": "#/$defs/1M"
                               }
                             },
                             "type": [
@@ -12545,10 +12501,10 @@
                                 "$ref": "#/$defs/G"
                               },
                               "matchLabelKeys": {
-                                "$ref": "#/$defs/1S"
+                                "$ref": "#/$defs/1Q"
                               },
                               "mismatchLabelKeys": {
-                                "$ref": "#/$defs/1R"
+                                "$ref": "#/$defs/1P"
                               },
                               "namespaceSelector": {
                                 "$ref": "#/$defs/G"
@@ -12636,10 +12592,10 @@
                                                               "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
                                                               "properties": {
                                                                 "key": {
-                                                                  "$ref": "#/$defs/2g"
+                                                                  "$ref": "#/$defs/2e"
                                                                 },
                                                                 "operator": {
-                                                                  "$ref": "#/$defs/2d"
+                                                                  "$ref": "#/$defs/2b"
                                                                 },
                                                                 "values": {
                                                                   "anyOf": [
@@ -12682,7 +12638,7 @@
                                                     ]
                                                   },
                                                   "matchLabels": {
-                                                    "$ref": "#/$defs/28"
+                                                    "$ref": "#/$defs/26"
                                                   }
                                                 },
                                                 "type": "object",
@@ -12694,10 +12650,10 @@
                                             ]
                                           },
                                           "matchLabelKeys": {
-                                            "$ref": "#/$defs/1S"
+                                            "$ref": "#/$defs/1Q"
                                           },
                                           "mismatchLabelKeys": {
-                                            "$ref": "#/$defs/1R"
+                                            "$ref": "#/$defs/1P"
                                           },
                                           "namespaceSelector": {
                                             "$ref": "#/$defs/G"
@@ -12881,19 +12837,19 @@
                               {
                                 "allOf": [
                                   {
+                                    "$ref": "#/$defs/8"
+                                  },
+                                  {
                                     "$ref": "#/$defs/9"
                                   },
                                   {
                                     "$ref": "#/$defs/a"
                                   },
                                   {
-                                    "$ref": "#/$defs/b"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/8"
-                                  },
-                                  {
                                     "$ref": "#/$defs/c"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/b"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -12931,7 +12887,7 @@
                               {
                                 "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
                                 "items": {
-                                  "$ref": "#/$defs/1X"
+                                  "$ref": "#/$defs/1V"
                                 },
                                 "type": "array"
                               },
@@ -12951,7 +12907,7 @@
                               {
                                 "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
                                 "items": {
-                                  "$ref": "#/$defs/1X"
+                                  "$ref": "#/$defs/1V"
                                 },
                                 "type": "array"
                               },
@@ -12992,19 +12948,19 @@
                               {
                                 "allOf": [
                                   {
+                                    "$ref": "#/$defs/8"
+                                  },
+                                  {
                                     "$ref": "#/$defs/9"
                                   },
                                   {
                                     "$ref": "#/$defs/a"
                                   },
                                   {
-                                    "$ref": "#/$defs/b"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/8"
-                                  },
-                                  {
                                     "$ref": "#/$defs/c"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/b"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -13103,19 +13059,19 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/$defs/8"
+                    },
+                    {
                       "$ref": "#/$defs/9"
                     },
                     {
                       "$ref": "#/$defs/a"
                     },
                     {
-                      "$ref": "#/$defs/b"
-                    },
-                    {
-                      "$ref": "#/$defs/8"
-                    },
-                    {
                       "$ref": "#/$defs/c"
+                    },
+                    {
+                      "$ref": "#/$defs/b"
                     },
                     {
                       "$ref": "#/$defs/h"
@@ -13142,7 +13098,7 @@
               ]
             },
             {
-              "$ref": "#/$defs/2k"
+              "$ref": "#/$defs/2i"
             },
             {
               "$ref": "#/$defs/A"
@@ -13155,7 +13111,7 @@
       ]
     },
     "namespaceOverride": {
-      "$ref": "#/$defs/1L"
+      "$ref": "#/$defs/1J"
     },
     "networkPolicies": {
       "additionalProperties": {},
@@ -13179,7 +13135,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/2c"
+                "$ref": "#/$defs/2a"
               }
             ]
           },
@@ -13310,7 +13266,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/2e"
+                "$ref": "#/$defs/2c"
               }
             ]
           },
@@ -13720,7 +13676,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/2f"
+            "$ref": "#/$defs/2d"
           },
           "then": {
             "additionalProperties": {},
@@ -13728,7 +13684,7 @@
               "registrySecret": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/2j"
+                    "$ref": "#/$defs/2h"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -13794,19 +13750,19 @@
                               {
                                 "allOf": [
                                   {
+                                    "$ref": "#/$defs/8"
+                                  },
+                                  {
                                     "$ref": "#/$defs/9"
                                   },
                                   {
                                     "$ref": "#/$defs/a"
                                   },
                                   {
-                                    "$ref": "#/$defs/b"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/8"
-                                  },
-                                  {
                                     "$ref": "#/$defs/c"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/b"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -13862,19 +13818,19 @@
                               {
                                 "allOf": [
                                   {
+                                    "$ref": "#/$defs/8"
+                                  },
+                                  {
                                     "$ref": "#/$defs/9"
                                   },
                                   {
                                     "$ref": "#/$defs/a"
                                   },
                                   {
-                                    "$ref": "#/$defs/b"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/8"
-                                  },
-                                  {
                                     "$ref": "#/$defs/c"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/b"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -13969,13 +13925,13 @@
                             "$ref": "#/$defs/2"
                           },
                           {
-                            "$ref": "#/$defs/1Z"
+                            "$ref": "#/$defs/1X"
                           },
                           {
                             "$ref": "#/$defs/6"
                           },
                           {
-                            "$ref": "#/$defs/1N"
+                            "$ref": "#/$defs/1L"
                           },
                           {
                             "$ref": "#/$defs/4"
@@ -14011,10 +13967,10 @@
             "nodePort": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/1T"
+                  "$ref": "#/$defs/1R"
                 },
                 {
-                  "$ref": "#/$defs/1U"
+                  "$ref": "#/$defs/1S"
                 },
                 {
                   "enum": [
@@ -14046,13 +14002,13 @@
                   "$ref": "#/$defs/2"
                 },
                 {
-                  "$ref": "#/$defs/1Z"
+                  "$ref": "#/$defs/1X"
                 },
                 {
                   "$ref": "#/$defs/6"
                 },
                 {
-                  "$ref": "#/$defs/1N"
+                  "$ref": "#/$defs/1L"
                 },
                 {
                   "$ref": "#/$defs/4"
@@ -14108,10 +14064,10 @@
             "nodePort": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/1T"
+                  "$ref": "#/$defs/1R"
                 },
                 {
-                  "$ref": "#/$defs/1U"
+                  "$ref": "#/$defs/1S"
                 },
                 {
                   "$ref": "#/$defs/1"

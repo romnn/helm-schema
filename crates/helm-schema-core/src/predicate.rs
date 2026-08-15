@@ -185,6 +185,15 @@ impl Predicate {
         crate::predicate_bdd::normalize(self)
     }
 
+    /// Reports whether this exact Boolean formula entails `consequent`.
+    ///
+    /// Opaque approximations never prove entailment. The bounded decision
+    /// diagram may also abstain when either formula exceeds its limits.
+    #[must_use]
+    pub fn exactly_implies(&self, consequent: &Self) -> bool {
+        crate::predicate_bdd::exact_implies(self, consequent)
+    }
+
     /// Reports whether the predicate is the constant `true` or `false` formula.
     #[must_use]
     pub fn is_trivial(&self) -> bool {

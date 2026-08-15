@@ -333,10 +333,10 @@ fn bitnami_redis_existing_secret_string_contract_stays_branch_scoped() -> eyre::
 }
 
 #[test]
-fn selected_string_contract_preserves_serialized_and_plain_provider_routes() -> eyre::Result<()> {
-    for (chart_name, yaml_serialized_route) in [
-        ("bitnami-redis", true),
-        ("aws-load-balancer-controller", false),
+fn selected_string_contract_preserves_only_live_provider_preimages() -> eyre::Result<()> {
+    for (chart_name, has_stringified_provider) in [
+        ("bitnami-redis", false),
+        ("aws-load-balancer-controller", true),
     ] {
         let chart_dir = test_util::workspace_testdata()
             .join("charts")
@@ -376,13 +376,13 @@ fn selected_string_contract_preserves_serialized_and_plain_provider_routes() -> 
             }),
             "the selected transform must retain its exact string requirement: {evidence:#?}"
         );
-        let has_stringified_scalar_provider = evidence
-            .provider_schema_uses
-            .iter()
-            .any(|use_| use_.kind == ValueKind::Scalar && use_.stringified);
-        assert!(
-            has_stringified_scalar_provider != yaml_serialized_route,
-            "a YAML-serialized sibling owns coercible string spellings, while a plain-only route retains its provider preimage: {evidence:#?}"
+        sim_assert_eq!(
+            have: evidence
+                .provider_schema_uses
+                .iter()
+                .any(|use_| use_.kind == ValueKind::Scalar && use_.stringified),
+            want: has_stringified_provider,
+            "a serialized sibling suppresses its transformed provider preimage, while an unquoted scalar sink retains the lexical contract: {evidence:#?}"
         );
     }
     Ok(())

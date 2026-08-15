@@ -88,10 +88,6 @@ pub(crate) struct HelperOutputMeta {
     /// include-bound locals, whose splices render the picked value's exact
     /// text and stay provider-typable.
     pub(crate) partial_text: bool,
-    /// A string-consuming transform bound a runtime string contract on this
-    /// path while producing the binding's value: splices rendering it carry
-    /// the contract under their own render conditions.
-    pub(crate) string_contract: bool,
     /// The path supplies the token-opening `%s` of a complete literal
     /// `printf` result. A caller rendering that result in a plain slot must
     /// retain the formatter's selected-string preimage.
@@ -173,7 +169,6 @@ impl HelperOutputMeta {
             && !self.templated_yaml
             && !self.derived_text
             && !self.partial_text
-            && !self.string_contract
             && !self.plain_slot_string_format
             && !self.json_serialized
             && !self.json_decoded
@@ -197,7 +192,6 @@ impl HelperOutputMeta {
             && !self.templated_yaml
             && !self.derived_text
             && !self.partial_text
-            && !self.string_contract
             && !self.plain_slot_string_format
             && !self.json_serialized
             && !self.json_decoded
@@ -221,7 +215,6 @@ impl HelperOutputMeta {
         self.templated_yaml |= other.templated_yaml;
         self.derived_text |= other.derived_text;
         self.partial_text |= other.partial_text;
-        self.string_contract |= other.string_contract;
         self.plain_slot_string_format |= other.plain_slot_string_format;
         self.json_serialized |= other.json_serialized;
         self.json_decoded |= other.json_decoded;

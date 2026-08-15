@@ -197,7 +197,11 @@ pub(super) fn escape_wrapped_identity(
             {
                 return None;
             }
-            let mut meta = crate::helper_meta::HelperOutputMeta::default();
+            let mut meta = effects
+                .local_output_meta
+                .get(path)
+                .cloned()
+                .unwrap_or_default();
             meta.lexical_escapes.insert(escape);
             Some(AbstractValue::OutputPath(path.clone(), meta))
         }

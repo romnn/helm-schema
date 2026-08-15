@@ -1595,16 +1595,24 @@ fn direct_ranged_nested_sentinel_retains_its_member_contract() {
             {{- end }}
     "#});
 
-    let evidence = signals
-        .evidence_for("entries.*.$tplYaml")
-        .unwrap_or_else(|| {
-            panic!(
-                "direct ranged sentinel member must survive: {:#?}",
-                signals.schema_evidence_by_value_path()
-            )
-        });
+    let evidence = signals.evidence_for("entries").unwrap_or_else(|| {
+        panic!(
+            "direct ranged sentinel member must survive: {:#?}",
+            signals.schema_evidence_by_value_path()
+        )
+    });
     assert!(
-        evidence.facts.has_non_self_guarded_string_contract,
+        evidence.fail_implications.iter().any(|implication| {
+            implication.target
+                == helm_schema_core::ContractRequirementTarget::MembersAt {
+                    target_path: vec!["$tplYaml".to_string()],
+                    allow_integer: true,
+                }
+                && implication.requirements
+                    == vec![helm_schema_core::FailValueRequirement::SchemaType(
+                        "string".to_string(),
+                    )]
+        }),
         "tpl must retain its scoped string contract on the nested sentinel: {evidence:#?}"
     );
     assert!(signals.evidence_for("$tplYaml").is_none());

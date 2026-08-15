@@ -4,6 +4,7 @@ use crate::{
 };
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
+use helm_schema_core::{MergeLayerTransform, MergeLayersUse};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -622,27 +623,21 @@ fn contract_ir_activation_guards_gate_fail_captures() {
 #[test]
 fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Result<()> {
     let mut contract = ContractIr::default();
-    contract.extend_string_contract_value_paths(["image.repository".to_string()]);
-    contract.add_type_hint("image.repository", "string");
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: Vec::new(),
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: "image.repository".to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Direct,
+            selection: Vec::new(),
+        },
+    }]);
     contract.append_guards_to_all_uses(&[Guard::Truthy {
         path: "postgresql.enabled".to_string(),
     }]);
 
     let finalized = contract.finalize();
-    sim_assert_eq!(have: finalized.uses().len(), want: 1);
-    let use_ = finalized
-        .uses()
-        .first()
-        .ok_or_eyre("expected one scoped string-contract row")?;
-    sim_assert_eq!(have: use_.source_expr.as_str(), want: "image.repository");
-    sim_assert_eq!(have: use_.path.clone(), want: YamlPath(Vec::new()));
-    sim_assert_eq!(have: use_.has_string_contract, want: true);
-    sim_assert_eq!(
-        have: use_.single_guard_conjunction(),
-        want: vec![Guard::Truthy {
-            path: "postgresql.enabled".to_string(),
-        }]
-    );
+    sim_assert_eq!(have: finalized.uses().len(), want: 0);
 
     let evidence = finalized
         .schema_signals()
@@ -650,24 +645,382 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
         .ok_or_eyre("expected scoped string-contract evidence")?;
     sim_assert_eq!(have: evidence.facts.has_string_contract, want: false);
     sim_assert_eq!(have: evidence.type_hints.contains("string"), want: false);
-    sim_assert_eq!(have: evidence.conditional_overlays.len(), want: 1);
-    let overlay = evidence
-        .conditional_overlays
-        .first()
-        .ok_or_eyre("expected one string-contract overlay")?;
     sim_assert_eq!(
-        have: overlay.guards.clone(),
-        want: vec![helm_schema_core::ConditionalGuard::Truthy {
-            path: "postgresql.enabled".to_string(),
+        have: evidence.fail_implications.clone(),
+        want: vec![helm_schema_core::ContractFailImplication {
+            outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                path: "postgresql.enabled".to_string(),
+            }],
+            target: helm_schema_core::ContractRequirementTarget::Value,
+            requirements: vec![helm_schema_core::FailValueRequirement::SchemaType(
+                "string".to_string(),
+            )],
         }]
     );
+    Ok(())
+}
+
+#[test]
+fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<()> {
+    let path = "config.value";
+    let mut contract = ContractIr::default();
+    contract.push(ContractUse::new(
+        path.to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        vec![Guard::Truthy {
+            path: "config.enabled".to_string(),
+        }],
+        None,
+    ));
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: vec![
+            helm_schema_core::Predicate::Guard(Guard::Truthy {
+                path: "config.enabled".to_string(),
+            }),
+            helm_schema_core::Predicate::Guard(Guard::TypeIs {
+                path: path.to_string(),
+                schema_type: "string".to_string(),
+            }),
+        ],
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: path.to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Scoped,
+            selection: Vec::new(),
+        },
+    }]);
+
+    let finalized = contract.finalize();
+    let evidence = finalized
+        .schema_signals()
+        .evidence_for(path)
+        .ok_or_eyre("expected selected string evidence")?;
+    sim_assert_eq!(have: evidence.facts.has_string_contract, want: false);
+    sim_assert_eq!(have: evidence.type_hints.contains("string"), want: false);
+    Ok(())
+}
+
+#[test]
+fn scoped_string_requirement_suppresses_only_the_matching_provider_route() {
+    let path = "config.name";
+    let mut contract = ContractIr::default();
+    for (gate, slot) in [("first.enabled", "first"), ("second.enabled", "second")] {
+        let row = ContractUse::new(
+            path.to_string(),
+            YamlPath(vec!["metadata".to_string(), slot.to_string()]),
+            ValueKind::Scalar,
+            vec![Guard::Truthy {
+                path: gate.to_string(),
+            }],
+            Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+        );
+        contract.push(row);
+    }
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: vec![helm_schema_core::Predicate::truthy_path("first.enabled")],
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: path.to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Scoped,
+            selection: Vec::new(),
+        },
+    }]);
+
+    let evidence = contract.finalize().into_schema_signals();
+    let provider_paths = evidence
+        .evidence_for(path)
+        .into_iter()
+        .flat_map(|evidence| {
+            evidence
+                .conditional_overlays
+                .iter()
+                .flat_map(|overlay| overlay.evidence.provider_schema_uses.iter())
+        })
+        .map(|provider_use| provider_use.path.clone())
+        .collect::<Vec<_>>();
     sim_assert_eq!(
-        have: overlay.evidence.facts.has_string_contract,
-        want: true
+        have: provider_paths,
+        want: vec![YamlPath(vec!["metadata".to_string(), "second".to_string()])]
     );
+}
+
+#[test]
+fn scoped_string_requirement_matches_a_logically_implied_disjunction() {
+    let path = "config.name";
+    let mut contract = ContractIr::default();
+    contract.push(ContractUse::new(
+        path.to_string(),
+        YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        ValueKind::Scalar,
+        vec![Guard::Truthy {
+            path: "selected".to_string(),
+        }],
+        Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+    ));
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: vec![helm_schema_core::Predicate::Or(vec![
+            helm_schema_core::Predicate::truthy_path("selected"),
+            helm_schema_core::Predicate::truthy_path("fallback"),
+        ])],
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: path.to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Scoped,
+            selection: Vec::new(),
+        },
+    }]);
+
+    let signals = contract.finalize().into_schema_signals();
+    let evidence = signals.evidence_for(path).expect("config.name evidence");
+    assert!(
+        evidence.provider_schema_uses.is_empty(),
+        "the selected disjunction arm proves that the scoped string consumer owns this provider route: {evidence:#?}"
+    );
+}
+
+#[test]
+fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
+    let path = "config.name";
+    let mut contract = ContractIr::default();
+    for (slot, stringified) in [("transformed", true), ("raw", false)] {
+        let mut row = ContractUse::new(
+            path.to_string(),
+            YamlPath(vec!["metadata".to_string(), slot.to_string()]),
+            ValueKind::Scalar,
+            Vec::new(),
+            Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+        );
+        row.stringified = stringified;
+        contract.push(row);
+    }
+    contract.push(ContractUse::new(
+        path.to_string(),
+        YamlPath::default(),
+        ValueKind::YamlSerialized,
+        Vec::new(),
+        None,
+    ));
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: Vec::new(),
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: path.to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Direct,
+            selection: Vec::new(),
+        },
+    }]);
+
+    let evidence = contract.finalize().into_schema_signals();
+    let provider_paths = evidence
+        .evidence_for(path)
+        .into_iter()
+        .flat_map(|evidence| evidence.provider_schema_uses.iter())
+        .map(|provider_use| provider_use.path.clone())
+        .collect::<Vec<_>>();
     sim_assert_eq!(
-        have: overlay.evidence.type_hints.contains("string"),
-        want: true
+        have: provider_paths,
+        want: vec![YamlPath(vec!["metadata".to_string(), "raw".to_string()])]
+    );
+}
+
+#[test]
+fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
+    let mut contract = ContractIr::default();
+    let mut row = ContractUse::new(
+        "workers".to_string(),
+        YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+        ValueKind::YamlSerialized,
+        vec![Guard::Truthy {
+            path: "workers.enabled".to_string(),
+        }],
+        Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+    );
+    row.merge_layers = Some(MergeLayersUse {
+        layers: vec![
+            "workers.celery.sets.*.query".to_string(),
+            "workers.celery.query".to_string(),
+            "workers".to_string(),
+        ],
+        position: 2,
+        transforms: vec![MergeLayerTransform::Identity; 3],
+        via_binding: false,
+    });
+    contract.push(row);
+    contract.extend_fail_conditions([
+        crate::eval_effect::FailCapture {
+            conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "workers.celery.query".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Scoped,
+                selection: Vec::new(),
+            },
+        },
+        crate::eval_effect::FailCapture {
+            conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "workers.celery.sets.*.query".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Scoped,
+                selection: Vec::new(),
+            },
+        },
+    ]);
+
+    let finalized = contract.finalize();
+    sim_assert_eq!(
+        have: finalized
+            .uses()
+            .first()
+            .map(|row| (row.source_expr.as_str(), row.kind)),
+        want: Some(("workers.query", ValueKind::YamlSerialized))
+    );
+}
+
+#[test]
+fn unrelated_string_requirement_keeps_recursive_merge_source() {
+    let mut contract = ContractIr::default();
+    let mut row = ContractUse::new(
+        "ports".to_string(),
+        YamlPath(vec!["spec".to_string(), "ports".to_string()]),
+        ValueKind::YamlSerialized,
+        vec![Guard::Truthy {
+            path: "deployment.enabled".to_string(),
+        }],
+        Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+    );
+    row.merge_layers = Some(MergeLayersUse {
+        layers: vec![
+            "ports.overrides.*.port".to_string(),
+            "ports.port".to_string(),
+            "ports".to_string(),
+        ],
+        position: 2,
+        transforms: vec![MergeLayerTransform::Identity; 3],
+        via_binding: false,
+    });
+    contract.push(row);
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: vec![helm_schema_core::Predicate::truthy_path(
+            "deployment.enabled",
+        )],
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: "ports.*.protocol".to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Selected,
+            selection: vec![helm_schema_core::Predicate::truthy_path("ports.*.protocol")],
+        },
+    }]);
+
+    let finalized = contract.finalize();
+    sim_assert_eq!(
+        have: finalized.uses().first().map(|row| row.source_expr.as_str()),
+        want: Some("ports")
+    );
+}
+
+#[test]
+fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
+    let mut contract = ContractIr::default();
+    let mut row = ContractUse::new(
+        "workers".to_string(),
+        YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
+        ValueKind::YamlSerialized,
+        vec![Guard::Not {
+            path: "workers.enabled".to_string(),
+        }],
+        Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
+    );
+    row.merge_layers = Some(MergeLayersUse {
+        layers: vec![
+            "workers.celery.sets.*.query".to_string(),
+            "workers.celery.query".to_string(),
+            "workers".to_string(),
+        ],
+        position: 2,
+        transforms: vec![MergeLayerTransform::Identity; 3],
+        via_binding: false,
+    });
+    contract.push(row);
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: "workers.celery.query".to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Scoped,
+            selection: Vec::new(),
+        },
+    }]);
+
+    let finalized = contract.finalize();
+    sim_assert_eq!(
+        have: finalized.uses().first().map(|row| row.source_expr.as_str()),
+        want: Some("workers")
+    );
+}
+
+#[test]
+fn propagated_wildcard_string_requirement_needs_its_range_scope() {
+    let mut contract = ContractIr::default();
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: vec![helm_schema_core::Predicate::truthy_path(
+            "workers.celery.enabled",
+        )],
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: "workers.*".to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Selected,
+            selection: Vec::new(),
+        },
+    }]);
+
+    let finalized = contract.finalize();
+    let signals = finalized.schema_signals();
+    assert!(
+        signals.evidence_for("workers").is_none_or(|evidence| {
+            evidence.fail_implications.iter().all(|implication| {
+                !matches!(
+                    implication.target,
+                    helm_schema_core::ContractRequirementTarget::Members { .. }
+                )
+            })
+        }),
+        "a helper-propagated wildcard identity must not classify every member without its range: {signals:#?}"
+    );
+}
+
+#[test]
+fn ranged_wildcard_string_requirement_keeps_its_member_contract() -> eyre::Result<()> {
+    let mut contract = ContractIr::default();
+    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
+        conjunction: Vec::new(),
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::StringRequirement {
+            path: "workers.*".to_string(),
+            route: crate::eval_effect::StringRequirementRoute::Selected,
+            selection: vec![helm_schema_core::Predicate::Guard(Guard::Range {
+                path: "workers".to_string(),
+            })],
+        },
+    }]);
+
+    let finalized = contract.finalize();
+    let evidence = finalized
+        .schema_signals()
+        .evidence_for("workers")
+        .ok_or_eyre("expected ranged worker evidence")?;
+    assert!(
+        evidence.fail_implications.iter().any(|implication| {
+            matches!(
+                implication.target,
+                helm_schema_core::ContractRequirementTarget::Members { .. }
+            ) && implication.requirements
+                == vec![helm_schema_core::FailValueRequirement::SchemaType(
+                    "string".to_string(),
+                )]
+        }),
+        "the exact member range must retain its string contract: {evidence:#?}"
     );
     Ok(())
 }

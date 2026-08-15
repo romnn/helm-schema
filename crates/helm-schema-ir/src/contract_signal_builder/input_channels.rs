@@ -16,15 +16,26 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
     guarded_fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
     shape_erased_value_paths: &BTreeSet<String>,
-    string_contract_value_paths: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
     fail_conditions: &[crate::eval_effect::FailCapture],
     dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
+    let string_requirement_routes = string_requirement_routes(fail_conditions);
+    let yaml_serialized_paths = yaml_serialized_paths(uses);
     for contract_use in uses {
-        record_contract_use(&mut paths, contract_use, range_modes);
+        let routes = string_requirement_routes
+            .get(&contract_use.source_expr)
+            .map(Vec::as_slice)
+            .unwrap_or_default();
+        record_contract_use(
+            &mut paths,
+            contract_use,
+            range_modes,
+            routes,
+            yaml_serialized_paths.contains(contract_use.source_expr.as_str()),
+        );
     }
     for capture in fail_conditions {
         record_fail_conjunction(&mut paths, &mut terminal_clauses, capture, range_modes);
@@ -68,21 +79,6 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         let acc = path_accumulator(&mut paths, value_path);
         acc.referenced = true;
         acc.facts.facts.used_as_serialized = true;
-    }
-    // These paths' RAW values are consumed as Go strings before any
-    // selection runs (a `tpl` program input piped through `default` still
-    // parses first), so the contract types the path even when every placed
-    // row is conditioned by the selection chain (oauth2-proxy's
-    // `tpl .Values.image.registry $ | default … | default "quay.io"`).
-    for value_path in string_contract_value_paths {
-        if value_path.trim().is_empty() {
-            continue;
-        }
-        let acc = path_accumulator(&mut paths, value_path);
-        acc.referenced = true;
-        acc.facts.facts.has_string_contract = true;
-        acc.facts.facts.has_non_self_guarded_string_contract = true;
-        acc.type_hints.insert("string".to_string());
     }
     for (value_path, schema_types) in type_hints {
         let schema_types = schema_types
@@ -140,4 +136,84 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         }
     }
     finish_schema_signals(paths, terminal_clauses)
+}
+
+fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&str> {
+    uses.iter()
+        .filter(|contract_use| {
+            matches!(
+                contract_use.kind,
+                crate::ValueKind::YamlSerialized | crate::ValueKind::TemplatedYamlSerialized
+            )
+        })
+        .map(|contract_use| contract_use.source_expr.as_str())
+        .collect()
+}
+
+fn string_requirement_routes(
+    fail_conditions: &[crate::eval_effect::FailCapture],
+) -> BTreeMap<
+    String,
+    Vec<(
+        crate::eval_effect::StringRequirementRoute,
+        Vec<helm_schema_core::Predicate>,
+    )>,
+> {
+    let mut routes = BTreeMap::<
+        String,
+        BTreeSet<(
+            crate::eval_effect::StringRequirementRoute,
+            Vec<helm_schema_core::Predicate>,
+        )>,
+    >::new();
+    for capture in fail_conditions {
+        let crate::eval_effect::CaptureKind::StringRequirement {
+            path,
+            route,
+            selection,
+        } = &capture.kind
+        else {
+            continue;
+        };
+        if *route == crate::eval_effect::StringRequirementRoute::Serialized {
+            continue;
+        }
+        let mut predicates = capture.conjunction.clone();
+        predicates.extend(selection.iter().cloned());
+        predicates.sort();
+        predicates.dedup();
+        if predicates
+            .iter()
+            .any(helm_schema_core::Predicate::contains_approximation)
+        {
+            continue;
+        }
+        routes
+            .entry(path.clone())
+            .or_default()
+            .insert((*route, predicates));
+    }
+    routes
+        .into_iter()
+        .map(|(path, routes)| {
+            let mut routes = routes.into_iter().collect::<Vec<_>>();
+            routes.sort_by(|left, right| left.1.len().cmp(&right.1.len()).then(left.cmp(right)));
+            let mut minimal = Vec::<(
+                crate::eval_effect::StringRequirementRoute,
+                Vec<helm_schema_core::Predicate>,
+            )>::new();
+            for route in routes {
+                if !minimal.iter().any(|broader| {
+                    broader.0 == route.0
+                        && broader
+                            .1
+                            .iter()
+                            .all(|predicate| route.1.contains(predicate))
+                }) {
+                    minimal.push(route);
+                }
+            }
+            (path, minimal)
+        })
+        .collect()
 }

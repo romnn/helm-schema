@@ -749,305 +749,33 @@
       }
     },
     "A": {
-      "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "B": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
       "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+        "config": {
           "properties": {
-            "labelSelector": {
-              "additionalProperties": false,
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+            "jetstream": {
               "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                    "properties": {
-                      "key": {
-                        "description": "key is the label key that the selector applies to.",
-                        "type": "string"
-                      },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                        "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                        "items": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "type": [
-                          "array",
-                          "null"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "operator"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "matchLabels": {
-                  "additionalProperties": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
+                "enabled": {
+                  "$ref": "#/$defs/t"
                 }
               },
-              "type": [
-                "object",
-                "null"
+              "required": [
+                "enabled"
               ],
-              "x-kubernetes-map-type": "atomic"
-            },
-            "matchLabelKeys": {
-              "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-type": "atomic"
-            },
-            "mismatchLabelKeys": {
-              "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-type": "atomic"
-            },
-            "namespaceSelector": {
-              "additionalProperties": false,
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-              "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                    "properties": {
-                      "key": {
-                        "description": "key is the label key that the selector applies to.",
-                        "type": "string"
-                      },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                        "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                        "items": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "type": [
-                          "array",
-                          "null"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "operator"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "matchLabels": {
-                  "additionalProperties": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
-            },
-            "namespaces": {
-              "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "topologyKey": {
-              "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-              "type": "string"
+              "type": "object"
             }
           },
           "required": [
-            "topologyKey"
+            "jetstream"
           ],
           "type": "object"
-        },
-        "weight": {
-          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
-          "format": "int32",
-          "type": "integer"
         }
       },
       "required": [
-        "weight",
-        "podAffinityTerm"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "C": {
-      "additionalProperties": {},
-      "properties": {
-        "name": {},
-        "tls": {
-          "additionalProperties": {},
-          "properties": {
-            "ca": {},
-            "cert": {},
-            "key": {},
-            "secret": {
-              "additionalProperties": {},
-              "properties": {
-                "name": {}
-              },
-              "type": "object"
-            }
-          }
-        }
-      },
-      "type": "object"
-    },
-    "D": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "E": {
-      "properties": {
-        "credentials": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "credentials"
+        "config"
       ],
       "type": "object"
     },
-    "F": {
-      "properties": {
-        "password": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "password"
-      ],
-      "type": "object"
-    },
-    "G": {
-      "properties": {
-        "registry": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "registry"
-      ],
-      "type": "object"
-    },
-    "H": {
-      "properties": {
-        "jetstream": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "jetstream"
-      ],
-      "type": "object"
-    },
-    "I": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "J": {
+    "B": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -1066,7 +794,71 @@
       },
       "type": "object"
     },
-    "K": {
+    "C": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "D": {
+      "properties": {
+        "credentials": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "credentials"
+      ],
+      "type": "object"
+    },
+    "E": {
+      "properties": {
+        "password": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "password"
+      ],
+      "type": "object"
+    },
+    "F": {
+      "properties": {
+        "registry": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "registry"
+      ],
+      "type": "object"
+    },
+    "G": {
+      "properties": {
+        "jetstream": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "jetstream"
+      ],
+      "type": "object"
+    },
+    "H": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "I": {
       "anyOf": [
         {
           "not": {
@@ -1094,7 +886,26 @@
         }
       ]
     },
-    "L": {
+    "J": {
+      "properties": {
+        "serviceMonitor": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "K": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -1120,7 +931,7 @@
         }
       }
     },
-    "M": {
+    "L": {
       "additionalProperties": {},
       "properties": {
         "host": {},
@@ -1137,6 +948,25 @@
           ]
         }
       },
+      "type": "object"
+    },
+    "M": {
+      "properties": {
+        "autoscaling": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "autoscaling"
+      ],
       "type": "object"
     },
     "N": {
@@ -1942,31 +1772,12 @@
       ]
     },
     "l": {
-      "properties": {
-        "ingress": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "m": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "n": {
+    "m": {
       "properties": {
         "secret": {
           "enum": [
@@ -1979,7 +1790,7 @@
       ],
       "type": "object"
     },
-    "o": {
+    "n": {
       "properties": {
         "tls": {
           "$ref": "#/$defs/t"
@@ -1990,13 +1801,22 @@
       ],
       "type": "object"
     },
-    "p": {
+    "o": {
       "additionalProperties": {},
       "properties": {
         "secret": {
           "type": "object"
         }
       }
+    },
+    "p": {
+      "properties": {
+        "secret": {}
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
     },
     "providerSchema1": {
       "anyOf": [
@@ -2160,42 +1980,6 @@
       ]
     },
     "q": {
-      "properties": {
-        "secret": {}
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "r": {
-      "properties": {
-        "config": {
-          "properties": {
-            "jetstream": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "jetstream"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "config"
-      ],
-      "type": "object"
-    },
-    "s": {
       "allOf": [
         {
           "if": {
@@ -2216,6 +2000,29 @@
           }
         }
       ]
+    },
+    "r": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "s": {
+      "properties": {
+        "ingress": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -2243,55 +2050,13 @@
       ]
     },
     "u": {
-      "properties": {
-        "serviceMonitor": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
-    },
-    "v": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "w": {
-      "properties": {
-        "autoscaling": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "autoscaling"
-      ],
-      "type": "object"
-    },
-    "x": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "y": {
+    "v": {
       "additionalProperties": {},
       "properties": {
         "secret": {
@@ -2303,13 +2068,248 @@
         }
       }
     },
-    "z": {
+    "w": {
       "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
       "format": "date-time",
       "type": [
         "string",
         "null"
       ]
+    },
+    "x": {
+      "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "y": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "matchLabelKeys": {
+              "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "mismatchLabelKeys": {
+              "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "namespaceSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "namespaces": {
+              "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "topologyKey": {
+              "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "z": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {},
+        "tls": {
+          "additionalProperties": {},
+          "properties": {
+            "ca": {},
+            "cert": {},
+            "key": {},
+            "secret": {
+              "additionalProperties": {},
+              "properties": {
+                "name": {}
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2319,7 +2319,7 @@
       "if": {
         "properties": {
           "config": {
-            "$ref": "#/$defs/E"
+            "$ref": "#/$defs/D"
           }
         },
         "required": [
@@ -2336,7 +2336,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "credentials": {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/o"
                   }
                 }
               }
@@ -2360,7 +2360,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/r"
+        "$ref": "#/$defs/A"
       },
       "then": {
         "additionalProperties": {},
@@ -2375,13 +2375,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/C"
+                          "$ref": "#/$defs/z"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/C"
+                          "$ref": "#/$defs/z"
                         },
                         "type": "object"
                       },
@@ -2422,7 +2422,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "nkey": {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/o"
                   }
                 }
               }
@@ -2448,7 +2448,7 @@
       "if": {
         "properties": {
           "config": {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/E"
           }
         },
         "required": [
@@ -2511,7 +2511,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "password": {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/o"
                   }
                 }
               }
@@ -2537,7 +2537,7 @@
       "if": {
         "properties": {
           "config": {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/n"
           }
         },
         "required": [
@@ -2579,7 +2579,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/o"
                   }
                 }
               }
@@ -2725,39 +2725,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/w"
-          },
-          {
-            "$ref": "#/$defs/r"
-          },
-          {
-            "$ref": "#/$defs/l"
-          },
-          {
-            "$ref": "#/$defs/u"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/1"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/t"
@@ -2784,13 +2751,13 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/w"
+            "$ref": "#/$defs/M"
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/s"
           },
           {
-            "$ref": "#/$defs/u"
+            "$ref": "#/$defs/J"
           }
         ]
       },
@@ -2820,12 +2787,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/A"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/H"
               }
             },
             "required": [
@@ -2913,7 +2880,7 @@
       "if": {
         "properties": {
           "image": {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/F"
           }
         },
         "required": [
@@ -2954,7 +2921,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/l"
+        "$ref": "#/$defs/s"
       },
       "then": {
         "allOf": [
@@ -2976,13 +2943,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/M"
+                          "$ref": "#/$defs/L"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/M"
+                          "$ref": "#/$defs/L"
                         },
                         "type": "object"
                       },
@@ -3015,12 +2982,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/s"
           },
           {
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/n"
               }
             },
             "required": [
@@ -3040,13 +3007,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/J"
+                      "$ref": "#/$defs/B"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/J"
+                      "$ref": "#/$defs/B"
                     },
                     "type": "object"
                   },
@@ -3067,7 +3034,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/u"
+        "$ref": "#/$defs/J"
       },
       "then": {
         "additionalProperties": {},
@@ -3118,7 +3085,7 @@
     {
       "if": {
         "not": {
-          "$ref": "#/$defs/w"
+          "$ref": "#/$defs/M"
         }
       },
       "then": {
@@ -3140,7 +3107,7 @@
                 "$ref": "#/$defs/g"
               },
               {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/r"
               },
               {
                 "$ref": "#/$defs/f"
@@ -3186,7 +3153,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/K"
+        "$ref": "#/$defs/I"
       },
       "then": false
     },
@@ -3211,7 +3178,7 @@
               {
                 "properties": {
                   "config": {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/G"
                   }
                 },
                 "required": [
@@ -3222,7 +3189,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/I"
           }
         ]
       },
@@ -3483,7 +3450,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/B"
+                    "$ref": "#/$defs/y"
                   },
                   "type": [
                     "array",
@@ -3513,7 +3480,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/B"
+                    "$ref": "#/$defs/y"
                   },
                   "type": [
                     "array",
@@ -3540,7 +3507,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
           "$ref": "#/$defs/1"
@@ -3638,7 +3605,7 @@
           "additionalProperties": {},
           "properties": {
             "credentials": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/q"
             }
           }
         },
@@ -3688,7 +3655,7 @@
           "additionalProperties": {},
           "properties": {
             "nkey": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/q"
             }
           }
         },
@@ -3839,7 +3806,7 @@
           "additionalProperties": {},
           "properties": {
             "tls": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/q"
             }
           }
         },
@@ -3950,7 +3917,7 @@
                                 "$ref": "#/$defs/g"
                               },
                               {
-                                "$ref": "#/$defs/v"
+                                "$ref": "#/$defs/r"
                               },
                               {
                                 "$ref": "#/$defs/f"
@@ -4093,7 +4060,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/E"
+                "$ref": "#/$defs/D"
               },
               {
                 "anyOf": [
@@ -4101,7 +4068,7 @@
                     "not": {
                       "properties": {
                         "credentials": {
-                          "$ref": "#/$defs/q"
+                          "$ref": "#/$defs/p"
                         }
                       },
                       "required": [
@@ -4113,7 +4080,7 @@
                   {
                     "properties": {
                       "credentials": {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/m"
                       }
                     },
                     "required": [
@@ -4139,7 +4106,7 @@
                     "not": {
                       "properties": {
                         "nkey": {
-                          "$ref": "#/$defs/q"
+                          "$ref": "#/$defs/p"
                         }
                       },
                       "required": [
@@ -4151,7 +4118,7 @@
                   {
                     "properties": {
                       "nkey": {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/m"
                       }
                     },
                     "required": [
@@ -4169,7 +4136,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/F"
+                "$ref": "#/$defs/E"
               },
               {
                 "anyOf": [
@@ -4177,7 +4144,7 @@
                     "not": {
                       "properties": {
                         "password": {
-                          "$ref": "#/$defs/q"
+                          "$ref": "#/$defs/p"
                         }
                       },
                       "required": [
@@ -4189,7 +4156,7 @@
                   {
                     "properties": {
                       "password": {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/m"
                       }
                     },
                     "required": [
@@ -4207,7 +4174,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/n"
               },
               {
                 "anyOf": [
@@ -4215,7 +4182,7 @@
                     "not": {
                       "properties": {
                         "tls": {
-                          "$ref": "#/$defs/q"
+                          "$ref": "#/$defs/p"
                         }
                       },
                       "required": [
@@ -4227,7 +4194,7 @@
                   {
                     "properties": {
                       "tls": {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/m"
                       }
                     },
                     "required": [
@@ -4250,7 +4217,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/H"
+                "$ref": "#/$defs/G"
               }
             ]
           },
@@ -4265,7 +4232,7 @@
           "description": "Enable granular per-account bytes and message metrics"
         },
         "credentials": {
-          "$ref": "#/$defs/y"
+          "$ref": "#/$defs/v"
         },
         "expectedServers": {
           "description": "Expected number of servers"
@@ -4287,10 +4254,10 @@
           "description": "Only query stream/consumer leaders for JSZ metrics"
         },
         "nkey": {
-          "$ref": "#/$defs/y"
+          "$ref": "#/$defs/v"
         },
         "password": {
-          "$ref": "#/$defs/y"
+          "$ref": "#/$defs/v"
         },
         "servers": {
           "description": "Required."
@@ -4551,7 +4518,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/x"
+                    "$ref": "#/$defs/u"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -4675,7 +4642,7 @@
                     "$ref": "#/$defs/k"
                   },
                   "optional": {
-                    "$ref": "#/$defs/D"
+                    "$ref": "#/$defs/C"
                   }
                 },
                 "type": [
@@ -4791,7 +4758,7 @@
                             "$ref": "#/$defs/1j"
                           },
                           "creationTimestamp": {
-                            "$ref": "#/$defs/z"
+                            "$ref": "#/$defs/w"
                           },
                           "deletionGracePeriodSeconds": {
                             "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -4802,7 +4769,7 @@
                             ]
                           },
                           "deletionTimestamp": {
-                            "$ref": "#/$defs/z"
+                            "$ref": "#/$defs/w"
                           },
                           "finalizers": {
                             "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -4882,7 +4849,7 @@
                                   ]
                                 },
                                 "time": {
-                                  "$ref": "#/$defs/z"
+                                  "$ref": "#/$defs/w"
                                 }
                               },
                               "type": [
@@ -5129,7 +5096,7 @@
                 "description": "Represents a Fibre Channel volume. Fibre Channel volumes can only be mounted as read/write once. Fibre Channel volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/A"
+                    "$ref": "#/$defs/x"
                   },
                   "lun": {
                     "description": "lun is Optional: FC target lun number",
@@ -5508,7 +5475,7 @@
                 "description": "Represents a Photon Controller persistent disk resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/A"
+                    "$ref": "#/$defs/x"
                   },
                   "pdID": {
                     "description": "pdID is the ID that identifies Photon Controller persistent disk",
@@ -5535,7 +5502,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/x"
+                    "$ref": "#/$defs/u"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -5620,7 +5587,7 @@
                               "$ref": "#/$defs/k"
                             },
                             "optional": {
-                              "$ref": "#/$defs/D"
+                              "$ref": "#/$defs/C"
                             }
                           },
                           "type": [
@@ -5966,10 +5933,10 @@
                 "description": "Represents a StorageOS persistent volume resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/A"
+                    "$ref": "#/$defs/x"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/x"
+                    "$ref": "#/$defs/u"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/i"
@@ -6060,7 +6027,7 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/1f"
@@ -6080,7 +6047,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/F"
               },
               {
                 "anyOf": [
@@ -6229,7 +6196,7 @@
                 "$ref": "#/$defs/j"
               },
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/n"
               }
             ]
           },
@@ -6238,11 +6205,11 @@
             "properties": {
               "tls": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/L"
+                  "$ref": "#/$defs/K"
                 },
                 "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
                 "items": {
-                  "$ref": "#/$defs/L"
+                  "$ref": "#/$defs/K"
                 }
               }
             }
@@ -6267,7 +6234,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
           "additionalProperties": {
@@ -6288,7 +6255,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
           "$ref": "#/$defs/1d"
@@ -6554,7 +6521,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/v"
+              "$ref": "#/$defs/r"
             }
           ]
         },
@@ -6628,7 +6595,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           },
           "then": {
             "allOf": [

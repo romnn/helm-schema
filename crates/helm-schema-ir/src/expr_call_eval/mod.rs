@@ -286,6 +286,9 @@ fn eval_string_transform_invocation(
             effects.merge(arg_result.effects);
         }
     }
+    if piped_for_facts.is_none() && !function_semantics(function).is_total_stringification() {
+        record_string_call_consumers(function, args, env, resolver, &mut effects);
+    }
     record_string_transform_effects(
         function,
         result.value.as_ref(),
@@ -1042,7 +1045,7 @@ fn eval_piped_invocation(
             if token_initial_string_argument == Some(args.len()) {
                 conjoin_formatter_operand_selection(&piped, piped_dispatch.as_ref(), &mut effects);
             }
-            record_printf_argument_effects(false, &piped, &mut effects);
+            record_printf_argument_effects(false, current.value.as_ref(), &piped, &mut effects);
             let mut scalar_values = Vec::with_capacity(args.len());
             for (index, arg) in args.iter().enumerate() {
                 let mut result = eval_expr_with_helper_calls(arg, env, resolver);
@@ -1063,7 +1066,12 @@ fn eval_piped_invocation(
                     );
                 }
                 effects.merge(result.effects);
-                record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
+                record_printf_argument_effects(
+                    index == 0,
+                    result.value.as_ref(),
+                    &identity_paths,
+                    &mut effects,
+                );
             }
             scalar_values.push(piped_scalar);
             let dispatch = literal_printf_format(args)
@@ -1581,13 +1589,17 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
             .condition
             .conjoined(&GuardDnf::from_conjunction(predicates.iter().cloned()));
     }
-    for capture in &mut effects.helper_fails {
-        for predicate in predicates {
-            if !capture.conjunction.contains(predicate) {
-                capture.conjunction.push(predicate.clone());
+    effects.helper_fails = std::mem::take(&mut effects.helper_fails)
+        .into_iter()
+        .map(|mut capture| {
+            for predicate in predicates {
+                if !capture.conjunction.contains(predicate) {
+                    capture.conjunction.push(predicate.clone());
+                }
             }
-        }
-    }
+            capture
+        })
+        .collect();
     effects.member_host_conversions = std::mem::take(&mut effects.member_host_conversions)
         .into_iter()
         .map(|mut conversion| {
@@ -1599,18 +1611,6 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
             conversion
         })
         .collect();
-
-    let direct_string_paths = std::mem::take(&mut effects.direct_string_consumer_paths);
-    for path in direct_string_paths {
-        effects.string_contract_paths.remove(&path);
-        strict_operands::push_value_type_capture(
-            predicates.iter().cloned().collect(),
-            path,
-            "string".to_string(),
-            false,
-            effects,
-        );
-    }
 
     // Conditional mutation channels cannot yet carry an execution guard.
     // Ignoring those mutations is conservative; applying them globally

@@ -367,45 +367,27 @@ fn conditionally_rendered_quoted_tpl_clauses() -> serde_json::Value {
                 },
             },
             "then": {
-                "additionalProperties": {},
-                "properties": {
-                    "endpoint": {
-                        "anyOf": [
-                            { "$ref": "#/$defs/helm-double-quoted-safe" },
-                            { "pattern": r"\{\{", "type": "string" },
-                        ],
-                    },
-                },
-            },
-        },
-        {
-            "if": {
                 "allOf": [
                     {
+                        "additionalProperties": {},
                         "properties": {
-                            "endpoint": { "$ref": "#/$defs/t" },
+                            "endpoint": {
+                                "anyOf": [
+                                    { "$ref": "#/$defs/helm-double-quoted-safe" },
+                                    { "pattern": r"\{\{", "type": "string" },
+                                ],
+                            },
                         },
-                        "required": ["endpoint"],
-                        "type": "object",
                     },
                     {
-                        "not": {
-                            "properties": {
-                                "volumes": { "$ref": "#/$defs/t" },
+                        "additionalProperties": {},
+                        "properties": {
+                            "endpoint": {
+                                "type": ["null", "string"],
                             },
-                            "required": ["volumes"],
-                            "type": "object",
                         },
                     },
                 ],
-            },
-            "then": {
-                "additionalProperties": {},
-                "properties": {
-                    "endpoint": {
-                        "type": ["null", "string"],
-                    },
-                },
             },
         },
         {
@@ -506,6 +488,34 @@ fn conditionally_rendered_double_quoted_tpl_keeps_its_placement_language() {
             serde_json::json!({
                 "endpoint": r#"{{ "https://example.com" }}"#,
                 "volumes": [],
+            }),
+            true,
+        ),
+        (serde_json::json!({ "volumes": [] }), false),
+        (
+            serde_json::json!({
+                "endpoint": null,
+                "volumes": [],
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "endpoint": false,
+                "volumes": [],
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "endpoint": 7,
+                "volumes": [],
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "volumes": ["home"],
             }),
             true,
         ),

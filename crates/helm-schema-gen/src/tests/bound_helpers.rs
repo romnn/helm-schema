@@ -2,6 +2,42 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+#[test]
+fn templated_helper_name_matches_logically_implied_scope() {
+    let helpers = indoc! {r#"
+        {{- define "test.name" -}}
+        {{- if .Values.name }}
+          {{- tpl .Values.name . }}
+        {{- else }}
+          fallback
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          {{- if or .Values.config .Values.name }}
+          name: {{ include "test.name" . }}
+          {{- end }}
+        spec:
+          containers: []
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        enabled: true
+        config: false
+        name: ~
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "name": "3" })),
+        "the selected name arm implies its redundant outer disjunction, and tpl output remains arbitrary templated text: {schema}"
+    );
+}
+
 /// Passing a structured values object into a helper via `dict` should map the
 /// helper-local field accesses back to descendant values paths, not treat the
 /// parent object itself as a scalar leaf at the rendered output path.

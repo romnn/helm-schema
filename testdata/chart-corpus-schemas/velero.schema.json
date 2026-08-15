@@ -6,49 +6,6 @@
       }
     },
     "10": {
-      "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "11": {
-      "additionalProperties": false,
-      "description": "Adds and removes POSIX capabilities from running containers.",
-      "properties": {
-        "add": {
-          "description": "Added capabilities",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "drop": {
-          "description": "Removed capabilities",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "12": {
       "additionalProperties": {
         "type": [
           "string",
@@ -59,48 +16,40 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "13": {
+    "11": {
       "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "string",
         "null"
       ]
     },
-    "14": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "server": {
-              "properties": {
-                "create": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "create"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "server"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "15": {
+    "12": {
       "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "16": {
+    "13": {
+      "properties": {
+        "podDisruptionBudget": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "podDisruptionBudget"
+      ],
+      "type": "object"
+    },
+    "14": {
       "propertyNames": {
         "allOf": [
           {
@@ -132,7 +81,7 @@
       },
       "type": "object"
     },
-    "17": {
+    "15": {
       "properties": {
         "nodeAgent": {
           "properties": {
@@ -151,7 +100,7 @@
       ],
       "type": "object"
     },
-    "18": {
+    "16": {
       "properties": {
         "prometheusRule": {
           "properties": {
@@ -170,7 +119,7 @@
       ],
       "type": "object"
     },
-    "19": {
+    "17": {
       "properties": {
         "credentials": {
           "properties": {
@@ -189,48 +138,40 @@
       ],
       "type": "object"
     },
-    "1A": {
-      "additionalProperties": {},
+    "18": {
       "properties": {
-        "securityContext": {
+        "rbac": {
           "properties": {
-            "seccompProfile": {
-              "additionalProperties": false,
-              "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-              "properties": {
-                "localhostProfile": {
-                  "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "type": {
-                  "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": [
-                "object",
-                "null"
-              ],
-              "x-kubernetes-unions": [
-                {
-                  "discriminator": "type",
-                  "fields-to-discriminateBy": {
-                    "localhostProfile": "LocalhostProfile"
-                  }
-                }
-              ]
+            "create": {
+              "$ref": "#/$defs/t"
             }
-          }
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
         }
-      }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
     },
-    "1B": {
+    "19": {
+      "properties": {
+        "configMaps": {
+          "required": [
+            "fs-restore-action-config"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "configMaps"
+      ],
+      "type": "object"
+    },
+    "1A": {
       "additionalProperties": {},
       "properties": {
         "caCert": {
@@ -301,7 +242,7 @@
         }
       }
     },
-    "1C": {
+    "1B": {
       "additionalProperties": {},
       "properties": {
         "data": {
@@ -366,7 +307,7 @@
       },
       "type": "object"
     },
-    "1D": {
+    "1C": {
       "additionalProperties": {},
       "properties": {
         "accessMode": {
@@ -440,7 +381,7 @@
         }
       }
     },
-    "1E": {
+    "1D": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
         "additionalProperties": false,
@@ -482,7 +423,7 @@
         "null"
       ]
     },
-    "1F": {
+    "1E": {
       "description": "A list of node selector requirements by node's labels.",
       "items": {
         "additionalProperties": false,
@@ -524,7 +465,7 @@
         "null"
       ]
     },
-    "1G": {
+    "1F": {
       "allOf": [
         {
           "not": {
@@ -580,7 +521,7 @@
       "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
       "type": "string"
     },
-    "1H": {
+    "1G": {
       "description": "Resources resize policy for the container.",
       "items": {
         "additionalProperties": false,
@@ -607,7 +548,7 @@
       "type": "array",
       "x-kubernetes-list-type": "atomic"
     },
-    "1I": {
+    "1H": {
       "additionalProperties": {},
       "properties": {
         "annotations": {
@@ -644,7 +585,7 @@
         }
       }
     },
-    "1J": {
+    "1I": {
       "anyOf": [
         {
           "allOf": [
@@ -677,11 +618,11 @@
       ],
       "description": "Pod annotations for Prometheus"
     },
-    "1K": {
+    "1J": {
       "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
       "type": "null"
     },
-    "1L": {
+    "1K": {
       "allOf": [
         {
           "properties": {
@@ -736,7 +677,7 @@
         }
       ]
     },
-    "1M": {
+    "1L": {
       "allOf": [
         {
           "properties": {
@@ -791,7 +732,7 @@
         }
       ]
     },
-    "1N": {
+    "1M": {
       "if": {
         "not": {
           "properties": {
@@ -828,11 +769,11 @@
         }
       }
     },
-    "1O": {
+    "1N": {
       "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
       "type": "null"
     },
-    "1P": {
+    "1O": {
       "allOf": [
         {
           "anyOf": [
@@ -878,11 +819,11 @@
         }
       ]
     },
-    "1Q": {
+    "1P": {
       "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
       "type": "null"
     },
-    "1R": {
+    "1Q": {
       "allOf": [
         {
           "properties": {
@@ -944,7 +885,7 @@
         }
       ]
     },
-    "1S": {
+    "1R": {
       "allOf": [
         {
           "properties": {
@@ -1006,7 +947,7 @@
         }
       ]
     },
-    "1T": {
+    "1S": {
       "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2",
       "type": [
         "array",
@@ -1014,7 +955,7 @@
         "object"
       ]
     },
-    "1U": {
+    "1T": {
       "if": {
         "not": {
           "properties": {
@@ -1052,7 +993,7 @@
         }
       }
     },
-    "1V": {
+    "1U": {
       "allOf": [
         {
           "properties": {
@@ -1107,7 +1048,7 @@
         }
       ]
     },
-    "1W": {
+    "1V": {
       "additionalProperties": {},
       "properties": {
         "accessMode": {},
@@ -1153,7 +1094,7 @@
       },
       "type": "object"
     },
-    "1X": {
+    "1W": {
       "if": {
         "not": {
           "properties": {
@@ -1188,7 +1129,7 @@
         }
       }
     },
-    "1Y": {
+    "1X": {
       "if": {
         "not": {
           "properties": {
@@ -1223,7 +1164,7 @@
         }
       }
     },
-    "1Z": {
+    "1Y": {
       "allOf": [
         {
           "properties": {
@@ -1257,21 +1198,33 @@
         }
       ]
     },
-    "1a": {
+    "1Z": {
       "properties": {
-        "configMaps": {
+        "repositoryMaintenanceJob": {
+          "properties": {
+            "repositoryConfigData": {
+              "anyOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/t"
+                }
+              ]
+            }
+          },
           "required": [
-            "fs-restore-action-config"
+            "repositoryConfigData"
           ],
           "type": "object"
         }
       },
       "required": [
-        "configMaps"
+        "repositoryMaintenanceJob"
       ],
       "type": "object"
     },
-    "1b": {
+    "1a": {
       "properties": {
         "namespace": {
           "anyOf": [
@@ -1289,7 +1242,7 @@
       ],
       "type": "object"
     },
-    "1c": {
+    "1b": {
       "properties": {
         "namespace": {
           "properties": {
@@ -1308,7 +1261,7 @@
       ],
       "type": "object"
     },
-    "1d": {
+    "1c": {
       "properties": {
         "podSecurityContext": {
           "$ref": "#/$defs/t"
@@ -1319,7 +1272,7 @@
       ],
       "type": "object"
     },
-    "1e": {
+    "1d": {
       "anyOf": [
         {
           "type": "object"
@@ -1329,7 +1282,7 @@
         }
       ]
     },
-    "1f": {
+    "1e": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -1340,13 +1293,13 @@
       ],
       "type": "object"
     },
-    "1g": {
+    "1f": {
       "type": [
         "string",
         "null"
       ]
     },
-    "1h": {
+    "1g": {
       "additionalProperties": false,
       "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
       "properties": {
@@ -1566,7 +1519,7 @@
         "null"
       ]
     },
-    "1i": {
+    "1h": {
       "anyOf": [
         {
           "description": "List of environment variables to set in the container. Cannot be updated.",
@@ -1749,7 +1702,7 @@
       ],
       "description": "Additional values to be used as environment variables. Optional.\nSimple value\n- name: SIMPLE_VAR\nvalue: \"simple-value\""
     },
-    "1j": {
+    "1i": {
       "if": {
         "not": {
           "properties": {
@@ -2263,7 +2216,7 @@
         }
       }
     },
-    "1k": {
+    "1j": {
       "additionalProperties": {},
       "properties": {
         "securityContext": {
@@ -2310,7 +2263,7 @@
         }
       }
     },
-    "1l": {
+    "1k": {
       "allOf": [
         {
           "not": {
@@ -2366,7 +2319,7 @@
       "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
       "type": "string"
     },
-    "1m": {
+    "1l": {
       "allOf": [
         {
           "not": {
@@ -2422,7 +2375,7 @@
       "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
       "type": "string"
     },
-    "1n": {
+    "1m": {
       "additionalProperties": false,
       "description": "PodDNSConfig defines the DNS parameters of a pod in addition to those generated from DNSPolicy.",
       "properties": {
@@ -2485,7 +2438,7 @@
       },
       "type": "object"
     },
-    "1o": {
+    "1n": {
       "allOf": [
         {
           "not": {
@@ -2541,7 +2494,7 @@
       "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
       "type": "string"
     },
-    "1p": {
+    "1o": {
       "if": {
         "not": {
           "properties": {
@@ -2578,7 +2531,7 @@
         }
       }
     },
-    "1q": {
+    "1p": {
       "allOf": [
         {
           "not": {
@@ -2634,7 +2587,7 @@
       "description": "Provider is the provider of the backup storage.",
       "type": "string"
     },
-    "1r": {
+    "1q": {
       "allOf": [
         {
           "not": {
@@ -2690,7 +2643,7 @@
       "description": "Provider is the provider of the volume storage.",
       "type": "string"
     },
-    "1s": {
+    "1r": {
       "allOf": [
         {
           "not": {
@@ -2745,7 +2698,7 @@
       ],
       "type": "string"
     },
-    "1t": {
+    "1s": {
       "anyOf": [
         {
           "properties": {
@@ -2839,7 +2792,7 @@
         }
       ]
     },
-    "1u": {
+    "1t": {
       "anyOf": [
         {
           "properties": {
@@ -2920,7 +2873,7 @@
         }
       ]
     },
-    "1v": {
+    "1u": {
       "additionalProperties": false,
       "description": "keySecret defines the Secret containing the client key file for the targets.",
       "properties": {
@@ -2944,7 +2897,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "1w": {
+    "1v": {
       "additionalProperties": {},
       "properties": {
         "securityContext": {
@@ -2991,7 +2944,7 @@
         }
       }
     },
-    "1x": {
+    "1w": {
       "description": "HostAliases is an optional list of hosts and IPs that will be injected into the pod's hosts file if specified. This is only valid for non-hostNetwork pods.",
       "items": {
         "additionalProperties": false,
@@ -3027,7 +2980,7 @@
       "x-kubernetes-patch-merge-key": "ip",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "1y": {
+    "1x": {
       "anyOf": [
         {
           "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
@@ -3056,7 +3009,7 @@
       ],
       "description": "- registrySecretName\nConfigure if API credential for Service Account is automounted."
     },
-    "1z": {
+    "1y": {
       "allOf": [
         {
           "properties": {
@@ -3135,6 +3088,47 @@
         }
       ]
     },
+    "1z": {
+      "additionalProperties": {},
+      "properties": {
+        "securityContext": {
+          "properties": {
+            "seccompProfile": {
+              "additionalProperties": false,
+              "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+              "properties": {
+                "localhostProfile": {
+                  "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-unions": [
+                {
+                  "discriminator": "type",
+                  "fields-to-discriminateBy": {
+                    "localhostProfile": "LocalhostProfile"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
     "2": {
       "additionalProperties": {
         "anyOf": [
@@ -3203,32 +3197,6 @@
       "type": "object"
     },
     "20": {
-      "properties": {
-        "repositoryMaintenanceJob": {
-          "properties": {
-            "repositoryConfigData": {
-              "anyOf": [
-                {
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/t"
-                }
-              ]
-            }
-          },
-          "required": [
-            "repositoryConfigData"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "repositoryMaintenanceJob"
-      ],
-      "type": "object"
-    },
-    "21": {
       "allOf": [
         {
           "properties": {
@@ -3270,7 +3238,7 @@
         }
       ]
     },
-    "22": {
+    "21": {
       "additionalProperties": {},
       "properties": {
         "annotations": {
@@ -3309,7 +3277,7 @@
       },
       "type": "object"
     },
-    "23": {
+    "22": {
       "additionalProperties": {},
       "properties": {
         "default": {
@@ -3331,7 +3299,7 @@
         }
       }
     },
-    "24": {
+    "23": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -3348,7 +3316,7 @@
       },
       "type": "object"
     },
-    "25": {
+    "24": {
       "properties": {
         "configuration": {
           "properties": {
@@ -3371,6 +3339,33 @@
       },
       "required": [
         "configuration"
+      ],
+      "type": "object"
+    },
+    "25": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "server": {
+              "properties": {
+                "create": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "server"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
       ],
       "type": "object"
     },
@@ -8186,25 +8181,6 @@
       ]
     },
     "H": {
-      "properties": {
-        "podDisruptionBudget": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "podDisruptionBudget"
-      ],
-      "type": "object"
-    },
-    "I": {
       "additionalProperties": {},
       "properties": {
         "annotations": {
@@ -8233,7 +8209,7 @@
         }
       }
     },
-    "J": {
+    "I": {
       "properties": {
         "image": {
           "properties": {
@@ -8252,26 +8228,7 @@
       ],
       "type": "object"
     },
-    "K": {
-      "properties": {
-        "rbac": {
-          "properties": {
-            "create": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "L": {
+    "J": {
       "additionalProperties": {},
       "properties": {
         "config": {
@@ -8294,13 +8251,13 @@
         }
       }
     },
-    "M": {
+    "K": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "N": {
+    "L": {
       "additionalProperties": false,
       "description": "ResourceRequirements describes the compute resource requirements.",
       "properties": {
@@ -8381,7 +8338,7 @@
       },
       "type": "object"
     },
-    "O": {
+    "M": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -8549,7 +8506,7 @@
         }
       }
     },
-    "P": {
+    "N": {
       "if": {
         "properties": {
           "credential": {
@@ -8723,7 +8680,7 @@
         }
       }
     },
-    "Q": {
+    "O": {
       "if": {
         "properties": {
           "credential": {
@@ -8896,7 +8853,7 @@
         }
       }
     },
-    "R": {
+    "P": {
       "allOf": [
         {
           "not": {
@@ -8952,7 +8909,7 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "S": {
+    "Q": {
       "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
       "items": {
         "type": [
@@ -8962,7 +8919,7 @@
       },
       "type": "array"
     },
-    "T": {
+    "R": {
       "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
       "format": "int64",
       "type": [
@@ -8970,18 +8927,18 @@
         "null"
       ]
     },
-    "U": {
+    "S": {
       "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "V": {
+    "T": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "W": {
+    "U": {
       "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
       "format": "int64",
       "type": [
@@ -8989,7 +8946,7 @@
         "null"
       ]
     },
-    "X": {
+    "V": {
       "additionalProperties": {},
       "properties": {
         "labels": {
@@ -9026,18 +8983,61 @@
         }
       }
     },
-    "Y": {
+    "W": {
       "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "Z": {
+    "X": {
       "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
       "format": "int64",
       "type": [
         "integer",
+        "null"
+      ]
+    },
+    "Y": {
+      "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "Z": {
+      "additionalProperties": false,
+      "description": "Adds and removes POSIX capabilities from running containers.",
+      "properties": {
+        "add": {
+          "description": "Added capabilities",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "drop": {
+          "description": "Removed capabilities",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
         "null"
       ]
     },
@@ -9047,44 +9047,38 @@
       }
     },
     "b": {
-      "properties": {
-        "cleanUpCRDs": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "cleanUpCRDs"
-      ],
-      "type": "object"
-    },
-    "c": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "d": {
+    "c": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "e": {
+    "d": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "f": {
+    "e": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "g": {
+    "f": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "h": {
+    "g": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "h": {
+      "not": {
+        "pattern": "[\\r\\n]"
       }
     },
     "helm-double-quoted-safe": {
@@ -9120,15 +9114,10 @@
     },
     "i": {
       "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "j": {
-      "not": {
         "pattern": "[ \\t]#"
       }
     },
-    "k": {
+    "j": {
       "anyOf": [
         {
           "properties": {
@@ -9153,6 +9142,17 @@
           "type": "object"
         }
       ]
+    },
+    "k": {
+      "properties": {
+        "cleanUpCRDs": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "cleanUpCRDs"
+      ],
+      "type": "object"
     },
     "l": {
       "properties": {
@@ -9206,45 +9206,8 @@
       ]
     },
     "p": {
-      "allOf": [
-        {
-          "properties": {
-            "namespace": {
-              "anyOf": [
-                {
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/t"
-                }
-              ]
-            }
-          },
-          "required": [
-            "namespace"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "namespace": {
-              "properties": {
-                "labels": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "labels"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "namespace"
-          ],
-          "type": "object"
-        }
-      ]
+      "maximum": 0,
+      "type": "integer"
     },
     "providerSchema1": {
       "anyOf": [
@@ -15146,6 +15109,47 @@
       ]
     },
     "q": {
+      "allOf": [
+        {
+          "properties": {
+            "namespace": {
+              "anyOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/t"
+                }
+              ]
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "properties": {
+                "labels": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "labels"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "r": {
       "properties": {
         "metrics": {
           "properties": {
@@ -15163,10 +15167,6 @@
         "metrics"
       ],
       "type": "object"
-    },
-    "r": {
-      "maximum": 0,
-      "type": "integer"
     },
     "s": {
       "$ref": "#/$defs/helm-double-quoted-safe"
@@ -15557,7 +15557,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/k"
           },
           {
             "$ref": "#/$defs/n"
@@ -15621,7 +15621,7 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/12"
+                    "$ref": "#/$defs/10"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -15652,13 +15652,13 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/1C"
+                "$ref": "#/$defs/1B"
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/1C"
+                "$ref": "#/$defs/1B"
               },
               "type": "object"
             },
@@ -15672,7 +15672,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1a"
+        "$ref": "#/$defs/19"
       },
       "then": {
         "allOf": [
@@ -15775,11 +15775,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1D"
+                      "$ref": "#/$defs/1C"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/1D"
+                      "$ref": "#/$defs/1C"
                     }
                   }
                 }
@@ -15795,11 +15795,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/I"
+                      "$ref": "#/$defs/H"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/I"
+                      "$ref": "#/$defs/H"
                     }
                   }
                 }
@@ -15835,11 +15835,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1B"
+                      "$ref": "#/$defs/1A"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/1B"
+                      "$ref": "#/$defs/1A"
                     }
                   }
                 }
@@ -15855,11 +15855,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/L"
+                      "$ref": "#/$defs/J"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/L"
+                      "$ref": "#/$defs/J"
                     }
                   }
                 }
@@ -15875,11 +15875,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/23"
+                      "$ref": "#/$defs/22"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/23"
+                      "$ref": "#/$defs/22"
                     }
                   }
                 }
@@ -15895,11 +15895,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/O"
+                      "$ref": "#/$defs/M"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/O"
+                      "$ref": "#/$defs/M"
                     }
                   }
                 }
@@ -15923,7 +15923,7 @@
                               "$ref": "#/$defs/2"
                             },
                             {
-                              "$ref": "#/$defs/1q"
+                              "$ref": "#/$defs/1p"
                             },
                             {
                               "$ref": "#/$defs/3"
@@ -15942,7 +15942,7 @@
                               "$ref": "#/$defs/2"
                             },
                             {
-                              "$ref": "#/$defs/1q"
+                              "$ref": "#/$defs/1p"
                             },
                             {
                               "$ref": "#/$defs/3"
@@ -15988,11 +15988,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/Q"
+                      "$ref": "#/$defs/O"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/Q"
+                      "$ref": "#/$defs/O"
                     }
                   }
                 }
@@ -16008,11 +16008,11 @@
                 "properties": {
                   "backupStorageLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/P"
+                      "$ref": "#/$defs/N"
                     },
                     "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                     "items": {
-                      "$ref": "#/$defs/P"
+                      "$ref": "#/$defs/N"
                     }
                   }
                 }
@@ -16030,52 +16030,18 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/1W"
+                          "$ref": "#/$defs/1V"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1W"
+                          "$ref": "#/$defs/1V"
                         },
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/r"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configuration": {
-                "additionalProperties": {},
-                "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
-                "properties": {
-                  "backupStorageLocation": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "$ref": "#/$defs/1S"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/1S"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/p"
                       },
                       {
                         "type": "null"
@@ -16109,7 +16075,41 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/p"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configuration": {
+                "additionalProperties": {},
+                "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+                "properties": {
+                  "backupStorageLocation": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "$ref": "#/$defs/1Q"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/1Q"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/p"
                       },
                       {
                         "type": "null"
@@ -16138,7 +16138,7 @@
                 "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
                 "properties": {
                   "extraEnvVars": {
-                    "$ref": "#/$defs/1i"
+                    "$ref": "#/$defs/1h"
                   }
                 }
               }
@@ -16155,14 +16155,6 @@
                     "$ref": "#/$defs/33"
                   }
                 }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "type": "string"
               }
             }
           },
@@ -16208,7 +16200,7 @@
                   "dnsConfig": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1n"
+                        "$ref": "#/$defs/1m"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16235,13 +16227,13 @@
                         "$ref": "#/$defs/2"
                       },
                       {
-                        "$ref": "#/$defs/1o"
+                        "$ref": "#/$defs/1n"
                       },
                       {
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/1Q"
+                        "$ref": "#/$defs/1P"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -16268,7 +16260,7 @@
                   "extraArgs": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/S"
+                        "$ref": "#/$defs/Q"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16352,7 +16344,7 @@
                   "hostAliases": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1x"
+                        "$ref": "#/$defs/1w"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16397,7 +16389,7 @@
                   "nodeSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/12"
+                        "$ref": "#/$defs/10"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16508,13 +16500,13 @@
                         "$ref": "#/$defs/2"
                       },
                       {
-                        "$ref": "#/$defs/1m"
+                        "$ref": "#/$defs/1l"
                       },
                       {
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/1O"
+                        "$ref": "#/$defs/1N"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16544,7 +16536,7 @@
                   "resizePolicy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1H"
+                        "$ref": "#/$defs/1G"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16568,7 +16560,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/N"
+                        "$ref": "#/$defs/L"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16595,13 +16587,13 @@
                         "$ref": "#/$defs/2"
                       },
                       {
-                        "$ref": "#/$defs/1l"
+                        "$ref": "#/$defs/1k"
                       },
                       {
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/1K"
+                        "$ref": "#/$defs/1J"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -16726,7 +16718,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1u"
+        "$ref": "#/$defs/1t"
       },
       "then": {
         "allOf": [
@@ -16748,7 +16740,7 @@
                           "repositories": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/16"
+                                "$ref": "#/$defs/14"
                               },
                               {
                                 "type": "array"
@@ -16783,7 +16775,7 @@
                         "description": "Per-repository resource settings ConfigMap\nThis ConfigMap allows specifying different settings for different repositories\nSee: https://velero.io/docs/main/repository-maintenance/",
                         "properties": {
                           "repositories": {
-                            "$ref": "#/$defs/1T"
+                            "$ref": "#/$defs/1S"
                           }
                         }
                       }
@@ -16803,7 +16795,7 @@
             "$ref": "#/$defs/2r"
           },
           {
-            "$ref": "#/$defs/25"
+            "$ref": "#/$defs/24"
           }
         ]
       },
@@ -16912,11 +16904,11 @@
                 "properties": {
                   "volumeSnapshotLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/I"
+                      "$ref": "#/$defs/H"
                     },
                     "description": "Parameters for the VolumeSnapshotLocation(s). Configure multiple by adding other element(s) to the volumeSnapshotLocation slice.\nSee https://velero.io/docs/v1.6/api-types/volumesnapshotlocation/",
                     "items": {
-                      "$ref": "#/$defs/I"
+                      "$ref": "#/$defs/H"
                     }
                   }
                 }
@@ -16932,11 +16924,11 @@
                 "properties": {
                   "volumeSnapshotLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/L"
+                      "$ref": "#/$defs/J"
                     },
                     "description": "Parameters for the VolumeSnapshotLocation(s). Configure multiple by adding other element(s) to the volumeSnapshotLocation slice.\nSee https://velero.io/docs/v1.6/api-types/volumesnapshotlocation/",
                     "items": {
-                      "$ref": "#/$defs/L"
+                      "$ref": "#/$defs/J"
                     }
                   }
                 }
@@ -16952,11 +16944,11 @@
                 "properties": {
                   "volumeSnapshotLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/O"
+                      "$ref": "#/$defs/M"
                     },
                     "description": "Parameters for the VolumeSnapshotLocation(s). Configure multiple by adding other element(s) to the volumeSnapshotLocation slice.\nSee https://velero.io/docs/v1.6/api-types/volumesnapshotlocation/",
                     "items": {
-                      "$ref": "#/$defs/O"
+                      "$ref": "#/$defs/M"
                     }
                   }
                 }
@@ -16980,7 +16972,7 @@
                               "$ref": "#/$defs/2"
                             },
                             {
-                              "$ref": "#/$defs/1r"
+                              "$ref": "#/$defs/1q"
                             },
                             {
                               "$ref": "#/$defs/3"
@@ -16999,7 +16991,7 @@
                               "$ref": "#/$defs/2"
                             },
                             {
-                              "$ref": "#/$defs/1r"
+                              "$ref": "#/$defs/1q"
                             },
                             {
                               "$ref": "#/$defs/3"
@@ -17025,11 +17017,11 @@
                 "properties": {
                   "volumeSnapshotLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/Q"
+                      "$ref": "#/$defs/O"
                     },
                     "description": "Parameters for the VolumeSnapshotLocation(s). Configure multiple by adding other element(s) to the volumeSnapshotLocation slice.\nSee https://velero.io/docs/v1.6/api-types/volumesnapshotlocation/",
                     "items": {
-                      "$ref": "#/$defs/Q"
+                      "$ref": "#/$defs/O"
                     }
                   }
                 }
@@ -17045,11 +17037,11 @@
                 "properties": {
                   "volumeSnapshotLocation": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/P"
+                      "$ref": "#/$defs/N"
                     },
                     "description": "Parameters for the VolumeSnapshotLocation(s). Configure multiple by adding other element(s) to the volumeSnapshotLocation slice.\nSee https://velero.io/docs/v1.6/api-types/volumesnapshotlocation/",
                     "items": {
-                      "$ref": "#/$defs/P"
+                      "$ref": "#/$defs/N"
                     }
                   }
                 }
@@ -17067,18 +17059,18 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/22"
+                          "$ref": "#/$defs/21"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/22"
+                          "$ref": "#/$defs/21"
                         },
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/p"
                       },
                       {
                         "type": "null"
@@ -17101,18 +17093,18 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/1M"
+                          "$ref": "#/$defs/1L"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1M"
+                          "$ref": "#/$defs/1L"
                         },
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/p"
                       },
                       {
                         "type": "null"
@@ -17160,7 +17152,7 @@
                 "description": "Information about the Kubernetes service account Velero uses.",
                 "properties": {
                   "server": {
-                    "$ref": "#/$defs/1I"
+                    "$ref": "#/$defs/1H"
                   }
                 }
               }
@@ -17174,7 +17166,7 @@
                 "description": "Information about the Kubernetes service account Velero uses.",
                 "properties": {
                   "server": {
-                    "$ref": "#/$defs/X"
+                    "$ref": "#/$defs/V"
                   }
                 }
               }
@@ -17222,7 +17214,7 @@
                 "description": "requests:\ncpu: 50m\nmemory: 128Mi\nlimits:\ncpu: 100m\nmemory: 256Mi",
                 "properties": {
                   "extraEnvVars": {
-                    "$ref": "#/$defs/1i"
+                    "$ref": "#/$defs/1h"
                   }
                 }
               }
@@ -17281,7 +17273,7 @@
               "upgradeJobResources": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/N"
+                    "$ref": "#/$defs/L"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -17301,7 +17293,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/17"
           },
           {
             "$ref": "#/$defs/4"
@@ -17345,7 +17337,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/M"
+                        "$ref": "#/$defs/K"
                       },
                       {
                         "type": "null"
@@ -17373,7 +17365,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/M"
+                        "$ref": "#/$defs/K"
                       },
                       {
                         "type": "null"
@@ -17395,7 +17387,7 @@
                   "secretContents": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/16"
+                        "$ref": "#/$defs/14"
                       },
                       {
                         "type": "array"
@@ -17450,7 +17442,7 @@
               "extraEnvVars": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/16"
+                    "$ref": "#/$defs/14"
                   },
                   {
                     "type": "array"
@@ -17519,7 +17511,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/17"
           },
           {
             "$ref": "#/$defs/4"
@@ -17574,7 +17566,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/17"
           },
           {
             "$ref": "#/$defs/28"
@@ -17582,7 +17574,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/r"
               },
               {
                 "properties": {
@@ -17615,7 +17607,7 @@
                     "$ref": "#/$defs/2"
                   },
                   {
-                    "$ref": "#/$defs/1s"
+                    "$ref": "#/$defs/1r"
                   },
                   {
                     "$ref": "#/$defs/3"
@@ -17664,88 +17656,13 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/r"
+              "$ref": "#/$defs/p"
             },
             {
               "type": "null"
             }
           ],
           "description": "Extra K8s manifests to deploy\n- apiVersion: secrets-store.csi.x-k8s.io/v1\nkind: SecretProviderClass\nmetadata:\nname: velero-secrets-store\nspec:\nprovider: aws\nparameters:\nobjects: |\n- objectName: \"velero\"\nobjectType: \"secretsmanager\"\njmesPath:\n- path: \"access_key\"\nobjectAlias: \"access_key\"\n- path: \"secret_key\"\nobjectAlias: \"secret_key\"\nsecretObjects:\n- data:\n- key: access_key\nobjectName: client-id\n- key: client-secret\nobjectName: client-secret\nsecretName: velero-secrets-store\ntype: Opaque"
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/b"
-          },
-          {
-            "$ref": "#/$defs/q"
-          },
-          {
-            "$ref": "#/$defs/p"
-          },
-          {
-            "$ref": "#/$defs/H"
-          },
-          {
-            "$ref": "#/$defs/K"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/14"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "server": {
-                          "properties": {
-                            "name": {
-                              "$ref": "#/$defs/t"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "server"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/n"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/1"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
         }
       }
     },
@@ -17798,10 +17715,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/k"
               },
               {
-                "$ref": "#/$defs/J"
+                "$ref": "#/$defs/I"
               }
             ]
           },
@@ -17811,14 +17728,14 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/J"
+                "$ref": "#/$defs/I"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/J"
+                "$ref": "#/$defs/I"
               },
               {
                 "$ref": "#/$defs/n"
@@ -17850,7 +17767,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/J"
+        "$ref": "#/$defs/I"
       },
       "then": {
         "additionalProperties": {},
@@ -17877,7 +17794,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/k"
           },
           {
             "$ref": "#/$defs/4"
@@ -17979,7 +17896,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/b"
+        "$ref": "#/$defs/k"
       },
       "then": {
         "allOf": [
@@ -18016,7 +17933,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/N"
+                        "$ref": "#/$defs/L"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -18036,7 +17953,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/p"
+        "$ref": "#/$defs/q"
       },
       "then": {
         "allOf": [
@@ -18085,7 +18002,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/k"
               },
               {
                 "$ref": "#/$defs/2f"
@@ -18098,10 +18015,10 @@
                 "$ref": "#/$defs/2f"
               },
               {
-                "$ref": "#/$defs/1b"
+                "$ref": "#/$defs/1a"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1b"
               }
             ]
           }
@@ -18130,10 +18047,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           }
         ]
       },
@@ -18179,7 +18096,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/k"
               },
               {
                 "$ref": "#/$defs/2g"
@@ -18195,10 +18112,10 @@
                 "$ref": "#/$defs/2g"
               },
               {
-                "$ref": "#/$defs/1b"
+                "$ref": "#/$defs/1a"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1b"
               },
               {
                 "$ref": "#/$defs/2c"
@@ -18230,10 +18147,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           },
           {
             "$ref": "#/$defs/n"
@@ -18251,7 +18168,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/q"
+        "$ref": "#/$defs/r"
       },
       "then": {
         "allOf": [
@@ -18384,7 +18301,7 @@
             "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/q"
+            "$ref": "#/$defs/r"
           },
           {
             "not": {
@@ -18401,7 +18318,7 @@
             "description": "Settings for Velero's prometheus metrics. Enabled by default.",
             "properties": {
               "podAnnotations": {
-                "$ref": "#/$defs/1J"
+                "$ref": "#/$defs/1I"
               }
             }
           }
@@ -18412,7 +18329,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/k"
           },
           {
             "allOf": [
@@ -18420,12 +18337,12 @@
                 "$ref": "#/$defs/2r"
               },
               {
-                "$ref": "#/$defs/25"
+                "$ref": "#/$defs/24"
               },
               {
                 "properties": {
                   "configuration": {
-                    "$ref": "#/$defs/20"
+                    "$ref": "#/$defs/1Z"
                   }
                 },
                 "required": [
@@ -18434,7 +18351,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/1u"
+                "$ref": "#/$defs/1t"
               }
             ]
           },
@@ -18445,19 +18362,19 @@
             "$ref": "#/$defs/4"
           },
           {
+            "$ref": "#/$defs/r"
+          },
+          {
             "$ref": "#/$defs/q"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/13"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/18"
           },
           {
-            "$ref": "#/$defs/K"
-          },
-          {
-            "$ref": "#/$defs/14"
+            "$ref": "#/$defs/25"
           },
           {
             "$ref": "#/$defs/n"
@@ -18477,12 +18394,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1z"
+            "$ref": "#/$defs/1y"
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/r"
               },
               {
                 "properties": {
@@ -18521,7 +18438,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1s"
+                "$ref": "#/$defs/1r"
               },
               {
                 "$ref": "#/$defs/3"
@@ -18538,12 +18455,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/q"
+            "$ref": "#/$defs/r"
           },
           {
             "properties": {
               "metrics": {
-                "$ref": "#/$defs/18"
+                "$ref": "#/$defs/16"
               }
             },
             "required": [
@@ -18587,25 +18504,25 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/d"
-                      },
-                      {
-                        "$ref": "#/$defs/f"
-                      },
-                      {
-                        "$ref": "#/$defs/g"
-                      },
-                      {
-                        "$ref": "#/$defs/j"
-                      },
-                      {
-                        "$ref": "#/$defs/i"
+                        "$ref": "#/$defs/c"
                       },
                       {
                         "$ref": "#/$defs/e"
                       },
                       {
-                        "$ref": "#/$defs/c"
+                        "$ref": "#/$defs/f"
+                      },
+                      {
+                        "$ref": "#/$defs/i"
+                      },
+                      {
+                        "$ref": "#/$defs/h"
+                      },
+                      {
+                        "$ref": "#/$defs/d"
+                      },
+                      {
+                        "$ref": "#/$defs/b"
                       },
                       {
                         "$ref": "#/$defs/9"
@@ -18614,7 +18531,7 @@
                         "$ref": "#/$defs/a"
                       },
                       {
-                        "$ref": "#/$defs/h"
+                        "$ref": "#/$defs/g"
                       }
                     ],
                     "description": "Name of the rule group.",
@@ -18660,7 +18577,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1b"
+        "$ref": "#/$defs/1a"
       },
       "then": {
         "allOf": [
@@ -18729,7 +18646,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1c"
+        "$ref": "#/$defs/1b"
       },
       "then": {
         "additionalProperties": {},
@@ -18758,7 +18675,7 @@
             "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/17"
+            "$ref": "#/$defs/15"
           },
           {
             "$ref": "#/$defs/8"
@@ -18776,28 +18693,28 @@
                 "description": "Container Level Security Context for the 'node-agent' container of the node-agent daemonset. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container",
                 "properties": {
                   "allowPrivilegeEscalation": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/S"
                   },
                   "capabilities": {
-                    "$ref": "#/$defs/11"
-                  },
-                  "privileged": {
-                    "$ref": "#/$defs/10"
-                  },
-                  "procMount": {
-                    "$ref": "#/$defs/13"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "$ref": "#/$defs/15"
-                  },
-                  "runAsGroup": {
                     "$ref": "#/$defs/Z"
                   },
-                  "runAsNonRoot": {
+                  "privileged": {
                     "$ref": "#/$defs/Y"
                   },
-                  "runAsUser": {
+                  "procMount": {
+                    "$ref": "#/$defs/11"
+                  },
+                  "readOnlyRootFilesystem": {
+                    "$ref": "#/$defs/12"
+                  },
+                  "runAsGroup": {
+                    "$ref": "#/$defs/X"
+                  },
+                  "runAsNonRoot": {
                     "$ref": "#/$defs/W"
+                  },
+                  "runAsUser": {
+                    "$ref": "#/$defs/U"
                   },
                   "seLinuxOptions": {
                     "$ref": "#/$defs/x"
@@ -18826,7 +18743,7 @@
             "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/17"
+            "$ref": "#/$defs/15"
           }
         ]
       },
@@ -18963,25 +18880,25 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/j"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/c"
                           },
                           {
                             "$ref": "#/$defs/e"
                           },
                           {
-                            "$ref": "#/$defs/c"
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/9"
@@ -18990,7 +18907,7 @@
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/g"
                           }
                         ],
                         "description": "path of the directory on the host. If the path is a symlink, it will follow the link to the real path. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath",
@@ -19036,7 +18953,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1z"
+        "$ref": "#/$defs/1y"
       },
       "then": {
         "additionalProperties": {},
@@ -19071,7 +18988,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/15"
             }
           },
           {
@@ -19137,7 +19054,7 @@
               "securityContext": {
                 "properties": {
                   "allowPrivilegeEscalation": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/S"
                   }
                 }
               }
@@ -19190,7 +19107,7 @@
               "securityContext": {
                 "properties": {
                   "capabilities": {
-                    "$ref": "#/$defs/11"
+                    "$ref": "#/$defs/Z"
                   }
                 }
               }
@@ -19243,7 +19160,7 @@
               "securityContext": {
                 "properties": {
                   "privileged": {
-                    "$ref": "#/$defs/10"
+                    "$ref": "#/$defs/Y"
                   }
                 }
               }
@@ -19296,7 +19213,7 @@
               "securityContext": {
                 "properties": {
                   "procMount": {
-                    "$ref": "#/$defs/13"
+                    "$ref": "#/$defs/11"
                   }
                 }
               }
@@ -19349,7 +19266,7 @@
               "securityContext": {
                 "properties": {
                   "readOnlyRootFilesystem": {
-                    "$ref": "#/$defs/15"
+                    "$ref": "#/$defs/12"
                   }
                 }
               }
@@ -19402,7 +19319,7 @@
               "securityContext": {
                 "properties": {
                   "runAsGroup": {
-                    "$ref": "#/$defs/Z"
+                    "$ref": "#/$defs/X"
                   }
                 }
               }
@@ -19455,7 +19372,7 @@
               "securityContext": {
                 "properties": {
                   "runAsNonRoot": {
-                    "$ref": "#/$defs/Y"
+                    "$ref": "#/$defs/W"
                   }
                 }
               }
@@ -19508,7 +19425,7 @@
               "securityContext": {
                 "properties": {
                   "runAsUser": {
-                    "$ref": "#/$defs/W"
+                    "$ref": "#/$defs/U"
                   }
                 }
               }
@@ -19556,7 +19473,7 @@
         "additionalProperties": {},
         "properties": {
           "nodeAgent": {
-            "$ref": "#/$defs/1w"
+            "$ref": "#/$defs/1v"
           }
         }
       }
@@ -19600,7 +19517,7 @@
         "additionalProperties": {},
         "properties": {
           "nodeAgent": {
-            "$ref": "#/$defs/1A"
+            "$ref": "#/$defs/1z"
           }
         }
       }
@@ -19644,7 +19561,7 @@
         "additionalProperties": {},
         "properties": {
           "nodeAgent": {
-            "$ref": "#/$defs/1k"
+            "$ref": "#/$defs/1j"
           }
         }
       }
@@ -19671,7 +19588,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1t"
+        "$ref": "#/$defs/1s"
       },
       "then": {
         "additionalProperties": {},
@@ -19686,7 +19603,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/13"
           },
           {
             "not": {
@@ -19709,10 +19626,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1d"
+            "$ref": "#/$defs/1c"
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -19736,7 +19653,7 @@
                 "$ref": "#/$defs/F"
               },
               "runAsUser": {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/R"
               },
               "seLinuxOptions": {
                 "$ref": "#/$defs/x"
@@ -19764,7 +19681,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1d"
+        "$ref": "#/$defs/1c"
       },
       "then": {
         "additionalProperties": {},
@@ -19794,7 +19711,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/18"
           }
         ]
       },
@@ -19839,7 +19756,7 @@
               "$ref": "#/$defs/2d"
             },
             {
-              "$ref": "#/$defs/24"
+              "$ref": "#/$defs/23"
             },
             {
               "type": "null"
@@ -19856,18 +19773,18 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/1P"
+                "$ref": "#/$defs/1O"
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/1P"
+                "$ref": "#/$defs/1O"
               },
               "type": "object"
             },
             {
-              "$ref": "#/$defs/r"
+              "$ref": "#/$defs/p"
             },
             {
               "type": "null"
@@ -19885,11 +19802,11 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/1d"
+              "$ref": "#/$defs/1c"
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -19913,7 +19830,7 @@
                 "$ref": "#/$defs/F"
               },
               "runAsUser": {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/R"
               },
               "seLinuxOptions": {
                 "$ref": "#/$defs/x"
@@ -19959,7 +19876,7 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -19996,7 +19913,7 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -20033,7 +19950,7 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -20070,7 +19987,7 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -20107,7 +20024,7 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -20117,7 +20034,7 @@
           "securityContext": {
             "properties": {
               "runAsUser": {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/R"
               }
             }
           }
@@ -20144,12 +20061,12 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
       "then": {
-        "$ref": "#/$defs/1w"
+        "$ref": "#/$defs/1v"
       }
     },
     {
@@ -20172,12 +20089,12 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
       "then": {
-        "$ref": "#/$defs/1A"
+        "$ref": "#/$defs/1z"
       }
     },
     {
@@ -20200,7 +20117,7 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -20237,7 +20154,7 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -20274,12 +20191,12 @@
             }
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
       "then": {
-        "$ref": "#/$defs/1k"
+        "$ref": "#/$defs/1j"
       }
     },
     {
@@ -20297,7 +20214,7 @@
             "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           }
         ]
       },
@@ -20312,7 +20229,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "automountServiceAccountToken": {
-                    "$ref": "#/$defs/1y"
+                    "$ref": "#/$defs/1x"
                   }
                 }
               }
@@ -20323,7 +20240,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/21"
+        "$ref": "#/$defs/20"
       },
       "then": {
         "additionalProperties": {},
@@ -20346,7 +20263,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/14"
+                "$ref": "#/$defs/25"
               },
               {
                 "$ref": "#/$defs/3e"
@@ -20354,7 +20271,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/21"
+            "$ref": "#/$defs/20"
           }
         ]
       },
@@ -20375,7 +20292,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/K"
+        "$ref": "#/$defs/18"
       },
       "then": {
         "additionalProperties": {},
@@ -20395,25 +20312,25 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/j"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/c"
                           },
                           {
                             "$ref": "#/$defs/e"
                           },
                           {
-                            "$ref": "#/$defs/c"
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/9"
@@ -20422,7 +20339,7 @@
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/g"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -20447,13 +20364,13 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/k"
           },
           {
             "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           }
         ]
       },
@@ -20473,7 +20390,7 @@
                         "$ref": "#/$defs/2"
                       },
                       {
-                        "$ref": "#/$defs/1G"
+                        "$ref": "#/$defs/1F"
                       },
                       {
                         "$ref": "#/$defs/3"
@@ -20657,7 +20574,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/13"
           },
           {
             "$ref": "#/$defs/2e"
@@ -20896,10 +20813,10 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/k"
               },
               {
-                "$ref": "#/$defs/1Z"
+                "$ref": "#/$defs/1Y"
               },
               {
                 "$ref": "#/$defs/n"
@@ -20950,10 +20867,10 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/b"
+                "$ref": "#/$defs/k"
               },
               {
-                "$ref": "#/$defs/1Z"
+                "$ref": "#/$defs/1Y"
               }
             ]
           }
@@ -21024,7 +20941,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1t"
+            "$ref": "#/$defs/1s"
           }
         ]
       },
@@ -21634,7 +21551,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/1a"
+                "$ref": "#/$defs/19"
               }
             ]
           },
@@ -21658,7 +21575,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1a"
+                "$ref": "#/$defs/19"
               },
               {
                 "not": {
@@ -21767,10 +21684,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1F"
+                            "$ref": "#/$defs/1E"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1E"
+                            "$ref": "#/$defs/1D"
                           }
                         },
                         "type": "object",
@@ -21807,10 +21724,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1F"
+                            "$ref": "#/$defs/1E"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1E"
+                            "$ref": "#/$defs/1D"
                           }
                         },
                         "type": [
@@ -21961,7 +21878,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/1e"
+            "$ref": "#/$defs/1d"
           },
           "then": {
             "additionalProperties": {},
@@ -21969,7 +21886,7 @@
               "extraArgs": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/S"
+                    "$ref": "#/$defs/Q"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -21987,13 +21904,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/1e"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/3q"
               },
               {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/1Z"
               },
               {
                 "anyOf": [
@@ -22030,13 +21947,13 @@
                                         "$ref": "#/$defs/2"
                                       },
                                       {
-                                        "$ref": "#/$defs/R"
+                                        "$ref": "#/$defs/P"
                                       },
                                       {
                                         "$ref": "#/$defs/3"
                                       },
                                       {
-                                        "$ref": "#/$defs/V"
+                                        "$ref": "#/$defs/T"
                                       },
                                       {
                                         "$ref": "#/$defs/5"
@@ -22130,7 +22047,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "repositories": {
-                            "$ref": "#/$defs/1T"
+                            "$ref": "#/$defs/1S"
                           }
                         }
                       }
@@ -22210,7 +22127,7 @@
           "description": "additional command-line arguments that will be passed to the `velero server`\ne.g.: extraArgs: [\"--foo=bar\"]"
         },
         "extraEnvVars": {
-          "$ref": "#/$defs/1i"
+          "$ref": "#/$defs/1h"
         },
         "features": {
           "description": "Comma separated list of velero feature flags. default: empty\nfeatures: EnableCSI"
@@ -22305,28 +22222,28 @@
               "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
               "properties": {
                 "allowPrivilegeEscalation": {
-                  "$ref": "#/$defs/U"
+                  "$ref": "#/$defs/S"
                 },
                 "capabilities": {
-                  "$ref": "#/$defs/11"
-                },
-                "privileged": {
-                  "$ref": "#/$defs/10"
-                },
-                "procMount": {
-                  "$ref": "#/$defs/13"
-                },
-                "readOnlyRootFilesystem": {
-                  "$ref": "#/$defs/15"
-                },
-                "runAsGroup": {
                   "$ref": "#/$defs/Z"
                 },
-                "runAsNonRoot": {
+                "privileged": {
                   "$ref": "#/$defs/Y"
                 },
-                "runAsUser": {
+                "procMount": {
+                  "$ref": "#/$defs/11"
+                },
+                "readOnlyRootFilesystem": {
+                  "$ref": "#/$defs/12"
+                },
+                "runAsGroup": {
+                  "$ref": "#/$defs/X"
+                },
+                "runAsNonRoot": {
                   "$ref": "#/$defs/W"
+                },
+                "runAsUser": {
+                  "$ref": "#/$defs/U"
                 },
                 "seLinuxOptions": {
                   "$ref": "#/$defs/x"
@@ -22387,70 +22304,38 @@
             ]
           },
           "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "extraEnvVars": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret.",
-                    "items": {
-                      "type": "string"
-                    }
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/2"
+                  },
+                  {
+                    "$ref": "#/$defs/P"
+                  },
+                  {
+                    "$ref": "#/$defs/3"
+                  },
+                  {
+                    "$ref": "#/$defs/T"
+                  },
+                  {
+                    "$ref": "#/$defs/1"
+                  },
+                  {
+                    "$ref": "#/$defs/5"
+                  },
+                  {
+                    "$ref": "#/$defs/7"
+                  },
+                  {
+                    "$ref": "#/$defs/6"
                   }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/R"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/V"
-                      },
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/6"
-                      }
-                    ],
-                    "description": "Name of the secret to create if `useSecret` is true and `existingSecret` is empty"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "secretContents": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Data to be stored in the Velero secret, if `useSecret` is true and `existingSecret` is empty.\nAs of the current Velero release, Velero only uses one secret key/value at a time.\nThe key must be named `cloud`, and the value corresponds to the entire content of your IAM credentials file.\nNote that the format will be different for different providers, please check their documentation.\nHere is a list of documentation for plugins maintained by the Velero team:\n[AWS] https://github.com/vmware-tanzu/velero-plugin-for-aws/blob/main/README.md\n[GCP] https://github.com/vmware-tanzu/velero-plugin-for-gcp/blob/main/README.md\n[Azure] https://github.com/vmware-tanzu/velero-plugin-for-microsoft-azure/blob/main/README.md",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
+                ],
+                "description": "Name of the secret to create if `useSecret` is true and `existingSecret` is empty"
               }
-            ]
+            }
           }
         },
         {
@@ -22499,7 +22384,7 @@
     "dnsConfig": {
       "anyOf": [
         {
-          "$ref": "#/$defs/1n"
+          "$ref": "#/$defs/1m"
         },
         {
           "$ref": "#/$defs/m"
@@ -22519,13 +22404,13 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/1o"
+          "$ref": "#/$defs/1n"
         },
         {
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/1Q"
+          "$ref": "#/$defs/1P"
         },
         {
           "$ref": "#/$defs/5"
@@ -22581,13 +22466,11 @@
       ],
       "description": "Extra volumes for the Velero deployment. Optional."
     },
-    "fullnameOverride": {
-      "type": "string"
-    },
+    "fullnameOverride": {},
     "hostAliases": {
       "anyOf": [
         {
-          "$ref": "#/$defs/1x"
+          "$ref": "#/$defs/1w"
         },
         {
           "$ref": "#/$defs/1"
@@ -22660,7 +22543,7 @@
                     "args": {
                       "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
                       "items": {
-                        "$ref": "#/$defs/1g"
+                        "$ref": "#/$defs/1f"
                       },
                       "type": [
                         "array",
@@ -22670,7 +22553,7 @@
                     "command": {
                       "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
                       "items": {
-                        "$ref": "#/$defs/1g"
+                        "$ref": "#/$defs/1f"
                       },
                       "type": [
                         "array",
@@ -22784,7 +22667,7 @@
                       ]
                     },
                     "livenessProbe": {
-                      "$ref": "#/$defs/1h"
+                      "$ref": "#/$defs/1g"
                     },
                     "name": {
                       "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
@@ -22852,7 +22735,7 @@
                       "x-kubernetes-patch-strategy": "merge"
                     },
                     "readinessProbe": {
-                      "$ref": "#/$defs/1h"
+                      "$ref": "#/$defs/1g"
                     },
                     "resizePolicy": {
                       "description": "Resources resize policy for the container.",
@@ -22895,7 +22778,7 @@
                       "$ref": "#/$defs/2O"
                     },
                     "startupProbe": {
-                      "$ref": "#/$defs/1h"
+                      "$ref": "#/$defs/1g"
                     },
                     "stdin": {
                       "description": "Whether this container should allocate a buffer for stdin in the container runtime. If this is not set, reads from stdin in the container will always result in EOF. Default is false.",
@@ -23102,7 +22985,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/1V"
+            "$ref": "#/$defs/1U"
           },
           "then": {
             "allOf": [
@@ -23116,7 +22999,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/M"
+                            "$ref": "#/$defs/K"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -23196,25 +23079,25 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/j"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/c"
                               },
                               {
                                 "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/b"
                               },
                               {
                                 "$ref": "#/$defs/9"
@@ -23223,7 +23106,7 @@
                                 "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/h"
+                                "$ref": "#/$defs/g"
                               }
                             ],
                             "description": "scheme defines the HTTP scheme to use for scraping.",
@@ -23267,7 +23150,7 @@
                                 "$ref": "#/$defs/2C"
                               },
                               "keySecret": {
-                                "$ref": "#/$defs/1v"
+                                "$ref": "#/$defs/1u"
                               },
                               "maxVersion": {
                                 "$ref": "#/$defs/26"
@@ -23310,7 +23193,7 @@
             "additionalProperties": {},
             "properties": {
               "podAnnotations": {
-                "$ref": "#/$defs/1J"
+                "$ref": "#/$defs/1I"
               }
             }
           }
@@ -23322,7 +23205,7 @@
                 "$ref": "#/$defs/l"
               },
               {
-                "$ref": "#/$defs/18"
+                "$ref": "#/$defs/16"
               },
               {
                 "$ref": "#/$defs/2s"
@@ -23343,7 +23226,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/M"
+                            "$ref": "#/$defs/K"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -23373,7 +23256,7 @@
                 "$ref": "#/$defs/l"
               },
               {
-                "$ref": "#/$defs/18"
+                "$ref": "#/$defs/16"
               },
               {
                 "$ref": "#/$defs/29"
@@ -23454,10 +23337,10 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/1V"
+                "$ref": "#/$defs/1U"
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1K"
               }
             ]
           },
@@ -23471,25 +23354,25 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/j"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/c"
                           },
                           {
                             "$ref": "#/$defs/e"
                           },
                           {
-                            "$ref": "#/$defs/c"
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/9"
@@ -23498,7 +23381,7 @@
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/g"
                           }
                         ],
                         "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -23520,25 +23403,25 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/j"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/c"
                           },
                           {
                             "$ref": "#/$defs/e"
                           },
                           {
-                            "$ref": "#/$defs/c"
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/9"
@@ -23547,7 +23430,7 @@
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/g"
                           }
                         ],
                         "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -23599,25 +23482,25 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/j"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/c"
                               },
                               {
                                 "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/b"
                               },
                               {
                                 "$ref": "#/$defs/9"
@@ -23626,7 +23509,7 @@
                                 "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/h"
+                                "$ref": "#/$defs/g"
                               }
                             ],
                             "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
@@ -23673,25 +23556,25 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/j"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/c"
                               },
                               {
                                 "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/b"
                               },
                               {
                                 "$ref": "#/$defs/9"
@@ -23700,7 +23583,7 @@
                                 "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/h"
+                                "$ref": "#/$defs/g"
                               }
                             ],
                             "description": "InternalTrafficPolicy describes how nodes distribute service traffic they receive on the ClusterIP. If set to \"Local\", the proxy will assume that pods only want to talk to endpoints of the service on the same node as the pod, dropping the traffic if there are no local endpoints. The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features).",
@@ -23743,7 +23626,7 @@
                           {
                             "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
                             "items": {
-                              "$ref": "#/$defs/1g"
+                              "$ref": "#/$defs/1f"
                             },
                             "type": "array",
                             "x-kubernetes-list-type": "atomic"
@@ -23776,25 +23659,25 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/j"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/c"
                               },
                               {
                                 "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/b"
                               },
                               {
                                 "$ref": "#/$defs/9"
@@ -23803,7 +23686,7 @@
                                 "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/h"
+                                "$ref": "#/$defs/g"
                               }
                             ],
                             "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -23864,25 +23747,25 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/j"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/c"
                               },
                               {
                                 "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/b"
                               },
                               {
                                 "$ref": "#/$defs/9"
@@ -23891,7 +23774,7 @@
                                 "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/h"
+                                "$ref": "#/$defs/g"
                               }
                             ],
                             "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -23994,7 +23877,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/1L"
+            "$ref": "#/$defs/1K"
           },
           "then": {
             "allOf": [
@@ -24064,25 +23947,25 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/j"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/c"
                               },
                               {
                                 "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/b"
                               },
                               {
                                 "$ref": "#/$defs/9"
@@ -24091,7 +23974,7 @@
                                 "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/h"
+                                "$ref": "#/$defs/g"
                               }
                             ],
                             "description": "scheme defines the HTTP scheme to use when scraping the metrics.",
@@ -24146,7 +24029,7 @@
                                 "type": "string"
                               },
                               "keySecret": {
-                                "$ref": "#/$defs/1v"
+                                "$ref": "#/$defs/1u"
                               },
                               "maxVersion": {
                                 "$ref": "#/$defs/26"
@@ -24426,7 +24309,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/1e"
+            "$ref": "#/$defs/1d"
           },
           "then": {
             "additionalProperties": {},
@@ -24434,7 +24317,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/S"
+                    "$ref": "#/$defs/Q"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -24551,7 +24434,7 @@
           "$ref": "#/$defs/m"
         },
         {
-          "$ref": "#/$defs/12"
+          "$ref": "#/$defs/10"
         },
         {
           "$ref": "#/$defs/1"
@@ -24602,7 +24485,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/X"
+                "$ref": "#/$defs/V"
               },
               {
                 "additionalProperties": {},
@@ -24646,25 +24529,25 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/j"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/c"
                           },
                           {
                             "$ref": "#/$defs/e"
                           },
                           {
-                            "$ref": "#/$defs/c"
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/9"
@@ -24673,7 +24556,7 @@
                             "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/g"
                           }
                         ],
                         "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
@@ -24743,13 +24626,13 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/1m"
+          "$ref": "#/$defs/1l"
         },
         {
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/1O"
+          "$ref": "#/$defs/1N"
         },
         {
           "$ref": "#/$defs/1"
@@ -24776,7 +24659,7 @@
                 "$ref": "#/$defs/2B"
               },
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1e"
               }
             ]
           },
@@ -24791,25 +24674,25 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/d"
-                      },
-                      {
-                        "$ref": "#/$defs/f"
-                      },
-                      {
-                        "$ref": "#/$defs/g"
-                      },
-                      {
-                        "$ref": "#/$defs/j"
-                      },
-                      {
-                        "$ref": "#/$defs/i"
+                        "$ref": "#/$defs/c"
                       },
                       {
                         "$ref": "#/$defs/e"
                       },
                       {
-                        "$ref": "#/$defs/c"
+                        "$ref": "#/$defs/f"
+                      },
+                      {
+                        "$ref": "#/$defs/i"
+                      },
+                      {
+                        "$ref": "#/$defs/h"
+                      },
+                      {
+                        "$ref": "#/$defs/d"
+                      },
+                      {
+                        "$ref": "#/$defs/b"
                       },
                       {
                         "$ref": "#/$defs/9"
@@ -24818,7 +24701,7 @@
                         "$ref": "#/$defs/a"
                       },
                       {
-                        "$ref": "#/$defs/h"
+                        "$ref": "#/$defs/g"
                       }
                     ],
                     "description": "Name is the name of resource being referenced",
@@ -24853,7 +24736,7 @@
     "resizePolicy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/1H"
+          "$ref": "#/$defs/1G"
         },
         {
           "$ref": "#/$defs/1"
@@ -24867,7 +24750,7 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/N"
+          "$ref": "#/$defs/L"
         },
         {
           "$ref": "#/$defs/m"
@@ -24915,13 +24798,13 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/1l"
+          "$ref": "#/$defs/1k"
         },
         {
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/1K"
+          "$ref": "#/$defs/1J"
         },
         {
           "$ref": "#/$defs/1"
@@ -24942,6 +24825,14 @@
       "allOf": [
         {
           "additionalProperties": {
+            "$ref": "#/$defs/1W"
+          },
+          "items": {
+            "$ref": "#/$defs/1W"
+          }
+        },
+        {
+          "additionalProperties": {
             "$ref": "#/$defs/1X"
           },
           "items": {
@@ -24950,42 +24841,34 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/1Y"
+            "$ref": "#/$defs/1M"
           },
           "items": {
-            "$ref": "#/$defs/1Y"
+            "$ref": "#/$defs/1M"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/1N"
+            "$ref": "#/$defs/1o"
           },
           "items": {
-            "$ref": "#/$defs/1N"
+            "$ref": "#/$defs/1o"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/1p"
+            "$ref": "#/$defs/1i"
           },
           "items": {
-            "$ref": "#/$defs/1p"
+            "$ref": "#/$defs/1i"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/1j"
+            "$ref": "#/$defs/1T"
           },
           "items": {
-            "$ref": "#/$defs/1j"
-          }
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/1U"
-          },
-          "items": {
-            "$ref": "#/$defs/1U"
+            "$ref": "#/$defs/1T"
           }
         }
       ],
@@ -25003,7 +24886,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/24"
+          "$ref": "#/$defs/23"
         }
       ],
       "description": "Backup schedules to create.\nEg:\nschedules:\nmybackup:\ndisabled: false\nlabels:\nmyenv: foo\nannotations:\nmyenv: foo\nschedule: \"0 0 * * *\"\nuseOwnerReferencesInBackup: false\npaused: false\nskipImmediately: false\ntemplate:\nttl: \"240h\"\nstorageLocation: default\nincludedNamespaces:\n- foo\nSee: https://velero.io/docs/v1.14/resource-filtering/#excludes\nexcludedNamespaceScopedResources:\n- persistentVolumeClaims\nexcludedClusterScopedResources:\n- persistentVolumes"
@@ -25022,12 +24905,12 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/1f"
+                    "$ref": "#/$defs/1e"
                   },
                   "then": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/1I"
+                        "$ref": "#/$defs/1H"
                       },
                       {
                         "additionalProperties": {},
@@ -25060,7 +24943,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/X"
+                        "$ref": "#/$defs/V"
                       },
                       {
                         "additionalProperties": {},
@@ -25071,13 +24954,13 @@
                                 "$ref": "#/$defs/2"
                               },
                               {
-                                "$ref": "#/$defs/R"
+                                "$ref": "#/$defs/P"
                               },
                               {
                                 "$ref": "#/$defs/3"
                               },
                               {
-                                "$ref": "#/$defs/V"
+                                "$ref": "#/$defs/T"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -25111,7 +24994,7 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/1f"
+                        "$ref": "#/$defs/1e"
                       },
                       {
                         "$ref": "#/$defs/3t"
@@ -25156,7 +25039,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "$ref": "#/$defs/1y"
+              "$ref": "#/$defs/1x"
             },
             "create": {},
             "imagePullSecrets": {},
@@ -25167,7 +25050,7 @@
                   "$ref": "#/$defs/2"
                 },
                 {
-                  "$ref": "#/$defs/1G"
+                  "$ref": "#/$defs/1F"
                 },
                 {
                   "$ref": "#/$defs/3"

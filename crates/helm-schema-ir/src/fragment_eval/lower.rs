@@ -73,7 +73,6 @@ pub(crate) struct LowerScope<'a> {
     pub(crate) shape_erased_paths: &'a BTreeSet<String>,
     pub(crate) stringified_paths: &'a BTreeSet<String>,
     pub(crate) nil_omitting_paths: &'a BTreeSet<String>,
-    pub(crate) string_contract_paths: &'a BTreeSet<String>,
     pub(crate) plain_slot_string_format_paths: &'a BTreeSet<String>,
     pub(crate) json_serialized_paths: &'a BTreeSet<String>,
     pub(crate) chart_value_defaults: &'a BTreeSet<String>,
@@ -108,8 +107,6 @@ impl LowerScope<'_> {
                     || path_is_encoded(path, self.yaml_serialized_paths),
                 templated_yaml: helper_meta.is_some_and(|meta| meta.templated_yaml)
                     || path_is_encoded(path, self.templated_yaml_paths),
-                string_contract: helper_meta.is_some_and(|meta| meta.string_contract)
-                    || path_is_encoded(path, self.string_contract_paths),
                 plain_slot_string_format: helper_meta
                     .is_some_and(|meta| meta.plain_slot_string_format)
                     || path_is_encoded(path, self.plain_slot_string_format_paths),

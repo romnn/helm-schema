@@ -257,25 +257,15 @@ impl Interpreter<'_> {
         let strict_paths: std::collections::BTreeSet<String> = effects
             .helper_fails
             .iter()
-            .flat_map(runtime_requirement_paths)
+            .flat_map(non_string_runtime_requirement_paths)
             .collect();
-        // Derived booleans and counts erase output identity, but their operands remain strict.
-        // A header has no output slot to protect, so the hard operand contract wins over that
-        // placement-only erasure. Truly total calls such as `join` have no failure capture.
+        // Derived booleans and counts erase output identity, but their typed
+        // operand requirements still describe the raw input. String and
+        // presence captures keep their own execution predicates instead of
+        // promoting that relationship into path-wide shape state.
         effects
             .shape_erased_paths
             .retain(|path| !strict_paths.contains(path));
-
-        for path in &effects.string_contract_paths {
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.type_hints
-            } else {
-                &mut self.guarded_type_hints
-            };
-            sink.entry(path.clone())
-                .or_default()
-                .insert("string".to_string());
-        }
 
         let has_helper_claims = !effects.helper_reads.is_empty()
             || !effects.helper_rendered.is_empty()
@@ -522,31 +512,6 @@ impl Interpreter<'_> {
         self.shape_erased_paths
             .extend(effects.helper_observed_shape_erased_paths.iter().cloned());
         self.range_modes.merge(&effects.range_modes);
-        // Only an unconditional consumer contributes a path-wide contract.
-        // Conditional consumers travel through their placed rows and fail
-        // captures; promoting them here would reject values in dead arms.
-        if self.active_predicates.is_empty() {
-            self.string_contract_paths
-                .extend(effects.string_contract_paths.iter().cloned());
-        }
-        // A locally unconditional consumer becomes a fail capture only
-        // after the enclosing control-flow predicates are known. Selected
-        // expression arms already arrive as captures and never enter this
-        // compatibility lane.
-        if !self.active_predicates.is_empty() {
-            self.absorb_condition_string_captures(&effects.direct_string_consumer_paths.clone());
-        }
-        // The same consumers abort on a nil operand, which the truthy⇒string
-        // capture above can never say. This claim needs no ambient predicates
-        // of its own: an unconditional consumer demands the key outright. Only
-        // operands that ARE the path qualify — a derivation carrying it
-        // renders its own text whatever the path does.
-        let presence_paths: std::collections::BTreeSet<String> = effects
-            .direct_string_consumer_paths
-            .intersection(&effects.nil_strict_identity_paths)
-            .cloned()
-            .collect();
-        self.absorb_string_consumer_presence_captures(&presence_paths);
         let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
         for path in bound_reads {
             self.push_read(&path, &[]);
@@ -688,14 +653,12 @@ impl Interpreter<'_> {
     }
 }
 
-fn runtime_requirement_paths(
+fn non_string_runtime_requirement_paths(
     capture: &crate::eval_effect::FailCapture,
 ) -> std::collections::BTreeSet<String> {
     use crate::eval_effect::CaptureKind;
 
     match &capture.kind {
-        // `RangeKeyPlainSlot` binds the collection's KEYS, but the
-        // runtime-kind lane still keys on the collection itself.
         CaptureKind::RangeKeyStrings { paths }
         | CaptureKind::RangeKeyPlainSlot { paths }
         | CaptureKind::CollectionItems { paths, .. }
@@ -705,13 +668,15 @@ fn runtime_requirement_paths(
         | CaptureKind::RangeInput { path, .. }
         | CaptureKind::DigSubject { path }
         | CaptureKind::RequiredPresence { path }
-        | CaptureKind::AbsenceAborts { path }
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
         | CaptureKind::QuotedSerialization { path, .. }
         | CaptureKind::PrintfStringOperand { path }
         | CaptureKind::PlainSlotText { path, .. }
         | CaptureKind::RangeSelection { path, .. } => [path.clone()].into_iter().collect(),
+        CaptureKind::StringRequirement { .. } | CaptureKind::AbsenceAborts { .. } => {
+            std::collections::BTreeSet::new()
+        }
         CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
             .conjunction
             .last()

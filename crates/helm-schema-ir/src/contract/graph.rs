@@ -32,9 +32,6 @@ pub struct ContractIr {
     /// `join`, `printf`) anywhere in the interpretation: the chart tolerates
     /// any input type at them even when no placed row exists.
     shape_erased_value_paths: BTreeSet<String>,
-    /// Paths carrying a real runtime string contract (`trunc`, `b64enc`,
-    /// `fromYaml`, a dynamic `printf` format) anywhere.
-    string_contract_value_paths: BTreeSet<String>,
     /// The chart's per-path range facts (direct iteration, JSON-decoded
     /// values, key/value destructuring).
     range_modes: crate::range_modes::RangeModes,
@@ -51,7 +48,7 @@ pub struct ContractIr {
     values_program_wrapper_exclusions: BTreeSet<String>,
     /// `fail` captures: no valid values document may satisfy one of these
     /// conjunctions.
-    fail_conditions: Vec<crate::eval_effect::FailCapture>,
+    fail_conditions: BTreeSet<crate::eval_effect::FailCapture>,
     dependency_values_root_fragments: BTreeSet<String>,
 }
 
@@ -130,8 +127,6 @@ impl ContractIr {
         }
         self.shape_erased_value_paths
             .append(&mut other.shape_erased_value_paths);
-        self.string_contract_value_paths
-            .append(&mut other.string_contract_value_paths);
         self.range_modes.merge(&other.range_modes);
         self.values_default_sources
             .append(&mut other.values_default_sources);
@@ -141,11 +136,7 @@ impl ContractIr {
             .append(&mut other.values_program_wrappers);
         self.values_program_wrapper_exclusions
             .append(&mut other.values_program_wrapper_exclusions);
-        for condition in std::mem::take(&mut other.fail_conditions) {
-            if !self.fail_conditions.contains(&condition) {
-                self.fail_conditions.push(condition);
-            }
-        }
+        self.fail_conditions.append(&mut other.fail_conditions);
     }
 
     /// Append guards to every claim in the graph without rewriting any paths.
@@ -163,9 +154,7 @@ impl ContractIr {
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::Fail,
         };
-        if !self.fail_conditions.contains(&capture) {
-            self.fail_conditions.push(capture);
-        }
+        self.fail_conditions.insert(capture);
     }
 
     /// Conjoins activation guards onto every use and terminating failure.
@@ -178,53 +167,25 @@ impl ContractIr {
         // Fail captures are claims too: a `fail` inside a dependency gated
         // off by `condition:` / `tags:` cannot abort rendering, so its
         // conjunction must carry the activation predicate like every row.
-        for capture in &mut self.fail_conditions {
-            capture.conjunction.splice(
-                0..0,
-                guards
-                    .iter()
-                    .cloned()
-                    .map(helm_schema_core::Predicate::from),
-            );
-        }
+        self.fail_conditions = std::mem::take(&mut self.fail_conditions)
+            .into_iter()
+            .map(|mut capture| {
+                capture.conjunction.splice(
+                    0..0,
+                    guards
+                        .iter()
+                        .cloned()
+                        .map(helm_schema_core::Predicate::from),
+                );
+                capture
+            })
+            .collect();
         // A conditionally active chart cannot contribute unconditional
         // effective defaults. Conditional default overlays are not yet part
         // of the schema-signal vocabulary, so abstain instead of leaking them.
         if !guards.is_empty() {
             self.values_default_sources.clear();
             self.values_root_overlay_prefixes.clear();
-            // A path-wide runtime string contract is unconditional only
-            // within its own chart's rendering: under activation guards the
-            // consumer may never run. Materialize it as an ordinary guarded
-            // semantic row so the active branch keeps the contract without
-            // typing the dormant base.
-            let string_contract_paths = std::mem::take(&mut self.string_contract_value_paths);
-            for path in string_contract_paths {
-                if let Some(hints) = self.type_hints.get_mut(&path) {
-                    hints.remove("string");
-                    if hints.is_empty() {
-                        self.type_hints.remove(&path);
-                    }
-                }
-                self.uses.push(ContractUse {
-                    source_expr: path,
-                    path: YamlPath(Vec::new()),
-                    kind: ValueKind::Scalar,
-                    condition: helm_schema_core::GuardDnf::from_guards(guards.iter().cloned()),
-                    resource: None,
-                    provenance: Vec::new(),
-                    has_string_contract: true,
-                    stringified: false,
-                    template_supplied_member_keys: BTreeSet::new(),
-                    split_segment: None,
-                    merge_layers: None,
-                    range_key: false,
-                    nil_omitting: false,
-                    omitted_members: BTreeMap::new(),
-                    digest: false,
-                    merge_operand: false,
-                });
-            }
         }
     }
 
@@ -290,10 +251,6 @@ impl ContractIr {
             .into_iter()
             .map(|path| map(&path))
             .collect();
-        self.string_contract_value_paths = std::mem::take(&mut self.string_contract_value_paths)
-            .into_iter()
-            .map(|path| map(&path))
-            .collect();
         self.range_modes.map_value_paths(&mut map);
         self.values_default_sources = std::mem::take(&mut self.values_default_sources)
             .into_iter()
@@ -341,36 +298,6 @@ impl ContractIr {
             return;
         }
         let global_sources = dependency_global_sources(prefix);
-        let Some(dependency_global) = global_sources.last() else {
-            return;
-        };
-
-        let projected_string_contracts = self
-            .string_contract_value_paths
-            .iter()
-            .filter(|path| {
-                let segments = helm_schema_core::split_value_path(path);
-                let dependency_global_segments =
-                    helm_schema_core::split_value_path(dependency_global);
-                segments
-                    .strip_prefix(dependency_global_segments.as_slice())
-                    .is_some_and(|relative| relative.iter().any(|segment| segment != "*"))
-            })
-            .cloned()
-            .collect::<Vec<_>>();
-        for path in projected_string_contracts {
-            self.string_contract_value_paths.remove(&path);
-            let mut contract_use = ContractUse::new(
-                path.clone(),
-                YamlPath(Vec::new()),
-                ValueKind::Scalar,
-                Vec::new(),
-                None,
-            );
-            contract_use.has_string_contract = true;
-            self.uses.push(contract_use);
-        }
-
         project_global_uses(&mut self.uses, &global_sources);
         project_global_uses(&mut self.dependency_uses, &global_sources);
         project_global_fail_captures(&mut self.fail_conditions, &global_sources);
@@ -485,14 +412,6 @@ impl ContractIr {
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
-    pub(crate) fn extend_string_contract_value_paths(
-        &mut self,
-        paths: impl IntoIterator<Item = String>,
-    ) {
-        self.string_contract_value_paths
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
-    }
-
     pub(crate) fn merge_range_modes(&mut self, range_modes: &crate::range_modes::RangeModes) {
         self.range_modes.merge(range_modes);
     }
@@ -568,11 +487,7 @@ impl ContractIr {
         &mut self,
         conditions: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
     ) {
-        for conjunction in conditions {
-            if !self.fail_conditions.contains(&conjunction) {
-                self.fail_conditions.push(conjunction);
-            }
-        }
+        self.fail_conditions.extend(conditions);
     }
 
     /// Finalize the contract once and derive downstream artifacts from that
@@ -589,13 +504,12 @@ impl ContractIr {
             fallback_type_hints,
             guarded_fallback_type_hints,
             shape_erased_value_paths,
-            string_contract_value_paths,
             range_modes,
             values_default_sources,
             values_root_overlay_prefixes,
             values_program_wrappers,
             values_program_wrapper_exclusions,
-            mut fail_conditions,
+            fail_conditions,
             dependency_values_root_fragments,
         } = self;
         for source_expr in &dependency_values_root_fragments {
@@ -614,8 +528,9 @@ impl ContractIr {
         drop_default_guard_subsumed_duplicates(&mut uses);
         drop_self_truthy_subsumed_duplicates(&mut uses);
         canonicalize_contract_uses(&mut uses);
-        fail_conditions.sort();
-        fail_conditions.dedup();
+        let fail_conditions = fail_conditions.into_iter().collect::<Vec<_>>();
+        lower_string_requirement_merge_sources(&mut uses, &fail_conditions);
+        canonicalize_contract_uses(&mut uses);
         FinalizedContract::new(
             uses,
             &type_hints,
@@ -623,7 +538,6 @@ impl ContractIr {
             &fallback_type_hints,
             &guarded_fallback_type_hints,
             &shape_erased_value_paths,
-            &string_contract_value_paths,
             &range_modes,
             values_default_sources,
             values_root_overlay_prefixes,
@@ -633,6 +547,153 @@ impl ContractIr {
             &dependency_values_root_fragments,
         )
     }
+}
+
+fn string_requirements_by_ancestor(
+    fail_conditions: &[crate::eval_effect::FailCapture],
+) -> BTreeMap<String, BTreeSet<(String, Vec<helm_schema_core::Predicate>)>> {
+    let mut requirements: BTreeMap<String, BTreeSet<(String, Vec<helm_schema_core::Predicate>)>> =
+        BTreeMap::new();
+    for capture in fail_conditions {
+        let crate::eval_effect::CaptureKind::StringRequirement {
+            path,
+            route,
+            selection,
+        } = &capture.kind
+        else {
+            continue;
+        };
+        if *route == crate::eval_effect::StringRequirementRoute::Serialized {
+            continue;
+        }
+        let mut predicates = capture.conjunction.clone();
+        predicates.extend(selection.iter().cloned());
+        predicates.sort();
+        predicates.dedup();
+        let segments = helm_schema_core::split_value_path(path);
+        for end in 1..segments.len() {
+            requirements
+                .entry(helm_schema_core::join_value_path(
+                    segments.get(..end).unwrap_or_default().iter().cloned(),
+                ))
+                .or_default()
+                .insert((path.clone(), predicates.clone()));
+        }
+    }
+    requirements
+}
+
+fn lower_string_requirement_merge_sources(
+    uses: &mut [ContractUse],
+    fail_conditions: &[crate::eval_effect::FailCapture],
+) {
+    let requirements_by_ancestor = string_requirements_by_ancestor(fail_conditions);
+
+    let mut overlap_cache = BTreeMap::new();
+
+    for contract_use in uses.iter_mut() {
+        let Some(merge) = &contract_use.merge_layers else {
+            continue;
+        };
+        let Some(requirements) = requirements_by_ancestor.get(&contract_use.source_expr) else {
+            continue;
+        };
+        let source_segments = helm_schema_core::split_value_path(&contract_use.source_expr);
+        let specific_layers = merge
+            .layers
+            .iter()
+            .map(|layer| helm_schema_core::split_value_path(layer))
+            .filter(|layer| {
+                layer.len() > source_segments.len() && layer.starts_with(source_segments.as_slice())
+            })
+            .collect::<Vec<_>>();
+        let [first, second, rest @ ..] = specific_layers.as_slice() else {
+            continue;
+        };
+        let mut common_suffix_len = first
+            .iter()
+            .rev()
+            .zip(second.iter().rev())
+            .take_while(|(left, right)| left == right)
+            .count();
+        for layer in rest {
+            common_suffix_len = common_suffix_len.min(
+                first
+                    .iter()
+                    .rev()
+                    .zip(layer.iter().rev())
+                    .take_while(|(left, right)| left == right)
+                    .count(),
+            );
+        }
+        let suffix = first.get(first.len().saturating_sub(common_suffix_len)..);
+        let Some(suffix) = suffix.filter(|suffix| {
+            !suffix.is_empty() && suffix.iter().all(|segment| segment.as_str() != "*")
+        }) else {
+            continue;
+        };
+        let Some(requirements) =
+            merge_suffix_string_requirements(&contract_use.source_expr, requirements, suffix)
+        else {
+            continue;
+        };
+        let cache_key = (
+            contract_use.source_expr.clone(),
+            suffix.to_vec(),
+            contract_use.condition.clone(),
+        );
+        let overlaps_requirement = overlap_cache.get(&cache_key).copied().unwrap_or_else(|| {
+            let overlaps = contract_use.condition.disjuncts().iter().any(|row| {
+                requirements.iter().any(|requirement| {
+                    !helm_schema_core::GuardDnf::from_conjunction(
+                        row.iter().cloned().chain(requirement.iter().cloned()),
+                    )
+                    .is_never()
+                })
+            });
+            overlap_cache.insert(cache_key, overlaps);
+            overlaps
+        });
+        if !overlaps_requirement {
+            continue;
+        }
+        let source = contract_use.source_expr.clone();
+        let projected = helm_schema_core::join_value_path(
+            source_segments
+                .iter()
+                .cloned()
+                .chain(suffix.iter().cloned()),
+        );
+        contract_use.map_value_paths(&mut |path| {
+            if path == source {
+                projected.clone()
+            } else {
+                path.to_string()
+            }
+        });
+    }
+}
+
+fn merge_suffix_string_requirements(
+    source: &str,
+    requirements: &BTreeSet<(String, Vec<helm_schema_core::Predicate>)>,
+    suffix: &[String],
+) -> Option<BTreeSet<Vec<helm_schema_core::Predicate>>> {
+    let source_segments = helm_schema_core::split_value_path(source);
+    let mut paths = BTreeSet::new();
+    let mut conjunctions = BTreeSet::new();
+    for (path, predicates) in requirements {
+        let segments = helm_schema_core::split_value_path(path);
+        if segments.len() <= source_segments.len()
+            || !segments.starts_with(source_segments.as_slice())
+            || !segments.ends_with(suffix)
+        {
+            continue;
+        }
+        paths.insert(segments);
+        conjunctions.insert(predicates.clone());
+    }
+    (paths.len() >= 2).then_some(conjunctions)
 }
 
 fn dependency_global_sources(prefix: &[String]) -> Vec<String> {
@@ -761,23 +822,23 @@ fn replace_value_path_prefix(path: &str, from: &str, to: &str) -> String {
 }
 
 fn project_global_fail_captures(
-    captures: &mut Vec<crate::eval_effect::FailCapture>,
+    captures: &mut BTreeSet<crate::eval_effect::FailCapture>,
     global_sources: &[String],
 ) {
     let Some(dependency_global) = global_sources.last() else {
         return;
     };
     let dependency_global_segments = helm_schema_core::split_value_path(dependency_global);
-    let mut projected = Vec::with_capacity(captures.len());
+    let mut projected = BTreeSet::new();
     for dependency_capture in std::mem::take(captures) {
         let Some(source_path) = dependency_capture.kind.sole_value_path() else {
-            projected.push(dependency_capture);
+            projected.insert(dependency_capture);
             continue;
         };
         let source_segments = helm_schema_core::split_value_path(source_path);
         let Some(relative) = source_segments.strip_prefix(dependency_global_segments.as_slice())
         else {
-            projected.push(dependency_capture);
+            projected.insert(dependency_capture);
             continue;
         };
         if relative.is_empty() {
@@ -799,15 +860,15 @@ fn project_global_fail_captures(
                     selected_capture.kind.map_value_paths(&mut |path| {
                         replace_value_path_prefix(path, dependency_global, global_source)
                     });
-                    projected.push(selected_capture);
+                    projected.insert(selected_capture);
                 }
             } else {
-                projected.push(dependency_capture);
+                projected.insert(dependency_capture);
             }
             continue;
         }
         let Some((selection_relative, key)) = global_selection_path(relative) else {
-            projected.push(dependency_capture);
+            projected.insert(dependency_capture);
             continue;
         };
 
@@ -841,7 +902,7 @@ fn project_global_fail_captures(
                 .into_iter()
                 .map(helm_schema_core::Predicate::from),
             );
-            projected.push(selected_capture);
+            projected.insert(selected_capture);
         }
     }
     *captures = projected;

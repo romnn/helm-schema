@@ -44,6 +44,159 @@
       "condition": [
         [
           {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 575,
+            "start": 515
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        },
+        {
+          "helper_chain": [
+            "postgres-operator.serviceAccountName"
+          ],
+          "span": {
+            "end": 1035,
+            "start": 953
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "roleRef",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 575,
+            "start": 515
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        },
+        {
+          "helper_chain": [
+            "postgres-operator.serviceAccountName"
+          ],
+          "span": {
+            "end": 1035,
+            "start": 953
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "subjects[*]",
+        "name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 575,
+            "start": 515
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        },
+        {
+          "helper_chain": [
+            "postgres-operator.serviceAccountName"
+          ],
+          "span": {
+            "end": 1035,
+            "start": 953
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "rbac.create",
             "type": "truthy"
           },

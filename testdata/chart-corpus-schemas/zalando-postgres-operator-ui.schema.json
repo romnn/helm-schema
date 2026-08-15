@@ -1755,25 +1755,76 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "registry": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "tag": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/k"
       },
       "then": {
         "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/1"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          },
           {
             "additionalProperties": {},
             "properties": {
@@ -1837,72 +1888,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "description": "configure ui image",
-          "properties": {
-            "registry": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "description": "configure ui image",
-          "properties": {
-            "repository": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "description": "configure ui image",
-          "properties": {
-            "tag": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
-            }
-          }
-        }
       }
     },
     {

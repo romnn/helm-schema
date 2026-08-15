@@ -1,9 +1,8 @@
 {
   "$defs": {
     "1": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
     },
     "10": {
       "additionalProperties": {
@@ -19,8 +18,9 @@
       ]
     },
     "2": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
+      "not": {
+        "$ref": "#/$defs/t"
+      }
     },
     "3": {
       "type": [
@@ -1903,39 +1903,6 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/V"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/1"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "fullnameOverride overrides nats-kafka.fullname"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/$defs/G"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/t"
@@ -2030,6 +1997,19 @@
               "null",
               "object"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/V"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/G"
           }
         }
       }
@@ -2566,7 +2546,7 @@
               "$ref": "#/$defs/4"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/1"
             }
           ],
           "description": "registry: docker.io"
@@ -2650,7 +2630,7 @@
                                     "$ref": "#/$defs/4"
                                   },
                                   {
-                                    "$ref": "#/$defs/2"
+                                    "$ref": "#/$defs/1"
                                   }
                                 ]
                               }
@@ -2874,7 +2854,7 @@
               "x-kubernetes-patch-strategy": "merge"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/2"
             },
             {
               "type": "null"
@@ -4484,7 +4464,7 @@
               "x-kubernetes-patch-strategy": "merge,retainKeys"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/2"
             },
             {
               "type": "null"
@@ -4649,7 +4629,7 @@
               "$ref": "#/$defs/9"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/2"
             },
             {
               "type": "null"
@@ -4666,10 +4646,10 @@
               "$ref": "#/$defs/T"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/2"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/1"
             },
             {
               "type": "null"
@@ -4713,7 +4693,7 @@
                           "$ref": "#/$defs/4"
                         },
                         {
-                          "$ref": "#/$defs/2"
+                          "$ref": "#/$defs/1"
                         }
                       ]
                     },
@@ -4737,7 +4717,7 @@
                               "$ref": "#/$defs/4"
                             },
                             {
-                              "$ref": "#/$defs/2"
+                              "$ref": "#/$defs/1"
                             },
                             {
                               "type": "null"
@@ -4756,7 +4736,7 @@
                               "$ref": "#/$defs/4"
                             },
                             {
-                              "$ref": "#/$defs/2"
+                              "$ref": "#/$defs/1"
                             },
                             {
                               "type": "integer"
@@ -4771,7 +4751,7 @@
                   ]
                 },
                 {
-                  "$ref": "#/$defs/1"
+                  "$ref": "#/$defs/2"
                 }
               ],
               "description": "0 means no monitoring, -1 means some available port"
@@ -4782,7 +4762,7 @@
                   "$ref": "#/$defs/x"
                 },
                 {
-                  "$ref": "#/$defs/1"
+                  "$ref": "#/$defs/2"
                 },
                 {
                   "$ref": "#/$defs/5"
@@ -4791,7 +4771,7 @@
                   "$ref": "#/$defs/4"
                 },
                 {
-                  "$ref": "#/$defs/2"
+                  "$ref": "#/$defs/1"
                 }
               ]
             },
@@ -4816,7 +4796,7 @@
                       "$ref": "#/$defs/M"
                     },
                     {
-                      "$ref": "#/$defs/1"
+                      "$ref": "#/$defs/2"
                     },
                     {
                       "$ref": "#/$defs/5"
@@ -4825,7 +4805,7 @@
                       "$ref": "#/$defs/4"
                     },
                     {
-                      "$ref": "#/$defs/2"
+                      "$ref": "#/$defs/1"
                     }
                   ]
                 }
@@ -4890,7 +4870,7 @@
               "x-kubernetes-map-type": "atomic"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/2"
             },
             {
               "type": "null"
@@ -4999,7 +4979,7 @@
               "type": "array"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/2"
             },
             {
               "type": "null"
@@ -5032,7 +5012,7 @@
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/2"
+          "$ref": "#/$defs/1"
         }
       ]
     },
@@ -5095,7 +5075,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/1"
+                    "$ref": "#/$defs/2"
                   },
                   {
                     "$ref": "#/$defs/5"
@@ -5104,7 +5084,7 @@
                     "$ref": "#/$defs/4"
                   },
                   {
-                    "$ref": "#/$defs/2"
+                    "$ref": "#/$defs/1"
                   }
                 ]
               }
@@ -5163,7 +5143,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/2"
             },
             {
               "$ref": "#/$defs/5"
@@ -5172,7 +5152,7 @@
               "$ref": "#/$defs/4"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/1"
             },
             {
               "type": "string"

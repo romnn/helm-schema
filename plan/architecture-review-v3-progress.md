@@ -2557,7 +2557,7 @@ adjudication.
 
 ## Step 6b.4 — migrate strict string-consumer scope and fail captures
 
-- Status: landed; commit pending.
+- Status: landed in `46b7f24`.
 - Contract: behavior-bearing; make strict string consumers and fail captures
   preserve typed selection reachability through conditional captures, remove
   legacy default-marker reconstruction and path-wide promotion that can erase
@@ -2799,4 +2799,364 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +100 (61,681 to 61,781).
+- Commit: `46b7f24` (`refactor(ir): migrate string consumer reachability`).
+
+## Step 6b.5 — lower consumer requirements in the contract builder
+
+- Status: complete; commit pending.
+- Contract: behavior-bearing; make every strict string consumer publish a
+  selection-scoped value-type requirement and, where nil aborts, an
+  execution-scoped absence requirement. Lower those requirements once in the
+  contract-signal builder, derive the final string facts there, and delete the
+  path-wide string-contract set, direct-consumer and nil-identity marker sets,
+  row/meta string-contract Boolean, and final-signal serializer compatibility
+  adjustment. Audit the legacy direct-only serializer producers and replace
+  each ordinary string-input row with the same requirement carrier; retain a
+  separate lane only with measured evidence that its domain is different.
+- Acceptance baseline: `46b7f24`.
+- Baseline production Rust LOC: 61,781.
+- Pre-registered acceptance expectations:
+  - Exact default/coalesce/or/ternary selection remains execution-scoped:
+    wrong-kind values in dormant arms render and remain accepted, while the
+    same values in selected strict-string arms abort Helm and remain rejected.
+  - A direct nil-strict string identity keeps both teeth. Missing, null, and
+    wrong-kind operands reject wherever the consumer executes; a derivation
+    merely carrying that path does not acquire an absence requirement.
+  - Dynamic `printf` formats and non-round-tripping `fromYaml`/`fromJson`
+    inputs use the selection carrier. Their selected raw string inputs keep
+    the existing type teeth, and their dormant alternatives stay open.
+  - YAML-serialized and transformed-scalar sibling routes keep the same raw
+    input domain without `adjust_serialized_provider_routes`: builder-owned
+    requirements suppress only provider preimages for the transformed route,
+    never direct raw provider uses.
+  - Exact control predicates continue to lower exactly from typed
+    reachability. Approximate control predicates remain one-way and cannot be
+    negated merely because a legacy faithfulness Boolean says so.
+  - Selection-chain marker stamps remain semantically inert after the typed
+    requirement migration: range/default chains retain their existing
+    iterable and string teeth without marker-specific string promotion.
+  - No corpus or full-depth acceptance flip is expected against `46b7f24`.
+    Any changed cell stops the step for individual Helm 4.2.3 adjudication
+    before a fixture is changed; the zero candidate-accepts/Helm-aborts
+    allowance remains fixed.
+
+- Measured results:
+  - Strict string consumers now emit one `StringRequirement` capture per
+    direct, scoped, selected, or certified-serialized route. The capture keeps
+    its selection conjunction until the contract-signal builder either lowers
+    it as an unconditional string fact or as a conditional value-type
+    requirement. A direct raw identity also emits its execution-scoped
+    `AbsenceAborts` capture, replacing the old nil marker without losing the
+    measured missing/null tooth.
+  - The old `string_contract_paths`, `direct_string_consumer_paths`, and
+    `nil_strict_identity_paths` effect sets are deleted. `ContractIr` no
+    longer carries `string_contract_value_paths`; `ContractUse` no longer
+    carries `has_string_contract`; marker-only promotion and the final-signal
+    `adjust_serialized_provider_routes` pass are deleted. Fail and helper-fail
+    collections are ordered sets, so exact duplicate capture suppression is a
+    property of the carrier rather than repeated linear scans.
+  - Builder lowering precomputes a minimal exact route table before visiting
+    contract uses. Route matching uses bounded exact predicate implication, so
+    a row selected by one arm of a redundant disjunction still satisfies that
+    consumer's scope. Approximate predicates abstain. Merge projection derives
+    a common concrete suffix and exact route overlap from typed merge layers;
+    it does not scan source text or name a chart.
+  - The legacy serializer audit leaves no ordinary raw string input on a
+    direct-only row. Dynamic `printf` formats, `tpl` programs, and raw
+    `fromYaml`/`fromJson` inputs use the selection carrier. `toYaml`, `toJson`,
+    and their certified round trips remain a genuinely different domain:
+    they produce derived text from an input of any JSON kind, so a later
+    string consumer constrains the serialized text rather than retyping the
+    raw source.
+  - Helper-bound and fragment-spliced serializer metadata now transfers the
+    carrier unchanged. Contradictory nested helper arms are skipped as dead:
+    four fragment traversals previously treated `Predicate::False` as a
+    nontrivial live condition and projected such arms unconditionally.
+  - One final-tree schema dump writes 84 artifacts and one final-tree IR dump
+    writes 18 artifacts. The adopted diff changes 49 chart-corpus schemas, 13
+    generator schemas, 15 IR fixtures, and one lean schema; the remaining
+    dumped lanes are byte-identical.
+  - The full-depth comparison against `46b7f24` checks 121,059 probes in 60
+    lanes and finds 83 acceptance flips: 32 widenings and 51 tightenings.
+    Every changed cell was live-adjudicated before fixture adoption. Mandatory
+    base coverage emits 112,260 of 112,260 candidates and third-level coverage
+    emits 7,465 of 7,465 candidates, with zero drops in both categories.
+    Bounded accounting reports 427 guard-witness pairs, 37,582 dropped
+    guard-witness candidates, 240 composite pairs, 2,268 composite pairs
+    dropped by cap, and 51,740 total disclosed drops.
+
+- Deviations:
+  - The pre-registered zero-flip expectation was contradicted. Candidate dumps
+    remained outside the fixture tree while every changed cell was replayed
+    individually through Helm 4.2.3. The authoritative final14 comparison then
+    found 83 cells and failed only the stale exact-count sentinel of 108; only
+    after all 83 live results showed zero false rejections and zero accepted-
+    abort cells was the sentinel changed to 83 and the same full comparison
+    repeated. The final fixtures come only from the clean final14 dumps.
+  - Four performance preflights were rejected without adopting their
+    artifacts. Raw pairwise scalar satisfiability exceeded 328 seconds; one
+    giant disjunction normalization exceeded 194 seconds; DNF lowering without
+    suffix/route absorption exceeded 357 seconds; and two early whole-corpus
+    batches exceeded 600 and 1,655 seconds. The final bounded route table and
+    implication cache reduce builder work to about 1.36 seconds. Airflow takes
+    184.753 seconds at the `46b7f24` baseline, 169.158 seconds in an isolated
+    late-candidate preflight, and 180.839 seconds in that candidate's batch.
+  - The first complete battery exposed a false rejection for Velero
+    `fullnameOverride: "3"`: Helm rendered it. The cause was not the string
+    carrier but a pre-existing structural traversal bug in the adjacent path:
+    nested-helper contradictions normalized to `Predicate::False`, while four
+    fragment traversals treated every nontrivial predicate as live. The
+    structural fix skips false arms and keeps only `Predicate::True` as an
+    identity condition; the regression test proves a contradictory caller
+    guard cannot escape. No chart-specific exception was added.
+  - A later full-tree preflight exposed Airflow `configmap-name: "3"` false
+    rejections. The row predicate selected `name`, while the requirement also
+    retained the redundant `(config || name)` guard; syntactic predicate-set
+    containment could not prove the logical implication. The final route
+    matcher exposes bounded `Predicate::exactly_implies`, recognizes the
+    selected disjunction arm, and deliberately abstains for opaque
+    approximations. Focused Airflow replay then retained only two expected
+    `extraEnv` tightenings, both Helm aborts.
+  - The first exact integration gate after the final13 fixture adoption failed
+    `aws_lbc_null_spelling_name_override_stays_rejected`: the candidate accepted
+    `nameOverride: "null"`, while Helm rendered a null label and the strict
+    provider rejected it. The full-depth deletion battery did not synthesize
+    that lexical spelling, so its 108 live adjudications were insufficient to
+    prove this provider tooth. The broad preimage filter suppressed every
+    stringified scalar route merely because a selected raw string requirement
+    existed. That state and all of its artifacts were rejected.
+  - A first refinement tried to identify structural serialization through a
+    matching `StringRequirementRoute::Serialized`; focused Bitnami Redis tests
+    disproved it because a YAML-serialized sibling is a `ContractUse` fact, not
+    necessarily a later strict consumer of serialized text. The final builder
+    precomputes paths with actual `YamlSerialized` or
+    `TemplatedYamlSerialized` uses, and suppresses an unquoted-scalar provider
+    preimage only when both that structural use and the exact selected raw
+    string route exist. AWS has no serialized sibling and keeps its lexical
+    tooth; Bitnami Redis still removes the transformed-route preimage.
+  - The first final-tree focused IR sweep then found that its new isolated
+    transformed-preimage unit model set only `stringified = true`, the same
+    ambiguous spelling carried by AWS, while expecting the structural
+    serializer result. The preflight failed 368/369 and was rejected. Adding
+    the missing pathless `YamlSerialized` contract use made the model express
+    the actual producer route; no production code or generated fixture changed,
+    and the repeated sweep passed 369/369.
+  - The first final gate sweep stopped at `task lint`: adding the structural
+    serialization-path collection took `derive_schema_signals_from_contract_parts`
+    to 105 lines against Clippy's 100-line limit. The failed gate exited 201.
+    The collection moved unchanged into the direct `yaml_serialized_paths`
+    helper; no lint suppression or adapter layer was added, and the gate sweep
+    restarted from gate 1.
+  - The default-profile unit gate twice passed 1,256/1,257 tests but terminated
+    the existing Airflow break-scope analysis at exactly 300 seconds. An
+    isolated replay passed in 275.763 seconds, and the same final build's clean
+    Airflow schema lane took 360.440 seconds while an 8-vCPU VM and four Turbo
+    development processes held the host load average at 13--19. This was not a
+    hang or assertion failure: the nextest policy comment already requires
+    several-times-slower-machine headroom and reserves termination for stuck
+    tests, but the default profile gave the measured 184.753-second baseline
+    only a 300-second ceiling. Aligning its slow period with the existing
+    integration and CI profiles raises the kill threshold to 600 seconds while
+    keeping zero retries. The entire gate sweep restarted on that final tree.
+  - That first restarted integration gate then exposed aggregate starvation:
+    nextest launched the Airflow corpus and up to eight Airflow re-audits
+    together. Four were terminated at 600.017--600.036 seconds; seven sibling
+    re-audits passed at 591.191--598.597 seconds, and every completed semantic
+    assertion passed. The no-fail-fast run completed 563 passes, four timeouts,
+    and one unrelated platform-path failure. Integration and CI test threads
+    are now bounded at four while retries remain zero, so whole-chart analyzers
+    make stable progress instead of all starving together.
+  - The same integration run exposed a pre-existing macOS path-spelling test
+    defect: the CLI correctly canonicalized `/var/...` to `/private/var/...`,
+    but `relative_explicit_config_is_resolved_from_invocation_directory`
+    compared it with the noncanonical temporary-directory spelling. The test
+    now canonicalizes its expected file path and still verifies the same CLI
+    contract. No production path handling changed.
+  - The exact downstream command first exited 201 before launching a chart
+    because luup2's Linux-oriented parallel harness uses GNU `xargs -a` and
+    `flock`, neither of which macOS supplies. A repository-external temporary
+    shim translated `-a FILE` into BSD xargs stdin and serialized log printing
+    with an atomic-directory lock. The next run reached every worker but all
+    32 failed before analysis because luup2's default `HELM_SCHEMA_BIN` is the
+    frozen `/home/roman/dev/helm-schema/target/release/helm-schema` path. The
+    documented environment override was then set to the freshly installed
+    `/Users/roman/.cargo/bin/helm-schema`; the exact task command exited 0 and
+    every chart reported `[ok]`. Neither repository was edited for these host
+    compatibility accommodations.
+  - `condition_lowering_is_faithful` remains after an exhaustive call-site
+    audit. It is the typed control decoder's global exact-versus-approximate
+    boundary for branch negation, range/with lowering, and assignment scope;
+    it is not a parallel string-selection flag and its callers span control
+    domains that the new carrier does not represent. The carrier's own
+    exactness is read solely from `SelectionReachability` and its predicates.
+  - Apple Clang rejected the vendored scanner's label immediately before a
+    declaration. Adding the null statement `no_bl:;` is a build prerequisite
+    with no scanner-state or runtime semantic change; it is recorded rather
+    than hidden inside the Rust refactor.
+  - The direct final12 dump command spent more than six minutes in macOS
+    binary discovery without launching a test and produced no artifact. It was
+    terminated and rejected. The final14 schema and IR batches were instead
+    built once as nextest archives and executed from those immutable archives.
+    A later external-target prober rebuild hit a transient rustc `SIGBUS`; its
+    retry then stalled at zero CPU for more than eight minutes. Neither output
+    was used. Rebuilding the same final tree under a fresh `/private/tmp`
+    target succeeded, and that archive produced both authoritative batteries.
+  - A post-adoption archive fixture check was rejected as a validation method:
+    nextest correctly read the fixture snapshot embedded before adoption, not
+    the newly copied working-tree fixtures. Direct current-tree tests then
+    proved generator, IR, lean, and final-output fixture equality. The initial
+    default-profile fixture command also selected zero tests and exited 4, as
+    expected from the repository's corpus filtering; it is not counted as a
+    passing gate.
+  - The frozen Step 6b estimate was not reachable without deleting live
+    semantics. Production Rust grows by 77 lines in 6b.5 (61,781 to 61,858),
+    and the full five-step family grows by 454 lines from the 61,404 pre-6b
+    baseline. The old parallel sets, Boolean, compatibility pass, and marker
+    interpretations are deleted, but their nil tooth, exact route selection,
+    merge-source structural projection, and regression coverage require more
+    code than the removed compatibility lanes. The shortfall is accepted as
+    audited evidence, not forced by weakening behavior or deleting tests.
+
+- Adjudication evidence:
+  - All 32 widenings render under Helm 4.2.3. They cover four Bitnami Redis
+    service-account name values and its composite fullname fallback; Cilium
+    cgroup host-root and external-dns name-override coercible strings; eight
+    Flux source-watcher tag kinds; four Kyverno custom-label kinds plus an
+    unknown namespace-override member; NATS's coercible name override; two
+    Traefik additional-argument and four version-override kinds; Trivy
+    Operator's coercible namespace; and four Velero fullname-override kinds.
+  - All 51 tightenings abort under Helm 4.2.3. They cover two Airflow
+    `extraEnv` string states; four Datadog gateway config kinds; four wrong
+    kinds for each of Fluent Bit's five config text fields; four Grafana
+    existing-secret kinds, two extra-container string states, and a null image
+    tag; one third-level Harbor username null state; nine Jenkins agent-
+    argument states; two third-level kube-prometheus-stack null route prefixes;
+    four Promtail config-file kinds plus a null image tag; and Tempo's null tag.
+  - The final report records 83 adjudicated flips, zero
+    candidate-accepts/Helm-aborts cells against the fixed zero allowance, and
+    no adjudication failure. Thus each tightening is a Helm-confirmed rejection
+    rather than a direction-only verdict.
+
+### Producer and route coverage
+
+| Producer or route | Construction sites audited | Final ownership |
+|---|---|---|
+| Direct strict string operand | `record_string_transform_effects`, catalog call operands, pipeline strict-parser arms | Emits `Direct` plus `AbsenceAborts` only when the operand is the exact raw identity; derived influences cannot acquire the nil tooth. |
+| Selected default/coalesce/or/ternary arm | `collect_string_operand_requirements`, `operand_selection_conjunctions`, output metadata transfer | Emits `Selected` with the exact carrier predicates; the builder creates a conditional capture and never flattens it to a path Boolean. |
+| Ambient execution scope | fragment `scope_execution`, helper transfer, dependency activation | Reclassifies a raw direct route as `Scoped` and carries the surrounding conjunction into both type and absence lowering. |
+| Certified serializer output | `toYaml`, `toJson`, certified YAML/JSON round trips, helper-bound metadata | Emits or preserves `Serialized`; builder raw-type lowering abstains because the consumer sees generated text, not the source kind. |
+| Raw parser input | dynamic `printf`, `tpl`, `fromYaml`, `fromJson` | Uses the ordinary direct/selected carrier. Dormant alternatives remain open and selected wrong-kind inputs retain their runtime tooth. |
+| Merge-backed source | `MergeLayerFact` production and `lower_string_requirement_merge_sources` | Derives a common concrete layer suffix and requires an exact route overlap before projecting the source; wildcard or ambiguous suffixes abstain. |
+| Fragment/helper traversal | `fragment_eval::{project,summary}` and helper value/splice transfer | `False` arms are dead, `True` arms are identity, and other predicates remain attached to the transferred capture. |
+| Final schema fact | `string_requirement_routes`, `record_contract_use`, `record_fail_conjunction` | One precomputed minimal route table supplies row facts and conditional requirements. There is no final-signal repair pass. |
+
+### Review dossier
+
+- Carrier/deletion proof: `rg -n
+  'nil_strict_identity_paths|string_contract_paths|direct_string_consumer_paths|adjust_serialized_provider_routes|DefaultPrimarySelection|row_lowered'
+  crates`; no matches. The remaining `has_string_contract` fields are emitted
+  schema facts derived by builder route implication, not producer markers or a
+  parallel contract lane.
+- Focused IR proof: `cargo nextest run -p helm-schema-ir`; exit 0, 369 tests
+  pass. New cases pin direct nil strictness, selected raw input routes,
+  serializer exemption, helper-bound transfer, exact merge suffix projection,
+  and the contradictory nested-helper guard.
+- Provider-preimage proof: the exact
+  `selected_string_contract_preserves_only_live_provider_preimages` library
+  test and `aws_lbc_null_spelling_name_override_stays_rejected` chart re-audit
+  both pass on the final tree. The former checks the structural serialized
+  sibling and plain unquoted-scalar routes together; the latter pins the
+  lexical `"null"` rejection that invalidated final13.
+- Clean schema dump:
+  `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v3-step6b5-final15-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step6b5-final15.tar.zst --profile integration
+  --no-fail-fast -E
+  'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(/final_output_policy/)'`; exit 0, 62 tests pass, 399 are skipped by
+  the integration filter, and 84 artifacts are written in one batch.
+- Clean IR dump:
+  `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v3-step6b5-final15-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step6b5-final15.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts
+  are written in one batch while 460 are skipped. `diff -rq`, excluding only
+  nextest archive metadata, proves the final15 schema and IR artifacts are
+  byte-identical to the fully adjudicated final14 batches.
+- Full-depth acceptance and Helm proof:
+  `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v3-step6b5-final14-confirmed-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=46b7f24
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v3-step6b5-final14-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v3-step6b5-final14-confirmed-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step6b5-final14-prober.tar.zst --profile
+  integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 lanes, 121,059 probes,
+  83 live-adjudicated flips, and zero unallowed accepted-abort cells.
+- Coverage proof: `jq` aggregation over
+  `target/arch-v3-step6b5-final14-confirmed-coverage.json` reproduces baseline
+  `46b7f24`, 60 charts, 112,260/112,260 base probes,
+  7,465/7,465 third-level probes, 427 emitted guard pairs, 240 emitted
+  composite pairs, 51,740 disclosed bounded drops, 83 adjudications, and zero
+  accepted-abort cells.
+- Performance proof: an isolated `46b7f24` checkout at
+  `/private/tmp/helm-schema-46b7.1EUHKn` generates Airflow in 184.753 seconds;
+  the final candidate takes 169.158 seconds in isolation and 180.839 seconds
+  in the authoritative schema batch.
+- Frozen-reference proof is included in the final gates below; the three
+  frozen documents remain byte-identical to their specified refs.
+
+### Self-adversarial pass
+
+- Inherited fact: the nil marker looked removable in isolation, but the 6b.4
+  experiment proved its runtime tooth was real. The replacement derives the
+  same absence claim only from an exact direct raw operand and carries ambient
+  execution predicates, so the marker is gone without turning derivations or
+  dormant alternatives into required paths.
+- Letter versus intent: simply moving the old path-wide string Boolean into a
+  new enum would satisfy the surface representation request while still
+  erasing selection. The final builder consumes the actual predicate vector,
+  uses route implication for row facts, and lowers selected arms as
+  conditional captures. Certified serializer text is explicitly separated
+  from raw parser input.
+- Counterexample pressure: Velero's false rejection demonstrated that a
+  correct new carrier can expose an older dead-arm traversal defect. The step
+  stopped, reproduced Helm, fixed the typed predicate handling, and reran the
+  entire 121,059-cell battery. Adjacent falsy, null, wrong-kind, deleted,
+  third-level, guard-witness, and composite probes found no remaining false
+  rejection.
+- Lexical counterexample: the AWS integration regression demonstrated that a
+  zero-false-rejection deletion battery can still omit a provider-specific
+  spelling. The step rejected the final13 state, restored lexical provider
+  evidence structurally, regenerated every artifact in final14, and repeated
+  the full battery. The focused AWS regression and Bitnami serializer test pin
+  both sides of the preimage decision.
+- Reporting bias: the 83 flips and 78 changed fixtures are reported as real
+  semantic changes, not normalization. Every rejected performance design, the
+  stale preregistration, bounded coverage drops, scanner prerequisite, retained
+  control-decoder API, and LOC-estimate miss are disclosed.
+
+- Gates on the final Step 6b.5 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations across 13 packages and 3 targets.
+  - `cargo nextest run --workspace`: exit 0; 1,257/1,257 tests pass.
+  - `task test:integration`: exit 0; 568/568 tests pass, with 24 intentional
+    skips.
+  - `task test:all`: exit 0; 1,829/1,829 tests pass, with 24 intentional
+    skips; all four live-network cases pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 after the disclosed macOS harness and documented
+    binary-path environment accommodations; 32/32 charts report `[ok]`.
+  - `task tokei:core`: exit 0; 61,858 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +77 (61,781 to 61,858); cumulative Step 6b
+  delta +454 (61,404 to 61,858).
 - Commit: pending.

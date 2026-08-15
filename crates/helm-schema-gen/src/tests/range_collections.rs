@@ -474,7 +474,6 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
-        has_string_contract: false,
         stringified: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,

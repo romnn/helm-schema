@@ -34,69 +34,6 @@
         "allOf": [
           {
             "properties": {
-              "podPriorityClassName": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podPriorityClassName"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "podPriorityClassName": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "podPriorityClassName"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
               "fullnameOverride": {
                 "$ref": "#/$defs/t"
               }

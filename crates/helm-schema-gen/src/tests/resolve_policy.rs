@@ -503,7 +503,6 @@ fn pathless_conditional_target_does_not_own_descendant_defaults() {
             "ConfigMap".to_string(),
         )),
         provenance: Vec::new(),
-        has_string_contract: false,
         stringified: false,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,

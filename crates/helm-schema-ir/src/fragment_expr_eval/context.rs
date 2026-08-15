@@ -53,10 +53,14 @@ impl<'a> FragmentEvalContext<'a> {
                 seen,
             },
         );
+        let mut output_meta = result.effects.local_output_meta.clone();
+        for path in &result.effects.yaml_serialized_paths {
+            output_meta.entry(path.clone()).or_default().yaml_serialized = true;
+        }
         result
             .value
             .and_then(AbstractValue::without_widened)
-            .map(|value| value.with_output_meta(&result.effects.local_output_meta))
+            .map(|value| value.with_output_meta(&output_meta))
             .map(|value| value.to_context_value())
     }
 }

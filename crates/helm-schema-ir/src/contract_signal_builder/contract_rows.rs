@@ -5,9 +5,9 @@ use super::{
     ProviderSchemaUse, SourceUseFactSplit, ValueKind, collapse_layered_truthy_gates,
     extend_lowerable_predicate, hard_negation_paths, lowerable_conditional_guard_set,
     lowerable_conditional_guard_subset, path_accumulator, path_contains_wildcard,
-    predicate_is_structural_ancestor_guard, predicate_skips_falsy_source,
-    predicate_tests_source_type, predicate_to_guard, provider_schema_use,
-    range_guard_is_iteration_ancestor, ranged_member_parent, record_member_range_requirement,
+    predicate_is_structural_ancestor_guard, predicate_tests_source_type, predicate_to_guard,
+    provider_schema_use, range_guard_is_iteration_ancestor, ranged_member_parent,
+    record_member_range_requirement,
 };
 
 #[derive(Default)]
@@ -198,6 +198,8 @@ pub(super) fn record_contract_use(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
+    string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
+    has_yaml_serialized_use: bool,
 ) {
     if contract_use.range_key {
         record_range_key_slot_use(paths, contract_use, range_modes);
@@ -279,7 +281,14 @@ pub(super) fn record_contract_use(
                 _ => predicate,
             })
             .collect();
-        record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
+        record_contract_use_conjunction(
+            paths,
+            contract_use,
+            &predicates,
+            range_modes,
+            string_requirement_routes,
+            has_yaml_serialized_use,
+        );
     }
 }
 
@@ -408,6 +417,8 @@ pub(super) fn record_contract_use_conjunction(
     contract_use: &ContractUse,
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
+    string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
+    has_yaml_serialized_use: bool,
 ) {
     let kind_resolved = kind_branch_resolved_use(contract_use, predicates);
     let contract_use = kind_resolved.as_ref().unwrap_or(contract_use);
@@ -557,7 +568,6 @@ pub(super) fn record_contract_use_conjunction(
     // A `x.*` member row fires BY `range x`: that Range predicate is the
     // row's own iteration, not a foreign condition gating it. It is NOT a
     // null-tolerance signal though — iteration does not skip null members.
-    let member_range_parent = contract_use.source_expr.strip_suffix(".*");
     let self_range_guarded = range_guard_paths.contains(contract_use.source_expr.as_str());
     let has_matching_self_guard = predicates.iter().any(|predicate| {
         matches!(
@@ -605,7 +615,6 @@ pub(super) fn record_contract_use_conjunction(
             contract_use.kind,
             ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
         );
-
     // The serialized-tolerance fact is itself widen-only — the use it
     // records never rejects an input, it only stops intent-grade channels
     // (declared defaults, fallback hints, standalone guard typing) from
@@ -643,12 +652,6 @@ pub(super) fn record_contract_use_conjunction(
                 contract_use.kind,
                 ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
             ),
-            has_string_contract: contract_use.has_string_contract && !type_dispatched,
-            has_non_self_guarded_string_contract: contract_use.has_string_contract
-                && !type_dispatched
-                && !predicates.iter().any(|predicate| {
-                    predicate_skips_falsy_source(predicate, &contract_use.source_expr)
-                }),
             used_as_pathless_fragment: matches!(
                 contract_use.kind,
                 ValueKind::Fragment
@@ -670,10 +673,7 @@ pub(super) fn record_contract_use_conjunction(
                 || pathless_self_default_guarded,
             ..ContractValuePathFacts::default()
         };
-        let scoped_pathless_string_contract = path_is_empty
-            && contract_use.has_string_contract
-            && ranged_member_parent(&contract_use.source_expr).is_none();
-        if !path_is_empty || scoped_pathless_string_contract {
+        if !path_is_empty {
             // Merge operands and digest rows do not consume a falsy input at
             // this use. Textual placement alone does not prove that: strict
             // formatters such as `%s` still abort on empty maps and arrays.
@@ -709,21 +709,6 @@ pub(super) fn record_contract_use_conjunction(
         facts.has_unlayered_non_control_use = facts.has_non_control_use && merge_layered.is_none();
         let acc = path_accumulator(paths, &contract_use.source_expr);
         acc.requiredness.is_positive_header |= positive_header;
-        // An UNCONDITIONAL string-contract row types the path itself;
-        // a conditional one types only its own overlay branch (the branch
-        // facts carry it there). A member row's own iteration does not
-        // scope it: `tpl` over each ranged member types every member.
-        let own_iteration_only = predicates.iter().all(|predicate| {
-            member_range_parent.is_some_and(|parent| {
-                matches!(
-                    predicate,
-                    Predicate::Guard(Guard::Range { path }) if path == parent
-                )
-            })
-        });
-        if contract_use.has_string_contract && own_iteration_only {
-            acc.type_hints.insert("string".to_string());
-        }
         // A positive dispatch arm normally abstains from provider typing
         // (a transformed scalar arm observes derived text), but an arm that
         // splices the VALUE structurally — a fragment under its own lowered
@@ -786,9 +771,28 @@ pub(super) fn record_contract_use_conjunction(
             None
         };
         let source_null_tolerant = path_is_empty || has_matching_self_guard;
+        let row_predicate = Predicate::all(predicates.to_vec());
+        let matching_string_routes = string_requirement_routes
+            .iter()
+            .filter(|(_, route)| row_predicate.exactly_implies(&Predicate::all(route.clone())))
+            .map(|(route, _)| *route)
+            .collect::<BTreeSet<_>>();
+        let provider_route_consumes_raw_string = matching_string_routes
+            .iter()
+            .any(|route| *route != crate::eval_effect::StringRequirementRoute::Serialized);
+        let serialized_sibling_owns_scalar_preimage =
+            provider_route_consumes_raw_string && has_yaml_serialized_use;
+        let scoped_consumer_owns_raw_domain =
+            matching_string_routes.contains(&crate::eval_effect::StringRequirementRoute::Scoped);
         let provider_use = (!type_dispatched || complement_dispatched || structural_dispatch_arm)
             .then(|| provider_schema_use(contract_use, self_range_guarded, source_null_tolerant))
             .flatten()
+            .filter(|provider_use| {
+                !(provider_use.kind == ValueKind::Scalar
+                    && provider_use.split_segment.is_none()
+                    && (provider_use.stringified && serialized_sibling_owns_scalar_preimage
+                        || scoped_consumer_owns_raw_domain))
+            })
             // A row whose layer facts stay UN-rerouted (binding-carried,
             // no structural transform involved) types through the ordinary
             // branch/base lanes; its use must not also seed synthesized
@@ -850,10 +854,6 @@ pub(super) fn record_contract_use_conjunction(
         // partition merely selects from), while the BRANCH keeps the real
         // structural use without the tolerance (which would dissolve the
         // arm's own provider typing into the serialized preimage).
-        let guarded_string_contract = scoped_pathless_string_contract
-            && lowerable_guards
-                .as_ref()
-                .is_some_and(|guards| !guards.is_empty());
         let (path_facts, branch_facts) = if structural_dispatch_arm {
             let mut path_facts = facts;
             path_facts.used_as_fragment = false;
@@ -862,13 +862,6 @@ pub(super) fn record_contract_use_conjunction(
             let mut branch_facts = facts;
             branch_facts.used_as_serialized = false;
             (path_facts, branch_facts)
-        } else if guarded_string_contract {
-            // A pathless strict-consumer claim under a foreign gate types
-            // only that branch. Keeping the same fact on the path base would
-            // reject values while the consumer's chart is dormant.
-            let mut path_facts = facts;
-            path_facts.has_string_contract = false;
-            (path_facts, facts)
         } else if contract_use.digest {
             // A digest observes fresh derived text, not the raw input. Its
             // tolerance belongs only to a live overlay branch; path-level
@@ -948,51 +941,6 @@ pub(super) fn record_contract_use_conjunction(
     }
 }
 
-/// A `range` read under foreign conditions bounds an ITERABLE requirement
-/// to those conditions: Go's `range` iterates collections and skips nil but
-/// fails template rendering on scalars, so inside the guarded branch the
-/// ranged path must be a collection. The branch stays render-free; overlay
-/// lowering recognizes that shape and emits the iterable domain.
-/// Whether a conjunction carries a disjunctive with-header's marker stamp:
-/// `with A | default B` stamps a conjunctive `With` marker per path beside
-/// the real `Or` condition. The markers encode as truthiness downstream, so
-/// lowering them conjunctively would scope a RANGE requirement to "every
-/// candidate truthy" — the exact state where a selected sibling collection
-/// keeps a truthy scalar co-candidate unranged — and dropping them would
-/// fire it on other unselected states instead. Only the selection-chain
-/// capture knows which candidate ranges; requirement lowering abstains on
-/// the stamp.
-pub(super) fn has_selection_chain_marker_stamp(predicates: &[Predicate]) -> bool {
-    let with_marker_paths: BTreeSet<&str> = predicates
-        .iter()
-        .filter_map(|predicate| match predicate {
-            Predicate::Guard(Guard::With { path }) => Some(path.as_str()),
-            _ => None,
-        })
-        .collect();
-    let disjunction_paths = |predicate: &Predicate| -> Option<Vec<String>> {
-        match predicate {
-            Predicate::Guard(Guard::Or { paths }) => Some(paths.clone()),
-            Predicate::Or(alternatives) => alternatives
-                .iter()
-                .map(|alternative| match alternative {
-                    Predicate::Guard(Guard::Truthy { path }) => Some(path.clone()),
-                    _ => None,
-                })
-                .collect(),
-            _ => None,
-        }
-    };
-    with_marker_paths.len() > 1
-        && predicates.iter().any(|predicate| {
-            disjunction_paths(predicate).is_some_and(|paths| {
-                with_marker_paths
-                    .iter()
-                    .all(|marker| paths.iter().any(|path| path == marker))
-            })
-        })
-}
-
 pub(super) fn lowerable_range_outer_guards(
     ranged_path: &str,
     predicates: &[Predicate],
@@ -1045,9 +993,7 @@ pub(super) fn record_range_input_capture(
     if path.trim().is_empty() || capture.contains_approximation() {
         return;
     }
-    let outer_guards = (!has_selection_chain_marker_stamp(&capture.conjunction))
-        .then(|| lowerable_range_outer_guards(path, &capture.conjunction))
-        .flatten();
+    let outer_guards = lowerable_range_outer_guards(path, &capture.conjunction);
     let unconditional = outer_guards.as_ref().is_some_and(Vec::is_empty);
     let facts = ContractValuePathFacts {
         is_ranged_source: unconditional,

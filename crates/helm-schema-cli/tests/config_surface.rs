@@ -137,9 +137,10 @@ fn relative_explicit_config_is_resolved_from_invocation_directory() -> eyre::Res
         .pointer("/profile/source")
         .and_then(Value::as_str)
         .ok_or_eyre("profile source missing")?;
+    let config_path = std::fs::canonicalize(temp.path().join("policy.yaml"))?;
     sim_assert_eq!(
         have: source,
-        want: temp.path().join("policy.yaml").display().to_string()
+        want: config_path.display().to_string()
     );
     assert!(
         String::from_utf8_lossy(&output.stderr).contains("explicit helm-schema config"),

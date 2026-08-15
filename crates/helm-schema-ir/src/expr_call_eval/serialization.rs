@@ -82,7 +82,12 @@ pub(super) fn eval_printf(
         effects
             .plain_slot_string_format_paths
             .extend(plain_slot_format_paths);
-        record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
+        record_printf_argument_effects(
+            index == 0,
+            result.value.as_ref(),
+            &identity_paths,
+            &mut effects,
+        );
         provenance_paths.extend(identity_paths);
         values.push(result.value);
     }
@@ -203,6 +208,7 @@ pub(super) fn record_total_conversion_effects(paths: BTreeSet<String>, effects: 
 /// becomes derived text for later stages.
 pub(super) fn record_printf_argument_effects(
     is_format: bool,
+    value: Option<&AbstractValue>,
     identity_paths: &BTreeSet<String>,
     effects: &mut Effects,
 ) {
@@ -212,7 +218,7 @@ pub(super) fn record_printf_argument_effects(
             .filter(|path| !effects.derived_text_paths.contains(*path))
             .cloned()
             .collect();
-        effects.string_contract_paths.extend(raw);
+        record_string_consumer_effects(value, &raw, effects);
     } else {
         effects.add_shape_erased_paths(identity_paths.clone());
     }
@@ -473,9 +479,6 @@ pub(super) fn eval_tpl(
             AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path),
             _ => None,
         }) {
-            if matches!(template.value.as_ref(), Some(AbstractValue::ValuesPath(_))) {
-                effects.nil_strict_identity_paths.insert(path.clone());
-            }
             effects.templated_text_identity_paths.insert(path.clone());
         }
         record_range_key_string_consumer_effects(template.value.as_ref(), &mut effects);
@@ -532,12 +535,12 @@ pub(super) fn eval_to_yaml(
 
 pub(super) fn eval_to_yaml_result(result: EvalResult) -> EvalResult {
     let paths = serialization_payload_paths(result.value.as_ref());
-    let mut effects = result.effects;
-    if !result
+    let structurally_rendered = result
         .value
         .as_ref()
-        .is_some_and(is_structurally_rendered_yaml_value)
-    {
+        .is_some_and(is_structurally_rendered_yaml_value);
+    let mut effects = result.effects;
+    if !structurally_rendered {
         effects.yaml_serialized_paths.extend(paths.iter().cloned());
     }
     // The output is rendered YAML text: a later consuming transform
@@ -607,8 +610,7 @@ pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
             .as_ref()
             .and_then(AbstractValue::json_roundtrip_identity)
     } else {
-        effects.add_type_hints(paths.clone(), "string");
-        effects.string_contract_paths.extend(paths);
+        record_string_consumer_effects(result.value.as_ref(), &paths, &mut effects);
         None
     };
     let mut decoded = EvalResult::with_effects(value, effects);
@@ -718,6 +720,17 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
         && paths
             .iter()
             .all(|path| result.effects.derived_text_paths.contains(path));
+    let output_meta = result
+        .value
+        .as_ref()
+        .map(AbstractValue::output_meta)
+        .unwrap_or_default();
+    let rendered_yaml_output = !paths.is_empty()
+        && paths.iter().all(|path| {
+            output_meta
+                .get(path)
+                .is_some_and(|meta| meta.yaml_serialized)
+        });
     let round_trips_yaml = structurally_rendered_yaml
         || !paths.is_empty()
             && paths
@@ -733,13 +746,12 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
             .cloned()
             .collect::<BTreeSet<_>>()
     };
-    effects.add_type_hints(string_input_paths.clone(), "string");
-    effects
-        .string_contract_paths
-        .extend(string_input_paths.iter().cloned());
+    record_string_consumer_effects(result.value.as_ref(), &string_input_paths, &mut effects);
     effects.parsed_yaml_input_paths.extend(string_input_paths);
     let value = if round_trips_yaml {
         result.value
+    } else if rendered_yaml_output {
+        Some(AbstractValue::Unknown)
     } else {
         AbstractValue::widened(paths)
     };
@@ -782,17 +794,11 @@ pub(super) fn eval_join(
 
 /// `join` is a total stringification like `toString`: Sprig's `strslice`
 /// converts lists element-wise, wraps any other non-nil value as a singleton,
-/// and turns nil into an empty slice, so any input type renders. As with
-/// `quote`, a path that already passed a string-consuming transform keeps
-/// its own contract.
+/// and turns nil into an empty slice, so any input type renders. Earlier
+/// string consumers keep their own predicate-scoped captures independently.
 pub(super) fn erase_join_input_shape(result: &mut EvalResult) {
     let paths = identity_value_paths(result.value.as_ref());
-    let erasable = paths
-        .iter()
-        .filter(|path| !result.effects.string_contract_paths.contains(*path))
-        .cloned()
-        .collect();
-    result.effects.add_shape_erased_paths(erasable);
+    result.effects.add_shape_erased_paths(paths.clone());
     result.effects.derived_text_paths.extend(paths);
 }
 

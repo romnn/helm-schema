@@ -1,11 +1,10 @@
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ContractFailImplication, ContractPathAccumulator,
     ContractRequirementTarget, FailValueRequirement, Guard, GuardDnf, GuardValue,
-    MemberAccessConditions, Predicate, TruthCondition, has_selection_chain_marker_stamp,
-    lowerable_range_outer_guards, member_local_truthy_selector, path_accumulator,
-    path_contains_wildcard, predicate_is_truthy_disjunction_over, predicate_skips_falsy_source,
-    predicate_to_guard, record_range_input_capture, remove_redundant_approximate_conditions,
-    terminal_clause_guard,
+    MemberAccessConditions, Predicate, TruthCondition, lowerable_range_outer_guards,
+    member_local_truthy_selector, path_accumulator, path_contains_wildcard,
+    predicate_is_truthy_disjunction_over, predicate_to_guard, record_range_input_capture,
+    remove_redundant_approximate_conditions, terminal_clause_guard,
 };
 
 /// Lower one `fail` conjunction into a path requirement: rendering aborts
@@ -72,28 +71,6 @@ pub(super) fn record_fail_conjunction(
         null_aborts,
     } = &capture.kind
     {
-        // The path-wide contract set intentionally loses execution scope.
-        // Only this capture's conjunction can distinguish a raw consumer
-        // from one skipped by its own guard or an unlowerable output selector.
-        if schema_type == "string"
-            && !capture
-                .conjunction
-                .iter()
-                .any(|predicate| predicate_skips_falsy_source(predicate, path))
-            && !matches!(
-                capture.conjunction.as_slice(),
-                [Predicate::Approximate {
-                    role: super::ApproximationRole::OutputSelection,
-                    sound_subset: None,
-                    ..
-                }]
-            )
-        {
-            path_accumulator(paths, path)
-                .facts
-                .facts
-                .has_non_self_guarded_string_contract = true;
-        }
         record_value_requirement_capture(
             paths,
             capture,
@@ -104,6 +81,61 @@ pub(super) fn record_fail_conjunction(
                 FailValueRequirement::SchemaType(schema_type.clone())
             },
         );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::StringRequirement {
+        path,
+        route,
+        selection,
+    } = &capture.kind
+    {
+        if *route == crate::eval_effect::StringRequirementRoute::Serialized {
+            return;
+        }
+        if *route == crate::eval_effect::StringRequirementRoute::Selected
+            && let Some(requirement_capture) =
+                selected_member_requirement_capture(capture, path, selection)
+        {
+            record_value_requirement_capture(
+                paths,
+                &requirement_capture,
+                path,
+                FailValueRequirement::SchemaType("string".to_string()),
+            );
+            return;
+        }
+        let mut requirement_capture = capture.clone();
+        requirement_capture
+            .conjunction
+            .extend(selection.iter().cloned());
+        requirement_capture.conjunction.sort();
+        requirement_capture.conjunction.dedup();
+        if *route == crate::eval_effect::StringRequirementRoute::Direct
+            && requirement_capture.conjunction.is_empty()
+        {
+            record_unconditional_string_requirement_facts(paths, path);
+        } else if string_requirement_has_execution_scope(&requirement_capture, path, range_modes) {
+            record_value_requirement_capture(
+                paths,
+                &requirement_capture,
+                path,
+                FailValueRequirement::SchemaType("string".to_string()),
+            );
+            if let Some(collection_path) = member_range_path(path)
+                && requirement_capture.conjunction.iter().all(|predicate| {
+                    matches!(
+                        predicate,
+                        Predicate::Guard(Guard::Range { path }) if path == &collection_path
+                    )
+                })
+                && requirement_capture
+                    .ranged
+                    .mode(&collection_path)
+                    .member_identity
+            {
+                record_unconditional_string_requirement_facts(paths, path);
+            }
+        }
         return;
     }
     if let crate::eval_effect::CaptureKind::RangeInput {
@@ -614,6 +646,77 @@ pub(super) fn record_fail_conjunction(
     if !acc.fail_implications.contains(&implication) {
         acc.fail_implications.push(implication);
     }
+}
+
+fn selected_member_requirement_capture(
+    capture: &crate::eval_effect::FailCapture,
+    path: &str,
+    selection: &[Predicate],
+) -> Option<crate::eval_effect::FailCapture> {
+    let collection_path = member_range_path(path)?;
+    // A range predicate naming this collection proves which input owns the
+    // member. The other selection predicates describe the derived iterable's
+    // competing sources; execution scope remains in the capture conjunction.
+    if !selection.iter().any(|predicate| {
+        matches!(
+            predicate,
+            Predicate::Guard(Guard::Range { path }) if path == &collection_path
+        )
+    }) {
+        return None;
+    }
+    let mut capture = capture.clone();
+    capture.conjunction.push(Predicate::Guard(Guard::Range {
+        path: collection_path,
+    }));
+    capture.conjunction.sort();
+    capture.conjunction.dedup();
+    Some(capture)
+}
+
+fn member_range_path(path: &str) -> Option<String> {
+    let segments = helm_schema_core::split_value_path(path);
+    let wildcard = segments.iter().position(|segment| segment == "*")?;
+    Some(helm_schema_core::join_value_path(
+        segments.get(..wildcard)?.iter().cloned(),
+    ))
+}
+
+fn string_requirement_has_execution_scope(
+    capture: &crate::eval_effect::FailCapture,
+    path: &str,
+    range_modes: &crate::range_modes::RangeModes,
+) -> bool {
+    let segments = helm_schema_core::split_value_path(path);
+    let mut required_ranges = BTreeSet::new();
+    for (index, segment) in segments.iter().enumerate() {
+        if segment == "*" {
+            required_ranges.insert(helm_schema_core::join_value_path(
+                segments.get(..index).unwrap_or_default().iter().cloned(),
+            ));
+        }
+    }
+    required_ranges.iter().all(|required| {
+        capture.ranged.mode(required).member_identity
+            || range_modes.mode(required).member_identity
+            || capture.conjunction.iter().any(|predicate| {
+                matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == required)
+            })
+    })
+}
+
+fn record_unconditional_string_requirement_facts(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    path: &str,
+) {
+    if path.trim().is_empty() {
+        return;
+    }
+    let acc = path_accumulator(paths, path);
+    acc.referenced = true;
+    acc.type_hints.insert("string".to_string());
+    acc.facts.facts.has_string_contract = true;
+    acc.facts.facts.has_non_self_guarded_string_contract = true;
 }
 
 pub(super) fn record_range_key_prefix_requirement(
@@ -1525,7 +1628,6 @@ pub(super) fn record_range_key_string_requirements(
         if path_contains_wildcard(path)
             || (!range_modes.mode(path).member_identity
                 && !capture.ranged.mode(path).member_identity)
-            || has_selection_chain_marker_stamp(&capture.conjunction)
         {
             continue;
         }
@@ -1562,7 +1664,6 @@ pub(super) fn record_range_key_plain_slot_requirements(
         if path_contains_wildcard(path)
             || (!range_modes.mode(path).member_identity
                 && !capture.ranged.mode(path).member_identity)
-            || has_selection_chain_marker_stamp(&capture.conjunction)
         {
             continue;
         }

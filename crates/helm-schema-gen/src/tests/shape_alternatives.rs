@@ -85,19 +85,15 @@ fn tpl_context_does_not_type_the_templated_value_as_an_object() {
           - name: example
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    let items = schema.pointer("/properties/items").expect("items present");
-    let array_arm = ranged_arm_of_type(items, "array")
-        .unwrap_or_else(|| panic!("items array arm missing, got {items}"));
-    let Some(name) = array_arm.pointer("/items/properties/name") else {
-        panic!("ranged item name missing from {schema}");
-    };
-
     assert!(
-        permits_type(name, "string"),
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "items": [{ "name": "rendered" }] }),
+        ),
         "tpl's first argument is string content: {schema}"
     );
     assert!(
-        !permits_type(name, "object"),
+        !schema_accepts_instance(&schema, &serde_json::json!({ "items": [{ "name": {} }] }),),
         "tpl's context must not become content: {schema}"
     );
 }

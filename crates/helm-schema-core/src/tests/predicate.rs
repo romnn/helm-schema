@@ -244,3 +244,19 @@ fn boolean_normalization_keeps_an_unproven_approximate_conjunct() {
         want: predicate
     );
 }
+
+#[test]
+fn exact_implication_recognizes_a_selected_disjunction_arm() {
+    let selected = Predicate::truthy_path("selected");
+    let fallback = Predicate::truthy_path("fallback");
+
+    assert!(selected.exactly_implies(&Predicate::Or(vec![selected.clone(), fallback])));
+}
+
+#[test]
+fn exact_implication_abstains_for_opaque_approximations() {
+    let approximate =
+        Predicate::approximate("opaque", ["selected".to_string()].into_iter().collect());
+
+    assert!(!approximate.exactly_implies(&approximate));
+}

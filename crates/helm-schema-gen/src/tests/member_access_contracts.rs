@@ -1502,6 +1502,62 @@ fn tilde_semver_guard_scopes_member_host_shape_exactly() {
         ),
         "an out-of-range version short-circuits before the member access: {schema}"
     );
+    for (instance, want) in [
+        (
+            serde_json::json!({
+                "component": {
+                    "enabled": true,
+                    "host": {},
+                },
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "version": null,
+                "component": {
+                    "enabled": true,
+                    "host": {},
+                },
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "version": false,
+                "component": {
+                    "enabled": true,
+                    "host": {},
+                },
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "version": 7,
+                "component": {
+                    "enabled": true,
+                    "host": {},
+                },
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "component": {
+                    "enabled": false,
+                    "host": {},
+                },
+            }),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
 
     let mut properties = serde_json::Map::new();
     properties.insert(
@@ -1618,9 +1674,37 @@ fn tilde_semver_guard_scopes_member_host_shape_exactly() {
             serde_json::json!({
                 "if": {
                     "allOf": [
-                        enabled,
+                        enabled.clone(),
                         missing_host,
                         matching_version,
+                    ],
+                },
+                "then": false,
+            }),
+            serde_json::json!({
+                "if": {
+                    "allOf": [
+                        enabled,
+                        {
+                            "anyOf": [
+                                {
+                                    "not": {
+                                        "properties": {
+                                            "version": {},
+                                        },
+                                        "required": ["version"],
+                                        "type": "object",
+                                    },
+                                },
+                                {
+                                    "properties": {
+                                        "version": { "enum": [null] },
+                                    },
+                                    "required": ["version"],
+                                    "type": "object",
+                                },
+                            ],
+                        },
                     ],
                 },
                 "then": false,

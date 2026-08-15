@@ -75,7 +75,6 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
             .map(|(path, hints)| (path.clone(), hints.clone())),
     );
     contract.extend_shape_erased_value_paths(document.shape_erased_paths.iter().cloned());
-    contract.extend_string_contract_value_paths(document.string_contract_paths.iter().cloned());
     contract.merge_range_modes(&document.range_modes);
     contract.extend_values_default_sources(document.values_default_sources.iter().cloned());
     contract
@@ -157,7 +156,10 @@ fn walk_guarded(
         .cloned()
         .collect::<Vec<_>>();
     for (condition, node) in &guarded.arms {
-        let pushed = !condition.is_trivial();
+        if *condition == Predicate::False {
+            continue;
+        }
+        let pushed = *condition != Predicate::True;
         if pushed {
             conditions.push(condition.clone());
         }
@@ -556,7 +558,6 @@ fn splice_row(
         splice.meta.site.as_deref(),
         &splice.meta.provenance,
     );
-    row.has_string_contract = splice.meta.string_contract;
     row.stringified = splice.meta.stringified;
     row.template_supplied_member_keys = member_sibling_keys.clone();
     row.split_segment = splice.meta.split_segment.clone();

@@ -69,8 +69,6 @@ pub(crate) struct FragmentSummary {
     /// Paths consumed through total stringifications anywhere in the body:
     /// the chart tolerates any input type at them.
     pub(crate) shape_erased_paths: BTreeSet<String>,
-    /// Paths carrying a real runtime string contract in the body.
-    pub(crate) string_contract_paths: BTreeSet<String>,
     /// The body's per-path range facts after bound-context resolution
     /// (direct iteration identity, JSON-decoded values, destructuring).
     /// Callers need the direct identity to project the runtime domain.
@@ -220,10 +218,9 @@ pub(crate) fn eval_bound_helper_fragment(
         parsed_yaml_input_paths: interpreter.parsed_yaml_input_paths,
         yaml_serialized_paths: interpreter.yaml_serialized_paths,
         shape_erased_paths: interpreter.shape_erased_paths,
-        string_contract_paths: interpreter.string_contract_paths,
         range_modes: interpreter.range_modes,
-        fail_conditions: interpreter.fail_conditions,
-        text_fails: interpreter.text_fails,
+        fail_conditions: interpreter.fail_conditions.into_iter().collect(),
+        text_fails: interpreter.text_fails.into_iter().collect(),
         member_host_conversions: interpreter.member_host_conversions,
         chart_defaults: interpreter.chart_defaults_observed,
         root_set_mutations: interpreter.root_set_mutations_observed,
@@ -404,15 +401,9 @@ fn scalar_render_contribution(parts: &[StringPart]) -> Option<Vec<ScalarRenderPa
                 {
                     return None;
                 }
-                if splice.meta.string_contract
-                    && !splice.meta.stringified
-                    && splice.meta.lexical_escapes.is_empty()
-                {
-                    return None;
-                }
                 rendered.push(ScalarRenderPart::Identity {
                     path: splice.values_path.clone(),
-                    stringified: splice.meta.stringified || !splice.meta.string_contract,
+                    stringified: true,
                     lexical_escapes: splice.meta.lexical_escapes.clone(),
                 });
             }
@@ -590,7 +581,6 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
             || matches!(splice.kind, ValueKind::Scalar | ValueKind::PartialScalar),
         nil_omitted: splice.meta.nil_omitted,
         templated_yaml: splice.meta.templated_yaml,
-        string_contract: splice.meta.string_contract,
         plain_slot_string_format: splice.meta.plain_slot_string_format,
         json_serialized: splice.meta.json_serialized,
         json_decoded: splice.meta.json_decoded,
@@ -766,7 +756,10 @@ fn project_guarded(
 ) -> Vec<AbstractValue> {
     let mut values = Vec::new();
     for (condition, node) in &guarded.arms {
-        let pushed = !condition.is_trivial();
+        if *condition == Predicate::False {
+            continue;
+        }
+        let pushed = *condition != Predicate::True;
         if pushed {
             conditions.push(condition.clone());
         }
@@ -909,7 +902,10 @@ fn collect_rendered(
     rows: &mut Vec<RenderedRow>,
 ) {
     for (condition, node) in &guarded.arms {
-        let pushed = !condition.is_trivial();
+        if *condition == Predicate::False {
+            continue;
+        }
+        let pushed = *condition != Predicate::True;
         if pushed {
             conditions.push(condition.clone());
         }
@@ -1073,7 +1069,10 @@ fn append_suppressed_reads(
     reads: &mut Vec<ValueRead>,
 ) {
     for (condition, node) in &guarded.arms {
-        let pushed = !condition.is_trivial();
+        if *condition == Predicate::False {
+            continue;
+        }
+        let pushed = *condition != Predicate::True;
         if pushed {
             conditions.push(condition.clone());
         }

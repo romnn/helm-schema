@@ -679,12 +679,6 @@ impl Interpreter<'_> {
                     meta.omitted_keys.insert(key.clone(), Vec::new());
                 }
             }
-            // A string-contracting RHS (`$name := .Values.x | trunc 63`)
-            // also rides the binding: wherever the local renders, that row
-            // requires a string input.
-            for path in &hole.effects.string_contract_paths {
-                output_meta.entry(path.clone()).or_default().string_contract = true;
-            }
             for path in &hole.effects.json_serialized_paths {
                 output_meta.entry(path.clone()).or_default().json_serialized = true;
             }

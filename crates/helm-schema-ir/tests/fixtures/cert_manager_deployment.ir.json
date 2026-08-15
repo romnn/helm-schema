@@ -655,7 +655,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -684,6 +683,59 @@
       "condition": [
         [
           {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.create",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "cert-manager.fullname"
+          ],
+          "span": {
+            "end": 497,
+            "start": 437
+          },
+          "template_path": "charts/cert-manager/templates/_helpers.tpl"
+        },
+        {
+          "helper_chain": [
+            "cert-manager.serviceAccountName"
+          ],
+          "span": {
+            "end": 1007,
+            "start": 930
+          },
+          "template_path": "charts/cert-manager/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "config",
             "type": "truthy"
           },
@@ -693,7 +745,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",

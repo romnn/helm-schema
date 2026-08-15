@@ -251,23 +251,10 @@ pub(super) fn provider_schema_use(
         || (contract_use.stringified
             && !matches!(
                 contract_use.kind,
-                ValueKind::Scalar
-                    | ValueKind::YamlSerialized
-                    | ValueKind::TemplatedYamlSerialized
+                ValueKind::Scalar | ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
             )
             && !nil_omitting_ranged_leaf)
         || contract_use.path.0.is_empty()
-        // A string-consuming transform produced this rendered text, so the
-        // slot observes the TRANSFORM's output, never the raw spelling: a
-        // provider preimage on the raw value would reject programs and
-        // pre-transform spellings that render fine (loki's
-        // `tpl .Values.loki.configObjectName .` at a secretName slot). The
-        // transform's own string-input contract still types the path. A
-        // split-segment splice is the exception: its declared provenance is
-        // exactly which part of the raw string the slot observes.
-        || (contract_use.has_string_contract
-            && contract_use.kind == ValueKind::Scalar
-            && contract_use.split_segment.is_none())
     {
         return None;
     }
@@ -723,15 +710,6 @@ pub(super) fn guard_to_conditional_guard(
                 .collect::<Option<Vec<_>>>()?,
         )),
     }
-}
-
-pub(super) fn predicate_skips_falsy_source(predicate: &Predicate, source_expr: &str) -> bool {
-    matches!(
-        predicate,
-        Predicate::Guard(
-            Guard::Truthy { path } | Guard::Range { path } | Guard::With { path }
-        ) if path == source_expr
-    )
 }
 
 /// A nested range over each member of `parent` (`p.*` ranged): members

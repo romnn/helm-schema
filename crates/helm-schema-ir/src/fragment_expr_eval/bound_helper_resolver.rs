@@ -86,7 +86,6 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 .collect(),
             encoded_paths: summary.encoded_paths(),
             helper_observed_shape_erased_paths: summary.shape_erased_paths.clone(),
-            string_contract_paths: summary.string_contract_paths.clone(),
             range_modes: summary.range_modes.clone(),
             // An include renders its body to text, so every path the value
             // carries is derived text at the call site: a consuming stage
@@ -100,8 +99,8 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             helper_reads: summary.reads.clone(),
             helper_rendered: summary.rendered.clone(),
             helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
-            helper_fails: summary.fail_conditions.clone(),
-            helper_text_fails: summary.text_fails.clone(),
+            helper_fails: summary.fail_conditions.iter().cloned().collect(),
+            helper_text_fails: summary.text_fails.iter().cloned().collect(),
             member_host_conversions: summary.member_host_conversions.clone(),
             ..Effects::default()
         };

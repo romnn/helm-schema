@@ -305,17 +305,15 @@ fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::O
         .then_with(|| left.path.0.cmp(&right.path.0))
         .then_with(|| (left.kind as u8).cmp(&(right.kind as u8)))
         .then_with(|| left.resource.cmp(&right.resource))
-        .then_with(|| left.has_string_contract.cmp(&right.has_string_contract))
-        // A merge-layer, digest, or merge-operand row carries row-scoped
-        // semantics (per-layer shadowing, branch-only serialized tolerance,
-        // base falsy tolerance), so it must not fold into a plain row at the
+        // These row-scoped semantics must not fold into a plain row at the
         // same site: the fold keeps one row's marker for ALL unioned
-        // disjuncts and incorrectly attributes the other's semantics
-        // (airflow's otel `mustMerge` labels beside the pod-template `with`
-        // renders).
+        // disjuncts and incorrectly attributes the other's semantics.
+        // Range keys are especially distinct from values: their provider
+        // slots constrain the collection's key domain, never its payload.
         .then_with(|| left.merge_layers.cmp(&right.merge_layers))
         .then_with(|| left.digest.cmp(&right.digest))
         .then_with(|| left.merge_operand.cmp(&right.merge_operand))
+        .then_with(|| left.range_key.cmp(&right.range_key))
 }
 
 fn merge_contract_use_provenance(

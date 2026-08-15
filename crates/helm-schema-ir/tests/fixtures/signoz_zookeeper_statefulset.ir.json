@@ -40,7 +40,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -216,7 +215,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -456,7 +454,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -629,7 +626,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -1016,7 +1012,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -1180,7 +1175,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -1334,7 +1328,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -2419,7 +2412,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -2597,7 +2589,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -2775,7 +2766,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -3169,7 +3159,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -3334,7 +3323,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -3503,7 +3491,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -3598,7 +3585,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -3766,7 +3752,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -3939,7 +3924,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -4103,7 +4087,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -4262,7 +4245,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -4588,7 +4570,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -4648,7 +4629,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -4712,7 +4692,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "PartialScalar",
       "path": [
         "spec",
@@ -4780,7 +4759,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -4954,7 +4932,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -5102,7 +5079,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -5185,10 +5161,88 @@
           {
             "path": "fullnameOverride",
             "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.create",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "not"
           }
         ]
       ],
-      "has_string_contract": true,
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.names.fullname"
+          ],
+          "span": {
+            "end": 778,
+            "start": 718
+          },
+          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_names.tpl"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.serviceAccountName"
+          ],
+          "span": {
+            "end": 1446,
+            "start": 1369
+          },
+          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          }
+        ]
+      ],
       "kind": "Serialized",
       "path": [
         "spec",
@@ -5274,7 +5328,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -6507,7 +6560,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -7487,7 +7539,62 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
+            "path": "global.imageRegistry",
+            "type": "not"
+          },
+          {
+            "path": "image.registry",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "global",
+            "type": "not"
+          },
+          {
+            "path": "image.registry",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Serialized",
       "path": [
@@ -7566,11 +7673,79 @@
       "condition": [
         [
           {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
+            "path": "global.imageRegistry",
+            "type": "not"
+          },
+          {
+            "path": "image.registry",
+            "type": "not"
+          },
+          {
             "paths": [
               "tls.client.enabled",
               "tls.quorum.enabled"
             ],
             "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "global",
+            "type": "not"
+          },
+          {
+            "path": "image.registry",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -7979,7 +8154,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "YamlSerialized",
       "path": [
         "spec",
@@ -8269,7 +8443,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -8450,7 +8623,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11322,7 +11494,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -11788,7 +11959,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -12035,7 +12205,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -12158,7 +12327,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -12472,7 +12640,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -12645,7 +12812,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -12901,7 +13067,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -13491,7 +13656,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -13705,7 +13869,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -14158,7 +14321,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -15064,7 +15226,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -15288,7 +15449,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -15734,7 +15894,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -16133,7 +16292,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -16206,7 +16364,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -16734,7 +16891,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -17133,7 +17289,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -17206,7 +17361,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -17653,7 +17807,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -17811,7 +17964,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -18700,12 +18852,82 @@
       "condition": [
         [
           {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
             "path": "persistence.enabled",
             "type": "truthy"
           },
           {
             "path": "volumePermissions.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "global.imageRegistry",
+            "type": "not"
+          },
+          {
+            "path": "volumePermissions.image.registry",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not"
+          },
+          {
+            "path": "volumePermissions.image.registry",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "global",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],

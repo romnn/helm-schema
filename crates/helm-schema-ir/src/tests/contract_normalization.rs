@@ -38,7 +38,6 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 SourceSpan::new(10, 20),
                 Vec::new(),
             )],
-            has_string_contract: false,
             stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
@@ -60,7 +59,6 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 SourceSpan::new(30, 40),
                 vec!["helper.render".to_string()],
             )],
-            has_string_contract: false,
             stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
@@ -77,6 +75,30 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
 
     sim_assert_eq!(have: uses.len(), want: 1);
     sim_assert_eq!(have: uses[0].provenance.len(), want: 2);
+}
+
+#[test]
+fn canonicalization_keeps_range_key_and_value_rows_distinct() {
+    let value_row = ContractUse::new(
+        "config.*".to_string(),
+        YamlPath(vec!["data".to_string()]),
+        ValueKind::PartialScalar,
+        vec![Guard::Range {
+            path: "config".to_string(),
+        }],
+        None,
+    );
+    let mut key_row = value_row.clone();
+    key_row.range_key = true;
+    let mut uses = vec![key_row, value_row];
+
+    canonicalize_contract_uses(&mut uses);
+
+    sim_assert_eq!(have: uses.len(), want: 2);
+    sim_assert_eq!(
+        have: uses.iter().map(|row| row.range_key).collect::<Vec<_>>(),
+        want: vec![false, true]
+    );
 }
 
 #[test]

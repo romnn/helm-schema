@@ -67,25 +67,8 @@ pub(crate) struct Effects {
     pub(crate) omitted_map_keys: BTreeMap<String, BTreeSet<String>>,
     /// Range keys converted to text by an earlier pipeline stage.
     pub(crate) derived_range_key_paths: BTreeSet<String>,
-    /// Paths on which a string-consuming transform (`trunc`, `b64enc`, …)
-    /// bound a real runtime string contract: rendering fails for non-string
-    /// values, so a later total stringification must not erase their shape.
-    pub(crate) string_contract_paths: BTreeSet<String>,
     /// Range identities exported by called helper bodies.
     pub(crate) range_modes: crate::range_modes::RangeModes,
-    /// The subset of string contracts recorded by consumers evaluated in
-    /// THIS expression (never copied across a helper-summary boundary):
-    /// only these may become ambient-scoped truthy⇒string fail captures —
-    /// a called helper's path-level contract flags lost their body-internal
-    /// guards and stay row evidence.
-    pub(crate) direct_string_consumer_paths: BTreeSet<String>,
-    /// Paths a nil-strict string consumer in THIS expression read as their
-    /// whole operand — the operand IS that values path, not a derivation
-    /// carrying it (`printf … | trimSuffix`, an `include`'s text, a
-    /// `default` chain). Only these may claim abort-grade PRESENCE: a
-    /// derived operand renders whatever its derivation produced, so the
-    /// path's own absence is not what the consumer reads.
-    pub(crate) nil_strict_identity_paths: BTreeSet<String>,
     /// Paths whose rendered text in THIS expression is `tpl`'s render of the
     /// raw value. `tpl` is the identity on template-ACTION-free input, so the
     /// sink's LEXICAL language still projects back onto the raw value (modulo
@@ -149,11 +132,11 @@ pub(crate) struct Effects {
     pub(crate) helper_suppressed_paths: BTreeSet<String>,
     /// `fail` captures of called helpers, carrying helper-internal
     /// predicates only; the absorbing site prepends its ambient state.
-    pub(crate) helper_fails: Vec<FailCapture>,
+    pub(crate) helper_fails: BTreeSet<FailCapture>,
     /// Captures of called helpers that hold only where the called body's
     /// rendered TEXT is consumed as YAML. Ordinary absorption ignores them:
     /// only a site that certified its own sink records them.
-    pub(crate) helper_text_fails: Vec<FailCapture>,
+    pub(crate) helper_text_fails: BTreeSet<FailCapture>,
     /// Object-producing mutations that have executed before later member
     /// reads. Their outer predicates remain attached so only accesses that
     /// imply the mutation's execution may accept the converted input kind.
@@ -183,6 +166,19 @@ pub(crate) struct FailCapture {
     /// supplies the values-backed members of a possibly derived iterable.
     pub(crate) ranged: crate::range_modes::RangeModes,
     pub(crate) kind: CaptureKind,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum StringRequirementRoute {
+    /// A direct consumer whose row already owns its raw string contract.
+    Direct,
+    /// A direct consumer lowered under ambient execution predicates.
+    Scoped,
+    /// One selected raw input arm of a composed expression.
+    Selected,
+    /// A certified serializer rendered the raw value before this consumer.
+    /// The consumer constrains that text, not the original value's kind.
+    Serialized,
 }
 
 /// How a [`FailCapture`]'s conjunction lowers into schema requirements.
@@ -221,6 +217,14 @@ pub(crate) enum CaptureKind {
         path: String,
         schema_type: String,
         null_aborts: bool,
+    },
+    /// A strict string consumer with its exact selection conjunction.
+    /// `route` distinguishes direct raw consumption, selected raw
+    /// consumption, and consumption after a certified serializer.
+    StringRequirement {
+        path: String,
+        route: StringRequirementRoute,
+        selection: Vec<helm_schema_core::Predicate>,
     },
     /// A range header iterates this values path itself, or a wildcard path
     /// identifies the values-backed member alternative supplied to a
@@ -334,6 +338,7 @@ impl CaptureKind {
             }
             Self::IndexAccess { path, .. }
             | Self::ValueType { path, .. }
+            | Self::StringRequirement { path, .. }
             | Self::RangeInput { path, .. }
             | Self::RangeSelection { path, .. }
             | Self::DigSubject { path }
@@ -374,6 +379,15 @@ impl CaptureKind {
             | Self::PrintfStringOperand { path }
             | Self::PlainSlotText { path, .. } => {
                 *path = map(path);
+            }
+            Self::StringRequirement {
+                path, selection, ..
+            } => {
+                *path = map(path);
+                *selection = selection
+                    .drain(..)
+                    .map(|predicate| predicate.map_value_paths(map))
+                    .collect();
             }
             Self::RangeSelection { path, chain, .. } => {
                 *path = map(path);
@@ -420,10 +434,7 @@ impl Effects {
             merge_operand_paths,
             omitted_map_keys,
             derived_range_key_paths,
-            string_contract_paths,
             range_modes,
-            direct_string_consumer_paths,
-            nil_strict_identity_paths,
             templated_text_identity_paths,
             plain_text_preserving_paths,
             plain_slot_string_format_paths,
@@ -466,12 +477,7 @@ impl Effects {
             self.omitted_map_keys.entry(path).or_default().extend(keys);
         }
         self.derived_range_key_paths.extend(derived_range_key_paths);
-        self.string_contract_paths.extend(string_contract_paths);
         self.range_modes.merge(&range_modes);
-        self.direct_string_consumer_paths
-            .extend(direct_string_consumer_paths);
-        self.nil_strict_identity_paths
-            .extend(nil_strict_identity_paths);
         self.templated_text_identity_paths
             .extend(templated_text_identity_paths);
         self.plain_text_preserving_paths
@@ -516,16 +522,8 @@ impl Effects {
             helper_dependency_rendered,
         );
         self.helper_suppressed_paths.extend(helper_suppressed_paths);
-        for condition in helper_fails {
-            if !self.helper_fails.contains(&condition) {
-                self.helper_fails.push(condition);
-            }
-        }
-        for condition in helper_text_fails {
-            if !self.helper_text_fails.contains(&condition) {
-                self.helper_text_fails.push(condition);
-            }
-        }
+        self.helper_fails.extend(helper_fails);
+        self.helper_text_fails.extend(helper_text_fails);
         self.member_host_conversions.extend(member_host_conversions);
         for (path, hints) in type_hints {
             for hint in hints {
@@ -588,10 +586,7 @@ impl Effects {
             merge_operand_paths: _,
             omitted_map_keys: _,
             derived_range_key_paths,
-            string_contract_paths,
             range_modes,
-            direct_string_consumer_paths,
-            nil_strict_identity_paths,
             templated_text_identity_paths,
             plain_text_preserving_paths: _,
             plain_slot_string_format_paths: _,
@@ -641,10 +636,7 @@ impl Effects {
             merge_operand_paths: BTreeSet::new(),
             omitted_map_keys: BTreeMap::new(),
             derived_range_key_paths,
-            string_contract_paths,
             range_modes,
-            direct_string_consumer_paths,
-            nil_strict_identity_paths,
             templated_text_identity_paths,
             plain_text_preserving_paths: BTreeSet::new(),
             plain_slot_string_format_paths: BTreeSet::new(),
@@ -665,7 +657,7 @@ impl Effects {
             helper_dependency_rendered,
             helper_suppressed_paths,
             helper_fails,
-            helper_text_fails: Vec::new(),
+            helper_text_fails: BTreeSet::new(),
             member_host_conversions,
         }
     }
@@ -688,14 +680,6 @@ impl Effects {
     pub(crate) fn add_default_paths(&mut self, paths: BTreeSet<String>) {
         self.defaults
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
-    }
-
-    pub(crate) fn add_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
-        for path in paths {
-            if !path.trim().is_empty() {
-                insert_type_hint(&mut self.type_hints, path, schema_type);
-            }
-        }
     }
 
     pub(crate) fn add_fallback_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {

@@ -829,10 +829,6 @@ pub(super) fn eval_nonempty_split(
         let (string_paths, raw_range_key_paths) =
             string_invocation_operand_facts("split", args, Some(piped), env, resolver);
         record_string_consumer_effects(piped.value.as_ref(), &string_paths, &mut effects);
-        super::strict_operands::record_nil_strict_identity_operand(
-            piped.value.as_ref(),
-            &mut effects,
-        );
         record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
     } else {
         record_string_call_consumers("split", args, env, resolver, &mut effects);

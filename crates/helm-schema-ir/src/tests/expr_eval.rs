@@ -596,12 +596,11 @@ fn unsupported_printf_format_types_nothing_without_exact_string() {
 }
 
 #[test]
-fn pipeline_ternary_returns_value_branches_not_condition() {
+fn pipeline_ternary_collapses_value_but_keeps_branch_facts() {
     let expr = single_expr(
         r#"typeIs "string" .Values.config | ternary .Values.config (.Values.config | toYaml)"#,
     );
     let result = eval_expr(&expr, &EvalEnv::default());
-
     sim_assert_eq!(
         have: result.value,
         want: Some(AbstractValue::ValuesPath("config".to_string()))
@@ -615,6 +614,29 @@ fn pipeline_ternary_returns_value_branches_not_condition() {
         have: result.effects.guarded_type_hints.get("config"),
         want: Some(&BTreeSet::from(["string".to_string()])),
         "the tested arm remains an accepted output alternative"
+    );
+
+    let consumed = eval_expr(
+        &single_expr(
+            r#"typeIs "string" .Values.config | ternary .Values.config (.Values.config | toYaml) | b64enc"#,
+        ),
+        &EvalEnv::default(),
+    );
+    let requirements = consumed
+        .effects
+        .helper_fails
+        .into_iter()
+        .filter_map(|capture| match capture.kind {
+            crate::eval_effect::CaptureKind::StringRequirement {
+                route, selection, ..
+            } => Some((route, selection)),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: requirements,
+        want: BTreeSet::new(),
+        "the type-tested raw arm and total serializer fallback accept every input kind",
     );
 }
 
@@ -1187,16 +1209,107 @@ fn generated_default_chain_keeps_truthy_primary_string_consumption() {
         result.effects.helper_fails.iter().any(|capture| {
             matches!(
                 &capture.kind,
-                crate::eval_effect::CaptureKind::ValueType {
+                crate::eval_effect::CaptureKind::StringRequirement {
                     path,
-                    schema_type,
-                    ..
-                } if path == "secret" && schema_type == "string"
-            ) && capture
-                .conjunction
-                .contains(&Predicate::truthy_path("secret"))
+                    route: crate::eval_effect::StringRequirementRoute::Selected,
+                    selection,
+                } if path == "secret"
+                    && selection.contains(&Predicate::truthy_path("secret"))
+            )
         }),
         "a truthy raw primary reaches the strict b64enc consumer: {result:#?}"
+    );
+}
+
+#[test]
+fn lexical_transforms_preserve_selected_string_consumption() {
+    let result = eval_expr(
+        &single_expr(
+            r#".Values.image.tag | default "1.13.1" | replace ":" "-" | replace "@" "_" | trunc 63 | trimSuffix "-""#,
+        ),
+        &EvalEnv::default(),
+    );
+    let routes = result
+        .effects
+        .helper_fails
+        .iter()
+        .filter_map(|capture| match &capture.kind {
+            crate::eval_effect::CaptureKind::StringRequirement {
+                path,
+                route,
+                selection,
+            } if path == "image.tag" => Some((*route, selection.clone())),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+
+    sim_assert_eq!(
+        have: routes,
+        want: BTreeSet::from([(
+            crate::eval_effect::StringRequirementRoute::Selected,
+            vec![Predicate::truthy_path("image.tag")],
+        )])
+    );
+}
+
+#[test]
+fn serializer_output_does_not_retype_raw_input() {
+    let serialized_result = eval_expr(
+        &single_expr(".Values.labels | toYaml | b64enc"),
+        &EvalEnv::default(),
+    );
+    let serialized_routes = serialized_result
+        .effects
+        .helper_fails
+        .iter()
+        .filter_map(|capture| match capture.kind {
+            crate::eval_effect::CaptureKind::StringRequirement { route, .. } => Some(route),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: serialized_routes,
+        want: BTreeSet::new(),
+        "toYaml produces total derived text rather than a raw string requirement",
+    );
+
+    let merged_result = eval_expr(
+        &single_expr("merge .Values.override .Values.base | toYaml | b64enc"),
+        &EvalEnv::default(),
+    );
+    let merged_routes = merged_result
+        .effects
+        .helper_fails
+        .iter()
+        .filter_map(|capture| match capture.kind {
+            crate::eval_effect::CaptureKind::StringRequirement { route, .. } => Some(route),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: merged_routes,
+        want: BTreeSet::new(),
+        "serializing merged layers produces total derived text"
+    );
+
+    let mut raw_env = EvalEnv::default();
+    raw_env.locals.insert(
+        "encoded".to_string(),
+        AbstractValue::ValuesPath("labels".to_string()),
+    );
+    let raw_result = eval_expr(&single_expr("$encoded | b64enc"), &raw_env);
+    let raw_routes = raw_result
+        .effects
+        .helper_fails
+        .iter()
+        .filter_map(|capture| match capture.kind {
+            crate::eval_effect::CaptureKind::StringRequirement { route, .. } => Some(route),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: raw_routes,
+        want: BTreeSet::from([crate::eval_effect::StringRequirementRoute::Direct]),
     );
 }
 
@@ -1287,23 +1400,23 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
         have: failure_captures,
         want: BTreeSet::from([
             (
-                crate::eval_effect::CaptureKind::ValueType {
+                crate::eval_effect::CaptureKind::StringRequirement {
                     path: "primary".to_string(),
-                    schema_type: "string".to_string(),
-                    null_aborts: false,
+                    route: crate::eval_effect::StringRequirementRoute::Selected,
+                    selection: vec![Predicate::truthy_path("primary")],
                 },
-                BTreeSet::from([Predicate::truthy_path("primary")]),
+                BTreeSet::new(),
             ),
             (
-                crate::eval_effect::CaptureKind::ValueType {
+                crate::eval_effect::CaptureKind::StringRequirement {
                     path: "fallback".to_string(),
-                    schema_type: "string".to_string(),
-                    null_aborts: false,
+                    route: crate::eval_effect::StringRequirementRoute::Selected,
+                    selection: vec![
+                        Predicate::truthy_path("fallback"),
+                        Predicate::truthy_path("primary").negated(),
+                    ],
                 },
-                BTreeSet::from([
-                    Predicate::truthy_path("primary").negated(),
-                    Predicate::truthy_path("fallback"),
-                ]),
+                BTreeSet::new(),
             ),
         ])
     );
@@ -1394,14 +1507,22 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
 
     sim_assert_eq!(
         have: failure_captures,
-        want: BTreeSet::from([(
-            crate::eval_effect::CaptureKind::ValueType {
-                path: "payload".to_string(),
-                schema_type: "string".to_string(),
-                null_aborts: false,
-            },
-            BTreeSet::from([Predicate::truthy_path("ready").negated()]),
-        )]),
+        want: BTreeSet::from([
+            (
+                crate::eval_effect::CaptureKind::StringRequirement {
+                    path: "payload".to_string(),
+                    route: crate::eval_effect::StringRequirementRoute::Direct,
+                    selection: Vec::new(),
+                },
+                BTreeSet::from([Predicate::truthy_path("ready").negated()]),
+            ),
+            (
+                crate::eval_effect::CaptureKind::AbsenceAborts {
+                    path: "payload".to_string(),
+                },
+                BTreeSet::from([Predicate::truthy_path("ready").negated()]),
+            ),
+        ]),
     );
 }
 
@@ -1674,9 +1795,13 @@ fn from_json_without_matching_serialization_only_contracts_the_input_string() {
     );
 
     sim_assert_eq!(have: result.value, want: None);
-    sim_assert_eq!(
-        have: result.effects.type_hints.get("payload"),
-        want: Some(&["string".to_string()].into_iter().collect())
+    assert!(
+        result.effects.helper_fails.iter().any(|capture| matches!(
+            &capture.kind,
+            crate::eval_effect::CaptureKind::StringRequirement { path, .. }
+                if path == "payload"
+        )),
+        "fromJson must publish its raw string input requirement: {result:#?}"
     );
 }
 
@@ -1955,8 +2080,13 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
         nested_consumer.effects.encoded_paths.contains("payload")
             && nested_consumer
                 .effects
-                .string_contract_paths
-                .contains("payload"),
+                .helper_fails
+                .iter()
+                .any(|capture| matches!(
+                    &capture.kind,
+                    crate::eval_effect::CaptureKind::StringRequirement { path, .. }
+                        if path == "payload"
+                )),
         "evaluating the predicate still runs its strict nested consumer: {nested_consumer:#?}"
     );
 }

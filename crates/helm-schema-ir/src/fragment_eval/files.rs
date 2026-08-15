@@ -206,13 +206,9 @@ impl Interpreter<'_> {
         self.yaml_serialized_paths
             .extend(nested.yaml_serialized_paths);
         self.shape_erased_paths.extend(nested.shape_erased_paths);
-        self.string_contract_paths
-            .extend(nested.string_contract_paths);
         self.range_modes.merge(&nested.range_modes);
         for capture in nested.fail_conditions {
-            if !self.fail_conditions.contains(&capture) {
-                self.fail_conditions.push(capture);
-            }
+            self.fail_conditions.insert(capture);
         }
         self.absorb_member_host_conversions(&nested.member_host_conversions);
         self.apply_root_set_mutations(

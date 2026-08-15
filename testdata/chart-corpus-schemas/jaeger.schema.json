@@ -16731,6 +16731,30 @@
     },
     {
       "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/8"
@@ -16751,21 +16775,6 @@
       },
       "then": {
         "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/1"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          },
           {
             "additionalProperties": {},
             "properties": {
@@ -16809,30 +16818,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
       }
     },
     {
@@ -20182,20 +20167,6 @@
             "allOf": [
               {
                 "$ref": "#/$defs/13"
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "args": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
               },
               {
                 "additionalProperties": {},

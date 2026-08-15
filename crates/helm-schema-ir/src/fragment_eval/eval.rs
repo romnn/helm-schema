@@ -93,9 +93,6 @@ pub struct EvaluatedDocument {
     /// `join`, `printf`) anywhere in the source: the chart tolerates any
     /// input type at them even when no placed row exists.
     pub(crate) shape_erased_paths: BTreeSet<String>,
-    /// Paths carrying a real runtime string contract (`trunc`, `b64enc`,
-    /// `fromYaml`, a dynamic `printf` format) somewhere in the source.
-    pub(crate) string_contract_paths: BTreeSet<String>,
     /// The observed per-path range facts (direct iteration, JSON-decoded
     /// values, key/value destructuring).
     pub(crate) range_modes: crate::range_modes::RangeModes,
@@ -157,13 +154,12 @@ pub(crate) fn eval_document(
         fallback_type_hints: interpreter.fallback_type_hints,
         guarded_fallback_type_hints: interpreter.guarded_fallback_type_hints,
         shape_erased_paths: interpreter.shape_erased_paths,
-        string_contract_paths: interpreter.string_contract_paths,
         range_modes: interpreter.range_modes,
         values_default_sources: interpreter.values_default_sources_observed,
         values_root_overlay_prefixes: interpreter.values_root_overlay_prefixes_observed,
         values_root_helper_includes: interpreter.values_root_helper_includes_observed,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
-        fail_conditions: interpreter.fail_conditions,
+        fail_conditions: interpreter.fail_conditions.into_iter().collect(),
     }
 }
 
@@ -674,20 +670,17 @@ pub(super) struct Interpreter<'a> {
     /// `toString`, `join`, `printf`): the chart tolerates any input type at
     /// them even when no placed row exists.
     pub(super) shape_erased_paths: BTreeSet<String>,
-    /// Paths on which a string-consuming transform bound a real runtime
-    /// string contract somewhere in the source.
-    pub(super) string_contract_paths: BTreeSet<String>,
     /// The per-path range facts observed anywhere in this source (direct
     /// iteration, JSON-decoded values, key/value destructuring).
     pub(super) range_modes: crate::range_modes::RangeModes,
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
-    pub(super) fail_conditions: Vec<FailCapture>,
+    pub(super) fail_conditions: BTreeSet<FailCapture>,
     /// Captures that hold only where this source's rendered TEXT is consumed
     /// as YAML. A helper body renders at its caller's position, so its plain
     /// slots corrupt a document only when the caller splices the body raw
     /// into one; the caller certifies that and absorbs (or defers again).
-    pub(super) text_fails: Vec<FailCapture>,
+    pub(super) text_fails: BTreeSet<FailCapture>,
     /// Paths whose text the CURRENT scalar run renders through `tpl`. Reset
     /// per run: the completed-token pass reads it to tell an identity-carrying
     /// taint from a genuinely transformed one.
@@ -791,10 +784,9 @@ impl<'a> Interpreter<'a> {
             fallback_type_hints: BTreeMap::new(),
             guarded_fallback_type_hints: BTreeMap::new(),
             shape_erased_paths: BTreeSet::new(),
-            string_contract_paths: BTreeSet::new(),
             range_modes: crate::range_modes::RangeModes::default(),
-            fail_conditions: Vec::new(),
-            text_fails: Vec::new(),
+            fail_conditions: BTreeSet::new(),
+            text_fails: BTreeSet::new(),
             run_templated_text_paths: BTreeSet::new(),
             in_value_slot: false,
             block_text_is_yaml: false,
@@ -1024,9 +1016,7 @@ impl<'a> Interpreter<'a> {
         {
             return;
         }
-        if !self.fail_conditions.contains(&capture) {
-            self.fail_conditions.push(capture);
-        }
+        self.fail_conditions.insert(capture);
     }
 
     /// Record a `required(message, subject)` guardrail: rendering fails
@@ -1058,9 +1048,7 @@ impl<'a> Interpreter<'a> {
         {
             return;
         }
-        if !self.fail_conditions.contains(&capture) {
-            self.fail_conditions.push(capture);
-        }
+        self.fail_conditions.insert(capture);
     }
 
     /// The ambient predicates plus `tail`.
@@ -1239,9 +1227,7 @@ impl<'a> Interpreter<'a> {
                     paths: [splice.values_path.clone()].into_iter().collect(),
                 },
             };
-            if !self.fail_conditions.contains(&capture) {
-                self.fail_conditions.push(capture);
-            }
+            self.fail_conditions.insert(capture);
         }
         for part in &string.parts {
             match part {
@@ -1375,7 +1361,7 @@ impl<'a> Interpreter<'a> {
     /// captures count because engines guard their whole body with an
     /// idempotence flag exactly as conditional as the rewrite itself.
     pub(super) fn strict_string_capture_paths(&self) -> BTreeSet<String> {
-        let mut paths = self.string_contract_paths.clone();
+        let mut paths = BTreeSet::new();
         for capture in &self.fail_conditions {
             match &capture.kind {
                 crate::eval_effect::CaptureKind::ValueType {
@@ -1383,7 +1369,8 @@ impl<'a> Interpreter<'a> {
                 } if schema_type == "string" => {
                     paths.insert(path.clone());
                 }
-                crate::eval_effect::CaptureKind::ValuePattern { path, .. } => {
+                crate::eval_effect::CaptureKind::StringRequirement { path, .. }
+                | crate::eval_effect::CaptureKind::ValuePattern { path, .. } => {
                     paths.insert(path.clone());
                 }
                 _ => {}
@@ -1393,11 +1380,12 @@ impl<'a> Interpreter<'a> {
         paths
     }
 
-    pub(super) fn absorb_helper_fails(&mut self, fails: &[FailCapture]) {
+    pub(super) fn absorb_helper_fails<'capture>(
+        &mut self,
+        fails: impl IntoIterator<Item = &'capture FailCapture>,
+    ) {
         for capture in self.scope_helper_fails(fails) {
-            if !self.fail_conditions.contains(&capture) {
-                self.fail_conditions.push(capture);
-            }
+            self.fail_conditions.insert(capture);
         }
     }
 
@@ -1405,25 +1393,46 @@ impl<'a> Interpreter<'a> {
     /// consumed as YAML, at a site that certified exactly that. Inside a
     /// helper body the sink is still the caller's to certify, so they defer
     /// once more instead of binding here.
-    pub(super) fn record_yaml_text_fails(&mut self, fails: &[FailCapture]) {
-        if !self.helper_scope {
-            self.absorb_helper_fails(fails);
-            return;
-        }
+    pub(super) fn record_yaml_text_fails<'capture>(
+        &mut self,
+        fails: impl IntoIterator<Item = &'capture FailCapture>,
+    ) {
         for capture in self.scope_helper_fails(fails) {
-            if !self.text_fails.contains(&capture) {
-                self.text_fails.push(capture);
+            if self.helper_scope {
+                self.text_fails.insert(capture);
+            } else {
+                self.fail_conditions.insert(capture);
             }
         }
     }
 
-    fn scope_helper_fails(&self, fails: &[FailCapture]) -> Vec<FailCapture> {
+    fn scope_helper_fails<'capture>(
+        &self,
+        fails: impl IntoIterator<Item = &'capture FailCapture>,
+    ) -> Vec<FailCapture> {
         let mut scoped = Vec::new();
         for body_capture in fails {
             let mut ranged = self.capture_ranged_modes();
             ranged.merge(&body_capture.ranged);
             let conjunction = self.fail_capture_conjunction(body_capture.conjunction.clone());
             let mut kind = body_capture.kind.clone();
+            // Ambient execution scope turns a direct string contract into an implication.
+            // Its conjunction is the complete scope.
+            // Operand truthiness would admit consumed falsy values.
+            if let CaptureKind::StringRequirement {
+                path,
+                route,
+                selection,
+            } = &kind
+                && matches!(route, crate::eval_effect::StringRequirementRoute::Direct)
+                && !conjunction.is_empty()
+            {
+                kind = CaptureKind::StringRequirement {
+                    path: path.clone(),
+                    route: crate::eval_effect::StringRequirementRoute::Scoped,
+                    selection: selection.clone(),
+                };
+            }
             if let CaptureKind::MemberAccess { handled_kinds } = &mut kind {
                 let target = conjunction.iter().find_map(|predicate| match predicate {
                     Predicate::Not(inner) => match inner.as_ref() {

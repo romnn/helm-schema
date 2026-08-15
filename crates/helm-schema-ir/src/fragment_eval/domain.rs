@@ -328,11 +328,6 @@ pub struct SpliceMeta {
     /// but template-bearing string leaves no longer carry raw sink
     /// constraints.
     pub templated_yaml: bool,
-    /// A string-consuming transform (`trunc`, `b64enc`, a dynamic `printf`
-    /// format) shaped the rendered text: rendering fails for non-string
-    /// values, so this splice's row binds a string contract under its own
-    /// conditions.
-    pub string_contract: bool,
     /// The splice supplies the token-opening `%s` of a complete literal
     /// `printf` result.
     pub plain_slot_string_format: bool,
@@ -384,7 +379,6 @@ impl SpliceMeta {
             && !self.nil_omitted
             && !self.yaml_serialized
             && !self.templated_yaml
-            && !self.string_contract
             && !self.plain_slot_string_format
             && !self.json_serialized
             && self.lexical_escapes.is_empty()

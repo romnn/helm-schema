@@ -9,6 +9,7 @@ use std::collections::BTreeSet;
 use helm_schema_ast::{TemplateExpr, parse_expr_text};
 use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span};
 
+use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, SelectionReachability};
 use crate::expr_eval::literal_helper_call_callee;
@@ -16,7 +17,6 @@ use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
-use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
 
 use super::domain::{
@@ -373,16 +373,6 @@ impl Interpreter<'_> {
                 meta.omitted_keys.insert(key.clone(), Vec::new());
             }
         }
-        // An APPROXIMATELY-lowered enclosing condition gates this hole:
-        // its rows' branch keys stand in for a guard the encoding cannot
-        // represent, so a string contract riding them would narrow states
-        // the real branch never reaches.
-        let no_contracts = std::collections::BTreeSet::new();
-        let row_string_contract_paths = if self.under_approximate_condition() {
-            &no_contracts
-        } else {
-            &hole.effects.string_contract_paths
-        };
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
@@ -393,7 +383,6 @@ impl Interpreter<'_> {
             shape_erased_paths: &hole.effects.shape_erased_paths,
             stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
-            string_contract_paths: row_string_contract_paths,
             plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
@@ -453,9 +442,7 @@ impl Interpreter<'_> {
                 schema_type: "object".to_string(),
             },
         };
-        if !self.fail_conditions.contains(&capture) {
-            self.fail_conditions.push(capture);
-        }
+        self.fail_conditions.insert(capture);
     }
 
     /// Claim the unquoted-slot lexical language for the text an UNQUOTED
@@ -683,25 +670,6 @@ impl Interpreter<'_> {
             .extend(summary.shape_erased_paths.iter().cloned());
         self.yaml_serialized_paths
             .extend(summary.yaml_serialized_paths.iter().cloned());
-        let mut self_guarded_contracts = std::collections::BTreeSet::new();
-        for path in &summary.string_contract_paths {
-            let guarded_by_source = self.active_predicates.iter().any(|predicate| {
-                matches!(
-                    predicate,
-                    Predicate::Guard(
-                        Guard::Truthy { path: guarded }
-                            | Guard::Range { path: guarded }
-                            | Guard::With { path: guarded }
-                    ) if guarded == path
-                )
-            });
-            if guarded_by_source {
-                self_guarded_contracts.insert(path.clone());
-            } else {
-                self.string_contract_paths.insert(path.clone());
-            }
-        }
-        self.absorb_condition_string_captures(&self_guarded_contracts);
         self.range_modes.merge(&summary.range_modes);
         self.chart_defaults_observed
             .extend(summary.chart_defaults.iter().cloned());
@@ -785,16 +753,6 @@ impl Interpreter<'_> {
                 meta.omitted_keys.insert(key.clone(), Vec::new());
             }
         }
-        // An APPROXIMATELY-lowered enclosing condition gates this hole:
-        // its rows' branch keys stand in for a guard the encoding cannot
-        // represent, so a string contract riding them would narrow states
-        // the real branch never reaches.
-        let no_contracts = std::collections::BTreeSet::new();
-        let row_string_contract_paths = if self.under_approximate_condition() {
-            &no_contracts
-        } else {
-            &hole.effects.string_contract_paths
-        };
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
@@ -805,7 +763,6 @@ impl Interpreter<'_> {
             shape_erased_paths: &hole.effects.shape_erased_paths,
             stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
-            string_contract_paths: row_string_contract_paths,
             plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
@@ -1020,7 +977,6 @@ impl Interpreter<'_> {
                             && !splice.meta.encoded
                             && !splice.meta.shape_erased
                             && !splice.meta.yaml_serialized
-                            && !splice.meta.string_contract
                             && !splice.meta.json_serialized
                             && splice.meta.split_segment.is_none()
                             && !splice.meta.range_key

@@ -31,6 +31,53 @@
   "allOf": [
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "serviceMonitor": {
             "properties": {
@@ -51,23 +98,6 @@
       },
       "then": {
         "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          },
           {
             "additionalProperties": {},
             "properties": {
@@ -248,53 +278,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "fullnameOverride": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
       }
     },
     {

@@ -161,6 +161,59 @@ fn helper_yaml_serialization_keeps_its_fixed_sequence_sibling() {
 }
 
 #[test]
+fn strict_consumer_does_not_retype_derived_helper_output() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "operator.securityContext" -}}
+            {{- with .Values.operator.securityContext -}}
+            {{- toYaml . -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let context = crate::SymbolicIrContext::new(&defines);
+    let document = context.eval_document_fragment(indoc! {r#"
+        {{- $security_context := include "operator.securityContext" . | trim -}}
+        {{- if $security_context -}}
+        {{- $security_context | b64enc -}}
+        {{- end -}}
+    "#});
+
+    assert!(
+        !document.fail_conditions.iter().any(|capture| matches!(
+            &capture.kind,
+            CaptureKind::StringRequirement { path, .. }
+                if path == "operator.securityContext"
+        )),
+        "the strict consumer sees the helper's rendered string, not its structured input: {document:#?}"
+    );
+}
+
+#[test]
+fn total_conversion_inside_nested_range_precedes_tpl_contract() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let document = context.eval_document_fragment(indoc! {r"
+        {{- range $section, $settings := .Values.config -}}
+        {{- range $key, $value := $settings -}}
+        {{- tpl ($value | toString) $ -}}
+        {{- end -}}
+        {{- end -}}
+    "});
+    assert!(
+        !document.fail_conditions.iter().any(|capture| matches!(
+            &capture.kind,
+            CaptureKind::StringRequirement { path, .. }
+                | CaptureKind::AbsenceAborts { path }
+                if path == "config.*.*"
+        )),
+        "tpl consumes the text produced by toString, not the ranged input: {document:#?}"
+    );
+}
+
+#[test]
 fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
     let defines = DefineIndex::new();
     let context = crate::SymbolicIrContext::new(&defines);
@@ -429,6 +482,62 @@ fn defaulted_helper_output_keeps_its_stringified_identity() {
         .collect::<Vec<_>>();
 
     sim_assert_eq!(have: name_rows, want: vec![true]);
+}
+
+#[test]
+fn nested_helper_fallback_does_not_escape_a_contradictory_caller_guard() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "workload.fullname" -}}
+            {{- if .Values.fullnameOverride -}}
+            {{- .Values.fullnameOverride | trunc 63 -}}
+            {{- else -}}
+            workload
+            {{- end -}}
+            {{- end -}}
+            {{- define "workload.priorityClassName" -}}
+            {{- if .Values.priorityClassName -}}
+            {{- .Values.priorityClassName -}}
+            {{- else -}}
+            {{- include "workload.fullname" . -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let source = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              {{- if .Values.priorityClassName }}
+              priorityClassName: {{ include "workload.priorityClassName" . }}
+              {{- end }}
+    "#};
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize();
+    let provider_rows = contract
+        .uses()
+        .iter()
+        .filter(|contract_use| {
+            contract_use.source_expr == "fullnameOverride"
+                && contract_use.path
+                    == crate::YamlPath(vec![
+                        "spec".into(),
+                        "template".into(),
+                        "spec".into(),
+                        "priorityClassName".into(),
+                    ])
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(have: provider_rows, want: Vec::<crate::ContractUse>::new());
 }
 
 #[test]
@@ -2370,4 +2479,37 @@ fn yaml_helper_output_preserves_structured_value_for_decoding() {
             },
         )),
     );
+}
+
+#[test]
+fn selected_yaml_serializer_keeps_each_provider_route() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          annotations:
+            {{- $value := .Values.injector.webhook.annotations | default .Values.injector.webhookAnnotations }}
+            {{- $kind := typeOf $value }}
+            {{- if eq $kind "string" }}
+            {{- tpl $value . | nindent 4 }}
+            {{- else }}
+            {{- toYaml $value | nindent 4 }}
+            {{- end }}
+    "#};
+    let finalized = context.generate_contract_ir(source).finalize();
+
+    for path in [
+        "injector.webhook.annotations",
+        "injector.webhookAnnotations",
+    ] {
+        assert!(
+            finalized
+                .uses()
+                .iter()
+                .any(|row| row.source_expr == path && row.kind == crate::ValueKind::YamlSerialized),
+            "missing YAML-serialized provider route for {path}: {finalized:#?}"
+        );
+    }
 }

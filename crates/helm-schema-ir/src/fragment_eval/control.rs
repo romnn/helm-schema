@@ -609,64 +609,6 @@ impl Interpreter<'_> {
         predicate.contract_guards()
     }
 
-    /// Absorb a truthy⇒string fail capture for each path: a condition's
-    /// string consumer fails template evaluation when the raw value is
-    /// present (truthy) but not a string. Ambient guards join through the
-    /// same absorption the helper-body `fail` lane uses.
-    pub(super) fn absorb_condition_string_captures(&mut self, paths: &BTreeSet<String>) {
-        let captures: Vec<crate::eval_effect::FailCapture> = paths
-            .iter()
-            .map(|path| {
-                let mut conjunction = Vec::new();
-                if !helm_schema_core::split_value_path(path)
-                    .iter()
-                    .any(|segment| segment == "*")
-                {
-                    conjunction.insert(0, Predicate::truthy_path(path.clone()));
-                }
-                // An approximately-lowered enclosing condition gates when
-                // this consumer runs at all: the ambient predicates the
-                // absorption prepends carry it as an `Approximate` conjunct,
-                // so the implication abstains instead of binding a branch
-                // whose real guard the encoding cannot represent.
-                crate::eval_effect::FailCapture {
-                    conjunction,
-                    ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::ValueType {
-                        path: path.clone(),
-                        schema_type: "string".to_string(),
-                        null_aborts: false,
-                    },
-                }
-            })
-            .collect();
-        self.absorb_helper_fails(&captures);
-    }
-
-    /// Absorb the abort-grade PRESENCE claim of every nil-strict string
-    /// consumer subject. `tpl`, `b64enc`, `trim`, `nindent`, `htpasswd`, and
-    /// the rest of the string-transform catalog read their operand as a Go
-    /// `string`, so a nil operand — an absent key, or one the user
-    /// null-deleted — aborts rendering with "wrong type for value; expected
-    /// string" wherever the consumer runs. The truthy⇒string capture beside
-    /// this one cannot state that: absence is Helm-falsy, so its own guard
-    /// excuses exactly the state that aborts.
-    ///
-    /// The nil-TOLERANT stringifications never reach this lane — `quote`,
-    /// `squote`, `toString`, and `urlquery` return from
-    /// `record_string_transform_effects` before any string contract is recorded.
-    pub(super) fn absorb_string_consumer_presence_captures(&mut self, paths: &BTreeSet<String>) {
-        let captures: Vec<crate::eval_effect::FailCapture> = paths
-            .iter()
-            .map(|path| crate::eval_effect::FailCapture {
-                conjunction: Vec::new(),
-                ranged: crate::range_modes::RangeModes::default(),
-                kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
-            })
-            .collect();
-        self.absorb_helper_fails(&captures);
-    }
-
     fn activate_if(
         &mut self,
         header: Option<&TemplateHeader>,
@@ -1074,7 +1016,12 @@ impl Interpreter<'_> {
                     .any(|segment| segment == "*")
             })
         });
-        if let Some(identity) = input_contract_identity {
+        if iterable_value
+            .as_ref()
+            .and_then(AbstractValue::selection_chain_identity_paths)
+            .is_none()
+            && let Some(identity) = input_contract_identity
+        {
             let capture = crate::eval_effect::FailCapture {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
@@ -1088,9 +1035,8 @@ impl Interpreter<'_> {
                 .conjunction
                 .iter()
                 .any(|predicate| matches!(predicate, Predicate::False))
-                && !self.fail_conditions.contains(&capture)
             {
-                self.fail_conditions.push(capture);
+                self.fail_conditions.insert(capture);
             }
         }
         self.record_selection_range_captures(iterable_value.as_ref(), destructured);

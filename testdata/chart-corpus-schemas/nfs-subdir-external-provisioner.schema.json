@@ -118,38 +118,6 @@
       }
     },
     "A": {
-      "additionalProperties": false,
-      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-      "properties": {
-        "localhostProfile": {
-          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-unions": [
-        {
-          "discriminator": "type",
-          "fields-to-discriminateBy": {
-            "localhostProfile": "LocalhostProfile"
-          }
-        }
-      ]
-    },
-    "B": {
       "allOf": [
         {
           "not": {
@@ -204,7 +172,7 @@
       ],
       "type": "string"
     },
-    "C": {
+    "B": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -242,7 +210,7 @@
         "null"
       ]
     },
-    "D": {
+    "C": {
       "allOf": [
         {
           "additionalProperties": {
@@ -265,11 +233,11 @@
         }
       ]
     },
-    "E": {
+    "D": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "F": {
+    "E": {
       "allOf": [
         {
           "not": {
@@ -307,6 +275,12 @@
         }
       ]
     },
+    "F": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
     "G": {
       "properties": {
         "mountOptions": {
@@ -316,23 +290,6 @@
       "required": [
         "mountOptions"
       ],
-      "type": "object"
-    },
-    "H": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "I": {
-      "additionalProperties": {
-        "type": "string"
-      },
       "type": "object"
     },
     "a": {
@@ -453,31 +410,23 @@
     },
     "l": {
       "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "m": {
+      "properties": {
         "create": {
           "$ref": "#/$defs/t"
         }
       },
       "required": [
         "create"
-      ],
-      "type": "object"
-    },
-    "m": {
-      "properties": {
-        "rbac": {
-          "properties": {
-            "create": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "rbac"
       ],
       "type": "object"
     },
@@ -1741,84 +1690,64 @@
       ]
     },
     "x": {
-      "properties": {
-        "podDisruptionBudget": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "podDisruptionBudget"
-      ],
-      "type": "object"
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
     },
     "y": {
       "properties": {
-        "podSecurityPolicy": {
+        "rbac": {
           "properties": {
-            "enabled": {
+            "create": {
               "$ref": "#/$defs/t"
             }
           },
           "required": [
-            "enabled"
+            "create"
           ],
           "type": "object"
         }
       },
       "required": [
-        "podSecurityPolicy"
+        "rbac"
       ],
       "type": "object"
     },
     "z": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
+      "additionalProperties": false,
+      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+      "properties": {
+        "localhostProfile": {
+          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-unions": [
+        {
+          "discriminator": "type",
+          "fields-to-discriminateBy": {
+            "localhostProfile": "LocalhostProfile"
+          }
+        }
+      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/k"
-          },
-          {
-            "$ref": "#/$defs/x"
-          },
-          {
-            "$ref": "#/$defs/y"
-          },
-          {
-            "$ref": "#/$defs/m"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/1"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      }
-    },
     {
       "if": {
         "properties": {
@@ -1871,7 +1800,15 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/y"
+        "properties": {
+          "podSecurityPolicy": {
+            "$ref": "#/$defs/l"
+          }
+        },
+        "required": [
+          "podSecurityPolicy"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -1879,7 +1816,7 @@
           "labels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/F"
               },
               {
                 "$ref": "#/$defs/1"
@@ -1897,15 +1834,23 @@
             "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/x"
+            "properties": {
+              "podDisruptionBudget": {
+                "$ref": "#/$defs/l"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/y"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/l"
+                "$ref": "#/$defs/m"
               }
             },
             "required": [
@@ -1926,7 +1871,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/D"
+                    "$ref": "#/$defs/C"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -2150,7 +2095,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/B"
+                        "$ref": "#/$defs/A"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -2179,7 +2124,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/F"
+        "$ref": "#/$defs/E"
       },
       "then": {
         "allOf": [
@@ -2270,7 +2215,7 @@
             "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/E"
           }
         ]
       },
@@ -2307,7 +2252,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/m"
+        "$ref": "#/$defs/y"
       },
       "then": {
         "additionalProperties": {},
@@ -2450,6 +2395,44 @@
               "pathPattern": {
                 "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "storageClass": {
+            "properties": {
+              "provisionerName": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "provisionerName"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "storageClass"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "provisionerName": {
+                "type": [
+                  "null",
+                  "string"
+                ]
               }
             }
           }
@@ -2980,7 +2963,7 @@
           "$ref": "#/$defs/i"
         },
         {
-          "$ref": "#/$defs/D"
+          "$ref": "#/$defs/C"
         },
         {
           "$ref": "#/$defs/1"
@@ -3282,7 +3265,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/l"
           },
           "then": {
             "additionalProperties": {},
@@ -3300,7 +3283,7 @@
                             "$ref": "#/$defs/6"
                           },
                           {
-                            "$ref": "#/$defs/B"
+                            "$ref": "#/$defs/A"
                           },
                           {
                             "$ref": "#/$defs/5"
@@ -3325,7 +3308,7 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/z"
+                            "$ref": "#/$defs/x"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -3398,10 +3381,10 @@
           ]
         },
         "seLinuxOptions": {
-          "$ref": "#/$defs/C"
+          "$ref": "#/$defs/B"
         },
         "seccompProfile": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/z"
         },
         "supplementalGroups": {
           "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -3490,7 +3473,7 @@
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/z"
+          "$ref": "#/$defs/x"
         },
         {
           "$ref": "#/$defs/2"
@@ -3675,10 +3658,10 @@
           ]
         },
         "seLinuxOptions": {
-          "$ref": "#/$defs/C"
+          "$ref": "#/$defs/B"
         },
         "seccompProfile": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/z"
         },
         "windowsOptions": {
           "$ref": "#/$defs/s"
@@ -3694,7 +3677,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/m"
           },
           "then": {
             "allOf": [
@@ -3729,7 +3712,7 @@
                         "$ref": "#/$defs/5"
                       },
                       {
-                        "$ref": "#/$defs/E"
+                        "$ref": "#/$defs/D"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3836,7 +3819,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/m"
           },
           "then": {
             "allOf": [
@@ -3904,7 +3887,7 @@
                             "$ref": "#/$defs/5"
                           },
                           {
-                            "$ref": "#/$defs/E"
+                            "$ref": "#/$defs/D"
                           },
                           {
                             "$ref": "#/$defs/3"
@@ -3922,21 +3905,6 @@
                       }
                     ],
                     "description": "Set a StorageClass name\nIgnored if storageClass.create is false"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "provisionerName": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
                   }
                 }
               },

@@ -1107,7 +1107,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             RET_SYM(BL);
         }
     }
- no_bl:
+ no_bl:;
     bool has_nwl = scanner->cur_row > scanner->row;
     bool is_r = !has_nwl;
     bool is_br = has_nwl && leading_spaces > cur_ind;

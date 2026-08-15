@@ -263,6 +263,7 @@ impl Interpreter<'_> {
         self.record_range_identities(
             member_identity.as_ref(),
             input_identity.as_ref(),
+            range_subject.value.as_ref(),
             destructured,
         );
         self.record_selection_range_captures(range_subject.value.as_ref(), destructured);
@@ -343,6 +344,7 @@ impl Interpreter<'_> {
         &mut self,
         member_identity: Option<&crate::value_path_context::RangeSubjectIdentity>,
         input_identity: Option<&crate::value_path_context::RangeSubjectIdentity>,
+        iterable_value: Option<&crate::abstract_value::AbstractValue>,
         destructured: bool,
     ) {
         if let Some(identity) = member_identity {
@@ -370,7 +372,11 @@ impl Interpreter<'_> {
                     .any(|segment| segment == "*")
             })
         });
-        if let Some(identity) = input_contract_identity {
+        if iterable_value
+            .and_then(crate::abstract_value::AbstractValue::selection_chain_identity_paths)
+            .is_none()
+            && let Some(identity) = input_contract_identity
+        {
             let capture = crate::eval_effect::FailCapture {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
@@ -384,9 +390,8 @@ impl Interpreter<'_> {
                 .conjunction
                 .iter()
                 .any(|predicate| matches!(predicate, Predicate::False))
-                && !self.fail_conditions.contains(&capture)
             {
-                self.fail_conditions.push(capture);
+                self.fail_conditions.insert(capture);
             }
         }
     }
@@ -424,9 +429,8 @@ impl Interpreter<'_> {
                 .conjunction
                 .iter()
                 .any(|predicate| matches!(predicate, Predicate::False))
-                && !self.fail_conditions.contains(&capture)
             {
-                self.fail_conditions.push(capture);
+                self.fail_conditions.insert(capture);
             }
             prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
         }
@@ -661,14 +665,6 @@ impl Interpreter<'_> {
                         meta.omitted_keys.insert(key.clone(), Vec::new());
                     }
                 }
-                // As at block-scalar sites, string-contract metadata must
-                // abstain under approximately lowered conditions.
-                let no_contracts = std::collections::BTreeSet::new();
-                let row_string_contract_paths = if self.under_approximate_condition() {
-                    &no_contracts
-                } else {
-                    &hole.effects.string_contract_paths
-                };
                 let scope = LowerScope {
                     defaulted_paths: &defaulted,
                     encoded_paths: &hole.effects.encoded_paths,
@@ -679,7 +675,6 @@ impl Interpreter<'_> {
                     shape_erased_paths: &hole.effects.shape_erased_paths,
                     stringified_paths: &hole.effects.stringified_paths,
                     nil_omitting_paths: &hole.effects.nil_omitting_paths,
-                    string_contract_paths: row_string_contract_paths,
                     plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
                     json_serialized_paths: &hole.effects.json_serialized_paths,
                     chart_value_defaults: &self.locals.chart_value_defaults,

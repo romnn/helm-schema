@@ -49,7 +49,6 @@ pub(super) fn record_string_transform_effects(
         return;
     }
     record_string_consumer_effects(value, string_paths, effects);
-    record_nil_strict_identity_operand(value, effects);
     record_raw_range_key_string_consumer_paths(raw_range_key_paths, effects);
     if matches!(function, "lower" | "upper") {
         for path in string_paths {
@@ -124,7 +123,6 @@ pub(super) fn record_string_call_consumers(
         let operand = eval_expr_with_helper_calls(arg, env, resolver);
         let paths = identity_value_paths(operand.value.as_ref());
         record_string_consumer_effects(operand.value.as_ref(), &paths, effects);
-        record_nil_strict_identity_operand(operand.value.as_ref(), effects);
         let keys = identity_range_key_paths(operand.value.as_ref());
         raw_range_key_paths.extend(
             keys.difference(&operand.effects.derived_range_key_paths)
@@ -132,20 +130,6 @@ pub(super) fn record_string_call_consumers(
         );
     }
     record_raw_range_key_string_consumer_paths(&raw_range_key_paths, effects);
-}
-
-/// Record a nil-strict consumer's operand as a PRESENCE subject when the
-/// operand IS one values path. A derived operand (`printf … | trimSuffix`,
-/// an `include`'s rendered text, a `default` chain) only carries paths as
-/// influences: it renders whatever the derivation produced, so those paths'
-/// own absence is not what the consumer reads.
-pub(super) fn record_nil_strict_identity_operand(
-    value: Option<&AbstractValue>,
-    effects: &mut Effects,
-) {
-    if let Some(AbstractValue::ValuesPath(path)) = value {
-        effects.nil_strict_identity_paths.insert(path.clone());
-    }
 }
 
 pub(super) fn record_strict_parser_invocation(
@@ -421,30 +405,101 @@ pub(super) fn record_string_consumer_effects(
     effects: &mut Effects,
 ) {
     for path in paths {
-        if effects.derived_text_paths.contains(path)
-            || effects
-                .local_output_meta
-                .get(path)
-                .is_some_and(|meta| meta.shape_erased || meta.derived_text)
-        {
-            continue;
-        }
-        let conjunctions = string_operand_selection_conjunctions(value, effects, path);
-        if matches!(conjunctions.as_slice(), [conjunction] if conjunction.is_empty()) {
-            effects.string_contract_paths.insert(path.clone());
-            effects.direct_string_consumer_paths.insert(path.clone());
-            continue;
-        }
-        for conjunction in conjunctions {
-            push_value_type_capture(
-                conjunction,
-                path.clone(),
-                "string".to_string(),
-                false,
-                effects,
-            );
+        let direct_identity =
+            matches!(value, Some(AbstractValue::ValuesPath(identity)) if identity == path);
+        let requirements = string_operand_requirements(value, effects, path);
+        for (route, conjunction) in requirements {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: Vec::new(),
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::StringRequirement {
+                    path: path.clone(),
+                    route,
+                    selection: conjunction.clone(),
+                },
+            };
+            effects.helper_fails.insert(capture);
+            if direct_identity {
+                let capture = crate::eval_effect::FailCapture {
+                    conjunction,
+                    ranged: crate::range_modes::RangeModes::default(),
+                    kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
+                };
+                effects.helper_fails.insert(capture);
+            }
         }
     }
+}
+
+fn string_operand_requirements(
+    value: Option<&AbstractValue>,
+    effects: &Effects,
+    path: &str,
+) -> Vec<(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)> {
+    let output_metas = parser_output_metas(value, path);
+    let path_is_derived = effects.derived_text_paths.contains(path)
+        || effects
+            .local_output_meta
+            .get(path)
+            .is_some_and(|meta| meta.shape_erased || meta.derived_text);
+    let mut requirements = if output_metas.is_empty() {
+        if path_is_derived {
+            Vec::new()
+        } else {
+            let conjunctions = operand_selection_conjunctions(effects, path);
+            let exact_identity = matches!(
+                value,
+                Some(AbstractValue::ValuesPath(candidate) | AbstractValue::JsonDecodedPath(candidate))
+                    if candidate == path
+            );
+            if !exact_identity && conjunctions.iter().all(Vec::is_empty) {
+                return Vec::new();
+            }
+            conjunctions
+                .into_iter()
+                .map(|conjunction| {
+                    let route = if conjunction.is_empty() {
+                        crate::eval_effect::StringRequirementRoute::Direct
+                    } else {
+                        crate::eval_effect::StringRequirementRoute::Selected
+                    };
+                    (route, conjunction)
+                })
+                .collect()
+        }
+    } else {
+        output_metas
+            .into_iter()
+            .filter(|meta| {
+                meta.yaml_serialized
+                    || meta.json_serialized
+                    || (!path_is_derived && !meta.shape_erased && !meta.derived_text)
+            })
+            .flat_map(|meta| {
+                let branches = if meta.predicates.is_empty() {
+                    vec![Vec::new()]
+                } else {
+                    meta.predicates
+                        .iter()
+                        .map(|branch| branch.iter().cloned().collect())
+                        .collect()
+                };
+                branches.into_iter().map(move |branch| {
+                    let route = if meta.yaml_serialized || meta.json_serialized {
+                        crate::eval_effect::StringRequirementRoute::Serialized
+                    } else if branch.is_empty() {
+                        crate::eval_effect::StringRequirementRoute::Direct
+                    } else {
+                        crate::eval_effect::StringRequirementRoute::Selected
+                    };
+                    (route, branch)
+                })
+            })
+            .collect()
+    };
+    requirements.sort();
+    requirements.dedup();
+    requirements
 }
 
 pub(super) fn record_range_key_string_consumer_effects(
@@ -472,9 +527,7 @@ pub(super) fn record_raw_range_key_string_consumer_paths(
                 paths: raw_paths.clone(),
             },
         };
-        if !effects.helper_fails.contains(&capture) {
-            effects.helper_fails.push(capture);
-        }
+        effects.helper_fails.insert(capture);
     }
     effects
         .derived_range_key_paths
@@ -541,10 +594,9 @@ pub(super) fn record_strict_kind_result(
 /// carry the claim.
 pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut Effects) {
     // Only an operand that IS one raw values path carries the claim, the
-    // same rule [`record_nil_strict_identity_operand`] applies to the
-    // string lane: a derived operand (a merge, a `default` chain, a
-    // helper's rendered text) hands the call whatever the derivation
-    // produced, so those paths' own absence is not what aborts. Reading
+    // same rule the string lane applies: a derived operand (a merge, a
+    // `default` chain, a helper's rendered text) hands the call whatever the
+    // derivation produced, so those paths' own absence is not what aborts. Reading
     // the layered identities instead fabricates subjects — k8s-infra's
     // preset merge grew 951 clauses over spellings like
     // `otelAgent.presets.hostMetrics.scrapers.service.pipelines`, which
@@ -563,9 +615,7 @@ pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
         };
-        if !effects.helper_fails.contains(&capture) {
-            effects.helper_fails.push(capture);
-        }
+        effects.helper_fails.insert(capture);
     }
 }
 
@@ -596,9 +646,7 @@ pub(super) fn record_comparable_kind_result(
                         schema_type: schema_type.to_string(),
                     },
                 };
-                if !effects.helper_fails.contains(&capture) {
-                    effects.helper_fails.push(capture);
-                }
+                effects.helper_fails.insert(capture);
             }
         }
         return;
@@ -614,9 +662,7 @@ pub(super) fn record_comparable_kind_result(
                     schema_type: schema_type.to_string(),
                 },
             };
-            if !effects.helper_fails.contains(&capture) {
-                effects.helper_fails.push(capture);
-            }
+            effects.helper_fails.insert(capture);
         }
     }
 }
@@ -720,9 +766,7 @@ pub(super) fn record_collection_item_kind_result(
                     pattern: pattern.map(str::to_string),
                 },
             };
-            if !effects.helper_fails.contains(&capture) {
-                effects.helper_fails.push(capture);
-            }
+            effects.helper_fails.insert(capture);
         }
     }
     for path in individual_paths {
@@ -766,9 +810,7 @@ pub(super) fn push_fail_capture(conjunction: Vec<Predicate>, effects: &mut Effec
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::Fail,
     };
-    if !effects.helper_fails.contains(&capture) {
-        effects.helper_fails.push(capture);
-    }
+    effects.helper_fails.insert(capture);
 }
 
 pub(super) fn push_value_type_capture(
@@ -787,9 +829,7 @@ pub(super) fn push_value_type_capture(
             null_aborts,
         },
     };
-    if !effects.helper_fails.contains(&capture) {
-        effects.helper_fails.push(capture);
-    }
+    effects.helper_fails.insert(capture);
 }
 
 fn push_value_pattern_capture(
@@ -808,9 +848,7 @@ fn push_value_pattern_capture(
             templated,
         },
     };
-    if !effects.helper_fails.contains(&capture) {
-        effects.helper_fails.push(capture);
-    }
+    effects.helper_fails.insert(capture);
 }
 
 fn strict_operand_path_is_clean(path: &str, effects: &Effects) -> bool {
@@ -982,33 +1020,6 @@ pub(super) fn operand_selection_conjunctions(effects: &Effects, path: &str) -> V
             conjunction.into_iter().collect()
         })
         .collect()
-}
-
-fn string_operand_selection_conjunctions(
-    value: Option<&AbstractValue>,
-    effects: &Effects,
-    path: &str,
-) -> Vec<Vec<Predicate>> {
-    let output_metas = parser_output_metas(value, path);
-    if output_metas.is_empty() {
-        return operand_selection_conjunctions(effects, path);
-    }
-    let mut conjunctions = output_metas
-        .iter()
-        .flat_map(|meta| {
-            if meta.predicates.is_empty() {
-                vec![Vec::new()]
-            } else {
-                meta.predicates
-                    .iter()
-                    .map(|branch| branch.iter().cloned().collect())
-                    .collect()
-            }
-        })
-        .collect::<Vec<_>>();
-    conjunctions.sort();
-    conjunctions.dedup();
-    conjunctions
 }
 
 /// `len` requires a length-bearing value (string, list, or map): numeric

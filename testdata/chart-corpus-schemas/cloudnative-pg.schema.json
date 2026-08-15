@@ -332,17 +332,6 @@
     },
     "18": {
       "properties": {
-        "podMonitorEnabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "podMonitorEnabled"
-      ],
-      "type": "object"
-    },
-    "19": {
-      "properties": {
         "create": {}
       },
       "required": [
@@ -350,7 +339,7 @@
       ],
       "type": "object"
     },
-    "1a": {
+    "19": {
       "additionalProperties": false,
       "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
@@ -416,11 +405,11 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "1b": {
+    "1a": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "1c": {
+    "1b": {
       "allOf": [
         {
           "type": "object"
@@ -471,7 +460,7 @@
         }
       ]
     },
-    "1d": {
+    "1c": {
       "allOf": [
         {
           "not": {
@@ -527,7 +516,7 @@
       "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
       "type": "string"
     },
-    "1e": {
+    "1d": {
       "allOf": [
         {
           "not": {
@@ -583,7 +572,7 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "1f": {
+    "1e": {
       "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
       "type": "null"
     },
@@ -701,17 +690,6 @@
     },
     "A": {
       "properties": {
-        "clusterWide": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "clusterWide"
-      ],
-      "type": "object"
-    },
-    "B": {
-      "properties": {
         "livenessProbe": {
           "enum": [
             null
@@ -723,7 +701,7 @@
       ],
       "type": "object"
     },
-    "C": {
+    "B": {
       "not": {
         "properties": {
           "secret": {
@@ -736,7 +714,7 @@
         "type": "object"
       }
     },
-    "D": {
+    "C": {
       "properties": {
         "startupProbe": {
           "enum": [
@@ -749,7 +727,7 @@
       ],
       "type": "object"
     },
-    "E": {
+    "D": {
       "additionalProperties": {},
       "properties": {
         "create": {},
@@ -757,7 +735,7 @@
       },
       "type": "object"
     },
-    "F": {
+    "E": {
       "properties": {
         "validating": {
           "enum": [
@@ -770,7 +748,7 @@
       ],
       "type": "object"
     },
-    "G": {
+    "F": {
       "properties": {
         "secret": {
           "$ref": "#/$defs/t"
@@ -781,7 +759,7 @@
       ],
       "type": "object"
     },
-    "H": {
+    "G": {
       "properties": {
         "mutating": {
           "enum": [
@@ -794,7 +772,7 @@
       ],
       "type": "object"
     },
-    "I": {
+    "H": {
       "properties": {
         "readinessProbe": {}
       },
@@ -803,7 +781,7 @@
       ],
       "type": "object"
     },
-    "J": {
+    "I": {
       "properties": {
         "livenessProbe": {}
       },
@@ -812,7 +790,7 @@
       ],
       "type": "object"
     },
-    "K": {
+    "J": {
       "properties": {
         "startupProbe": {}
       },
@@ -821,7 +799,7 @@
       ],
       "type": "object"
     },
-    "L": {
+    "K": {
       "anyOf": [
         {
           "not": {
@@ -848,6 +826,17 @@
           "type": "object"
         }
       ]
+    },
+    "L": {
+      "properties": {
+        "podMonitorEnabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "podMonitorEnabled"
+      ],
+      "type": "object"
     },
     "M": {
       "not": {
@@ -2010,25 +1999,6 @@
       "type": "object"
     },
     "n": {
-      "properties": {
-        "rbac": {
-          "properties": {
-            "create": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "o": {
       "allOf": [
         {
           "additionalProperties": {
@@ -2051,7 +2021,7 @@
         }
       ]
     },
-    "p": {
+    "o": {
       "properties": {
         "config": {
           "properties": {
@@ -2067,6 +2037,25 @@
       },
       "required": [
         "config"
+      ],
+      "type": "object"
+    },
+    "p": {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "create": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "rbac"
       ],
       "type": "object"
     },
@@ -2729,25 +2718,6 @@
     },
     "y": {
       "properties": {
-        "monitoring": {
-          "properties": {
-            "podMonitorEnabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "podMonitorEnabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "monitoring"
-      ],
-      "type": "object"
-    },
-    "z": {
-      "properties": {
         "readinessProbe": {
           "enum": [
             null
@@ -2756,6 +2726,17 @@
       },
       "required": [
         "readinessProbe"
+      ],
+      "type": "object"
+    },
+    "z": {
+      "properties": {
+        "clusterWide": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "clusterWide"
       ],
       "type": "object"
     }
@@ -2779,7 +2760,15 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/y"
+        "properties": {
+          "monitoring": {
+            "$ref": "#/$defs/L"
+          }
+        },
+        "required": [
+          "monitoring"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -2822,7 +2811,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/n"
+            "$ref": "#/$defs/p"
           },
           {
             "$ref": "#/$defs/r"
@@ -2838,7 +2827,7 @@
           "commonAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/n"
               },
               {
                 "$ref": "#/$defs/1"
@@ -2851,7 +2840,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/p"
+        "$ref": "#/$defs/o"
       },
       "then": {
         "additionalProperties": {},
@@ -2890,7 +2879,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/n"
+        "$ref": "#/$defs/p"
       },
       "then": {
         "allOf": [
@@ -3046,13 +3035,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/o"
           },
           {
             "not": {
               "properties": {
                 "config": {
-                  "$ref": "#/$defs/A"
+                  "$ref": "#/$defs/z"
                 }
               },
               "required": [
@@ -3075,33 +3064,6 @@
                 "type": "object"
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/y"
-          },
-          {
-            "$ref": "#/$defs/n"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/1"
-              },
-              {
-                "type": "string"
-              }
-            ]
           }
         }
       }
@@ -3191,10 +3153,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/n"
+            "$ref": "#/$defs/p"
           },
           {
             "$ref": "#/$defs/r"
@@ -3254,13 +3216,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/o"
               },
               {
                 "not": {
                   "properties": {
                     "config": {
-                      "$ref": "#/$defs/G"
+                      "$ref": "#/$defs/F"
                     }
                   },
                   "required": [
@@ -3274,7 +3236,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/n"
+                "$ref": "#/$defs/p"
               },
               {
                 "properties": {
@@ -3516,7 +3478,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/o"
+                    "$ref": "#/$defs/n"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -3794,7 +3756,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/J"
+                      "$ref": "#/$defs/I"
                     }
                   },
                   "required": [
@@ -3806,7 +3768,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/B"
+                    "$ref": "#/$defs/A"
                   }
                 },
                 "required": [
@@ -3844,7 +3806,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/G"
                   }
                 },
                 "required": [
@@ -3870,7 +3832,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/I"
+                      "$ref": "#/$defs/H"
                     }
                   },
                   "required": [
@@ -3882,7 +3844,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/z"
+                    "$ref": "#/$defs/y"
                   }
                 },
                 "required": [
@@ -3908,7 +3870,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/K"
+                      "$ref": "#/$defs/J"
                     }
                   },
                   "required": [
@@ -3920,7 +3882,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/D"
+                    "$ref": "#/$defs/C"
                   }
                 },
                 "required": [
@@ -3958,7 +3920,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/F"
+                    "$ref": "#/$defs/E"
                   }
                 },
                 "required": [
@@ -4432,7 +4394,7 @@
           "$ref": "#/$defs/m"
         },
         {
-          "$ref": "#/$defs/o"
+          "$ref": "#/$defs/n"
         },
         {
           "$ref": "#/$defs/1"
@@ -4447,13 +4409,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/A"
+                "$ref": "#/$defs/z"
               },
               {
                 "$ref": "#/$defs/l"
               },
               {
-                "$ref": "#/$defs/C"
+                "$ref": "#/$defs/B"
               }
             ]
           },
@@ -4517,10 +4479,10 @@
                 "$ref": "#/$defs/l"
               },
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/F"
               },
               {
-                "$ref": "#/$defs/L"
+                "$ref": "#/$defs/K"
               },
               {
                 "$ref": "#/$defs/M"
@@ -4536,13 +4498,13 @@
                 "$ref": "#/$defs/l"
               },
               {
-                "$ref": "#/$defs/L"
+                "$ref": "#/$defs/K"
               },
               {
                 "$ref": "#/$defs/M"
               },
               {
-                "$ref": "#/$defs/C"
+                "$ref": "#/$defs/B"
               }
             ]
           },
@@ -4946,7 +4908,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/18"
+            "$ref": "#/$defs/L"
           },
           "then": {
             "allOf": [
@@ -5021,7 +4983,7 @@
                     "$ref": "#/$defs/16"
                   },
                   {
-                    "$ref": "#/$defs/1c"
+                    "$ref": "#/$defs/1b"
                   }
                 ]
               }
@@ -5051,7 +5013,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/19"
+                          "$ref": "#/$defs/18"
                         }
                       },
                       {
@@ -5069,7 +5031,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/o"
+                            "$ref": "#/$defs/n"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -5124,13 +5086,13 @@
                                     "$ref": "#/$defs/5"
                                   },
                                   {
-                                    "$ref": "#/$defs/1d"
+                                    "$ref": "#/$defs/1c"
                                   },
                                   {
                                     "$ref": "#/$defs/6"
                                   },
                                   {
-                                    "$ref": "#/$defs/1f"
+                                    "$ref": "#/$defs/1e"
                                   },
                                   {
                                     "$ref": "#/$defs/4"
@@ -5262,7 +5224,7 @@
           "$ref": "#/$defs/m"
         },
         {
-          "$ref": "#/$defs/o"
+          "$ref": "#/$defs/n"
         },
         {
           "$ref": "#/$defs/1"
@@ -5791,13 +5753,13 @@
                     "$ref": "#/$defs/5"
                   },
                   {
-                    "$ref": "#/$defs/1e"
+                    "$ref": "#/$defs/1d"
                   },
                   {
                     "$ref": "#/$defs/6"
                   },
                   {
-                    "$ref": "#/$defs/1b"
+                    "$ref": "#/$defs/1a"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -5961,7 +5923,7 @@
             "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
             "properties": {
               "labelSelector": {
-                "$ref": "#/$defs/1a"
+                "$ref": "#/$defs/19"
               },
               "matchLabelKeys": {
                 "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
@@ -6106,11 +6068,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/J"
+                  "$ref": "#/$defs/I"
                 }
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/A"
               }
             ]
           },
@@ -6125,7 +6087,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/H"
+                "$ref": "#/$defs/G"
               }
             ]
           },
@@ -6136,11 +6098,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/I"
+                  "$ref": "#/$defs/H"
                 }
               },
               {
-                "$ref": "#/$defs/z"
+                "$ref": "#/$defs/y"
               }
             ]
           },
@@ -6151,11 +6113,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/K"
+                  "$ref": "#/$defs/J"
                 }
               },
               {
-                "$ref": "#/$defs/D"
+                "$ref": "#/$defs/C"
               }
             ]
           },
@@ -6170,7 +6132,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/F"
+                "$ref": "#/$defs/E"
               }
             ]
           },
@@ -6183,7 +6145,7 @@
           "$ref": "#/$defs/12"
         },
         "mutating": {
-          "$ref": "#/$defs/E"
+          "$ref": "#/$defs/D"
         },
         "port": {
           "anyOf": [
@@ -6265,7 +6227,7 @@
           "type": "object"
         },
         "validating": {
-          "$ref": "#/$defs/E"
+          "$ref": "#/$defs/D"
         }
       },
       "required": [

@@ -386,7 +386,6 @@ fn output_meta_preserves_range_shape(meta: &HelperOutputMeta) -> bool {
         && !meta.yaml_serialized
         && !meta.derived_text
         && !meta.partial_text
-        && !meta.string_contract
         && !meta.json_serialized
         && !meta.nil_scrubbed
         && meta.merge_layers.is_none()

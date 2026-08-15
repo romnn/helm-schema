@@ -222,7 +222,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "metadata",
@@ -256,7 +255,6 @@
           }
         ]
       ],
-      "has_string_contract": true,
       "kind": "Scalar",
       "path": [
         "spec",
@@ -274,6 +272,65 @@
           "span": {
             "end": 575,
             "start": 515
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        },
+        {
+          "helper_chain": [
+            "postgres-operator.controllerID"
+          ],
+          "span": {
+            "end": 1644,
+            "start": 1564
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceAccount.name",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "serviceAccountName"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "postgres-operator.fullname"
+          ],
+          "span": {
+            "end": 575,
+            "start": 515
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        },
+        {
+          "helper_chain": [
+            "postgres-operator.serviceAccountName"
+          ],
+          "span": {
+            "end": 1035,
+            "start": 953
           },
           "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
         }
