@@ -16,7 +16,6 @@ use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
-use crate::observed_facts::HintGrade;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_core::Predicate;
 
@@ -381,7 +380,7 @@ impl Interpreter<'_> {
             merge_operand_paths: &hole.effects.merge_operand_paths,
             yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
             templated_yaml_paths: &hole.effects.templated_yaml_paths,
-            shape_erased_paths: &hole.effects.shape_erased_paths,
+            shape_erased_paths: &hole.effects.observed_facts.shape_erased_paths,
             stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
@@ -443,7 +442,7 @@ impl Interpreter<'_> {
                 schema_type: "object".to_string(),
             },
         };
-        self.fail_conditions.insert(capture);
+        self.observed_facts.captures.insert(capture);
     }
 
     /// Claim the unquoted-slot lexical language for the text an UNQUOTED
@@ -466,7 +465,7 @@ impl Interpreter<'_> {
         // slot renders, so the raw value's own characters no longer reach it
         // (external-dns's `{{ tpl $value $ | b64enc | quote }}`).
         let reaches_slot = |path: &String| {
-            !effects.shape_erased_paths.contains(path)
+            !effects.observed_facts.shape_erased_paths.contains(path)
                 && !effects.encoded_paths.contains(path)
                 && !effects.yaml_serialized_paths.contains(path)
         };
@@ -570,48 +569,7 @@ impl Interpreter<'_> {
             }
         }
         if !captures.is_empty() {
-            self.record_yaml_text_fails(&captures);
-        }
-    }
-
-    fn absorb_helper_summary_type_hints(&mut self, summary: &super::summary::FragmentSummary) {
-        for (path, hints) in &summary.type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
-                (&mut self.type_hints, HintGrade::DECLARED)
-            } else {
-                (&mut self.guarded_type_hints, HintGrade::GUARDED_DECLARED)
-            };
-            self.observed_facts
-                .extend_type_hints(sink, grade, path, hints);
-        }
-        for (path, hints) in &summary.guarded_type_hints {
-            if !path.trim().is_empty() {
-                self.observed_facts.extend_type_hints(
-                    &mut self.guarded_type_hints,
-                    HintGrade::GUARDED_DECLARED,
-                    path,
-                    hints,
-                );
-            }
-        }
-        for (path, hints) in &summary.fallback_type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
-                (&mut self.fallback_type_hints, HintGrade::FALLBACK)
-            } else {
-                // Branch-scoped fallback hints remain intent, not a consumer contract.
-                (
-                    &mut self.guarded_fallback_type_hints,
-                    HintGrade::GUARDED_FALLBACK,
-                )
-            };
-            self.observed_facts
-                .extend_type_hints(sink, grade, path, hints);
+            self.record_yaml_text_captures(&captures);
         }
     }
 
@@ -658,7 +616,7 @@ impl Interpreter<'_> {
             .collect();
         claims.extend(summary.rendered.iter().map(|row| row.path.clone()));
         self.absorb_helper_reads_with_suppression(&summary.reads, &suppressed, &claims);
-        self.absorb_helper_fails(&summary.fail_conditions);
+        self.absorb_scoped_observed_facts(&summary.observed_facts);
         if self.in_value_slot {
             self.record_plain_slot_text(summary.value.as_ref(), &Effects::default());
         }
@@ -666,15 +624,11 @@ impl Interpreter<'_> {
         // content, so its plain slots belong to this document. A value slot
         // instead renders the body as the caller's scalar token.
         if !self.in_value_slot {
-            self.record_yaml_text_fails(&summary.text_fails);
+            self.record_yaml_text_captures(&summary.text_captures);
         }
         self.absorb_member_host_conversions(&summary.member_host_conversions);
-        self.absorb_helper_summary_type_hints(summary);
-        self.shape_erased_paths
-            .extend(summary.shape_erased_paths.iter().cloned());
         self.yaml_serialized_paths
             .extend(summary.yaml_serialized_paths.iter().cloned());
-        self.range_modes.merge(&summary.range_modes);
         self.chart_defaults_observed
             .extend(summary.chart_defaults.iter().cloned());
         self.apply_root_set_mutations(
@@ -682,15 +636,9 @@ impl Interpreter<'_> {
             &summary.root_set_predicates,
             &summary.root_set_value_dispatches,
         );
-        self.values_default_sources_observed
-            .extend(summary.values_default_sources.iter().cloned());
-        self.values_root_overlay_prefixes_observed
-            .extend(summary.values_root_overlay_prefixes.iter().cloned());
         // A wrapper snapshot stays verbatim because caller reads run afterward.
         self.pre_rewrite_strict_paths
             .extend(summary.pre_rewrite_strict_paths.iter().cloned());
-        self.values_root_helper_includes_observed
-            .extend(summary.values_root_helper_includes.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
         Some((
@@ -764,7 +712,7 @@ impl Interpreter<'_> {
             merge_operand_paths: &hole.effects.merge_operand_paths,
             yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
             templated_yaml_paths: &hole.effects.templated_yaml_paths,
-            shape_erased_paths: &hole.effects.shape_erased_paths,
+            shape_erased_paths: &hole.effects.observed_facts.shape_erased_paths,
             stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
@@ -1145,10 +1093,10 @@ impl Interpreter<'_> {
             });
         }
         if !captures.is_empty() {
-            self.absorb_helper_fails(&captures);
+            self.absorb_scoped_captures(&captures);
         }
         if !text_captures.is_empty() {
-            self.record_yaml_text_fails(&text_captures);
+            self.record_yaml_text_captures(&text_captures);
         }
     }
 
@@ -1321,7 +1269,7 @@ impl Interpreter<'_> {
         // for jenkins' `jcasc-default-config.yaml: |-`, whose embedded
         // document stops parsing when a JCasC key breaks its plain token.
         if self.block_text_is_yaml && splice_target_helper_call(&exprs).is_some() {
-            self.record_yaml_text_fails(&hole.effects.helper_text_fails);
+            self.record_yaml_text_captures(&hole.effects.helper_text_captures);
         }
         self.push_effects_reads(&hole, ValueKind::Serialized);
         self.restore_site(previous_site);

@@ -13,7 +13,6 @@ use helm_schema_ast::{TemplateExpr, parse_go_template};
 use helm_schema_syntax::TemplatedDocument;
 
 use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::observed_facts::HintGrade;
 use crate::static_file_template::{
     StaticTemplateProgram, StaticTemplateSource, collect_template_requests_from_exprs,
     collect_template_requests_from_helper, literal_helper_calls_from_exprs,
@@ -100,10 +99,6 @@ impl Interpreter<'_> {
     /// guards, mirroring the current pipeline's seeded nested walk) and the
     /// chart-level default mutations observed so far; file-internal local
     /// state stays nested-only.
-    #[expect(
-        clippy::too_many_lines,
-        reason = "keeping this semantic operation together makes its state transitions easier to audit"
-    )]
     fn eval_static_template_program(
         &mut self,
         request: &StaticTemplateProgram,
@@ -181,59 +176,17 @@ impl Interpreter<'_> {
         for read in nested.reads {
             self.push_nested_read(read);
         }
-        for (path, hints) in nested.type_hints {
-            self.observed_facts.extend_type_hints(
-                &mut self.type_hints,
-                HintGrade::DECLARED,
-                &path,
-                &hints,
-            );
-        }
-        for (path, hints) in nested.guarded_type_hints {
-            self.observed_facts.extend_type_hints(
-                &mut self.guarded_type_hints,
-                HintGrade::GUARDED_DECLARED,
-                &path,
-                &hints,
-            );
-        }
-        for (path, hints) in nested.fallback_type_hints {
-            self.observed_facts.extend_type_hints(
-                &mut self.fallback_type_hints,
-                HintGrade::FALLBACK,
-                &path,
-                &hints,
-            );
-        }
-        for (path, hints) in nested.guarded_fallback_type_hints {
-            self.observed_facts.extend_type_hints(
-                &mut self.guarded_fallback_type_hints,
-                HintGrade::GUARDED_FALLBACK,
-                &path,
-                &hints,
-            );
-        }
+        self.absorb_nested_observed_facts(&nested.observed_facts);
         self.parsed_yaml_input_paths
             .extend(nested.parsed_yaml_input_paths);
         self.yaml_serialized_paths
             .extend(nested.yaml_serialized_paths);
-        self.shape_erased_paths.extend(nested.shape_erased_paths);
-        self.range_modes.merge(&nested.range_modes);
-        for capture in nested.fail_conditions {
-            self.fail_conditions.insert(capture);
-        }
         self.absorb_member_host_conversions(&nested.member_host_conversions);
         self.apply_root_set_mutations(
             &nested.root_set_mutations_observed,
             &nested.root_set_predicates_observed,
             &nested.root_value_dispatches_observed,
         );
-        self.values_default_sources_observed
-            .extend(nested.values_default_sources_observed);
-        self.values_root_overlay_prefixes_observed
-            .extend(nested.values_root_overlay_prefixes_observed);
-        self.values_root_helper_includes_observed
-            .extend(nested.values_root_helper_includes_observed);
         self.pre_rewrite_strict_paths
             .extend(nested.pre_rewrite_strict_paths);
         self.chart_defaults_observed

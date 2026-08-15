@@ -8,6 +8,15 @@ use helm_schema_core::{MergeLayerTransform, MergeLayersUse};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
+fn absorb_captures(
+    contract: &mut ContractIr,
+    captures: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
+) {
+    let mut observed_facts = crate::observed_facts::ObservedFacts::default();
+    observed_facts.captures.extend(captures);
+    contract.absorb_observed_facts(&observed_facts);
+}
+
 #[test]
 fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicate() {
     let mut contract = ContractIr::default();
@@ -590,14 +599,17 @@ fn contract_ir_activation_guards_gate_fail_captures() {
     // activation guard must survive into that clause, or the validator
     // would reject values documents that keep the dependency disabled.
     let mut contract = ContractIr::default();
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: vec![
-            helm_schema_core::Predicate::truthy_path("auth.enabled"),
-            helm_schema_core::Predicate::truthy_path("auth.usePassword"),
-        ],
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::Fail,
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![
+                helm_schema_core::Predicate::truthy_path("auth.enabled"),
+                helm_schema_core::Predicate::truthy_path("auth.usePassword"),
+            ],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::Fail,
+        }],
+    );
 
     contract.append_guards_to_all_uses(&[Guard::Truthy {
         path: "redis.enabled".to_string(),
@@ -623,15 +635,18 @@ fn contract_ir_activation_guards_gate_fail_captures() {
 #[test]
 fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Result<()> {
     let mut contract = ContractIr::default();
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: Vec::new(),
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: "image.repository".to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Direct,
-            selection: Vec::new(),
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: Vec::new(),
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "image.repository".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Direct,
+                selection: Vec::new(),
+            },
+        }],
+    );
     contract.append_guards_to_all_uses(&[Guard::Truthy {
         path: "postgresql.enabled".to_string(),
     }]);
@@ -673,23 +688,26 @@ fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<(
         }],
         None,
     ));
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: vec![
-            helm_schema_core::Predicate::Guard(Guard::Truthy {
-                path: "config.enabled".to_string(),
-            }),
-            helm_schema_core::Predicate::Guard(Guard::TypeIs {
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![
+                helm_schema_core::Predicate::Guard(Guard::Truthy {
+                    path: "config.enabled".to_string(),
+                }),
+                helm_schema_core::Predicate::Guard(Guard::TypeIs {
+                    path: path.to_string(),
+                    schema_type: "string".to_string(),
+                }),
+            ],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: path.to_string(),
-                schema_type: "string".to_string(),
-            }),
-        ],
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: path.to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Scoped,
-            selection: Vec::new(),
-        },
-    }]);
+                route: crate::eval_effect::StringRequirementRoute::Scoped,
+                selection: Vec::new(),
+            },
+        }],
+    );
 
     let finalized = contract.finalize();
     let evidence = finalized
@@ -717,15 +735,18 @@ fn scoped_string_requirement_suppresses_only_the_matching_provider_route() {
         );
         contract.push(row);
     }
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: vec![helm_schema_core::Predicate::truthy_path("first.enabled")],
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: path.to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Scoped,
-            selection: Vec::new(),
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![helm_schema_core::Predicate::truthy_path("first.enabled")],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: path.to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Scoped,
+                selection: Vec::new(),
+            },
+        }],
+    );
 
     let evidence = contract.finalize().into_schema_signals();
     let provider_paths = evidence
@@ -758,18 +779,21 @@ fn scoped_string_requirement_matches_a_logically_implied_disjunction() {
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     ));
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: vec![helm_schema_core::Predicate::Or(vec![
-            helm_schema_core::Predicate::truthy_path("selected"),
-            helm_schema_core::Predicate::truthy_path("fallback"),
-        ])],
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: path.to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Scoped,
-            selection: Vec::new(),
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![helm_schema_core::Predicate::Or(vec![
+                helm_schema_core::Predicate::truthy_path("selected"),
+                helm_schema_core::Predicate::truthy_path("fallback"),
+            ])],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: path.to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Scoped,
+                selection: Vec::new(),
+            },
+        }],
+    );
 
     let signals = contract.finalize().into_schema_signals();
     let evidence = signals.evidence_for(path).expect("config.name evidence");
@@ -801,15 +825,18 @@ fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
         Vec::new(),
         None,
     ));
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: Vec::new(),
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: path.to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Direct,
-            selection: Vec::new(),
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: Vec::new(),
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: path.to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Direct,
+                selection: Vec::new(),
+            },
+        }],
+    );
 
     let evidence = contract.finalize().into_schema_signals();
     let provider_paths = evidence
@@ -847,26 +874,29 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
         via_binding: false,
     });
     contract.push(row);
-    contract.extend_fail_conditions([
-        crate::eval_effect::FailCapture {
-            conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
-            ranged: crate::range_modes::RangeModes::default(),
-            kind: crate::eval_effect::CaptureKind::StringRequirement {
-                path: "workers.celery.query".to_string(),
-                route: crate::eval_effect::StringRequirementRoute::Scoped,
-                selection: Vec::new(),
+    absorb_captures(
+        &mut contract,
+        [
+            crate::eval_effect::FailCapture {
+                conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::StringRequirement {
+                    path: "workers.celery.query".to_string(),
+                    route: crate::eval_effect::StringRequirementRoute::Scoped,
+                    selection: Vec::new(),
+                },
             },
-        },
-        crate::eval_effect::FailCapture {
-            conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
-            ranged: crate::range_modes::RangeModes::default(),
-            kind: crate::eval_effect::CaptureKind::StringRequirement {
-                path: "workers.celery.sets.*.query".to_string(),
-                route: crate::eval_effect::StringRequirementRoute::Scoped,
-                selection: Vec::new(),
+            crate::eval_effect::FailCapture {
+                conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::StringRequirement {
+                    path: "workers.celery.sets.*.query".to_string(),
+                    route: crate::eval_effect::StringRequirementRoute::Scoped,
+                    selection: Vec::new(),
+                },
             },
-        },
-    ]);
+        ],
+    );
 
     let finalized = contract.finalize();
     sim_assert_eq!(
@@ -901,17 +931,20 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() {
         via_binding: false,
     });
     contract.push(row);
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: vec![helm_schema_core::Predicate::truthy_path(
-            "deployment.enabled",
-        )],
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: "ports.*.protocol".to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Selected,
-            selection: vec![helm_schema_core::Predicate::truthy_path("ports.*.protocol")],
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![helm_schema_core::Predicate::truthy_path(
+                "deployment.enabled",
+            )],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "ports.*.protocol".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Selected,
+                selection: vec![helm_schema_core::Predicate::truthy_path("ports.*.protocol")],
+            },
+        }],
+    );
 
     let finalized = contract.finalize();
     sim_assert_eq!(
@@ -943,15 +976,18 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
         via_binding: false,
     });
     contract.push(row);
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: "workers.celery.query".to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Scoped,
-            selection: Vec::new(),
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "workers.celery.query".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Scoped,
+                selection: Vec::new(),
+            },
+        }],
+    );
 
     let finalized = contract.finalize();
     sim_assert_eq!(
@@ -963,17 +999,20 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
 #[test]
 fn propagated_wildcard_string_requirement_needs_its_range_scope() {
     let mut contract = ContractIr::default();
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: vec![helm_schema_core::Predicate::truthy_path(
-            "workers.celery.enabled",
-        )],
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: "workers.*".to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Selected,
-            selection: Vec::new(),
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![helm_schema_core::Predicate::truthy_path(
+                "workers.celery.enabled",
+            )],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "workers.*".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Selected,
+                selection: Vec::new(),
+            },
+        }],
+    );
 
     let finalized = contract.finalize();
     let signals = finalized.schema_signals();
@@ -993,17 +1032,20 @@ fn propagated_wildcard_string_requirement_needs_its_range_scope() {
 #[test]
 fn ranged_wildcard_string_requirement_keeps_its_member_contract() -> eyre::Result<()> {
     let mut contract = ContractIr::default();
-    contract.extend_fail_conditions([crate::eval_effect::FailCapture {
-        conjunction: Vec::new(),
-        ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::StringRequirement {
-            path: "workers.*".to_string(),
-            route: crate::eval_effect::StringRequirementRoute::Selected,
-            selection: vec![helm_schema_core::Predicate::Guard(Guard::Range {
-                path: "workers".to_string(),
-            })],
-        },
-    }]);
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: Vec::new(),
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "workers.*".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Selected,
+                selection: vec![helm_schema_core::Predicate::Guard(Guard::Range {
+                    path: "workers".to_string(),
+                })],
+            },
+        }],
+    );
 
     let finalized = contract.finalize();
     let evidence = finalized

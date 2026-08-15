@@ -6,6 +6,7 @@ use crate::expr_eval::{
     eval_exprs_effects,
 };
 use crate::helper_meta::HelperOutputMeta;
+use crate::observed_facts::HintGrade;
 use crate::scalar_value::ScalarValueDispatch;
 use helm_schema_ast::parse_expr_text;
 use helm_schema_ast::render_printf_string_sets;
@@ -266,7 +267,12 @@ fn string_transform_pipeline_preserves_all_printf_argument_paths() {
         // string contract on the raw argument paths: printf renders
         // anything.
         sim_assert_eq!(
-            have: result.effects.type_hints.get(path),
+            have: result
+                .effects
+                .observed_facts
+                .type_hints
+                .get(&HintGrade::DECLARED)
+                .and_then(|hints| hints.get(path)),
             want: None,
             "{path} must not inherit trunc's contract through printf"
         );
@@ -278,12 +284,21 @@ fn quote_pipeline_erases_input_shape_without_typing() {
     let result = eval_expr(&single_expr(r".Values.flag | quote"), &EvalEnv::default());
 
     sim_assert_eq!(
-        have: result.effects.type_hints.get("flag"),
+        have: result
+            .effects
+            .observed_facts
+            .type_hints
+            .get(&HintGrade::DECLARED)
+            .and_then(|hints| hints.get("flag")),
         want: None,
         "quote renders any input through strval, so it types nothing"
     );
     assert!(
-        result.effects.shape_erased_paths.contains("flag"),
+        result
+            .effects
+            .observed_facts
+            .shape_erased_paths
+            .contains("flag"),
         "the sink observes quote's rendered text, never the input shape"
     );
 }
@@ -371,19 +386,26 @@ fn get_requires_its_values_backed_host_to_be_an_object() {
     );
     let result = eval_expr(&single_expr(r#"get $context "creds""#), &env);
 
-    assert!(result.effects.helper_fails.iter().any(|capture| {
-        matches!(
-            capture.kind,
-            crate::eval_effect::CaptureKind::MemberAccess { .. }
-        ) && capture.conjunction
-            == vec![
-                Predicate::from(Guard::TypeIs {
-                    path: "contexts.*".to_string(),
-                    schema_type: "object".to_string(),
-                })
-                .negated(),
-            ]
-    }));
+    assert!(
+        result
+            .effects
+            .observed_facts
+            .captures
+            .iter()
+            .any(|capture| {
+                matches!(
+                    capture.kind,
+                    crate::eval_effect::CaptureKind::MemberAccess { .. }
+                ) && capture.conjunction
+                    == vec![
+                        Predicate::from(Guard::TypeIs {
+                            path: "contexts.*".to_string(),
+                            schema_type: "object".to_string(),
+                        })
+                        .negated(),
+                    ]
+            })
+    );
 }
 
 #[test]
@@ -401,7 +423,8 @@ fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
     );
     let target_capture = result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .find(|capture| {
             matches!(
@@ -441,16 +464,23 @@ fn ungrouped_selector_still_requires_the_intermediate_member() {
         &EvalEnv::default(),
     );
 
-    assert!(result.effects.helper_fails.iter().any(|capture| {
-        matches!(
-            capture.kind,
-            crate::eval_effect::CaptureKind::MemberAccess { .. }
-        ) && capture.conjunction
-            == vec![Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
-                path: "resources.limits".to_string(),
-                schema_type: "object".to_string(),
-            })))]
-    }));
+    assert!(
+        result
+            .effects
+            .observed_facts
+            .captures
+            .iter()
+            .any(|capture| {
+                matches!(
+                    capture.kind,
+                    crate::eval_effect::CaptureKind::MemberAccess { .. }
+                ) && capture.conjunction
+                    == vec![Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
+                        path: "resources.limits".to_string(),
+                        schema_type: "object".to_string(),
+                    })))]
+            })
+    );
 }
 
 #[test]
@@ -576,7 +606,12 @@ fn unsupported_printf_format_types_nothing_without_exact_string() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
-        have: result.effects.type_hints.get("count"),
+        have: result
+            .effects
+            .observed_facts
+            .type_hints
+            .get(&HintGrade::DECLARED)
+            .and_then(|hints| hints.get("count")),
         want: None,
         "Go fmt embeds verb mismatches in the output instead of failing, so printf types nothing"
     );
@@ -606,12 +641,22 @@ fn pipeline_ternary_collapses_value_but_keeps_branch_facts() {
         want: Some(AbstractValue::ValuesPath("config".to_string()))
     );
     sim_assert_eq!(
-        have: result.effects.type_hints.get("config"),
+        have: result
+            .effects
+            .observed_facts
+            .type_hints
+            .get(&HintGrade::DECLARED)
+            .and_then(|hints| hints.get("config")),
         want: None,
         "a type test selects an output arm; it does not restrict the input domain"
     );
     sim_assert_eq!(
-        have: result.effects.guarded_type_hints.get("config"),
+        have: result
+            .effects
+            .observed_facts
+            .type_hints
+            .get(&HintGrade::GUARDED_DECLARED)
+            .and_then(|hints| hints.get("config")),
         want: Some(&BTreeSet::from(["string".to_string()])),
         "the tested arm remains an accepted output alternative"
     );
@@ -624,7 +669,8 @@ fn pipeline_ternary_collapses_value_but_keeps_branch_facts() {
     );
     let requirements = consumed
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .into_iter()
         .filter_map(|capture| match capture.kind {
             crate::eval_effect::CaptureKind::StringRequirement {
@@ -1004,12 +1050,12 @@ fn strict_pipeline_calls_match_direct_operand_contracts() {
         let pipeline_result = eval_expr(&single_expr(pipeline), &EvalEnv::default());
 
         assert!(
-            !direct.effects.helper_fails.is_empty(),
+            !direct.effects.observed_facts.captures.is_empty(),
             "the direct call should establish the reference contract: {pipeline}"
         );
         sim_assert_eq!(
-            have: pipeline_result.effects.helper_fails,
-            want: direct.effects.helper_fails,
+            have: pipeline_result.effects.observed_facts.captures,
+            want: direct.effects.observed_facts.captures,
             "the pipeline form must preserve the direct call's runtime contract: {pipeline}"
         );
     }
@@ -1056,7 +1102,8 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
     let captures = |action: &str| {
         eval_expr(&single_expr(action), &EvalEnv::default())
             .effects
-            .helper_fails
+            .observed_facts
+            .captures
             .into_iter()
             .map(|capture| (capture.kind, capture.conjunction))
             .collect::<BTreeSet<_>>()
@@ -1206,17 +1253,22 @@ fn generated_default_chain_keeps_truthy_primary_string_consumption() {
     );
 
     assert!(
-        result.effects.helper_fails.iter().any(|capture| {
-            matches!(
-                &capture.kind,
-                crate::eval_effect::CaptureKind::StringRequirement {
-                    path,
-                    route: crate::eval_effect::StringRequirementRoute::Selected,
-                    selection,
-                } if path == "secret"
-                    && selection.contains(&Predicate::truthy_path("secret"))
-            )
-        }),
+        result
+            .effects
+            .observed_facts
+            .captures
+            .iter()
+            .any(|capture| {
+                matches!(
+                    &capture.kind,
+                    crate::eval_effect::CaptureKind::StringRequirement {
+                        path,
+                        route: crate::eval_effect::StringRequirementRoute::Selected,
+                        selection,
+                    } if path == "secret"
+                        && selection.contains(&Predicate::truthy_path("secret"))
+                )
+            }),
         "a truthy raw primary reaches the strict b64enc consumer: {result:#?}"
     );
 }
@@ -1231,7 +1283,8 @@ fn lexical_transforms_preserve_selected_string_consumption() {
     );
     let routes = result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .filter_map(|capture| match &capture.kind {
             crate::eval_effect::CaptureKind::StringRequirement {
@@ -1260,7 +1313,8 @@ fn serializer_output_does_not_retype_raw_input() {
     );
     let serialized_routes = serialized_result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .filter_map(|capture| match capture.kind {
             crate::eval_effect::CaptureKind::StringRequirement { route, .. } => Some(route),
@@ -1279,7 +1333,8 @@ fn serializer_output_does_not_retype_raw_input() {
     );
     let merged_routes = merged_result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .filter_map(|capture| match capture.kind {
             crate::eval_effect::CaptureKind::StringRequirement { route, .. } => Some(route),
@@ -1300,7 +1355,8 @@ fn serializer_output_does_not_retype_raw_input() {
     let raw_result = eval_expr(&single_expr("$encoded | b64enc"), &raw_env);
     let raw_routes = raw_result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .filter_map(|capture| match capture.kind {
             crate::eval_effect::CaptureKind::StringRequirement { route, .. } => Some(route),
@@ -1387,7 +1443,8 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
     );
     let failure_captures = consumed
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .into_iter()
         .map(|capture| {
             (
@@ -1495,7 +1552,8 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
     );
     let failure_captures = result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .into_iter()
         .map(|capture| {
             (
@@ -1538,7 +1596,8 @@ fn truth_only_locals_drive_short_circuit_execution() {
     );
     let failure_captures = result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .into_iter()
         .map(|capture| {
             (
@@ -1577,7 +1636,8 @@ fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
     );
     let direct_failures = direct
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .into_iter()
         .map(|capture| capture.kind)
         .collect::<BTreeSet<_>>();
@@ -1603,7 +1663,8 @@ fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
     let local = eval_expr(&single_expr(r#"unset $x "k""#), &env);
     let local_failures = local
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .into_iter()
         .map(|capture| capture.kind)
         .collect::<BTreeSet<_>>();
@@ -1796,11 +1857,16 @@ fn from_json_without_matching_serialization_only_contracts_the_input_string() {
 
     sim_assert_eq!(have: result.value, want: None);
     assert!(
-        result.effects.helper_fails.iter().any(|capture| matches!(
-            &capture.kind,
-            crate::eval_effect::CaptureKind::StringRequirement { path, .. }
-                if path == "payload"
-        )),
+        result
+            .effects
+            .observed_facts
+            .captures
+            .iter()
+            .any(|capture| matches!(
+                &capture.kind,
+                crate::eval_effect::CaptureKind::StringRequirement { path, .. }
+                    if path == "payload"
+            )),
         "fromJson must publish its raw string input requirement: {result:#?}"
     );
 }
@@ -1939,7 +2005,7 @@ fn root_values_merge_records_the_fallback_values_subtree() {
     );
 
     sim_assert_eq!(
-        have: result.effects.values_default_sources,
+        have: result.effects.observed_facts.values_default_sources,
         want: BTreeSet::from([crate::ValuesDefaultSource {
             target_path: String::new(),
             source_path: "_internal_defaults".to_string(),
@@ -1957,12 +2023,21 @@ fn coercing_arithmetic_erases_raw_operand_shape() {
         &EvalEnv::default(),
     );
     assert!(
-        result.effects.shape_erased_paths.contains("pct"),
+        result
+            .effects
+            .observed_facts
+            .shape_erased_paths
+            .contains("pct"),
         "arithmetic operand shape is coerced, not constrained: {:?}",
-        result.effects.shape_erased_paths
+        result.effects.observed_facts.shape_erased_paths
     );
     sim_assert_eq!(
-        have: result.effects.type_hints.get("pct"),
+        have: result
+            .effects
+            .observed_facts
+            .type_hints
+            .get(&HintGrade::DECLARED)
+            .and_then(|hints| hints.get("pct")),
         want: None,
         "arithmetic must not type its raw operand"
     );
@@ -1974,7 +2049,11 @@ fn division_operand_is_not_arithmetic_erased() {
     // deliberately excluded from the coercing-arithmetic widening.
     let result = eval_expr(&single_expr(r"div .Values.count 2"), &EvalEnv::default());
     assert!(
-        !result.effects.shape_erased_paths.contains("count"),
+        !result
+            .effects
+            .observed_facts
+            .shape_erased_paths
+            .contains("count"),
         "div is not part of the coercing-arithmetic catalog"
     );
 }
@@ -2022,12 +2101,17 @@ fn ternary_condition_identity_stays_out_of_output_paths() {
             "the condition never renders into the slot: {action}"
         );
         assert!(
-            result.effects.helper_fails.iter().any(|capture| matches!(
-                &capture.kind,
-                crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
-                    | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
-                    if path == "internalTLS.enabled" && schema_type == "boolean"
-            )),
+            result
+                .effects
+                .observed_facts
+                .captures
+                .iter()
+                .any(|capture| matches!(
+                    &capture.kind,
+                    crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
+                        | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
+                        if path == "internalTLS.enabled" && schema_type == "boolean"
+                )),
             "the Boolean operand contract must survive: {action}"
         );
     }
@@ -2063,12 +2147,17 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
         want: BTreeMap::new()
     );
     assert!(
-        result.effects.helper_fails.iter().any(|capture| matches!(
-            &capture.kind,
-            crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
-                | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
-                if path == "diagnosticMode.enabled" && schema_type == "boolean"
-        )),
+        result
+            .effects
+            .observed_facts
+            .captures
+            .iter()
+            .any(|capture| matches!(
+                &capture.kind,
+                crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
+                    | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
+                    if path == "diagnosticMode.enabled" && schema_type == "boolean"
+            )),
         "the Boolean consumption contract must survive without returned metadata: {result:#?}"
     );
 
@@ -2080,7 +2169,8 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
         nested_consumer.effects.encoded_paths.contains("payload")
             && nested_consumer
                 .effects
-                .helper_fails
+                .observed_facts
+                .captures
                 .iter()
                 .any(|capture| matches!(
                     &capture.kind,

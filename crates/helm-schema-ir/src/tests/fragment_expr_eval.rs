@@ -42,9 +42,10 @@ fn wrapped_with_program_keeps_exact_else_requirements() {
     "#};
     let document = context.eval_document_fragment(source);
     assert!(
-        !document.fail_conditions.is_empty()
+        !document.observed_facts.captures.is_empty()
             && document
-                .fail_conditions
+                .observed_facts
+                .captures
                 .iter()
                 .all(|capture| !capture.contains_approximation()),
         "{document:#?}"
@@ -182,11 +183,15 @@ fn strict_consumer_does_not_retype_derived_helper_output() {
     "#});
 
     assert!(
-        !document.fail_conditions.iter().any(|capture| matches!(
-            &capture.kind,
-            CaptureKind::StringRequirement { path, .. }
-                if path == "operator.securityContext"
-        )),
+        !document
+            .observed_facts
+            .captures
+            .iter()
+            .any(|capture| matches!(
+                &capture.kind,
+                CaptureKind::StringRequirement { path, .. }
+                    if path == "operator.securityContext"
+            )),
         "the strict consumer sees the helper's rendered string, not its structured input: {document:#?}"
     );
 }
@@ -203,12 +208,16 @@ fn total_conversion_inside_nested_range_precedes_tpl_contract() {
         {{- end -}}
     "});
     assert!(
-        !document.fail_conditions.iter().any(|capture| matches!(
-            &capture.kind,
-            CaptureKind::StringRequirement { path, .. }
-                | CaptureKind::AbsenceAborts { path }
-                if path == "config.*.*"
-        )),
+        !document
+            .observed_facts
+            .captures
+            .iter()
+            .any(|capture| matches!(
+                &capture.kind,
+                CaptureKind::StringRequirement { path, .. }
+                    | CaptureKind::AbsenceAborts { path }
+                    if path == "config.*.*"
+            )),
         "tpl consumes the text produced by toString, not the ranged input: {document:#?}"
     );
 }
@@ -984,7 +993,8 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
     assert!(
         !call
             .summary
-            .fail_conditions
+            .observed_facts
+            .captures
             .iter()
             .any(|capture| matches!(capture.kind, CaptureKind::Fail)),
         "the helper summary must prune the unreachable fail: {:#?}",
@@ -1360,7 +1370,8 @@ fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
 
     let conditions = result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .filter_map(|capture| match &capture.kind {
             crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
@@ -2088,7 +2099,8 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
     .negated()]);
     let host_captures = result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .filter(|capture| {
             matches!(
@@ -2300,6 +2312,7 @@ fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
     assert!(
         !result
             .effects
+            .observed_facts
             .shape_erased_paths
             .contains("server.namespaces"),
         "a body-wide observation must not transform every returned occurrence: {result:#?}",

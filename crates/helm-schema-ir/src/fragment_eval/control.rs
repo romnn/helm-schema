@@ -992,21 +992,33 @@ impl Interpreter<'_> {
         // split list carries its source only as influence and has no such
         // member path.
         if let Some(identity) = &member_identity {
-            self.range_modes.mark_member_identity(&identity.path);
+            self.observed_facts
+                .range_modes
+                .mark_member_identity(&identity.path);
             if destructured {
-                self.range_modes.mark_destructured(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_destructured(&identity.path);
             }
             if identity.json_decoded {
-                self.range_modes.mark_json_decoded(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_json_decoded(&identity.path);
             }
         }
         if let Some(identity) = &input_identity {
-            self.range_modes.mark_input_identity(&identity.path);
+            self.observed_facts
+                .range_modes
+                .mark_input_identity(&identity.path);
             if destructured {
-                self.range_modes.mark_destructured(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_destructured(&identity.path);
             }
             if identity.json_decoded {
-                self.range_modes.mark_json_decoded(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_json_decoded(&identity.path);
             }
         }
         let input_contract_identity = input_identity.as_ref().or_else(|| {
@@ -1036,7 +1048,7 @@ impl Interpreter<'_> {
                 .iter()
                 .any(|predicate| matches!(predicate, Predicate::False))
             {
-                self.fail_conditions.insert(capture);
+                self.observed_facts.captures.insert(capture);
             }
         }
         self.record_selection_range_captures(iterable_value.as_ref(), destructured);

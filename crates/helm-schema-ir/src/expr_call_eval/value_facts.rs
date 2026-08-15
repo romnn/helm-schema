@@ -188,7 +188,7 @@ pub(super) fn escape_wrapped_identity(
 ) -> Option<AbstractValue> {
     match value {
         AbstractValue::ValuesPath(path) => {
-            if effects.shape_erased_paths.contains(path)
+            if effects.observed_facts.shape_erased_paths.contains(path)
                 || effects.derived_text_paths.contains(path)
                 || effects
                     .local_output_meta

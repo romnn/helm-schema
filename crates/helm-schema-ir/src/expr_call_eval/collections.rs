@@ -702,7 +702,11 @@ pub(super) fn eval_split_list(
         .map(AbstractValue::paths)
         .unwrap_or_default();
     let total_text_preimage = source_paths.iter().all(|path| {
-        result.effects.shape_erased_paths.contains(path)
+        result
+            .effects
+            .observed_facts
+            .shape_erased_paths
+            .contains(path)
             || result
                 .effects
                 .local_output_meta
@@ -755,7 +759,11 @@ pub(super) fn eval_regex_split(
         .map(AbstractValue::paths)
         .unwrap_or_default();
     let total_text_preimage = source_paths.iter().all(|path| {
-        subject.effects.shape_erased_paths.contains(path)
+        subject
+            .effects
+            .observed_facts
+            .shape_erased_paths
+            .contains(path)
             || subject
                 .effects
                 .local_output_meta
@@ -1018,7 +1026,10 @@ pub(super) fn eval_merge(
     {
         for source in values.iter().skip(1) {
             if let Some(path) = source.unique_path().filter(|path| !path.is_empty()) {
-                effects.values_root_overlay_prefixes.insert(path);
+                effects
+                    .observed_facts
+                    .values_root_overlay_prefixes
+                    .insert(path);
             }
         }
     }

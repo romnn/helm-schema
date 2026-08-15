@@ -116,7 +116,8 @@ fn partial_helper_truth_marks_later_short_circuit_member_access_incomplete() {
     );
     let member_capture = result
         .effects
-        .helper_fails
+        .observed_facts
+        .captures
         .iter()
         .find(|capture| {
             matches!(

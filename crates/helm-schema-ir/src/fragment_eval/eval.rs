@@ -78,44 +78,11 @@ pub struct EvaluatedDocument {
     /// `.Values` reads that never render: condition reads, assignment
     /// right-hand sides, helper-internal guard reads, and range headers.
     pub reads: Vec<ValueRead>,
-    /// Declared input-type hints observed at unconditional rendered holes.
-    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints observed only under branch predicates: they hold
-    /// where those branches render, never at the unconditional base.
-    pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints from literal `default`/`coalesce` fallbacks: they
-    /// type only the truthy arm of the path, never its Helm-falsy states.
-    pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Fallback hints observed under branch predicates: fallback-grade
-    /// intent that may type conditional overlays, but never a branch whose
-    /// renders all totally format.
-    pub(crate) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-    #[expect(
-        dead_code,
-        reason = "Step 7a shadows legacy facts before Step 7b migrates document readers"
-    )]
     pub(crate) observed_facts: ObservedFacts,
-    /// Paths consumed through total stringifications (`quote`, `toString`,
-    /// `join`, `printf`) anywhere in the source: the chart tolerates any
-    /// input type at them even when no placed row exists.
-    pub(crate) shape_erased_paths: BTreeSet<String>,
-    /// The observed per-path range facts (direct iteration, JSON-decoded
-    /// values, key/value destructuring).
-    pub(crate) range_modes: crate::range_modes::RangeModes,
-    /// Chart value subtrees supplying defaults to the effective values tree.
-    pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-    /// Values subtrees merged in place over the values root: root contracts
-    /// project back onto the prefixed spellings.
-    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
-    /// Helper names through which the values root was replaced.
-    pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// Strictly string-consumed paths whose consumers execute BEFORE the
     /// values-root wrapper rewrite: their nodes must not gain the wrapper
     /// alternative (see the interpreter field of the same name).
     pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
-    /// `fail` captures (see [`FailCapture`]): no valid values document may
-    /// satisfy one of these conjunctions.
-    pub(crate) fail_conditions: Vec<FailCapture>,
 }
 
 /// One pathless `.Values` read with the guards active at the read site.
@@ -155,18 +122,8 @@ pub(crate) fn eval_document(
     EvaluatedDocument {
         root: contributions.assemble(),
         reads: interpreter.reads,
-        type_hints: interpreter.type_hints,
-        guarded_type_hints: interpreter.guarded_type_hints,
-        fallback_type_hints: interpreter.fallback_type_hints,
-        guarded_fallback_type_hints: interpreter.guarded_fallback_type_hints,
         observed_facts: interpreter.observed_facts,
-        shape_erased_paths: interpreter.shape_erased_paths,
-        range_modes: interpreter.range_modes,
-        values_default_sources: interpreter.values_default_sources_observed,
-        values_root_overlay_prefixes: interpreter.values_root_overlay_prefixes_observed,
-        values_root_helper_includes: interpreter.values_root_helper_includes_observed,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
-        fail_conditions: interpreter.fail_conditions.into_iter().collect(),
     }
 }
 
@@ -638,9 +595,6 @@ pub(super) struct Interpreter<'a> {
     pub(super) root_set_mutations_observed: BTreeMap<String, AbstractValue>,
     pub(super) root_set_predicates_observed: BTreeMap<String, Predicate>,
     pub(super) root_value_dispatches_observed: BTreeMap<String, ScalarValueDispatch>,
-    pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
-    pub(super) values_root_overlay_prefixes_observed: BTreeSet<String>,
-    pub(super) values_root_helper_includes_observed: BTreeSet<String>,
     /// Values paths with a strict STRING consumer that executed before the
     /// first values-root program-wrapper rewrite in this source: a wrapper
     /// map at such a path reaches the consumer raw and aborts (nats'
@@ -656,7 +610,6 @@ pub(super) struct Interpreter<'a> {
     pub(super) reads: Vec<ValueRead>,
     /// Dedup shadow of `reads` (order lives in the vec).
     reads_seen: HashSet<ValueRead>,
-    pub(super) type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed as serialized YAML by `fromYaml`; document-scope
     /// helper conditions import this narrow input contract without importing
     /// unrelated helper-body output transformations.
@@ -664,31 +617,12 @@ pub(super) struct Interpreter<'a> {
     /// Paths whose helper output was serialized with `toYaml`; callers use
     /// this to recognize a matching `fromYaml` as a structural round trip.
     pub(super) yaml_serialized_paths: BTreeSet<String>,
-    /// Input-type hints observed while branch predicates were active: they
-    /// hold only where those branches render, so they may type conditional
-    /// overlays but never the unconditional base.
-    pub(super) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints from literal `default`/`coalesce` fallbacks: they
-    /// type only the truthy arm of the path, never its Helm-falsy states.
-    pub(super) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Fallback hints observed under branch predicates.
-    pub(super) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(super) observed_facts: ObservedFacts,
-    /// Paths consumed only through total stringifications (`quote`,
-    /// `toString`, `join`, `printf`): the chart tolerates any input type at
-    /// them even when no placed row exists.
-    pub(super) shape_erased_paths: BTreeSet<String>,
-    /// The per-path range facts observed anywhere in this source (direct
-    /// iteration, JSON-decoded values, key/value destructuring).
-    pub(super) range_modes: crate::range_modes::RangeModes,
-    /// `fail` captures (see [`FailCapture`]): no valid values document may
-    /// satisfy one of these conjunctions.
-    pub(super) fail_conditions: BTreeSet<FailCapture>,
     /// Captures that hold only where this source's rendered TEXT is consumed
     /// as YAML. A helper body renders at its caller's position, so its plain
     /// slots corrupt a document only when the caller splices the body raw
     /// into one; the caller certifies that and absorbs (or defers again).
-    pub(super) text_fails: BTreeSet<FailCapture>,
+    pub(super) text_captures: BTreeSet<FailCapture>,
     /// Paths whose text the CURRENT scalar run renders through `tpl`. Reset
     /// per run: the completed-token pass reads it to tell an identity-carrying
     /// taint from a genuinely transformed one.
@@ -777,25 +711,15 @@ impl<'a> Interpreter<'a> {
             root_set_mutations_observed: BTreeMap::new(),
             root_set_predicates_observed: BTreeMap::new(),
             root_value_dispatches_observed: BTreeMap::new(),
-            values_default_sources_observed: BTreeSet::new(),
-            values_root_overlay_prefixes_observed: BTreeSet::new(),
-            values_root_helper_includes_observed: BTreeSet::new(),
             pre_rewrite_strict_paths: BTreeSet::new(),
             active_predicates: Vec::new(),
             loop_depth: 0,
             reads: Vec::new(),
             reads_seen: HashSet::new(),
-            type_hints: BTreeMap::new(),
             parsed_yaml_input_paths: BTreeSet::new(),
             yaml_serialized_paths: BTreeSet::new(),
-            guarded_type_hints: BTreeMap::new(),
-            fallback_type_hints: BTreeMap::new(),
-            guarded_fallback_type_hints: BTreeMap::new(),
             observed_facts: ObservedFacts::default(),
-            shape_erased_paths: BTreeSet::new(),
-            range_modes: crate::range_modes::RangeModes::default(),
-            fail_conditions: BTreeSet::new(),
-            text_fails: BTreeSet::new(),
+            text_captures: BTreeSet::new(),
             run_templated_text_paths: BTreeSet::new(),
             in_value_slot: false,
             block_text_is_yaml: false,
@@ -1025,7 +949,7 @@ impl<'a> Interpreter<'a> {
         {
             return;
         }
-        self.fail_conditions.insert(capture);
+        self.observed_facts.captures.insert(capture);
     }
 
     /// Record a `required(message, subject)` guardrail: rendering fails
@@ -1057,7 +981,7 @@ impl<'a> Interpreter<'a> {
         {
             return;
         }
-        self.fail_conditions.insert(capture);
+        self.observed_facts.captures.insert(capture);
     }
 
     /// The ambient predicates plus `tail`.
@@ -1236,7 +1160,7 @@ impl<'a> Interpreter<'a> {
                     paths: [splice.values_path.clone()].into_iter().collect(),
                 },
             };
-            self.fail_conditions.insert(capture);
+            self.observed_facts.captures.insert(capture);
         }
         for part in &string.parts {
             match part {
@@ -1354,14 +1278,6 @@ impl<'a> Interpreter<'a> {
         )
     }
 
-    /// Absorb helper-body reads at a call site: each read keeps its
-    /// helper-internal guards and gains the site's ambient guards; the
-    /// site's provenance leads the read's helper-body sites. Helper-internal
-    /// reads carry no resource of their own, so site-less rows stay
-    /// resource-free exactly like the summary lane always was.
-    /// Absorb called-helper fail conjunctions: the body recorded its
-    /// internal predicates; the call site prepends its ambient predicates,
-    /// the same scoping helper reads get.
     /// Values paths a strict STRING consumer captured so far, regardless
     /// of branch scope: a program-wrapper map reaching such a consumer raw
     /// aborts rendering (`trunc`/`contains` type-assert strings, and a
@@ -1371,7 +1287,7 @@ impl<'a> Interpreter<'a> {
     /// idempotence flag exactly as conditional as the rewrite itself.
     pub(super) fn strict_string_capture_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
-        for capture in &self.fail_conditions {
+        for capture in &self.observed_facts.captures {
             match &capture.kind {
                 crate::eval_effect::CaptureKind::ValueType {
                     path, schema_type, ..
@@ -1389,12 +1305,12 @@ impl<'a> Interpreter<'a> {
         paths
     }
 
-    pub(super) fn absorb_helper_fails<'capture>(
+    pub(super) fn absorb_scoped_captures<'capture>(
         &mut self,
-        fails: impl IntoIterator<Item = &'capture FailCapture>,
+        captures: impl IntoIterator<Item = &'capture FailCapture>,
     ) {
-        for capture in self.scope_helper_fails(fails) {
-            self.fail_conditions.insert(capture);
+        for capture in self.scope_captures(captures) {
+            self.observed_facts.captures.insert(capture);
         }
     }
 
@@ -1402,25 +1318,25 @@ impl<'a> Interpreter<'a> {
     /// consumed as YAML, at a site that certified exactly that. Inside a
     /// helper body the sink is still the caller's to certify, so they defer
     /// once more instead of binding here.
-    pub(super) fn record_yaml_text_fails<'capture>(
+    pub(super) fn record_yaml_text_captures<'capture>(
         &mut self,
-        fails: impl IntoIterator<Item = &'capture FailCapture>,
+        captures: impl IntoIterator<Item = &'capture FailCapture>,
     ) {
-        for capture in self.scope_helper_fails(fails) {
+        for capture in self.scope_captures(captures) {
             if self.helper_scope {
-                self.text_fails.insert(capture);
+                self.text_captures.insert(capture);
             } else {
-                self.fail_conditions.insert(capture);
+                self.observed_facts.captures.insert(capture);
             }
         }
     }
 
-    fn scope_helper_fails<'capture>(
+    fn scope_captures<'capture>(
         &self,
-        fails: impl IntoIterator<Item = &'capture FailCapture>,
+        captures: impl IntoIterator<Item = &'capture FailCapture>,
     ) -> Vec<FailCapture> {
         let mut scoped = Vec::new();
-        for body_capture in fails {
+        for body_capture in captures {
             let mut ranged = self.capture_ranged_modes();
             ranged.merge(&body_capture.ranged);
             let conjunction = self.fail_capture_conjunction(body_capture.conjunction.clone());

@@ -50,36 +50,7 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
             contract.push(row);
         }
     }
-    contract.extend_type_hints(
-        document
-            .type_hints
-            .iter()
-            .map(|(path, hints)| (path.clone(), hints.clone())),
-    );
-    contract.extend_guarded_type_hints(
-        document
-            .guarded_type_hints
-            .iter()
-            .map(|(path, hints)| (path.clone(), hints.clone())),
-    );
-    contract.extend_fallback_type_hints(
-        document
-            .fallback_type_hints
-            .iter()
-            .map(|(path, hints)| (path.clone(), hints.clone())),
-    );
-    contract.extend_guarded_fallback_type_hints(
-        document
-            .guarded_fallback_type_hints
-            .iter()
-            .map(|(path, hints)| (path.clone(), hints.clone())),
-    );
-    contract.extend_shape_erased_value_paths(document.shape_erased_paths.iter().cloned());
-    contract.merge_range_modes(&document.range_modes);
-    contract.extend_values_default_sources(document.values_default_sources.iter().cloned());
-    contract
-        .extend_values_root_overlay_prefixes(document.values_root_overlay_prefixes.iter().cloned());
-    contract.extend_fail_conditions(document.fail_conditions.iter().cloned());
+    contract.absorb_observed_facts(&document.observed_facts);
     contract
 }
 
@@ -417,15 +388,19 @@ fn walk_node(
                         };
                         conjunctions.insert(conjunction);
                     }
-                    contract.extend_fail_conditions(conjunctions.into_iter().map(|conjunction| {
-                        crate::eval_effect::FailCapture {
-                            conjunction,
-                            ranged: crate::range_modes::RangeModes::default(),
-                            kind: crate::eval_effect::CaptureKind::AbsenceAborts {
-                                path: row.source_expr.clone(),
-                            },
-                        }
-                    }));
+                    let mut observed_facts = crate::observed_facts::ObservedFacts::default();
+                    observed_facts
+                        .captures
+                        .extend(conjunctions.into_iter().map(|conjunction| {
+                            crate::eval_effect::FailCapture {
+                                conjunction,
+                                ranged: crate::range_modes::RangeModes::default(),
+                                kind: crate::eval_effect::CaptureKind::AbsenceAborts {
+                                    path: row.source_expr.clone(),
+                                },
+                            }
+                        }));
+                    contract.absorb_observed_facts(&observed_facts);
                 }
                 contract.push(row);
             }

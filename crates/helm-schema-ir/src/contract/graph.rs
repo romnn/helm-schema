@@ -5,6 +5,7 @@ use crate::contract_normalization::{
     canonicalize_contract_uses, drop_default_guard_subsumed_duplicates,
     drop_self_truthy_subsumed_duplicates, normalize_contract_uses,
 };
+use crate::observed_facts::{HintGrade, ObservedFacts};
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
 /// Opaque guarded contract graph for one template interpretation.
@@ -15,40 +16,13 @@ use crate::{ContractUse, Guard, ValueKind, YamlPath};
 pub struct ContractIr {
     uses: Vec<ContractUse>,
     dependency_uses: Vec<ContractUse>,
-    type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints observed only under branch predicates: they hold
-    /// where those branches render, so they type conditional overlays but
-    /// never the unconditional base.
-    guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints from literal `default`/`coalesce` fallbacks: they
-    /// type only the truthy arm of the path, so lowering must keep the
-    /// whole Helm-falsy set open beside them.
-    fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Fallback hints observed under branch predicates: fallback-grade
-    /// intent that may type conditional overlays, but never a branch whose
-    /// renders all totally format.
-    guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Paths consumed through total stringifications (`quote`, `toString`,
-    /// `join`, `printf`) anywhere in the interpretation: the chart tolerates
-    /// any input type at them even when no placed row exists.
-    shape_erased_value_paths: BTreeSet<String>,
-    /// The chart's per-path range facts (direct iteration, JSON-decoded
-    /// values, key/value destructuring).
-    range_modes: crate::range_modes::RangeModes,
-    /// Chart value subtrees supplying defaults to effective values subtrees.
-    values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-    /// Values subtrees merged in place over the values root; root contracts
-    /// project back onto the prefixed spellings.
-    values_root_overlay_prefixes: BTreeSet<String>,
+    observed_facts: ObservedFacts,
     values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
     /// Values paths whose nodes must NOT gain a wrapper alternative: a
     /// strict string consumer reads them BEFORE the engine's values-root
     /// rewrite, so a wrapper map there aborts rendering (nats'
     /// `nameOverride` through `fullname | trunc`).
     values_program_wrapper_exclusions: BTreeSet<String>,
-    /// `fail` captures: no valid values document may satisfy one of these
-    /// conjunctions.
-    fail_conditions: BTreeSet<crate::eval_effect::FailCapture>,
     dependency_values_root_fragments: BTreeSet<String>,
 }
 
@@ -101,49 +75,13 @@ impl ContractIr {
         self.dependency_uses.append(&mut other.dependency_uses);
         self.dependency_values_root_fragments
             .append(&mut other.dependency_values_root_fragments);
-        for (path, schema_types) in other.type_hints {
-            self.type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-        for (path, schema_types) in other.guarded_type_hints {
-            self.guarded_type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-        for (path, schema_types) in other.fallback_type_hints {
-            self.fallback_type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-        for (path, schema_types) in other.guarded_fallback_type_hints {
-            self.guarded_fallback_type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-        self.shape_erased_value_paths
-            .append(&mut other.shape_erased_value_paths);
-        self.range_modes.merge(&other.range_modes);
-        self.values_default_sources
-            .append(&mut other.values_default_sources);
-        self.values_root_overlay_prefixes
-            .append(&mut other.values_root_overlay_prefixes);
+        self.observed_facts.absorb(&other.observed_facts);
         self.values_program_wrappers
             .append(&mut other.values_program_wrappers);
         self.values_program_wrapper_exclusions
             .append(&mut other.values_program_wrapper_exclusions);
-        self.fail_conditions.append(&mut other.fail_conditions);
     }
 
-    /// Append guards to every claim in the graph without rewriting any paths.
-    ///
-    /// This is used for chart-structural activation predicates that apply to
-    /// an already-scoped batch of claims, such as dependency `condition:` /
-    /// `tags:` liveness from `Chart.yaml`.
     /// Record that rendering FAILS whenever `condition` holds — an
     /// unconditionally reached `include` whose helper only an inactive
     /// optional dependency defines aborts with "no template". The predicate
@@ -154,10 +92,14 @@ impl ContractIr {
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::Fail,
         };
-        self.fail_conditions.insert(capture);
+        self.observed_facts.captures.insert(capture);
     }
 
-    /// Conjoins activation guards onto every use and terminating failure.
+    /// Append guards to every claim in the graph without rewriting any paths.
+    ///
+    /// This is used for chart-structural activation predicates that apply to
+    /// an already-scoped batch of claims, such as dependency `condition:` /
+    /// `tags:` liveness from `Chart.yaml`.
     pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
         for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
             contract_use.condition = contract_use
@@ -167,7 +109,7 @@ impl ContractIr {
         // Fail captures are claims too: a `fail` inside a dependency gated
         // off by `condition:` / `tags:` cannot abort rendering, so its
         // conjunction must carry the activation predicate like every row.
-        self.fail_conditions = std::mem::take(&mut self.fail_conditions)
+        self.observed_facts.captures = std::mem::take(&mut self.observed_facts.captures)
             .into_iter()
             .map(|mut capture| {
                 capture.conjunction.splice(
@@ -184,8 +126,8 @@ impl ContractIr {
         // effective defaults. Conditional default overlays are not yet part
         // of the schema-signal vocabulary, so abstain instead of leaking them.
         if !guards.is_empty() {
-            self.values_default_sources.clear();
-            self.values_root_overlay_prefixes.clear();
+            self.observed_facts.values_default_sources.clear();
+            self.observed_facts.values_root_overlay_prefixes.clear();
         }
     }
 
@@ -215,54 +157,7 @@ impl ContractIr {
                 .into_iter()
                 .map(|path| map(&path))
                 .collect();
-        let mut type_hints: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        for (path, schema_types) in std::mem::take(&mut self.type_hints) {
-            type_hints
-                .entry(map(&path))
-                .or_default()
-                .extend(schema_types);
-        }
-        self.type_hints = type_hints;
-        let mut guarded_type_hints: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        for (path, schema_types) in std::mem::take(&mut self.guarded_type_hints) {
-            guarded_type_hints
-                .entry(map(&path))
-                .or_default()
-                .extend(schema_types);
-        }
-        self.guarded_type_hints = guarded_type_hints;
-        let mut fallback_type_hints: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        for (path, schema_types) in std::mem::take(&mut self.fallback_type_hints) {
-            fallback_type_hints
-                .entry(map(&path))
-                .or_default()
-                .extend(schema_types);
-        }
-        self.fallback_type_hints = fallback_type_hints;
-        let mut guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        for (path, schema_types) in std::mem::take(&mut self.guarded_fallback_type_hints) {
-            guarded_fallback_type_hints
-                .entry(map(&path))
-                .or_default()
-                .extend(schema_types);
-        }
-        self.guarded_fallback_type_hints = guarded_fallback_type_hints;
-        self.shape_erased_value_paths = std::mem::take(&mut self.shape_erased_value_paths)
-            .into_iter()
-            .map(|path| map(&path))
-            .collect();
-        self.range_modes.map_value_paths(&mut map);
-        self.values_default_sources = std::mem::take(&mut self.values_default_sources)
-            .into_iter()
-            .map(|source| crate::ValuesDefaultSource {
-                target_path: map(&source.target_path),
-                source_path: map(&source.source_path),
-            })
-            .collect();
-        self.values_root_overlay_prefixes = std::mem::take(&mut self.values_root_overlay_prefixes)
-            .into_iter()
-            .map(|path| map(&path))
-            .collect();
+        self.observed_facts.map_value_paths(&mut map);
         self.values_program_wrappers = std::mem::take(&mut self.values_program_wrappers)
             .into_iter()
             .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
@@ -276,19 +171,6 @@ impl ContractIr {
                 .into_iter()
                 .map(|path| map(&path))
                 .collect();
-        self.fail_conditions = std::mem::take(&mut self.fail_conditions)
-            .into_iter()
-            .map(|mut capture| {
-                capture.conjunction = capture
-                    .conjunction
-                    .into_iter()
-                    .map(|predicate| predicate.map_value_paths(&mut map))
-                    .collect();
-                capture.ranged.map_value_paths(&mut map);
-                capture.kind.map_value_paths(&mut map);
-                capture
-            })
-            .collect();
     }
 
     /// Projects dependency `global.*` contracts through Helm's parent-first
@@ -300,8 +182,8 @@ impl ContractIr {
         let global_sources = dependency_global_sources(prefix);
         project_global_uses(&mut self.uses, &global_sources);
         project_global_uses(&mut self.dependency_uses, &global_sources);
-        project_global_fail_captures(&mut self.fail_conditions, &global_sources);
-        project_global_range_modes(&mut self.range_modes, &global_sources);
+        project_global_fail_captures(&mut self.observed_facts.captures, &global_sources);
+        project_global_range_modes(&mut self.observed_facts.range_modes, &global_sources);
     }
 
     /// Add declared input-type hints for values paths without projecting them
@@ -312,122 +194,12 @@ impl ContractIr {
         if path.trim().is_empty() || schema_type.trim().is_empty() {
             return;
         }
-        self.type_hints.entry(path).or_default().insert(schema_type);
+        self.observed_facts
+            .insert_type_hint(HintGrade::DECLARED, path, &schema_type);
     }
 
-    /// Extend the graph with already-grouped path type hints.
-    pub(crate) fn extend_type_hints(
-        &mut self,
-        type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
-    ) {
-        for (path, schema_types) in type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let schema_types = schema_types
-                .into_iter()
-                .filter(|schema_type| !schema_type.trim().is_empty())
-                .collect::<BTreeSet<_>>();
-            if schema_types.is_empty() {
-                continue;
-            }
-            self.type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-    }
-
-    pub(crate) fn extend_fallback_type_hints(
-        &mut self,
-        type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
-    ) {
-        for (path, schema_types) in type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let schema_types = schema_types
-                .into_iter()
-                .filter(|schema_type| !schema_type.trim().is_empty())
-                .collect::<BTreeSet<_>>();
-            if schema_types.is_empty() {
-                continue;
-            }
-            self.fallback_type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-    }
-
-    pub(crate) fn extend_guarded_fallback_type_hints(
-        &mut self,
-        type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
-    ) {
-        for (path, schema_types) in type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let schema_types = schema_types
-                .into_iter()
-                .filter(|schema_type| !schema_type.trim().is_empty())
-                .collect::<BTreeSet<_>>();
-            if schema_types.is_empty() {
-                continue;
-            }
-            self.guarded_fallback_type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-    }
-
-    pub(crate) fn extend_guarded_type_hints(
-        &mut self,
-        type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
-    ) {
-        for (path, schema_types) in type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let schema_types = schema_types
-                .into_iter()
-                .filter(|schema_type| !schema_type.trim().is_empty())
-                .collect::<BTreeSet<_>>();
-            if schema_types.is_empty() {
-                continue;
-            }
-            self.guarded_type_hints
-                .entry(path)
-                .or_default()
-                .extend(schema_types);
-        }
-    }
-
-    pub(crate) fn extend_shape_erased_value_paths(
-        &mut self,
-        paths: impl IntoIterator<Item = String>,
-    ) {
-        self.shape_erased_value_paths
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
-    }
-
-    pub(crate) fn merge_range_modes(&mut self, range_modes: &crate::range_modes::RangeModes) {
-        self.range_modes.merge(range_modes);
-    }
-
-    pub(crate) fn extend_values_default_sources(
-        &mut self,
-        sources: impl IntoIterator<Item = crate::ValuesDefaultSource>,
-    ) {
-        self.values_default_sources.extend(sources);
-    }
-
-    pub(crate) fn extend_values_root_overlay_prefixes(
-        &mut self,
-        prefixes: impl IntoIterator<Item = String>,
-    ) {
-        self.values_root_overlay_prefixes.extend(prefixes);
+    pub(crate) fn absorb_observed_facts(&mut self, facts: &ObservedFacts) {
+        self.observed_facts.absorb(facts);
     }
 
     pub(crate) fn extend_values_program_wrappers(
@@ -468,7 +240,7 @@ impl ContractIr {
             .retain(|contract_use| !touches(&contract_use.source_expr));
         self.dependency_uses
             .retain(|contract_use| !touches(&contract_use.source_expr));
-        self.fail_conditions.retain(|capture| {
+        self.observed_facts.captures.retain(|capture| {
             let mut paths: Vec<String> = capture
                 .conjunction
                 .iter()
@@ -483,13 +255,6 @@ impl ContractIr {
         });
     }
 
-    pub(crate) fn extend_fail_conditions(
-        &mut self,
-        conditions: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
-    ) {
-        self.fail_conditions.extend(conditions);
-    }
-
     /// Finalize the contract once and derive downstream artifacts from that
     /// one normalized contract representation.
     #[must_use]
@@ -499,17 +264,9 @@ impl ContractIr {
         let Self {
             mut uses,
             mut dependency_uses,
-            type_hints,
-            guarded_type_hints,
-            fallback_type_hints,
-            guarded_fallback_type_hints,
-            shape_erased_value_paths,
-            range_modes,
-            values_default_sources,
-            values_root_overlay_prefixes,
+            observed_facts,
             values_program_wrappers,
             values_program_wrapper_exclusions,
-            fail_conditions,
             dependency_values_root_fragments,
         } = self;
         for source_expr in &dependency_values_root_fragments {
@@ -528,22 +285,14 @@ impl ContractIr {
         drop_default_guard_subsumed_duplicates(&mut uses);
         drop_self_truthy_subsumed_duplicates(&mut uses);
         canonicalize_contract_uses(&mut uses);
-        let fail_conditions = fail_conditions.into_iter().collect::<Vec<_>>();
+        let fail_conditions = observed_facts.captures.iter().cloned().collect::<Vec<_>>();
         lower_string_requirement_merge_sources(&mut uses, &fail_conditions);
         canonicalize_contract_uses(&mut uses);
         FinalizedContract::new(
             uses,
-            &type_hints,
-            &guarded_type_hints,
-            &fallback_type_hints,
-            &guarded_fallback_type_hints,
-            &shape_erased_value_paths,
-            &range_modes,
-            values_default_sources,
-            values_root_overlay_prefixes,
+            &observed_facts,
             values_program_wrappers,
             values_program_wrapper_exclusions,
-            &fail_conditions,
             &dependency_values_root_fragments,
         )
     }

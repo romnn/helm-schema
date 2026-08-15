@@ -650,7 +650,7 @@ impl Interpreter<'_> {
             }
             // A shape-erasing RHS (`$tag := … | toString`) rides the binding:
             // wherever the local renders, the splice exposes no input shape.
-            for path in &hole.effects.shape_erased_paths {
+            for path in &hole.effects.observed_facts.shape_erased_paths {
                 output_meta.entry(path.clone()).or_default().shape_erased = true;
             }
             for path in &hole.effects.stringified_paths {

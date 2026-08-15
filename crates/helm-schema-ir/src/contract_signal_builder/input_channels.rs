@@ -3,26 +3,17 @@ use super::{
     ContractUse, ContractValuePathFacts, FailValueRequirement, finish_schema_signals,
     path_accumulator, record_contract_use, record_fail_conjunction,
 };
+use crate::observed_facts::{HintIntent, HintScope, ObservedFacts};
 
 #[tracing::instrument(skip_all)]
-#[expect(
-    clippy::too_many_arguments,
-    reason = "each parameter is one interpreter fact channel; a struct would               mirror the same nine fields without adding an invariant"
-)]
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
-    type_hints: &BTreeMap<String, BTreeSet<String>>,
-    guarded_type_hints: &BTreeMap<String, BTreeSet<String>>,
-    fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
-    guarded_fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
-    shape_erased_value_paths: &BTreeSet<String>,
-    range_modes: &crate::range_modes::RangeModes,
-    fail_conditions: &[crate::eval_effect::FailCapture],
+    observed_facts: &ObservedFacts,
     dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
-    let string_requirement_routes = string_requirement_routes(fail_conditions);
+    let string_requirement_routes = string_requirement_routes(&observed_facts.captures);
     let yaml_serialized_paths = yaml_serialized_paths(uses);
     for contract_use in uses {
         let routes = string_requirement_routes
@@ -32,13 +23,18 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         record_contract_use(
             &mut paths,
             contract_use,
-            range_modes,
+            &observed_facts.range_modes,
             routes,
             yaml_serialized_paths.contains(contract_use.source_expr.as_str()),
         );
     }
-    for capture in fail_conditions {
-        record_fail_conjunction(&mut paths, &mut terminal_clauses, capture, range_modes);
+    for capture in &observed_facts.captures {
+        record_fail_conjunction(
+            &mut paths,
+            &mut terminal_clauses,
+            capture,
+            &observed_facts.range_modes,
+        );
     }
     for value_path in dependency_values_root_fragments {
         if !value_path.trim().is_empty() {
@@ -72,7 +68,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     // (vault's `set . "csiEnabled" (eq (.Values.csi.enabled | toString)
     // "true")`); the fact carries the same serialized dominance a
     // stringified render does.
-    for value_path in shape_erased_value_paths {
+    for value_path in &observed_facts.shape_erased_paths {
         if value_path.trim().is_empty() {
             continue;
         }
@@ -80,59 +76,33 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         acc.referenced = true;
         acc.facts.facts.used_as_serialized = true;
     }
-    for (value_path, schema_types) in type_hints {
-        let schema_types = schema_types
-            .iter()
-            .filter(|schema_type| !schema_type.trim().is_empty())
-            .cloned()
-            .collect::<BTreeSet<_>>();
-        if !value_path.trim().is_empty() && !schema_types.is_empty() {
+    for (grade, hints) in &observed_facts.type_hints {
+        for (value_path, schema_types) in hints {
+            let schema_types = schema_types
+                .iter()
+                .filter(|schema_type| !schema_type.trim().is_empty())
+                .cloned()
+                .collect::<BTreeSet<_>>();
+            if value_path.trim().is_empty() || schema_types.is_empty() {
+                continue;
+            }
             let acc = path_accumulator(&mut paths, value_path);
             acc.referenced = true;
-            acc.type_hints.extend(schema_types);
-        }
-    }
-    // Guarded hints hold only where their branches render: they type the
-    // path's conditional overlays but never the unconditional base.
-    for (value_path, schema_types) in guarded_type_hints {
-        let schema_types = schema_types
-            .iter()
-            .filter(|schema_type| !schema_type.trim().is_empty())
-            .cloned()
-            .collect::<BTreeSet<_>>();
-        if !value_path.trim().is_empty() && !schema_types.is_empty() {
-            let acc = path_accumulator(&mut paths, value_path);
-            acc.referenced = true;
-            acc.guarded_type_hints.extend(schema_types);
-        }
-    }
-    // Fallback hints type only the truthy arm of their path: the base
-    // lowering keeps the Helm-falsy set open beside them.
-    for (value_path, schema_types) in fallback_type_hints {
-        let schema_types = schema_types
-            .iter()
-            .filter(|schema_type| !schema_type.trim().is_empty())
-            .cloned()
-            .collect::<BTreeSet<_>>();
-        if !value_path.trim().is_empty() && !schema_types.is_empty() {
-            let acc = path_accumulator(&mut paths, value_path);
-            acc.referenced = true;
-            acc.fallback_type_hints.extend(schema_types);
-        }
-    }
-    // Branch-scoped fallback hints stay fallback-grade: they may type a
-    // conditional overlay, but never one whose renders all totally format
-    //.
-    for (value_path, schema_types) in guarded_fallback_type_hints {
-        let schema_types = schema_types
-            .iter()
-            .filter(|schema_type| !schema_type.trim().is_empty())
-            .cloned()
-            .collect::<BTreeSet<_>>();
-        if !value_path.trim().is_empty() && !schema_types.is_empty() {
-            let acc = path_accumulator(&mut paths, value_path);
-            acc.referenced = true;
-            acc.guarded_fallback_type_hints.extend(schema_types);
+            match (grade.scope, grade.intent) {
+                (HintScope::Unconditional, HintIntent::Declared) => {
+                    acc.type_hints.extend(schema_types);
+                }
+                (HintScope::Guarded, HintIntent::Declared) => {
+                    acc.guarded_type_hints.extend(schema_types);
+                }
+                (HintScope::Unconditional, HintIntent::Fallback) => {
+                    acc.fallback_type_hints.extend(schema_types);
+                }
+                (HintScope::Guarded, HintIntent::Fallback) => {
+                    acc.guarded_fallback_type_hints.extend(schema_types);
+                }
+                (_, HintIntent::Tested) => {}
+            }
         }
     }
     finish_schema_signals(paths, terminal_clauses)
@@ -151,7 +121,7 @@ fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&str> {
 }
 
 fn string_requirement_routes(
-    fail_conditions: &[crate::eval_effect::FailCapture],
+    fail_conditions: &BTreeSet<crate::eval_effect::FailCapture>,
 ) -> BTreeMap<
     String,
     Vec<(

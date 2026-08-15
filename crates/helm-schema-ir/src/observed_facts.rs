@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::eval_effect::FailCapture;
+
 pub(crate) type TypeHints = BTreeMap<String, BTreeSet<String>>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -36,17 +38,16 @@ impl HintGrade {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct ObservedFacts {
     pub(crate) type_hints: BTreeMap<HintGrade, TypeHints>,
+    pub(crate) shape_erased_paths: BTreeSet<String>,
+    pub(crate) range_modes: crate::range_modes::RangeModes,
+    pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
+    pub(crate) values_root_helper_includes: BTreeSet<String>,
+    pub(crate) captures: BTreeSet<FailCapture>,
 }
 
 impl ObservedFacts {
-    pub(crate) fn insert_type_hint(
-        &mut self,
-        legacy: &mut TypeHints,
-        grade: HintGrade,
-        path: String,
-        schema_type: &str,
-    ) {
-        crate::helper_meta::insert_type_hint(legacy, path.clone(), schema_type);
+    pub(crate) fn insert_type_hint(&mut self, grade: HintGrade, path: String, schema_type: &str) {
         crate::helper_meta::insert_type_hint(
             self.type_hints.entry(grade).or_default(),
             path,
@@ -56,15 +57,10 @@ impl ObservedFacts {
 
     pub(crate) fn extend_type_hints(
         &mut self,
-        legacy: &mut TypeHints,
         grade: HintGrade,
         path: &str,
         hints: &BTreeSet<String>,
     ) {
-        legacy
-            .entry(path.to_owned())
-            .or_default()
-            .extend(hints.iter().cloned());
         self.type_hints
             .entry(grade)
             .or_default()
@@ -73,17 +69,87 @@ impl ObservedFacts {
             .extend(hints.iter().cloned());
     }
 
+    pub(crate) fn promote_tested_type_hints(&mut self) {
+        let tested = self
+            .type_hints
+            .remove(&HintGrade::TESTED)
+            .unwrap_or_default();
+        for (path, hints) in tested {
+            self.extend_type_hints(HintGrade::GUARDED_DECLARED, &path, &hints);
+        }
+    }
+
+    pub(crate) fn execution_only(mut self) -> Self {
+        self.type_hints.clear();
+        self
+    }
+
+    pub(crate) fn map_value_paths<F>(&mut self, map: &mut F)
+    where
+        F: FnMut(&str) -> String,
+    {
+        for paths in self.type_hints.values_mut() {
+            let mut mapped = TypeHints::new();
+            for (path, hints) in std::mem::take(paths) {
+                mapped.entry(map(&path)).or_default().extend(hints);
+            }
+            *paths = mapped;
+        }
+        self.shape_erased_paths = std::mem::take(&mut self.shape_erased_paths)
+            .into_iter()
+            .map(|path| map(&path))
+            .collect();
+        self.range_modes.map_value_paths(map);
+        self.values_default_sources = std::mem::take(&mut self.values_default_sources)
+            .into_iter()
+            .map(|source| crate::ValuesDefaultSource {
+                target_path: map(&source.target_path),
+                source_path: map(&source.source_path),
+            })
+            .collect();
+        self.values_root_overlay_prefixes = std::mem::take(&mut self.values_root_overlay_prefixes)
+            .into_iter()
+            .map(|path| map(&path))
+            .collect();
+        self.captures = std::mem::take(&mut self.captures)
+            .into_iter()
+            .map(|mut capture| {
+                capture.conjunction = capture
+                    .conjunction
+                    .into_iter()
+                    .map(|predicate| predicate.map_value_paths(map))
+                    .collect();
+                capture.ranged.map_value_paths(map);
+                capture.kind.map_value_paths(map);
+                capture
+            })
+            .collect();
+    }
+
     pub(crate) fn absorb(&mut self, other: &Self) {
-        let Self { type_hints } = other;
+        let Self {
+            type_hints,
+            shape_erased_paths,
+            range_modes,
+            values_default_sources,
+            values_root_overlay_prefixes,
+            values_root_helper_includes,
+            captures,
+        } = other;
         for (grade, paths) in type_hints {
             for (path, hints) in paths {
-                self.type_hints
-                    .entry(*grade)
-                    .or_default()
-                    .entry(path.clone())
-                    .or_default()
-                    .extend(hints.iter().cloned());
+                self.extend_type_hints(*grade, path, hints);
             }
         }
+        self.shape_erased_paths
+            .extend(shape_erased_paths.iter().cloned());
+        self.range_modes.merge(range_modes);
+        self.values_default_sources
+            .extend(values_default_sources.iter().cloned());
+        self.values_root_overlay_prefixes
+            .extend(values_root_overlay_prefixes.iter().cloned());
+        self.values_root_helper_includes
+            .extend(values_root_helper_includes.iter().cloned());
+        self.captures.extend(captures.iter().cloned());
     }
 }

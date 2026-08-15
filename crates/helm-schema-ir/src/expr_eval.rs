@@ -164,7 +164,7 @@ fn record_member_host_capture(
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::MemberAccess { handled_kinds },
     };
-    effects.helper_fails.insert(capture);
+    effects.observed_facts.captures.insert(capture);
 }
 
 #[expect(

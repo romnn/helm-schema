@@ -937,7 +937,10 @@ fn record_values_root_helper_include(
         });
     }
     if passes_values_root {
-        effects.values_root_helper_includes.insert(name.clone());
+        effects
+            .observed_facts
+            .values_root_helper_includes
+            .insert(name.clone());
     }
 }
 
@@ -1589,7 +1592,7 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
             .condition
             .conjoined(&GuardDnf::from_conjunction(predicates.iter().cloned()));
     }
-    effects.helper_fails = std::mem::take(&mut effects.helper_fails)
+    effects.observed_facts.captures = std::mem::take(&mut effects.observed_facts.captures)
         .into_iter()
         .map(|mut capture| {
             for predicate in predicates {

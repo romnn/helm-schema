@@ -5,7 +5,7 @@ use test_util::prelude::sim_assert_eq;
 use crate::observed_facts::{HintGrade, HintIntent, HintScope, ObservedFacts};
 
 #[test]
-fn hint_grades_shadow_legacy_lanes_and_absorb_exhaustively() {
+fn hint_grades_absorb_without_parallel_lanes() {
     let grades = [
         HintGrade::DECLARED,
         HintGrade::GUARDED_DECLARED,
@@ -17,11 +17,10 @@ fn hint_grades_shadow_legacy_lanes_and_absorb_exhaustively() {
     for (index, grade) in grades.into_iter().enumerate() {
         let path = format!("path{index}");
         let hints = BTreeSet::from(["string".to_owned()]);
-        let mut legacy = BTreeMap::new();
-        observed.extend_type_hints(&mut legacy, grade, &path, &hints);
+        observed.extend_type_hints(grade, &path, &hints);
         sim_assert_eq!(
-            have: legacy,
-            want: BTreeMap::from([(path, hints)])
+            have: observed.type_hints.get(&grade),
+            want: Some(&BTreeMap::from([(path, hints)]))
         );
     }
 
@@ -30,17 +29,14 @@ fn hint_grades_shadow_legacy_lanes_and_absorb_exhaustively() {
         intent: HintIntent::Tested,
     };
     let mut other = ObservedFacts::default();
-    let mut legacy = BTreeMap::new();
-    other.insert_type_hint(
-        &mut legacy,
-        guarded_tested,
-        "predicate".to_owned(),
-        "boolean",
-    );
+    other.insert_type_hint(guarded_tested, "predicate".to_owned(), "boolean");
     observed.absorb(&other);
 
     sim_assert_eq!(
         have: observed.type_hints.get(&guarded_tested),
-        want: Some(&legacy)
+        want: Some(&BTreeMap::from([(
+            "predicate".to_owned(),
+            BTreeSet::from(["boolean".to_owned()]),
+        )]))
     );
 }

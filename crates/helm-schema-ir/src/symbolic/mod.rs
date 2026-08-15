@@ -106,7 +106,7 @@ impl SymbolicIrContext {
         let document =
             crate::fragment_eval::eval_document(src, source_path, &self.inner.analysis_db);
         let mut contract = crate::fragment_eval::contract_ir_from_document(&document);
-        for name in &document.values_root_helper_includes {
+        for name in &document.observed_facts.values_root_helper_includes {
             contract.extend_values_program_wrappers(
                 self.inner
                     .analysis_db

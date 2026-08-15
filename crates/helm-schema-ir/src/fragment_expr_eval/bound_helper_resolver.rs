@@ -68,15 +68,15 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
         // keep the "sink does not constrain the value" semantics the row
         // recorded (the projected value's output paths carry no encoding
         // flag).
+        let mut observed_facts = summary.observed_facts.clone();
+        let helper_observed_shape_erased_paths =
+            std::mem::take(&mut observed_facts.shape_erased_paths);
         let mut effects = Effects {
             chart_default_paths: summary.chart_defaults.clone(),
             root_set_mutations: summary.root_set_mutations.clone(),
             root_set_predicates: summary.root_set_predicates.clone(),
             root_set_value_dispatches: summary.root_set_value_dispatches.clone(),
-            values_default_sources: summary.values_default_sources.clone(),
-            type_hints: summary.type_hints.clone(),
-            guarded_type_hints: summary.guarded_type_hints.clone(),
-            observed_facts: summary.observed_facts.clone(),
+            observed_facts,
             parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
             yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
             json_serialized_paths: summary
@@ -86,8 +86,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 .map(|row| row.path.clone())
                 .collect(),
             encoded_paths: summary.encoded_paths(),
-            helper_observed_shape_erased_paths: summary.shape_erased_paths.clone(),
-            range_modes: summary.range_modes.clone(),
+            helper_observed_shape_erased_paths,
             // An include renders its body to text, so every path the value
             // carries is derived text at the call site: a consuming stage
             // (`include … | trimAll`) must not claim contracts on the
@@ -100,8 +99,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             helper_reads: summary.reads.clone(),
             helper_rendered: summary.rendered.clone(),
             helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
-            helper_fails: summary.fail_conditions.iter().cloned().collect(),
-            helper_text_fails: summary.text_fails.iter().cloned().collect(),
+            helper_text_captures: summary.text_captures.iter().cloned().collect(),
             member_host_conversions: summary.member_host_conversions.clone(),
             ..Effects::default()
         };

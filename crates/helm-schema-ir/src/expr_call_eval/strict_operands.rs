@@ -217,7 +217,7 @@ fn parser_operand_identity_paths(
         match value {
             AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
                 if total_string_preimage
-                    || (!effects.shape_erased_paths.contains(path)
+                    || (!effects.observed_facts.shape_erased_paths.contains(path)
                         && !effects.derived_text_paths.contains(path))
                 {
                     paths.insert(path.clone());
@@ -418,14 +418,14 @@ pub(super) fn record_string_consumer_effects(
                     selection: conjunction.clone(),
                 },
             };
-            effects.helper_fails.insert(capture);
+            effects.observed_facts.captures.insert(capture);
             if direct_identity {
                 let capture = crate::eval_effect::FailCapture {
                     conjunction,
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
                 };
-                effects.helper_fails.insert(capture);
+                effects.observed_facts.captures.insert(capture);
             }
         }
     }
@@ -527,7 +527,7 @@ pub(super) fn record_raw_range_key_string_consumer_paths(
                 paths: raw_paths.clone(),
             },
         };
-        effects.helper_fails.insert(capture);
+        effects.observed_facts.captures.insert(capture);
     }
     effects
         .derived_range_key_paths
@@ -615,7 +615,7 @@ pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
         };
-        effects.helper_fails.insert(capture);
+        effects.observed_facts.captures.insert(capture);
     }
 }
 
@@ -646,7 +646,7 @@ pub(super) fn record_comparable_kind_result(
                         schema_type: schema_type.to_string(),
                     },
                 };
-                effects.helper_fails.insert(capture);
+                effects.observed_facts.captures.insert(capture);
             }
         }
         return;
@@ -662,7 +662,7 @@ pub(super) fn record_comparable_kind_result(
                     schema_type: schema_type.to_string(),
                 },
             };
-            effects.helper_fails.insert(capture);
+            effects.observed_facts.captures.insert(capture);
         }
     }
 }
@@ -766,7 +766,7 @@ pub(super) fn record_collection_item_kind_result(
                     pattern: pattern.map(str::to_string),
                 },
             };
-            effects.helper_fails.insert(capture);
+            effects.observed_facts.captures.insert(capture);
         }
     }
     for path in individual_paths {
@@ -810,7 +810,7 @@ pub(super) fn push_fail_capture(conjunction: Vec<Predicate>, effects: &mut Effec
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::Fail,
     };
-    effects.helper_fails.insert(capture);
+    effects.observed_facts.captures.insert(capture);
 }
 
 pub(super) fn push_value_type_capture(
@@ -829,7 +829,7 @@ pub(super) fn push_value_type_capture(
             null_aborts,
         },
     };
-    effects.helper_fails.insert(capture);
+    effects.observed_facts.captures.insert(capture);
 }
 
 fn push_value_pattern_capture(
@@ -848,11 +848,11 @@ fn push_value_pattern_capture(
             templated,
         },
     };
-    effects.helper_fails.insert(capture);
+    effects.observed_facts.captures.insert(capture);
 }
 
 fn strict_operand_path_is_clean(path: &str, effects: &Effects) -> bool {
-    !effects.shape_erased_paths.contains(path)
+    !effects.observed_facts.shape_erased_paths.contains(path)
         && !effects.derived_text_paths.contains(path)
         && !effects
             .local_output_meta

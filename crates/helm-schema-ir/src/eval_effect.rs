@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_eval::ValueRead;
-use crate::helper_meta::{HelperOutputMeta, RenderedRow, insert_type_hint};
+use crate::helper_meta::{HelperOutputMeta, RenderedRow};
 use crate::observed_facts::{HintGrade, ObservedFacts};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 
@@ -11,21 +11,6 @@ pub(crate) struct Effects {
     pub(crate) output_paths: BTreeSet<String>,
     pub(crate) bound_output_paths: BTreeSet<String>,
     pub(crate) defaults: BTreeSet<String>,
-    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints that arose under branch predicates inside a called
-    /// helper body: they hold only where those branches render, so they may
-    /// type conditional overlays but never the unconditional base.
-    pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints from a literal `default`/`coalesce` fallback. The
-    /// selection call itself never consumes the raw value — every Helm-empty
-    /// input takes the fallback and renders — so these type only the TRUTHY
-    /// arm of the path and must never close the base against the Helm-falsy
-    /// set.
-    pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Types observed by a predicate expression. These become input
-    /// alternatives only when an expression such as `ternary` consumes the
-    /// predicate; control-flow lowering owns ordinary `if`/`with` guards.
-    pub(crate) tested_type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) observed_facts: ObservedFacts,
     pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
     pub(crate) yaml_serialized_paths: BTreeSet<String>,
@@ -35,7 +20,6 @@ pub(crate) struct Effects {
     pub(crate) templated_yaml_paths: BTreeSet<String>,
     pub(crate) json_serialized_paths: BTreeSet<String>,
     pub(crate) encoded_paths: BTreeSet<String>,
-    pub(crate) shape_erased_paths: BTreeSet<String>,
     /// Total stringifications observed somewhere inside called helper
     /// bodies. They are execution facts for the caller's aggregate contract,
     /// not transformations of every returned occurrence of the same path.
@@ -69,8 +53,6 @@ pub(crate) struct Effects {
     pub(crate) omitted_map_keys: BTreeMap<String, BTreeSet<String>>,
     /// Range keys converted to text by an earlier pipeline stage.
     pub(crate) derived_range_key_paths: BTreeSet<String>,
-    /// Range identities exported by called helper bodies.
-    pub(crate) range_modes: crate::range_modes::RangeModes,
     /// Paths whose rendered text in THIS expression is `tpl`'s render of the
     /// raw value. `tpl` is the identity on template-ACTION-free input, so the
     /// sink's LEXICAL language still projects back onto the raw value (modulo
@@ -107,17 +89,6 @@ pub(crate) struct Effects {
     pub(crate) root_set_predicates: BTreeMap<String, helm_schema_core::Predicate>,
     /// Root-field value dispatches already joined inside called helpers.
     pub(crate) root_set_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
-    /// Chart value subtrees that supply defaults to a replaced effective `.Values` tree.
-    pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-    /// Values subtrees merged IN PLACE over the values root
-    /// (`mustMergeOverwrite $.Values .Values.pilot`): members written under
-    /// the prefix overwrite their effective-root twins for the rest of the
-    /// render, so root contracts project back onto the prefixed spellings.
-    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
-    /// Helper names through which the values ROOT was replaced
-    /// (`set . "Values" (get (include NAME …) …)`); the symbolic context
-    /// decides whether a name is a program-wrapper engine.
-    pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// Pathless reads observed inside called helper bodies (guard reads and
     /// dependency-lane rows), carrying helper-internal guards only; the
     /// absorbing site adds its ambient guards and provenance.
@@ -132,13 +103,10 @@ pub(crate) struct Effects {
     /// Predicate paths severed by index-call narrowing inside called
     /// helpers; ancestor guard reads absorb against them.
     pub(crate) helper_suppressed_paths: BTreeSet<String>,
-    /// `fail` captures of called helpers, carrying helper-internal
-    /// predicates only; the absorbing site prepends its ambient state.
-    pub(crate) helper_fails: BTreeSet<FailCapture>,
     /// Captures of called helpers that hold only where the called body's
     /// rendered TEXT is consumed as YAML. Ordinary absorption ignores them:
     /// only a site that certified its own sink records them.
-    pub(crate) helper_text_fails: BTreeSet<FailCapture>,
+    pub(crate) helper_text_captures: BTreeSet<FailCapture>,
     /// Object-producing mutations that have executed before later member
     /// reads. Their outer predicates remain attached so only accesses that
     /// imply the mutation's execution may accept the converted input kind.
@@ -407,10 +375,6 @@ impl Effects {
         }
     }
 
-    #[expect(
-        clippy::too_many_lines,
-        reason = "keeping this semantic operation together makes its state transitions easier to audit"
-    )]
     pub(crate) fn merge(&mut self, other: Self) {
         // Exhaustive destructuring: a new channel refuses to compile until
         // this merge decides how to combine it, instead of being silently
@@ -419,17 +383,12 @@ impl Effects {
             output_paths,
             bound_output_paths,
             defaults,
-            type_hints,
-            guarded_type_hints,
-            fallback_type_hints,
-            tested_type_hints,
             observed_facts,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
             templated_yaml_paths,
             json_serialized_paths,
             encoded_paths,
-            shape_erased_paths,
             helper_observed_shape_erased_paths,
             nil_omitting_paths,
             stringified_paths,
@@ -437,7 +396,6 @@ impl Effects {
             merge_operand_paths,
             omitted_map_keys,
             derived_range_key_paths,
-            range_modes,
             templated_text_identity_paths,
             plain_text_preserving_paths,
             plain_slot_string_format_paths,
@@ -450,15 +408,11 @@ impl Effects {
             root_set_mutations,
             root_set_predicates,
             root_set_value_dispatches,
-            values_default_sources,
-            values_root_overlay_prefixes,
-            values_root_helper_includes,
             helper_reads,
             helper_rendered,
             helper_dependency_rendered,
             helper_suppressed_paths,
-            helper_fails,
-            helper_text_fails,
+            helper_text_captures,
             member_host_conversions,
         } = other;
         self.output_paths.extend(output_paths);
@@ -469,7 +423,6 @@ impl Effects {
         self.templated_yaml_paths.extend(templated_yaml_paths);
         self.json_serialized_paths.extend(json_serialized_paths);
         self.encoded_paths.extend(encoded_paths);
-        self.shape_erased_paths.extend(shape_erased_paths);
         self.helper_observed_shape_erased_paths
             .extend(helper_observed_shape_erased_paths);
         self.nil_omitting_paths.extend(nil_omitting_paths);
@@ -480,7 +433,6 @@ impl Effects {
             self.omitted_map_keys.entry(path).or_default().extend(keys);
         }
         self.derived_range_key_paths.extend(derived_range_key_paths);
-        self.range_modes.merge(&range_modes);
         self.templated_text_identity_paths
             .extend(templated_text_identity_paths);
         self.plain_text_preserving_paths
@@ -509,11 +461,6 @@ impl Effects {
         self.root_set_predicates.extend(root_set_predicates);
         self.root_set_value_dispatches
             .extend(root_set_value_dispatches);
-        self.values_default_sources.extend(values_default_sources);
-        self.values_root_overlay_prefixes
-            .extend(values_root_overlay_prefixes);
-        self.values_root_helper_includes
-            .extend(values_root_helper_includes);
         for read in helper_reads {
             if !self.helper_reads.contains(&read) {
                 self.helper_reads.push(read);
@@ -525,30 +472,9 @@ impl Effects {
             helper_dependency_rendered,
         );
         self.helper_suppressed_paths.extend(helper_suppressed_paths);
-        self.helper_fails.extend(helper_fails);
-        self.helper_text_fails.extend(helper_text_fails);
+        self.helper_text_captures.extend(helper_text_captures);
         self.member_host_conversions.extend(member_host_conversions);
         self.observed_facts.absorb(&observed_facts);
-        for (path, hints) in type_hints {
-            for hint in hints {
-                insert_type_hint(&mut self.type_hints, path.clone(), &hint);
-            }
-        }
-        for (path, hints) in guarded_type_hints {
-            for hint in hints {
-                insert_type_hint(&mut self.guarded_type_hints, path.clone(), &hint);
-            }
-        }
-        for (path, hints) in fallback_type_hints {
-            for hint in hints {
-                insert_type_hint(&mut self.fallback_type_hints, path.clone(), &hint);
-            }
-        }
-        for (path, hints) in tested_type_hints {
-            for hint in hints {
-                insert_type_hint(&mut self.tested_type_hints, path.clone(), &hint);
-            }
-        }
     }
 
     /// Keep effects caused by evaluating a value while discarding facts that
@@ -566,18 +492,13 @@ impl Effects {
             output_paths: _,
             bound_output_paths: _,
             defaults: _,
-            type_hints: _,
-            guarded_type_hints: _,
-            fallback_type_hints: _,
-            tested_type_hints: _,
-            observed_facts: _,
+            observed_facts,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
             // Describes returned YAML text, not evaluation of an ignored argument.
             templated_yaml_paths: _,
             json_serialized_paths,
             encoded_paths,
-            shape_erased_paths,
             helper_observed_shape_erased_paths,
             nil_omitting_paths,
             // Describes the value returned by the expression, not its
@@ -591,7 +512,6 @@ impl Effects {
             merge_operand_paths: _,
             omitted_map_keys: _,
             derived_range_key_paths,
-            range_modes,
             templated_text_identity_paths,
             plain_text_preserving_paths: _,
             plain_slot_string_format_paths: _,
@@ -604,18 +524,14 @@ impl Effects {
             root_set_mutations,
             root_set_predicates,
             root_set_value_dispatches,
-            values_default_sources,
-            values_root_overlay_prefixes,
-            values_root_helper_includes,
             helper_reads,
             helper_rendered,
             helper_dependency_rendered,
             helper_suppressed_paths,
-            helper_fails,
             // Describes the text the argument RENDERS, which never reaches a
             // sink of its own: whatever the callee does with it decides the
             // language, and only a certifying sink may record the claim.
-            helper_text_fails: _,
+            helper_text_captures: _,
             member_host_conversions,
         } = self;
         let mut helper_dependency_rendered = helper_dependency_rendered;
@@ -624,17 +540,12 @@ impl Effects {
             output_paths: BTreeSet::new(),
             bound_output_paths: BTreeSet::new(),
             defaults: BTreeSet::new(),
-            type_hints: BTreeMap::new(),
-            guarded_type_hints: BTreeMap::new(),
-            fallback_type_hints: BTreeMap::new(),
-            tested_type_hints: BTreeMap::new(),
-            observed_facts: ObservedFacts::default(),
+            observed_facts: observed_facts.execution_only(),
             parsed_yaml_input_paths,
             yaml_serialized_paths,
             templated_yaml_paths: BTreeSet::new(),
             json_serialized_paths,
             encoded_paths,
-            shape_erased_paths,
             helper_observed_shape_erased_paths,
             nil_omitting_paths,
             stringified_paths: BTreeSet::new(),
@@ -642,7 +553,6 @@ impl Effects {
             merge_operand_paths: BTreeSet::new(),
             omitted_map_keys: BTreeMap::new(),
             derived_range_key_paths,
-            range_modes,
             templated_text_identity_paths,
             plain_text_preserving_paths: BTreeSet::new(),
             plain_slot_string_format_paths: BTreeSet::new(),
@@ -655,15 +565,11 @@ impl Effects {
             root_set_mutations,
             root_set_predicates,
             root_set_value_dispatches,
-            values_default_sources,
-            values_root_overlay_prefixes,
-            values_root_helper_includes,
             helper_reads,
             helper_rendered: Vec::new(),
             helper_dependency_rendered,
             helper_suppressed_paths,
-            helper_fails,
-            helper_text_fails: BTreeSet::new(),
+            helper_text_captures: BTreeSet::new(),
             member_host_conversions,
         }
     }
@@ -671,16 +577,8 @@ impl Effects {
     /// Keep contracts learned while consuming an expression as a predicate,
     /// without treating the predicate's returned value as rendered output.
     pub(crate) fn consumed_as_predicate(self) -> Self {
-        let type_hints = self.type_hints.clone();
-        let guarded_type_hints = self.guarded_type_hints.clone();
-        let fallback_type_hints = self.fallback_type_hints.clone();
-        let tested_type_hints = self.tested_type_hints.clone();
         let observed_facts = self.observed_facts.clone();
         let mut effects = self.execution_only();
-        effects.type_hints = type_hints;
-        effects.guarded_type_hints = guarded_type_hints;
-        effects.fallback_type_hints = fallback_type_hints;
-        effects.tested_type_hints = tested_type_hints;
         effects.observed_facts = observed_facts;
         effects
     }
@@ -693,7 +591,8 @@ impl Effects {
     pub(crate) fn add_fallback_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
         for path in paths {
             if !path.trim().is_empty() {
-                insert_type_hint(&mut self.fallback_type_hints, path, schema_type);
+                self.observed_facts
+                    .insert_type_hint(HintGrade::FALLBACK, path, schema_type);
             }
         }
     }
@@ -701,22 +600,14 @@ impl Effects {
     pub(crate) fn add_tested_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
         for path in paths {
             if !path.trim().is_empty() {
-                self.observed_facts.insert_type_hint(
-                    &mut self.tested_type_hints,
-                    HintGrade::TESTED,
-                    path,
-                    schema_type,
-                );
+                self.observed_facts
+                    .insert_type_hint(HintGrade::TESTED, path, schema_type);
             }
         }
     }
 
     pub(crate) fn promote_tested_type_hints(&mut self) {
-        for (path, hints) in std::mem::take(&mut self.tested_type_hints) {
-            for hint in hints {
-                insert_type_hint(&mut self.guarded_type_hints, path.clone(), &hint);
-            }
-        }
+        self.observed_facts.promote_tested_type_hints();
     }
 
     pub(crate) fn add_encoded_paths(&mut self, paths: BTreeSet<String>) {
@@ -741,7 +632,8 @@ impl Effects {
     }
 
     pub(crate) fn add_shape_erased_paths(&mut self, paths: BTreeSet<String>) {
-        self.shape_erased_paths
+        self.observed_facts
+            .shape_erased_paths
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 

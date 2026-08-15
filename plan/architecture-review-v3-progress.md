@@ -3163,7 +3163,7 @@ adjudication.
 
 ## Step 7a — introduce exhaustive observed-fact and hint-grade carriers
 
-- Status: landed; commit pending.
+- Status: landed in `4db6ee8a`.
 - Contract: representation-only; introduce one `ObservedFacts` carrier shared
   by the fragment interpreter, evaluated document, helper summary, and helper-
   call effects. Represent the existing five hint lanes with the deterministic
@@ -3351,4 +3351,247 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +126 (61,858 to 61,984).
-- Commit: pending.
+- Commit: `4db6ee8a` (`refactor(ir): introduce observed fact carrier`).
+
+## Step 7b — migrate observed-fact producers and delete parallel channels
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing; make `ObservedFacts` the single carrier for
+  shared interpreter, document, helper-summary, helper-effect, and contract
+  facts. Migrate every producer and consumer, retain `HintGrade` through the
+  final lowering boundary, place selection-scoped string requirements in the
+  carrier, and delete the legacy hint maps, per-channel graph extension
+  methods, rebuild loops, and argument bundles. Transform flags may combine
+  only when their execution and returned-value domains are identical.
+- Acceptance baseline: `4db6ee8a`.
+- Baseline production Rust LOC: 61,984.
+- Pre-registered acceptance expectations:
+  - Ordinary document holes, helper splices, static `.Files.Get` templates,
+    and the final contract boundary must preserve existing grade, execution
+    scope, string-selection predicates, and schema bytes.
+  - The helper-value audit found that its legacy `Effects` projection omits
+    fallback-grade hints, root-overlay prefixes, and nested wrapper names.
+    A fallback change must be a truthy-arm tightening on the helper-returned
+    path, with falsy states still accepted. Overlay or wrapper changes must be
+    confined to the corresponding effective-root projection. Helm must abort
+    every newly rejected value.
+  - The known program-wrapper divergence may expose a missing pre-rewrite
+    strict-path snapshot when a wrapper arrives through a direct helper splice
+    or static template rather than the helper-value `Effects` lane. Any
+    resulting change must only remove a wrapper alternative from a path whose
+    strict string consumer ran first; Helm must abort that wrapper-map state.
+  - Tested hints remain inert unless predicate consumption promotes them to
+    guarded declared evidence. Promotion must move the grade once; an
+    unconsumed tested hint cannot leak into document facts.
+  - Selection-scoped string requirements must retain their exact capture
+    conjunction and selection predicates across helper value, helper splice,
+    static-template, document, dependency, and contract rebasing boundaries.
+    No path-wide Boolean may replace the carrier.
+  - No acceptance flip is registered outside the helper-value fallback and
+    pre-rewrite wrapper rows above. Every changed cell, including either
+    registered class, stops fixture adoption for individual Helm 4.2.3
+    adjudication. Candidate-accepts/Helm-aborts allowance remains zero.
+  - Mandatory base and third-level coverage must have zero drops. All bounded
+    guard-witness and composite drops must be counted and disclosed.
+
+### Pre-change producer and route matrix
+
+| Required route | Producer and current transfer | Registered Step 7b ownership |
+|---|---|---|
+| Document hole | Expression `Effects` enter `Interpreter::absorb_hole_effects`; declared and fallback hints are regraded from the active predicates, helper captures are scoped, and the helper-value wrapper lane snapshots prior strict captures. | One scoped carrier absorption performs those same decisions before merging shared sets. Returned-value-only tested facts remain excluded. |
+| Helper value result | `BoundHelperValueResolver` separately copies summary declared/guarded hints, captures, range/default facts, and transformation sets into `Effects`, but omits the fallback map, root-overlay prefixes, and nested wrapper names. The shape-erased summary lane is deliberately stored as helper-observed execution evidence rather than a returned-value transform. | Copy one `ObservedFacts` after moving shape-erased paths into the distinct helper-observed execution lane; exhaustive merging then keeps fallback, root projection, wrapper, and string-requirement facts together without conflating transform domains. |
+| Helper splice | `splice_helper_call_hole` separately scopes reads/captures, rebuilds three hint maps, and extends each transform/default/wrapper set. It preserves the summary's internal wrapper snapshot but does not snapshot caller strict captures before importing a new wrapper. | Scope hint and capture channels once, merge identical-domain facts once, and snapshot caller strict captures at the same wrapper boundary used by document holes. |
+| `.Files.Get` template | The nested interpreter inherits call-site predicates, then four hint loops, transform/default/range loops, capture loops, and wrapper sets rebuild the outer state. Its internal snapshot is preserved, but caller strict captures are not snapshotted before a nested wrapper is imported. | Nested facts are already scoped, so one exhaustive same-scope absorb transfers them; the outer wrapper boundary first snapshots caller strict captures. |
+| Branch-guarded fallback | `absorb_hole_effects` and helper-splice code independently choose fallback versus guarded-fallback maps with `hint_scope_is_unconditional`; static templates copy the grade their nested interpreter already chose. | `HintGrade { scope, intent: Fallback }` is regraded only at a new call-site scope and otherwise remains unchanged through `absorb`. |
+| Tested predicate | Comparisons insert the fifth legacy/shadow lane; `promote_tested_type_hints` drains only the legacy tested map into legacy guarded-declared, leaving the shadow grade stale. Unpromoted tested hints are ignored by document absorption. | Carrier promotion removes `TESTED` and inserts `GUARDED_DECLARED` in one operation. Document absorption continues to ignore any unpromoted tested grade. |
+| Values-root program wrapper | Helper-name facts flow through helper effects, direct splices, and static templates to the evaluated document; `SymbolicContext` resolves names to typed wrapper sentinels, while `pre_rewrite_strict_paths` excludes raw strict consumers. Only the effects route currently takes the caller-side snapshot. | Wrapper names and selection-scoped string captures share `ObservedFacts`; every boundary that first imports a wrapper snapshots carrier-owned strict paths before absorption, then final name resolution remains typed and unchanged. |
+
+- Measured results:
+  - `ObservedFacts` is now the sole shared carrier in `Effects`, `Interpreter`,
+    `EvaluatedDocument`, `FragmentSummary`, and `ContractIr`. It owns graded
+    type hints, shape-erasure facts, range modes, effective-values default and
+    root-overlay facts, wrapper helper names, and all `FailCapture` variants,
+    including selection-scoped string requirements.
+  - `ObservedFacts::absorb` still destructures every field without `..`.
+    Path rebasing also lives on the carrier and rewrites hint, shape, range,
+    default, overlay, conjunction, ranged-capture, and capture-kind paths in
+    one operation. `ContractIr::map_value_paths` no longer rebuilds each
+    channel independently.
+  - `HintGrade` survives until `derive_schema_signals_from_contract_parts`,
+    whose one exhaustive `(scope, intent)` match fills the final accumulator.
+    `TESTED` is ignored at document absorption unless predicate consumption
+    first moves it to `GUARDED_DECLARED`; there is no tested-map shadow left
+    to go stale.
+  - Document holes and helper splices use one scoped carrier absorption.
+    Static `.Files.Get` programs use one same-scope absorption because their
+    nested interpreter was seeded with the caller predicates. All three first
+    snapshot prior strict string captures when importing the first values-root
+    wrapper helper.
+  - Helper value results copy the summary carrier after moving
+    `shape_erased_paths` into `helper_observed_shape_erased_paths`. That lane
+    remains intentionally distinct: a total stringification executed inside
+    a helper does not prove every occurrence returned by the helper was
+    transformed. YAML-text-only captures, parsed-YAML input, and serialized
+    output transforms likewise remain separate because their sink or
+    returned-value domains differ.
+  - Legacy hint maps, common fact sets, `fail_conditions`, `helper_fails`, all
+    per-channel `ContractIr::extend_*` methods, four document-to-contract
+    rebuild loops, and the nine-argument final builder bundle are deleted.
+    The three final `ContractValuePathFacts` string Booleans remain derived
+    only in the signal builder and have no independent producer setter.
+  - The immutable final1 archive produces 84 schema-family artifacts and 18
+    IR artifacts in one clean dump. IR bytes are exact. Four chart schemas
+    re-encode (`datadog`, `jenkins`, `oauth2-proxy`, and `signoz-signoz`) from
+    helper facts that the old helper-value projection dropped; the other 80
+    artifacts are byte-identical.
+  - The full-depth battery compares `4db6ee8a` with final1 over 60 charts and
+    121,055 probes. It finds zero acceptance flips, so no changed cell exists
+    for Helm adjudication and the zero candidate-accepts/Helm-aborts allowance
+    is satisfied.
+  - Coverage is 112,260/112,260 mandatory base probes and 7,465/7,465
+    mandatory third-level probes, with zero drops in both categories. It emits
+    427 guard pairs and 238 composite pairs and discloses 36,339 bounded
+    guard-witness candidate drops, 2,277 composite-cap drops, 12,658 guards
+    skipped by cap, and 30,196 total bounded drops.
+  - Production Rust is 61,558 LOC, delta -426 from 61,984. This lands within
+    the frozen -750..-400 estimate and deletes 552 lines net across the paired
+    Step 7a/7b carrier introduction and migration.
+
+- Deviations:
+  - The first route-matrix draft incorrectly described helper value results as
+    already copying wrapper names. A pre-code audit of
+    `BoundHelperValueResolver` showed it also omitted fallback hints,
+    root-overlay prefixes, and nested wrapper names. The matrix and acceptance
+    registration were corrected before the candidate build or dump; no
+    artifact from the mistaken model was produced.
+  - A tempting full merge of every transform-looking set was rejected during
+    design review. Helper-observed shape erasure is body-execution evidence,
+    while ordinary shape erasure describes the returned value occurrence;
+    YAML-text captures bind only after a caller certifies a YAML text sink.
+    Keeping those lanes separate follows the frozen "identical domains only"
+    rule rather than manufacturing deletion by conflation.
+  - The first workspace lint preflight reported four unfulfilled
+    `too_many_lines` expectations after the migration shortened their
+    functions. Those dead suppressions were removed, the candidate archive
+    was rebuilt afterward, and no dump from the preflight state was adopted.
+  - The literal downstream command first exited 201 before running any chart
+    because macOS BSD `xargs` rejects the taskfile's GNU `-a` option. The
+    established `/private/tmp/helm-schema-xargs-shim` supplied compatible
+    `xargs` and `flock`; rerunning the same taskfile target with the installed
+    final-tree CLI then exercised all 32 charts and exited 0.
+  - Four schemas change bytes even though the full-depth battery has zero
+    flips. They are reported as newly complete helper-fact projection and
+    deterministic definition re-encoding, not as normalization. The tracked
+    fixtures were copied only from the single final1 dump after the zero-flip
+    battery completed.
+
+- Adjudication evidence:
+  - `ADJUDICATE_WITH_HELM=1` verifies Helm 4.2.3 before the maintenance test
+    runs. The final report has `flips_adjudicated = 0`,
+    `candidate_accepts_helm_aborts = 0`, and allowance zero because no probe
+    changes acceptance.
+  - The visible schema additions are confined to the pre-registered
+    helper-value projection family (for example generated service-account
+    name and literal port alternatives). None changes any top-level,
+    second-level, third-level, guard, or composite probe verdict against the
+    baseline. There is therefore no fixture cell whose direction could hide a
+    false rejection.
+
+### Producer and route coverage
+
+| Required route | Final construction and transfer | Verification result |
+|---|---|---|
+| Document hole | `absorb_hole_effects` calls `absorb_scoped_observed_facts`; active chart guards regrade declared/fallback intent and scope captures once. | Existing document bytes remain stable outside the four disclosed helper-projection charts; direct string captures retain conjunction and selection. |
+| Helper value result | `BoundHelperValueResolver` copies one carrier, separating only helper-body shape erasure from returned-value transforms. | Missing fallback/root-overlay/wrapper facts now survive; focused helper fallback and transform-domain controls pass. |
+| Helper splice | `splice_helper_call_hole` scopes the summary carrier once, then preserves its internal pre-rewrite snapshot. | No independent hint/capture/default/range rebuild loop remains; schema battery finds no unregistered flip. |
+| `.Files.Get` template | `inline_static_file_fragments` absorbs the already-scoped nested carrier once and preserves the nested snapshot. | The live static-file template control passes; no nested fact channel drops in the IR dump. |
+| Branch-guarded fallback | Scoped absorption preserves fallback intent and promotes scope only when a new caller guard gates another path. | Helper fallback controls pass and the four changed schemas produce zero acceptance flips. |
+| Tested predicate | Comparison effects insert `TESTED`; predicate consumption drains it into `GUARDED_DECLARED`; document absorption ignores any unconsumed tested fact. | The carrier grade test covers all five registered grades plus guarded-tested representation; no tested shadow exists. |
+| Values-root program wrapper | Wrapper helper names and strict captures share the carrier; first import snapshots prior raw strict paths at every route. | The final carrier reaches `SymbolicIrContext`; zero wrapper acceptance cells change in the full-depth battery. |
+
+### Review dossier
+
+- Deletion proof: `rg -n
+  'guarded_type_hints|fallback_type_hints|tested_type_hints|helper_fails|fail_conditions|extend_guarded_type_hints|extend_fallback_type_hints|extend_guarded_fallback_type_hints'
+  crates/helm-schema-ir/src` leaves only final accumulator/final-lowering
+  vocabulary and local builder parameters; no producer, document, summary,
+  effect, or contract parallel field remains.
+- Focused route proof: `cargo nextest run -p helm-schema-ir -E
+  'test(hint_grades_absorb_without_parallel_lanes) |
+  test(bound_helper_keeps_join_observation_separate_from_output_transforms) |
+  test(nested_helper_fallback_does_not_escape_a_contradictory_caller_guard) |
+  test(direct_tpl_files_get_executes_json_template_source)'`; exit 0, four
+  tests pass together.
+- Immutable build proof: `TMPDIR=target/arch-v3-step7b-final1-build cargo
+  nextest archive --workspace --archive-file
+  /private/tmp/arch-v3-step7b-final1.tar.zst`; exit 0, 91 binaries and 135
+  files archived after the last production edit.
+- Clean schema dump: `TMPDIR=target/arch-v3-step7b-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step7b-final1.tar.zst --profile integration
+  --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(/final_output_policy/)'`; exit 0, 62 tests pass and 84 artifacts are
+  written in one batch.
+- Clean IR dump: `TMPDIR=target/arch-v3-step7b-final1-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step7b-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts
+  are written in one batch.
+- Artifact inventory: `diff -rq --exclude 'nextest-*'` against Step 7a final2
+  reports exactly the four chart schema files named above; the corresponding
+  IR comparison exits 0. Replaying those four tracked corpus fixtures from
+  the immutable archive exits 0, four tests pass.
+- Full-depth acceptance and Helm proof:
+  `TMPDIR=target/arch-v3-step7b-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=4db6ee8a
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=target/arch-v3-step7b-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=target/arch-v3-step7b-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step7b-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 charts, 121,055
+  probes, zero flips, and zero unallowed accepted-abort cells.
+- Coverage-accounting proof: the step-local `jq` summary reproduces baseline
+  `4db6ee8a`, 60 charts, zero mandatory drops, all bounded drop counts above,
+  and the zero-cell Helm result.
+
+### Self-adversarial pass
+
+- Carrier pressure: simply absorbing the full helper carrier would have met
+  the type-level wording while incorrectly asserting that every returned
+  occurrence was stringified. Moving body-only shape facts to their existing
+  execution lane preserves the semantic boundary and is explicitly tested.
+- Scope pressure: same-scope `.Files.Get` facts must not be regraded through
+  caller predicates a second time, while helper calls must gain caller scope.
+  The two absorption operations make this distinction visible instead of
+  hiding it in a Boolean.
+- Wrapper pressure: copying wrapper names without first snapshotting prior
+  raw strict captures would retain a wrapper alternative that Helm can reach
+  only after an earlier abort. All three import routes now share the snapshot
+  decision; the battery found no corpus acceptance change from the repair.
+- Reporting pressure: four fixture files changed despite zero battery flips.
+  The exact files, newly projected fact family, bounded probe drops, rejected
+  lane conflation, corrected pre-code matrix, and lint preflight are all
+  recorded rather than collapsed into a broad normalization claim.
+
+- Gates on the final Step 7b tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; the whole workspace completes with zero warnings.
+  - `task lint:fc`: exit 0; 48 feature combinations across 13 packages and
+    three targets complete with zero warnings.
+  - `cargo nextest run --workspace`: exit 0; 1,258 passed, zero skipped.
+  - `task test:integration`: exit 0; 568 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,830 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS GNU-tool shim; all 32
+    charts pass. The unshimmed host preflight exits 201 on BSD `xargs -a` and
+    is recorded under Deviations.
+  - `task tokei:core`: exit 0; 61,558 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: -426 (61,984 to 61,558).

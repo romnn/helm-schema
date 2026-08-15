@@ -15,7 +15,7 @@ use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
-use crate::observed_facts::HintGrade;
+use crate::observed_facts::{HintGrade, HintIntent, HintScope, ObservedFacts};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
@@ -256,7 +256,8 @@ impl Interpreter<'_> {
         let mut effects = hole.effects;
         effects.bound_output_paths.clear();
         let strict_paths: std::collections::BTreeSet<String> = effects
-            .helper_fails
+            .observed_facts
+            .captures
             .iter()
             .flat_map(non_string_runtime_requirement_paths)
             .collect();
@@ -265,6 +266,7 @@ impl Interpreter<'_> {
         // presence captures keep their own execution predicates instead of
         // promoting that relationship into path-wide shape state.
         effects
+            .observed_facts
             .shape_erased_paths
             .retain(|path| !strict_paths.contains(path));
 
@@ -277,8 +279,14 @@ impl Interpreter<'_> {
             std::collections::BTreeSet::new()
         };
         if has_helper_claims {
-            claims.extend(effects.type_hints.keys().cloned());
-            claims.extend(effects.fallback_type_hints.keys().cloned());
+            claims.extend(
+                effects
+                    .observed_facts
+                    .type_hints
+                    .iter()
+                    .filter(|(grade, _)| grade.intent != HintIntent::Tested)
+                    .flat_map(|(_, hints)| hints.keys().cloned()),
+            );
         }
         self.absorb_hole_effects(&effects, RenderedDemotion::None);
 
@@ -426,10 +434,62 @@ impl Interpreter<'_> {
             .all(|predicate| !predicate_gates_hint(predicate, path))
     }
 
-    #[expect(
-        clippy::too_many_lines,
-        reason = "keeping this semantic operation together makes its state transitions easier to audit"
-    )]
+    pub(super) fn absorb_scoped_observed_facts(&mut self, facts: &ObservedFacts) {
+        self.snapshot_pre_rewrite_strict_paths(facts);
+        for (grade, paths) in &facts.type_hints {
+            if grade.intent == HintIntent::Tested {
+                continue;
+            }
+            for (path, hints) in paths {
+                if path.trim().is_empty() {
+                    continue;
+                }
+                let scope = if grade.scope == HintScope::Guarded
+                    || !self.hint_scope_is_unconditional(path)
+                {
+                    HintScope::Guarded
+                } else {
+                    HintScope::Unconditional
+                };
+                let grade = match (scope, grade.intent) {
+                    (HintScope::Unconditional, HintIntent::Declared) => HintGrade::DECLARED,
+                    (HintScope::Guarded, HintIntent::Declared) => HintGrade::GUARDED_DECLARED,
+                    (HintScope::Unconditional, HintIntent::Fallback) => HintGrade::FALLBACK,
+                    (HintScope::Guarded, HintIntent::Fallback) => HintGrade::GUARDED_FALLBACK,
+                    (_, HintIntent::Tested) => continue,
+                };
+                self.observed_facts.extend_type_hints(grade, path, hints);
+            }
+        }
+        self.absorb_scoped_captures(&facts.captures);
+        self.observed_facts
+            .shape_erased_paths
+            .extend(facts.shape_erased_paths.iter().cloned());
+        self.observed_facts.range_modes.merge(&facts.range_modes);
+        self.observed_facts
+            .values_default_sources
+            .extend(facts.values_default_sources.iter().cloned());
+        self.observed_facts
+            .values_root_overlay_prefixes
+            .extend(facts.values_root_overlay_prefixes.iter().cloned());
+        self.observed_facts
+            .values_root_helper_includes
+            .extend(facts.values_root_helper_includes.iter().cloned());
+    }
+
+    pub(super) fn absorb_nested_observed_facts(&mut self, facts: &ObservedFacts) {
+        self.snapshot_pre_rewrite_strict_paths(facts);
+        self.observed_facts.absorb(facts);
+    }
+
+    fn snapshot_pre_rewrite_strict_paths(&mut self, facts: &ObservedFacts) {
+        if !facts.values_root_helper_includes.is_empty()
+            && self.observed_facts.values_root_helper_includes.is_empty()
+        {
+            self.pre_rewrite_strict_paths = self.strict_string_capture_paths();
+        }
+    }
+
     pub(super) fn absorb_hole_effects(&mut self, effects: &Effects, demotion: RenderedDemotion) {
         self.absorb_member_host_conversions(&effects.member_host_conversions);
         self.apply_root_set_mutations(
@@ -437,85 +497,21 @@ impl Interpreter<'_> {
             &effects.root_set_predicates,
             &effects.root_set_value_dispatches,
         );
-        self.values_default_sources_observed
-            .extend(effects.values_default_sources.iter().cloned());
-        self.values_root_overlay_prefixes_observed
-            .extend(effects.values_root_overlay_prefixes.iter().cloned());
-        // The first values-root wrapper rewrite freezes the strict-consumer
-        // snapshot: string contracts recorded so far ran on RAW values, so
-        // a wrapper map at those paths aborts before the engine rewrites it
-        // (nats' `fullname | trunc` on `nameOverride`).
-        if !effects.values_root_helper_includes.is_empty()
-            && self.values_root_helper_includes_observed.is_empty()
-        {
-            self.pre_rewrite_strict_paths = self.strict_string_capture_paths();
-        }
-        self.values_root_helper_includes_observed
-            .extend(effects.values_root_helper_includes.iter().cloned());
+        self.absorb_scoped_observed_facts(&effects.observed_facts);
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths.clone();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
 
-        // Type hints surface from every hole, including assignment
-        // right-hand sides. A hint observed under branch predicates about
-        // OTHER paths holds only where those branches render: it may type
-        // conditional overlays but never the unconditional base. Predicates
-        // about the hinted path itself (self-guards, `typeIs` type
-        // switches) partition its own domain instead, so those hints stay
-        // base evidence.
-        for (path, hints) in &effects.type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
-                (&mut self.type_hints, HintGrade::DECLARED)
-            } else {
-                (&mut self.guarded_type_hints, HintGrade::GUARDED_DECLARED)
-            };
-            self.observed_facts
-                .extend_type_hints(sink, grade, path, hints);
-        }
-        for (path, hints) in &effects.guarded_type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.observed_facts.extend_type_hints(
-                &mut self.guarded_type_hints,
-                HintGrade::GUARDED_DECLARED,
-                path,
-                hints,
-            );
-        }
-        for (path, hints) in &effects.fallback_type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
-                (&mut self.fallback_type_hints, HintGrade::FALLBACK)
-            } else {
-                // Branch-scoped fallback hints keep their fallback identity
-                //: overlay lowering must know they are intent, not a
-                // consumer contract.
-                (
-                    &mut self.guarded_fallback_type_hints,
-                    HintGrade::GUARDED_FALLBACK,
-                )
-            };
-            self.observed_facts
-                .extend_type_hints(sink, grade, path, hints);
-        }
         self.parsed_yaml_input_paths
             .extend(effects.parsed_yaml_input_paths.iter().cloned());
         if !matches!(demotion, RenderedDemotion::Serialized) {
             self.yaml_serialized_paths
                 .extend(effects.yaml_serialized_paths.iter().cloned());
         }
-        self.shape_erased_paths
-            .extend(effects.shape_erased_paths.iter().cloned());
-        self.shape_erased_paths
+        self.observed_facts
+            .shape_erased_paths
             .extend(effects.helper_observed_shape_erased_paths.iter().cloned());
-        self.range_modes.merge(&effects.range_modes);
         let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
         for path in bound_reads {
             self.push_read(&path, &[]);
@@ -553,7 +549,6 @@ impl Interpreter<'_> {
             };
             self.push_meta_reads(&row.path, kind, &row.meta, &claims, true);
         }
-        self.absorb_helper_fails(&effects.helper_fails);
         match demotion {
             RenderedDemotion::None => {}
             RenderedDemotion::Document => {

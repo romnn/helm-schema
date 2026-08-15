@@ -348,21 +348,33 @@ impl Interpreter<'_> {
         destructured: bool,
     ) {
         if let Some(identity) = member_identity {
-            self.range_modes.mark_member_identity(&identity.path);
+            self.observed_facts
+                .range_modes
+                .mark_member_identity(&identity.path);
             if destructured {
-                self.range_modes.mark_destructured(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_destructured(&identity.path);
             }
             if identity.json_decoded {
-                self.range_modes.mark_json_decoded(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_json_decoded(&identity.path);
             }
         }
         if let Some(identity) = input_identity {
-            self.range_modes.mark_input_identity(&identity.path);
+            self.observed_facts
+                .range_modes
+                .mark_input_identity(&identity.path);
             if destructured {
-                self.range_modes.mark_destructured(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_destructured(&identity.path);
             }
             if identity.json_decoded {
-                self.range_modes.mark_json_decoded(&identity.path);
+                self.observed_facts
+                    .range_modes
+                    .mark_json_decoded(&identity.path);
             }
         }
         let input_contract_identity = input_identity.or_else(|| {
@@ -391,7 +403,7 @@ impl Interpreter<'_> {
                 .iter()
                 .any(|predicate| matches!(predicate, Predicate::False))
             {
-                self.fail_conditions.insert(capture);
+                self.observed_facts.captures.insert(capture);
             }
         }
     }
@@ -430,7 +442,7 @@ impl Interpreter<'_> {
                 .iter()
                 .any(|predicate| matches!(predicate, Predicate::False))
             {
-                self.fail_conditions.insert(capture);
+                self.observed_facts.captures.insert(capture);
             }
             prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
         }
@@ -672,7 +684,7 @@ impl Interpreter<'_> {
                     merge_operand_paths: &hole.effects.merge_operand_paths,
                     yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
                     templated_yaml_paths: &hole.effects.templated_yaml_paths,
-                    shape_erased_paths: &hole.effects.shape_erased_paths,
+                    shape_erased_paths: &hole.effects.observed_facts.shape_erased_paths,
                     stringified_paths: &hole.effects.stringified_paths,
                     nil_omitting_paths: &hole.effects.nil_omitting_paths,
                     plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,

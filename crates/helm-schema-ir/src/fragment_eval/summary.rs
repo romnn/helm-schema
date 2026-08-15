@@ -56,32 +56,16 @@ pub(crate) struct FragmentSummary {
     pub(crate) root_render_indent: Option<usize>,
     /// Pathless reads observed in the body (helper-internal guards only).
     pub(crate) reads: Vec<ValueRead>,
-    /// Declared input-type hints observed unconditionally in the body.
-    pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints observed only under body branch predicates.
-    pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Input-type hints from literal `default`/`coalesce` fallbacks in the
-    /// body: they type only the truthy arm of the path.
-    pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) observed_facts: ObservedFacts,
     /// Paths consumed as serialized YAML by `fromYaml` in the body.
     pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
     /// Paths serialized with `toYaml` in the helper's projected output.
     pub(crate) yaml_serialized_paths: BTreeSet<String>,
-    /// Paths consumed through total stringifications anywhere in the body:
-    /// the chart tolerates any input type at them.
-    pub(crate) shape_erased_paths: BTreeSet<String>,
-    /// The body's per-path range facts after bound-context resolution
-    /// (direct iteration identity, JSON-decoded values, destructuring).
-    /// Callers need the direct identity to project the runtime domain.
-    pub(crate) range_modes: crate::range_modes::RangeModes,
-    /// `fail` captures of the body, helper-internal state only.
-    pub(crate) fail_conditions: Vec<crate::eval_effect::FailCapture>,
     /// Captures that hold only where the body's rendered TEXT is consumed as
     /// YAML: the plain-slot lexical language of the body's own slots. The
     /// body renders at its caller's position, so the caller certifies the
-    /// sink (see [`Interpreter::record_yaml_text_fails`]).
-    pub(crate) text_fails: Vec<crate::eval_effect::FailCapture>,
+    /// sink (see [`Interpreter::record_yaml_text_captures`]).
+    pub(crate) text_captures: Vec<crate::eval_effect::FailCapture>,
     /// Object-producing value mutations observed in source order.
     pub(crate) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Chart-level `set … default` normalizations the body applies.
@@ -93,11 +77,6 @@ pub(crate) struct FragmentSummary {
     /// Joined per-arm value alternatives for root-context fields the helper
     /// set across complete if/else chains.
     pub(crate) root_set_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
-    /// Chart value subtrees supplying defaults to a replaced effective values tree.
-    pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
-    /// Helper names through which the values root was replaced.
-    pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// Strictly string-consumed paths whose consumers ran before the
     /// body's values-root wrapper rewrite (see the interpreter field).
     pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
@@ -117,10 +96,6 @@ pub(crate) struct FragmentSummary {
 
 /// Evaluate one bound helper body as a fragment. `seen` is the active call
 /// chain (this helper included), threaded so nested calls cut cycles.
-#[expect(
-    clippy::too_many_lines,
-    reason = "the helper summary must move one interpreter's correlated outputs into a single immutable phase result"
-)]
 pub(crate) fn eval_bound_helper_fragment(
     name: &str,
     resolution: &BoundHelperCallResolution,
@@ -214,24 +189,15 @@ pub(crate) fn eval_bound_helper_fragment(
         root_render_indent,
         reads,
         suppress_predicate_paths: suppress,
-        type_hints: interpreter.type_hints,
-        guarded_type_hints: interpreter.guarded_type_hints,
-        fallback_type_hints: interpreter.fallback_type_hints,
         observed_facts: interpreter.observed_facts,
         parsed_yaml_input_paths: interpreter.parsed_yaml_input_paths,
         yaml_serialized_paths: interpreter.yaml_serialized_paths,
-        shape_erased_paths: interpreter.shape_erased_paths,
-        range_modes: interpreter.range_modes,
-        fail_conditions: interpreter.fail_conditions.into_iter().collect(),
-        text_fails: interpreter.text_fails.into_iter().collect(),
+        text_captures: interpreter.text_captures.into_iter().collect(),
         member_host_conversions: interpreter.member_host_conversions,
         chart_defaults: interpreter.chart_defaults_observed,
         root_set_mutations: interpreter.root_set_mutations_observed,
         root_set_predicates: interpreter.root_set_predicates_observed,
         root_set_value_dispatches: interpreter.root_value_dispatches_observed,
-        values_default_sources: interpreter.values_default_sources_observed,
-        values_root_overlay_prefixes: interpreter.values_root_overlay_prefixes_observed,
-        values_root_helper_includes: interpreter.values_root_helper_includes_observed,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
     };
     // Render-suppressed splices (block-scalar bodies) influence the text

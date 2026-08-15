@@ -127,7 +127,7 @@ pub(super) fn eval_set_call(
             && let Some(assigned) = args.get(2)
             && let Some(source) = root_values_default_source(assigned, env)
         {
-            effects.values_default_sources.insert(source);
+            effects.observed_facts.values_default_sources.insert(source);
         }
         for key in keys {
             if let Some(predicate) = &assigned_predicate {

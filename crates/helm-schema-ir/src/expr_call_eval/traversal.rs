@@ -108,7 +108,7 @@ pub(super) fn eval_dig(
                 }]
             };
             for capture in captures {
-                effects.helper_fails.insert(capture);
+                effects.observed_facts.captures.insert(capture);
             }
         }
     }
@@ -265,7 +265,7 @@ pub(super) fn eval_index(
                                 total_text_preimage: *total_text_preimage,
                             },
                         };
-                        effects.helper_fails.insert(capture);
+                        effects.observed_facts.captures.insert(capture);
                     }
                     for path in identity_value_paths(Some(value)) {
                         for conjunction in
@@ -279,7 +279,7 @@ pub(super) fn eval_index(
                                     index,
                                 },
                             };
-                            effects.helper_fails.insert(capture);
+                            effects.observed_facts.captures.insert(capture);
                         }
                     }
                 }
@@ -335,7 +335,7 @@ pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effe
                     handled_kinds: BTreeSet::new(),
                 },
             };
-            effects.helper_fails.insert(capture);
+            effects.observed_facts.captures.insert(capture);
         }
     }
 }
