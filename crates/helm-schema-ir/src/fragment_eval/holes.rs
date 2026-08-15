@@ -16,6 +16,7 @@ use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
+use crate::observed_facts::HintGrade;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_core::Predicate;
 
@@ -578,36 +579,39 @@ impl Interpreter<'_> {
             if path.trim().is_empty() {
                 continue;
             }
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.type_hints
+            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
+                (&mut self.type_hints, HintGrade::DECLARED)
             } else {
-                &mut self.guarded_type_hints
+                (&mut self.guarded_type_hints, HintGrade::GUARDED_DECLARED)
             };
-            sink.entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
+            self.observed_facts
+                .extend_type_hints(sink, grade, path, hints);
         }
         for (path, hints) in &summary.guarded_type_hints {
             if !path.trim().is_empty() {
-                self.guarded_type_hints
-                    .entry(path.clone())
-                    .or_default()
-                    .extend(hints.iter().cloned());
+                self.observed_facts.extend_type_hints(
+                    &mut self.guarded_type_hints,
+                    HintGrade::GUARDED_DECLARED,
+                    path,
+                    hints,
+                );
             }
         }
         for (path, hints) in &summary.fallback_type_hints {
             if path.trim().is_empty() {
                 continue;
             }
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.fallback_type_hints
+            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
+                (&mut self.fallback_type_hints, HintGrade::FALLBACK)
             } else {
                 // Branch-scoped fallback hints remain intent, not a consumer contract.
-                &mut self.guarded_fallback_type_hints
+                (
+                    &mut self.guarded_fallback_type_hints,
+                    HintGrade::GUARDED_FALLBACK,
+                )
             };
-            sink.entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
+            self.observed_facts
+                .extend_type_hints(sink, grade, path, hints);
         }
     }
 

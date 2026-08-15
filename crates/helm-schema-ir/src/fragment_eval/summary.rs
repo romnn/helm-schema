@@ -31,6 +31,7 @@ use helm_schema_syntax::TemplatedDocument;
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::{BoundHelperCallResolution, IrAnalysisDb};
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, merge_provenance_sites};
+use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::{
     ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates,
     conjoin_predicates,
@@ -62,6 +63,7 @@ pub(crate) struct FragmentSummary {
     /// Input-type hints from literal `default`/`coalesce` fallbacks in the
     /// body: they type only the truthy arm of the path.
     pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
+    pub(crate) observed_facts: ObservedFacts,
     /// Paths consumed as serialized YAML by `fromYaml` in the body.
     pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
     /// Paths serialized with `toYaml` in the helper's projected output.
@@ -215,6 +217,7 @@ pub(crate) fn eval_bound_helper_fragment(
         type_hints: interpreter.type_hints,
         guarded_type_hints: interpreter.guarded_type_hints,
         fallback_type_hints: interpreter.fallback_type_hints,
+        observed_facts: interpreter.observed_facts,
         parsed_yaml_input_paths: interpreter.parsed_yaml_input_paths,
         yaml_serialized_paths: interpreter.yaml_serialized_paths,
         shape_erased_paths: interpreter.shape_erased_paths,

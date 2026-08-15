@@ -56,6 +56,7 @@ use crate::eval_effect::{CaptureKind, FailCapture};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::{NodeAction, control_header, node_action};
+use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
@@ -89,6 +90,11 @@ pub struct EvaluatedDocument {
     /// intent that may type conditional overlays, but never a branch whose
     /// renders all totally format.
     pub(crate) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
+    #[expect(
+        dead_code,
+        reason = "Step 7a shadows legacy facts before Step 7b migrates document readers"
+    )]
+    pub(crate) observed_facts: ObservedFacts,
     /// Paths consumed through total stringifications (`quote`, `toString`,
     /// `join`, `printf`) anywhere in the source: the chart tolerates any
     /// input type at them even when no placed row exists.
@@ -153,6 +159,7 @@ pub(crate) fn eval_document(
         guarded_type_hints: interpreter.guarded_type_hints,
         fallback_type_hints: interpreter.fallback_type_hints,
         guarded_fallback_type_hints: interpreter.guarded_fallback_type_hints,
+        observed_facts: interpreter.observed_facts,
         shape_erased_paths: interpreter.shape_erased_paths,
         range_modes: interpreter.range_modes,
         values_default_sources: interpreter.values_default_sources_observed,
@@ -666,6 +673,7 @@ pub(super) struct Interpreter<'a> {
     pub(super) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Fallback hints observed under branch predicates.
     pub(super) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
+    pub(super) observed_facts: ObservedFacts,
     /// Paths consumed only through total stringifications (`quote`,
     /// `toString`, `join`, `printf`): the chart tolerates any input type at
     /// them even when no placed row exists.
@@ -783,6 +791,7 @@ impl<'a> Interpreter<'a> {
             guarded_type_hints: BTreeMap::new(),
             fallback_type_hints: BTreeMap::new(),
             guarded_fallback_type_hints: BTreeMap::new(),
+            observed_facts: ObservedFacts::default(),
             shape_erased_paths: BTreeSet::new(),
             range_modes: crate::range_modes::RangeModes::default(),
             fail_conditions: BTreeSet::new(),

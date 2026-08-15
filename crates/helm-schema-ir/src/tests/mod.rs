@@ -6,6 +6,7 @@ mod fragment_expr_eval;
 mod fragment_scope_eval;
 mod function_semantics;
 mod ip_item_pattern;
+mod observed_facts;
 mod resource_identity;
 mod selection_reachability;
 mod symbolic_local_state;

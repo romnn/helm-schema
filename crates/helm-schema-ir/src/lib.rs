@@ -17,6 +17,7 @@ mod function_semantics;
 mod helper_literal_dispatch;
 mod helper_meta;
 mod node_eval;
+mod observed_facts;
 mod range_modes;
 mod resource_identity;
 mod scalar_value;

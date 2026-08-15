@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::abstract_value::AbstractValue;
 use crate::fragment_eval::ValueRead;
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, insert_type_hint};
+use crate::observed_facts::{HintGrade, ObservedFacts};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -25,6 +26,7 @@ pub(crate) struct Effects {
     /// alternatives only when an expression such as `ternary` consumes the
     /// predicate; control-flow lowering owns ordinary `if`/`with` guards.
     pub(crate) tested_type_hints: BTreeMap<String, BTreeSet<String>>,
+    pub(crate) observed_facts: ObservedFacts,
     pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
     pub(crate) yaml_serialized_paths: BTreeSet<String>,
     /// Paths serialized to YAML and then evaluated by `tpl`. Their
@@ -421,6 +423,7 @@ impl Effects {
             guarded_type_hints,
             fallback_type_hints,
             tested_type_hints,
+            observed_facts,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
             templated_yaml_paths,
@@ -525,6 +528,7 @@ impl Effects {
         self.helper_fails.extend(helper_fails);
         self.helper_text_fails.extend(helper_text_fails);
         self.member_host_conversions.extend(member_host_conversions);
+        self.observed_facts.absorb(&observed_facts);
         for (path, hints) in type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.type_hints, path.clone(), &hint);
@@ -566,6 +570,7 @@ impl Effects {
             guarded_type_hints: _,
             fallback_type_hints: _,
             tested_type_hints: _,
+            observed_facts: _,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
             // Describes returned YAML text, not evaluation of an ignored argument.
@@ -623,6 +628,7 @@ impl Effects {
             guarded_type_hints: BTreeMap::new(),
             fallback_type_hints: BTreeMap::new(),
             tested_type_hints: BTreeMap::new(),
+            observed_facts: ObservedFacts::default(),
             parsed_yaml_input_paths,
             yaml_serialized_paths,
             templated_yaml_paths: BTreeSet::new(),
@@ -669,11 +675,13 @@ impl Effects {
         let guarded_type_hints = self.guarded_type_hints.clone();
         let fallback_type_hints = self.fallback_type_hints.clone();
         let tested_type_hints = self.tested_type_hints.clone();
+        let observed_facts = self.observed_facts.clone();
         let mut effects = self.execution_only();
         effects.type_hints = type_hints;
         effects.guarded_type_hints = guarded_type_hints;
         effects.fallback_type_hints = fallback_type_hints;
         effects.tested_type_hints = tested_type_hints;
+        effects.observed_facts = observed_facts;
         effects
     }
 
@@ -693,7 +701,12 @@ impl Effects {
     pub(crate) fn add_tested_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
         for path in paths {
             if !path.trim().is_empty() {
-                insert_type_hint(&mut self.tested_type_hints, path, schema_type);
+                self.observed_facts.insert_type_hint(
+                    &mut self.tested_type_hints,
+                    HintGrade::TESTED,
+                    path,
+                    schema_type,
+                );
             }
         }
     }

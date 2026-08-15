@@ -13,6 +13,7 @@ use helm_schema_ast::{TemplateExpr, parse_go_template};
 use helm_schema_syntax::TemplatedDocument;
 
 use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::observed_facts::HintGrade;
 use crate::static_file_template::{
     StaticTemplateProgram, StaticTemplateSource, collect_template_requests_from_exprs,
     collect_template_requests_from_helper, literal_helper_calls_from_exprs,
@@ -181,25 +182,36 @@ impl Interpreter<'_> {
             self.push_nested_read(read);
         }
         for (path, hints) in nested.type_hints {
-            self.type_hints.entry(path).or_default().extend(hints);
+            self.observed_facts.extend_type_hints(
+                &mut self.type_hints,
+                HintGrade::DECLARED,
+                &path,
+                &hints,
+            );
         }
         for (path, hints) in nested.guarded_type_hints {
-            self.guarded_type_hints
-                .entry(path)
-                .or_default()
-                .extend(hints);
+            self.observed_facts.extend_type_hints(
+                &mut self.guarded_type_hints,
+                HintGrade::GUARDED_DECLARED,
+                &path,
+                &hints,
+            );
         }
         for (path, hints) in nested.fallback_type_hints {
-            self.fallback_type_hints
-                .entry(path)
-                .or_default()
-                .extend(hints);
+            self.observed_facts.extend_type_hints(
+                &mut self.fallback_type_hints,
+                HintGrade::FALLBACK,
+                &path,
+                &hints,
+            );
         }
         for (path, hints) in nested.guarded_fallback_type_hints {
-            self.guarded_fallback_type_hints
-                .entry(path)
-                .or_default()
-                .extend(hints);
+            self.observed_facts.extend_type_hints(
+                &mut self.guarded_fallback_type_hints,
+                HintGrade::GUARDED_FALLBACK,
+                &path,
+                &hints,
+            );
         }
         self.parsed_yaml_input_paths
             .extend(nested.parsed_yaml_input_paths);

@@ -76,6 +76,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             values_default_sources: summary.values_default_sources.clone(),
             type_hints: summary.type_hints.clone(),
             guarded_type_hints: summary.guarded_type_hints.clone(),
+            observed_facts: summary.observed_facts.clone(),
             parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
             yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
             json_serialized_paths: summary

@@ -2803,7 +2803,7 @@ adjudication.
 
 ## Step 6b.5 — lower consumer requirements in the contract builder
 
-- Status: complete; commit pending.
+- Status: landed in `04ce2cc7`.
 - Contract: behavior-bearing; make every strict string consumer publish a
   selection-scoped value-type requirement and, where nil aborts, an
   execution-scoped absence requirement. Lower those requirements once in the
@@ -3159,4 +3159,196 @@ adjudication.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +77 (61,781 to 61,858); cumulative Step 6b
   delta +454 (61,404 to 61,858).
+- Commit: `04ce2cc7` (`refactor(ir): lower scoped consumer requirements`).
+
+## Step 7a — introduce exhaustive observed-fact and hint-grade carriers
+
+- Status: landed; commit pending.
+- Contract: representation-only; introduce one `ObservedFacts` carrier shared
+  by the fragment interpreter, evaluated document, helper summary, and helper-
+  call effects. Represent the existing five hint lanes with the deterministic
+  `HintGrade { scope, intent }` key, provide one exhaustive `absorb` operation
+  with no rest patterns, and fill the new carrier beside the legacy fields
+  from the same phase boundary. Downstream readers remain on the legacy fields
+  until Step 7b.
+- Acceptance baseline: `04ce2cc7`.
+- Baseline production Rust LOC: 61,858.
+- Pre-registered acceptance expectations:
+  - Exact schema, IR, lean-profile, and final-output fixture bytes must remain
+    identical to `04ce2cc7`; expected changed fixtures: zero.
+  - The complete acceptance battery must report zero flips at every probe
+    depth. Any flip is outside the registered set and stops fixture adoption
+    for individual Helm adjudication.
+  - Mandatory base and third-level coverage must have zero drops. Disclosed
+    bounded categories must retain complete accounting even though this step
+    expects no schema movement.
+  - No downstream reader may consume `ObservedFacts` or `HintGrade` in this
+    step. The legacy fields remain the behavior-bearing representation; the
+    new carrier is a compile-checked, equality-audited shadow only.
+  - Every legacy hint lane has one registered grade: unconditional declared,
+    guarded declared, unconditional fallback, guarded fallback, and
+    unconditional tested. Guarded tested is representable by the key but has
+    no legacy producer and therefore must remain empty.
+
+- Measured results:
+  - `ObservedFacts` now owns a deterministic `BTreeMap<HintGrade, ...>` where
+    `HintGrade` is the explicit `{ scope, intent }` product. The five legacy
+    lanes map to `DECLARED`, `GUARDED_DECLARED`, `FALLBACK`,
+    `GUARDED_FALLBACK`, and `TESTED`; the unused guarded-tested combination
+    remains representable without inventing a producer.
+  - One `extend_type_hints` operation is the insertion boundary for both the
+    legacy map and shadow carrier. One `absorb` destructures `ObservedFacts`
+    exhaustively with no `..` pattern, so adding a fact channel makes the
+    merge decision fail to compile until it is handled.
+  - The carrier is embedded beside the legacy fields in `Interpreter`,
+    `EvaluatedDocument`, `FragmentSummary`, and helper-call `Effects`.
+    Document holes, direct helper-summary splices, and static `.Files.Get`
+    template evaluations fill both representations at the same insertion
+    boundary. Helper value results copy the already-populated carrier into
+    effects; execution-only effect rebuilding explicitly discards it, while
+    predicate consumption explicitly preserves it.
+  - No production downstream consumer reads the document shadow. The single
+    temporary `dead_code` expectation is scoped to that field and states the
+    Step 7b removal condition; the legacy maps still exclusively determine
+    contract construction and schema output.
+  - The authoritative final2 dump contains 84 schema-family artifacts and 18
+    IR artifacts. Both trees compare byte-for-byte with the Step 6b.5 final15
+    baseline after excluding only nextest archive extraction metadata; both
+    `diff -rq` commands exit 0. No fixture was edited.
+  - The full-depth battery compares `04ce2cc7` with the final2 candidate over
+    60 charts and 121,055 probes. It reports zero acceptance flips, zero Helm
+    adjudications (there were no changed cells), and zero candidate-accepts /
+    Helm-aborts cells.
+  - Mandatory coverage is complete: 112,260/112,260 base probes and
+    7,465/7,465 third-level probes, with zero drops in both categories. The
+    bounded categories emit 427 guard pairs and 238 composite pairs; the
+    report discloses 28,872 total bounded drops, 36,339 guard-witness
+    candidate drops, 2,277 composite-cap drops, and 11,996 guards skipped by
+    cap.
+
+- Deviations:
+  - The first carrier draft duplicated every legacy map write locally and
+    measured +177 production LOC. It was rejected before any dump. The final
+    design names the grade once at `extend_type_hints`, which updates the
+    legacy and shadow maps together and measures +126 LOC.
+  - The measured +126 delta exceeds the frozen +50 to +120 estimate by six
+    lines. The excess is the explicit tested-lane insertion plus the
+    exhaustive absorption surface; deleting either would weaken the frozen
+    contract, so the small audited miss is retained rather than hidden by
+    compressing Rust unnaturally.
+  - The first final1 schema dump command exited before extraction because its
+    step-specific `TMPDIR` did not exist. It produced no artifact and was
+    rejected. The directory was created under `target/`, and the clean final1
+    dump then passed.
+  - The first final1 full-depth battery correctly found zero flips and wrote a
+    zero-flip coverage report, but the maintenance test still compiled Step
+    6b.5's allowance of 83 and therefore exited 100 on the count assertion.
+    That state was rejected. The test-only preregistration constant was set to
+    the already-recorded Step 7a allowance of zero, a final2 archive was built,
+    and every dump and battery was rerun from that final state.
+  - The final2 battery emits four fewer probes and two fewer composite pairs
+    than Step 6b.5's behavior-changing comparison. Schema bytes are identical:
+    comparing a schema with itself no longer unions four baseline-only
+    guard/composite witnesses present when `46b7f24` was the other side. Base
+    and third-level candidate counts remain identical with zero drops; all
+    changed bounded counts are disclosed above.
+
+- Adjudication evidence:
+  - There are no acceptance changes to adjudicate. The final coverage report
+    records `flips_adjudicated = 0`, `candidate_accepts_helm_aborts = 0`, and
+    the compiled allowance remains zero. Helm 4.2.3 was still verified by the
+    adjudicating maintenance entry point before the battery ran.
+  - Exact schema/IR/lean/final-output bytes independently prove that the new
+    shadow carrier cannot affect acceptance in this step. No generated
+    artifact from either rejected final1 preflight was adopted.
+
+### Producer and route coverage
+
+| Producer or route | Dual-write site audited | Step 7a result |
+|---|---|---|
+| Document output hole | `Interpreter::absorb_hole_effects` | Declared and fallback evidence chooses its legacy scope once, then the same grade and hints enter `ObservedFacts`. |
+| Helper splice | `Interpreter::absorb_helper_summary_type_hints` | Helper-summary hints receive call-site scope once and populate both representations; no summary reader changed. |
+| `.Files.Get` template | `inline_static_file_fragments` | All four document-grade legacy lanes merge through the same dual-write operation; the nested carrier cannot be dropped silently. |
+| Helper value result | `BoundHelperValueResolver::resolve_helper_call` | The populated summary carrier is copied beside the legacy effect fields; `Effects::merge` absorbs it exhaustively. |
+| Predicate-only effect | `Effects::add_tested_type_hints` and `consumed_as_predicate` | Tested intent has its fifth grade; execution-only rebuilding discards returned-value facts and predicate consumption explicitly restores them. |
+| Evaluated document handoff | `eval_document` | The interpreter carrier moves beside all legacy hint maps and remains unread by contract construction until Step 7b. |
+
+### Review dossier
+
+- Exhaustiveness proof: `ObservedFacts::absorb` uses `let Self { type_hints } =
+  other` and contains no rest pattern. `Effects::merge` and
+  `Effects::execution_only` likewise name the new field in their existing
+  exhaustive destructures.
+- Grade proof: the private carrier test constructs all five registered grades,
+  proves each dual write exactly matches its legacy lane, constructs the
+  otherwise-unused guarded-tested product, and proves exhaustive absorption.
+  `cargo nextest run -p helm-schema-ir -E
+  'test(hint_grades_shadow_legacy_lanes_and_absorb_exhaustively)'`; exit 0,
+  one test passes.
+- Clean final schema dump:
+  `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v3-step7a-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step7a-final2.tar.zst --profile integration
+  --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(/final_output_policy/)'`; exit 0, 62 tests pass and 530 are skipped,
+  with 84 artifacts written in one batch.
+- Clean final IR dump:
+  `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v3-step7a-final2-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step7a-final2.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes, 591 are skipped,
+  and 18 artifacts are written in one batch.
+- Artifact parity proof: `diff -rq --exclude 'nextest-*'` against the Step
+  6b.5 final15 schema and IR directories exits 0 for each comparison.
+- Full-depth acceptance proof:
+  `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v3-step7a-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=04ce2cc7
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v3-step7a-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v3-step7a-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step7a-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 charts, 121,055
+  probes, zero flips, and zero unallowed accepted-abort cells.
+- Frozen-reference proof is included in the final gates below; the three
+  frozen documents remain byte-identical to their specified refs.
+
+### Self-adversarial pass
+
+- Representation pressure: an `ObservedFacts` wrapper that merely cloned
+  maps at the final document boundary would compile while producers silently
+  diverged. The final dual-write operation instead accepts both sinks and the
+  grade at each producer boundary, while exhaustive `absorb` pins transfers.
+- Product pressure: five separate enum variants would preserve the old lane
+  taxonomy. The explicit scope/intent product represents guarded-tested
+  evidence without adding a sixth legacy map, and its synthetic unit control
+  proves the product is not accidentally closed to only today's five lanes.
+- Behavior pressure: changing contract construction to read the new carrier
+  would make this a hidden migration step. The document field is intentionally
+  unread, fixture bytes are exact, and Step 7b owns the reader migration.
+- Reporting pressure: the rejected +177 design, missing-`TMPDIR` launch, stale
+  83-flip maintenance constant, four-probe bounded accounting difference, and
+  six-line estimate miss are recorded rather than described as normalization.
+
+- Gates on the final Step 7a tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations across 13 packages and 3 targets.
+  - `cargo nextest run --workspace`: exit 0; 1,258/1,258 tests pass.
+  - `task test:integration`: exit 0; 568/568 tests pass, with 24 intentional
+    skips.
+  - `task test:all`: exit 0; 1,830/1,830 tests pass, with 24 intentional skips
+    and all live-network cases green.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the documented macOS harness and binary-path
+    environment accommodations; 32/32 charts report `[ok]`.
+  - `task tokei:core`: exit 0; 61,984 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +126 (61,858 to 61,984).
 - Commit: pending.

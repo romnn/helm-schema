@@ -15,6 +15,7 @@ use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
+use crate::observed_facts::HintGrade;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
@@ -467,39 +468,42 @@ impl Interpreter<'_> {
             if path.trim().is_empty() {
                 continue;
             }
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.type_hints
+            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
+                (&mut self.type_hints, HintGrade::DECLARED)
             } else {
-                &mut self.guarded_type_hints
+                (&mut self.guarded_type_hints, HintGrade::GUARDED_DECLARED)
             };
-            sink.entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
+            self.observed_facts
+                .extend_type_hints(sink, grade, path, hints);
         }
         for (path, hints) in &effects.guarded_type_hints {
             if path.trim().is_empty() {
                 continue;
             }
-            self.guarded_type_hints
-                .entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
+            self.observed_facts.extend_type_hints(
+                &mut self.guarded_type_hints,
+                HintGrade::GUARDED_DECLARED,
+                path,
+                hints,
+            );
         }
         for (path, hints) in &effects.fallback_type_hints {
             if path.trim().is_empty() {
                 continue;
             }
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.fallback_type_hints
+            let (sink, grade) = if self.hint_scope_is_unconditional(path) {
+                (&mut self.fallback_type_hints, HintGrade::FALLBACK)
             } else {
                 // Branch-scoped fallback hints keep their fallback identity
                 //: overlay lowering must know they are intent, not a
                 // consumer contract.
-                &mut self.guarded_fallback_type_hints
+                (
+                    &mut self.guarded_fallback_type_hints,
+                    HintGrade::GUARDED_FALLBACK,
+                )
             };
-            sink.entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
+            self.observed_facts
+                .extend_type_hints(sink, grade, path, hints);
         }
         self.parsed_yaml_input_paths
             .extend(effects.parsed_yaml_input_paths.iter().cloned());
