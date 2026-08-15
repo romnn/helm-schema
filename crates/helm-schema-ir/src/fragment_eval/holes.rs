@@ -1168,7 +1168,7 @@ impl Interpreter<'_> {
                     continue;
                 }
                 Some(facts) => {
-                    if facts.is_range {
+                    if matches!(facts.arms.first(), Some(super::eval::ArmSpec::Range { .. })) {
                         // YAML block spans can exclude trim-only closing
                         // actions even though the template range is wholly
                         // contained in the scalar. Evaluate the parsed range

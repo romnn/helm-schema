@@ -55,7 +55,7 @@ use crate::analysis_db::IrAnalysisDb;
 use crate::eval_effect::{CaptureKind, FailCapture};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
-use crate::node_eval::{NodeAction, control_header, node_action};
+use crate::node_eval::{NodeAction, control_headers, node_action};
 use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::symbolic_local_state::SymbolicLocalState;
@@ -131,15 +131,7 @@ pub(crate) fn eval_document(
 /// by the region's opening-bracket byte (which equals the action node's
 /// start byte).
 pub(crate) struct ControlFacts {
-    pub(super) header: Option<TemplateHeader>,
-    pub(super) is_range: bool,
-    pub(super) range_destructured: bool,
-    /// The VALUE variable of a destructured range header (`$v` in
-    /// `range $k, $v := …`).
-    pub(super) range_value_variable: Option<String>,
-    /// The KEY variable of a destructured range header (`$k` in
-    /// `range $k, $v := …`).
-    pub(super) range_key_variable: Option<String>,
+    pub(super) arms: Vec<ArmSpec>,
     /// The whole region's end byte (through `{{ end }}`), for regions that
     /// only surface as holes (block-scalar bodies).
     pub(super) region_end: usize,
@@ -176,31 +168,42 @@ fn collect_control_facts(
 ) {
     match node.kind() {
         "if_action" | "with_action" => {
+            let is_if = node.kind() == "if_action";
+            let arms = control_headers(source, node)
+                .into_iter()
+                .map(|header| {
+                    if is_if {
+                        ArmSpec::If(header)
+                    } else {
+                        ArmSpec::With(header)
+                    }
+                })
+                .chain(std::iter::once(ArmSpec::Else))
+                .collect();
             out.insert(
                 node.start_byte(),
                 ControlFacts {
-                    header: control_header(source, node),
-                    is_range: false,
-                    range_destructured: false,
-                    range_value_variable: None,
-                    range_key_variable: None,
+                    arms,
                     region_end: node.end_byte(),
                 },
             );
         }
         "range_action" => {
+            let arms = vec![
+                ArmSpec::Range {
+                    header: range_header_from_source(node, source),
+                    destructured: range_has_destructured_variable_definition(node),
+                    value_variable: helm_schema_ast::range_destructured_value_variable(
+                        node, source,
+                    ),
+                    key_variable: helm_schema_ast::range_destructured_key_variable(node, source),
+                },
+                ArmSpec::Else,
+            ];
             out.insert(
                 node.start_byte(),
                 ControlFacts {
-                    header: range_header_from_source(node, source),
-                    is_range: true,
-                    range_destructured: range_has_destructured_variable_definition(node),
-                    range_value_variable: helm_schema_ast::range_destructured_value_variable(
-                        node, source,
-                    ),
-                    range_key_variable: helm_schema_ast::range_destructured_key_variable(
-                        node, source,
-                    ),
+                    arms,
                     region_end: node.end_byte(),
                 },
             );
@@ -428,6 +431,55 @@ impl Contributions {
         std::mem::take(&mut self.loop_control)
     }
 
+    fn repair_valueless_mapping_header(&mut self) {
+        let Some((header_index, header_key)) =
+            self.entries
+                .iter()
+                .enumerate()
+                .rev()
+                .find_map(|(index, entry)| match &entry.key {
+                    EntryKey::Literal(key) if !key.is_empty() && entry.value.is_empty() => {
+                        Some((index, key.clone()))
+                    }
+                    EntryKey::Literal(_) | EntryKey::Dynamic(_) => None,
+                })
+        else {
+            return;
+        };
+        let Some(trailing) = self.entries.get(header_index + 1..) else {
+            return;
+        };
+        if !trailing
+            .iter()
+            .all(|entry| matches!(entry.key, EntryKey::Dynamic(_)))
+        {
+            return;
+        }
+        let dynamic_entries = self.entries.split_off(header_index + 1);
+        let mut continued_values = take_mapping_continuation_arms(&mut self.values, &header_key);
+        self.floating.retain_mut(|floating| {
+            continued_values.extend(take_mapping_continuation_arms(
+                &mut floating.value,
+                &header_key,
+            ));
+            !floating.value.is_empty()
+        });
+        if dynamic_entries.is_empty() && continued_values.is_empty() {
+            return;
+        }
+        if let Some(header) = self.entries.get_mut(header_index) {
+            header.value.extend(continued_values);
+            if !dynamic_entries.is_empty() {
+                header.value.arms.push((
+                    Predicate::True,
+                    AbstractFragment::Mapping(Mapping {
+                        entries: dynamic_entries,
+                    }),
+                ));
+            }
+        }
+    }
+
     /// Split off the floating output that renders *inside* a container of
     /// the given indent, returning it as one guarded value; shallower output
     /// keeps floating for an ancestor. A container opened without an inline
@@ -492,6 +544,42 @@ impl Contributions {
     }
 }
 
+fn take_mapping_continuation_arms(
+    guarded: &mut Guarded<AbstractFragment>,
+    header_key: &str,
+) -> Guarded<AbstractFragment> {
+    Guarded {
+        arms: guarded
+            .arms
+            .extract_if(.., |(condition, fragment)| match fragment {
+                AbstractFragment::Splice(_) => predicate_has_range(condition),
+                AbstractFragment::Mapping(mapping) => mapping.entries.iter().all(|entry| {
+                    matches!(entry.key, EntryKey::Dynamic(_))
+                        || matches!(&entry.key, EntryKey::Literal(key)
+                            if key == header_key && entry.value.is_empty())
+                }),
+                AbstractFragment::Sequence(_)
+                | AbstractFragment::Scalar(_)
+                | AbstractFragment::Opaque(_) => false,
+            })
+            .collect(),
+    }
+}
+
+fn predicate_has_range(predicate: &Predicate) -> bool {
+    match predicate {
+        Predicate::Guard(Guard::Range { .. }) => true,
+        Predicate::Not(inner) => predicate_has_range(inner),
+        Predicate::And(predicates) | Predicate::Or(predicates) => {
+            predicates.iter().any(predicate_has_range)
+        }
+        Predicate::True
+        | Predicate::False
+        | Predicate::Approximate { .. }
+        | Predicate::Guard(_) => false,
+    }
+}
+
 /// A node reference plus an optional adoption child limit: children whose
 /// spans start at or beyond the limit belong *after* the adopting control
 /// region (source order) and are evaluated there instead of inside the
@@ -541,6 +629,7 @@ pub(super) struct Adopted<'n> {
 }
 
 /// One arm's decoded activation.
+#[derive(Clone)]
 pub(super) enum ArmSpec {
     If(Option<TemplateHeader>),
     With(Option<TemplateHeader>),
@@ -1547,6 +1636,7 @@ impl<'a> Interpreter<'a> {
             };
             index += 1;
         }
+        out.repair_valueless_mapping_header();
         out
     }
 

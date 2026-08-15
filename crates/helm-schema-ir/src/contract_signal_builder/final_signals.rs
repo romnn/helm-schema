@@ -1,9 +1,113 @@
 use super::{
-    BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, ContractPathAccumulator,
-    ContractPathSchemaEvidence, ContractSchemaSignals, ContractValuePathFacts, MetadataFieldKind,
-    PathSchemaFactsAccumulator, ProviderSchemaUse, collect_paths_with_descendants,
-    record_member_access_implications,
+    BTreeMap, BTreeSet, ConditionalGuard, ConditionalOverlayFlavor, ConditionalPathOverlay,
+    ContractPathAccumulator, ContractPathSchemaEvidence, ContractSchemaSignals,
+    ContractValuePathFacts, MetadataFieldKind, PathSchemaFactsAccumulator, ProviderSchemaUse,
+    collect_paths_with_descendants, record_member_access_implications,
 };
+
+fn kind_partitioned_overlays(overlay: ConditionalPathOverlay) -> Vec<ConditionalPathOverlay> {
+    let mut kinds = BTreeSet::new();
+    for use_ in &overlay.evidence.provider_schema_uses {
+        if provider_use_depends_on_kind_selector(use_) {
+            kinds.insert(use_.resource.kind.clone());
+            kinds.extend(use_.resource.kind_candidates.iter().cloned());
+        }
+    }
+    if kinds.is_empty() {
+        return vec![overlay];
+    }
+    let Some(selector) = kind_selector_path(&overlay.guards, &kinds) else {
+        return vec![overlay];
+    };
+
+    let mut out = Vec::new();
+    let mut ordinary = overlay.clone();
+    ordinary
+        .evidence
+        .provider_schema_uses
+        .retain(|use_| !provider_use_depends_on_kind_selector(use_));
+    if !ordinary.evidence.provider_schema_uses.is_empty() {
+        out.push(ordinary);
+    }
+    for kind in kinds {
+        let mut partition = overlay.clone();
+        partition
+            .evidence
+            .provider_schema_uses
+            .retain(provider_use_depends_on_kind_selector);
+        partition.guards.push(ConditionalGuard::Eq {
+            path: selector.clone(),
+            value: super::GuardValue::string(kind.clone()),
+        });
+        partition.guards.sort();
+        partition.guards.dedup();
+        partition.evidence.provider_schema_uses.retain_mut(|use_| {
+            let supports_kind =
+                use_.resource.kind == kind || use_.resource.kind_candidates.contains(&kind);
+            if supports_kind {
+                use_.resource.kind = kind.clone();
+                use_.resource.kind_candidates.clear();
+            }
+            supports_kind
+        });
+        if partition.evidence.provider_schema_uses.is_empty() {
+            continue;
+        }
+        partition.flavor = ConditionalOverlayFlavor::KindBranch;
+        out.push(partition);
+    }
+    out
+}
+
+fn provider_use_depends_on_kind_selector(use_: &ProviderSchemaUse) -> bool {
+    !use_.resource.kind_candidates.is_empty() || !use_.resource.kind_branches.is_empty()
+}
+
+fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> Option<String> {
+    fn collect(guard: &ConditionalGuard, kinds: &BTreeSet<String>, out: &mut BTreeSet<String>) {
+        match guard {
+            ConditionalGuard::Eq {
+                path,
+                value: super::GuardValue::String(value),
+            }
+            | ConditionalGuard::NotEq {
+                path,
+                value: super::GuardValue::String(value),
+            } if kinds.contains(value) => {
+                out.insert(path.clone());
+            }
+            ConditionalGuard::Not(inner) => collect(inner, kinds, out),
+            ConditionalGuard::AllOf(inner) | ConditionalGuard::AnyOf(inner) => {
+                for guard in inner {
+                    collect(guard, kinds, out);
+                }
+            }
+            ConditionalGuard::Truthy { .. }
+            | ConditionalGuard::With { .. }
+            | ConditionalGuard::Eq { .. }
+            | ConditionalGuard::NotEq { .. }
+            | ConditionalGuard::Absent { .. }
+            | ConditionalGuard::TypeIs { .. }
+            | ConditionalGuard::MatchesPattern { .. }
+            | ConditionalGuard::IntGt { .. }
+            | ConditionalGuard::IntLt { .. }
+            | ConditionalGuard::HasKey { .. }
+            | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsTruthyMember { .. }
+            | ConditionalGuard::ContainsEquals { .. }
+            | ConditionalGuard::AtMostOneMember { .. }
+            | ConditionalGuard::MinMembers { .. } => {}
+        }
+    }
+
+    let mut paths = BTreeSet::new();
+    for guard in guards {
+        collect(guard, kinds, &mut paths);
+    }
+    let mut paths = paths.into_iter();
+    let path = paths.next()?;
+    paths.next().is_none().then_some(path)
+}
 
 pub(super) fn finish_schema_signals(
     mut paths: BTreeMap<String, ContractPathAccumulator>,
@@ -292,8 +396,10 @@ impl ContractPathAccumulator {
                     guards,
                     evidence: branch.conditional_overlay_evidence(facts, branch_hints),
                     preserve_base_schema: has_unconditional_overlay_peer || saw_unsupported_overlay,
+                    flavor: ConditionalOverlayFlavor::Ordinary,
                 }
             })
+            .flat_map(kind_partitioned_overlays)
             .collect();
         // Branch-scoped hints ride the overlays' evidence copies. When no
         // overlay can host them (none lowered, or an unsupported or

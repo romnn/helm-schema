@@ -481,25 +481,25 @@ impl Interpreter<'_> {
     }
 
     fn classify_branch(&self, region: &ControlRegion, index: usize) -> ArmSpec {
-        if index == 0 {
-            let facts = self.body_facts.control_facts.get(&region.span.start);
-            return match region.kind {
-                ControlKind::If => ArmSpec::If(facts.and_then(|facts| facts.header.clone())),
-                ControlKind::With => ArmSpec::With(facts.and_then(|facts| facts.header.clone())),
-                ControlKind::Range => ArmSpec::Range {
-                    header: facts.and_then(|facts| facts.header.clone()),
-                    destructured: facts.is_some_and(|facts| facts.range_destructured),
-                    value_variable: facts.and_then(|facts| facts.range_value_variable.clone()),
-                    key_variable: facts.and_then(|facts| facts.range_key_variable.clone()),
-                },
-                ControlKind::Define | ControlKind::Block => ArmSpec::Else,
-            };
+        if let Some(arm) = self
+            .body_facts
+            .control_facts
+            .get(&region.span.start)
+            .and_then(|facts| facts.arms.get(index))
+        {
+            return arm.clone();
         }
-        let header_text = region
-            .branches
-            .get(index)
-            .map_or("", |branch| self.text(branch.header));
-        parse_else_header(header_text)
+        match (region.kind, index) {
+            (ControlKind::If, 0) => ArmSpec::If(None),
+            (ControlKind::With, 0) => ArmSpec::With(None),
+            (ControlKind::Range, 0) => ArmSpec::Range {
+                header: None,
+                destructured: false,
+                value_variable: None,
+                key_variable: None,
+            },
+            _ => ArmSpec::Else,
+        }
     }
 
     /// Activate one arm: decode its condition, record the condition reads
@@ -1387,37 +1387,6 @@ fn branch_node_lists<'nodes>(
         list.sort_by_key(|view| view.node.span_start());
     }
     lists
-}
-
-/// Classify an `{{ else … }}` branch header. The header span is a single
-/// isolated action token, so keyword classification here is a narrow local
-/// check; condition text still goes through the typed header parser.
-fn parse_else_header(text: &str) -> ArmSpec {
-    let mut inner = text.trim();
-    if let Some(rest) = inner.strip_prefix("{{") {
-        inner = rest.trim_start_matches('-').trim();
-    }
-    if let Some(rest) = inner.strip_suffix("}}") {
-        inner = rest.trim_end_matches('-').trim();
-    }
-    if inner == "else" {
-        return ArmSpec::Else;
-    }
-    let Some(rest) = inner.strip_prefix("else") else {
-        return ArmSpec::Else;
-    };
-    let rest = rest.trim_start();
-    if let Some(condition) = rest.strip_prefix("if ") {
-        return ArmSpec::If(Some(TemplateHeader::parse_control(format!(
-            "if {condition}"
-        ))));
-    }
-    if let Some(condition) = rest.strip_prefix("with ") {
-        return ArmSpec::With(Some(TemplateHeader::parse_control(format!(
-            "with {condition}"
-        ))));
-    }
-    ArmSpec::Else
 }
 
 /// One container a deferred batch nests under. A sequence item is a

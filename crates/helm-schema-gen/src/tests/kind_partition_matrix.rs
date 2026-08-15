@@ -1,98 +1,69 @@
 use super::*;
 use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_core::{
-    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractValuePathFacts,
-    KindBranch, MetadataFieldKind, Predicate,
-};
+use helm_schema_core::ConditionalOverlayFlavor;
 use test_util::prelude::sim_assert_eq;
 
-fn partition_provider_use(resource: ResourceRef) -> ProviderSchemaUse {
-    ProviderSchemaUse {
-        value_path: "value".to_string(),
-        path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
-        kind: ValueKind::Scalar,
-        stringified: false,
-        resource,
-        is_self_range_collection: false,
-        source_null_tolerant: false,
-        template_supplied_member_keys: BTreeSet::new(),
-        split_segment: None,
-        merge_layers: None,
-        range_key: false,
-        nil_omitting: false,
-        omitted_members: BTreeMap::new(),
-        outer_guards: Vec::new(),
+#[test]
+fn contract_builder_emits_typed_kind_branch_evidence() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        apiVersion: apps/v1
+        kind: {{ .Values.workload.kind }}
+        metadata:
+          name: test
+        spec:
+          {{- if eq .Values.workload.kind "Deployment" }}
+          strategy: {{- toYaml .Values.workload.strategy | nindent 4 }}
+          {{- else if eq .Values.workload.kind "StatefulSet" }}
+          updateStrategy: {{- toYaml .Values.workload.strategy | nindent 4 }}
+          {{- end }}
+    "#};
+    let signals = schema_signals_for(parse_ir(source));
+    let evidence = signals
+        .evidence_for("workload.strategy")
+        .ok_or_eyre("workload strategy evidence missing")?;
+
+    eyre::ensure!(!evidence.conditional_overlays.is_empty());
+    for overlay in &evidence.conditional_overlays {
+        sim_assert_eq!(have: overlay.flavor, want: ConditionalOverlayFlavor::KindBranch);
+        eyre::ensure!(!overlay.evidence.provider_schema_uses.is_empty());
+        for use_ in &overlay.evidence.provider_schema_uses {
+            eyre::ensure!(use_.resource.kind_branches.is_empty());
+            eyre::ensure!(use_.resource.kind_candidates.is_empty());
+        }
     }
+    Ok(())
 }
 
 #[test]
-fn selector_independent_provider_uses_stay_on_an_ordinary_conjunct() -> eyre::Result<()> {
-    let independent = partition_provider_use(ResourceRef::concrete(
-        "v1".to_string(),
-        "ConfigMap".to_string(),
-    ));
-    let mut dynamic_resource =
-        ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
-    dynamic_resource.kind_candidates = vec!["StatefulSet".to_string()];
-    dynamic_resource.kind_branches = vec![KindBranch {
-        predicate: Predicate::True,
-        kind: "Deployment".to_string(),
-    }];
-    let dependent = partition_provider_use(dynamic_resource);
-    let overlay = ConditionalPathOverlay {
-        guards: vec![ConditionalGuard::Eq {
-            path: "workload.kind".to_string(),
-            value: GuardValue::string("Deployment"),
-        }],
-        evidence: ConditionalOverlayEvidence {
-            facts: ContractValuePathFacts {
-                used_as_serialized: true,
-                is_ranged_source: true,
-                ..ContractValuePathFacts::default()
-            },
-            metadata_field_kinds: BTreeSet::from([MetadataFieldKind::Name]),
-            type_hints: BTreeSet::from(["string".to_string()]),
-            provider_schema_uses: vec![independent.clone(), dependent],
-        },
-        preserve_base_schema: false,
-    };
+fn contract_builder_retains_literal_control_kind_branches() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        {{- if eq .Values.local.kind "ConfigMap" }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        immutable: {{ .Values.local.setting }}
+        {{- else if eq .Values.local.kind "Service" }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          type: {{ .Values.local.setting }}
+        {{- end }}
+    "#};
+    let signals = schema_signals_for(parse_ir(source));
+    let evidence = signals
+        .evidence_for("local.setting")
+        .ok_or_eyre("local setting evidence missing")?;
 
-    let partitions = crate::overlay_lowering::kind_partitioned_overlays(&overlay);
-    let mut partitions = partitions.into_iter();
-    let ordinary = partitions.next().ok_or_eyre("ordinary partition missing")?;
-
-    sim_assert_eq!(have: partitions.len(), want: 2);
-    sim_assert_eq!(
-        have: ordinary.flavor,
-        want: crate::emission_policy::ConditionalFlavor::Ordinary
+    eyre::ensure!(
+        evidence
+            .conditional_overlays
+            .iter()
+            .all(|overlay| overlay.flavor == ConditionalOverlayFlavor::KindBranch),
+        "literal kind branches were not retained: {evidence:#?}"
     );
-    sim_assert_eq!(
-        have: &ordinary.overlay.evidence.provider_schema_uses,
-        want: &vec![independent]
-    );
-    sim_assert_eq!(
-        have: ordinary.overlay.evidence.facts,
-        want: overlay.evidence.facts
-    );
-    sim_assert_eq!(
-        have: &ordinary.overlay.evidence.metadata_field_kinds,
-        want: &overlay.evidence.metadata_field_kinds
-    );
-    sim_assert_eq!(
-        have: &ordinary.overlay.evidence.type_hints,
-        want: &overlay.evidence.type_hints
-    );
-    for partition in partitions {
-        sim_assert_eq!(
-            have: partition.flavor,
-            want: crate::emission_policy::ConditionalFlavor::KindPartition
-        );
-        sim_assert_eq!(have: partition.overlay.evidence.provider_schema_uses.len(), want: 1);
-        sim_assert_eq!(
-            have: partition.overlay.evidence.facts.used_as_serialized,
-            want: true
-        );
-    }
     Ok(())
 }
 

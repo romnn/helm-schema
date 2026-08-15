@@ -3355,7 +3355,7 @@ adjudication.
 
 ## Step 7b — migrate observed-fact producers and delete parallel channels
 
-- Status: landed; commit pending.
+- Status: landed in `b2ca4c76`.
 - Contract: behavior-bearing; make `ObservedFacts` the single carrier for
   shared interpreter, document, helper-summary, helper-effect, and contract
   facts. Migrate every producer and consumer, retain `HintGrade` through the
@@ -3595,3 +3595,255 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: -426 (61,984 to 61,558).
+- Commit: `b2ca4c76` (`refactor(ir): migrate observed fact producers`).
+
+## Step 8 — place kind, shape, and action facts in their producer phases
+
+- Status: in progress; commit pending.
+- Contract: representation-only; make contract construction emit typed
+  Ordinary and per-kind conditional evidence, repair valueless mapping-header
+  shape while the fragment tree is constructed, and retain structural branch
+  header kind in control facts. Delete generator-side kind partition
+  reconstruction, projection-time open-mapping recovery, and text-based else
+  header reconstruction without moving emission policy into IR.
+- Acceptance baseline: `b2ca4c76`.
+- Baseline production Rust LOC: 61,558.
+- Pre-registered acceptance expectations:
+  - Exact schema, IR, lean-profile, and final-output fixture bytes must remain
+    identical to `b2ca4c76`; expected changed fixtures: zero.
+  - The complete acceptance battery must report zero flips at every probe
+    depth. Any changed cell is outside the registered set and stops the step
+    for individual Helm 4.2.3 adjudication before a fixture is changed.
+  - Mandatory base and third-level coverage must have zero drops. Bounded
+    guard-witness and composite drops remain permitted only when counted and
+    disclosed by the existing battery.
+  - The current kind matrix must remain exact. Selector-independent evidence
+    stays Ordinary; finite structural kind alternatives become explicit typed
+    per-kind branch evidence; a ranged or otherwise unresolved dynamic kind
+    remains live and must not be collapsed to a guessed branch.
+  - Contract IR may name semantic evidence flavor but not generator emission
+    policy. The generator may classify the typed flavor for policy, but may
+    not scan kind names, infer a selector by matching literals, invent
+    equality guards, or clone unrelated branch facts.
+  - Valueless mapping headers must own their continued control-arm content in
+    the fragment tree before projection. The Velero fixture and sibling-arm
+    controls must preserve the same effective value paths and emitted bytes.
+  - First, else-if, else-with, and plain-else arms must retain their structural
+    action kind from the parser-backed control-fact producer. No consumer may
+    reconstruct an action by formatting or slicing header text.
+  - If any operation reveals a true pre-existing behavior defect, that repair
+    is excluded from this representation-only commit and must become a
+    separately pre-registered behavior-bearing round.
+
+### Pre-change producer and route matrix
+
+| Required route | Current reconstruction | Registered Step 8 ownership |
+|---|---|---|
+| Selector-independent overlay | Contract construction emits one untyped overlay; generator filters dynamic provider uses from a clone. | Contract construction emits Ordinary evidence containing the independent facts and provider uses exactly once. |
+| Finite per-kind branch | Generator scans candidate kind names and guards, guesses a selector path, invents an equality guard, and clones the overlay per kind. | Resource and contract producers supply structural kind branches; contract construction emits one typed branch overlay per explicit alternative. |
+| Ranged dynamic kind | Generator abstains when it cannot correlate guard literals with candidate kinds. | The producer preserves unresolved dynamic evidence as Ordinary; typed lowering must not guess or drop it. |
+| Valueless mapping header | Projection searches guarded siblings for an open mapping entry and decides whether later arms continue it. | Fragment construction repairs ownership once, so projection walks the ordinary tree without a path-shape side channel. |
+| First control arm | Control facts retain the parsed opening header and the evaluator classifies it. | The same parser-backed control-fact producer records the structural branch-header kind. |
+| Else-if and else-with arm | The evaluator slices reconstructed header text and reparses a fabricated `if` or `with` action. | Per-branch control facts retain the parser's structural action kind and expression; the evaluator consumes that typed fact directly. |
+| Plain else arm | Text reconstruction falls through to an unconditional arm. | The producer records the unconditional branch kind explicitly; no action text is synthesized. |
+
+- Measured results:
+  - Contract construction now emits `ConditionalOverlayFlavor::Ordinary` or
+    `KindBranch` on each `ConditionalPathOverlay`. Kind-dependent provider
+    evidence is partitioned only after the complete branch evidence has been
+    materialized, preserving the old branch facts while moving selector
+    inference and kind concretization out of the generator. The generator
+    performs one exhaustive flavor-to-policy classification and no longer
+    scans candidates, invents equality guards, or clones overlays.
+  - Fragment construction repairs a valueless literal mapping header before
+    projection. Only the structural continuation domain accepted by the
+    deleted projection recovery moves under the header: ranged splices,
+    compatible mappings, and dynamic mapping entries. Scalar and sequence
+    output remains beside the header, so ordinary prose ending in a colon is
+    not reinterpreted as a YAML container.
+  - `ControlFacts` owns an ordered `Vec<ArmSpec>` for every parsed control
+    region. The first arm, else-if, else-with, range-else, and plain-else
+    classifications are populated at the one tree-sitter insertion site;
+    evaluator-side header slicing, fabricated control text, and
+    `parse_else_header` are deleted.
+  - The immutable final5 archive contains 91 binaries and 135 files. Its one
+    clean schema dump passes 62 tests and writes 84 artifacts; its one clean
+    IR dump passes one test and writes 18 artifacts. Both artifact trees are
+    byte-identical to the Step 7b final1 trees after excluding only nextest
+    archive extraction metadata.
+  - The full-depth battery compares `b2ca4c76` with final5 across 60 charts
+    and 121,055 probes. It reports zero flips, so there is no fixture cell to
+    adjudicate and no accepted candidate that Helm 4.2.3 aborts.
+  - Mandatory coverage is 112,260/112,260 base probes and 7,465/7,465
+    third-level probes, with zero drops in both categories. Bounded accounting
+    emits 427 guard pairs and 238 composite pairs; it discloses 36,339
+    guard-witness candidate drops, 2,277 composite-cap drops, 11,997 guards
+    skipped by cap, 119 guards without a witness pair, and 28,874 total
+    bounded drops.
+  - Production Rust is 61,571 LOC, delta +13 from 61,558. The frozen
+    -220..-100 estimate is not met: the audited deletion removes the three
+    consumer reconstructions, but the exact producer-owned replacements must
+    retain the same finite-kind partition, continuation-shape, and branch-arm
+    semantics. Removing those live rules merely to reach the estimate would
+    violate the representation-only contract.
+
+- Deviations:
+  - The first kind-carrier preflight put an optional selector string directly
+    on `ResourceRef`; `task lint` rejected the enlarged common enum variant.
+    A second preflight moved selection beside kind branches but produced six
+    schema-family differences. Neither state produced an adopted artifact.
+    The final carrier is path-local conditional evidence, where the fact is
+    consumed and where no common resource enum grows.
+  - An early producer partition rebuilt `ConditionalOverlayEvidence` after
+    filtering its accumulator. The old generator cloned already-materialized
+    evidence. That preflight changed Prometheus/profile bytes and was
+    rejected. The final builder materializes once and then partitions the
+    typed overlay, matching the prior evidence boundary exactly.
+  - Direct selector recognition, resource-span branch broadening, overlay
+    field-order changes, and multi-path guard-validation changes were each
+    tried as explanations for the remaining Prometheus drift and rejected.
+    Restoring only the old control classifier left the drift; restoring only
+    projection recovery also left it. Restoring both old representations made
+    the fixture exact, and runtime isolation then proved the tree repair alone
+    was sufficient to recreate the mismatch.
+  - The rejected tree repair moved every range-produced fragment under a
+    preceding valueless literal. Prometheus `NOTES.txt` contains prose such as
+    `From outside the cluster, the alertmanager URL(s) are:` followed by a
+    scalar range. The deleted projection rule never treated a scalar as a
+    mapping continuation. The final producer repair admits only ranged
+    splices and compatible mappings, which restores exact bytes without a
+    chart or filename exception. No artifact from the broad repair was
+    adopted.
+  - Three archive preflights were rejected before final5: a first run was
+    interrupted before producing an archive; a shared-target run hit corrupt
+    incremental linker symbols; a relative `TMPDIR` made clang fail to create
+    temporary files; and an isolated multi-job run stopped making progress
+    and was terminated. `cargo clean -p helm-schema-gen` removed the corrupt
+    incremental products. The authoritative build uses an absolute
+    step-local `TMPDIR`, `CARGO_INCREMENTAL=0`, and one build job; it exits 0
+    after archiving 91 binaries and 135 files.
+  - A focused nextest invocation selected the default profile and exited 4
+    with zero tests; rerunning the named binary under `-P integration` passes
+    all six fragment-tree controls. This repeated the already-known profile
+    trap and no zero-test run is counted as evidence.
+  - The LOC estimate assumed producer ownership would be shorter than the
+    deleted reconstructions. Measured line accounting shows why it is not:
+    kind partitioning moves the finite selection algorithm rather than
+    deleting it; early tree construction must encode all continuation forms
+    the projection side channel handled; and parser-owned arms replace both
+    opening-header fields and else-header text reconstruction. The +13
+    shortfall is recorded rather than deleting a live semantic case.
+
+- Adjudication evidence:
+  - `ADJUDICATE_WITH_HELM=1` runs with Helm 4.2.3 and reports
+    `flips_adjudicated = 0`, `candidate_accepts_helm_aborts = 0`, and allowance
+    zero. Exact artifact parity independently proves there is no hidden
+    fixture adoption.
+  - The rejected Prometheus candidate was never copied into fixtures. Its one
+    extra guarded arm came from scalar NOTES prose being nested under a
+    valueless pseudo-header; the narrowed structural repair returns the
+    candidate to exact baseline bytes before the final archive and battery.
+
+### Producer and route coverage
+
+| Required route | Final producer and carrier | Verification result |
+|---|---|---|
+| Selector-independent overlay | Contract construction emits `ConditionalOverlayFlavor::Ordinary` after complete evidence materialization. | Ordinary kind-matrix controls pass; exact schema and IR trees show no independent evidence loss. |
+| Finite per-kind branch | Contract construction partitions the completed overlay, adds the exact kind equality guard, concretizes the matching provider uses, and stamps `KindBranch`. | Eight kind-partition controls pass, including values-selected, inline-local, literal-control, complement, and serialized-shape cases. |
+| Ranged dynamic kind | Failure to identify one exact selector leaves the evidence Ordinary and uncollapsed. | The live ranged/dynamic-kind corpus and final-output policy bytes remain exact. |
+| Valueless mapping header | `Contributions::repair_valueless_mapping_header` attaches only structural mapping continuations before the fragment tree leaves evaluation. | Six dict-config/Velero controls pass; Prometheus NOTES scalar ranges remain siblings; all corpus bytes are exact. |
+| First control arm | `collect_control_facts` records `If`, `With`, or `Range` directly from the parsed opening node. | Existing opening-arm and range controls pass in the immutable suite. |
+| Else-if arm | `control_headers` records each parser-owned condition in branch order and constructs the matching `ArmSpec::If`. | Else-if-heavy contract, merge, and resource-identity suites pass with exact IR bytes. |
+| Else-with arm | The same ordered producer emits `ArmSpec::With`; evaluation reads it by branch index. | `else_with_local_join_does_not_treat_the_arm_as_unconditional` passes. |
+| Plain else arm | The producer appends explicit `ArmSpec::Else`; evaluator fallback is only a bounded malformed/missing-fact fallback. | Plain-else and range-else corpus behavior is byte-identical. |
+
+### Review dossier
+
+- Deletion proof: `rg -n
+  'kind_partitioned_overlays|PartitionedOverlay|parse_else_header|find_open_mapping_entry|arm_continues_open_mapping_entry'
+  crates/helm-schema-gen/src crates/helm-schema-ir/src` finds none of the
+  deleted consumer reconstructions. The only remaining kind partition helper
+  is builder-owned `kind_partitioned_overlays` in `final_signals.rs`.
+- Focused kind proof: `CARGO_INCREMENTAL=0 cargo test -p helm-schema-gen
+  --lib kind_partition_matrix -- --nocapture`; exit 0, eight tests pass.
+- Focused shape proof: `CARGO_INCREMENTAL=0 cargo nextest run -p
+  helm-schema-ir -P integration -E 'binary(fragment_dict_config_guards)'`;
+  exit 0, six tests pass. The first default-profile invocation exits 4 with
+  zero tests and is rejected under Deviations.
+- Focused action proof: `CARGO_INCREMENTAL=0 cargo test -p helm-schema-gen
+  --lib else_with_local_join_does_not_treat_the_arm_as_unconditional --
+  --nocapture`; exit 0, one test passes.
+- Immutable build proof:
+  `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0
+  TMPDIR=target/arch-v3-step8-final5-build cargo nextest archive --workspace
+  --archive-file /private/tmp/arch-v3-step8-final5.tar.zst`; exit 0, 91
+  binaries and 135 files archived after the last production edit.
+- Clean schema dump: `TMPDIR=target/arch-v3-step8-final5-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step8-final5.tar.zst --profile integration
+  --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) |
+  binary(/final_output_policy/)'`; exit 0, 62 tests pass and 84 artifacts are
+  written in one batch.
+- Clean IR dump: `TMPDIR=target/arch-v3-step8-final5-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step8-final5.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts
+  are written in one batch.
+- Artifact parity proof: separate `diff -rq --exclude 'nextest-*'` commands
+  compare final5 schema and IR trees with Step 7b final1; both exit 0.
+- Full-depth acceptance and Helm proof:
+  `TMPDIR=target/arch-v3-step8-final5-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=b2ca4c76
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=target/arch-v3-step8-final5-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=target/arch-v3-step8-final5-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v3-step8-final5.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+  --run-ignored ignored-only --no-capture`; exit 0, 60 charts, 121,055
+  probes, zero flips, and zero unallowed accepted-abort cells.
+- Coverage-accounting proof: the step-local `jq` aggregation reports baseline
+  `b2ca4c76`, 60 charts, 112,260/112,260 base probes,
+  7,465/7,465 third-level probes, all disclosed bounded-drop counts above,
+  and the zero-cell Helm result.
+
+### Self-adversarial pass
+
+- Phase pressure: merely moving the old generator function verbatim before
+  branch evidence materialization changed observable facts. The final
+  operation preserves the old materialization boundary, while ownership and
+  typed flavor move to the producer.
+- Shape pressure: a valueless entry is not sufficient proof that arbitrary
+  following output belongs beneath it. The final repair matches fragment
+  variants, so scalar NOTES prose cannot acquire mapping semantics even when
+  its control predicate contains a range.
+- Action pressure: producer arms are indexed against parser-owned branch
+  order. A bounded evaluator fallback remains for missing facts, but it does
+  not reconstruct text or guess an else-if/else-with action.
+- Policy pressure: IR names semantic origin (`Ordinary`/`KindBranch`) only.
+  `ConditionalFlavor::KindPartition` remains generator-owned emission policy
+  and is selected exhaustively at the generator boundary.
+- Reporting pressure: the final output is byte-identical, but the rejected
+  Prometheus drift, archive/linker failures, zero-test invocation, and +13 LOC
+  estimate miss are recorded rather than described as normalization.
+
+- Gates on the final Step 8 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; the whole workspace completes with zero warnings.
+  - `task lint:fc`: exit 0.
+  - `cargo nextest run --workspace`: exit 0.
+  - `task test:integration`: exit 0.
+  - `task test:all`: exit 0.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS GNU-tool shim; all 32
+    charts pass. The literal unshimmed host command exits 201 on BSD
+    `xargs -a` before chart execution and is recorded under Deviations.
+  - `task tokei:core`: exit 0; 61,571 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +13 (61,558 to 61,571).
+- Commit: pending.

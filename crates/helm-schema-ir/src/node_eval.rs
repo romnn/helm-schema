@@ -64,6 +64,26 @@ pub(crate) fn control_header(source: &str, node: tree_sitter::Node<'_>) -> Optio
         .map(|text| TemplateHeader::parse_control(text.trim().to_string()))
 }
 
+pub(crate) fn control_headers(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+) -> Vec<Option<TemplateHeader>> {
+    let mut headers = Vec::new();
+    let mut walker = node.walk();
+    if !walker.goto_first_child() {
+        return headers;
+    }
+    loop {
+        if walker.field_name() == Some("condition") {
+            headers.push(control_header(source, walker.node()));
+        }
+        if !walker.goto_next_sibling() {
+            break;
+        }
+    }
+    headers
+}
+
 pub(crate) fn else_if_pairs<'node>(
     node: tree_sitter::Node<'node>,
     source: &str,

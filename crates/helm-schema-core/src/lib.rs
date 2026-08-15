@@ -23,10 +23,10 @@ mod value_path;
 pub use capability::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBranchBody};
 pub use capability_liveness::{CapabilityOracle, live_literals};
 pub use contract_signals::{
-    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractFailImplication,
-    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractRequirementTarget,
-    ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
-    QuotedScalarStyle, ValuesDefaultSource, ValuesProgramWrapper,
+    ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor, ConditionalPathOverlay,
+    ContractFailImplication, ContractPathSchemaEvidence, ContractRequirednessEvidence,
+    ContractRequirementTarget, ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement,
+    MetadataFieldKind, QuotedScalarStyle, ValuesDefaultSource, ValuesProgramWrapper,
 };
 pub use contract_use::{ContractUse, MergeLayerTransform, MergeLayersUse, SplitSegmentUse};
 pub use guard::{Guard, GuardValue};

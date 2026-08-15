@@ -148,14 +148,16 @@ fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
         when always:
           mapping:
             key "spec":
-              when (truthy(cfg) && range(cfg)):
-                splice cfg fragment
               when always:
                 mapping:
                   key "config":
-                  key dynamic [splice cfg fragment range-key]:
                     when (truthy(cfg) && range(cfg)):
-                      splice cfg.* scalar
+                      splice cfg fragment
+                    when truthy(cfg):
+                      mapping:
+                        key dynamic [splice cfg fragment range-key]:
+                          when range(cfg):
+                            splice cfg.* scalar
         reads:
           cfg [truthy(cfg)]
           cfg [truthy(cfg), range(cfg)]

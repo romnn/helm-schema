@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
-    ProviderSchemaFragment, ProviderSchemaUse, ResourceSchemaOracle,
+    ProviderSchemaFragment, ResourceSchemaOracle,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -454,66 +454,149 @@ pub(crate) fn collect_conditional_schemas(
         }
 
         for source_overlay in &evidence.conditional_overlays {
-            for partition in kind_partitioned_overlays(source_overlay) {
-                let overlay = partition.overlay;
-                if is_unconditional_self_presence_overlay(target_value_path, &overlay) {
-                    continue;
+            let overlay = source_overlay;
+            let flavor = match overlay.flavor {
+                helm_schema_core::ConditionalOverlayFlavor::Ordinary => ConditionalFlavor::Ordinary,
+                helm_schema_core::ConditionalOverlayFlavor::KindBranch => {
+                    ConditionalFlavor::KindPartition
                 }
-                if !guards_supported_for_conditional_lowering(
-                    &overlay.guards,
-                    &resolved_by_path,
-                    values_yaml_doc,
-                ) {
-                    continue;
-                }
+            };
+            if is_unconditional_self_presence_overlay(target_value_path, overlay) {
+                continue;
+            }
+            if !guards_supported_for_conditional_lowering(
+                &overlay.guards,
+                &resolved_by_path,
+                values_yaml_doc,
+            ) {
+                continue;
+            }
 
-                let target_segments = split_value_path(target_value_path);
-                let Some((outer_guards, nested_guard_scopes)) =
-                    partition_guard_scopes(&target_segments, &overlay.guards)
-                else {
-                    continue;
-                };
-                let ancestor_segments = nested_guard_scopes
-                    .first()
-                    .filter(|_| outer_guards.is_empty())
-                    .map(|scope| {
-                        let mut parent = scope.ancestor_segments.clone();
-                        parent.pop();
-                        parent
-                    })
-                    .unwrap_or_else(|| {
-                        conditional_ancestor_segments(&target_segments, &outer_guards)
-                    });
-                let active_by_defaults =
-                    evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
-                let resolved_overlay =
-                    resolve_overlay_target_schema(target_value_path, &overlay, provider);
-                // The range header supplies the branch's complete runtime
-                // domain. Its declared sample shape cannot remain as an
-                // unconditional base without deleting valid map or integer
-                // lanes while the range is active.
-                let preserve_overlay_base = !overlay.evidence.facts.is_ranged_source
-                    && (overlay.preserve_base_schema || has_unconditional_self_presence_contract);
-                // A ranged branch's runtime domain is structural evidence, not
-                // a declared-default placeholder. Add it before conditional
-                // policy so a fixed map default cannot reintroduce literal
-                // member typing that the loop body erased (for example through
-                // `quote`).
-                let member_implication_owns_range_domain = overlay.evidence.facts.is_ranged_source
-                    && crate::schema_model::is_empty_schema(&resolved_overlay.schema)
-                    && member_implication_covers_range_domain(
-                        &evidence.fail_implications,
-                        &overlay.guards,
-                    );
-                if member_implication_owns_range_domain {
-                    // The fail implication already carries the branch's
-                    // complete runtime domain. Keep only this empty ownership
-                    // marker; passing an evidence-free overlay through
-                    // conditional policy would substitute its values.yaml
-                    // sample shape and re-type members the range accepts.
+            let target_segments = split_value_path(target_value_path);
+            let Some((outer_guards, nested_guard_scopes)) =
+                partition_guard_scopes(&target_segments, &overlay.guards)
+            else {
+                continue;
+            };
+            let ancestor_segments = nested_guard_scopes
+                .first()
+                .filter(|_| outer_guards.is_empty())
+                .map(|scope| {
+                    let mut parent = scope.ancestor_segments.clone();
+                    parent.pop();
+                    parent
+                })
+                .unwrap_or_else(|| conditional_ancestor_segments(&target_segments, &outer_guards));
+            let active_by_defaults = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
+            let resolved_overlay =
+                resolve_overlay_target_schema(target_value_path, overlay, provider);
+            // The range header supplies the branch's complete runtime
+            // domain. Its declared sample shape cannot remain as an
+            // unconditional base without deleting valid map or integer
+            // lanes while the range is active.
+            let preserve_overlay_base = !overlay.evidence.facts.is_ranged_source
+                && (overlay.preserve_base_schema || has_unconditional_self_presence_contract);
+            // A ranged branch's runtime domain is structural evidence, not
+            // a declared-default placeholder. Add it before conditional
+            // policy so a fixed map default cannot reintroduce literal
+            // member typing that the loop body erased (for example through
+            // `quote`).
+            let member_implication_owns_range_domain = overlay.evidence.facts.is_ranged_source
+                && crate::schema_model::is_empty_schema(&resolved_overlay.schema)
+                && member_implication_covers_range_domain(
+                    &evidence.fail_implications,
+                    &overlay.guards,
+                );
+            if member_implication_owns_range_domain {
+                // The fail implication already carries the branch's
+                // complete runtime domain. Keep only this empty ownership
+                // marker; passing an evidence-free overlay through
+                // conditional policy would substitute its values.yaml
+                // sample shape and re-type members the range accepts.
+                conditionals.push(LoweredConjunct::schema(
+                    EmissionOrigin::Overlay,
+                    flavor,
+                    target_value_path.clone(),
+                    ancestor_segments.clone(),
+                    target_segments
+                        .get(ancestor_segments.len()..)
+                        .unwrap_or_default()
+                        .to_vec(),
+                    outer_guards.clone(),
+                    nested_guard_scopes.clone(),
+                    crate::schema_model::empty_schema(),
+                    None,
+                    if preserve_overlay_base {
+                        ConditionalBaseEffect::Preserve
+                    } else {
+                        ConditionalBaseEffect::Own
+                    },
+                    false,
+                ));
+                continue;
+            }
+            let range_allows_integer = !overlay.evidence.facts.has_structured_item_descendants
+                && !overlay.evidence.facts.has_destructured_range_use
+                && !overlay.evidence.facts.has_string_contract_items;
+            let mut range_domain = crate::runtime_iterable_schema(range_allows_integer);
+            let mut member_schemas = Vec::new();
+            if let Some(member_schema) = member_descendant_projection(
+                target_segments.as_slice(),
+                member_descendants
+                    .get(target_segments.as_slice())
+                    .map(Vec::as_slice)
+                    .unwrap_or_default(),
+                &mut insertion_abstentions.conditional_member_projection,
+            ) {
+                member_schemas.push(member_schema);
+            }
+            if let Some(member_schema) =
+                structural_collection_member_projection(&resolved_target.structural_schema)
+            {
+                member_schemas.push(member_schema);
+            }
+            if !member_schemas.is_empty() {
+                let member_schema = crate::merge::merge_schema_list(member_schemas);
+                range_domain = crate::schema_tree::conjoin_collection_member_schema_value(
+                    range_domain,
+                    &member_schema,
+                );
+            }
+            let branch_schema = if overlay.evidence.facts.has_self_range_guard_render_use {
+                // The render executes only after this subject's range
+                // header accepts it. That exact Helm input domain has
+                // priority over a provider backprojection from the loop
+                // body, which describes the emitted value but cannot
+                // make the already-running range reject its subject.
+                crate::merge::union_schema_list(vec![resolved_overlay.schema, range_domain])
+            } else if overlay.evidence.facts.is_ranged_source {
+                crate::merge::merge_schema_list(vec![resolved_overlay.schema, range_domain])
+            } else {
+                resolved_overlay.schema
+            };
+            let target_schema = conditional_target_schema(
+                target_value_path,
+                overlay,
+                values_yaml_doc,
+                branch_schema,
+                &resolved_target.values_yaml_schema,
+                resolved_target.schema.clone(),
+                active_by_defaults,
+            );
+            if crate::schema_model::is_empty_schema(&target_schema) {
+                // A branch whose renders are all serialized proves the wider
+                // contract inside that branch, so it carries no schema; it
+                // stays a conditional TARGET so base classification still
+                // uncloses/opens the base the way the guarded renders
+                // demand. Mixed branches resolve their own evidence above,
+                // so a stringified occurrence never erases an independent
+                // stricter sibling.
+                if overlay.evidence.facts.used_as_serialized
+                    || overlay.evidence.facts.used_as_yaml_serialized
+                {
                     conditionals.push(LoweredConjunct::schema(
                         EmissionOrigin::Overlay,
-                        partition.flavor,
+                        flavor,
                         target_value_path.clone(),
                         ancestor_segments.clone(),
                         target_segments
@@ -522,7 +605,7 @@ pub(crate) fn collect_conditional_schemas(
                             .to_vec(),
                         outer_guards.clone(),
                         nested_guard_scopes.clone(),
-                        crate::schema_model::empty_schema(),
+                        target_schema,
                         None,
                         if preserve_overlay_base {
                             ConditionalBaseEffect::Preserve
@@ -531,115 +614,33 @@ pub(crate) fn collect_conditional_schemas(
                         },
                         false,
                     ));
-                    continue;
                 }
-                let range_allows_integer = !overlay.evidence.facts.has_structured_item_descendants
-                    && !overlay.evidence.facts.has_destructured_range_use
-                    && !overlay.evidence.facts.has_string_contract_items;
-                let mut range_domain = crate::runtime_iterable_schema(range_allows_integer);
-                let mut member_schemas = Vec::new();
-                if let Some(member_schema) = member_descendant_projection(
-                    target_segments.as_slice(),
-                    member_descendants
-                        .get(target_segments.as_slice())
-                        .map(Vec::as_slice)
-                        .unwrap_or_default(),
-                    &mut insertion_abstentions.conditional_member_projection,
-                ) {
-                    member_schemas.push(member_schema);
-                }
-                if let Some(member_schema) =
-                    structural_collection_member_projection(&resolved_target.structural_schema)
-                {
-                    member_schemas.push(member_schema);
-                }
-                if !member_schemas.is_empty() {
-                    let member_schema = crate::merge::merge_schema_list(member_schemas);
-                    range_domain = crate::schema_tree::conjoin_collection_member_schema_value(
-                        range_domain,
-                        &member_schema,
-                    );
-                }
-                let branch_schema = if overlay.evidence.facts.has_self_range_guard_render_use {
-                    // The render executes only after this subject's range
-                    // header accepts it. That exact Helm input domain has
-                    // priority over a provider backprojection from the loop
-                    // body, which describes the emitted value but cannot
-                    // make the already-running range reject its subject.
-                    crate::merge::union_schema_list(vec![resolved_overlay.schema, range_domain])
-                } else if overlay.evidence.facts.is_ranged_source {
-                    crate::merge::merge_schema_list(vec![resolved_overlay.schema, range_domain])
-                } else {
-                    resolved_overlay.schema
-                };
-                let target_schema = conditional_target_schema(
-                    target_value_path,
-                    &overlay,
-                    values_yaml_doc,
-                    branch_schema,
-                    &resolved_target.values_yaml_schema,
-                    resolved_target.schema.clone(),
-                    active_by_defaults,
-                );
-                if crate::schema_model::is_empty_schema(&target_schema) {
-                    // A branch whose renders are all serialized proves the wider
-                    // contract inside that branch, so it carries no schema; it
-                    // stays a conditional TARGET so base classification still
-                    // uncloses/opens the base the way the guarded renders
-                    // demand. Mixed branches resolve their own evidence above,
-                    // so a stringified occurrence never erases an independent
-                    // stricter sibling.
-                    if overlay.evidence.facts.used_as_serialized
-                        || overlay.evidence.facts.used_as_yaml_serialized
-                    {
-                        conditionals.push(LoweredConjunct::schema(
-                            EmissionOrigin::Overlay,
-                            partition.flavor,
-                            target_value_path.clone(),
-                            ancestor_segments.clone(),
-                            target_segments
-                                .get(ancestor_segments.len()..)
-                                .unwrap_or_default()
-                                .to_vec(),
-                            outer_guards.clone(),
-                            nested_guard_scopes.clone(),
-                            target_schema,
-                            None,
-                            if preserve_overlay_base {
-                                ConditionalBaseEffect::Preserve
-                            } else {
-                                ConditionalBaseEffect::Own
-                            },
-                            false,
-                        ));
-                    }
-                    continue;
-                }
-                let provider_schema_candidate = resolved_overlay
-                    .provider_schema_candidate
-                    .filter(|candidate| candidate.survives_as(&target_schema));
-
-                conditionals.push(LoweredConjunct::schema(
-                    EmissionOrigin::Overlay,
-                    partition.flavor,
-                    target_value_path.clone(),
-                    ancestor_segments.clone(),
-                    target_segments
-                        .get(ancestor_segments.len()..)
-                        .unwrap_or_default()
-                        .to_vec(),
-                    outer_guards,
-                    nested_guard_scopes,
-                    target_schema,
-                    provider_schema_candidate,
-                    if preserve_overlay_base {
-                        ConditionalBaseEffect::Preserve
-                    } else {
-                        ConditionalBaseEffect::Own
-                    },
-                    false,
-                ));
+                continue;
             }
+            let provider_schema_candidate = resolved_overlay
+                .provider_schema_candidate
+                .filter(|candidate| candidate.survives_as(&target_schema));
+
+            conditionals.push(LoweredConjunct::schema(
+                EmissionOrigin::Overlay,
+                flavor,
+                target_value_path.clone(),
+                ancestor_segments.clone(),
+                target_segments
+                    .get(ancestor_segments.len()..)
+                    .unwrap_or_default()
+                    .to_vec(),
+                outer_guards,
+                nested_guard_scopes,
+                target_schema,
+                provider_schema_candidate,
+                if preserve_overlay_base {
+                    ConditionalBaseEffect::Preserve
+                } else {
+                    ConditionalBaseEffect::Own
+                },
+                false,
+            ));
         }
     }
 
@@ -1170,126 +1171,6 @@ fn dereferenced_payload_subschema(
         )),
         other => Some(other.clone()),
     }
-}
-
-pub(crate) struct PartitionedOverlay {
-    pub(crate) overlay: ConditionalPathOverlay,
-    pub(crate) flavor: ConditionalFlavor,
-}
-
-pub(crate) fn kind_partitioned_overlays(
-    overlay: &ConditionalPathOverlay,
-) -> Vec<PartitionedOverlay> {
-    let mut kinds = BTreeSet::new();
-    for use_ in &overlay.evidence.provider_schema_uses {
-        if provider_use_depends_on_kind_selector(use_) {
-            kinds.insert(use_.resource.kind.clone());
-            kinds.extend(use_.resource.kind_candidates.iter().cloned());
-        }
-    }
-    if kinds.is_empty() {
-        return vec![PartitionedOverlay {
-            overlay: overlay.clone(),
-            flavor: ConditionalFlavor::Ordinary,
-        }];
-    }
-    let Some(selector) = kind_selector_path(&overlay.guards, &kinds) else {
-        return vec![PartitionedOverlay {
-            overlay: overlay.clone(),
-            flavor: ConditionalFlavor::Ordinary,
-        }];
-    };
-
-    let mut partitions = Vec::new();
-    let mut ordinary = overlay.clone();
-    ordinary
-        .evidence
-        .provider_schema_uses
-        .retain(|use_| !provider_use_depends_on_kind_selector(use_));
-    if !ordinary.evidence.provider_schema_uses.is_empty() {
-        partitions.push(PartitionedOverlay {
-            overlay: ordinary,
-            flavor: ConditionalFlavor::Ordinary,
-        });
-    }
-
-    partitions.extend(kinds.into_iter().filter_map(|kind| {
-        let mut partition = overlay.clone();
-        partition
-            .evidence
-            .provider_schema_uses
-            .retain(provider_use_depends_on_kind_selector);
-        partition.guards.push(ConditionalGuard::Eq {
-            path: selector.clone(),
-            value: GuardValue::string(kind.clone()),
-        });
-        partition.guards.sort();
-        partition.guards.dedup();
-        partition.evidence.provider_schema_uses.retain_mut(|use_| {
-            let supports_kind =
-                use_.resource.kind == kind || use_.resource.kind_candidates.contains(&kind);
-            if supports_kind {
-                use_.resource.kind = kind.clone();
-                use_.resource.kind_candidates.clear();
-            }
-            supports_kind
-        });
-        (!partition.evidence.provider_schema_uses.is_empty()).then_some(PartitionedOverlay {
-            overlay: partition,
-            flavor: ConditionalFlavor::KindPartition,
-        })
-    }));
-    partitions
-}
-
-fn provider_use_depends_on_kind_selector(use_: &ProviderSchemaUse) -> bool {
-    !use_.resource.kind_candidates.is_empty() || !use_.resource.kind_branches.is_empty()
-}
-
-fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> Option<String> {
-    fn collect(guard: &ConditionalGuard, kinds: &BTreeSet<String>, paths: &mut BTreeSet<String>) {
-        match guard {
-            ConditionalGuard::Eq {
-                path,
-                value: GuardValue::String(value),
-            }
-            | ConditionalGuard::NotEq {
-                path,
-                value: GuardValue::String(value),
-            } if kinds.contains(value) => {
-                paths.insert(path.clone());
-            }
-            ConditionalGuard::Not(inner) => collect(inner, kinds, paths),
-            ConditionalGuard::AllOf(inner) | ConditionalGuard::AnyOf(inner) => {
-                for guard in inner {
-                    collect(guard, kinds, paths);
-                }
-            }
-            ConditionalGuard::Truthy { .. }
-            | ConditionalGuard::With { .. }
-            | ConditionalGuard::Eq { .. }
-            | ConditionalGuard::NotEq { .. }
-            | ConditionalGuard::Absent { .. }
-            | ConditionalGuard::TypeIs { .. }
-            | ConditionalGuard::MatchesPattern { .. }
-            | ConditionalGuard::IntGt { .. }
-            | ConditionalGuard::IntLt { .. }
-            | ConditionalGuard::HasKey { .. }
-            | ConditionalGuard::ContainsMemberEquals { .. }
-            | ConditionalGuard::ContainsTruthyMember { .. }
-            | ConditionalGuard::ContainsEquals { .. }
-            | ConditionalGuard::AtMostOneMember { .. }
-            | ConditionalGuard::MinMembers { .. } => {}
-        }
-    }
-
-    let mut paths = BTreeSet::new();
-    for guard in guards {
-        collect(guard, kinds, &mut paths);
-    }
-    let mut paths = paths.into_iter();
-    let path = paths.next()?;
-    paths.next().is_none().then_some(path)
 }
 
 fn is_unconditional_self_presence_overlay(

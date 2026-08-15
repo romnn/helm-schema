@@ -248,6 +248,15 @@ impl ConditionalGuard {
     }
 }
 
+/// Semantic source of one conditional evidence branch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ConditionalOverlayFlavor {
+    /// Evidence selected by ordinary values control flow.
+    Ordinary,
+    /// Evidence tied to one producer-known Kubernetes kind alternative.
+    KindBranch,
+}
+
 /// Conditionally-scoped values path whose schema can be lowered under a
 /// values-decidable guard set.
 ///
@@ -262,6 +271,8 @@ pub struct ConditionalPathOverlay {
     /// Keep the unconditional/base schema for this path alongside the guarded
     /// overlay because the contract also observed an unguarded use.
     pub preserve_base_schema: bool,
+    /// Semantic origin of the conditional evidence.
+    pub flavor: ConditionalOverlayFlavor,
 }
 
 /// Branch-local evidence for one conditional schema overlay.

@@ -3,10 +3,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::scalar_value::TruthCondition;
 use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
 use helm_schema_core::{
-    ApproximationRole, ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
-    ContractFailImplication, ContractPathSchemaEvidence, ContractRequirednessEvidence,
-    ContractRequirementTarget, ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement,
-    GuardDnf, GuardValue, MetadataFieldKind, Predicate,
+    ApproximationRole, ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor,
+    ConditionalPathOverlay, ContractFailImplication, ContractPathSchemaEvidence,
+    ContractRequirednessEvidence, ContractRequirementTarget, ContractSchemaSignals,
+    ContractValuePathFacts, FailValueRequirement, GuardDnf, GuardValue, MetadataFieldKind,
+    Predicate,
 };
 
 mod conditional_overlays;

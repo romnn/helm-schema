@@ -62,7 +62,6 @@ fn walk_guarded(
     member_sibling_keys: &std::collections::BTreeSet<String>,
     structural_sibling_conditions: &[Predicate],
 ) {
-    let open_mapping_entry = find_open_mapping_entry(guarded);
     // Sibling MAPPING arms of the same guarded position contribute literal
     // keys to the object a member-level splice completes (`- name: tmp`
     // above a `toYaml .Values.tmpVolume | nindent` action): the splice's
@@ -134,15 +133,9 @@ fn walk_guarded(
         if pushed {
             conditions.push(condition.clone());
         }
-        let mut effective_path = path.clone();
-        if let Some((owner, key)) = &open_mapping_entry
-            && arm_continues_open_mapping_entry(owner, key, condition, node)
-        {
-            effective_path.0.push(key.clone());
-        }
         walk_node(
             node,
-            &effective_path,
+            path,
             conditions,
             contract,
             &sibling_keys,
@@ -151,77 +144,6 @@ fn walk_guarded(
         if pushed {
             conditions.pop();
         }
-    }
-}
-
-/// The trailing literal mapping entry an arm leaves OPEN: a valueless
-/// `config:`-style header whose only successors are dynamic entries. A
-/// `with`-scoped splice (velero's `{{- with .config }} config: {{- range … }}`
-/// pattern) emits the header in one arm and the member writes as sibling
-/// arms; those siblings belong under the header's key.
-fn find_open_mapping_entry(guarded: &Guarded<AbstractFragment>) -> Option<(Predicate, String)> {
-    guarded.arms.iter().rev().find_map(|(condition, node)| {
-        let AbstractFragment::Mapping(mapping) = node else {
-            return None;
-        };
-        mapping
-            .entries
-            .iter()
-            .enumerate()
-            .rev()
-            .find_map(|(index, entry)| match &entry.key {
-                EntryKey::Literal(key)
-                    if !key.is_empty()
-                        && entry.value.arms.is_empty()
-                        && mapping
-                            .entries
-                            .get(index + 1..)
-                            .into_iter()
-                            .flatten()
-                            .all(|entry| matches!(entry.key, EntryKey::Dynamic(_))) =>
-                {
-                    Some((condition.clone(), key.clone()))
-                }
-                _ => None,
-            })
-    })
-}
-
-/// Whether an arm's content continues the open mapping entry of `owner`:
-/// the arm must run under (at least) the owner's conjuncts, and be either a
-/// ranged splice or a mapping made only of dynamic entries and the open
-/// header itself.
-fn arm_continues_open_mapping_entry(
-    owner: &Predicate,
-    key: &str,
-    condition: &Predicate,
-    node: &AbstractFragment,
-) -> bool {
-    if !predicate_is_conjunctive_subset(owner, condition) {
-        return false;
-    }
-    match node {
-        AbstractFragment::Splice(_) => predicate_has_range(condition),
-        AbstractFragment::Mapping(mapping) => mapping.entries.iter().all(|entry| {
-            matches!(entry.key, EntryKey::Dynamic(_))
-                || matches!(&entry.key, EntryKey::Literal(entry_key)
-                    if entry_key == key && entry.value.arms.is_empty())
-        }),
-        _ => false,
-    }
-}
-
-fn predicate_has_range(predicate: &Predicate) -> bool {
-    match predicate {
-        Predicate::Guard(Guard::Range { .. }) => true,
-        Predicate::Not(inner) => predicate_has_range(inner),
-        Predicate::And(predicates) | Predicate::Or(predicates) => {
-            predicates.iter().any(predicate_has_range)
-        }
-        Predicate::True
-        | Predicate::False
-        | Predicate::Approximate { .. }
-        | Predicate::Guard(_) => false,
     }
 }
 
