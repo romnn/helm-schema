@@ -3911,7 +3911,7 @@ adjudication.
 
 ## Step 9 operation 1 — split generator responsibilities
 
-- Status: landed; commit pending.
+- Status: landed; commit `6351a414`.
 - Contract: representation-only, pure file decomposition of
   `overlay_lowering.rs`, `resolve_policy.rs`, and `path_resolver.rs` along
   their existing lowering, scalar-preimage, declared-default, and
@@ -4054,3 +4054,168 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +5 (61,571 to 61,576).
+
+## Step 9 operation 2 — lossless schema-node ingestion
+
+- Status: landed; commit pending.
+- Contract: representation-only. Implement D4 option 1 at the schema-tree
+  ingestion boundary: parse the generator-owned JSON Schema keyword subset
+  into typed fields, retain every unmodeled keyword losslessly in an ordered
+  `extra_keywords` map, and prove `from_value(value).into_value() == value`.
+  This operation does not migrate downstream mutation readers; those folds are
+  separately scheduled in operation 3.
+- Acceptance baseline: `6351a414`.
+- Baseline production Rust LOC: 61,576.
+
+### Pre-registered acceptance expectations
+
+- Provider schemas, generated schemas, Boolean schemas, unknown-keyword
+  schemas, and mixed-combinator schemas round-trip byte-for-byte as
+  `serde_json::Value` through the new ingestion boundary.
+- The schema and IR fixture dumps remain byte-identical to operation 1. The
+  full-depth compiled battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- Existing schema operations continue to receive the same representation in
+  this operation. No `Foreign` mutation branch is deleted or redirected until
+  its separately attributable operation 3 fold proves exact full-schema
+  equality.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected
+  preflight.
+
+### Measured results
+
+- `SchemaNode::from_value` now lowers Boolean schemas and object-valued
+  schemas into the typed lossless carrier. The generator-owned subset covers
+  type declarations, properties, required names, additional properties,
+  items, `allOf`/`anyOf`/`oneOf`, `not`, `if`/`then`/`else`, and the modeled
+  size constraints. Every other entry remains in a lexically ordered
+  `extra_keywords` map.
+- Known child-schema keywords recurse through the same carrier. Unknown or
+  ill-shaped known keywords remain untouched in `extra_keywords`; non-schema
+  JSON values remain the explicit internal `Foreign` placeholder lane until
+  the separately scheduled operation 3 folds.
+- The production insertion site is `deduped_sorted_any_of`, where each
+  already-normalized arm crosses the lossless ingestion boundary immediately
+  before typed `anyOf` construction and emission. No mutation can observe a
+  new representation in this operation.
+- Exact round-trip tests cover a committed Kubernetes provider schema, a
+  committed generated schema, both Boolean schemas, an unknown provider
+  extension beside typed object keywords, and nested mixed combinators.
+- The immutable final archive contains 91 binaries and 135 files. Its clean
+  schema dump runs 62 tests and writes 84 artifacts; its clean IR dump runs
+  one test and writes 18 artifacts. Both artifact trees are byte-identical to
+  operation 1.
+- The full-depth battery covers 60 charts and 121,055 probes with zero
+  acceptance flips and zero candidate-accepts/Helm-aborts cells. Mandatory
+  base coverage is 112,260/112,260 with zero drops; third-level coverage is
+  7,465/7,465 with zero drops. The disclosed bounded categories drop 28,874
+  probes.
+
+### Deviations
+
+- The first production insertion preflight re-ingested the whole schema after
+  declared-member materialization. All 607 unrelated generator tests passed,
+  but two nested-range controls changed because later tree mutations still
+  dispatch on the legacy representation. That insertion site was rejected;
+  no fixture or dump artifact was produced or adopted. It is direct evidence
+  for operation 3's rule that each mutation must fold separately.
+- The first compile preflight exposed three non-exhaustive matches at the
+  canonical-constraint boundary. The new carrier was added explicitly as
+  not-applicable there; operation 2 does not silently treat it as a migrated
+  mutation path.
+- Lint preflights rejected the unboxed keyword carrier, a redundant match arm,
+  and one unnecessary test semicolon. The final carrier boxes its large
+  keyword payload and the focused source has no lint suppression.
+- The first immutable-archive launch exited 101 because the fresh absolute
+  `TMPDIR` had been named but not created, so clang could not allocate a
+  temporary file. It produced no archive. The same command succeeded after
+  creating the step-local directory; only that archive participates in the
+  accepted dumps and battery.
+- This foundational operation adds 275 production Rust lines. The typed
+  fields precede the operation 3 deletion of dual mutation implementations,
+  so it cannot individually satisfy the aggregate Step 9 negative estimate.
+  No live semantics or round-trip coverage is deleted to force the interim
+  number.
+
+### Adjudication evidence
+
+- There are no changed acceptance cells to adjudicate. Helm 4.2.3
+  adjudication remained enabled for the full battery and reports zero
+  candidate-accepts/Helm-aborts cells against the zero allowance.
+- Exact schema and IR artifact parity independently proves that the one
+  production parse/emit insertion preserves fixture bytes.
+
+### Producer and route coverage
+
+| Schema family or route | Typed/lossless proof | Result |
+|---|---|---|
+| Provider schema | Committed Kubernetes HPA provider document | Exact round trip. |
+| Generated schema | Committed NATS service schema fixture | Exact round trip. |
+| Boolean schema | `true` and `false` roots | Exact round trip. |
+| Unknown keyword | Kubernetes-style extension beside modeled object fields | Retained exactly in ordered extras. |
+| Mixed combinators | Nested `allOf`, `oneOf`, `anyOf`, `if`/`then`/`else`, and `not` | Exact recursive round trip. |
+| Production union ingestion | Deduplicated and sorted `anyOf` arms | All 84 schema artifacts remain exact. |
+
+### Review dossier
+
+- Focused carrier proof: `cargo nextest run -p helm-schema-gen`; exit 0, all
+  609 generator tests pass, including both new lossless-schema tests.
+- Immutable build: `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0
+  TMPDIR=target/arch-v3-step9-op2-final1-build cargo nextest archive
+  --workspace --archive-file
+  /private/tmp/arch-v3-step9-op2-final1.tar.zst`; exit 0, 91 binaries and 135
+  files archived.
+- Clean schema dump: absolute
+  `TMPDIR=target/arch-v3-step9-op2-final1-schema`, `SCHEMA_DUMP=1`, and the
+  established 62-test archive filter; exit 0, 62/62 tests pass and 84
+  artifacts are written in one batch.
+- Clean IR dump: absolute `TMPDIR=target/arch-v3-step9-op2-final1-ir`,
+  `SYMBOLIC_DUMP=1`, `IR_DUMP=1`, and `test(ir_corpus_fixtures_match)`; exit 0,
+  one test passes and 18 artifacts are written in one batch.
+- Artifact comparison: separate `diff -rq --exclude 'nextest-*'` commands
+  compare the accepted schema and IR trees with operation 1 final3; both exit
+  0.
+- Full-depth proof: absolute
+  `TMPDIR=target/arch-v3-step9-op2-final1-prober`, baseline `6351a414`, the
+  accepted schema dump and coverage paths, and `ADJUDICATE_WITH_HELM=1` run
+  the ignored Round 74 battery from the immutable archive; exit 0, 60 charts,
+  121,055 probes, and zero flips.
+- Coverage aggregation: `jq` reports 112,260/112,260 mandatory base probes,
+  7,465/7,465 mandatory third-level probes, 427 guard pairs, 238 composite
+  pairs, 28,874 disclosed bounded drops, and zero mandatory drops.
+
+### Self-adversarial pass
+
+- Losslessness pressure: modeled fields preserve presence, sequence order,
+  and nested Boolean schemas; an ill-shaped modeled keyword is not consumed,
+  so serialization cannot normalize or discard it accidentally.
+- Opaque-key pressure: mutations have no access to `extra_keywords`; the only
+  operation in this round is ingestion followed by emission, which proves the
+  selected D4 policy without opportunistic raw mutation.
+- Adoption pressure: the rejected whole-document insertion demonstrates that
+  compiling a new carrier is not proof a mutation supports it. The final
+  insertion is deliberately beyond all mutations, and operation 3 retains the
+  obligation to fold each dual operation separately.
+- Scope pressure: no existing `Foreign` mutation branch, fixture, emission
+  policy, or provider-selection behavior changes in this operation.
+
+- Gates on the final Step 9 operation 2 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0.
+  - `cargo nextest run --workspace`: exit 0.
+  - `task test:integration`: exit 0.
+  - `task test:all`: exit 0.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims and explicit
+    `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - `task tokei:core`: exit 0; 61,851 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +275 (61,576 to 61,851).

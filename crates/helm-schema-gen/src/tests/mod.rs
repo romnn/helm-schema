@@ -51,6 +51,7 @@ mod range_contracts;
 mod range_key_contracts;
 mod required_source_backprojection;
 mod resolve_policy;
+mod schema_node;
 mod shape_alternatives;
 mod string_transform_contracts;
 mod validator_reachability;

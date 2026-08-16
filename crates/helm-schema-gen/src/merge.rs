@@ -182,7 +182,7 @@ fn deduped_sorted_any_of(variants: Vec<Value>) -> Value {
     if let [variant] = variants.as_slice() {
         return variant.clone();
     }
-    SchemaNode::any_of(variants.into_iter().map(SchemaNode::foreign).collect()).into_value()
+    SchemaNode::any_of(variants.into_iter().map(SchemaNode::from_value).collect()).into_value()
 }
 
 fn flatten_union_variants(v: Value) -> Vec<Value> {

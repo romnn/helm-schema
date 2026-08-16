@@ -60,7 +60,40 @@ pub(crate) enum SchemaNode {
         items: Option<Box<SchemaNode>>,
         min_items: Option<u64>,
     },
+    Typed(TypedSchemaNode),
     Foreign(Value),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum TypedSchemaNode {
+    Boolean(bool),
+    Keywords(Box<SchemaKeywords>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum SchemaTypeKeyword {
+    Single(JsonSchemaType),
+    Multiple(Vec<JsonSchemaType>),
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(crate) struct SchemaKeywords {
+    schema_type: Option<SchemaTypeKeyword>,
+    properties: Option<BTreeMap<String, SchemaNode>>,
+    required: Option<Vec<String>>,
+    additional_properties: Option<Box<SchemaNode>>,
+    items: Option<Box<SchemaNode>>,
+    all_of: Option<Vec<SchemaNode>>,
+    any_of: Option<Vec<SchemaNode>>,
+    one_of: Option<Vec<SchemaNode>>,
+    not: Option<Box<SchemaNode>>,
+    if_schema: Option<Box<SchemaNode>>,
+    then_schema: Option<Box<SchemaNode>>,
+    else_schema: Option<Box<SchemaNode>>,
+    min_properties: Option<u64>,
+    max_properties: Option<u64>,
+    min_items: Option<u64>,
+    extra_keywords: BTreeMap<String, Value>,
 }
 
 pub(crate) fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
@@ -100,6 +133,7 @@ impl SchemaNode {
                     items.visit_foreign_values(visit);
                 }
             }
+            Self::Typed(schema) => schema.visit_embedded_values(visit),
             Self::Foreign(value) => visit(value),
         }
     }
@@ -110,6 +144,55 @@ impl SchemaNode {
 
     pub(crate) fn foreign(value: Value) -> Self {
         Self::Foreign(value)
+    }
+
+    pub(crate) fn from_value(value: Value) -> Self {
+        match value {
+            Value::Bool(value) => Self::Typed(TypedSchemaNode::Boolean(value)),
+            Value::Object(mut object) => {
+                let schema_type = take_schema_type(&mut object);
+                let properties = take_object_keyword(&mut object, "properties").map(|properties| {
+                    properties
+                        .into_iter()
+                        .map(|(key, value)| (key, Self::from_value(value)))
+                        .collect()
+                });
+                let required = take_string_array_keyword(&mut object, "required");
+                let additional_properties =
+                    take_schema_keyword(&mut object, "additionalProperties");
+                let items = take_schema_keyword(&mut object, "items");
+                let all_of = take_schema_array_keyword(&mut object, "allOf");
+                let any_of = take_schema_array_keyword(&mut object, "anyOf");
+                let one_of = take_schema_array_keyword(&mut object, "oneOf");
+                let not = take_schema_keyword(&mut object, "not");
+                let if_schema = take_schema_keyword(&mut object, "if");
+                let then_schema = take_schema_keyword(&mut object, "then");
+                let else_schema = take_schema_keyword(&mut object, "else");
+                let min_properties = take_u64_keyword(&mut object, "minProperties");
+                let max_properties = take_u64_keyword(&mut object, "maxProperties");
+                let min_items = take_u64_keyword(&mut object, "minItems");
+
+                Self::Typed(TypedSchemaNode::Keywords(Box::new(SchemaKeywords {
+                    schema_type,
+                    properties,
+                    required,
+                    additional_properties,
+                    items,
+                    all_of,
+                    any_of,
+                    one_of,
+                    not,
+                    if_schema,
+                    then_schema,
+                    else_schema,
+                    min_properties,
+                    max_properties,
+                    min_items,
+                    extra_keywords: object.into_iter().collect(),
+                })))
+            }
+            value => Self::Foreign(value),
+        }
     }
 
     pub(crate) fn typed(ty: JsonSchemaType) -> Self {
@@ -331,7 +414,7 @@ impl SchemaNode {
     pub(crate) fn is_array_like(&self) -> bool {
         match self {
             Self::Array { .. } => true,
-            Self::Object { .. } | Self::Empty => false,
+            Self::Object { .. } | Self::Empty | Self::Typed(_) => false,
             Self::Foreign(value) => foreign_is_array_like(value),
         }
     }
@@ -449,6 +532,7 @@ impl SchemaNode {
             Self::Array { items, .. } if head == "*" => items
                 .as_deref()
                 .is_some_and(|child| child.path_exists(tail)),
+            Self::Typed(schema) => schema.path_exists(path_segments),
             Self::Foreign(value) => foreign_path_exists(value, path_segments),
             _ => false,
         }
@@ -541,8 +625,218 @@ impl SchemaNode {
                 }
                 Value::Object(object)
             }
+            Self::Typed(schema) => schema.into_value(),
             Self::Foreign(value) => value,
         }
+    }
+}
+
+impl TypedSchemaNode {
+    fn visit_embedded_values(&self, visit: &mut impl FnMut(&Value)) {
+        match self {
+            Self::Boolean(_) => {}
+            Self::Keywords(keywords) => keywords.visit_embedded_values(visit),
+        }
+    }
+
+    fn path_exists(&self, path_segments: &[String]) -> bool {
+        match self {
+            Self::Boolean(_) => false,
+            Self::Keywords(keywords) => keywords.path_exists(path_segments),
+        }
+    }
+
+    fn into_value(self) -> Value {
+        match self {
+            Self::Boolean(value) => Value::Bool(value),
+            Self::Keywords(keywords) => keywords.into_value(),
+        }
+    }
+}
+
+impl SchemaKeywords {
+    fn visit_embedded_values(&self, visit: &mut impl FnMut(&Value)) {
+        for value in self.extra_keywords.values() {
+            visit(value);
+        }
+        for schema in self.child_schemas() {
+            schema.visit_foreign_values(visit);
+        }
+    }
+
+    fn path_exists(&self, path_segments: &[String]) -> bool {
+        let Some((head, tail)) = path_segments.split_first() else {
+            return true;
+        };
+        self.all_of
+            .iter()
+            .flatten()
+            .any(|schema| schema.path_exists(path_segments))
+            || self
+                .properties
+                .as_ref()
+                .and_then(|properties| properties.get(head))
+                .is_some_and(|schema| schema.path_exists(tail))
+            || (head == "*"
+                && self
+                    .items
+                    .as_deref()
+                    .is_some_and(|schema| schema.path_exists(tail)))
+    }
+
+    fn child_schemas(&self) -> impl Iterator<Item = &SchemaNode> {
+        self.properties
+            .iter()
+            .flat_map(|properties| properties.values())
+            .chain(self.additional_properties.iter().map(Box::as_ref))
+            .chain(self.items.iter().map(Box::as_ref))
+            .chain(self.all_of.iter().flatten())
+            .chain(self.any_of.iter().flatten())
+            .chain(self.one_of.iter().flatten())
+            .chain(self.not.iter().map(Box::as_ref))
+            .chain(self.if_schema.iter().map(Box::as_ref))
+            .chain(self.then_schema.iter().map(Box::as_ref))
+            .chain(self.else_schema.iter().map(Box::as_ref))
+    }
+
+    fn into_value(self) -> Value {
+        let mut object = self.extra_keywords.into_iter().collect::<Map<_, _>>();
+        if let Some(schema_type) = self.schema_type {
+            object.insert("type".to_string(), schema_type.into_value());
+        }
+        if let Some(properties) = self.properties {
+            object.insert(
+                "properties".to_string(),
+                Value::Object(
+                    properties
+                        .into_iter()
+                        .map(|(key, value)| (key, value.into_value()))
+                        .collect(),
+                ),
+            );
+        }
+        if let Some(required) = self.required {
+            object.insert(
+                "required".to_string(),
+                Value::Array(required.into_iter().map(Value::String).collect()),
+            );
+        }
+        insert_schema_keyword(
+            &mut object,
+            "additionalProperties",
+            self.additional_properties,
+        );
+        insert_schema_keyword(&mut object, "items", self.items);
+        insert_schema_array_keyword(&mut object, "allOf", self.all_of);
+        insert_schema_array_keyword(&mut object, "anyOf", self.any_of);
+        insert_schema_array_keyword(&mut object, "oneOf", self.one_of);
+        insert_schema_keyword(&mut object, "not", self.not);
+        insert_schema_keyword(&mut object, "if", self.if_schema);
+        insert_schema_keyword(&mut object, "then", self.then_schema);
+        insert_schema_keyword(&mut object, "else", self.else_schema);
+        insert_u64_keyword(&mut object, "minProperties", self.min_properties);
+        insert_u64_keyword(&mut object, "maxProperties", self.max_properties);
+        insert_u64_keyword(&mut object, "minItems", self.min_items);
+        Value::Object(object)
+    }
+}
+
+impl SchemaTypeKeyword {
+    fn into_value(self) -> Value {
+        match self {
+            Self::Single(schema_type) => Value::String(schema_type.as_str().to_string()),
+            Self::Multiple(schema_types) => Value::Array(
+                schema_types
+                    .into_iter()
+                    .map(|schema_type| Value::String(schema_type.as_str().to_string()))
+                    .collect(),
+            ),
+        }
+    }
+}
+
+fn take_schema_type(object: &mut Map<String, Value>) -> Option<SchemaTypeKeyword> {
+    let parsed = match object.get("type")? {
+        Value::String(name) => JsonSchemaType::from_name(name).map(SchemaTypeKeyword::Single),
+        Value::Array(names) => names
+            .iter()
+            .map(|name| JsonSchemaType::from_name(name.as_str()?))
+            .collect::<Option<Vec<_>>>()
+            .map(SchemaTypeKeyword::Multiple),
+        _ => None,
+    }?;
+    object.remove("type");
+    Some(parsed)
+}
+
+fn take_object_keyword(object: &mut Map<String, Value>, key: &str) -> Option<Map<String, Value>> {
+    match object.remove(key)? {
+        Value::Object(value) => Some(value),
+        value => {
+            object.insert(key.to_string(), value);
+            None
+        }
+    }
+}
+
+fn take_string_array_keyword(object: &mut Map<String, Value>, key: &str) -> Option<Vec<String>> {
+    let values = object
+        .get(key)?
+        .as_array()?
+        .iter()
+        .map(|value| value.as_str().map(str::to_string))
+        .collect::<Option<Vec<_>>>()?;
+    object.remove(key);
+    Some(values)
+}
+
+fn take_schema_keyword(object: &mut Map<String, Value>, key: &str) -> Option<Box<SchemaNode>> {
+    object.remove(key).map(SchemaNode::from_value).map(Box::new)
+}
+
+fn take_schema_array_keyword(
+    object: &mut Map<String, Value>,
+    key: &str,
+) -> Option<Vec<SchemaNode>> {
+    object.get(key)?.as_array()?;
+    let Value::Array(values) = object.remove(key)? else {
+        return None;
+    };
+    Some(values.into_iter().map(SchemaNode::from_value).collect())
+}
+
+fn take_u64_keyword(object: &mut Map<String, Value>, key: &str) -> Option<u64> {
+    let value = object.get(key)?.as_u64()?;
+    object.remove(key);
+    Some(value)
+}
+
+fn insert_schema_keyword(
+    object: &mut Map<String, Value>,
+    key: &str,
+    schema: Option<Box<SchemaNode>>,
+) {
+    if let Some(schema) = schema {
+        object.insert(key.to_string(), schema.into_value());
+    }
+}
+
+fn insert_schema_array_keyword(
+    object: &mut Map<String, Value>,
+    key: &str,
+    schemas: Option<Vec<SchemaNode>>,
+) {
+    if let Some(schemas) = schemas {
+        object.insert(
+            key.to_string(),
+            Value::Array(schemas.into_iter().map(SchemaNode::into_value).collect()),
+        );
+    }
+}
+
+fn insert_u64_keyword(object: &mut Map<String, Value>, key: &str, value: Option<u64>) {
+    if let Some(value) = value {
+        object.insert(key.to_string(), Value::Number(Number::from(value)));
     }
 }
 

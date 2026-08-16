@@ -212,9 +212,10 @@ fn canonicalize_constraint_at_parts(
             *child_value = child.into_value();
             outcome
         }
-        SchemaNode::Empty | SchemaNode::Array { .. } | SchemaNode::Foreign(_) => {
-            CanonicalConstraintOutcome::NotApplicable
-        }
+        SchemaNode::Empty
+        | SchemaNode::Array { .. }
+        | SchemaNode::Typed(_)
+        | SchemaNode::Foreign(_) => CanonicalConstraintOutcome::NotApplicable,
     }
 }
 
@@ -244,6 +245,7 @@ fn canonicalize_object_constraint(node: &mut SchemaNode) -> Option<CanonicalCons
             CanonicalConstraintApplication::Redundant,
         )),
         SchemaNode::Array { .. }
+        | SchemaNode::Typed(_)
         | SchemaNode::Foreign(
             Value::Null | Value::Number(_) | Value::String(_) | Value::Array(_) | Value::Object(_),
         ) => None,
@@ -326,6 +328,7 @@ fn apply_required_entries(
         )),
         SchemaNode::Empty
         | SchemaNode::Array { .. }
+        | SchemaNode::Typed(_)
         | SchemaNode::Foreign(
             Value::Null
             | Value::Bool(true)
