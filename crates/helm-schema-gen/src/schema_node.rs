@@ -78,22 +78,22 @@ pub(crate) enum SchemaTypeKeyword {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct SchemaKeywords {
-    schema_type: Option<SchemaTypeKeyword>,
-    properties: Option<BTreeMap<String, SchemaNode>>,
-    required: Option<Vec<String>>,
-    additional_properties: Option<Box<SchemaNode>>,
-    items: Option<Box<SchemaNode>>,
-    all_of: Option<Vec<SchemaNode>>,
-    any_of: Option<Vec<SchemaNode>>,
-    one_of: Option<Vec<SchemaNode>>,
-    not: Option<Box<SchemaNode>>,
-    if_schema: Option<Box<SchemaNode>>,
-    then_schema: Option<Box<SchemaNode>>,
-    else_schema: Option<Box<SchemaNode>>,
-    min_properties: Option<u64>,
-    max_properties: Option<u64>,
-    min_items: Option<u64>,
-    extra_keywords: BTreeMap<String, Value>,
+    pub(crate) schema_type: Option<SchemaTypeKeyword>,
+    pub(crate) properties: Option<BTreeMap<String, SchemaNode>>,
+    pub(crate) required: Option<Vec<String>>,
+    pub(crate) additional_properties: Option<Box<SchemaNode>>,
+    pub(crate) items: Option<Box<SchemaNode>>,
+    pub(crate) all_of: Option<Vec<SchemaNode>>,
+    pub(crate) any_of: Option<Vec<SchemaNode>>,
+    pub(crate) one_of: Option<Vec<SchemaNode>>,
+    pub(crate) not: Option<Box<SchemaNode>>,
+    pub(crate) if_schema: Option<Box<SchemaNode>>,
+    pub(crate) then_schema: Option<Box<SchemaNode>>,
+    pub(crate) else_schema: Option<Box<SchemaNode>>,
+    pub(crate) min_properties: Option<u64>,
+    pub(crate) max_properties: Option<u64>,
+    pub(crate) min_items: Option<u64>,
+    pub(crate) extra_keywords: BTreeMap<String, Value>,
 }
 
 pub(crate) fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
@@ -133,7 +133,7 @@ impl SchemaNode {
                     items.visit_foreign_values(visit);
                 }
             }
-            Self::Typed(schema) => schema.visit_embedded_values(visit),
+            Self::Typed(schema) => visit(&schema.clone().into_value()),
             Self::Foreign(value) => visit(value),
         }
     }
@@ -143,7 +143,7 @@ impl SchemaNode {
     }
 
     pub(crate) fn foreign(value: Value) -> Self {
-        Self::Foreign(value)
+        Self::from_value(value)
     }
 
     pub(crate) fn from_value(value: Value) -> Self {
@@ -196,7 +196,10 @@ impl SchemaNode {
     }
 
     pub(crate) fn typed(ty: JsonSchemaType) -> Self {
-        Self::Foreign(Value::Object(type_map(ty)))
+        Self::Typed(TypedSchemaNode::Keywords(Box::new(SchemaKeywords {
+            schema_type: Some(SchemaTypeKeyword::Single(ty)),
+            ..SchemaKeywords::default()
+        })))
     }
 
     pub(crate) fn type_named(name: &str) -> Self {
@@ -206,8 +209,8 @@ impl SchemaNode {
     pub(crate) fn typed_keyword(mut self, key: impl Into<String>, value: Value) -> Self {
         let key = key.into();
         match &mut self {
-            Self::Foreign(Value::Object(object)) => {
-                object.insert(key, value);
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords.extra_keywords.insert(key, value);
                 self
             }
             _ => self,
@@ -249,8 +252,17 @@ impl SchemaNode {
     }
 
     pub(crate) fn property(mut self, key: impl Into<String>, value: SchemaNode) -> Self {
-        if let Self::Object { properties, .. } = &mut self {
-            properties.insert(key.into(), value);
+        match &mut self {
+            Self::Object { properties, .. } => {
+                properties.insert(key.into(), value);
+            }
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords
+                    .properties
+                    .get_or_insert_with(BTreeMap::new)
+                    .insert(key.into(), value);
+            }
+            _ => {}
         }
         self
     }
@@ -267,8 +279,19 @@ impl SchemaNode {
     }
 
     pub(crate) fn require(mut self, key: impl Into<String>) -> Self {
-        if let Self::Object { required, .. } = &mut self {
-            required.insert(key.into());
+        let key = key.into();
+        match &mut self {
+            Self::Object { required, .. } => {
+                required.insert(key);
+            }
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                let required = keywords.required.get_or_insert_with(Vec::new);
+                if !required.contains(&key) {
+                    required.push(key);
+                    required.sort();
+                }
+            }
+            _ => {}
         }
         self
     }
@@ -303,8 +326,8 @@ impl SchemaNode {
             Self::Object { all_of, .. } => {
                 all_of.push(value);
             }
-            Self::Foreign(schema) => {
-                push_all_of_value(schema, value);
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords.all_of.get_or_insert_with(Vec::new).push(value);
             }
             _ => {}
         }
@@ -377,7 +400,12 @@ impl SchemaNode {
                 .iter()
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect(),
-            Self::Foreign(value) => foreign_property_entries(value),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords
+                .properties
+                .iter()
+                .flat_map(|properties| properties.iter())
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect(),
             _ => Vec::new(),
         }
     }
@@ -385,11 +413,10 @@ impl SchemaNode {
     pub(crate) fn take_property(&mut self, key: &str) -> Option<SchemaNode> {
         match self {
             Self::Object { properties, .. } => properties.remove(key),
-            Self::Foreign(Value::Object(object)) => object
-                .get_mut("properties")
-                .and_then(Value::as_object_mut)
-                .and_then(|properties| properties.remove(key))
-                .map(SchemaNode::foreign),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords
+                .properties
+                .as_mut()
+                .and_then(|properties| properties.remove(key)),
             _ => None,
         }
     }
@@ -399,13 +426,11 @@ impl SchemaNode {
             Self::Object { properties, .. } => {
                 properties.insert(key, value);
             }
-            Self::Foreign(Value::Object(object)) => {
-                let properties = object
-                    .entry("properties".to_string())
-                    .or_insert_with(|| Value::Object(Map::new()));
-                if let Value::Object(properties) = properties {
-                    properties.insert(key, value.into_value());
-                }
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords
+                    .properties
+                    .get_or_insert_with(BTreeMap::new)
+                    .insert(key, value);
             }
             _ => {}
         }
@@ -414,13 +439,16 @@ impl SchemaNode {
     pub(crate) fn is_array_like(&self) -> bool {
         match self {
             Self::Array { .. } => true,
-            Self::Object { .. } | Self::Empty | Self::Typed(_) => false,
-            Self::Foreign(value) => foreign_is_array_like(value),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.is_array_like(),
+            Self::Object { .. }
+            | Self::Empty
+            | Self::Typed(TypedSchemaNode::Boolean(_))
+            | Self::Foreign(_) => false,
         }
     }
 
     pub(crate) fn is_false_schema(&self) -> bool {
-        matches!(self, Self::Foreign(Value::Bool(false)))
+        matches!(self, Self::Typed(TypedSchemaNode::Boolean(false)))
     }
 
     pub(crate) fn opens_unknown_object_fields(&self) -> bool {
@@ -429,7 +457,9 @@ impl SchemaNode {
                 additional_properties: Some(additional_properties),
                 ..
             } => !additional_properties.is_false_schema(),
-            Self::Foreign(Value::Object(object)) => foreign_opens_unknown_object_fields(object),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords.opens_unknown_object_fields()
+            }
             _ => false,
         }
     }
@@ -437,7 +467,7 @@ impl SchemaNode {
     pub(crate) fn is_exact_empty_object(&self) -> bool {
         match self {
             Self::Object { max_properties, .. } => *max_properties == Some(0),
-            Self::Foreign(Value::Object(object)) => foreign_is_exact_empty_object(object),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.max_properties == Some(0),
             _ => false,
         }
     }
@@ -447,7 +477,7 @@ impl SchemaNode {
             Self::Object {
                 properties, all_of, ..
             } => !properties.is_empty() || !all_of.is_empty(),
-            Self::Foreign(Value::Object(object)) => foreign_has_object_descendants(object),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.has_object_descendants(),
             _ => false,
         }
     }
@@ -464,7 +494,9 @@ impl SchemaNode {
                     && *max_properties != Some(0)
                     && all_of.is_empty()
             }
-            Self::Foreign(Value::Object(object)) => foreign_is_plain_closed_values_object(object),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords.is_plain_closed_values_object()
+            }
             _ => false,
         }
     }
@@ -480,13 +512,13 @@ impl SchemaNode {
             {
                 *additional_properties = Some(Box::new(Self::empty()));
             }
-            Self::Foreign(Value::Object(object))
-                if object.get("additionalProperties").and_then(Value::as_bool) == Some(false) =>
+            Self::Typed(TypedSchemaNode::Keywords(keywords))
+                if keywords
+                    .additional_properties
+                    .as_deref()
+                    .is_some_and(Self::is_false_schema) =>
             {
-                object.insert(
-                    "additionalProperties".to_string(),
-                    Self::empty().into_value(),
-                );
+                keywords.additional_properties = Some(Box::new(Self::empty()));
             }
             _ => {}
         }
@@ -498,8 +530,10 @@ impl SchemaNode {
                 *max_properties = None;
                 true
             }
-            Self::Foreign(Value::Object(object)) if foreign_is_exact_empty_object(object) => {
-                object.remove("maxProperties");
+            Self::Typed(TypedSchemaNode::Keywords(keywords))
+                if keywords.max_properties == Some(0) =>
+            {
+                keywords.max_properties = None;
                 true
             }
             _ => false,
@@ -533,7 +567,6 @@ impl SchemaNode {
                 .as_deref()
                 .is_some_and(|child| child.path_exists(tail)),
             Self::Typed(schema) => schema.path_exists(path_segments),
-            Self::Foreign(value) => foreign_path_exists(value, path_segments),
             _ => false,
         }
     }
@@ -541,7 +574,7 @@ impl SchemaNode {
     pub(crate) fn is_empty_slot(&self) -> bool {
         match self {
             Self::Empty | Self::Foreign(Value::Null) => true,
-            Self::Foreign(value) => crate::schema_model::is_empty_schema(value),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.is_empty_schema(),
             _ => false,
         }
     }
@@ -632,13 +665,6 @@ impl SchemaNode {
 }
 
 impl TypedSchemaNode {
-    fn visit_embedded_values(&self, visit: &mut impl FnMut(&Value)) {
-        match self {
-            Self::Boolean(_) => {}
-            Self::Keywords(keywords) => keywords.visit_embedded_values(visit),
-        }
-    }
-
     fn path_exists(&self, path_segments: &[String]) -> bool {
         match self {
             Self::Boolean(_) => false,
@@ -655,21 +681,68 @@ impl TypedSchemaNode {
 }
 
 impl SchemaKeywords {
-    fn visit_embedded_values(&self, visit: &mut impl FnMut(&Value)) {
-        for value in self.extra_keywords.values() {
-            visit(value);
+    pub(crate) fn is_array_like(&self) -> bool {
+        match &self.schema_type {
+            Some(SchemaTypeKeyword::Single(JsonSchemaType::Array)) => true,
+            Some(SchemaTypeKeyword::Single(_) | SchemaTypeKeyword::Multiple(_)) => false,
+            None => self.items.is_some(),
         }
-        for schema in self.child_schemas() {
-            schema.visit_foreign_values(visit);
-        }
+    }
+
+    fn opens_unknown_object_fields(&self) -> bool {
+        self.additional_properties
+            .as_deref()
+            .is_some_and(|schema| !schema.is_false_schema())
+            || self
+                .extra_keywords
+                .get("x-kubernetes-preserve-unknown-fields")
+                .and_then(Value::as_bool)
+                == Some(true)
+    }
+
+    fn has_object_descendants(&self) -> bool {
+        self.properties
+            .as_ref()
+            .is_some_and(|properties| !properties.is_empty())
+            || self
+                .all_of
+                .as_ref()
+                .is_some_and(|schemas| !schemas.is_empty())
+    }
+
+    fn is_plain_closed_values_object(&self) -> bool {
+        self.schema_type == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object))
+            && self
+                .additional_properties
+                .as_deref()
+                .is_some_and(SchemaNode::is_false_schema)
+            && self.max_properties != Some(0)
+            && self
+                .properties
+                .as_ref()
+                .is_some_and(|properties| !properties.is_empty())
+            && self.all_of.is_none()
+            && self.any_of.is_none()
+            && self.one_of.is_none()
+            && !self.extra_keywords.contains_key("description")
+            && !self.extra_keywords.contains_key("$ref")
+            && !self
+                .extra_keywords
+                .keys()
+                .any(|key| key.starts_with("x-kubernetes-"))
+    }
+
+    pub(crate) fn is_empty_schema(&self) -> bool {
+        self == &Self::default()
     }
 
     fn path_exists(&self, path_segments: &[String]) -> bool {
         let Some((head, tail)) = path_segments.split_first() else {
             return true;
         };
-        self.all_of
-            .iter()
+        [&self.any_of, &self.all_of, &self.one_of]
+            .into_iter()
+            .flatten()
             .flatten()
             .any(|schema| schema.path_exists(path_segments))
             || self
@@ -682,21 +755,6 @@ impl SchemaKeywords {
                     .items
                     .as_deref()
                     .is_some_and(|schema| schema.path_exists(tail)))
-    }
-
-    fn child_schemas(&self) -> impl Iterator<Item = &SchemaNode> {
-        self.properties
-            .iter()
-            .flat_map(|properties| properties.values())
-            .chain(self.additional_properties.iter().map(Box::as_ref))
-            .chain(self.items.iter().map(Box::as_ref))
-            .chain(self.all_of.iter().flatten())
-            .chain(self.any_of.iter().flatten())
-            .chain(self.one_of.iter().flatten())
-            .chain(self.not.iter().map(Box::as_ref))
-            .chain(self.if_schema.iter().map(Box::as_ref))
-            .chain(self.then_schema.iter().map(Box::as_ref))
-            .chain(self.else_schema.iter().map(Box::as_ref))
     }
 
     fn into_value(self) -> Value {
@@ -838,118 +896,6 @@ fn insert_u64_keyword(object: &mut Map<String, Value>, key: &str, value: Option<
     if let Some(value) = value {
         object.insert(key.to_string(), Value::Number(Number::from(value)));
     }
-}
-
-fn push_all_of_value(schema: &mut Value, value: SchemaNode) {
-    let Value::Object(object) = schema else {
-        return;
-    };
-    let all_of = object
-        .entry("allOf".to_string())
-        .or_insert_with(|| Value::Array(Vec::new()));
-    if let Value::Array(entries) = all_of {
-        entries.push(value.into_value());
-    }
-}
-
-fn foreign_property_entries(value: &Value) -> Vec<(String, SchemaNode)> {
-    value
-        .as_object()
-        .and_then(|object| object.get("properties"))
-        .and_then(Value::as_object)
-        .map(|properties| {
-            properties
-                .iter()
-                .map(|(key, value)| (key.clone(), SchemaNode::foreign(value.clone())))
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
-fn foreign_is_array_like(value: &Value) -> bool {
-    match crate::schema_model::schema_type(value) {
-        Some("array") => true,
-        Some(_) => false,
-        None => value
-            .as_object()
-            .is_some_and(|object| object.contains_key("items")),
-    }
-}
-
-fn foreign_opens_unknown_object_fields(object: &Map<String, Value>) -> bool {
-    object
-        .get("additionalProperties")
-        .is_some_and(|value| value.as_bool() != Some(false))
-        || object
-            .get("x-kubernetes-preserve-unknown-fields")
-            .and_then(Value::as_bool)
-            == Some(true)
-}
-
-fn foreign_is_exact_empty_object(object: &Map<String, Value>) -> bool {
-    object.get("maxProperties").and_then(Value::as_u64) == Some(0)
-}
-
-fn foreign_has_object_descendants(object: &Map<String, Value>) -> bool {
-    object
-        .get("properties")
-        .and_then(Value::as_object)
-        .is_some_and(|properties| !properties.is_empty())
-        || object
-            .get("allOf")
-            .and_then(Value::as_array)
-            .is_some_and(|entries| !entries.is_empty())
-}
-
-fn foreign_is_plain_closed_values_object(object: &Map<String, Value>) -> bool {
-    object.get("type").and_then(Value::as_str) == Some("object")
-        && object.get("additionalProperties").and_then(Value::as_bool) == Some(false)
-        && object
-            .get("properties")
-            .and_then(Value::as_object)
-            .is_some_and(|properties| !properties.is_empty())
-        && !object.contains_key("anyOf")
-        && !object.contains_key("oneOf")
-        && !object.contains_key("allOf")
-        && !object.contains_key("description")
-        && !object
-            .keys()
-            .any(|key| key.starts_with("x-kubernetes-") || key == "$ref")
-}
-
-fn foreign_path_exists(value: &Value, path_segments: &[String]) -> bool {
-    if path_segments.is_empty() {
-        return !crate::schema_model::is_empty_schema(value);
-    }
-
-    let Some((head, tail)) = path_segments.split_first() else {
-        return false;
-    };
-    let Some(object) = value.as_object() else {
-        return false;
-    };
-
-    for composition_key in ["anyOf", "allOf", "oneOf"] {
-        if let Some(entries) = object.get(composition_key).and_then(Value::as_array)
-            && entries
-                .iter()
-                .any(|entry| foreign_path_exists(entry, path_segments))
-        {
-            return true;
-        }
-    }
-
-    if head == "*" {
-        return object
-            .get("items")
-            .is_some_and(|child| foreign_path_exists(child, tail));
-    }
-
-    object
-        .get("properties")
-        .and_then(Value::as_object)
-        .and_then(|properties| properties.get(head))
-        .is_some_and(|child| foreign_path_exists(child, tail))
 }
 
 fn type_map(ty: JsonSchemaType) -> Map<String, Value> {

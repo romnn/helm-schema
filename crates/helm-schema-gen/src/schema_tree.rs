@@ -4,8 +4,7 @@ use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
 use crate::merge::merge_two_schemas;
-use crate::schema_model::is_empty_schema;
-use crate::schema_node::SchemaNode;
+use crate::schema_node::{JsonSchemaType, SchemaNode, SchemaTypeKeyword, TypedSchemaNode};
 use crate::values_yaml::{
     child_value_path, schema_node_from_yaml_value_with_skips, yaml_value_at_segments,
 };
@@ -51,9 +50,15 @@ impl SchemaDocument {
     /// analyzed chart never reads; closing the namespace to this chart's
     /// observed members would reject valid umbrella configurations.
     pub(crate) fn open_helm_global_namespace(&mut self) {
-        if let SchemaNode::Object { properties, .. } = &mut self.root
-            && let Some(global) = properties.get_mut("global")
-        {
+        let global = match &mut self.root {
+            SchemaNode::Object { properties, .. } => properties.get_mut("global"),
+            SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => keywords
+                .properties
+                .as_mut()
+                .and_then(|properties| properties.get_mut("global")),
+            _ => None,
+        };
+        if let Some(global) = global {
             global.open_object();
         }
     }
@@ -178,9 +183,7 @@ fn canonicalize_constraint_at_parts(
         if !is_object_constraint && !is_not_null_constraint(constraint) {
             return CanonicalConstraintOutcome::NotApplicable;
         }
-        if matches!(node, SchemaNode::Foreign(Value::Bool(false)))
-            || constraint_is_implied_by_node(node, constraint)
-        {
+        if node.is_false_schema() || constraint_is_implied_by_node(node, constraint) {
             return CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant);
         }
         let existing = std::mem::replace(node, SchemaNode::empty());
@@ -199,29 +202,29 @@ fn canonicalize_constraint_at_parts(
             .map_or(CanonicalConstraintOutcome::NotApplicable, |child| {
                 canonicalize_constraint_at_parts(child, tail, constraint)
             }),
-        SchemaNode::Foreign(Value::Object(object)) => {
-            let Some(child_value) = object
-                .get_mut("properties")
-                .and_then(Value::as_object_mut)
-                .and_then(|properties| properties.get_mut(head))
-            else {
-                return CanonicalConstraintOutcome::NotApplicable;
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
+            let child = if head == "*" {
+                keywords.items.as_deref_mut()
+            } else {
+                keywords
+                    .properties
+                    .as_mut()
+                    .and_then(|properties| properties.get_mut(head))
             };
-            let mut child = SchemaNode::foreign(std::mem::take(child_value));
-            let outcome = canonicalize_constraint_at_parts(&mut child, tail, constraint);
-            *child_value = child.into_value();
-            outcome
+            child.map_or(CanonicalConstraintOutcome::NotApplicable, |child| {
+                canonicalize_constraint_at_parts(child, tail, constraint)
+            })
         }
         SchemaNode::Empty
         | SchemaNode::Array { .. }
-        | SchemaNode::Typed(_)
+        | SchemaNode::Typed(TypedSchemaNode::Boolean(_))
         | SchemaNode::Foreign(_) => CanonicalConstraintOutcome::NotApplicable,
     }
 }
 
 fn canonicalize_object_constraint(node: &mut SchemaNode) -> Option<CanonicalConstraintOutcome> {
     match node {
-        SchemaNode::Empty | SchemaNode::Foreign(Value::Bool(true)) => {
+        SchemaNode::Empty | SchemaNode::Typed(TypedSchemaNode::Boolean(true)) => {
             *node = SchemaNode::type_named("object");
             Some(CanonicalConstraintOutcome::Applied(
                 CanonicalConstraintApplication::Emitted,
@@ -236,19 +239,18 @@ fn canonicalize_object_constraint(node: &mut SchemaNode) -> Option<CanonicalCons
                 CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
             })
         }
-        SchemaNode::Foreign(value) if crate::schema_model::schema_type(value) == Some("object") => {
-            Some(CanonicalConstraintOutcome::Applied(
-                CanonicalConstraintApplication::Redundant,
-            ))
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
+            if keywords.schema_type == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object)) {
+                return Some(CanonicalConstraintOutcome::Applied(
+                    CanonicalConstraintApplication::Redundant,
+                ));
+            }
+            None
         }
-        SchemaNode::Foreign(Value::Bool(false)) => Some(CanonicalConstraintOutcome::Applied(
-            CanonicalConstraintApplication::Redundant,
-        )),
-        SchemaNode::Array { .. }
-        | SchemaNode::Typed(_)
-        | SchemaNode::Foreign(
-            Value::Null | Value::Number(_) | Value::String(_) | Value::Array(_) | Value::Object(_),
-        ) => None,
+        SchemaNode::Typed(TypedSchemaNode::Boolean(false)) => Some(
+            CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant),
+        ),
+        SchemaNode::Array { .. } | SchemaNode::Foreign(_) => None,
     }
 }
 
@@ -286,15 +288,12 @@ fn apply_required_entries(
                 CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
             })
         }
-        SchemaNode::Foreign(Value::Object(object))
-            if object.get("type").and_then(Value::as_str) == Some("object") =>
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords))
+            if keywords.schema_type == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object)) =>
         {
-            let all_slots_exist = object
-                .get("properties")
-                .and_then(Value::as_object)
-                .is_some_and(|properties| {
-                    required.iter().all(|name| properties.contains_key(*name))
-                });
+            let all_slots_exist = keywords.properties.as_ref().is_some_and(|properties| {
+                required.iter().all(|name| properties.contains_key(*name))
+            });
             if !all_slots_exist {
                 return Some(CanonicalConstraintOutcome::NotApplicable);
             }
@@ -303,40 +302,28 @@ fn apply_required_entries(
                     CanonicalConstraintApplication::Redundant,
                 ));
             }
-            let existing = object
-                .entry("required".to_string())
-                .or_insert_with(|| Value::Array(Vec::new()));
-            let Some(existing) = existing.as_array_mut() else {
-                return Some(CanonicalConstraintOutcome::NotApplicable);
-            };
+            let existing = keywords.required.get_or_insert_with(Vec::new);
             let before = existing.len();
             for name in required {
-                let name = Value::String(name.to_string());
+                let name = name.to_string();
                 if !existing.contains(&name) {
                     existing.push(name);
                 }
             }
-            existing.sort_by(|left, right| left.as_str().cmp(&right.as_str()));
+            existing.sort();
             Some(if existing.len() == before {
                 CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant)
             } else {
                 CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
             })
         }
-        SchemaNode::Foreign(Value::Bool(false)) => Some(CanonicalConstraintOutcome::Applied(
-            CanonicalConstraintApplication::Redundant,
-        )),
+        SchemaNode::Typed(TypedSchemaNode::Boolean(false)) => Some(
+            CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant),
+        ),
         SchemaNode::Empty
         | SchemaNode::Array { .. }
         | SchemaNode::Typed(_)
-        | SchemaNode::Foreign(
-            Value::Null
-            | Value::Bool(true)
-            | Value::Number(_)
-            | Value::String(_)
-            | Value::Array(_)
-            | Value::Object(_),
-        ) => Some(CanonicalConstraintOutcome::NotApplicable),
+        | SchemaNode::Foreign(_) => Some(CanonicalConstraintOutcome::NotApplicable),
     }
 }
 
@@ -359,19 +346,14 @@ fn relax_host_object_type(node: &mut SchemaNode, path_segments: &[String]) {
     let Some((head, tail)) = path_segments.split_first() else {
         match node {
             SchemaNode::Object { typed, .. } => *typed = false,
-            // A declared mapping default resolves to a foreign base pinning
-            // `type: object`; keep its scalar rejection and admit only the
-            // null spelling helm deletes before any consumer runs.
-            SchemaNode::Foreign(Value::Object(object))
-                if object.get("type").and_then(Value::as_str) == Some("object") =>
+            SchemaNode::Typed(TypedSchemaNode::Keywords(keywords))
+                if keywords.schema_type
+                    == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object)) =>
             {
-                object.insert(
-                    "type".to_string(),
-                    Value::Array(vec![
-                        Value::String("object".to_string()),
-                        Value::String("null".to_string()),
-                    ]),
-                );
+                keywords.schema_type = Some(SchemaTypeKeyword::Multiple(vec![
+                    JsonSchemaType::Object,
+                    JsonSchemaType::Null,
+                ]));
             }
             _ => {}
         }
@@ -383,15 +365,13 @@ fn relax_host_object_type(node: &mut SchemaNode, path_segments: &[String]) {
                 relax_host_object_type(child, tail);
             }
         }
-        SchemaNode::Foreign(Value::Object(object)) => {
-            if let Some(child_value) = object
-                .get_mut("properties")
-                .and_then(Value::as_object_mut)
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
+            if let Some(child) = keywords
+                .properties
+                .as_mut()
                 .and_then(|properties| properties.get_mut(head))
             {
-                let mut child = SchemaNode::foreign(std::mem::take(child_value));
-                relax_host_object_type(&mut child, tail);
-                *child_value = child.into_value();
+                relax_host_object_type(child, tail);
             }
         }
         _ => {}
@@ -665,9 +645,22 @@ fn append_conditional_at_parts(
                 return;
             }
         }
+        if let SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) = node {
+            let member = keywords
+                .additional_properties
+                .get_or_insert_with(|| Box::new(SchemaNode::empty()));
+            if !member.is_false_schema() {
+                if tail.is_empty() {
+                    push_conditional_entry(member, condition, then_schema, true);
+                } else {
+                    append_conditional_at_parts(member, tail, condition, then_schema);
+                }
+                return;
+            }
+        }
     }
 
-    if matches!(node, SchemaNode::Foreign(_)) && !node.is_empty_slot() {
+    if matches!(node, SchemaNode::Typed(_) | SchemaNode::Foreign(_)) && !node.is_empty_slot() {
         let mut fragment = SchemaNode::empty();
         append_conditional_at_parts(&mut fragment, path_segments, condition, then_schema);
         merge_conditional_fragment_into_foreign_slot(node, fragment);
@@ -726,7 +719,7 @@ fn push_conditional_entry(
 
     if !matches!(
         node,
-        SchemaNode::Object { .. } | SchemaNode::Foreign(Value::Object(_))
+        SchemaNode::Object { .. } | SchemaNode::Typed(TypedSchemaNode::Keywords(_))
     ) {
         // A type-partition arm deliberately selects one runtime kind out of
         // several the chart handles, so its carrier holds vacuously for the
@@ -951,11 +944,21 @@ fn new_array_slot() -> SchemaNode {
 }
 
 fn ensure_array_items_schema(node: &mut SchemaNode) -> &mut SchemaNode {
-    if !matches!(node, SchemaNode::Array { .. }) {
+    let is_array = matches!(node, SchemaNode::Array { .. })
+        || matches!(
+            node,
+            SchemaNode::Typed(TypedSchemaNode::Keywords(keywords))
+                if keywords.is_array_like()
+        );
+    if !is_array {
         *node = new_array_slot();
     }
     match node {
         SchemaNode::Array { items, .. } => items
+            .get_or_insert_with(|| Box::new(SchemaNode::foreign(Value::Null)))
+            .as_mut(),
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => keywords
+            .items
             .get_or_insert_with(|| Box::new(SchemaNode::foreign(Value::Null)))
             .as_mut(),
         _ => ensure_array_items_schema(node),
@@ -963,15 +966,24 @@ fn ensure_array_items_schema(node: &mut SchemaNode) -> &mut SchemaNode {
 }
 
 fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, SchemaNode> {
-    match node {
-        SchemaNode::Object { .. } => {}
-        SchemaNode::Foreign(value) if is_empty_schema(value) => {
-            // An EMPTY slot coerced to host members carries no shape claim
-            // of its own: it stays open and untyped (guarded member reads
-            // supply the conditional object requirement).
+    let is_object = matches!(node, SchemaNode::Object { .. })
+        || matches!(
+            node,
+            SchemaNode::Typed(TypedSchemaNode::Keywords(keywords))
+            if keywords.schema_type
+                == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object))
+                || keywords.schema_type.is_none()
+                    && (keywords.properties.is_some()
+                        || keywords.additional_properties.is_some())
+        );
+    if !is_object {
+        let is_empty_schema = matches!(
+            node,
+            SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) if keywords.is_empty_schema()
+        );
+        if is_empty_schema {
             *node = SchemaNode::untyped_member_host();
-        }
-        _ => {
+        } else {
             // Hosting a member under a non-object slot proves keys exist,
             // not that the member set is bounded: the coerced host stays
             // open (the strict root closure is created separately).
@@ -980,6 +992,9 @@ fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, Sche
     }
     match node {
         SchemaNode::Object { properties, .. } => properties,
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
+            keywords.properties.get_or_insert_with(BTreeMap::new)
+        }
         _ => ensure_object_properties(node),
     }
 }
@@ -995,32 +1010,48 @@ fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
     // the slot into a union whose typeless alternative matches scalars
     // (jenkins' additionalAgents member-map contract): conjoin the
     // carrier's member slot into the object instead.
-    if let SchemaNode::Foreign(Value::Object(carrier)) = &schema
-        && !carrier.contains_key("type")
-        && !carrier.contains_key("anyOf")
-        && !carrier.contains_key("oneOf")
-        && carrier.contains_key("additionalProperties")
+    if let SchemaNode::Typed(TypedSchemaNode::Keywords(carrier)) = &schema
+        && carrier.schema_type.is_none()
+        && carrier.any_of.is_none()
+        && carrier.one_of.is_none()
+        && carrier.additional_properties.is_some()
+        && carrier.properties.is_none()
+        && carrier.required.is_none()
+        && carrier.items.is_none()
+        && carrier.all_of.is_none()
+        && carrier.not.is_none()
+        && carrier.if_schema.is_none()
+        && carrier.then_schema.is_none()
+        && carrier.else_schema.is_none()
+        && carrier.min_properties.is_none()
+        && carrier.max_properties.is_none()
+        && carrier.min_items.is_none()
         && carrier
+            .extra_keywords
             .keys()
-            .all(|key| matches!(key.as_str(), "additionalProperties" | "description"))
-        && let SchemaNode::Foreign(Value::Object(object)) = slot
-        && object.get("type").and_then(Value::as_str) == Some("object")
+            .all(|key| key == "description")
+        && let SchemaNode::Typed(TypedSchemaNode::Keywords(object)) = slot
+        && object.schema_type == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object))
         && object
-            .get("additionalProperties")
-            .is_none_or(|additional| additional != &Value::Bool(false))
+            .additional_properties
+            .as_deref()
+            .is_none_or(|additional| !additional.is_false_schema())
     {
         let carrier_member = carrier
-            .get("additionalProperties")
+            .additional_properties
+            .as_deref()
             .cloned()
-            .unwrap_or(Value::Object(serde_json::Map::new()));
-        let member = match object.remove("additionalProperties") {
-            None | Some(Value::Bool(true)) => carrier_member,
-            Some(existing) => crate::merge::merge_two_schemas(existing, carrier_member),
+            .unwrap_or_else(SchemaNode::empty);
+        let member = match object.additional_properties.take().map(|value| *value) {
+            None | Some(SchemaNode::Typed(TypedSchemaNode::Boolean(true))) => carrier_member,
+            Some(existing) => SchemaNode::from_value(merge_two_schemas(
+                existing.into_value(),
+                carrier_member.into_value(),
+            )),
         };
-        object.insert("additionalProperties".to_string(), member);
+        object.additional_properties = Some(Box::new(member));
         return;
     }
-
     if schema.opens_unknown_object_fields()
         || (schema.is_exact_empty_object() && slot.has_object_descendants())
     {
@@ -1040,40 +1071,61 @@ fn replace_schema_at_parts(
     path_segments: &[String],
     leaf: SchemaNode,
 ) -> usize {
-    let Some((head, tail)) = path_segments.split_first() else {
-        *node = leaf;
+    if replace_existing_schema_at_parts(node, path_segments, &leaf) {
         return 0;
-    };
-
-    let head = head.as_str();
-    let replaced = match node {
-        SchemaNode::Object { properties, .. } => properties
-            .get_mut(head)
-            .map(|child| replace_schema_at_parts(child, tail, leaf.clone())),
-        SchemaNode::Array { items, .. } if head == "*" => items
-            .as_deref_mut()
-            .map(|child| replace_schema_at_parts(child, tail, leaf.clone())),
-        SchemaNode::Foreign(value) => {
-            replace_schema_value_at_path(value, path_segments, &leaf.clone().into_value())
-                .then_some(0)
-        }
-        _ => None,
-    };
-
-    match replaced {
-        Some(abstentions) => abstentions,
-        None => insert_schema_at_parts(node, path_segments, leaf),
     }
+    insert_schema_at_parts(node, path_segments, leaf)
 }
 
-fn replace_schema_value_at_path(
-    value: &mut Value,
+fn replace_existing_schema_at_parts(
+    node: &mut SchemaNode,
     path_segments: &[String],
-    replacement: &Value,
+    leaf: &SchemaNode,
 ) -> bool {
-    visit_schema_values_at_path_mut(value, path_segments, &mut |node| {
-        *node = replacement.clone();
-    })
+    let Some((head, tail)) = path_segments.split_first() else {
+        *node = leaf.clone();
+        return true;
+    };
+    match node {
+        SchemaNode::Object { properties, .. } => properties
+            .get_mut(head)
+            .is_some_and(|child| replace_existing_schema_at_parts(child, tail, leaf)),
+        SchemaNode::Array { items, .. } if head == "*" => items
+            .as_deref_mut()
+            .is_some_and(|child| replace_existing_schema_at_parts(child, tail, leaf)),
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
+            let mut replaced = false;
+            for schemas in [
+                &mut keywords.any_of,
+                &mut keywords.all_of,
+                &mut keywords.one_of,
+            ]
+            .into_iter()
+            .flatten()
+            {
+                for schema in schemas {
+                    replaced |= replace_existing_schema_at_parts(schema, path_segments, leaf);
+                }
+            }
+            for schema in [&mut keywords.then_schema, &mut keywords.else_schema]
+                .into_iter()
+                .filter_map(Option::as_deref_mut)
+            {
+                replaced |= replace_existing_schema_at_parts(schema, path_segments, leaf);
+            }
+            let child = if head == "*" {
+                keywords.items.as_deref_mut()
+            } else {
+                keywords
+                    .properties
+                    .as_mut()
+                    .and_then(|properties| properties.get_mut(head))
+            };
+            replaced
+                | child.is_some_and(|child| replace_existing_schema_at_parts(child, tail, leaf))
+        }
+        _ => false,
+    }
 }
 
 /// Host a `*` member row inside an object-shaped node's
@@ -1101,18 +1153,17 @@ fn insert_map_member_row(
             insert_map_member_schema(member.as_mut(), tail, leaf, ambiguous_union_abstentions);
             true
         }
-        SchemaNode::Foreign(Value::Object(object))
-            if object.get("type").and_then(Value::as_str) == Some("object")
-                && object
-                    .get("additionalProperties")
-                    .is_none_or(|additional| additional != &Value::Bool(false)) =>
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords))
+            if keywords.schema_type == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object))
+                && keywords
+                    .additional_properties
+                    .as_deref()
+                    .is_none_or(|additional| !additional.is_false_schema()) =>
         {
-            let mut member = object
-                .get("additionalProperties")
-                .cloned()
-                .map_or_else(SchemaNode::empty, SchemaNode::foreign);
-            insert_map_member_schema(&mut member, tail, leaf, ambiguous_union_abstentions);
-            object.insert("additionalProperties".to_string(), member.into_value());
+            let member = keywords
+                .additional_properties
+                .get_or_insert_with(|| Box::new(SchemaNode::empty()));
+            insert_map_member_schema(member, tail, leaf, ambiguous_union_abstentions);
             true
         }
         // A union base (the runtime iterable domain) hosts the member row
@@ -1121,40 +1172,24 @@ fn insert_map_member_row(
         // scalar, null, and CLOSED-object arms (the exact-empty off state)
         // stay untouched. Array arms merge into their `items`
         // directly so repeated member rows fold instead of wrapping.
-        SchemaNode::Foreign(Value::Object(object)) if object.contains_key("anyOf") => {
-            let Some(arms) = object.get_mut("anyOf").and_then(Value::as_array_mut) else {
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) if keywords.any_of.is_some() => {
+            let Some(arms) = keywords.any_of.as_mut() else {
                 return false;
             };
             let mut hosted = false;
             for arm in arms {
-                if let Some(arm_object) = arm.as_object_mut() {
-                    let is_array_arm = arm_object.get("type").and_then(Value::as_str)
-                        == Some("array")
-                        || arm_object.contains_key("items");
-                    if is_array_arm {
-                        let mut items = arm_object
-                            .get("items")
-                            .cloned()
-                            .map_or_else(SchemaNode::empty, SchemaNode::foreign);
-                        insert_map_member_schema(
-                            &mut items,
-                            tail,
-                            leaf,
-                            ambiguous_union_abstentions,
-                        );
-                        arm_object.insert("items".to_string(), items.into_value());
-                        hosted = true;
-                        continue;
-                    }
+                if arm.is_array_like() {
+                    let items = ensure_array_items_schema(arm);
+                    insert_map_member_schema(items, tail, leaf, ambiguous_union_abstentions);
+                    hosted = true;
+                } else {
+                    hosted |= insert_map_member_row(
+                        arm,
+                        path_segments,
+                        leaf,
+                        ambiguous_union_abstentions,
+                    );
                 }
-                let mut arm_node = SchemaNode::foreign(std::mem::take(arm));
-                hosted |= insert_map_member_row(
-                    &mut arm_node,
-                    path_segments,
-                    leaf,
-                    ambiguous_union_abstentions,
-                );
-                *arm = arm_node.into_value();
             }
             hosted
         }
@@ -1204,7 +1239,7 @@ fn insert_schema_at_parts_tracking(
         return;
     }
 
-    if insert_into_nonempty_foreign_slot(
+    if insert_into_nonempty_schema_slot(
         node,
         path_segments,
         head,
@@ -1289,7 +1324,7 @@ fn insert_schema_at_parts_tracking(
     insert_schema_at_parts_tracking(child, tail, leaf, ambiguous_union_abstentions);
 }
 
-fn insert_into_nonempty_foreign_slot(
+fn insert_into_nonempty_schema_slot(
     node: &mut SchemaNode,
     path_segments: &[String],
     head: &str,
@@ -1297,7 +1332,7 @@ fn insert_into_nonempty_foreign_slot(
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) -> bool {
-    if !matches!(node, SchemaNode::Foreign(_)) || node.is_empty_slot() {
+    if !matches!(node, SchemaNode::Typed(_)) || node.is_empty_slot() {
         return false;
     }
     // Descend through properties the resolved value already declares, so
@@ -1307,19 +1342,17 @@ fn insert_into_nonempty_foreign_slot(
     // map one level down).
     if !tail.is_empty()
         && head != "*"
-        && let SchemaNode::Foreign(value) = node
-        && let Some(child_value) = value
-            .get_mut("properties")
+        && let SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) = node
+        && let Some(child) = keywords
+            .properties
+            .as_mut()
             .and_then(|properties| properties.get_mut(head))
     {
-        let mut child_node = SchemaNode::foreign(std::mem::take(child_value));
-        insert_schema_at_parts_tracking(
-            &mut child_node,
-            tail,
-            leaf.clone(),
-            ambiguous_union_abstentions,
-        );
-        *child_value = child_node.into_value();
+        insert_schema_at_parts_tracking(child, tail, leaf.clone(), ambiguous_union_abstentions);
+        // Re-enter through the parent's ingestion boundary so later passes
+        // do not mistake a newly materialized legacy host for a tree-owned one.
+        let child_value = std::mem::replace(child, SchemaNode::empty()).into_value();
+        *child = SchemaNode::from_value(child_value);
         return true;
     }
     if insert_into_canonical_object_conjunct(node, head, tail, leaf, ambiguous_union_abstentions) {
@@ -1330,23 +1363,19 @@ fn insert_into_nonempty_foreign_slot(
     // merging a carrier at the union level would replace the open arm
     // with the carrier's materialized closure.
     if head != "*"
-        && let SchemaNode::Foreign(value) = node
-        && let Some(arms) = value.get_mut("anyOf").and_then(Value::as_array_mut)
+        && let SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) = node
+        && let Some(arms) = keywords.any_of.as_mut()
     {
-        let arm_is_open_object = |arm: &Value| {
-            arm.get("additionalProperties")
-                .is_some_and(|additional| additional.as_bool() != Some(false))
-        };
-        let mut open_arms = arms.iter_mut().filter(|arm| arm_is_open_object(arm));
+        let mut open_arms = arms
+            .iter_mut()
+            .filter(|arm| arm.opens_unknown_object_fields());
         if let (Some(arm), None) = (open_arms.next(), open_arms.next()) {
-            let mut arm_node = SchemaNode::foreign(std::mem::take(arm));
             insert_schema_at_parts_tracking(
-                &mut arm_node,
+                arm,
                 path_segments,
                 leaf.clone(),
                 ambiguous_union_abstentions,
             );
-            *arm = arm_node.into_value();
             return true;
         }
     }
@@ -1372,113 +1401,105 @@ fn insert_into_canonical_object_conjunct(
     // `allOf`. Descendant default evidence still belongs to that same
     // object lane; union-merging a new carrier would let either side
     // bypass the other.
-    let SchemaNode::Foreign(value) = node else {
-        return false;
-    };
-    if insert_into_canonical_mixed_object_lane(value, head, tail, leaf, ambiguous_union_abstentions)
-    {
-        return true;
-    }
-    let mut path_segments = Vec::with_capacity(tail.len() + 1);
-    path_segments.push(head.to_string());
-    path_segments.extend_from_slice(tail);
-    if multi_arm_object_union_has_equivalent_descendant(value, &path_segments) == Some(false) {
-        // Default backfill cannot identify which alternative supplied a
-        // branch-specific member constraint. Retaining the structural
-        // alternatives is safer than conjoining the default across them.
-        *ambiguous_union_abstentions += 1;
-        return true;
-    }
-    if !schema_only_allows_object(value) {
-        return false;
-    }
-    let Some(object) = value.as_object_mut() else {
-        return false;
-    };
-    let properties = object
-        .entry("properties".to_string())
-        .or_insert_with(|| Value::Object(Map::new()));
-    let Some(properties) = properties.as_object_mut() else {
-        return false;
-    };
-    let next_is_array = tail.first().is_some_and(|segment| segment == "*");
-    let child = properties.entry(head.to_string()).or_insert_with(|| {
-        if tail.is_empty() || next_is_array {
-            SchemaNode::empty().into_value()
-        } else {
-            SchemaNode::unknown_object().into_value()
-        }
-    });
-    let mut child = SchemaNode::foreign(std::mem::take(child));
-    if tail.is_empty() {
-        merge_into_schema_slot(&mut child, leaf.clone());
-    } else {
-        child.clear_exact_empty_constraint_for_descendant();
-        insert_schema_at_parts_tracking(
-            &mut child,
-            tail,
-            leaf.clone(),
-            ambiguous_union_abstentions,
-        );
-    }
-    properties.insert(head.to_string(), child.into_value());
-    true
+    insert_into_typed_canonical_object_conjunct(node, head, tail, leaf, ambiguous_union_abstentions)
 }
 
-fn schema_only_allows_object(schema: &Value) -> bool {
-    crate::schema_model::schema_allows_type(schema, "object")
-        && ["array", "boolean", "integer", "null", "number", "string"]
-            .into_iter()
-            .all(|schema_type| crate::schema_model::schema_excludes_type(schema, schema_type))
-}
-
-fn insert_into_canonical_mixed_object_lane(
-    schema: &mut Value,
+fn insert_into_typed_canonical_object_conjunct(
+    node: &mut SchemaNode,
     head: &str,
     tail: &[String],
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) -> bool {
-    let Some(conjuncts) = schema.get_mut("allOf").and_then(Value::as_array_mut) else {
+    if insert_into_typed_canonical_mixed_object_lane(
+        node,
+        head,
+        tail,
+        leaf,
+        ambiguous_union_abstentions,
+    ) {
+        return true;
+    }
+    let value = node.clone().into_value();
+    let mut path_segments = Vec::with_capacity(tail.len() + 1);
+    path_segments.push(head.to_string());
+    path_segments.extend_from_slice(tail);
+    if multi_arm_object_union_has_equivalent_descendant(&value, &path_segments) == Some(false) {
+        *ambiguous_union_abstentions += 1;
+        return true;
+    }
+    if !schema_only_allows_object(&value) {
+        return false;
+    }
+    let SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) = node else {
+        return false;
+    };
+    let properties = keywords.properties.get_or_insert_with(BTreeMap::new);
+    let next_is_array = tail.first().is_some_and(|segment| segment == "*");
+    let child = properties.entry(head.to_string()).or_insert_with(|| {
+        if tail.is_empty() || next_is_array {
+            SchemaNode::empty()
+        } else {
+            SchemaNode::unknown_object()
+        }
+    });
+    if tail.is_empty() {
+        merge_into_schema_slot(child, leaf.clone());
+    } else {
+        child.clear_exact_empty_constraint_for_descendant();
+        insert_schema_at_parts_tracking(child, tail, leaf.clone(), ambiguous_union_abstentions);
+    }
+    true
+}
+
+fn insert_into_typed_canonical_mixed_object_lane(
+    node: &mut SchemaNode,
+    head: &str,
+    tail: &[String],
+    leaf: &SchemaNode,
+    ambiguous_union_abstentions: &mut usize,
+) -> bool {
+    let SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) = node else {
+        return false;
+    };
+    let Some(conjuncts) = keywords.all_of.as_mut() else {
         return false;
     };
     let [first, second] = conjuncts.as_slice() else {
         return false;
     };
-    let base_index = if is_not_null_constraint(first) {
+    let base_index = if is_not_null_constraint(&first.clone().into_value()) {
         1
-    } else if is_not_null_constraint(second) {
+    } else if is_not_null_constraint(&second.clone().into_value()) {
         0
     } else {
         return false;
     };
-    let Some(base) = conjuncts.get(base_index).and_then(Value::as_object) else {
+    let Some(SchemaNode::Typed(TypedSchemaNode::Keywords(base))) = conjuncts.get(base_index) else {
         return false;
     };
-    let Some(types) = base.get("type").and_then(Value::as_array).cloned() else {
+    let Some(SchemaTypeKeyword::Multiple(types)) = &base.schema_type else {
         return false;
     };
-    if !types.iter().any(|schema_type| schema_type == "object")
+    if !types.contains(&JsonSchemaType::Object)
         || !types.iter().any(|schema_type| {
-            schema_type
-                .as_str()
-                .is_some_and(|schema_type| !matches!(schema_type, "null" | "object"))
+            !matches!(schema_type, JsonSchemaType::Null | JsonSchemaType::Object)
         })
     {
         return false;
     }
-
-    let mut base_keywords = base.clone();
-    base_keywords.remove("type");
+    let types = types.clone();
+    let mut base_keywords = (**base).clone();
+    base_keywords.schema_type = None;
     let mut path_segments = Vec::with_capacity(tail.len() + 1);
     path_segments.push(head.to_string());
     path_segments.extend_from_slice(tail);
     let mut arms = Vec::with_capacity(types.len());
     for schema_type in types {
-        let mut arm = base_keywords.clone();
-        arm.insert("type".to_string(), schema_type.clone());
-        let mut arm = SchemaNode::foreign(Value::Object(arm));
-        if schema_type == "object" {
+        let mut arm_keywords = base_keywords.clone();
+        arm_keywords.schema_type = Some(SchemaTypeKeyword::Single(schema_type));
+        let mut arm = SchemaNode::Typed(TypedSchemaNode::Keywords(Box::new(arm_keywords)));
+        if schema_type == JsonSchemaType::Object {
             insert_schema_at_parts_tracking(
                 &mut arm,
                 &path_segments,
@@ -1491,8 +1512,15 @@ fn insert_into_canonical_mixed_object_lane(
     let Some(base) = conjuncts.get_mut(base_index) else {
         return false;
     };
-    *base = SchemaNode::any_of(arms).into_value();
+    *base = SchemaNode::any_of(arms);
     true
+}
+
+fn schema_only_allows_object(schema: &Value) -> bool {
+    crate::schema_model::schema_allows_type(schema, "object")
+        && ["array", "boolean", "integer", "null", "number", "string"]
+            .into_iter()
+            .all(|schema_type| crate::schema_model::schema_excludes_type(schema, schema_type))
 }
 
 fn multi_arm_object_union_has_equivalent_descendant(

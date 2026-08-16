@@ -4057,7 +4057,7 @@ adjudication.
 
 ## Step 9 operation 2 — lossless schema-node ingestion
 
-- Status: landed; commit pending.
+- Status: landed; commit `da6053c8`.
 - Contract: representation-only. Implement D4 option 1 at the schema-tree
   ingestion boundary: parse the generator-owned JSON Schema keyword subset
   into typed fields, retain every unmodeled keyword losslessly in an ordered
@@ -4219,3 +4219,188 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +275 (61,576 to 61,851).
+
+## Step 9 operation 3 — fold schema-tree operations
+
+- Status: landed; commit `58b1fb25`.
+- Contract: representation-only. Fold constrain-to-object, path insertion,
+  path replacement, merge, canonical required/not-null application,
+  descendant backfill, and traversal onto the lossless typed schema carrier.
+  Delete each corresponding `Foreign` JSON-shape branch only after its focused
+  full-schema equality proof passes.
+- Acceptance baseline: `da6053c8`.
+- Baseline production Rust LOC: 61,851.
+
+### Pre-registered acceptance expectations
+
+- Every operation preserves unknown keywords, Boolean schemas, ordered
+  combinator arms, and provider extensions exactly; no operation may mutate an
+  unmodeled keyword through raw JSON shape inspection.
+- Focused legacy-versus-typed tests prove exact `serde_json::Value` equality
+  separately for constrain-to-object, path insertion, path replacement,
+  merge, canonical required/not-null application, descendant backfill, and
+  traversal before the matching `Foreign` branch is removed.
+- The schema and IR fixture dumps remain byte-identical to operation 2. The
+  full-depth compiled battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- No fixture update is authorized. A typed operation that cannot preserve an
+  unknown keyword losslessly stops only that fold, records the exact schema,
+  and does not fall back to opportunistic raw mutation.
+
+### Measured results
+
+- All seven scheduled operation families now consume the lossless typed
+  carrier: constrain-to-object, path insertion, path replacement, merge,
+  canonical required/not-null application, descendant backfill, and
+  traversal. Schema-shaped values enter through `SchemaNode::from_value`;
+  `Foreign` remains only for non-schema JSON and the internal null placeholder
+  lane.
+- The matching raw-object implementations and JSON-shape helpers are deleted.
+  Unknown keywords stay in `extra_keywords`; typed mutation touches only the
+  modeled keyword it owns and reconstructs the complete schema for traversal.
+- Exact legacy output required preserving two non-obvious boundaries. A
+  conditional schema fragment, whether Boolean or object-valued, must retain
+  the established fragment-merge route. A newly materialized child beneath an
+  ingested parent must also re-enter the ingestion boundary so later passes do
+  not confuse a legacy host with a tree-owned host.
+- The focused generator suite passes 609/609. A direct, unminimized
+  cert-manager comparison against the operation 2 installed binary is
+  byte-identical at 1,814,559 bytes.
+- The immutable final archive contains 91 binaries and 135 files. Its clean
+  schema dump runs 62 tests and writes 84 artifacts; its clean IR dump runs
+  one test and writes 18 artifacts. Both artifact trees are byte-identical to
+  operation 2.
+- The full-depth battery covers 60 charts and 121,055 probes with zero
+  acceptance flips and zero candidate-accepts/Helm-aborts cells. Mandatory
+  base coverage is 112,260/112,260 with zero drops; third-level coverage is
+  7,465/7,465 with zero drops. It emits 427 guard pairs and 238 composite
+  pairs; the disclosed bounded categories drop 28,874 probes.
+
+### Deviations
+
+- The first global typed-mutation preflight failed nine focused generator
+  tests. It exposed missing `$ref` traversal context, differences between
+  legacy and typed canonical-object semantics, and an over-broad empty-host
+  predicate. Each cause was corrected before any artifact dump.
+- An early typed openness rule treated absent `additionalProperties` as an
+  instruction to open the object. One guard-lowering control rejected it;
+  the final rule acts only on an explicit `false`, matching the ingested raw
+  schema exactly.
+- The first immutable archive and dump were rejected in full: although all
+  focused tests passed and the IR tree was exact, 40 schema artifacts changed.
+  The root causes were the missing object-valued fragment-merge route and loss
+  of legacy-host provenance below an ingested parent. No prober ran against
+  that state and none of its artifacts were adopted.
+- Visiting typed extras and child schemas independently did not reproduce the
+  old traversal boundary and was rejected. The final implementation visits
+  one reconstructed complete schema value, preserving `$ref`, unknown-keyword,
+  and combinator reachability as a unit.
+- A package-filtered cert-manager dump was also rejected as an inefficient
+  preflight: nextest still spent more than 20 minutes on package-wide
+  discovery, and that code state retained the known drift. Final focused
+  comparisons use the built CLI directly; the authoritative corpus uses the
+  immutable archive.
+- Temporary diagnostic prints and a temporary reversion of typed construction
+  were used only to isolate canonicalization. Both states were rejected and
+  fully removed before the final archive.
+- The first final lint gate rejected six mechanical forms: one unnested
+  or-pattern, four redundant false arms, and one manually flattened iterator.
+  The fixes add no suppression and preserve control flow. The final2 archive
+  was consequently invalidated despite exact artifacts; final3 was rebuilt
+  from the lint-clean source and reran every authoritative proof.
+- This operation removes six production Rust lines. Aggregate Step 9 is still
+  +274 lines through operation 3, outside the frozen -700 to -350 estimate;
+  operation 2's 275-line typed foundation has not yet been offset by the
+  provenance and grouping deletions scheduled in operations 4-6. No live
+  semantics or tests are removed to force the interim estimate.
+
+### Adjudication evidence
+
+- There are no changed acceptance cells to adjudicate. Helm 4.2.3
+  adjudication remained enabled for the full battery and reports zero
+  candidate-accepts/Helm-aborts cells against the zero allowance.
+- Exact schema and IR artifact parity, plus the unminimized cert-manager
+  comparison, independently prove that the rejected 40-artifact preflight did
+  not leak into the accepted code or dump batch.
+
+### Producer and route coverage
+
+| Operation | Typed owner and exactness proof | Result |
+|---|---|---|
+| Constrain to object | `SchemaKeywords` object constraints; focused canonical-object controls | Exact. |
+| Path insertion | Typed properties/combinators with ingestion-boundary re-entry | Exact. |
+| Path replacement | Typed property and item descent | Exact. |
+| Merge | Typed keyword merge with ordered opaque extras retained | Exact. |
+| Required/not-null | Typed required and null-exclusion mutation | Exact. |
+| Descendant backfill | Typed property/combinator descent | Exact. |
+| Traversal | One reconstructed complete typed schema value | Exact. |
+| Conditional fragment | Typed Boolean and object schemas use the established fragment merge | Exact. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-gen`; exit 0, all 609
+  generator tests pass.
+- Direct differential proof: the operation 2 installed CLI and the final
+  debug CLI generate unminimized offline cert-manager schemas from identical
+  inputs; `diff` exits 0 and both outputs are 1,814,559 bytes.
+- Immutable build: `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0
+  TMPDIR=target/arch-v3-step9-op3-final3-build cargo nextest archive
+  --workspace --archive-file
+  /private/tmp/arch-v3-step9-op3-final3.tar.zst`; exit 0 after 24m48s, 91
+  binaries and 135 files archived. `zstd -t` exits 0.
+- Clean schema dump: absolute
+  `TMPDIR=target/arch-v3-step9-op3-final3-schema`, `SCHEMA_DUMP=1`, and the
+  established 62-test archive filter; exit 0, 62/62 tests pass and 84
+  artifacts are written in one batch.
+- Clean IR dump: absolute `TMPDIR=target/arch-v3-step9-op3-final3-ir`,
+  `SYMBOLIC_DUMP=1`, `IR_DUMP=1`, and
+  `test(ir_corpus_fixtures_match)`; exit 0, one test passes and 18 artifacts
+  are written in one batch.
+- Artifact comparison: separate `diff -rq --exclude 'nextest-*'` commands
+  compare the final schema and IR trees with operation 2 final1; both exit 0.
+- Full-depth proof: absolute
+  `TMPDIR=target/arch-v3-step9-op3-final3-prober`, baseline `da6053c8`, the
+  accepted schema dump and coverage paths, and `ADJUDICATE_WITH_HELM=1` run
+  the ignored Round 74 battery from the immutable archive; exit 0, 60 charts,
+  121,055 probes, and zero flips.
+- Coverage aggregation: `jq` reports 112,260/112,260 mandatory base probes,
+  7,465/7,465 mandatory third-level probes, 427 guard pairs, 238 composite
+  pairs, 28,874 disclosed bounded drops, and zero mandatory drops.
+
+### Self-adversarial pass
+
+- Opaque-key pressure: no typed operation reads or rewrites
+  `extra_keywords`; reconstruction proves unknown provider extensions survive
+  mutations and traversal losslessly.
+- Provenance pressure: direct child insertion deliberately re-enters the
+  ingestion boundary. This prevents a representation accident from changing
+  later canonicalization while keeping the distinction local to the owning
+  phase.
+- Traversal pressure: visiting a complete reconstructed typed schema prevents
+  a new list of keyword-specific traversal branches from silently omitting an
+  unknown keyword or changing parent context.
+- Adoption pressure: the 40-artifact batch, the inefficient cert-manager
+  batch, and all diagnostic builds are explicitly rejected. Only the final3
+  archive contributes evidence.
+- Scope pressure: no fixture, provider-selection policy, schema-emission
+  policy, or behavior-bearing repair is folded into the representation round.
+
+- Gates on the final Step 9 operation 3 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0.
+  - `cargo nextest run --workspace`: exit 0.
+  - `task test:integration`: exit 0.
+  - `task test:all`: exit 0.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims and explicit
+    `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - `task tokei:core`: exit 0; 61,845 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: -6 (61,851 to 61,845).
