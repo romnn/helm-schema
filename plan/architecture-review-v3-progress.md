@@ -4222,7 +4222,7 @@ adjudication.
 
 ## Step 9 operation 3 — fold schema-tree operations
 
-- Status: landed; commit `58b1fb25`.
+- Status: landed; commit `e3e134da`.
 - Contract: representation-only. Fold constrain-to-object, path insertion,
   path replacement, merge, canonical required/not-null application,
   descendant backfill, and traversal onto the lossless typed schema carrier.
@@ -4404,3 +4404,165 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: -6 (61,851 to 61,845).
+
+## Step 9 operation 4 — typed schema provenance
+
+- Status: landed; commit pending.
+- Contract: representation-only. Carry explicit map-openness,
+  plain-scalar-exclusion, and Helm-truthy-reference provenance as typed schema
+  facts instead of rediscovering those facts by inspecting serialized JSON
+  shapes or string payloads. Emitted schemas and acceptance remain exact.
+- Acceptance baseline: `e3e134da`.
+- Baseline production Rust LOC: 61,845.
+
+### Pre-registered acceptance expectations
+
+- The typed provenance is set only at the existing producer sites and follows
+  schema composition without changing any emitted JSON keyword, ordering, or
+  conditional branch.
+- Provider schemas and user override schemas remain lossless: an unknown
+  keyword or coincidentally matching string is data, not generator-owned
+  provenance, unless it enters through the corresponding typed producer.
+- Schema and IR fixture dumps remain byte-identical to operation 3. The
+  full-depth compiled battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected
+  preflight.
+
+### Measured results
+
+- `SchemaKeywords` now owns typed `$ref` and `pattern` fields while retaining
+  every unmodeled keyword in the ordered `extra_keywords` map. Ingestion and
+  emission therefore preserve the exact schema document, including malformed
+  or differently typed spellings of the modeled keywords, without making raw
+  JSON mutation a compatibility lane.
+- Explicit map openness is applied through the typed
+  `additional_properties` field. Plain-scalar null-token exclusion is queried
+  through typed negation and combinator children. Helm-truthy requirements are
+  produced as typed references and discovered only through modeled schema
+  children, so an arbitrary string hidden in an unknown data keyword is not
+  reinterpreted as generator provenance.
+- The focused generator sweep passes 610/610 tests. A new private-carrier test
+  covers a negated plain-scalar pattern and a nested Helm-truthy reference in
+  the same mixed-combinator schema.
+- One immutable final-tree archive at
+  `/private/tmp/arch-v3-step9-op4-final1.tar.zst` contains 91 binaries and 135
+  files. Its clean schema dump writes 84 artifacts and its clean IR dump writes
+  18 artifacts. Both directories are byte-identical to the operation 3 final3
+  baseline after excluding nextest metadata.
+- The compiled full-depth battery compares 60 lanes and 121,055 probes against
+  `e3e134da` and finds zero acceptance flips. Mandatory base coverage emits
+  112,260 of 112,260 candidates and third-level coverage emits 7,465 of 7,465,
+  with zero drops in both categories. Bounded accounting reports 427
+  guard-witness pairs, 238 composite pairs, and 28,874 disclosed capped drops.
+  Helm adjudication is enabled; there are zero candidate-accepts/Helm-aborts
+  cells.
+- Production Rust measures 61,937 LOC. Operation 4 adds 92 LOC, and Step 9 is
+  now +366 LOC through operation 4 rather than moving toward the frozen
+  -700...-350 estimate. The typed total-schema carrier and explicit traversal
+  methods cost more than the JSON-shape readers they replace; no live semantic
+  path or test was deleted to force the estimate.
+
+### Deviations
+
+- The first focused compile preflight omitted the parent module's
+  `SchemaNode` import. It failed before a test ran; the import was added and no
+  artifact from that state was used.
+- The first archive schema-dump command combined `--archive-file` with a
+  package selector, which nextest rejects. It exited 2 before extracting or
+  writing artifacts. The authoritative run uses only the archive-compatible
+  filter expression.
+- The first archive prober command omitted `--run-ignored only`. It selected
+  zero tests and exited 4. The authoritative invocation explicitly runs the
+  ignored prober and passes.
+- The exact integration gate spent about an hour in macOS pre-user-code launch
+  discovery before executing its tests. Direct execution, a copy under
+  `/private/tmp`, and an LLDB launch confirmed the delay occurred before Rust
+  user code. Removing `com.apple.provenance` from one generated binary exited
+  successfully but macOS immediately restored it, so that host-only preflight
+  was rejected. Neither repository nor any test artifact was changed.
+- The same host launch delay made the integration gate take 4,292.842 seconds
+  and the all-test gate take 7,144.850 seconds. Both original commands were
+  allowed to finish; no retry, faster-model substitution, timeout change, or
+  nextest configuration edit was made.
+- Step 9's measured shape already contradicts its frozen LOC band. The first
+  four operations total +366 LOC because operations 2 and 4 establish a
+  lossless typed schema tree and explicit typed queries before later deletion
+  opportunities. This is recorded now rather than deferred to campaign
+  close-out.
+
+### Adjudication evidence
+
+- Representation expectation: zero fixture changes and zero acceptance flips.
+- Observed result: schema fixtures 84/84 byte-identical, IR fixtures 18/18
+  byte-identical, and 0/121,055 acceptance cells changed.
+- Helm 4.2.3 adjudication was enabled in the authoritative prober. With no
+  changed cells there was nothing to adopt or individually replay; the fixed
+  zero candidate-accepts/Helm-aborts allowance is satisfied.
+
+### Producer and route coverage
+
+| Fact | Producer | Typed carrier/query | Final evidence |
+|---|---|---|---|
+| Explicit object openness | Existing map-openness stamp | Typed `additional_properties` | Exact 84-artifact schema diff |
+| Plain-scalar exclusion | Scalar-string preimage | Typed `pattern` below `not`/combinators | Carrier regression plus zero flips |
+| Helm-truthy constraint | Condition and fail-requirement lowering | Typed `$ref` and modeled-child traversal | Focused generator sweep plus zero flips |
+| Provider and override keywords | Lossless schema ingestion | Ordered `extra_keywords` for every unmodeled shape | Round-trip suite plus exact fixture diff |
+| Nested object/array/combinator routes | Schema composition | Exhaustive typed traversal over modeled children | 121,055-probe full-depth battery |
+
+### Review dossier
+
+- Ownership: provenance-producing code constructs typed schema nodes; policy
+  readers ask the typed carrier about openness, negated patterns, and exact
+  references instead of decoding serialized JSON.
+- Losslessness: string extraction removes a keyword only when its value has the
+  modeled string shape. Boolean, object, array, number, and null spellings stay
+  untouched in `extra_keywords` and round-trip exactly.
+- Scope: the operation changes no provider selection, constraint strength,
+  merge order, default policy, fixture, test runner, or downstream chart.
+- Simplicity: the former raw recursive string scan and nested `get` chains are
+  deleted. The remaining traversal is centralized on the total schema carrier
+  and exposes only the three queries this operation needs.
+- Determinism: typed keyword emission and unknown-key retention both use the
+  existing ordered maps; no hash iteration or source-order-sensitive grouping
+  was introduced.
+
+### Self-adversarial pass
+
+- Unknown-key pressure: an unknown keyword containing a coincidental truthy
+  reference-shaped string is preserved as data and is not traversed as a
+  schema child.
+- Malformed-key pressure: a non-string `$ref` or `pattern` remains lossless in
+  `extra_keywords` rather than being dropped or coerced.
+- Boolean-schema pressure: `true` and `false` schemas remain terminal typed
+  nodes and do not acquire provenance.
+- Traversal pressure: objects, arrays, properties, additional properties,
+  items, all three combinators, negation, and conditional children are covered
+  explicitly; there is no `..` match hiding a future modeled child.
+- Adoption pressure: the failed compile, archive-selector, ignored-prober, and
+  host-metadata preflights contribute no accepted fixture or semantic evidence.
+- Estimate pressure: the +92 operation and +366 Step 9 aggregate are reported
+  plainly; no semantic or test deletion was used to manufacture the frozen
+  estimate.
+
+- Gates on the final Step 9 operation 4 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,262/1,262 passed.
+  - `task test:integration`: exit 0; 568/568 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,834/1,834 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims and explicit
+    `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 61,937 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +92 (61,845 to 61,937).

@@ -1038,11 +1038,8 @@ fn collect_positive_self_types(
 }
 
 fn schema_allows_non_falsy_type(schema: &Value, schema_type: &str) -> bool {
-    if schema
-        .get("not")
-        .and_then(|not| not.get("$ref"))
-        .and_then(Value::as_str)
-        == Some(&format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"))
+    if SchemaNode::from_value(schema.clone())
+        .is_not_reference(&format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"))
     {
         return false;
     }

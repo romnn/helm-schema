@@ -79,6 +79,8 @@ pub(crate) enum SchemaTypeKeyword {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct SchemaKeywords {
     pub(crate) schema_type: Option<SchemaTypeKeyword>,
+    pub(crate) reference: Option<String>,
+    pub(crate) pattern: Option<String>,
     pub(crate) properties: Option<BTreeMap<String, SchemaNode>>,
     pub(crate) required: Option<Vec<String>>,
     pub(crate) additional_properties: Option<Box<SchemaNode>>,
@@ -151,6 +153,8 @@ impl SchemaNode {
             Value::Bool(value) => Self::Typed(TypedSchemaNode::Boolean(value)),
             Value::Object(mut object) => {
                 let schema_type = take_schema_type(&mut object);
+                let reference = take_string_keyword(&mut object, "$ref");
+                let pattern = take_string_keyword(&mut object, "pattern");
                 let properties = take_object_keyword(&mut object, "properties").map(|properties| {
                     properties
                         .into_iter()
@@ -174,6 +178,8 @@ impl SchemaNode {
 
                 Self::Typed(TypedSchemaNode::Keywords(Box::new(SchemaKeywords {
                     schema_type,
+                    reference,
+                    pattern,
                     properties,
                     required,
                     additional_properties,
@@ -206,11 +212,21 @@ impl SchemaNode {
         Self::keyword_schema("type", Value::String(name.to_string()))
     }
 
+    pub(crate) fn reference(reference: impl Into<String>) -> Self {
+        Self::keyword_schema("$ref", Value::String(reference.into()))
+    }
+
     pub(crate) fn typed_keyword(mut self, key: impl Into<String>, value: Value) -> Self {
         let key = key.into();
         match &mut self {
             Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
-                keywords.extra_keywords.insert(key, value);
+                match (key.as_str(), value) {
+                    ("$ref", Value::String(reference)) => keywords.reference = Some(reference),
+                    ("pattern", Value::String(pattern)) => keywords.pattern = Some(pattern),
+                    (_, value) => {
+                        keywords.extra_keywords.insert(key, value);
+                    }
+                }
                 self
             }
             _ => self,
@@ -462,6 +478,72 @@ impl SchemaNode {
             }
             _ => false,
         }
+    }
+
+    pub(crate) fn make_explicitly_open_object(&mut self) {
+        match self {
+            Self::Object {
+                additional_properties,
+                ..
+            } if additional_properties.is_none() => {
+                *additional_properties = Some(Box::new(Self::empty()));
+            }
+            Self::Typed(TypedSchemaNode::Keywords(keywords))
+                if keywords.schema_type
+                    == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object))
+                    && keywords.additional_properties.is_none() =>
+            {
+                keywords.additional_properties = Some(Box::new(Self::empty()));
+            }
+            _ => {}
+        }
+    }
+
+    pub(crate) fn has_negated_pattern(&self, pattern: &str) -> bool {
+        match self {
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords.has_negated_pattern(pattern)
+            }
+            _ => false,
+        }
+    }
+
+    pub(crate) fn references(&self, reference: &str) -> bool {
+        match self {
+            Self::Object {
+                properties,
+                all_of,
+                additional_properties,
+                ..
+            } => {
+                properties
+                    .values()
+                    .any(|schema| schema.references(reference))
+                    || all_of.iter().any(|schema| schema.references(reference))
+                    || additional_properties
+                        .as_deref()
+                        .is_some_and(|schema| schema.references(reference))
+            }
+            Self::Array { items, .. } => items
+                .as_deref()
+                .is_some_and(|schema| schema.references(reference)),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.references(reference),
+            Self::Empty | Self::Typed(TypedSchemaNode::Boolean(_)) | Self::Foreign(_) => false,
+        }
+    }
+
+    pub(crate) fn is_not_reference(&self, reference: &str) -> bool {
+        matches!(
+            self,
+            Self::Typed(TypedSchemaNode::Keywords(keywords))
+                if keywords.not.as_deref().is_some_and(|schema| {
+                    matches!(
+                        schema,
+                        Self::Typed(TypedSchemaNode::Keywords(not_keywords))
+                            if not_keywords.reference.as_deref() == Some(reference)
+                    )
+                })
+        )
     }
 
     pub(crate) fn is_exact_empty_object(&self) -> bool {
@@ -725,7 +807,7 @@ impl SchemaKeywords {
             && self.any_of.is_none()
             && self.one_of.is_none()
             && !self.extra_keywords.contains_key("description")
-            && !self.extra_keywords.contains_key("$ref")
+            && self.reference.is_none()
             && !self
                 .extra_keywords
                 .keys()
@@ -734,6 +816,51 @@ impl SchemaKeywords {
 
     pub(crate) fn is_empty_schema(&self) -> bool {
         self == &Self::default()
+    }
+
+    fn has_negated_pattern(&self, pattern: &str) -> bool {
+        self.not.as_deref().is_some_and(|schema| {
+            matches!(
+                schema,
+                SchemaNode::Typed(TypedSchemaNode::Keywords(keywords))
+                    if keywords.pattern.as_deref() == Some(pattern)
+            )
+        }) || [&self.all_of, &self.any_of, &self.one_of]
+            .into_iter()
+            .flatten()
+            .flatten()
+            .any(|schema| schema.has_negated_pattern(pattern))
+    }
+
+    fn references(&self, reference: &str) -> bool {
+        self.reference.as_deref() == Some(reference)
+            || self.properties.as_ref().is_some_and(|properties| {
+                properties
+                    .values()
+                    .any(|schema| schema.references(reference))
+            })
+            || self
+                .additional_properties
+                .as_deref()
+                .is_some_and(|schema| schema.references(reference))
+            || self
+                .items
+                .as_deref()
+                .is_some_and(|schema| schema.references(reference))
+            || [&self.all_of, &self.any_of, &self.one_of]
+                .into_iter()
+                .flatten()
+                .flatten()
+                .any(|schema| schema.references(reference))
+            || [
+                &self.not,
+                &self.if_schema,
+                &self.then_schema,
+                &self.else_schema,
+            ]
+            .into_iter()
+            .flatten()
+            .any(|schema| schema.references(reference))
     }
 
     fn path_exists(&self, path_segments: &[String]) -> bool {
@@ -762,6 +889,8 @@ impl SchemaKeywords {
         if let Some(schema_type) = self.schema_type {
             object.insert("type".to_string(), schema_type.into_value());
         }
+        insert_string_keyword(&mut object, "$ref", self.reference);
+        insert_string_keyword(&mut object, "pattern", self.pattern);
         if let Some(properties) = self.properties {
             object.insert(
                 "properties".to_string(),
@@ -848,6 +977,12 @@ fn take_string_array_keyword(object: &mut Map<String, Value>, key: &str) -> Opti
     Some(values)
 }
 
+fn take_string_keyword(object: &mut Map<String, Value>, key: &str) -> Option<String> {
+    let value = object.get(key)?.as_str()?.to_string();
+    object.remove(key);
+    Some(value)
+}
+
 fn take_schema_keyword(object: &mut Map<String, Value>, key: &str) -> Option<Box<SchemaNode>> {
     object.remove(key).map(SchemaNode::from_value).map(Box::new)
 }
@@ -895,6 +1030,12 @@ fn insert_schema_array_keyword(
 fn insert_u64_keyword(object: &mut Map<String, Value>, key: &str, value: Option<u64>) {
     if let Some(value) = value {
         object.insert(key.to_string(), Value::Number(Number::from(value)));
+    }
+}
+
+fn insert_string_keyword(object: &mut Map<String, Value>, key: &str, value: Option<String>) {
+    if let Some(value) = value {
+        object.insert(key.to_string(), Value::String(value));
     }
 }
 

@@ -871,16 +871,8 @@ fn build_default_aware_leaf_condition_fragment(
 }
 
 pub(crate) fn value_references_helm_truthy(value: &Value) -> bool {
-    match value {
-        Value::Object(object) => object.iter().any(|(key, child)| {
-            (key == "$ref"
-                && child.as_str()
-                    == Some(&format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}") as &str))
-                || value_references_helm_truthy(child)
-        }),
-        Value::Array(items) => items.iter().any(value_references_helm_truthy),
-        _ => false,
-    }
+    SchemaNode::from_value(value.clone())
+        .references(&format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"))
 }
 
 /// Helm truthiness as one shared definition: every truthy/with condition
@@ -889,9 +881,7 @@ pub(crate) fn value_references_helm_truthy(value: &Value) -> bool {
 pub(crate) const HELM_TRUTHY_DEFINITION_NAME: &str = "t";
 
 pub(crate) fn helm_truthy_condition_schema() -> SchemaNode {
-    SchemaNode::foreign(serde_json::json!({
-        "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
-    }))
+    SchemaNode::reference(format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"))
 }
 
 pub(crate) fn helm_truthy_definition_schema() -> Value {

@@ -73,6 +73,35 @@ fn lossless_schema_node_types_known_keywords_and_retains_unknown_keywords() -> e
     Ok(())
 }
 
+#[test]
+fn schema_node_carries_generator_provenance_in_typed_keywords() -> eyre::Result<()> {
+    let truthy_reference = "#/$defs/t";
+    let null_pattern = crate::resolve_policy::PLAIN_SCALAR_NULL_TOKEN_PATTERN;
+    let schema = SchemaNode::from_value(json!({
+        "anyOf": [
+            {
+                "allOf": [
+                    { "not": { "pattern": null_pattern } },
+                    { "type": "string" },
+                ]
+            },
+            {
+                "properties": {
+                    "enabled": { "$ref": truthy_reference }
+                }
+            }
+        ]
+    }));
+
+    if !schema.has_negated_pattern(null_pattern) {
+        return Err(eyre::eyre!("typed schema lost plain-scalar provenance"));
+    }
+    if !schema.references(truthy_reference) {
+        return Err(eyre::eyre!("typed schema lost Helm-truthy provenance"));
+    }
+    Ok(())
+}
+
 fn read_json(path: &std::path::Path) -> eyre::Result<Value> {
     let source = fs::read_to_string(path)
         .wrap_err_with(|| format!("read schema fixture {}", path.display()))?;

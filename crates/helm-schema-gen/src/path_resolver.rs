@@ -14,6 +14,7 @@ use crate::merge::{intersect_schema_list, merge_schema_list, union_schema_list};
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, guard_value_to_json, is_empty_schema, type_schema};
+use crate::schema_node::SchemaNode;
 use crate::values_yaml::{ValuesYamlPathFacts, ValuesYamlPathInfo, build_values_yaml_path_info};
 
 #[derive(Clone)]

@@ -181,27 +181,7 @@ fn preserve_declared_plain_scalar_empty_defaults(mut schema: Value, declared: &V
 }
 
 fn has_plain_scalar_implicit_token_exclusion(schema: &Value) -> bool {
-    if schema
-        .get("not")
-        .and_then(|not| not.get("pattern"))
-        .and_then(Value::as_str)
-        == Some(PLAIN_SCALAR_NULL_TOKEN_PATTERN)
-    {
-        return true;
-    }
-    // The preimage rides an `allOf` of `not` patterns, and a nullable sink
-    // wraps that in an `anyOf`/`oneOf` alongside the `null` arm, so the
-    // exclusion must be detected through every combinator wrapper.
-    ["allOf", "anyOf", "oneOf"].iter().any(|keyword| {
-        schema
-            .get(keyword)
-            .and_then(Value::as_array)
-            .is_some_and(|branches| {
-                branches
-                    .iter()
-                    .any(has_plain_scalar_implicit_token_exclusion)
-            })
-    })
+    SchemaNode::from_value(schema.clone()).has_negated_pattern(PLAIN_SCALAR_NULL_TOKEN_PATTERN)
 }
 
 fn should_merge_values_yaml_into_conditional_branch(

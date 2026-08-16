@@ -374,11 +374,10 @@ fn scalar_string_preimage(object: &serde_json::Map<String, Value>, pattern: &str
 }
 
 fn helm_falsy_schema() -> Value {
-    serde_json::json!({
-        "not": {
-            "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
-        }
-    })
+    SchemaNode::not(SchemaNode::reference(format!(
+        "#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"
+    )))
+    .into_value()
 }
 
 /// The branch schema is the strongest available evidence schema that is not a

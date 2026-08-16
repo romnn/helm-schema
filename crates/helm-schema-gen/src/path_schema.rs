@@ -52,17 +52,10 @@ pub(crate) fn merge_explicit_empty_placeholder(
 /// as openness evidence: without it, a later literal member read (e.g. a
 /// guard probing one key) closes the map when its descendant fragment merges
 /// into the slot.
-pub(crate) fn stamp_explicit_map_openness(mut schema: Value) -> Value {
-    if let Some(object) = schema.as_object_mut()
-        && object.get("type").and_then(Value::as_str) == Some("object")
-        && !object.contains_key("additionalProperties")
-    {
-        object.insert(
-            "additionalProperties".to_string(),
-            crate::schema_model::empty_schema(),
-        );
-    }
-    schema
+pub(crate) fn stamp_explicit_map_openness(schema: Value) -> Value {
+    let mut schema = SchemaNode::from_value(schema);
+    schema.make_explicitly_open_object();
+    schema.into_value()
 }
 
 fn schema_accepts_empty_object(schema: &Value) -> bool {

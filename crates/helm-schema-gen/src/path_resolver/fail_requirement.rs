@@ -369,27 +369,26 @@ fn fail_value_requirement_schema(
             // Only truthy values reach the consumer; every Helm-falsy
             // spelling escapes through the selection and stays accepted.
             FailValueRequirement::TruthyImpliesSchemaType(schema_type) => {
-                parts.push(serde_json::json!({
-                    "anyOf": [
-                        type_schema(schema_type),
-                        { "not": { "$ref": format!(
-                            "#/$defs/{}",
-                            crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
-                        ) } },
-                    ]
-                }));
+                parts.push(
+                    SchemaNode::any_of(vec![
+                        SchemaNode::from_value(type_schema(schema_type)),
+                        SchemaNode::not(
+                            crate::condition_encoding::helm_truthy_condition_schema(),
+                        ),
+                    ])
+                    .into_value(),
+                );
             }
             FailValueRequirement::HelmTruthy => {
-                parts.push(serde_json::json!({ "$ref": format!(
-                    "#/$defs/{}",
-                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
-                ) }));
+                parts.push(
+                    crate::condition_encoding::helm_truthy_condition_schema().into_value(),
+                );
             }
             FailValueRequirement::HelmFalsy => {
-                parts.push(serde_json::json!({ "not": { "$ref": format!(
-                    "#/$defs/{}",
-                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
-                ) } }));
+                parts.push(
+                    SchemaNode::not(crate::condition_encoding::helm_truthy_condition_schema())
+                        .into_value(),
+                );
             }
             // `properties` constrains only PRESENT keys on objects — an
             // absent or null field differs from every literal, so no
@@ -408,10 +407,10 @@ fn fail_value_requirement_schema(
             // is exactly the tolerance the negated truthiness test needs:
             // an absent or falsy field renders, a truthy one aborts.
             FailValueRequirement::FieldHelmFalsy { path } => {
-                let mut node = serde_json::json!({ "not": { "$ref": format!(
-                    "#/$defs/{}",
-                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
-                ) } });
+                let mut node = SchemaNode::not(
+                    crate::condition_encoding::helm_truthy_condition_schema(),
+                )
+                .into_value();
                 for segment in path.iter().rev() {
                     node = serde_json::json!({ "properties": { segment: node } });
                 }
@@ -570,10 +569,8 @@ fn fail_value_requirement_schema(
                 parts.push(node);
             }
             FailValueRequirement::FieldHelmTruthy { path } => {
-                let mut node = serde_json::json!({ "$ref": format!(
-                    "#/$defs/{}",
-                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
-                ) });
+                let mut node =
+                    crate::condition_encoding::helm_truthy_condition_schema().into_value();
                 for segment in path.iter().rev() {
                     node = serde_json::json!({
                         "type": "object",
