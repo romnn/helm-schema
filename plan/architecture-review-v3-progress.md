@@ -3908,3 +3908,149 @@ adjudication.
     crates/helm-schema-ir/src crates/helm-schema-gen/src`: exit 0; confirms one
     semantic producer, one typed cross-crate artifact, and one emission
     lowering carrier with downstream emission consumers.
+
+## Step 9 operation 1 — split generator responsibilities
+
+- Status: landed; commit pending.
+- Contract: representation-only, pure file decomposition of
+  `overlay_lowering.rs`, `resolve_policy.rs`, and `path_resolver.rs` along
+  their existing lowering, scalar-preimage, declared-default, and
+  fail-requirement responsibilities. No item signature or behavior changes.
+- Acceptance baseline: `c9df6aa2`.
+- Baseline production Rust LOC: 61,571.
+
+### Pre-registered acceptance expectations
+
+- The schema and IR fixture dumps must remain byte-identical to `c9df6aa2`.
+- The full-depth compiled battery must report zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- The static, templated, and conditional lowering routes retain the same
+  owners and call graph; only their physical source files change.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected
+  preflight.
+
+### Measured results
+
+- `overlay_lowering.rs` is reduced from 2,192 to 653 lines. Its existing
+  member-projection and conditional-constraint bodies now live in 812-line
+  and 729-line include files without changing their lexical module or item
+  signatures.
+- `resolve_policy.rs` is reduced from 1,715 to 1,064 lines. Its existing
+  scalar-preimage and declared-default bodies now live in 395-line and
+  259-line include files.
+- `path_resolver.rs` is reduced from 1,225 to 591 lines. Its existing
+  fail-requirement body now lives in a 636-line include file.
+- A reconstruction check reassembles each original file around the include
+  boundaries and compares it with `git show c9df6aa2:<path>`; all three
+  comparisons are exactly equal.
+- The immutable final archive contains 91 binaries and 135 files. Its clean
+  schema dump runs 62 tests and writes 84 artifacts; its clean IR dump runs
+  one test and writes 18 artifacts. Both artifact trees are byte-identical
+  to the Step 8 final archive.
+- The full-depth battery covers 60 charts and 121,055 probes with zero
+  acceptance flips and zero candidate-accepts/Helm-aborts cells. Mandatory
+  base coverage is 112,260/112,260 with zero drops; third-level coverage is
+  7,465/7,465 with zero drops. The disclosed bounded categories drop 28,874
+  probes.
+
+### Deviations
+
+- The first archive preflight exposed two doc-comment boundaries and one
+  item attribute left beside an `include!` invocation. It exited 101 before
+  producing an archive. The comments and attribute moved with their exact
+  items; no prose or code semantics changed, and no artifact from that state
+  was adopted.
+- The first final-state archive succeeded, but a relative `TMPDIR` did not
+  exist from the archive extraction workspace. The extraction-only launch
+  exited 96. A second launch with a repository-relative path reached all 62
+  tests but resolved the path beneath individual crate roots and exited 100
+  after 61 dump-write failures. Neither run produced an admissible dump.
+- The authoritative dump uses a fresh absolute step-local `TMPDIR`. It is the
+  operation's only accepted schema batch; the IR and prober runs likewise use
+  distinct absolute directories.
+- A final-tree `task test:integration` rerun entered a nextest discovery
+  deadlock after enumerating the corpus and Kubernetes binaries: the same 14
+  `--list` children remained asleep for 30 minutes with no open files or
+  network sockets, and the parent produced no test plan. After 60 minutes the
+  invocation was interrupted and exited 201 (inner status 130). No test or
+  dump artifact from that infrastructure state was adopted; the exact gate
+  was rerun from a clean process state.
+- The physical split adds five production lines for include declarations
+  and spacing. A pure decomposition has no honest deletion opportunity, so
+  this operation does not force the aggregate Step 9 negative estimate.
+
+### Adjudication evidence
+
+- There are no changed acceptance cells to adjudicate. Helm 4.2.3
+  adjudication remained enabled for the full battery and reports zero
+  candidate-accepts/Helm-aborts cells against the zero allowance.
+- Exact schema and IR artifact parity independently proves that no fixture
+  update or stale-dump adoption occurred.
+
+### Producer and route coverage
+
+| Responsibility | Physical owner after the split | Identity proof |
+|---|---|---|
+| Conditional collection | `overlay_lowering.rs` | Reconstructed source and full fixture trees are exact. |
+| Member projection | `overlay_lowering/member_projection.rs` | The member and runtime-domain controls remain in the immutable archive. |
+| Conditional host and clause lowering | `overlay_lowering/conditional_constraints.rs` | Conditional corpus schemas and 121,055 probes are exact. |
+| Scalar preimages | `resolve_policy/scalar_preimage.rs` | Plain-scalar, split-segment, and templated-YAML controls are exact. |
+| Declared defaults | `resolve_policy/declared_default.rs` | Default-preservation fixtures and null-deletion probes are exact. |
+| Fail requirements | `path_resolver/fail_requirement.rs` | Fail-domain fixtures and terminal-clause probes are exact. |
+
+### Review dossier
+
+- Source reconstruction: a read-only script loads all three files from
+  `c9df6aa2`, substitutes the extracted bodies for their include statements,
+  restores the two item-order-neutral chunks, and reports `True` for every
+  comparison.
+- Immutable build: `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0
+  TMPDIR=target/arch-v3-step9-op1-final2-build cargo nextest archive
+  --workspace --archive-file
+  /private/tmp/arch-v3-step9-op1-final2.tar.zst`; exit 0, 91 binaries and 135
+  files archived.
+- Clean schema dump: absolute
+  `TMPDIR=.../target/arch-v3-step9-op1-final3-schema`, `SCHEMA_DUMP=1`, and
+  the established 62-test archive filter; exit 0, 62/62 tests pass.
+- Clean IR dump: absolute
+  `TMPDIR=.../target/arch-v3-step9-op1-final3-ir`, `SYMBOLIC_DUMP=1`,
+  `IR_DUMP=1`, and `test(ir_corpus_fixtures_match)`; exit 0, one test passes.
+- Artifact comparison: separate `diff -rq --exclude 'nextest-*'` commands
+  compare the accepted schema and IR trees with Step 8 final5; both exit 0.
+- Full-depth proof: the established ignored Round 74 battery runs from the
+  immutable archive with baseline `c9df6aa2`, the accepted schema dump,
+  absolute prober and coverage paths, and `ADJUDICATE_WITH_HELM=1`; exit 0,
+  60 charts, 121,055 probes, and zero flips.
+
+### Self-adversarial pass
+
+- Module-boundary pressure: the extracted files use `include!` deliberately
+  so a physical warm-up cannot widen visibility, alter item signatures, or
+  introduce a second semantic module boundary before the total-tree work.
+- Move-integrity pressure: exact textual reconstruction catches missing or
+  duplicated bodies that compilation and fixture parity might not expose.
+- Artifact pressure: the two path-invalid dump attempts are rejected in full;
+  only the fresh absolute-path batch participates in parity and probing.
+- Scope pressure: no opportunistic cleanup, import rewrite, signature change,
+  fixture update, or schema-tree behavior is folded into the split.
+
+- Gates on the final Step 9 operation 1 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0.
+  - `cargo nextest run --workspace`: exit 0.
+  - `task test:integration`: exit 0.
+  - `task test:all`: exit 0.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims and explicit
+    `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - `task tokei:core`: exit 0; 61,576 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +5 (61,571 to 61,576).
