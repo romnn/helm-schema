@@ -42,6 +42,7 @@ mod actions;
 mod cst;
 mod dump;
 mod lines;
+mod literal;
 mod parse;
 mod yaml_scan;
 

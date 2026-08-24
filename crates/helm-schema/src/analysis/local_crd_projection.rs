@@ -1,7 +1,7 @@
-use helm_schema_ast::{ParseError, parse_helm_template};
 use helm_schema_k8s::{
     LocalResourceSchema, LocalSchemaUniverse, resource_schemas_from_crd_document_with_source,
 };
+use helm_schema_syntax::{MappingEntry, Node, Span, TemplatedDocument};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
@@ -44,9 +44,18 @@ pub(crate) fn local_resource_schemas_from_template_source(
         return resource_schemas_from_literal_documents(source, TEMPLATE_CRD_SOURCE_ID, filename);
     }
 
-    let tree = parse_helm_template(source).ok_or(ParseError::TreeSitterParseFailed)?;
+    let document = TemplatedDocument::parse(source);
     let mut resource_schemas = Vec::new();
-    collect_template_crd_schemas(tree.root_node(), source, filename, &mut resource_schemas);
+    for span in document.document_spans() {
+        let Some(crd) = crd_document_from_nodes(&document, document.roots(), Some(*span)) else {
+            continue;
+        };
+        resource_schemas.extend(resource_schemas_from_crd_document_with_source(
+            &crd,
+            TEMPLATE_CRD_SOURCE_ID,
+            filename.to_string(),
+        ));
+    }
     Ok(resource_schemas)
 }
 
@@ -70,209 +79,182 @@ fn resource_schemas_from_literal_documents(
     Ok(resource_schemas)
 }
 
-fn collect_template_crd_schemas(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-    filename: &str,
-    resource_schemas: &mut Vec<LocalResourceSchema>,
-) {
-    if let Some(document) = crd_document_from_node(node, source) {
-        let schemas = resource_schemas_from_crd_document_with_source(
-            &document,
-            TEMPLATE_CRD_SOURCE_ID,
-            filename.to_string(),
-        );
-        if !schemas.is_empty() {
-            resource_schemas.extend(schemas);
-            return;
-        }
+fn crd_document_from_nodes(
+    document: &TemplatedDocument<'_>,
+    nodes: &[Node],
+    span: Option<Span>,
+) -> Option<Value> {
+    let spec = mapping_entry(document, nodes, span, "spec")?;
+    if spec.children.is_empty() {
+        return Some(json!({
+            "apiVersion": literal_string_for_nodes(document, nodes, span, "apiVersion")?,
+            "kind": literal_string_for_nodes(document, nodes, span, "kind")?,
+            "spec": document.literal_mapping_value(spec)?,
+        }));
     }
-
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        collect_template_crd_schemas(child, source, filename, resource_schemas);
-    }
-}
-
-fn crd_document_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<Value> {
-    let spec = mapping_value(node, source, "spec")?;
-    let names = mapping_value(spec, source, "names")?;
     let mut spec_json = json!({
-        "group": literal_string_for_key(spec, source, "group")?,
-        "names": { "kind": literal_string_for_key(names, source, "kind")? },
+        "group": literal_string_for_child(document, spec, "group")?,
+        "names": {
+            "kind": literal_nested_string_for_child(document, spec, "names", "kind")?,
+        },
     });
 
-    if let Some(version_nodes) = mapping_value(spec, source, "versions").and_then(sequence_items) {
-        let versions = version_nodes
-            .iter()
-            .map(|version| {
-                let schema = mapping_value(*version, source, "schema")
-                    .and_then(|schema| mapping_value(schema, source, "openAPIV3Schema"))
-                    .and_then(|schema| literal_json_from_node(schema, source))?;
-                Some(json!({
-                    "name": literal_string_for_key(*version, source, "name")?,
-                    "served": literal_bool_for_key(*version, source, "served"),
-                    "schema": { "openAPIV3Schema": schema },
-                }))
-            })
-            .collect::<Option<Vec<_>>>()?;
+    if let Some(versions) = mapping_child(document, spec, "versions") {
+        let items = versions.sequence_items();
+        let versions = if items.is_empty() {
+            document
+                .literal_mapping_value(versions)?
+                .as_array()?
+                .iter()
+                .map(crd_version_from_value)
+                .collect::<Option<Vec<_>>>()?
+        } else {
+            items
+                .into_iter()
+                .map(|version| crd_version_from_item(document, version))
+                .collect::<Option<Vec<_>>>()?
+        };
         spec_json
             .as_object_mut()?
             .insert("versions".to_string(), Value::Array(versions));
     } else {
-        let validation = mapping_value(spec, source, "validation")?;
+        let validation = mapping_child(document, spec, "validation")?;
         let spec_object = spec_json.as_object_mut()?;
         spec_object.insert(
             "version".to_string(),
-            Value::String(literal_string_for_key(spec, source, "version")?),
+            Value::String(literal_string_for_child(document, spec, "version")?),
         );
         spec_object.insert(
             "validation".to_string(),
             json!({
-                "openAPIV3Schema": mapping_value(validation, source, "openAPIV3Schema")
-                    .and_then(|schema| literal_json_from_node(schema, source))?,
+                "openAPIV3Schema": literal_value_for_child(
+                    document,
+                    validation,
+                    "openAPIV3Schema",
+                )?,
             }),
         );
     }
 
     Some(json!({
-        "apiVersion": literal_string_for_key(node, source, "apiVersion")?,
-        "kind": literal_string_for_key(node, source, "kind")?,
+        "apiVersion": literal_string_for_nodes(document, nodes, span, "apiVersion")?,
+        "kind": literal_string_for_nodes(document, nodes, span, "kind")?,
         "spec": spec_json,
     }))
 }
 
-fn mapping_value<'tree>(
-    node: tree_sitter::Node<'tree>,
-    source: &str,
+fn crd_version_from_item(
+    document: &TemplatedDocument<'_>,
+    version: &helm_schema_syntax::SequenceItem,
+) -> Option<Value> {
+    if !version.children.is_empty() {
+        let schema = mapping_entry(document, &version.children, None, "schema")?;
+        return Some(json!({
+            "name": literal_string_for_nodes(document, &version.children, None, "name")?,
+            "served": literal_bool_for_nodes(document, &version.children, None, "served"),
+            "schema": {
+                "openAPIV3Schema": literal_value_for_child(
+                    document,
+                    schema,
+                    "openAPIV3Schema",
+                )?,
+            },
+        }));
+    }
+
+    let version = document.literal_sequence_value(version)?;
+    crd_version_from_value(&version)
+}
+
+fn crd_version_from_value(version: &Value) -> Option<Value> {
+    let version = version.as_object()?;
+    let schema = version.get("schema")?.as_object()?;
+    Some(json!({
+        "name": version.get("name")?.as_str()?,
+        "served": version.get("served").and_then(Value::as_bool),
+        "schema": { "openAPIV3Schema": schema.get("openAPIV3Schema")? },
+    }))
+}
+
+fn mapping_child<'nodes>(
+    document: &TemplatedDocument<'_>,
+    entry: &'nodes MappingEntry,
     key: &str,
-) -> Option<tree_sitter::Node<'tree>> {
-    for pair in mapping_pairs(mapping_node(node)?) {
-        let pair_key = pair.child_by_field_name("key")?;
-        if literal_string_from_node(pair_key, source).as_deref() == Some(key) {
-            return pair
-                .child_by_field_name("value")
-                .map(unwrap_yaml_value_node);
+) -> Option<&'nodes MappingEntry> {
+    mapping_entry(document, &entry.children, None, key)
+}
+
+fn mapping_entry<'nodes>(
+    document: &TemplatedDocument<'_>,
+    nodes: &'nodes [Node],
+    span: Option<Span>,
+    key: &str,
+) -> Option<&'nodes MappingEntry> {
+    nodes.iter().find_map(|node| {
+        let Node::Mapping(entry) = node else {
+            return None;
+        };
+        if span.is_some_and(|span| entry.span.start < span.start || entry.span.start >= span.end) {
+            return None;
         }
-    }
-    None
+        (document.literal_scalar(&entry.key)?.as_str()? == key).then_some(entry)
+    })
 }
 
-/// Named `key: value` pair nodes of a mapping node; block and flow
-/// mappings name their pair kind differently.
-fn mapping_pairs(mapping: tree_sitter::Node<'_>) -> Vec<tree_sitter::Node<'_>> {
-    let pair_kind = match mapping.kind() {
-        "block_mapping" => "block_mapping_pair",
-        "flow_mapping" => "flow_pair",
-        _ => return Vec::new(),
-    };
-    let mut cursor = mapping.walk();
-    mapping
-        .children(&mut cursor)
-        .filter(|pair| pair.is_named() && pair.kind() == pair_kind)
-        .collect()
+fn literal_value_for_child(
+    document: &TemplatedDocument<'_>,
+    entry: &MappingEntry,
+    key: &str,
+) -> Option<Value> {
+    let entry = mapping_child(document, entry, key)?;
+    document.literal_mapping_value(entry)
 }
 
-fn sequence_items(node: tree_sitter::Node<'_>) -> Option<Vec<tree_sitter::Node<'_>>> {
-    let node = unwrap_yaml_value_node(node);
-    if !matches!(node.kind(), "block_sequence" | "flow_sequence") {
-        return None;
-    }
-    let mut items = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if matches!(
-            child.kind(),
-            "block_sequence_item" | "flow_node" | "flow_pair"
-        ) {
-            items.push(unwrap_yaml_value_node(child));
-        }
-    }
-    Some(items)
-}
-
-fn literal_string_for_key(node: tree_sitter::Node<'_>, source: &str, key: &str) -> Option<String> {
-    mapping_value(node, source, key).and_then(|value| literal_string_from_node(value, source))
-}
-
-fn literal_bool_for_key(node: tree_sitter::Node<'_>, source: &str, key: &str) -> Option<bool> {
-    mapping_value(node, source, key)
-        .and_then(|value| literal_json_from_node(value, source))?
-        .as_bool()
-}
-
-fn literal_string_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
-    literal_json_from_node(node, source)?
+fn literal_string_for_child(
+    document: &TemplatedDocument<'_>,
+    entry: &MappingEntry,
+    key: &str,
+) -> Option<String> {
+    literal_value_for_child(document, entry, key)?
         .as_str()
-        .map(std::string::ToString::to_string)
+        .map(str::to_string)
 }
 
-fn literal_json_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<Value> {
-    let node = unwrap_yaml_value_node(node);
-    match node.kind() {
-        "stream" | "document" | "block_node" | "flow_node" => {
-            let mut cursor = node.walk();
-            let children = node
-                .named_children(&mut cursor)
-                .filter(|child| {
-                    !matches!(
-                        child.kind(),
-                        "reserved_directive" | "tag_directive" | "yaml_directive" | "comment"
-                    )
-                })
-                .collect::<Vec<_>>();
-            let [child] = children.as_slice() else {
-                return None;
-            };
-            literal_json_from_node(*child, source)
-        }
-        "block_mapping" | "flow_mapping" => {
-            let mut object = serde_json::Map::new();
-            for pair in mapping_pairs(node) {
-                let key = literal_string_from_node(pair.child_by_field_name("key")?, source)?;
-                let value = pair
-                    .child_by_field_name("value")
-                    .map(|value| literal_json_from_node(value, source))
-                    .unwrap_or(Some(Value::Null))?;
-                object.insert(key, value);
-            }
-            Some(Value::Object(object))
-        }
-        "block_sequence" | "flow_sequence" => sequence_items(node)?
-            .into_iter()
-            .map(|item| literal_json_from_node(item, source))
-            .collect::<Option<Vec<_>>>()
-            .map(Value::Array),
-        "helm_template" => None,
-        _ => {
-            let text = node.utf8_text(source.as_bytes()).ok()?.trim();
-            if text.contains("{{") || text.contains("}}") {
-                return None;
-            }
-            let yaml_value = serde_yaml::from_str::<serde_yaml::Value>(text).ok()?;
-            serde_json::to_value(yaml_value).ok()
-        }
-    }
+fn literal_nested_string_for_child(
+    document: &TemplatedDocument<'_>,
+    entry: &MappingEntry,
+    key: &str,
+    nested_key: &str,
+) -> Option<String> {
+    let value = literal_value_for_child(document, entry, key)?;
+    value
+        .as_object()?
+        .get(nested_key)?
+        .as_str()
+        .map(str::to_string)
 }
 
-fn mapping_node(node: tree_sitter::Node<'_>) -> Option<tree_sitter::Node<'_>> {
-    let node = unwrap_yaml_value_node(node);
-    match node.kind() {
-        "block_mapping" | "flow_mapping" => Some(node),
-        "stream" | "document" => node.named_child(0).and_then(mapping_node),
-        _ => None,
-    }
+fn literal_string_for_nodes(
+    document: &TemplatedDocument<'_>,
+    nodes: &[Node],
+    span: Option<Span>,
+    key: &str,
+) -> Option<String> {
+    document
+        .literal_mapping_value(mapping_entry(document, nodes, span, key)?)?
+        .as_str()
+        .map(str::to_string)
 }
 
-fn unwrap_yaml_value_node(node: tree_sitter::Node<'_>) -> tree_sitter::Node<'_> {
-    if matches!(
-        node.kind(),
-        "block_node" | "flow_node" | "block_sequence_item"
-    ) && let Some(child) = node.named_child(0)
-    {
-        return unwrap_yaml_value_node(child);
-    }
-    node
+fn literal_bool_for_nodes(
+    document: &TemplatedDocument<'_>,
+    nodes: &[Node],
+    span: Option<Span>,
+    key: &str,
+) -> Option<bool> {
+    document
+        .literal_mapping_value(mapping_entry(document, nodes, span, key)?)?
+        .as_bool()
 }
 
 #[cfg(test)]

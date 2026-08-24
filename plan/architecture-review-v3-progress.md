@@ -5025,3 +5025,172 @@ adjudication.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: -37 (61,947 to 61,910); cumulative Step 10
   delta through operation 1: -37.
+
+## Step 10 operation 2 — templated-document CRD projection
+
+- Status: landed; commit pending.
+- Contract: representation-only. Reimplement chart-local templated CRD literal
+  projection over `helm_schema_syntax::TemplatedDocument`. CRD recognition and
+  construction remain engine-owned; only reusable projection of literal CST
+  nodes belongs to the syntax model.
+- Acceptance baseline: `f352d98f`.
+- Baseline production Rust LOC: 61,910.
+
+### Pre-registered acceptance expectations
+
+- Template sources with no actions retain the existing direct multi-document
+  YAML path. Sources with actions are parsed once as a `TemplatedDocument`;
+  engine code selects CRD fields while syntax code projects only fully literal
+  mapping values, sequence items, and scalars.
+- Template holes outside the selected CRD identity and OpenAPI-schema fields
+  remain irrelevant. A hole inside a required identity or schema subtree keeps
+  that candidate unprojectable, matching the hybrid parser behavior.
+- Static and templated CRDs, v1 and v1beta1 shapes, multiple documents, block
+  and flow collections, and holes in mapping keys, mapping values, sequence
+  items, metadata, and schema positions retain their current outcomes.
+- Schema and IR fixture dumps remain byte-identical to operation 1. The
+  full-depth battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected preflight.
+
+### Measured results
+
+- `helm_schema_syntax::TemplatedDocument` now owns reusable projection of a
+  mapping entry, sequence item, scalar, block scalar, and nested literal node
+  collection into `serde_json::Value`. The projector knows nothing about CRD
+  envelopes, Kubernetes versions, or provider policy.
+- Engine-side local CRD recognition selects `apiVersion`, `kind`, `spec.group`,
+  `spec.names.kind`, served versions, and OpenAPI schema nodes from the
+  templated CST. The static no-action path retains the direct multi-document
+  YAML deserializer.
+- Top-level document spans keep adjacent YAML documents isolated. Block
+  collections use CST children; fully literal flow collections use the same
+  generic projector, preserving both v1 and v1beta1 CRD forms.
+- Standalone template overlay nodes contribute no invented literal value, so
+  known mapping and sequence siblings remain projectable. A hole inside a
+  scalar or mapping key makes that scalar unprojectable.
+- Focused engine-and-syntax integration proof passes 55/55 tests, including
+  v1/v1beta1 multi-document CRDs, templated metadata, standalone schema holes,
+  inline scalar holes, and block/flow literal projection.
+- The immutable final1 archive contains 92 binaries and 136 files. Its one
+  clean schema dump passes 62/62 and writes 84 artifacts; its one clean IR
+  dump passes 1/1 and writes 18 artifacts.
+- Separate `diff -rq --exclude 'nextest-*'` comparisons with operation 1 exit
+  0 for both schema and IR trees. No fixture changed.
+- The full-depth battery compares 60 lanes and 121,055 probes against
+  `f352d98f` with Helm adjudication enabled and reports zero flips and zero
+  candidate-accepts/Helm-aborts cells.
+
+### Deviations
+
+- The first focused syntax-test invocation used nextest's default profile,
+  which filters crate-level integration tests. It exited 4 with zero tests;
+  that run is rejected. The identical binary target under the integration
+  profile passes 2/2 before the authoritative archive was built.
+- The first lint preflight exited 0 but the ast-grep layer warned that a
+  multiline YAML test string used escaped newlines. That pass is non-accepting;
+  the source moved to `indoc!`, and the final lint gate is warning-free.
+- The pre-registration phrase “hole inside a required identity or schema
+  subtree” was broader than the hybrid parser's measured behavior. A hole
+  embedded in the selected scalar remains unprojectable, but a standalone
+  template overlay at a mapping or sequence position is skipped while its
+  literal siblings survive. The final implementation and explicit control
+  preserve that existing partial-literal behavior; the pre-registration text
+  is retained rather than silently rewritten after measurement.
+- The first downstream invocation replaced the inherited PATH instead of
+  prefixing it, so luup2 could not find `jv`. It was a rejected host preflight,
+  not schema evidence, and was interrupted after its deterministic missing-tool
+  failures. A process-tree check showed no surviving worker. The final gate
+  prefixes the shim directory to the inherited PATH and passes 32/32.
+- Operation 2 adds 74 production Rust LOC: the generic 80-line projector and
+  explicit engine selection outweigh deletion of the hybrid tree walk. Step 10
+  is +37 through operation 2, outside the frozen -300 to -100 whole-step band;
+  operation 3's grammar and caller deletion remains unmeasured. No live
+  behavior or controls were removed to force the estimate.
+
+### Adjudication evidence
+
+- Schema artifact identity: operation 1 final1 versus operation 2 final1 exits
+  0 across all 84 artifacts.
+- IR artifact identity: operation 1 final1 versus operation 2 final1 exits 0
+  across all 18 artifacts.
+- The ignored Round 74 battery passes in 69.129 seconds: 60 charts, 121,055
+  probes, zero flips, and zero Helm adjudications because no acceptance cell
+  changed.
+- Mandatory base coverage is 112,260/112,260 and mandatory third-level
+  coverage is 7,465/7,465, with zero drops in either category. Bounded
+  accounting reports 427 guard pairs, 238 composite pairs, and 28,874
+  disclosed drops.
+
+### Producer and route coverage
+
+| CRD route | Syntax-owned projection | Engine-owned recognition |
+|---|---|---|
+| Static `crds/` document | Direct YAML document parse retained | Existing CRD envelope recognition |
+| Literal manifest template | Existing direct YAML document parse retained | Existing template source identity |
+| Templated metadata | Metadata hole is not selected | Literal identity/spec fields still form a CRD |
+| Multiple YAML documents | Document spans isolate root entries | Each span is evaluated independently |
+| v1 served versions | Literal block/flow values and sequence items | Version name, served flag, and schema selection |
+| v1beta1 validation | Literal block/flow mapping values | Legacy version and validation selection |
+| Standalone mapping/sequence hole | Overlay node contributes no literal value | Known siblings retain the old partial projection |
+| Inline scalar/key hole | Scalar projection abstains | Candidate is not constructed from invented text |
+
+### Review dossier
+
+- Ownership: the syntax crate owns only source-span-to-literal-value mechanics;
+  the engine owns document selection, CRD field names, version compatibility,
+  provider source identity, and `LocalResourceSchema` construction.
+- Scope: static CRD parsing, resource-schema normalization, local-universe
+  precedence, manifest contract extraction, provider lookup, output lowering,
+  and fixtures are unchanged.
+- Parser consolidation: the sole production hybrid-Helm/YAML tree caller is
+  gone. Templated CRDs now consume the same CST as the analyzer's other
+  templated-YAML paths, preparing operation 3's grammar deletion.
+- Simplicity: projection is direct recursive matching over the seven CST node
+  variants. It introduces no CRD DTO, visitor trait, callback, or raw source
+  mutation lane.
+- Determinism: source-order document and sequence traversal is retained;
+  object insertion uses source order exactly as the prior JSON construction,
+  and downstream canonical output remains byte-identical.
+- Immutable proof: `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0` with a distinct
+  build `TMPDIR` creates the final1 nextest archive in 8m33s. All accepted dump
+  and acceptance runs execute only from that archive.
+
+### Self-adversarial pass
+
+- Metadata pressure: a dynamic metadata name does not poison literal CRD
+  identity or schema fields.
+- Document pressure: a templated non-CRD preceding v1 and v1beta1 CRDs yields
+  exactly the two resource schemas from their own document spans.
+- Hole pressure: standalone overlays preserve known siblings; embedded scalar
+  holes abstain. Focused tests pin both sides.
+- Flow pressure: literal flow mapping and sequence values are parsed at the
+  leaf projector, while block structure stays CST-driven.
+- Boundary pressure: repository search finds no CRD name, version, or provider
+  concept in `helm-schema-syntax`, and no `tree_sitter::Node` in the new engine
+  projector.
+- Estimate pressure: the +74 operation and +37 Step 10 aggregate are recorded
+  without deleting semantic or test code.
+
+- Gates on the final Step 10 operation 2 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,264/1,264 passed.
+  - `task test:integration`: exit 0; 570/570 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,838/1,838 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims, inherited PATH,
+    and explicit `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 61,984 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +74 (61,910 to 61,984); cumulative Step 10
+  delta through operation 2: +37.
