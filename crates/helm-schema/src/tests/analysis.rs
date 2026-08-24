@@ -251,7 +251,7 @@ fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped() -> eyre:
         .unwrap_or_else(|| panic!("missing evidence for {path}"));
     let string_implications: Vec<_> =
         evidence
-            .fail_implications
+            .requirement_implications
             .iter()
             .filter(|implication| {
                 implication.requirements.contains(
@@ -303,7 +303,7 @@ fn bitnami_redis_existing_secret_string_contract_stays_branch_scoped() -> eyre::
     };
     let string_implications =
         evidence
-            .fail_implications
+            .requirement_implications
             .iter()
             .filter(|implication| {
                 implication.requirements.contains(
@@ -359,7 +359,7 @@ fn selected_string_contract_preserves_only_live_provider_preimages() -> eyre::Re
             ));
         };
         assert!(
-            evidence.fail_implications.iter().any(|implication| {
+            evidence.requirement_implications.iter().any(|implication| {
                 implication.requirements.iter().any(|requirement| {
                     matches!(
                         requirement,
@@ -416,7 +416,7 @@ fn harbor_defaulted_secret_string_contract_keeps_its_truthy_tooth() -> eyre::Res
             return Err(eyre::eyre!("missing evidence for {path}"));
         };
         let keeps_truthy_string_tooth =
-            evidence.fail_implications.iter().any(|implication| {
+            evidence.requirement_implications.iter().any(|implication| {
                 implication.requirements.contains(
                     &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
                 ) && implication.outer_guards.iter().any(|guard| {
@@ -491,7 +491,7 @@ fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> eyre::Res
     assert!(
         evidence.is_some_and(|evidence| {
             evidence.type_hints.contains("string")
-                || evidence.fail_implications.iter().any(|implication| {
+                || evidence.requirement_implications.iter().any(|implication| {
                     implication.requirements.contains(
                         &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
                     )

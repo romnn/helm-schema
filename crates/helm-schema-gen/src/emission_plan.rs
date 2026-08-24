@@ -404,7 +404,7 @@ fn canonicalize_mandatory_constraints(
             && conjunct.carrier.ancestor_segments.is_empty()
             && matches!(
                 conjunct.origin,
-                EmissionOrigin::FailImplication | EmissionOrigin::Backprojection
+                EmissionOrigin::RequirementImplication | EmissionOrigin::Backprojection
             );
         let outcome = if !is_object_host || canonical_object_host {
             document.canonicalize_constraint_at_path(&target_segments, &conjunct.schema)

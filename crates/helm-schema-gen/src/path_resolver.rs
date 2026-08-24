@@ -113,7 +113,7 @@ impl<'a> PathSchemaResolver<'a> {
             .schema_evidence_by_value_path
             .iter()
             .filter(|(_, evidence)| {
-                evidence.is_referenced_value_path || !evidence.fail_implications.is_empty()
+                evidence.is_referenced_value_path || !evidence.requirement_implications.is_empty()
             })
             .map(|(value_path, _)| value_path.clone())
             .collect::<Vec<_>>();

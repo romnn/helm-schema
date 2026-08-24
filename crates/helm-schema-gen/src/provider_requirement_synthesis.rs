@@ -24,7 +24,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use helm_schema_core::{
-    ContractFailImplication, ContractRequirementTarget, ContractSchemaSignals,
+    ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
     FailValueRequirement, ProviderSchemaUse, ResourceSchemaOracle, ValueKind,
 };
 use serde_json::Value;
@@ -39,8 +39,8 @@ pub(crate) fn synthesized_required_source_implications(
     values_yaml_doc: &YamlValue,
     subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractFailImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
+) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
     let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
@@ -71,7 +71,7 @@ pub(crate) fn synthesized_required_source_implications(
             push_implication(
                 &mut implications,
                 helm_schema_core::join_value_path(parent_segments.iter().cloned()),
-                ContractFailImplication {
+                ContractRequirementImplication {
                     outer_guards: Vec::new(),
                     target: ContractRequirementTarget::Value,
                     requirements: vec![FailValueRequirement::HasMemberEvenDefaulted(
@@ -82,7 +82,7 @@ pub(crate) fn synthesized_required_source_implications(
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractFailImplication {
+                ContractRequirementImplication {
                     outer_guards: Vec::new(),
                     target: ContractRequirementTarget::Value,
                     requirements: vec![FailValueRequirement::NotSchemaType("null".to_string())],
@@ -138,7 +138,7 @@ pub(crate) fn synthesized_required_source_implications(
             push_implication(
                 &mut implications,
                 helm_schema_core::join_value_path(parent_segments.iter().cloned()),
-                ContractFailImplication {
+                ContractRequirementImplication {
                     outer_guards: overlay.guards.clone(),
                     target: ContractRequirementTarget::Value,
                     requirements: vec![FailValueRequirement::HasMemberEvenDefaulted(
@@ -149,7 +149,7 @@ pub(crate) fn synthesized_required_source_implications(
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractFailImplication {
+                ContractRequirementImplication {
                     outer_guards: overlay.guards.clone(),
                     target: ContractRequirementTarget::Value,
                     requirements: vec![FailValueRequirement::NotSchemaType("null".to_string())],
@@ -179,8 +179,8 @@ pub(crate) fn synthesized_ranged_member_required_implications(
     contract_schema_signals: &ContractSchemaSignals,
     subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractFailImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
+) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
     let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
@@ -314,7 +314,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
             push_implication(
                 &mut implications,
                 collection_path.clone(),
-                ContractFailImplication {
+                ContractRequirementImplication {
                     outer_guards,
                     // An integer iterable has no members to constrain;
                     // leaving that lane open is the safe direction.
@@ -393,8 +393,8 @@ fn provider_use_rejects_null(
 pub(crate) fn synthesized_split_segment_implications(
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractFailImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
+) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         for use_ in &evidence.provider_schema_uses {
             let Some(segment) = &use_.split_segment else {
@@ -411,7 +411,7 @@ pub(crate) fn synthesized_split_segment_implications(
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractFailImplication {
+                ContractRequirementImplication {
                     outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                         path: value_path.clone(),
                     }],
@@ -436,8 +436,8 @@ pub(crate) fn synthesized_split_segment_implications(
 pub(crate) fn synthesized_range_key_implications(
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractFailImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
+) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let overlay_uses = evidence.conditional_overlays.iter().flat_map(|overlay| {
             overlay
@@ -487,7 +487,7 @@ pub(crate) fn synthesized_range_key_implications(
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractFailImplication {
+                ContractRequirementImplication {
                     outer_guards: branch_guards.to_vec(),
                     target: ContractRequirementTarget::Keys,
                     requirements,
@@ -499,9 +499,9 @@ pub(crate) fn synthesized_range_key_implications(
 }
 
 fn push_implication(
-    implications: &mut BTreeMap<String, Vec<ContractFailImplication>>,
+    implications: &mut BTreeMap<String, Vec<ContractRequirementImplication>>,
     target_value_path: String,
-    implication: ContractFailImplication,
+    implication: ContractRequirementImplication,
 ) {
     let entries = implications.entry(target_value_path).or_default();
     if !entries.contains(&implication) {

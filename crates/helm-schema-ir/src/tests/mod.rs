@@ -146,7 +146,7 @@ fn ranged_tpl_executes_matching_values_default_programs() {
                 .conditional_overlays
                 .iter()
                 .any(|overlay| overlay.evidence.facts.is_ranged_source)
-                && evidence.fail_implications.iter().any(|implication| {
+                && evidence.requirement_implications.iter().any(|implication| {
                     implication.requirements.iter().any(|requirement| {
                         matches!(
                             requirement,

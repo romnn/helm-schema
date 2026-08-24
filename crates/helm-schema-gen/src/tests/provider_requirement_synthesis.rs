@@ -4,9 +4,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use color_eyre::eyre;
 use helm_schema_core::{
-    ConditionalGuard, ContractFailImplication, ContractPathSchemaEvidence, ContractSchemaSignals,
-    ContractValuePathFacts, MergeLayerTransform, MergeLayersUse, ProviderSchemaUse, ResourceRef,
-    ValueKind, YamlPath,
+    ConditionalGuard, ContractPathSchemaEvidence, ContractRequirementImplication,
+    ContractSchemaSignals, ContractValuePathFacts, MergeLayerTransform, MergeLayersUse,
+    ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,
 };
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
@@ -98,14 +98,14 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
     "})?;
     let no_dependency_defaults = serde_yaml::from_str("{}")?;
 
-    let direct = crate::required_source_backprojection::synthesized_required_source_implications(
+    let direct = crate::provider_requirement_synthesis::synthesized_required_source_implications(
         &signals,
         &values,
         &no_dependency_defaults,
         &provider(),
     );
     let ranged =
-        crate::required_source_backprojection::synthesized_ranged_member_required_implications(
+        crate::provider_requirement_synthesis::synthesized_ranged_member_required_implications(
             &signals,
             &no_dependency_defaults,
             &provider(),
@@ -113,11 +113,11 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
 
     sim_assert_eq!(
         have: direct,
-        want: BTreeMap::<String, Vec<ContractFailImplication>>::new()
+        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
     );
     sim_assert_eq!(
         have: ranged,
-        want: BTreeMap::<String, Vec<ContractFailImplication>>::new()
+        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
     );
 
     Ok(())
@@ -154,7 +154,7 @@ fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
     let no_dependency_defaults = serde_yaml::from_str("{}")?;
 
     let implications =
-        crate::required_source_backprojection::synthesized_required_source_implications(
+        crate::provider_requirement_synthesis::synthesized_required_source_implications(
             &signals,
             &values,
             &no_dependency_defaults,
@@ -163,7 +163,7 @@ fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
 
     sim_assert_eq!(
         have: implications,
-        want: BTreeMap::<String, Vec<ContractFailImplication>>::new()
+        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
     );
 
     Ok(())
@@ -195,7 +195,7 @@ fn range_key_provider_presence_does_not_require_collection() -> eyre::Result<()>
     let no_dependency_defaults = serde_yaml::from_str("{}")?;
 
     let implications =
-        crate::required_source_backprojection::synthesized_required_source_implications(
+        crate::provider_requirement_synthesis::synthesized_required_source_implications(
             &signals,
             &values,
             &no_dependency_defaults,
@@ -204,7 +204,7 @@ fn range_key_provider_presence_does_not_require_collection() -> eyre::Result<()>
 
     sim_assert_eq!(
         have: implications,
-        want: BTreeMap::<String, Vec<ContractFailImplication>>::new()
+        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
     );
 
     Ok(())

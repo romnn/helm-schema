@@ -1,5 +1,5 @@
 use super::{
-    BTreeMap, BTreeSet, ConditionalGuard, ContractFailImplication, ContractPathAccumulator,
+    BTreeMap, BTreeSet, ConditionalGuard, ContractPathAccumulator, ContractRequirementImplication,
     ContractRequirementTarget, ContractUse, FailValueRequirement, Guard, Predicate,
     ProviderSchemaUse, ValueKind, path_accumulator,
 };
@@ -743,7 +743,7 @@ pub(super) fn record_member_range_requirement(
     }
     outer_guards.sort();
     outer_guards.dedup();
-    let implication = ContractFailImplication {
+    let implication = ContractRequirementImplication {
         outer_guards,
         target: ContractRequirementTarget::Members {
             allow_integer: outer_allows_integer,
@@ -754,8 +754,8 @@ pub(super) fn record_member_range_requirement(
     };
     let acc = path_accumulator(paths, parent);
     acc.referenced = true;
-    if !acc.fail_implications.contains(&implication) {
-        acc.fail_implications.push(implication);
+    if !acc.requirement_implications.contains(&implication) {
+        acc.requirement_implications.push(implication);
     }
 }
 

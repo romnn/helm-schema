@@ -1432,8 +1432,8 @@ fn foreign_range_does_not_globalize_strict_consumer() {
         .expect("strict consumer evidence");
 
     assert!(
-        !evidence.fail_implications.is_empty()
-            && evidence.fail_implications.iter().all(|implication| {
+        !evidence.requirement_implications.is_empty()
+            && evidence.requirement_implications.iter().all(|implication| {
                 implication.outer_guards.iter().any(|guard| {
                     matches!(
                         guard,
@@ -1466,7 +1466,7 @@ fn nested_member_range_abstains_under_unlowerable_outer_guard() {
     "});
     assert!(
         signals.evidence_for("groups").is_none_or(|evidence| {
-            !evidence.fail_implications.iter().any(|implication| {
+            !evidence.requirement_implications.iter().any(|implication| {
                 matches!(
                     implication.target,
                     helm_schema_core::ContractRequirementTarget::Members { .. }
@@ -1602,7 +1602,7 @@ fn direct_ranged_nested_sentinel_retains_its_member_contract() {
         )
     });
     assert!(
-        evidence.fail_implications.iter().any(|implication| {
+        evidence.requirement_implications.iter().any(|implication| {
             implication.target
                 == helm_schema_core::ContractRequirementTarget::MembersAt {
                     target_path: vec!["$tplYaml".to_string()],
@@ -1630,7 +1630,7 @@ fn get_on_destructured_range_value_requires_object_members() {
         .evidence_for("contexts")
         .expect("direct range evidence");
 
-    assert!(evidence.fail_implications.iter().any(|implication| {
+    assert!(evidence.requirement_implications.iter().any(|implication| {
         matches!(
             implication.target,
             helm_schema_core::ContractRequirementTarget::Members {
@@ -1662,7 +1662,7 @@ fn unknown_member_access_site_makes_the_exact_domain_incomplete() -> eyre::Resul
         .evidence_for("host")
         .ok_or_eyre("expected member-host evidence")?;
     let completeness = evidence
-        .fail_implications
+        .requirement_implications
         .iter()
         .flat_map(|implication| &implication.requirements)
         .filter_map(|requirement| match requirement {

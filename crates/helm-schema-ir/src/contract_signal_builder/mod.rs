@@ -4,8 +4,8 @@ use crate::scalar_value::TruthCondition;
 use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
 use helm_schema_core::{
     ApproximationRole, ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor,
-    ConditionalPathOverlay, ContractFailImplication, ContractPathSchemaEvidence,
-    ContractRequirednessEvidence, ContractRequirementTarget, ContractSchemaSignals,
+    ConditionalPathOverlay, ContractPathSchemaEvidence, ContractRequirednessEvidence,
+    ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
     ContractValuePathFacts, FailValueRequirement, GuardDnf, GuardValue, MetadataFieldKind,
     Predicate,
 };

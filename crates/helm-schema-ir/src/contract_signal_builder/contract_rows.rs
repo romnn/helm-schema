@@ -1,8 +1,8 @@
 use super::{
     ApproximationRole, BTreeMap, BTreeSet, ConditionalGuard, ConditionalOverlayEvidence,
-    ContractFailImplication, ContractRequirednessEvidence, ContractRequirementTarget, ContractUse,
-    ContractValuePathFacts, FailValueRequirement, Guard, GuardDnf, MetadataFieldKind, Predicate,
-    ProviderSchemaUse, SourceUseFactSplit, ValueKind, collapse_layered_truthy_gates,
+    ContractRequirednessEvidence, ContractRequirementImplication, ContractRequirementTarget,
+    ContractUse, ContractValuePathFacts, FailValueRequirement, Guard, GuardDnf, MetadataFieldKind,
+    Predicate, ProviderSchemaUse, SourceUseFactSplit, ValueKind, collapse_layered_truthy_gates,
     extend_lowerable_predicate, hard_negation_paths, lowerable_conditional_guard_set,
     lowerable_conditional_guard_subset, path_accumulator, path_contains_wildcard,
     predicate_is_structural_ancestor_guard, predicate_tests_source_type, predicate_to_guard,
@@ -29,7 +29,7 @@ pub(super) struct ContractPathAccumulator {
         BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
     pub(super) has_unconditional_overlay_peer: bool,
     pub(super) saw_unsupported_overlay: bool,
-    pub(super) fail_implications: Vec<ContractFailImplication>,
+    pub(super) requirement_implications: Vec<ContractRequirementImplication>,
     pub(super) member_access_conditions: MemberAccessConditions,
 }
 
@@ -1036,7 +1036,7 @@ pub(super) fn record_range_input_capture(
                 ..ContractValuePathFacts::default()
             });
         }
-        let implication = ContractFailImplication {
+        let implication = ContractRequirementImplication {
             outer_guards,
             target: ContractRequirementTarget::Value,
             requirements: vec![FailValueRequirement::Iterable {
@@ -1045,8 +1045,8 @@ pub(super) fn record_range_input_capture(
         };
         let acc = path_accumulator(paths, path);
         acc.referenced = true;
-        if !acc.fail_implications.contains(&implication) {
-            acc.fail_implications.push(implication);
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
         }
     }
 }

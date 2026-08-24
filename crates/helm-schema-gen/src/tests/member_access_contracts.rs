@@ -1939,7 +1939,7 @@ fn declared_shape_does_not_own_a_guarded_member_host_base() {
             has_referenced_descendants: true,
             ..ContractValuePathFacts::default()
         },
-        fail_implications: vec![helm_schema_core::ContractFailImplication {
+        requirement_implications: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                 path: "spark.enabled".to_string(),
             }],
@@ -2011,8 +2011,8 @@ fn partial_member_host_domain_preserves_the_declared_base() {
             has_referenced_descendants: true,
             ..ContractValuePathFacts::default()
         },
-        fail_implications: vec![
-            helm_schema_core::ContractFailImplication {
+        requirement_implications: vec![
+            helm_schema_core::ContractRequirementImplication {
                 outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                     path: "exact".to_string(),
                 }],
@@ -2022,7 +2022,7 @@ fn partial_member_host_domain_preserves_the_declared_base() {
                     complete_domain: true,
                 }],
             },
-            helm_schema_core::ContractFailImplication {
+            helm_schema_core::ContractRequirementImplication {
                 outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                     path: "partial".to_string(),
                 }],

@@ -540,7 +540,7 @@ pub(crate) fn append_selected_constraints(
     let mut emission_index: BTreeMap<(Vec<String>, String), usize> = BTreeMap::new();
     for ((ancestor_segments, _), group) in by_content {
         // An empty guard set is trivially true: the fragment applies
-        // unconditionally (an unguarded fail implication).
+        // unconditionally (an unguarded requirement implication).
         if group.guard_sets.iter().any(Vec::is_empty) {
             emissions.push(PendingEmission {
                 ancestor_segments,

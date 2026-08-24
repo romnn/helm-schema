@@ -265,7 +265,7 @@ impl ContractPathAccumulator {
             conditional_overlay_branches,
             mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
-            mut fail_implications,
+            mut requirement_implications,
             member_access_conditions: _,
         } = self;
         let overlay_type_hints: BTreeSet<String> = type_hints
@@ -408,14 +408,14 @@ impl ContractPathAccumulator {
         // the encoding could not represent decide when those branches run,
         // so binding their typing path-wide would narrow states the branch
         // never reaches.
-        fail_implications.sort();
-        fail_implications.dedup();
-        let unconditional_requirements = fail_implications
+        requirement_implications.sort();
+        requirement_implications.dedup();
+        let unconditional_requirements = requirement_implications
             .iter()
             .filter(|implication| implication.outer_guards.is_empty())
             .map(|implication| (implication.target.clone(), implication.requirements.clone()))
             .collect::<BTreeSet<_>>();
-        fail_implications.retain(|implication| {
+        requirement_implications.retain(|implication| {
             implication.outer_guards.is_empty()
                 || !unconditional_requirements
                     .contains(&(implication.target.clone(), implication.requirements.clone()))
@@ -434,7 +434,7 @@ impl ContractPathAccumulator {
             provider_schema_uses: path_facts.provider_schema_uses,
             requiredness,
             conditional_overlays,
-            fail_implications,
+            requirement_implications,
         }
     }
 }

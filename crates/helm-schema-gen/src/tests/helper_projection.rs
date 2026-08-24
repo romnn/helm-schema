@@ -51,7 +51,7 @@ fn helper_range_break_scopes_later_provider_candidates() {
         .get("worker.securityContexts");
     assert!(
         security_contexts.is_some_and(|evidence| {
-            evidence.fail_implications.iter().any(|implication| {
+            evidence.requirement_implications.iter().any(|implication| {
                 implication.outer_guards
                     == [helm_schema_core::ConditionalGuard::Not(Box::new(
                         helm_schema_core::ConditionalGuard::Absent {

@@ -1852,15 +1852,18 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
                 .schema_evidence_by_value_path()
                 .get(path)
                 .and_then(|evidence| {
-                    evidence.fail_implications.iter().find(|implication| {
-                        matches!(
-                            implication.requirements.as_slice(),
-                            [helm_schema_core::FailValueRequirement::MemberHost {
-                                complete_domain: false,
-                                ..
-                            }]
-                        )
-                    })
+                    evidence
+                        .requirement_implications
+                        .iter()
+                        .find(|implication| {
+                            matches!(
+                                implication.requirements.as_slice(),
+                                [helm_schema_core::FailValueRequirement::MemberHost {
+                                    complete_domain: false,
+                                    ..
+                                }]
+                            )
+                        })
                 })
                 .cloned()
                 .map(|implication| (path, implication))
@@ -1871,7 +1874,7 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
         .map(|path| {
             Some((
                 path,
-                helm_schema_core::ContractFailImplication {
+                helm_schema_core::ContractRequirementImplication {
                     outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                         path: "feature.explicit".to_string(),
                     }],

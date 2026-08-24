@@ -1,5 +1,5 @@
 use super::{
-    BTreeMap, BTreeSet, ConditionalGuard, ContractFailImplication, ContractPathAccumulator,
+    BTreeMap, BTreeSet, ConditionalGuard, ContractPathAccumulator, ContractRequirementImplication,
     ContractRequirementTarget, FailValueRequirement, Guard, GuardDnf, GuardValue,
     MemberAccessConditions, Predicate, TruthCondition, lowerable_range_outer_guards,
     member_local_truthy_selector, path_accumulator, path_contains_wildcard,
@@ -626,7 +626,7 @@ pub(super) fn record_fail_conjunction(
     }
     outer_guards.sort();
     outer_guards.dedup();
-    let implication = ContractFailImplication {
+    let implication = ContractRequirementImplication {
         outer_guards,
         target: ranged.map_or(ContractRequirementTarget::Value, |path| {
             let mode = range_modes.mode(path);
@@ -643,8 +643,8 @@ pub(super) fn record_fail_conjunction(
     };
     let acc = path_accumulator(paths, &target);
     acc.referenced = true;
-    if !acc.fail_implications.contains(&implication) {
-        acc.fail_implications.push(implication);
+    if !acc.requirement_implications.contains(&implication) {
+        acc.requirement_implications.push(implication);
     }
 }
 
@@ -793,7 +793,7 @@ pub(super) fn record_range_key_prefix_requirement(
     outer_guards.dedup();
     requirements.sort();
     requirements.dedup();
-    let implication = ContractFailImplication {
+    let implication = ContractRequirementImplication {
         outer_guards,
         target: ContractRequirementTarget::MembersMatchingPrefix {
             prefix: (*prefix).to_string(),
@@ -802,8 +802,8 @@ pub(super) fn record_range_key_prefix_requirement(
     };
     let acc = path_accumulator(paths, collection_path);
     acc.referenced = true;
-    if !acc.fail_implications.contains(&implication) {
-        acc.fail_implications.push(implication);
+    if !acc.requirement_implications.contains(&implication) {
+        acc.requirement_implications.push(implication);
     }
     true
 }
@@ -888,15 +888,15 @@ pub(super) fn record_range_key_matches_requirement(
             pattern: (*pattern).to_string(),
         }
     };
-    let implication = ContractFailImplication {
+    let implication = ContractRequirementImplication {
         outer_guards,
         target: ContractRequirementTarget::Keys,
         requirements: vec![requirement],
     };
     let acc = path_accumulator(paths, collection_path);
     acc.referenced = true;
-    if !acc.fail_implications.contains(&implication) {
-        acc.fail_implications.push(implication);
+    if !acc.requirement_implications.contains(&implication) {
+        acc.requirement_implications.push(implication);
     }
     true
 }
@@ -1143,7 +1143,7 @@ pub(super) fn record_value_requirement_capture(
             let mut target_path =
                 std::iter::repeat_n("*".to_string(), wildcard_count - 1).collect::<Vec<_>>();
             target_path.extend(suffix.iter().cloned());
-            let implication = ContractFailImplication {
+            let implication = ContractRequirementImplication {
                 outer_guards,
                 target: ContractRequirementTarget::MembersAt {
                     target_path,
@@ -1153,8 +1153,8 @@ pub(super) fn record_value_requirement_capture(
             };
             let acc = path_accumulator(paths, &collection_path);
             acc.referenced = true;
-            if !acc.fail_implications.contains(&implication) {
-                acc.fail_implications.push(implication);
+            if !acc.requirement_implications.contains(&implication) {
+                acc.requirement_implications.push(implication);
             }
             return;
         }
@@ -1235,7 +1235,7 @@ pub(super) fn record_value_requirement_capture(
             mode.member_identity && !mode.destructured && !mode.json_decoded
         };
         let target_path = helm_schema_core::split_value_path(member_suffix);
-        let implication = ContractFailImplication {
+        let implication = ContractRequirementImplication {
             outer_guards,
             target: match member_selector {
                 Some(guard_path) => ContractRequirementTarget::MembersAtWhereTruthy {
@@ -1251,8 +1251,8 @@ pub(super) fn record_value_requirement_capture(
             requirements: vec![requirement],
         };
         let acc = path_accumulator(paths, collection_path);
-        if !acc.fail_implications.contains(&implication) {
-            acc.fail_implications.push(implication);
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
         }
         return;
     }
@@ -1353,15 +1353,15 @@ pub(super) fn record_value_requirement_capture(
         };
         (path, ContractRequirementTarget::Value, outer_guards)
     };
-    let implication = ContractFailImplication {
+    let implication = ContractRequirementImplication {
         outer_guards,
         target,
         requirements: vec![requirement],
     };
     let acc = path_accumulator(paths, target_path);
     acc.referenced = true;
-    if !acc.fail_implications.contains(&implication) {
-        acc.fail_implications.push(implication);
+    if !acc.requirement_implications.contains(&implication) {
+        acc.requirement_implications.push(implication);
     }
 }
 
@@ -1386,7 +1386,7 @@ pub(super) fn record_collection_item_requirements(
                 templated: false,
             });
         }
-        let implication = ContractFailImplication {
+        let implication = ContractRequirementImplication {
             outer_guards: outer_guards.clone(),
             target: ContractRequirementTarget::Members {
                 allow_integer: false,
@@ -1395,8 +1395,8 @@ pub(super) fn record_collection_item_requirements(
         };
         let acc = path_accumulator(paths, path);
         acc.referenced = true;
-        if !acc.fail_implications.contains(&implication) {
-            acc.fail_implications.push(implication);
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
         }
     }
 }
@@ -1473,15 +1473,15 @@ pub(super) fn record_index_access_requirement(
     let Some(outer_guards) = capture_outer_guards(capture) else {
         return;
     };
-    let implication = ContractFailImplication {
+    let implication = ContractRequirementImplication {
         outer_guards,
         target: ContractRequirementTarget::Value,
         requirements: vec![FailValueRequirement::IndexableAt(index)],
     };
     let acc = path_accumulator(paths, path);
     acc.referenced = true;
-    if !acc.fail_implications.contains(&implication) {
-        acc.fail_implications.push(implication);
+    if !acc.requirement_implications.contains(&implication) {
+        acc.requirement_implications.push(implication);
     }
 }
 
@@ -1515,7 +1515,7 @@ pub(super) fn record_split_index_access_requirement(
         let Some(outer_guards) = outer_guards.clone() else {
             continue;
         };
-        let implication = ContractFailImplication {
+        let implication = ContractRequirementImplication {
             outer_guards,
             target: ContractRequirementTarget::Value,
             requirements: vec![FailValueRequirement::SplitSegmentsAtLeast {
@@ -1526,8 +1526,8 @@ pub(super) fn record_split_index_access_requirement(
         };
         let acc = path_accumulator(paths, path);
         acc.referenced = true;
-        if !acc.fail_implications.contains(&implication) {
-            acc.fail_implications.push(implication);
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
         }
     }
 }
@@ -1595,7 +1595,7 @@ pub(super) fn record_member_relative_split_requirement(
     };
     outer_guards.sort();
     outer_guards.dedup();
-    let implication = ContractFailImplication {
+    let implication = ContractRequirementImplication {
         outer_guards,
         target: ContractRequirementTarget::MembersWhereEquals {
             guard_path: guard_path.clone(),
@@ -1610,8 +1610,8 @@ pub(super) fn record_member_relative_split_requirement(
     };
     let acc = path_accumulator(paths, &collection_path);
     acc.referenced = true;
-    if !acc.fail_implications.contains(&implication) {
-        acc.fail_implications.push(implication);
+    if !acc.requirement_implications.contains(&implication) {
+        acc.requirement_implications.push(implication);
     }
 }
 
@@ -1634,15 +1634,15 @@ pub(super) fn record_range_key_string_requirements(
         let Some(outer_guards) = lowerable_range_outer_guards(path, &capture.conjunction) else {
             continue;
         };
-        let implication = ContractFailImplication {
+        let implication = ContractRequirementImplication {
             outer_guards,
             target: ContractRequirementTarget::Keys,
             requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
         };
         let acc = path_accumulator(paths, path);
         acc.referenced = true;
-        if !acc.fail_implications.contains(&implication) {
-            acc.fail_implications.push(implication);
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
         }
     }
 }
@@ -1670,7 +1670,7 @@ pub(super) fn record_range_key_plain_slot_requirements(
         let Some(outer_guards) = lowerable_range_outer_guards(path, &capture.conjunction) else {
             continue;
         };
-        let implication = ContractFailImplication {
+        let implication = ContractRequirementImplication {
             outer_guards,
             target: ContractRequirementTarget::Keys,
             requirements: vec![FailValueRequirement::PlainScalarSafe {
@@ -1680,8 +1680,8 @@ pub(super) fn record_range_key_plain_slot_requirements(
         };
         let acc = path_accumulator(paths, path);
         acc.referenced = true;
-        if !acc.fail_implications.contains(&implication) {
-            acc.fail_implications.push(implication);
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
         }
     }
 }
@@ -1976,7 +1976,7 @@ pub(super) fn record_member_access_capture(
         }
         outer_guards.sort();
         outer_guards.dedup();
-        let implication = ContractFailImplication {
+        let implication = ContractRequirementImplication {
             outer_guards,
             target: ContractRequirementTarget::Members {
                 allow_integer: {
@@ -1992,8 +1992,8 @@ pub(super) fn record_member_access_capture(
         };
         let acc = path_accumulator(paths, parent);
         acc.referenced = true;
-        if !acc.fail_implications.contains(&implication) {
-            acc.fail_implications.push(implication);
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
         }
         return;
     }
@@ -2261,7 +2261,7 @@ pub(super) fn record_member_access_implications(
         ] {
             for (handled_kinds, guard_sets) in guard_sets_by_kind {
                 let outer_guards = fold_member_access_arms(guard_sets.clone());
-                let implication = ContractFailImplication {
+                let implication = ContractRequirementImplication {
                     outer_guards,
                     target: ContractRequirementTarget::Value,
                     requirements: vec![FailValueRequirement::MemberHost {
@@ -2270,8 +2270,8 @@ pub(super) fn record_member_access_implications(
                     }],
                 };
                 let acc = path_accumulator(paths, &path);
-                if !acc.fail_implications.contains(&implication) {
-                    acc.fail_implications.push(implication);
+                if !acc.requirement_implications.contains(&implication) {
+                    acc.requirement_implications.push(implication);
                 }
             }
         }

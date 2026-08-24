@@ -106,7 +106,7 @@ impl LoweredConjunct {
         };
         Self {
             class,
-            origin: EmissionOrigin::FailImplication,
+            origin: EmissionOrigin::RequirementImplication,
             carrier: ConjunctCarrier {
                 target_value_path: String::new(),
                 ancestor_segments: Vec::new(),
@@ -171,26 +171,26 @@ pub(crate) fn collect_conditional_schemas(
 ) -> (Vec<LoweredConjunct>, InsertionAbstentionCounts) {
     let mut insertion_abstentions = InsertionAbstentionCounts::default();
     let mut synthesized_implications =
-        crate::required_source_backprojection::synthesized_required_source_implications(
+        crate::provider_requirement_synthesis::synthesized_required_source_implications(
             contract_schema_signals,
             values_yaml_doc,
             subchart_defaults_doc,
             provider,
         );
     for (path, split_implications) in
-        crate::required_source_backprojection::synthesized_split_segment_implications(
+        crate::provider_requirement_synthesis::synthesized_split_segment_implications(
             contract_schema_signals,
             provider,
         )
         .into_iter()
         .chain(
-            crate::required_source_backprojection::synthesized_range_key_implications(
+            crate::provider_requirement_synthesis::synthesized_range_key_implications(
                 contract_schema_signals,
                 provider,
             ),
         )
         .chain(
-            crate::required_source_backprojection::synthesized_ranged_member_required_implications(
+            crate::provider_requirement_synthesis::synthesized_ranged_member_required_implications(
                 contract_schema_signals,
                 subchart_defaults_doc,
                 provider,
@@ -264,12 +264,12 @@ pub(crate) fn collect_conditional_schemas(
             .iter()
             .any(|overlay| is_unconditional_self_presence_overlay(target_value_path, overlay));
 
-        // `fail` implications: wherever the outer guards hold, the failing
-        // test's negation must hold. Runtime-hard, so the requirement
-        // rides an `allOf` arm — property-level union lanes (declared
-        // defaults, range alternatives, carrier variants) must never
-        // bypass it. An empty guard set means the requirement is
-        // unconditional and the arm's condition is trivially true.
+        // Contract requirements hold wherever their outer guards hold. They
+        // are runtime-hard, so each requirement rides an `allOf` arm —
+        // property-level union lanes (declared defaults, range alternatives,
+        // carrier variants) must never bypass it. An empty guard set means the
+        // requirement is unconditional and the arm's condition is trivially
+        // true.
         let synthesized = synthesized_implications
             .get(target_value_path)
             .map(Vec::as_slice)
@@ -281,7 +281,7 @@ pub(crate) fn collect_conditional_schemas(
         // untyped and the presence-guarded arms alone carry `type: object`.
         let all_member_hosts_presence_scoped = {
             let mut member_host_implications = evidence
-                .fail_implications
+                .requirement_implications
                 .iter()
                 .chain(synthesized)
                 .filter(|implication| {
@@ -299,9 +299,9 @@ pub(crate) fn collect_conditional_schemas(
                 })
         };
         for (implication, origin) in evidence
-            .fail_implications
+            .requirement_implications
             .iter()
-            .map(|implication| (implication, EmissionOrigin::FailImplication))
+            .map(|implication| (implication, EmissionOrigin::RequirementImplication))
             .chain(
                 synthesized
                     .iter()
@@ -310,7 +310,7 @@ pub(crate) fn collect_conditional_schemas(
         {
             if is_bare_iterable_implication(implication)
                 && member_implication_covers_range_domain(
-                    &evidence.fail_implications,
+                    &evidence.requirement_implications,
                     &implication.outer_guards,
                 )
             {
@@ -504,11 +504,11 @@ pub(crate) fn collect_conditional_schemas(
             let member_implication_owns_range_domain = overlay.evidence.facts.is_ranged_source
                 && crate::schema_model::is_empty_schema(&resolved_overlay.schema)
                 && member_implication_covers_range_domain(
-                    &evidence.fail_implications,
+                    &evidence.requirement_implications,
                     &overlay.guards,
                 );
             if member_implication_owns_range_domain {
-                // The fail implication already carries the branch's
+                // The requirement implication already carries the branch's
                 // complete runtime domain. Keep only this empty ownership
                 // marker; passing an evidence-free overlay through
                 // conditional policy would substitute its values.yaml

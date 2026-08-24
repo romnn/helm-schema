@@ -661,8 +661,8 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
     sim_assert_eq!(have: evidence.facts.has_string_contract, want: false);
     sim_assert_eq!(have: evidence.type_hints.contains("string"), want: false);
     sim_assert_eq!(
-        have: evidence.fail_implications.clone(),
-        want: vec![helm_schema_core::ContractFailImplication {
+        have: evidence.requirement_implications.clone(),
+        want: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                 path: "postgresql.enabled".to_string(),
             }],
@@ -1018,7 +1018,7 @@ fn propagated_wildcard_string_requirement_needs_its_range_scope() {
     let signals = finalized.schema_signals();
     assert!(
         signals.evidence_for("workers").is_none_or(|evidence| {
-            evidence.fail_implications.iter().all(|implication| {
+            evidence.requirement_implications.iter().all(|implication| {
                 !matches!(
                     implication.target,
                     helm_schema_core::ContractRequirementTarget::Members { .. }
@@ -1053,7 +1053,7 @@ fn ranged_wildcard_string_requirement_keeps_its_member_contract() -> eyre::Resul
         .evidence_for("workers")
         .ok_or_eyre("expected ranged worker evidence")?;
     assert!(
-        evidence.fail_implications.iter().any(|implication| {
+        evidence.requirement_implications.iter().any(|implication| {
             matches!(
                 implication.target,
                 helm_schema_core::ContractRequirementTarget::Members { .. }

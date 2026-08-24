@@ -30,7 +30,9 @@ impl FinalizedContract {
             dependency_values_root_fragments,
         )
         .with_values_default_sources(observed_facts.values_default_sources.clone())
-        .with_root_overlay_fail_implications(observed_facts.values_root_overlay_prefixes.clone())
+        .with_root_overlay_requirement_implications(
+            observed_facts.values_root_overlay_prefixes.clone(),
+        )
         .with_values_program_wrappers(values_program_wrappers)
         .with_values_program_wrapper_exclusions(values_program_wrapper_exclusions);
 

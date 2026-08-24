@@ -67,7 +67,7 @@ pub struct InsertionAbstentionCounts {
     pub base_document: usize,
     /// Member-descendant projections skipped while lowering conditional overlays.
     pub conditional_member_projection: usize,
-    /// Nested requirement targets skipped while lowering fail implications.
+    /// Nested requirement targets skipped while lowering requirement implications.
     pub requirement_target: usize,
 }
 

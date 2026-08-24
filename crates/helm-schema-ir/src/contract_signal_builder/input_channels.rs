@@ -1,7 +1,7 @@
 use super::{
-    BTreeMap, BTreeSet, ContractFailImplication, ContractRequirementTarget, ContractSchemaSignals,
-    ContractUse, ContractValuePathFacts, FailValueRequirement, finish_schema_signals,
-    path_accumulator, record_contract_use, record_fail_conjunction,
+    BTreeMap, BTreeSet, ContractRequirementImplication, ContractRequirementTarget,
+    ContractSchemaSignals, ContractUse, ContractValuePathFacts, FailValueRequirement,
+    finish_schema_signals, path_accumulator, record_contract_use, record_fail_conjunction,
 };
 use crate::observed_facts::{HintIntent, HintScope, ObservedFacts};
 
@@ -53,13 +53,13 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             // as a mapping, so a user null is deleted by the values
             // coalesce that runs first and reaches the check as absent —
             // hence the null-tolerant form.
-            let requires_table = ContractFailImplication {
+            let requires_table = ContractRequirementImplication {
                 outer_guards: Vec::new(),
                 target: ContractRequirementTarget::Value,
                 requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
             };
-            if !acc.fail_implications.contains(&requires_table) {
-                acc.fail_implications.push(requires_table);
+            if !acc.requirement_implications.contains(&requires_table) {
+                acc.requirement_implications.push(requires_table);
             }
         }
     }

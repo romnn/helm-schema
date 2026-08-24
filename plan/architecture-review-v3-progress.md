@@ -4407,7 +4407,7 @@ adjudication.
 
 ## Step 9 operation 4 — typed schema provenance
 
-- Status: landed; commit pending.
+- Status: landed; commit `eb5a2a14`.
 - Contract: representation-only. Carry explicit map-openness,
   plain-scalar-exclusion, and Helm-truthy-reference provenance as typed schema
   facts instead of rediscovering those facts by inspecting serialized JSON
@@ -4566,3 +4566,164 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +92 (61,845 to 61,937).
+
+## Step 9 operation 5 — producer-neutral requirement naming
+
+- Status: landed; commit pending.
+- Contract: representation-only. Rename `ContractFailImplication` to a
+  producer-neutral requirement type and rename
+  `required_source_backprojection` for its actual provider-requirement
+  synthesis responsibility. This is an honesty change only: producer routes,
+  requirement ordering, emitted schemas, and acceptance stay exact.
+- Acceptance baseline: `eb5a2a14`.
+- Baseline production Rust LOC: 61,937.
+
+### Pre-registered acceptance expectations
+
+- Every existing fail, helper, range, merge, fragment, and provider-synthesis
+  producer constructs the same requirement value under the neutral type name;
+  no producer-specific field, guard, target, or requirement is added or
+  removed.
+- The renamed generator module exposes the same four synthesis operations and
+  returns the same ordered path-to-requirement maps. Call order and emission
+  origins remain unchanged.
+- Schema and IR fixture dumps remain byte-identical to operation 4. The
+  full-depth compiled battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected
+  preflight.
+
+### Measured results
+
+- `ContractRequirementImplication` now names the one shared runtime-hard
+  requirement carrier. Every field, builder accumulator, finalized-contract
+  access, root-overlay copy, lowering reader, emission origin, and test uses
+  the neutral name.
+- `provider_requirement_synthesis` now owns the former
+  `required_source_backprojection` implementation and private test module.
+  Its four synthesis entry points, ordering, inputs, and outputs are unchanged.
+- `FailValueRequirement` and `path_resolver/fail_requirement.rs` remain. They
+  model the existing fail-expression requirement vocabulary and the explicitly
+  named operation 1 fail-requirement lowering responsibility; broadening this
+  operation to rename them would exceed the frozen operation 5 contract.
+- Schema and IR fixture trees are byte-identical to operation 4. No tracked
+  fixture changed.
+- The full-depth battery compares 60 lanes and 121,055 probes with Helm
+  adjudication enabled and reports zero acceptance flips and zero
+  candidate-accepts/Helm-aborts cells.
+
+### Deviations
+
+- The first final-gate attempt exposed a host execution-policy failure rather
+  than a repository failure. `task test:integration` remained in libtest
+  discovery for 1h44m; its oldest children stayed asleep for more than 73
+  minutes with only their executable and `/usr/lib/dyld` mapped. Direct launch,
+  a copy under `/private/tmp`, provenance removal, and ad-hoc re-signing all
+  stalled before `main`. The interrupted inner command exited 130 and `task`
+  exited 201; no output from that state was adopted.
+- Two later retries reproduced the same pre-`main` delay and were interrupted
+  after bounded observation. A subsequent run finally reached execution and
+  passed 44 tests, but a concurrent user-directed `cargo clean` changed its
+  build-artifact state. That run was rejected and interrupted before any gate
+  result was recorded.
+- The authoritative retry rebuilt every test binary after the cleanup and was
+  allowed to absorb the macOS execution-policy latency. It completed 568/568
+  integration tests in 1,349.149 seconds. The final full battery then completed
+  1,834/1,834 tests in 1,131.092 seconds.
+- Host cleanup removed the ephemeral final1 archive and dump directories after
+  their results had been recorded. The production source did not change, and
+  no second dump batch was generated or adopted; the single accepted final1
+  schema, IR, exact-diff, and full-depth results below remain the acceptance
+  evidence.
+- `/private/tmp/helm-schema-xargs-shim` had also been cleared. The established
+  `xargs -a` translation and atomic-directory `flock` replacement were
+  recreated outside both repositories before the downstream gate. Neither
+  repository received a host-compatibility edit.
+- Operation 5 is +2 production Rust LOC and brings Step 9 to +368 through five
+  operations, contrary to the frozen -700 to -350 estimate. This operation is
+  a whole-workspace semantic rename with no obsolete behavior to delete; no
+  live semantics or tests were removed to force the estimate.
+
+### Adjudication evidence
+
+- The immutable final1 archive contained 135 files. Its single clean schema
+  dump passed 62/62 tests and wrote 84 artifacts; its single clean IR dump
+  passed 1/1 and wrote 18 artifacts. Separate exact comparisons with operation
+  4 exited 0 for both trees.
+- The full-depth battery against `eb5a2a14` checked 60 lanes and 121,055 probes
+  with Helm adjudication enabled and found zero flips. With no changed cell,
+  there was nothing to adopt or individually adjudicate.
+- Mandatory base coverage was 112,260/112,260 and mandatory third-level
+  coverage was 7,465/7,465, with zero drops in either category. Bounded
+  accounting reported 427 guard pairs, 238 composite pairs, and 28,874
+  disclosed drops.
+
+### Producer and route coverage
+
+| Producer or route | Neutral carrier path | Preservation proof |
+|---|---|---|
+| Explicit abort and condition requirements | Builder accumulators to finalized contract | Compile-driven exhaustive rename and IR identity |
+| Helper, fragment, range, merge, and member requirements | Shared `requirement_implications` field | Contract tests and zero acceptance flips |
+| Direct provider source requirements | `provider_requirement_synthesis` | Module differential plus schema identity |
+| Split segments, range keys, and ranged members | Provider synthesis entry points | Private generator tests and schema identity |
+| Root-overlay twins | Neutral implication copy operation | Existing root-overlay tests and IR identity |
+| Generator constraint lowering | Neutral emission origin and conjunct carrier | Full fixture equality and 121,055-probe battery |
+
+### Review dossier
+
+- Ownership: requirement producers write one shared contract carrier, and the
+  generator consumes that carrier without interpreting the producer's name.
+- Scope: the diff changes names and module placement only. It changes no guard,
+  target, requirement, ordering, provider selection, schema operation, or
+  fixture.
+- Simplicity: producer-neutral vocabulary removes the false implication that
+  every runtime-hard requirement originates in an explicit Helm `fail` call.
+  The provider synthesis module now names the responsibility it actually owns.
+- Losslessness: the carrier's fields and every value constructed into them are
+  unchanged; exact schema and IR comparisons prove no serialized information
+  was lost.
+- Determinism: no collection type, insertion order, sort, or grouping key
+  changed.
+- Comments: factual producer-specific comments were synchronized with the new
+  vocabulary. Existing comments whose meaning stayed accurate were preserved.
+
+### Self-adversarial pass
+
+- Partial-rename pressure: repository search finds no residual
+  `ContractFailImplication`, `fail_implications`, `FailImplication`, or
+  `required_source_backprojection` production/test reference.
+- Scope pressure: the still-live `FailValueRequirement` and fail-requirement
+  lowering names were audited and retained because operation 5 does not rename
+  that behavior-bearing vocabulary.
+- Move pressure: direct old-file/new-file comparisons show the provider module
+  and its private tests differ only in the scheduled carrier and module names.
+- Behavioral pressure: schema bytes, IR bytes, 121,055 acceptance probes, and
+  all full-battery tests stay identical.
+- Infrastructure pressure: every pre-clean or host-stalled gate attempt is
+  rejected explicitly. Only the fresh post-clean successful commands below
+  count as final gate evidence.
+- Estimate pressure: the +2 operation and +368 Step 9 aggregate are reported
+  without deleting live semantics or test coverage.
+
+- Gates on the final Step 9 operation 5 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,262/1,262 passed.
+  - `task test:integration`: exit 0; 568/568 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,834/1,834 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims and explicit
+    `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 61,939 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +2 (61,937 to 61,939); cumulative Step 9
+  delta through operation 5: +368.

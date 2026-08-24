@@ -307,7 +307,7 @@ impl ConditionalOverlayEvidence {
             provider_schema_uses: self.provider_schema_uses.clone(),
             requiredness: ContractRequirednessEvidence::default(),
             conditional_overlays: Vec::new(),
-            fail_implications: Vec::new(),
+            requirement_implications: Vec::new(),
         }
     }
 }
@@ -361,11 +361,11 @@ pub struct ContractPathSchemaEvidence {
     pub requiredness: ContractRequirednessEvidence,
     /// Branch-local evidence keyed by values-decidable guards.
     pub conditional_overlays: Vec<ConditionalPathOverlay>,
-    /// Requirements implied by explicit `fail` branches: the failing test's
-    /// negation must hold wherever the outer guards do. Runtime-hard
-    /// evidence — rendering genuinely aborts — so lowering must not let
-    /// weaker streams suppress it.
-    pub fail_implications: Vec<ContractFailImplication>,
+    /// Runtime-hard requirements that must hold wherever their outer guards
+    /// do. They may come from an explicit abort path or another producer that
+    /// proves the same rendering requirement, so lowering must not let weaker
+    /// evidence suppress them.
+    pub requirement_implications: Vec<ContractRequirementImplication>,
 }
 
 /// A chart-authored values-program wrapper convention: within `scope_path`
@@ -398,11 +398,11 @@ pub struct ValuesDefaultSource {
     pub source_path: String,
 }
 
-/// One `fail`-branch implication on a values path.
+/// One guarded runtime requirement on a values path.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ContractFailImplication {
-    /// Conditions outside the failing test; empty means the requirement
-    /// binds the path unconditionally.
+pub struct ContractRequirementImplication {
+    /// Conditions outside the requirement; empty means it binds the path
+    /// unconditionally.
     pub outer_guards: Vec<ConditionalGuard>,
     /// The runtime value affected by the requirement.
     pub target: ContractRequirementTarget,
@@ -829,7 +829,7 @@ impl ContractSchemaSignals {
     /// their root spellings — a bounded reading that assumes cross-path
     /// conditions are supplied at the root, not through the same overlay.
     #[must_use]
-    pub fn with_root_overlay_fail_implications(
+    pub fn with_root_overlay_requirement_implications(
         mut self,
         prefixes: impl IntoIterator<Item = String>,
     ) -> Self {
@@ -837,18 +837,18 @@ impl ContractSchemaSignals {
             if prefix.trim().is_empty() {
                 continue;
             }
-            let twins: Vec<(String, Vec<ContractFailImplication>)> = self
+            let twins: Vec<(String, Vec<ContractRequirementImplication>)> = self
                 .schema_evidence_by_value_path
                 .iter()
                 .filter(|(path, evidence)| {
-                    !evidence.fail_implications.is_empty()
+                    !evidence.requirement_implications.is_empty()
                         && path.as_str() != prefix
                         && !crate::values_path_is_descendant(path, &prefix)
                         && !crate::values_path_is_descendant(&prefix, path)
                 })
                 .map(|(path, evidence)| {
                     let implications = evidence
-                        .fail_implications
+                        .requirement_implications
                         .iter()
                         .map(|implication| {
                             let mut twin = implication.clone();
@@ -882,8 +882,8 @@ impl ContractSchemaSignals {
                         ..ContractPathSchemaEvidence::default()
                     });
                 for implication in implications {
-                    if !entry.fail_implications.contains(&implication) {
-                        entry.fail_implications.push(implication);
+                    if !entry.requirement_implications.contains(&implication) {
+                        entry.requirement_implications.push(implication);
                     }
                 }
             }
@@ -1059,7 +1059,7 @@ pub struct ContractValuePathFacts {
     pub has_parsed_map_layered_use: bool,
     /// Every render use either sits behind the path's own truthy selection or
     /// cannot reject a Helm-falsy value at all: a `merge` operand's strict
-    /// map contract rides its fail implication (which keys on the call's live
+    /// map contract rides its requirement implication (which keys on the call's live
     /// gate), and a checksum digest row hashes re-rendered text without
     /// consuming the raw value. Unlike `all_render_uses_self_guarded`, this
     /// bit feeds ONLY the base falsy escape — never overlay-branch routing or

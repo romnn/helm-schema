@@ -8,7 +8,7 @@
     reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
 )]
 pub(crate) fn fail_requirement_schema<'a>(
-    implications: impl IntoIterator<Item = &'a helm_schema_core::ContractFailImplication>,
+    implications: impl IntoIterator<Item = &'a helm_schema_core::ContractRequirementImplication>,
 ) -> (Value, usize) {
     let mut parts = Vec::new();
     let mut insertion_abstentions = 0;

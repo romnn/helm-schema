@@ -536,7 +536,7 @@ fn is_unconditional_self_presence_overlay(
     )
 }
 
-fn is_bare_iterable_implication(implication: &helm_schema_core::ContractFailImplication) -> bool {
+fn is_bare_iterable_implication(implication: &helm_schema_core::ContractRequirementImplication) -> bool {
     matches!(
         &implication.target,
         helm_schema_core::ContractRequirementTarget::Value
@@ -547,7 +547,7 @@ fn is_bare_iterable_implication(implication: &helm_schema_core::ContractFailImpl
 }
 
 fn member_implication_covers_range_domain(
-    implications: &[helm_schema_core::ContractFailImplication],
+    implications: &[helm_schema_core::ContractRequirementImplication],
     guards: &[ConditionalGuard],
 ) -> bool {
     implications.iter().any(|implication| {
@@ -562,7 +562,7 @@ fn member_implication_covers_range_domain(
 }
 
 fn implication_has_self_truthy_guard(
-    implication: &helm_schema_core::ContractFailImplication,
+    implication: &helm_schema_core::ContractRequirementImplication,
     target_value_path: &str,
 ) -> bool {
     implication.outer_guards.iter().any(|guard| {
@@ -579,7 +579,7 @@ fn implication_has_self_truthy_guard(
 /// parent's member. Such arms fire only where the value exists, so the
 /// base must keep its independent resolution.
 fn implication_has_self_presence_guard(
-    implication: &helm_schema_core::ContractFailImplication,
+    implication: &helm_schema_core::ContractRequirementImplication,
     target_value_path: &str,
 ) -> bool {
     implication.outer_guards.iter().any(|guard| match guard {
@@ -598,7 +598,7 @@ fn implication_has_self_presence_guard(
 
 fn resolved_schema_admits_fail_requirement_domain(
     resolved_schema: &Value,
-    implication: &helm_schema_core::ContractFailImplication,
+    implication: &helm_schema_core::ContractRequirementImplication,
 ) -> bool {
     !crate::schema_model::is_empty_schema(resolved_schema)
         && fail_requirement_runtime_types(implication)
@@ -606,7 +606,7 @@ fn resolved_schema_admits_fail_requirement_domain(
 }
 
 fn fail_requirement_runtime_types(
-    implication: &helm_schema_core::ContractFailImplication,
+    implication: &helm_schema_core::ContractRequirementImplication,
 ) -> BTreeSet<&'static str> {
     use helm_schema_core::ContractRequirementTarget;
 

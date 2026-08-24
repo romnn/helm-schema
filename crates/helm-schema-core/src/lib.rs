@@ -24,7 +24,7 @@ pub use capability::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBran
 pub use capability_liveness::{CapabilityOracle, live_literals};
 pub use contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor, ConditionalPathOverlay,
-    ContractFailImplication, ContractPathSchemaEvidence, ContractRequirednessEvidence,
+    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractRequirementImplication,
     ContractRequirementTarget, ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement,
     MetadataFieldKind, QuotedScalarStyle, ValuesDefaultSource, ValuesProgramWrapper,
 };

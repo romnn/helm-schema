@@ -520,8 +520,8 @@ pub enum EmissionClassKind {
 pub enum EmissionOrigin {
     /// Guarded path evidence.
     Overlay,
-    /// Requirement implied by a failing render path.
-    FailImplication,
+    /// Runtime-hard contract requirement.
+    RequirementImplication,
     /// Constraint for a lower-precedence merge layer.
     MergeShadow,
     /// Provider member conditionally retained by omission logic.
