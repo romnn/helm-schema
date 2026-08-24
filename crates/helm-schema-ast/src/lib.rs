@@ -27,9 +27,7 @@ pub use range_structure::{
 pub use resource_span::{KindBranchSource, ResourceSpan};
 pub use semver_constraint::{semver_constraint_match_pattern, semver_constraint_matches_version};
 pub use template_action::contains_template_action;
-pub use tree_sitter_utils::{
-    children_with_field, parse_expr_text, parse_go_template, parse_helm_template,
-};
+pub use tree_sitter_utils::{children_with_field, parse_expr_text, parse_go_template};
 pub use values_comments::extract_values_yaml_descriptions;
 
 use std::collections::HashMap;

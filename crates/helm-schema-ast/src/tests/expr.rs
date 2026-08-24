@@ -359,13 +359,7 @@ fn walk_already_recurses_through_parens_so_visitor_must_not_deparen() {
 #[test]
 fn raw_range_variable_definition_exposes_children() {
     let src = "{{- range $key, $value := .Values.environment }}{{- end }}";
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser
-        .set_language(&language)
-        .expect("set go-template language");
-    let tree = parser.parse(src, None).expect("parse source");
+    let tree = crate::parse_go_template(src).expect("parse source");
 
     let mut stack = vec![tree.root_node()];
     let mut range_var = None;

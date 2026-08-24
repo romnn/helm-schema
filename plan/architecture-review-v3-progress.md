@@ -5028,7 +5028,7 @@ adjudication.
 
 ## Step 10 operation 2 — templated-document CRD projection
 
-- Status: landed; commit pending.
+- Status: landed in `59064ec7`.
 - Contract: representation-only. Reimplement chart-local templated CRD literal
   projection over `helm_schema_syntax::TemplatedDocument`. CRD recognition and
   construction remain engine-owned; only reusable projection of literal CST
@@ -5194,3 +5194,171 @@ adjudication.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +74 (61,910 to 61,984); cumulative Step 10
   delta through operation 2: +37.
+
+## Step 10 operation 3 — delete the hybrid Helm/YAML grammars
+
+- Status: landed; commit pending.
+- Contract: representation-only. Delete `helm_schema_ast::parse_helm_template`,
+  the hybrid Helm/YAML grammar bindings and build entries, both obsolete
+  vendored grammar trees, their grammar-specific tests and fixtures, and direct
+  tree-sitter or grammar dependencies whose last caller disappears. Keep the
+  Go-template grammar and its typed-expression consumers.
+- Acceptance baseline: `59064ec7`.
+- Baseline production Rust LOC: 61,984.
+
+### Pre-registered acceptance expectations
+
+- `helm-schema-template-grammar` builds and exports only the Go-template
+  language. `helm-schema-syntax` remains the sole raw Go-template parser owner;
+  `helm-schema-ast` continues to layer typed expressions over that parse.
+- `helm-schema-ast` no longer exports or constructs a fused Helm/YAML parser.
+  The engine drops its now-unused direct tree-sitter dependency, while crates
+  with live typed tree consumers retain theirs.
+- Tests whose only subject is the deleted YAML or fused grammar disappear with
+  that representation. Existing Go-template, templated-document, expression,
+  IR, CRD microchart, multi-document, hole, corpus, and provider tests retain
+  their exact outcomes.
+- Schema and IR fixture dumps remain byte-identical to operation 2. The
+  full-depth battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected preflight.
+
+### Measured results
+
+- `helm_schema_ast::parse_helm_template`, its thread-local parser, constructor,
+  and public export are deleted. Repository search finds no remaining hybrid
+  parser symbol or hybrid/YAML grammar binding outside historical plan prose.
+- `helm-schema-template-grammar` now builds and exports only the Go-template
+  grammar. The build script is a direct one-grammar compile; package inclusion
+  names only the retained grammar source.
+- The hybrid Helm/YAML and plain YAML vendored trees are deleted in full: 108
+  tracked grammar files. Their three grammar-specific integration binaries,
+  two grammar-load tests, and the obsolete fused-tree AST corpus/fixtures are
+  deleted with the representation they tested.
+- `helm-schema` drops its unused direct tree-sitter dependency.
+  `helm-schema-ast` and `helm-schema-ir` drop unused direct grammar-crate
+  dependencies; both retain tree-sitter because their typed Go-template node
+  consumers remain live. `helm-schema-syntax` is the sole direct production
+  grammar consumer.
+- The retained raw range-variable test now obtains the Go-template tree from
+  `helm_schema_syntax` through the AST re-export instead of constructing a
+  second parser.
+- The immutable final1 archive contains 88 binaries and 132 files, down from
+  operation 2's 92 and 136. Its one clean schema dump passes 62/62 and writes
+  84 artifacts; its clean IR dump passes 1/1 and writes 18 artifacts.
+- Separate `diff -rq --exclude 'nextest-*'` comparisons with operation 2 exit
+  0 for both schema and IR trees. No fixture changed.
+- The full-depth battery compares 60 lanes and 121,055 probes against
+  `59064ec7` with Helm adjudication enabled and reports zero flips and zero
+  candidate-accepts/Helm-aborts cells.
+
+### Deviations
+
+- The frozen plan records the two obsolete source trees as 173 MiB and 146
+  MiB. That measurement is not reproducible on the acceptance baseline:
+  `git ls-tree -lr 59064ec7` totals 2,465,718 and 1,855,442 bytes, while
+  `du -sh -A` reports 2.4 MiB and 1.8 MiB. The operation removes all 4,321,160
+  tracked bytes and all 108 files; it does not claim removal of untracked or
+  absent build artifacts to preserve the frozen headline.
+- The operation deletes ten tests whose sole subject was the deleted
+  representation: the fused-tree AST corpus binary, two obsolete language-load
+  tests, and seven YAML/fused-grammar integration tests. The final counts fall
+  from 1,264 to 1,262 unit tests, 570 to 562 integration tests, and 1,838 to
+  1,828 full-battery tests. Go-template, templated-document, CRD, IR, schema,
+  and provider coverage remains and passes.
+- Operation 3 removes 82 production Rust LOC. Step 10 ends at -45, short of
+  the frozen -300 to -100 Rust estimate even though all scheduled string
+  handoffs, hybrid projection, parser bindings, build entries, dependencies,
+  tests, fixtures, and vendored sources are gone. The estimate counted more
+  production Rust behind the obsolete grammar path than the audited tree
+  contained; no live semantics or controls were deleted to force the band.
+
+### Adjudication evidence
+
+- Schema artifact identity: operation 2 final1 versus operation 3 final1 exits
+  0 across all 84 artifacts.
+- IR artifact identity: operation 2 final1 versus operation 3 final1 exits 0
+  across all 18 artifacts.
+- The ignored Round 74 battery passes in 66.037 seconds: 60 charts, 121,055
+  probes, zero flips, and zero Helm adjudications because no acceptance cell
+  changed.
+- Mandatory base coverage is 112,260/112,260 and mandatory third-level
+  coverage is 7,465/7,465, with zero drops in either category. Bounded
+  accounting reports 427 guard pairs, 238 composite pairs, and 28,874
+  disclosed drops.
+
+### Producer and route coverage
+
+| Parser route | Final owner | Final proof |
+|---|---|---|
+| Raw Go-template tree | `helm-schema-syntax` | Go-template load test and typed-expression suites |
+| Templated YAML layout | `TemplatedDocument` | Syntax corpus/goldens and CRD hole controls |
+| Typed expressions and ranges | `helm-schema-ast` over syntax tree | 1,262-test unit gate and focused 159/159 proof |
+| IR structure and schema facts | `helm-schema-ir` over typed/syntax models | 18 exact IR artifacts |
+| Local templated CRDs | Engine recognition over `TemplatedDocument` | v1/v1beta1 multi-document microcharts |
+| Schema output | Generator and CLI corpus | 84 exact schema artifacts and 121,055 probes |
+| Hybrid Helm/YAML tree | Deleted | No caller, binding, build entry, dependency, test, or fixture remains |
+| Plain YAML tree-sitter grammar | Deleted | No caller, binding, build entry, test, or vendored source remains |
+
+### Review dossier
+
+- Ownership: one grammar crate compiles one Go-template language; one syntax
+  crate owns its parser and templated-YAML CST; AST and IR consume those typed
+  structures without constructing alternate source trees.
+- Scope: operation 2's literal projection and engine-side CRD recognition are
+  unchanged. Schema generation, providers, values composition, output policy,
+  and tracked fixtures are untouched.
+- Dependency proof: Cargo metadata and repository search leave direct
+  `helm-schema-template-grammar` use only in `helm-schema-syntax`. Direct
+  tree-sitter dependencies remain only where production code names live tree
+  nodes/parsers.
+- Test deletion proof: every removed test file imports the deleted YAML or
+  fused grammar, or serializes the deleted fused AST. The retained syntax
+  corpus covers layout, the AST unit suite covers typed expressions, and the IR
+  corpus covers semantic lowering.
+- Source deletion: the diff removes 161,038 tracked lines across 132 obsolete
+  grammar/test/fixture files, while adding 188 lines for the one-grammar build,
+  dependency edits, and evidence dossier.
+- Immutable proof: `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0` with a distinct
+  build `TMPDIR` creates the final1 archive in 6m44s. All accepted dumps and
+  acceptance probing execute only from that archive.
+
+### Self-adversarial pass
+
+- Last-caller pressure: searches cover public symbol names, C language symbols,
+  Rust binding paths, Cargo direct dependencies, and remaining grammar
+  directories.
+- Over-deletion pressure: Go-template parser C, headers, binding, load test,
+  syntax corpus, typed-expression unit tests, and direct live consumers remain.
+- CRD pressure: the operation-2 templated metadata, multi-document,
+  v1/v1beta1, standalone-hole, and inline-hole controls pass after deletion.
+- Fixture pressure: schema and IR trees compare byte-for-byte before any full
+  gate, and the full integration/live gates independently replay equality.
+- Dependency pressure: AST and IR retain tree-sitter for live `Node` APIs, so
+  only dependencies with no production caller are removed.
+- Estimate pressure: the -82 operation and -45 Step 10 aggregate are recorded
+  without deleting live analysis or test coverage to manufacture the frozen
+  band.
+
+- Gates on the final Step 10 operation 3 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,262/1,262 passed.
+  - `task test:integration`: exit 0; 562/562 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,828/1,828 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims, inherited PATH,
+    and explicit `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 61,902 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: -82 (61,984 to 61,902); cumulative Step 10
+  delta through operation 3: -45.
