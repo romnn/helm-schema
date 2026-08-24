@@ -4730,7 +4730,7 @@ adjudication.
 
 ## Step 9 operation 6 — canonical schema grouping keys
 
-- Status: landed; commit pending.
+- Status: landed in `761e3f9c`.
 - Contract: representation-only. Replace every schema-grouping key derived
   from `Value::to_string()` with recursively canonical JSON serialization.
   Group membership may depend on JSON value equality, never object insertion
@@ -4868,3 +4868,160 @@ adjudication.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +8 (61,939 to 61,947); cumulative Step 9
   delta through operation 6: +376.
+
+## Step 10 operation 1 — typed prepared values documents
+
+- Status: landed; commit pending.
+- Contract: representation-only. Session preparation owns one
+  `PreparedValuesDocuments` containing the parsed composed, dependency, and
+  dependency-refill YAML documents. `ValuesSchemaInput` borrows that carrier;
+  the three optional string fields, string builder methods, and generator-side
+  parses are deleted. Null-deletion and dependency-refill semantics stay exact.
+- Acceptance baseline: `761e3f9c`.
+- Baseline production Rust LOC: 61,947.
+
+### Pre-registered acceptance expectations
+
+- Chart preparation parses each root/dependency/refill source at its existing
+  structural boundary and retains the resulting `serde_yaml::Value` without a
+  serialize-then-reparse handoff.
+- Generator emission borrows one prepared carrier and clones its three typed
+  documents before applying the existing default-source, shadow-removal, and
+  refill operations. Their order and null semantics do not change.
+- Values-root discovery reads the already parsed composed document. Tests that
+  start from source text parse in test support rather than reintroducing a
+  production string adapter.
+- Schema and IR fixture dumps remain byte-identical to Step 9 operation 6. The
+  full-depth battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected preflight.
+
+### Measured results
+
+- `PreparedValuesDocuments` is the single typed bundle for composed chart
+  defaults, dependency defaults, and deleted-root refill defaults.
+  `PreparedSession` owns one instance and both ordinary and benchmark emission
+  pass the same borrow through `ValuesSchemaInput`.
+- The three chart preparation functions now return `serde_yaml::Value`
+  documents directly. Their names say `document`, and the former serialization
+  handoffs are deleted.
+- `ValuesSchemaInput` has one optional typed-document borrow. Its three
+  `Option<&str>` fields and three source-string builder methods are deleted.
+- `LoweredEmissionPlan::build` clones the three prepared values and retains the
+  exact existing order: apply default sources, derive input defaults, remove
+  shadowed paths, add chart-internal defaults to dependency defaults, then add
+  them to refill defaults.
+- `ValuesRoots` reads the parsed composed document directly. Production no
+  longer reparses the root document for root/path/default discovery.
+- The immutable final1 archive contains 91 binaries and 135 files. Its one
+  clean schema dump passes 62/62 and writes 84 artifacts; its one clean IR dump
+  passes 1/1 and writes 18 artifacts.
+- Separate `diff -rq --exclude 'nextest-*'` comparisons with Step 9 operation
+  6 exit 0 for both schema and IR trees. No fixture changed.
+- The full-depth battery compares 60 lanes and 121,055 probes against
+  `761e3f9c` with Helm adjudication enabled and reports zero flips and zero
+  candidate-accepts/Helm-aborts cells.
+
+### Deviations
+
+- The first compiler-driven migration preflight enumerated the removed string
+  methods across integration and private tests and the now-typed chart test
+  return values. It exited 101; no test or dump from that state was used.
+- The second compile preflight found three private tests that retained a typed
+  input beyond a temporary document borrow, plus one test module outside the
+  main private-test tree. The documents received explicit local owners and the
+  helper import was moved to its actual crate path. A final compile preflight
+  corrected that helper's visibility. None of those failed states produced an
+  accepted artifact.
+- Private and integration test support still parses source literals because
+  those tests deliberately start from YAML text. The parser is confined to
+  test modules; no production string compatibility method or test-only helper
+  was added to production code.
+- The first final lint pass reported two unfulfilled
+  `large_types_passed_by_value` expectations after the typed carrier shrank
+  `ValuesSchemaInput`. The warnings make that pass non-accepting despite exit
+  0; both dead expectations were removed before the final battery.
+- Operation 1 removes 37 production Rust LOC. Step 10 is therefore -37 through
+  its first operation, still short of the frozen -300 to -100 whole-step
+  estimate; operations 2 and 3 remain unmeasured.
+
+### Adjudication evidence
+
+- Schema artifact identity: operation 6 final1 versus operation 1 final1 exits
+  0 across 84 artifacts.
+- IR artifact identity: operation 6 final1 versus operation 1 final1 exits 0
+  across 18 artifacts.
+- The full-depth ignored Round 74 battery passes in 99.671 seconds: 60 charts,
+  121,055 probes, zero flips, and zero Helm adjudications because no acceptance
+  cell changed.
+- Mandatory base coverage is 112,260/112,260 and mandatory third-level
+  coverage is 7,465/7,465, with zero drops in either category. Bounded
+  accounting reports 427 guard pairs, 238 composite pairs, and 28,874
+  disclosed drops.
+
+### Producer and route coverage
+
+| Values route | Typed preparation owner | Preserved consumer semantics |
+|---|---|---|
+| Root and composed defaults | `build_composed_values_document` | Default-source application and shadow removal |
+| Dependency-stage defaults | `build_dependency_values_document` | Parent null-deletion subtraction and child refill |
+| Deleted dependency root | `build_dependency_refill_values_document` | Whole-root subchart default restoration |
+| Root/path/default facts | `ValuesRoots::from_values_document` | Explicit paths and string program defaults |
+| Ordinary schema emission | `PreparedSession::values_documents` | One borrowed carrier per generation |
+| Benchmark emission | Same prepared session carrier | Identical policy-only reruns |
+
+### Review dossier
+
+- Ownership: session preparation owns parsing and document lifetime; generation
+  receives one borrow and owns only its working clones.
+- Scope: values composition, subtraction, global propagation, default-source
+  copy order, null deletion, schema lowering, and provider behavior are
+  unchanged.
+- Simplicity: three strings, three option fields, three builder methods, three
+  parses, and one extra root parse are replaced by one typed carrier.
+- Phase boundary: chart I/O and YAML parsing remain engine-side; the generator
+  accepts already parsed semantic input and performs no source recovery.
+- Determinism: the same ordered YAML mappings flow into the same mutation
+  passes without a serialization round trip.
+- Error contract: chart-source parse failures still surface from the chart
+  preparation boundary. Generator-side silent parse failure is no longer a
+  representable production state.
+
+### Self-adversarial pass
+
+- Null pressure: absent optional documents map to typed `Null` only for callers
+  that do not attach the carrier; prepared chart sessions always attach all
+  three total documents.
+- Deletion pressure: the dependency-subtracted and dependency-refill documents
+  remain distinct fields and enter the same copy operations in the same order.
+- Lifetime pressure: `ValuesSchemaInput` borrows the carrier, so generation
+  cannot outlive session-owned documents or accidentally retain mutable state.
+- Test-facade pressure: source parsing helpers live only under `src/tests` and
+  crate-level `tests/common`; production exposes no string compatibility lane.
+- Parse-count pressure: repository search finds no old string fields, builder
+  methods, or generator emission parse.
+- Estimate pressure: the -37 operation delta is reported without deleting
+  semantics or test coverage.
+
+- Gates on the final Step 10 operation 1 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,262/1,262 passed.
+  - `task test:integration`: exit 0; 568/568 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,834/1,834 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims and explicit
+    `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 61,910 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: -37 (61,947 to 61,910); cumulative Step 10
+  delta through operation 1: -37.

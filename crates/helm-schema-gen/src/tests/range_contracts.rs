@@ -838,7 +838,7 @@ fn sequence_fragment_keeps_provider_array_domain() {
     let signals = parse_ir(src).finalize().into_schema_signals();
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &SharedObjectProvider)
-            .with_values_yaml(Some("extraEnvs: []\n")),
+            .with_values_documents(&prepared_values_documents(Some("extraEnvs: []\n"))),
     );
 
     for instance in [

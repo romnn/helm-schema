@@ -5,7 +5,9 @@ use std::sync::{Arc, Mutex};
 use helm_schema_core::{
     ConditionalGuard, ContractSchemaSignals, ContractUse, ContractValuePathFacts, MetadataFieldKind,
 };
-use helm_schema_gen::{ValuesSchemaInput, generate_values_schema_with_report};
+use helm_schema_gen::{
+    PreparedValuesDocuments, ValuesSchemaInput, generate_values_schema_with_report,
+};
 use helm_schema_ir::{ContractDocument, ContractIr, FinalizedContract};
 use helm_schema_k8s::{Diagnostic, DiagnosticSink, LocalSchemaUniverse};
 use serde_json::Value;
@@ -59,9 +61,7 @@ pub struct ValuePathExplanation {
 
 struct PreparedSession {
     analysis: Analysis,
-    values_yaml: Option<String>,
-    dependency_values_yaml: Option<String>,
-    dependency_refill_values_yaml: Option<String>,
+    values_documents: PreparedValuesDocuments,
     shadowed_input_paths: BTreeSet<String>,
     explicit_value_paths: BTreeSet<String>,
     values_descriptions: BTreeMap<String, String>,
@@ -72,26 +72,27 @@ impl PreparedSession {
         let charts = &chart::discover_chart_contexts(&opts.chart_dir)?;
 
         let defines = chart::build_define_index(charts, opts.include_tests)?;
-        let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
+        let composed_values =
+            chart::build_composed_values_document(charts, opts.include_subchart_values)?;
         // The dependency charts' own declared defaults: schema generation
         // distinguishes parent-owned absence (helm null-deletion, nil at
         // render) from subchart-declared absence (the subchart's default
         // fills at its own coalesce stage, even after a parent-level
         // null-deletion).
         let dependency_values_yaml = if opts.include_subchart_values {
-            chart::build_dependency_values_yaml(charts)?
+            chart::build_dependency_values_document(charts)?
         } else {
-            None
+            serde_yaml::Value::Null
         };
         // What a DELETED dependency root refills with, which the subtracted
         // document above cannot say: it drops exactly the parent-declared
         // keys the refill also drops.
         let dependency_refill_values_yaml = if opts.include_subchart_values {
-            chart::build_dependency_refill_values_yaml(charts)?
+            chart::build_dependency_refill_values_document(charts)?
         } else {
-            None
+            serde_yaml::Value::Null
         };
-        let values_roots = values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref());
+        let values_roots = values_roots::ValuesRoots::from_values_document(&composed_values);
         let values_descriptions = chart::build_composed_values_descriptions(
             charts,
             opts.include_subchart_values,
@@ -112,9 +113,11 @@ impl PreparedSession {
                 contract: chart_analysis.contract,
                 local_schemas: chart_analysis.local_schema_universe,
             },
-            values_yaml,
-            dependency_values_yaml,
-            dependency_refill_values_yaml,
+            values_documents: PreparedValuesDocuments::new(
+                composed_values,
+                dependency_values_yaml,
+                dependency_refill_values_yaml,
+            ),
             shadowed_input_paths,
             explicit_value_paths: values_roots.explicit_paths,
             values_descriptions,
@@ -390,11 +393,7 @@ impl AnalysisSession {
 
             let (schema, emission_report) = generate_values_schema_with_report(
                 ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
-                    .with_values_yaml(prepared.values_yaml.as_deref())
-                    .with_dependency_values_yaml(prepared.dependency_values_yaml.as_deref())
-                    .with_dependency_refill_values_yaml(
-                        prepared.dependency_refill_values_yaml.as_deref(),
-                    )
+                    .with_values_documents(&prepared.values_documents)
                     .with_shadowed_input_paths(&prepared.shadowed_input_paths)
                     .with_values_descriptions(&prepared.values_descriptions)
                     .with_emission_policy(self.resolved_emission_policy()?.policy()),
@@ -425,9 +424,7 @@ impl AnalysisSession {
         provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
         let provider = provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
         let input = ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
-            .with_values_yaml(prepared.values_yaml.as_deref())
-            .with_dependency_values_yaml(prepared.dependency_values_yaml.as_deref())
-            .with_dependency_refill_values_yaml(prepared.dependency_refill_values_yaml.as_deref())
+            .with_values_documents(&prepared.values_documents)
             .with_shadowed_input_paths(&prepared.shadowed_input_paths)
             .with_values_descriptions(&prepared.values_descriptions);
         Ok(helm_schema_gen::bench_support::benchmark_policies(

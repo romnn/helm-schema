@@ -316,13 +316,13 @@ fn shadowed_dependency_global_default_does_not_type_ignored_input() {
         std::collections::BTreeSet::from(["metrics.agent.global.imageRegistry".to_string()]);
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider())
-            .with_values_yaml(Some(indoc! {"
+            .with_values_documents(&prepared_values_documents(Some(indoc! {"
                 metrics:
                   agent:
                     replicas: 1
                     global:
                       imageRegistry: []
-            "}))
+            "})))
             .with_shadowed_input_paths(&shadowed),
     );
 

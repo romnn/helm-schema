@@ -12,6 +12,6 @@ pub(crate) use paths::scope_values_path;
 pub use types::{ChartContext, ChartDependencyActivation};
 pub(crate) use values::build_dependency_global_ownership;
 pub use values::{
-    build_composed_values_descriptions, build_composed_values_yaml,
-    build_dependency_refill_values_yaml, build_dependency_values_yaml,
+    build_composed_values_descriptions, build_composed_values_document,
+    build_dependency_refill_values_document, build_dependency_values_document,
 };

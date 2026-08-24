@@ -107,7 +107,8 @@ fn chart_shipped_crds_close_the_fields_their_schema_prunes() {
     let provider = chart_local_crd_provider(&widget_crd("apiextensions.k8s.io/v1", None));
     let signals = schema_signals_for(parse_ir(WIDGET_TEMPLATE));
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &provider).with_values_yaml(Some(WIDGET_VALUES)),
+        ValuesSchemaInput::new(&signals, &provider)
+            .with_values_documents(&prepared_values_documents(Some(WIDGET_VALUES))),
     );
 
     for (instance, want, label) in [
@@ -164,7 +165,8 @@ fn non_pruning_crds_keep_their_undeclared_fields_open() {
         ));
         let signals = schema_signals_for(parse_ir(WIDGET_TEMPLATE));
         let schema = generate_values_schema(
-            ValuesSchemaInput::new(&signals, &provider).with_values_yaml(Some(WIDGET_VALUES)),
+            ValuesSchemaInput::new(&signals, &provider)
+                .with_values_documents(&prepared_values_documents(Some(WIDGET_VALUES))),
         );
         let instance = serde_json::json!({ "sink": { "unknown": 7 } });
         assert!(

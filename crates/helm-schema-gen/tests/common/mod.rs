@@ -3,7 +3,7 @@ pub mod cases;
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{ResourceSchemaOracle, YamlPath};
-use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
+use helm_schema_gen::{PreparedValuesDocuments, ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::{ContractIr, ResourceRef};
 use helm_schema_k8s::{
     Chain, CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
@@ -163,8 +163,13 @@ pub fn generate_schema_with_values_yaml(
     values_yaml: Option<&str>,
 ) -> Value {
     let schema_signals = contract.finalize().into_schema_signals();
+    let composed = values_yaml
+        .and_then(|source| serde_yaml::from_str(source).ok())
+        .unwrap_or(serde_yaml::Value::Null);
+    let documents =
+        PreparedValuesDocuments::new(composed, serde_yaml::Value::Null, serde_yaml::Value::Null);
     generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, provider).with_values_yaml(values_yaml),
+        ValuesSchemaInput::new(&schema_signals, provider).with_values_documents(&documents),
     )
 }
 

@@ -30,10 +30,12 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
     let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             feature:
               enabled: false
         "})),
+        ),
     );
 
     let base_host = schema
@@ -125,7 +127,7 @@ fn guarded_declared_ancestor_keeps_referenced_siblings_beside_child_overlay() {
 
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &NoopProvider)
-            .with_values_yaml(Some(values_yaml))
+            .with_values_documents(&prepared_values_documents(Some(values_yaml)))
             .with_values_descriptions(&descriptions),
     );
 
@@ -176,10 +178,12 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
     let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             feature:
               enabled: true
         "})),
+        ),
     );
 
     // Helm validates the coalesced document: the declared default only
@@ -249,10 +253,12 @@ fn negated_boolean_guard_lowers_to_not_condition() {
     let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             feature:
               enabled: false
         "})),
+        ),
     );
 
     sim_assert_eq!(
@@ -295,10 +301,12 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
     let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             feature:
               mode: auto
         "})),
+        ),
     );
 
     assert!(
@@ -380,10 +388,12 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
     let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             feature:
               enabled: false
         "})),
+        ),
     );
 
     sim_assert_eq!(
@@ -513,12 +523,14 @@ fn or_boolean_guards_lower_to_any_of_condition() {
     let schema_signals = schema_signals_for(contract);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             feature:
               enabled: false
             global:
               featureEnabled: false
         "})),
+        ),
     );
 
     sim_assert_eq!(
@@ -669,11 +681,13 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
     ]);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             mode: name
             feature:
               value: example
         "})),
+        ),
     );
 
     let base_value = schema
@@ -741,11 +755,13 @@ fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
     }]);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             mode: disabled
             feature:
               value: false
         "})),
+        ),
     );
 
     assert!(
@@ -831,11 +847,13 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
     ]);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             mode: name
             feature:
               value: example
         "})),
+        ),
     );
 
     let base_value_schema = schema
@@ -908,11 +926,13 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
     }]);
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             mode: prod
             feature:
               host: example
         "})),
+        ),
     );
 
     // The truthiness condition encoding is type-generic, so a string-valued

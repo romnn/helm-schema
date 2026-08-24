@@ -4,7 +4,7 @@ use indoc::indoc;
 use serde_json::Value;
 
 use crate::{
-    ValuesSchemaInput, generate_values_schema,
+    PreparedValuesDocuments, ValuesSchemaInput, generate_values_schema,
     resolve_policy::{
         ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
         open_objects_rejecting_declared_members, preserve_declared_default_in_schema,
@@ -176,10 +176,18 @@ fn schema_for(source: impl SchemaSignalSource) -> Value {
     generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()))
 }
 
+pub(crate) fn prepared_values_documents(values_yaml: Option<&str>) -> PreparedValuesDocuments {
+    let composed = values_yaml
+        .and_then(|source| serde_yaml::from_str(source).ok())
+        .unwrap_or(serde_yaml::Value::Null);
+    PreparedValuesDocuments::new(composed, serde_yaml::Value::Null, serde_yaml::Value::Null)
+}
+
 fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&str>) -> Value {
     let schema_signals = source.into_schema_signals();
     generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
+        ValuesSchemaInput::new(&schema_signals, &provider())
+            .with_values_documents(&prepared_values_documents(values_yaml)),
     )
 }
 
@@ -194,11 +202,13 @@ fn schema_for_dependency_values_yaml(
     refill_yaml: &str,
 ) -> Value {
     let schema_signals = source.into_schema_signals();
+    let documents = PreparedValuesDocuments::new(
+        serde_yaml::from_str(values_yaml).unwrap_or(serde_yaml::Value::Null),
+        serde_yaml::from_str(deeper_stage_yaml).unwrap_or(serde_yaml::Value::Null),
+        serde_yaml::from_str(refill_yaml).unwrap_or(serde_yaml::Value::Null),
+    );
     generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &provider())
-            .with_values_yaml(Some(values_yaml))
-            .with_dependency_values_yaml(Some(deeper_stage_yaml))
-            .with_dependency_refill_values_yaml(Some(refill_yaml)),
+        ValuesSchemaInput::new(&schema_signals, &provider()).with_values_documents(&documents),
     )
 }
 

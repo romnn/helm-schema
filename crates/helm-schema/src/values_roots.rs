@@ -29,16 +29,10 @@ pub(crate) struct ValuesRoots {
 }
 
 impl ValuesRoots {
-    pub(crate) fn from_values_yaml(values_yaml: Option<&str>) -> Self {
+    pub(crate) fn from_values_document(doc: &YamlValue) -> Self {
         let mut roots = Self::default();
-        let Some(values_yaml) = values_yaml else {
-            return roots;
-        };
-        let Ok(doc) = serde_yaml::from_str::<YamlValue>(values_yaml) else {
-            return roots;
-        };
 
-        if let YamlValue::Mapping(mapping) = &doc {
+        if let YamlValue::Mapping(mapping) = doc {
             for (key, value) in mapping {
                 let Some(key) = key.as_str() else {
                     continue;
@@ -56,7 +50,7 @@ impl ValuesRoots {
         }
 
         collect_values_facts(
-            &doc,
+            doc,
             &mut Vec::new(),
             &mut roots.explicit_paths,
             &mut roots.string_defaults,

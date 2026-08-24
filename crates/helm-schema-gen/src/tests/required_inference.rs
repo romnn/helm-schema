@@ -5,6 +5,7 @@ use indoc::indoc;
 use serde_json::Value;
 
 use super::apply_required_inference;
+use crate::tests::prepared_values_documents;
 use crate::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{
@@ -33,7 +34,8 @@ fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
     let contract = parse_contract(src);
     let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(values_yaml),
+        ValuesSchemaInput::new(&schema_signals, &provider())
+            .with_values_documents(&prepared_values_documents(values_yaml)),
     );
     apply_required_inference(
         &mut schema,

@@ -32,16 +32,17 @@ fn lean_profile_keeps_local_conditionals_and_omits_document_level_conditionals()
     let signals = schema_signals_for(parse_ir(source));
 
     let default_schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &NoopProvider).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&signals, &NoopProvider)
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
     let full_schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &NoopProvider)
-            .with_values_yaml(Some(values_yaml))
+            .with_values_documents(&prepared_values_documents(Some(values_yaml)))
             .with_profile(SchemaProfile::Full),
     );
     let lean_schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &NoopProvider)
-            .with_values_yaml(Some(values_yaml))
+            .with_values_documents(&prepared_values_documents(Some(values_yaml)))
             .with_profile(SchemaProfile::Lean),
     );
 
@@ -112,12 +113,12 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
     let signals = schema_signals_for(parse_ir(source));
     let (_, full) = generate_values_schema_with_report(
         ValuesSchemaInput::new(&signals, &NoopProvider)
-            .with_values_yaml(Some(values_yaml))
+            .with_values_documents(&prepared_values_documents(Some(values_yaml)))
             .with_profile(SchemaProfile::Full),
     );
     let (_, lean) = generate_values_schema_with_report(
         ValuesSchemaInput::new(&signals, &NoopProvider)
-            .with_values_yaml(Some(values_yaml))
+            .with_values_documents(&prepared_values_documents(Some(values_yaml)))
             .with_profile(SchemaProfile::Lean),
     );
 
@@ -248,7 +249,8 @@ fn kind_partition_audit_retains_local_anchors() {
     "};
     let signals = schema_signals_for(parse_ir(source));
     let (_, report) = generate_values_schema_with_report(
-        ValuesSchemaInput::new(&signals, &provider()).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&signals, &provider())
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
     let local_partitions =
         report.counts_for_class(crate::emission_policy::EmissionClassKind::KindPartitionLocal);
@@ -287,7 +289,8 @@ fn completion_passes_preserve_profile_monotonicity() -> eyre::Result<()> {
         payload: 1
     "};
     let signals = schema_signals_for(parse_ir_with_helpers(source, helpers));
-    let input = ValuesSchemaInput::new(&signals, &NoopProvider).with_values_yaml(Some(values_yaml));
+    let documents = prepared_values_documents(Some(values_yaml));
+    let input = ValuesSchemaInput::new(&signals, &NoopProvider).with_values_documents(&documents);
     let plan = LoweredEmissionPlan::build(&input);
     let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
     let passes = [
@@ -364,7 +367,8 @@ fn one_plan_projections_obey_floors_and_ignore_projection_order() {
           member: value
     "};
     let signals = schema_signals_for(parse_ir(source));
-    let input = ValuesSchemaInput::new(&signals, &NoopProvider).with_values_yaml(Some(values_yaml));
+    let documents = prepared_values_documents(Some(values_yaml));
+    let input = ValuesSchemaInput::new(&signals, &NoopProvider).with_values_documents(&documents);
     let plan = LoweredEmissionPlan::build(&input);
     let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
     let lean_policy = EmissionPolicy::for_profile(SchemaProfile::Lean);
@@ -440,7 +444,8 @@ fn projections_never_reenter_the_provider() {
     let values_yaml = "replicas: 1\n";
     let signals = schema_signals_for(parse_ir(source));
     let provider = CountingProvider::default();
-    let input = ValuesSchemaInput::new(&signals, &provider).with_values_yaml(Some(values_yaml));
+    let documents = prepared_values_documents(Some(values_yaml));
+    let input = ValuesSchemaInput::new(&signals, &provider).with_values_documents(&documents);
     let plan = LoweredEmissionPlan::build(&input);
     let calls_after_lowering = provider.calls.load(Ordering::Relaxed);
     assert!(calls_after_lowering > 0);

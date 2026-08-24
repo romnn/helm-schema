@@ -302,13 +302,13 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
     contract.push_pathless_scalar("signoz-otel-gateway");
     contract.add_type_hint("signoz-otel-gateway.serviceAccount.name", "string");
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
-            Some(indoc! {r#"
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {r#"
                 signoz-otel-gateway:
                   serviceAccount:
                     create: true
                     name: ""
-            "#}),
+            "#})),
         ),
     );
 
@@ -370,14 +370,14 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
     }]);
     contract.push_pathless_scalar("clickhouse");
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
-            Some(indoc! {r"
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {r"
                 clickhouse:
                   securityContext:
                     enabled: true
                     fsGroup: 101
                     runAsUser: 1001
-            "}),
+            "})),
         ),
     );
 
@@ -449,15 +449,15 @@ fn referenced_empty_string_child_survives_parent_pruning() {
     contract.add_type_hint("signoz.smtpVars.enabled", "boolean");
 
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
-            Some(indoc! {r#"
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {r#"
                 signoz:
                   smtpVars:
                     enabled: false
                     existingSecret:
                       name: ""
                       fromKey: ""
-            "#}),
+            "#})),
         ),
     );
 
@@ -524,12 +524,12 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
     contract.push_pathless_scalar("alertmanager");
     contract.add_type_hint("alertmanager.enabled", "boolean");
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
-            Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
                 alertmanager:
                   enabled: true
                   tolerations: []
-            "}),
+            "})),
         ),
     );
 
@@ -571,14 +571,14 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
     contract.push_pathless_scalar("clickhouse");
     contract.add_type_hint("clickhouse.enabled", "boolean");
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
-            Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
                 clickhouse:
                   enabled: true
                   clickhouseOperator:
                     configs:
                       confdFiles:
-            "}),
+            "})),
         ),
     );
 
@@ -693,12 +693,12 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
         &[("serviceAccount.name", "string")],
     );
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
-            Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
                 serviceAccount:
                   create: true
                   name:
-            "}),
+            "})),
         ),
     );
 

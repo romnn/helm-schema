@@ -56,7 +56,8 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
         .finalize()
         .into_schema_signals();
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &provider()).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&schema_signals, &provider())
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
     let data_source = schema
         .pointer("/properties/persistence/properties/dataSource")

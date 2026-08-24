@@ -11,10 +11,10 @@ use super::types::ChartContext;
 use crate::error::{CliError, EngineResult};
 
 #[instrument(skip_all)]
-pub fn build_composed_values_yaml(
+pub fn build_composed_values_document(
     charts: &[ChartContext],
     include_subchart_values: bool,
-) -> EngineResult<Option<String>> {
+) -> EngineResult<YamlValue> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
 
     let root_values_path = root.chart_dir.join("values.yaml")?;
@@ -28,12 +28,7 @@ pub fn build_composed_values_yaml(
         compose_subchart_values(charts, &mut doc)?;
     }
 
-    let serialized = serde_yaml::to_string(&doc)?;
-    if serialized.trim().is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(serialized))
-    }
+    Ok(doc)
 }
 
 /// The dependency charts' declared defaults, composed under their value
@@ -46,7 +41,7 @@ pub fn build_composed_values_yaml(
 /// null-deletion, which poisons the key through every later merge stage —
 /// the subchart default does NOT resurrect a deleted key.
 #[instrument(skip_all)]
-pub fn build_dependency_values_yaml(charts: &[ChartContext]) -> EngineResult<Option<String>> {
+pub fn build_dependency_values_document(charts: &[ChartContext]) -> EngineResult<YamlValue> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
     let mut doc = YamlValue::Mapping(serde_yaml::Mapping::default());
     compose_subchart_values(charts, &mut doc)?;
@@ -55,12 +50,7 @@ pub fn build_dependency_values_yaml(charts: &[ChartContext]) -> EngineResult<Opt
         let parent = serde_yaml::from_str::<YamlValue>(&root_values_path.read_to_string()?)?;
         doc = subtract_declared_paths(&doc, &parent);
     }
-    let serialized = serde_yaml::to_string(&doc)?;
-    if serialized.trim().is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(serialized))
-    }
+    Ok(doc)
 }
 
 /// The dependency charts' declared defaults, composed under their value
@@ -70,17 +60,10 @@ pub fn build_dependency_values_yaml(charts: &[ChartContext]) -> EngineResult<Opt
 /// parent's defaults for that root went with the deletion — so a key the
 /// subchart declares comes back while a parent-only key stays gone.
 #[instrument(skip_all)]
-pub fn build_dependency_refill_values_yaml(
-    charts: &[ChartContext],
-) -> EngineResult<Option<String>> {
+pub fn build_dependency_refill_values_document(charts: &[ChartContext]) -> EngineResult<YamlValue> {
     let mut doc = YamlValue::Mapping(serde_yaml::Mapping::default());
     compose_subchart_values(charts, &mut doc)?;
-    let serialized = serde_yaml::to_string(&doc)?;
-    if serialized.trim().is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(serialized))
-    }
+    Ok(doc)
 }
 
 pub(crate) struct DependencyGlobalOwnership {

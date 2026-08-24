@@ -28,6 +28,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{ContractSchemaSignals, ResourceSchemaOracle};
 use serde_json::Value;
+use serde_yaml::Value as YamlValue;
 
 pub(crate) use emission_plan::CompletionPass;
 use emission_plan::LoweredEmissionPlan;
@@ -41,6 +42,26 @@ pub use emission_report::{
     MandatoryOutcomes,
 };
 
+/// Parsed values documents consumed together during schema lowering.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PreparedValuesDocuments {
+    composed: YamlValue,
+    dependency: YamlValue,
+    dependency_refill: YamlValue,
+}
+
+impl PreparedValuesDocuments {
+    /// Creates the complete values-document bundle prepared by the caller.
+    #[must_use]
+    pub fn new(composed: YamlValue, dependency: YamlValue, dependency_refill: YamlValue) -> Self {
+        Self {
+            composed,
+            dependency,
+            dependency_refill,
+        }
+    }
+}
+
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
 /// The generated schema is derived from the contract-layer signal bundle plus
@@ -53,22 +74,23 @@ pub struct ValuesSchemaInput<'a> {
     pub contract_schema_signals: &'a ContractSchemaSignals,
     /// Resource-schema oracle used to constrain rendered Kubernetes fields.
     pub provider: &'a dyn ResourceSchemaOracle,
-    /// Composed chart values defaults, when available.
-    pub values_yaml: Option<&'a str>,
-    /// ONLY the dependency charts' declared defaults, composed under
-    /// their value prefixes. A key present here fills at the SUBCHART's
+    /// Parsed chart and dependency values documents, when available.
+    ///
+    /// The dependency document contains only dependency charts' declared
+    /// defaults, composed under their value prefixes. A key present there
+    /// fills at the SUBCHART's
     /// coalesce stage even when the parent-level document misses it —
     /// including after a parent-level null-deletion — so absence at such
     /// paths reads as the subchart default instead of nil. When absent,
     /// every missing key reads as nil.
-    pub dependency_values_yaml: Option<&'a str>,
-    /// The same dependency defaults WITHOUT the parent-declared
-    /// subtraction: what helm refills a missing or null dependency values
-    /// root with. Absence below such a root reads as nil only while the
-    /// root survives — deleting the root itself hands the whole subtree
-    /// back to the subchart's own defaults, and only the keys they miss
-    /// stay gone.
-    pub dependency_refill_values_yaml: Option<&'a str>,
+    ///
+    /// The dependency-refill document contains the same defaults without the
+    /// parent-declared subtraction: what Helm refills a missing or null
+    /// dependency values root with. Absence below such a root reads as nil
+    /// only while the root survives — deleting the root itself hands the
+    /// whole subtree back to the subchart's own defaults, and only the keys
+    /// they miss stay gone.
+    pub values_documents: Option<&'a PreparedValuesDocuments>,
     /// Descendant `global.*` input paths hidden by an ancestor chart's
     /// declared global value. Helm accepts these paths but never exposes
     /// them to the descendant consumer.
@@ -88,36 +110,17 @@ impl<'a> ValuesSchemaInput<'a> {
         Self {
             contract_schema_signals,
             provider,
-            values_yaml: None,
-            dependency_values_yaml: None,
-            dependency_refill_values_yaml: None,
+            values_documents: None,
             shadowed_input_paths: None,
             values_descriptions: None,
             emission_policy: SchemaProfile::Full.resolved_policy().policy(),
         }
     }
 
-    /// Attaches composed chart values defaults.
+    /// Attaches the parsed chart and dependency values documents.
     #[must_use]
-    pub fn with_values_yaml(mut self, values_yaml: Option<&'a str>) -> Self {
-        self.values_yaml = values_yaml;
-        self
-    }
-
-    /// Attaches dependency defaults composed beneath subchart prefixes.
-    #[must_use]
-    pub fn with_dependency_values_yaml(mut self, dependency_values_yaml: Option<&'a str>) -> Self {
-        self.dependency_values_yaml = dependency_values_yaml;
-        self
-    }
-
-    /// Attaches the defaults a deleted dependency values root refills with.
-    #[must_use]
-    pub fn with_dependency_refill_values_yaml(
-        mut self,
-        dependency_refill_values_yaml: Option<&'a str>,
-    ) -> Self {
-        self.dependency_refill_values_yaml = dependency_refill_values_yaml;
+    pub fn with_values_documents(mut self, values_documents: &'a PreparedValuesDocuments) -> Self {
+        self.values_documents = Some(values_documents);
         self
     }
 
@@ -161,10 +164,6 @@ impl<'a> ValuesSchemaInput<'a> {
 /// function isolates a heuristic feature from the core schema-generation
 /// pipeline.
 #[tracing::instrument(skip_all)]
-#[expect(
-    clippy::large_types_passed_by_value,
-    reason = "the input is a Copy bundle of borrows built by chained `with_*` calls, and generation runs once per chart"
-)]
 pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     generate_values_schema_with_report(input).0
 }
@@ -174,10 +173,6 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 /// The report describes generator emission before caller-owned overrides and
 /// output-pipeline transforms.
 #[tracing::instrument(skip_all)]
-#[expect(
-    clippy::large_types_passed_by_value,
-    reason = "the input is a Copy bundle of borrows built by chained `with_*` calls, and generation runs once per chart"
-)]
 pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> (Value, EmissionReport) {
     generate_values_schema_through(&input, CompletionPass::Descriptions)
 }

@@ -2,9 +2,16 @@ use super::*;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
+fn values_roots_from_yaml(source: Option<&str>) -> ValuesRoots {
+    let document = source
+        .and_then(|source| serde_yaml::from_str(source).ok())
+        .unwrap_or(serde_yaml::Value::Null);
+    ValuesRoots::from_values_document(&document)
+}
+
 #[test]
 fn extracts_sorted_top_level_mapping_keys_only() {
-    let roots = ValuesRoots::from_values_yaml(Some(indoc! {r#"
+    let roots = values_roots_from_yaml(Some(indoc! {r#"
         z:
           nested: true
         a: 1
@@ -20,25 +27,21 @@ fn extracts_sorted_top_level_mapping_keys_only() {
 #[test]
 fn ignores_non_mapping_documents_and_empty_keys() {
     assert!(
-        ValuesRoots::from_values_yaml(Some("- item\n"))
+        values_roots_from_yaml(Some("- item\n"))
             .top_level_paths
             .is_empty()
     );
     assert!(
-        ValuesRoots::from_values_yaml(Some("\"\": value\n"))
+        values_roots_from_yaml(Some("\"\": value\n"))
             .top_level_paths
             .is_empty()
     );
-    assert!(
-        ValuesRoots::from_values_yaml(None)
-            .top_level_paths
-            .is_empty()
-    );
+    assert!(values_roots_from_yaml(None).top_level_paths.is_empty());
 }
 
 #[test]
 fn mapping_root_paths_distinguish_structured_values_roots() {
-    let roots = ValuesRoots::from_values_yaml(Some(indoc! {r"
+    let roots = values_roots_from_yaml(Some(indoc! {r"
         object:
           nested: true
         empty: {}
@@ -55,7 +58,7 @@ fn mapping_root_paths_distinguish_structured_values_roots() {
 
 #[test]
 fn extracts_nested_explicit_mapping_paths() {
-    let roots = ValuesRoots::from_values_yaml(Some(indoc! {r"
+    let roots = values_roots_from_yaml(Some(indoc! {r"
         controller:
           kind: Deployment
           admissionWebhooks:
@@ -81,18 +84,14 @@ fn extracts_nested_explicit_mapping_paths() {
 #[test]
 fn explicit_paths_ignore_non_mapping_documents_and_empty_keys() {
     assert!(
-        ValuesRoots::from_values_yaml(Some("- item\n"))
+        values_roots_from_yaml(Some("- item\n"))
             .explicit_paths
             .is_empty()
     );
     assert!(
-        ValuesRoots::from_values_yaml(Some("\"\": value\n"))
+        values_roots_from_yaml(Some("\"\": value\n"))
             .explicit_paths
             .is_empty()
     );
-    assert!(
-        ValuesRoots::from_values_yaml(None)
-            .explicit_paths
-            .is_empty()
-    );
+    assert!(values_roots_from_yaml(None).explicit_paths.is_empty());
 }

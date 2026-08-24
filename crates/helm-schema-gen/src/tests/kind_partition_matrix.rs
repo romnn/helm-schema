@@ -117,7 +117,8 @@ fn values_selected_kind_partitions_strategy_provider_projection() {
     "};
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&signals, &strict_provider())
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
 
     for instance in [
@@ -177,7 +178,8 @@ fn inline_local_kind_partition_projects_per_arm_provider_schemas() {
     "};
     let signals = schema_signals_for(parse_ir(src));
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&signals, &strict_provider())
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
 
     // Cases compose over the declared defaults: `contains "Local"
@@ -254,7 +256,8 @@ fn shared_slot_kind_arms_resolve_through_selecting_predicates() {
     "};
     let signals = schema_signals_for(parse_ir(src));
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&signals, &strict_provider())
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
 
     // Cases compose over the declared defaults: `contains "Local"
@@ -326,7 +329,8 @@ fn pdb_int_or_string_survives_declared_integer_default() {
     "};
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
+        ValuesSchemaInput::new(&signals, &strict_provider())
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
 
     for instance in [
@@ -377,7 +381,7 @@ fn self_kind_dispatch_keeps_complement_kinds_open() {
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &strict_provider())
-            .with_values_yaml(Some("hostUsers: nil\n")),
+            .with_values_documents(&prepared_values_documents(Some("hostUsers: nil\n"))),
     );
     assert!(
         schema
@@ -455,10 +459,12 @@ fn type_of_dispatch_keeps_serialized_arm_structured() {
         "the structure-preserving complement must keep provider evidence ahead of the scalar declared default"
     );
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
                 affinity: |
                   nodeAffinity: {}
             "})),
+        ),
     );
     for (instance, want) in [
         (

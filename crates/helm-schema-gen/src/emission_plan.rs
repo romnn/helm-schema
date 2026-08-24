@@ -86,9 +86,8 @@ impl LoweredEmissionPlan {
     pub(crate) fn build(input: &ValuesSchemaInput<'_>) -> Self {
         let contract_schema_signals = input.contract_schema_signals.clone();
         let mut composed = input
-            .values_yaml
-            .and_then(|source| serde_yaml::from_str::<YamlValue>(source).ok())
-            .unwrap_or(YamlValue::Null);
+            .values_documents
+            .map_or(YamlValue::Null, |documents| documents.composed.clone());
         crate::values_yaml::apply_values_default_sources(
             &mut composed,
             contract_schema_signals.values_default_sources(),
@@ -99,9 +98,8 @@ impl LoweredEmissionPlan {
             input.shadowed_input_paths.unwrap_or(&BTreeSet::new()),
         );
         let mut subchart_defaults = input
-            .dependency_values_yaml
-            .and_then(|source| serde_yaml::from_str::<YamlValue>(source).ok())
-            .unwrap_or(YamlValue::Null);
+            .values_documents
+            .map_or(YamlValue::Null, |documents| documents.dependency.clone());
         // Chart-internal root merges (`set $ "Values" (mustMergeOverwrite
         // defaults .Values)`) fill their defaults at render time, after any
         // null-deletion, so absence at such paths reads as the merged default
@@ -111,10 +109,9 @@ impl LoweredEmissionPlan {
             &composed,
             contract_schema_signals.values_default_sources(),
         );
-        let mut dependency_refill = input
-            .dependency_refill_values_yaml
-            .and_then(|source| serde_yaml::from_str::<YamlValue>(source).ok())
-            .unwrap_or(YamlValue::Null);
+        let mut dependency_refill = input.values_documents.map_or(YamlValue::Null, |documents| {
+            documents.dependency_refill.clone()
+        });
         crate::values_yaml::copy_values_default_sources(
             &mut dependency_refill,
             &composed,

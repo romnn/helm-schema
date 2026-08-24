@@ -1,7 +1,7 @@
-use color_eyre::eyre::{self, OptionExt as _};
+use color_eyre::eyre;
 use indoc::indoc;
 
-use super::{build_composed_values_yaml, build_dependency_global_ownership};
+use super::{build_composed_values_document, build_dependency_global_ownership};
 use crate::chart::ChartContext;
 use crate::chart::discover_chart_contexts;
 use test_util::prelude::sim_assert_eq;
@@ -54,9 +54,7 @@ fn composed_subchart_globals_apply_parent_null_deletion() -> eyre::Result<()> {
         "},
     )?;
 
-    let composed = build_composed_values_yaml(&discover(&chart_dir)?, true)?
-        .ok_or_eyre("composed values yaml")?;
-    let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
+    let doc = build_composed_values_document(&discover(&chart_dir)?, true)?;
 
     assert!(
         yaml_pointer(&doc, &["global", "imageRegistry"]).is_some_and(serde_yaml::Value::is_null),
@@ -100,9 +98,7 @@ fn composed_subchart_globals_stay_in_the_child_when_parent_key_is_absent() -> ey
         "},
     )?;
 
-    let composed = build_composed_values_yaml(&discover(&chart_dir)?, true)?
-        .ok_or_eyre("composed values yaml")?;
-    let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
+    let doc = build_composed_values_document(&discover(&chart_dir)?, true)?;
 
     sim_assert_eq!(
         have: yaml_pointer(&doc, &["global", "imageRegistry"]),
@@ -144,9 +140,7 @@ fn scalar_parent_global_skips_injection_and_keeps_child_defaults() -> eyre::Resu
         "},
     )?;
 
-    let composed = build_composed_values_yaml(&discover(&chart_dir)?, true)?
-        .ok_or_eyre("composed values yaml")?;
-    let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
+    let doc = build_composed_values_document(&discover(&chart_dir)?, true)?;
 
     sim_assert_eq!(
         have: yaml_pointer(&doc, &["global"]),
@@ -196,9 +190,7 @@ fn scalar_child_global_skips_parent_injection_and_child_defaults() -> eyre::Resu
         "},
     )?;
 
-    let composed = build_composed_values_yaml(&discover(&chart_dir)?, true)?
-        .ok_or_eyre("composed values yaml")?;
-    let doc: serde_yaml::Value = serde_yaml::from_str(&composed)?;
+    let doc = build_composed_values_document(&discover(&chart_dir)?, true)?;
 
     sim_assert_eq!(
         have: yaml_pointer(&doc, &["child", "global"]),

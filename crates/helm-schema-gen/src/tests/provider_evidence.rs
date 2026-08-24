@@ -62,7 +62,7 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() {
     let signals = schema_signals_for(ir);
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &ConfigMapDataProvider)
-            .with_values_yaml(Some(values_yaml)),
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
 
     let expected = serde_json::json!({
@@ -256,7 +256,7 @@ fn always_omitted_provider_member_yields_declared_typing_to_its_leaf() {
     let signals = schema_signals_for(ir);
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &SecurityContextProvider)
-            .with_values_yaml(Some(values_yaml)),
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
 
     let expected = serde_json::json!({
@@ -2759,7 +2759,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
 
     let generated = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider)
-            .with_values_yaml(Some(&values_yaml_source)),
+            .with_values_documents(&prepared_values_documents(Some(&values_yaml_source))),
     );
     for (instance, want, label) in [
         (
@@ -2856,7 +2856,7 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
 
     let generated = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider)
-            .with_values_yaml(Some(&values_yaml_source)),
+            .with_values_documents(&prepared_values_documents(Some(&values_yaml_source))),
     );
     let extra_envs = generated
         .pointer("/properties/extraEnvs")
@@ -3010,12 +3010,12 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
 
     let schema_signals = schema_signals_for(uses);
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &RelabelingsProvider).with_values_yaml(Some(
-            indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &RelabelingsProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
                 serviceMonitor:
                   metricRelabelings: []
-            "},
-        )),
+            "})),
+        ),
     );
 
     for (instance, want, label) in [
@@ -3154,7 +3154,7 @@ fn values_yaml_comments_override_provider_descriptions() {
 
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &DescriptionProvider)
-            .with_values_yaml(Some("name: example\n"))
+            .with_values_documents(&prepared_values_documents(Some("name: example\n")))
             .with_values_descriptions(&descriptions),
     );
 
@@ -3186,7 +3186,7 @@ fn values_yaml_comments_do_not_create_schema_paths() {
 
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, &provider)
-            .with_values_yaml(Some("name: example\n"))
+            .with_values_documents(&prepared_values_documents(Some("name: example\n")))
             .with_values_descriptions(&descriptions),
     );
 
@@ -3399,13 +3399,15 @@ fn tpl_serialized_fragment_preserves_structure_without_typing_program_strings_as
     "};
     let signals = schema_signals_for(parse_ir(src));
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &HostnamesProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&signals, &HostnamesProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             route:
               main:
                 enabled: false
                 hostnames:
                   - '*.example.com'
         "})),
+        ),
     );
 
     for (instance, want, label) in [
@@ -3508,7 +3510,7 @@ fn helper_preserves_tpl_serialized_provider_preimage() {
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &HostnamesProvider)
-            .with_values_yaml(Some("hostnames: []\n")),
+            .with_values_documents(&prepared_values_documents(Some("hostnames: []\n"))),
     );
 
     for (hostnames, want, label) in [
@@ -3617,10 +3619,12 @@ fn template_supplied_sibling_keys_relax_provider_requiredness() {
     let ir = parse_ir(src);
     let schema_signals = ir.into_schema_signals();
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &VolumeProvider).with_values_yaml(Some(indoc! {"
+        ValuesSchemaInput::new(&schema_signals, &VolumeProvider).with_values_documents(
+            &prepared_values_documents(Some(indoc! {"
             tmpVolume:
               emptyDir: {}
         "})),
+        ),
     );
 
     for (instance, want, label) in [
@@ -3696,8 +3700,11 @@ fn tpl_rendered_slots_keep_the_raw_program_open() {
     let ir = parse_ir(src);
     let schema_signals = ir.into_schema_signals();
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &SecretNameProvider)
-            .with_values_yaml(Some("objectName: \"{{ include \\\"repro.name\\\" . }}\"\n")),
+        ValuesSchemaInput::new(&schema_signals, &SecretNameProvider).with_values_documents(
+            &prepared_values_documents(Some(
+                "objectName: \"{{ include \\\"repro.name\\\" . }}\"\n",
+            )),
+        ),
     );
 
     for (instance, want, label) in [
