@@ -209,7 +209,11 @@ fn append_omitted_member_arms(
                 guards.extend(retain_guards.iter().cloned());
                 guards.sort();
                 guards.dedup();
-                arms.insert((member.clone(), guards, member_schema.to_string()));
+                arms.insert((
+                    member.clone(),
+                    guards,
+                    helm_schema_json_schema_walk::canonical_json_string(&member_schema),
+                ));
             }
         }
         let target_segments = split_value_path(value_path);
@@ -809,4 +813,3 @@ fn relax_required_members_supplied_by_default(schema: &mut Value, default: &Yaml
         }
     }
 }
-

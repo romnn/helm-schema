@@ -510,7 +510,10 @@ pub(crate) fn append_selected_constraints(
             // `if anyOf [G1, G2] then X`, and X (often a repeated provider
             // schema) is the dominant emitted size.
             let content = by_content
-                .entry((ancestor_segments.clone(), fragment.to_string()))
+                .entry((
+                    ancestor_segments.clone(),
+                    helm_schema_json_schema_walk::canonical_json_string(&fragment),
+                ))
                 .or_insert_with(|| ContentGroup {
                     fragment,
                     guard_sets: Vec::new(),
@@ -569,9 +572,10 @@ pub(crate) fn append_selected_constraints(
         } else {
             SchemaNode::any_of(conditions)
         };
+        let condition_value = condition.clone().into_value();
         let key = (
             ancestor_segments.clone(),
-            condition.clone().into_value().to_string(),
+            helm_schema_json_schema_walk::canonical_json_string(&condition_value),
         );
         match emission_index.entry(key) {
             std::collections::btree_map::Entry::Occupied(entry) => {

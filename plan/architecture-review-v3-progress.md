@@ -4569,7 +4569,7 @@ adjudication.
 
 ## Step 9 operation 5 — producer-neutral requirement naming
 
-- Status: landed; commit pending.
+- Status: landed in `ed175336`.
 - Contract: representation-only. Rename `ContractFailImplication` to a
   producer-neutral requirement type and rename
   `required_source_backprojection` for its actual provider-requirement
@@ -4727,3 +4727,144 @@ adjudication.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +2 (61,937 to 61,939); cumulative Step 9
   delta through operation 5: +368.
+
+## Step 9 operation 6 — canonical schema grouping keys
+
+- Status: landed; commit pending.
+- Contract: representation-only. Replace every schema-grouping key derived
+  from `Value::to_string()` with recursively canonical JSON serialization.
+  Group membership may depend on JSON value equality, never object insertion
+  order; emitted schema bytes, ordering, acceptance, and fixtures stay exact.
+- Acceptance baseline: `ed175336`.
+- Baseline production Rust LOC: 61,939.
+
+### Pre-registered acceptance expectations
+
+- The three audited grouping sites use canonical JSON keys: omitted-provider
+  member arms, identical conditional fragments, and identical encoded
+  conditions. No other production grouping site in the generator calls
+  `Value::to_string()`.
+- JSON objects with equal recursively nested content but different insertion
+  order produce one group. Array order, scalar spelling, scope paths, guard
+  order, and first-occurrence emission position retain their existing meaning.
+- Schema and IR fixture dumps remain byte-identical to operation 5. The
+  full-depth compiled battery reports zero acceptance flips, zero
+  candidate-accepts/Helm-aborts cells, and zero mandatory base or third-level
+  probe drops.
+- No fixture update is authorized. Any changed artifact or acceptance cell
+  stops the operation before adoption and is recorded as a rejected
+  preflight.
+
+### Measured results
+
+- The omitted-member arm key now canonicalizes the dereferenced member schema.
+  Equal provider schemas group independently of nested object insertion order.
+- The conditional-content key now canonicalizes the scoped fragment, and the
+  emission key canonicalizes the encoded condition. Scope segments and the
+  first-occurrence index remain separate, ordered parts of each grouping rule.
+- Repository search finds no remaining generator grouping call that serializes
+  `member_schema`, `fragment`, or `condition.into_value()` with raw
+  `Value::to_string()`.
+- The immutable final1 archive contains 91 binaries and 135 files. Its one
+  clean schema dump passes 62/62 tests and writes 84 artifacts; its one clean
+  IR dump passes 1/1 and writes 18 artifacts.
+- Replaying the schema and IR fixture tests from that same archive with dump
+  mode disabled passes full diff-based equality against every tracked fixture.
+  No fixture changed.
+- The full-depth battery compares 60 lanes and 121,055 probes against
+  `ed175336` with Helm adjudication enabled and reports zero flips and zero
+  candidate-accepts/Helm-aborts cells.
+
+### Deviations
+
+- The first focused compile preflight passed an owned member schema where the
+  canonical serializer requires a borrow. It exited 101 before any test ran;
+  the compiler-directed borrow was added, and no artifact from that state was
+  used.
+- The first archive schema-dump command used a distinct `TMPDIR` whose parent
+  directory did not yet exist. Nextest exited 96 before extraction or artifact
+  creation. The empty step-local directory was created and the identical
+  command became the single accepted dump run.
+- The first dossier insertion matched operation 1's identical pre-registration
+  sentence and placed this block under the wrong heading. No source or evidence
+  changed; the block was moved intact before staging.
+- Operation 6 adds 8 production Rust LOC and brings Step 9 to +376, contrary
+  to the frozen -700 to -350 estimate. Canonical serialization expands three
+  formerly terse call sites; no live semantics or tests were removed to force
+  the estimate.
+
+### Adjudication evidence
+
+- Schema fixture identity replay: the established 62-test archive filter
+  passes 62/62 with dump mode disabled, exercising full diff-based equality
+  for all 84 schema families.
+- IR fixture identity replay: `ir_corpus_fixtures_match` passes 1/1 with dump
+  mode disabled and checks all 18 IR fixtures exactly.
+- The full-depth ignored Round 74 battery passes in 68.107 seconds: 60 charts,
+  121,055 probes, zero flips, and zero Helm adjudications because no acceptance
+  cell changed.
+- Mandatory base coverage is 112,260/112,260 and mandatory third-level
+  coverage is 7,465/7,465, with zero drops in either category. Bounded
+  accounting reports 427 guard pairs, 238 composite pairs, and 28,874
+  disclosed drops.
+
+### Producer and route coverage
+
+| Grouping route | Canonical identity | Preserved ordering input |
+|---|---|---|
+| Omitted provider member arms | Recursively canonical member schema | Member name and sorted guards |
+| Conditional content groups | Recursively canonical scoped fragment | Ancestor path and first occurrence |
+| Encoded condition groups | Recursively canonical condition schema | Ancestor path and emission index |
+| Arrays and scalars inside keys | Canonical serializer preserves their order and spelling | Existing JSON value semantics |
+
+### Review dossier
+
+- Ownership: grouping code owns only grouping identity; it delegates recursive
+  JSON normalization to the existing shared canonical serializer rather than
+  introducing another schema representation.
+- Scope: exactly the three audited grouping keys change. Guard normalization,
+  fragment construction, group traversal, emission order, schema mutation, and
+  fixture code are untouched.
+- Simplicity: direct calls keep the invariant visible at each grouping site and
+  avoid a one-line adapter abstraction.
+- Determinism: recursively sorted object keys remove insertion-order dependence
+  while arrays, scalars, B-tree iteration, and first-occurrence placement retain
+  their prior semantics.
+- Losslessness: canonical strings are temporary comparison keys only. The
+  original `Value` and `SchemaNode` payloads remain the values emitted.
+
+### Self-adversarial pass
+
+- Nested-order pressure: recursive canonicalization covers objects nested in
+  properties, combinators, arrays, definitions, and unknown keywords.
+- Array-order pressure: arrays are not sorted, so `allOf`, `anyOf`, `oneOf`,
+  tuple items, enums, and ordinary data arrays retain order-sensitive identity.
+- Emission-order pressure: the B-tree grouping keys and explicit emission index
+  still preserve the first occurrence's output position.
+- Payload pressure: no canonical string is parsed back into an emitted schema;
+  grouping retains the original fragment or condition payload.
+- Coverage pressure: search names each former raw serialization site, fixture
+  equality covers emitted bytes, and the full-depth battery covers acceptance.
+- Estimate pressure: the +8 operation and +376 Step 9 aggregate are recorded
+  without deleting semantic or test code.
+
+- Gates on the final Step 9 operation 6 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,262/1,262 passed.
+  - `task test:integration`: exit 0; 568/568 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,834/1,834 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims and explicit
+    `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 61,947 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +8 (61,939 to 61,947); cumulative Step 9
+  delta through operation 6: +376.
