@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::{
     PreparedValuesDocuments, ValuesSchemaInput, generate_values_schema,
     resolve_policy::{
-        ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
+        ProviderValueUsePolicy, ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
         open_objects_rejecting_declared_members, preserve_declared_default_in_schema,
     },
     values_yaml::ValuesYamlPathFacts,

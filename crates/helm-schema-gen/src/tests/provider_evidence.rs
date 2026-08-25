@@ -6,6 +6,78 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+/// Proves use order cannot choose which provider preimage survives memoization.
+#[test]
+fn provider_schema_cache_distinguishes_stringified_scalar_uses() {
+    #[derive(Debug)]
+    struct ScalarOrObjectProvider;
+
+    impl ResourceSchemaOracle for ScalarOrObjectProvider {
+        fn schema_fragment_for_use(
+            &self,
+            _use: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            Some(ProviderSchemaFragment::new(serde_json::json!({
+                "anyOf": [
+                    { "type": "string" },
+                    {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "nested": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "value": { "type": "string" }
+                                },
+                                "required": ["value"]
+                            }
+                        },
+                        "required": ["nested"]
+                    }
+                ]
+            })))
+        }
+    }
+
+    let provider_use = |stringified| ContractUse {
+        source_expr: "value".to_string(),
+        path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
+        kind: ValueKind::Scalar,
+        condition: helm_schema_core::GuardDnf::default(),
+        resource: Some(ResourceRef::concrete(
+            "example.io/v1".to_string(),
+            "Example".to_string(),
+        )),
+        provenance: Vec::new(),
+        stringified,
+        template_supplied_member_keys: BTreeSet::new(),
+        split_segment: None,
+        merge_layers: None,
+        range_key: false,
+        nil_omitting: false,
+        omitted_members: BTreeMap::new(),
+        digest: false,
+        merge_operand: false,
+    };
+    let generate = |uses| {
+        let signals = schema_signals_for(uses);
+        generate_values_schema(ValuesSchemaInput::new(&signals, &ScalarOrObjectProvider))
+    };
+    let stringified_first = generate(vec![provider_use(true), provider_use(false)]);
+    let direct_first = generate(vec![provider_use(false), provider_use(true)]);
+
+    sim_assert_eq!(have: stringified_first, want: direct_first);
+    assert!(schema_accepts_instance(
+        &direct_first,
+        &serde_json::json!({ "value": "plain" })
+    ));
+    assert!(!schema_accepts_instance(
+        &direct_first,
+        &serde_json::json!({ "value": { "nested": { "value": "text" } } })
+    ));
+}
+
 #[test]
 #[expect(
     clippy::too_many_lines,

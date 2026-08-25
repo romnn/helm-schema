@@ -1,8 +1,7 @@
 use serde_json::Value;
 
 use helm_schema_core::{
-    ConditionalGuard, ConditionalPathOverlay, ContractValuePathFacts, GuardValue,
-    ProviderSchemaUse, ValueKind,
+    ConditionalGuard, ConditionalPathOverlay, ContractValuePathFacts, GuardValue, ValueKind,
 };
 use serde_yaml::Value as YamlValue;
 
@@ -175,19 +174,49 @@ pub(crate) struct ValuePathSchemaInputs {
     pub(crate) fallback_type_hint_schema: Value,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct ProviderValueUsePolicy {
+    kind: ValueKind,
+    stringified: bool,
+    is_self_range_collection: bool,
+    template_supplied_member_keys: std::collections::BTreeSet<String>,
+    split_segment: Option<helm_schema_core::SplitSegmentUse>,
+    omitted_members: std::collections::BTreeMap<String, Vec<ConditionalGuard>>,
+}
+
+impl ProviderValueUsePolicy {
+    pub(crate) fn new(
+        kind: ValueKind,
+        stringified: bool,
+        is_self_range_collection: bool,
+        template_supplied_member_keys: std::collections::BTreeSet<String>,
+        split_segment: Option<helm_schema_core::SplitSegmentUse>,
+        omitted_members: std::collections::BTreeMap<String, Vec<ConditionalGuard>>,
+    ) -> Self {
+        Self {
+            kind,
+            stringified,
+            is_self_range_collection,
+            template_supplied_member_keys,
+            split_segment,
+            omitted_members,
+        }
+    }
+}
+
 impl ResolvePolicy {
     pub(crate) fn provider_schema_for_value_use(
         schema: &Value,
-        use_: &ProviderSchemaUse,
+        policy: &ProviderValueUsePolicy,
     ) -> Option<Value> {
-        match use_.kind {
+        match policy.kind {
             ValueKind::TemplatedYamlSerialized => {
                 Some(templated_yaml_provider_preimage(subtract_omitted_members(
                     relax_template_supplied_required(
                         schema.clone(),
-                        &use_.template_supplied_member_keys,
+                        &policy.template_supplied_member_keys,
                     ),
-                    &use_.omitted_members,
+                    &policy.omitted_members,
                 )))
             }
             // `toYaml` accepts every input kind but preserves that kind in
@@ -198,9 +227,9 @@ impl ResolvePolicy {
             ValueKind::YamlSerialized => Some(subtract_omitted_members(
                 relax_template_supplied_required(
                     schema.clone(),
-                    &use_.template_supplied_member_keys,
+                    &policy.template_supplied_member_keys,
                 ),
-                &use_.omitted_members,
+                &policy.omitted_members,
             )),
             // A self-ranged FRAGMENT use renders loop-body ITEMS derived
             // from the members, so the slot's item schema types the
@@ -208,23 +237,23 @@ impl ResolvePolicy {
             // (array or map) is the only sound projection (traefik's
             // resourceAttributes flag loops reassembled through the
             // pod-template roundtrip).
-            ValueKind::Fragment if use_.is_self_range_collection => {
+            ValueKind::Fragment if policy.is_self_range_collection => {
                 schema_allows_type(schema, "array")
                     .then(|| crate::schema_model::type_union_schema(["array", "object"]))
             }
             ValueKind::Fragment => schema_allows_type(schema, "array").then(|| schema.clone()),
             ValueKind::PartialScalar | ValueKind::Serialized | ValueKind::WidenedDependency => None,
-            ValueKind::Scalar if use_.is_self_range_collection => {
+            ValueKind::Scalar if policy.is_self_range_collection => {
                 ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
             }
             // The slot observes ONE separator-delimited segment of the raw
             // string, so the preimage constrains that segment instead of the
             // whole spelling.
-            ValueKind::Scalar if use_.split_segment.is_some() => use_
+            ValueKind::Scalar if policy.split_segment.is_some() => policy
                 .split_segment
                 .as_ref()
                 .and_then(|segment| split_segment_provider_preimage(schema, segment)),
-            ValueKind::Scalar if use_.stringified => {
+            ValueKind::Scalar if policy.stringified => {
                 Some(stringified_plain_scalar_provider_preimage(schema.clone()))
             }
             ValueKind::Scalar => ForeignSchemaRestriction::Scalar

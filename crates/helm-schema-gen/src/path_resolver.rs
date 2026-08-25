@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use helm_schema_core::{
     ConditionalGuard, ProviderSchemaFragment, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle,
-    ValueKind, YamlPath,
+    YamlPath,
 };
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
@@ -12,7 +12,9 @@ use helm_schema_core::{ContractPathSchemaEvidence, ContractSchemaSignals, Metada
 
 use crate::merge::{intersect_schema_list, merge_schema_list, union_schema_list};
 use crate::provider_schema::ProviderSchemaCandidate;
-use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
+use crate::resolve_policy::{
+    ProviderValueUsePolicy, ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
+};
 use crate::schema_model::{empty_schema, guard_value_to_json, is_empty_schema, type_schema};
 use crate::schema_node::SchemaNode;
 use crate::values_yaml::{ValuesYamlPathFacts, ValuesYamlPathInfo, build_values_yaml_path_info};
@@ -40,15 +42,46 @@ pub(crate) struct ResolvedPathSchema {
 struct ProviderSchemaLookupKey {
     resource: ResourceRef,
     path: YamlPath,
-    kind: ValueKind,
-    is_self_range_collection: bool,
+    policy: ProviderValueUsePolicy,
     /// These fields change the restricted schema a use resolves to, so an
     /// under-keyed cache hit would leak one use's preimage into another.
-    template_supplied_member_keys: std::collections::BTreeSet<String>,
-    split_segment: Option<helm_schema_core::SplitSegmentUse>,
     merge_layers: Option<helm_schema_core::MergeLayersUse>,
     range_key: bool,
-    omitted_members: std::collections::BTreeMap<String, Vec<helm_schema_core::ConditionalGuard>>,
+}
+
+impl From<&ProviderSchemaUse> for ProviderSchemaLookupKey {
+    fn from(use_: &ProviderSchemaUse) -> Self {
+        let ProviderSchemaUse {
+            value_path: _,
+            path,
+            kind,
+            stringified,
+            resource,
+            is_self_range_collection,
+            source_null_tolerant: _,
+            template_supplied_member_keys,
+            split_segment,
+            merge_layers,
+            range_key,
+            nil_omitting: _,
+            omitted_members,
+            outer_guards: _,
+        } = use_;
+        Self {
+            resource: resource.clone(),
+            path: path.clone(),
+            policy: ProviderValueUsePolicy::new(
+                *kind,
+                *stringified,
+                *is_self_range_collection,
+                template_supplied_member_keys.clone(),
+                split_segment.clone(),
+                omitted_members.clone(),
+            ),
+            merge_layers: merge_layers.clone(),
+            range_key: *range_key,
+        }
+    }
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -211,21 +244,11 @@ fn provider_schemas_for_path_evidence(
         if provider_use.merge_layers.is_some() || provider_use.range_key {
             continue;
         }
-        let lookup_key = ProviderSchemaLookupKey {
-            resource: provider_use.resource.clone(),
-            path: provider_use.path.clone(),
-            kind: provider_use.kind,
-            is_self_range_collection: provider_use.is_self_range_collection,
-            template_supplied_member_keys: provider_use.template_supplied_member_keys.clone(),
-            split_segment: provider_use.split_segment.clone(),
-            merge_layers: provider_use.merge_layers.clone(),
-            range_key: provider_use.range_key,
-            omitted_members: provider_use.omitted_members.clone(),
-        };
+        let lookup_key = ProviderSchemaLookupKey::from(provider_use);
         let schema = match provider_schema_cache.entry(lookup_key) {
             std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
             std::collections::hash_map::Entry::Vacant(entry) => {
-                let schema = lookup_provider_schema(provider, provider_use);
+                let schema = lookup_provider_schema(provider, provider_use, &entry.key().policy);
                 entry.insert(schema.clone());
                 schema
             }
@@ -288,6 +311,7 @@ fn build_path_schema_inputs(
 fn lookup_provider_schema(
     provider: &dyn ResourceSchemaOracle,
     provider_use: &ProviderSchemaUse,
+    policy: &ProviderValueUsePolicy,
 ) -> Option<Arc<ProviderSchemaCandidate>> {
     let mut kinds = vec![provider_use.resource.kind.clone()];
     for kind in &provider_use.resource.kind_candidates {
@@ -301,7 +325,7 @@ fn lookup_provider_schema(
             .schema_fragment_for_use(provider_use)
             .and_then(|fragment| {
                 fragment.try_map_schema(|schema| {
-                    ResolvePolicy::provider_schema_for_value_use(schema, provider_use)
+                    ResolvePolicy::provider_schema_for_value_use(schema, policy)
                 })
             })?
     } else {
@@ -314,7 +338,7 @@ fn lookup_provider_schema(
             let fragment = provider
                 .schema_fragment_for_use(&concrete_use)?
                 .try_map_schema(|schema| {
-                    ResolvePolicy::provider_schema_for_value_use(schema, &concrete_use)
+                    ResolvePolicy::provider_schema_for_value_use(schema, policy)
                 })?;
             required_in_parent &= fragment.required_in_parent();
             schemas.push(fragment.into_schema());
@@ -331,7 +355,7 @@ fn lookup_provider_schema(
             provider_use.path.0.as_slice(),
             [segment] if segment == "kind"
         ) {
-            ResolvePolicy::provider_schema_for_value_use(&type_schema("string"), provider_use)?
+            ResolvePolicy::provider_schema_for_value_use(&type_schema("string"), policy)?
         } else {
             union_schema_list(schemas)
         };

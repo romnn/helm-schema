@@ -34,22 +34,14 @@ fn common_plain_string_proof_respects_one_of_exclusivity() {
 
 #[test]
 fn overlapping_nullable_one_of_rejects_plain_null_spellings() -> eyre::Result<()> {
-    let use_ = ProviderSchemaUse {
-        value_path: "port".to_string(),
-        path: YamlPath(vec!["spec".to_string()]),
-        kind: ValueKind::Scalar,
-        stringified: false,
-        resource: ResourceRef::concrete("v1".to_string(), "Pod".to_string()),
-        is_self_range_collection: false,
-        source_null_tolerant: false,
-        template_supplied_member_keys: BTreeSet::new(),
-        split_segment: None,
-        merge_layers: None,
-        range_key: false,
-        nil_omitting: false,
-        omitted_members: BTreeMap::new(),
-        outer_guards: Vec::new(),
-    };
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
     let schema = ResolvePolicy::provider_schema_for_value_use(
         &serde_json::json!({
             "oneOf": [
@@ -57,7 +49,7 @@ fn overlapping_nullable_one_of_rejects_plain_null_spellings() -> eyre::Result<()
                 { "type": ["integer", "null"] },
             ]
         }),
-        &use_,
+        &policy,
     )
     .ok_or_eyre("scalar provider preimage")?;
 
@@ -87,22 +79,14 @@ fn overlapping_nullable_one_of_rejects_plain_null_spellings() -> eyre::Result<()
 
 #[test]
 fn int_or_string_preimage_partitions_numeric_string_spellings() -> eyre::Result<()> {
-    let use_ = ProviderSchemaUse {
-        value_path: "port".to_string(),
-        path: YamlPath(vec!["spec".to_string()]),
-        kind: ValueKind::Scalar,
-        stringified: false,
-        resource: ResourceRef::concrete("v1".to_string(), "Pod".to_string()),
-        is_self_range_collection: false,
-        source_null_tolerant: false,
-        template_supplied_member_keys: BTreeSet::new(),
-        split_segment: None,
-        merge_layers: None,
-        range_key: false,
-        nil_omitting: false,
-        omitted_members: BTreeMap::new(),
-        outer_guards: Vec::new(),
-    };
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
     let schema = ResolvePolicy::provider_schema_for_value_use(
         &serde_json::json!({
             "oneOf": [
@@ -110,7 +94,7 @@ fn int_or_string_preimage_partitions_numeric_string_spellings() -> eyre::Result<
                 { "type": "integer" },
             ]
         }),
-        &use_,
+        &policy,
     )
     .ok_or_eyre("scalar provider preimage")?;
 
@@ -142,25 +126,17 @@ fn int_or_string_preimage_partitions_numeric_string_spellings() -> eyre::Result<
 
 #[test]
 fn plain_string_comment_preimage_tracks_the_parsed_prefix() -> eyre::Result<()> {
-    let use_ = ProviderSchemaUse {
-        value_path: "label".to_string(),
-        path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
-        kind: ValueKind::Scalar,
-        stringified: false,
-        resource: ResourceRef::concrete("v1".to_string(), "Pod".to_string()),
-        is_self_range_collection: false,
-        source_null_tolerant: false,
-        template_supplied_member_keys: BTreeSet::new(),
-        split_segment: None,
-        merge_layers: None,
-        range_key: false,
-        nil_omitting: false,
-        omitted_members: BTreeMap::new(),
-        outer_guards: Vec::new(),
-    };
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
     let schema = ResolvePolicy::provider_schema_for_value_use(
         &serde_json::json!({ "type": "string" }),
-        &use_,
+        &policy,
     )
     .ok_or_eyre("scalar provider preimage")?;
 

@@ -185,3 +185,125 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: 0 (62,082 to 62,082).
+
+## Round A1 — key provider memoization by stringification policy
+
+- Status: landed in this round's `fix(gen)` commit.
+- Contract: behavior-bearing; make provider-schema memo identity include `stringified`, and make
+  provider preimage lowering consume the same typed policy subkey embedded in the cache key so a
+  future policy field cannot be read outside memo identity.
+- Acceptance baseline: `0b2e7345`.
+- Baseline production Rust LOC: 62,082.
+- Pre-registered acceptance expectations:
+  - Two uses of one values path at the same resource slot that differ only in `stringified` resolve
+    independently and retain both provider preimages.
+  - Reversing those two uses cannot change the generated schema; first-resolved cache order stops
+    being semantic input.
+  - A direct scalar use keeps its scalar-only provider restriction while a stringified use keeps
+    the wider preimage allowed by total textual conversion; neither may pin the other.
+  - No tracked fixture or 60-chart full-depth acceptance flip is expected. Any changed cell stops
+    the round for individual Helm 4.2.3 adjudication before a fixture is changed.
+  - The zero candidate-accepts/Helm-aborts allowance remains fixed.
+
+- Measured results:
+  - `ProviderValueUsePolicy` now owns every input read by provider preimage lowering: value kind,
+    stringification, direct-range shape, template-supplied keys, split-segment identity, and omitted
+    members. `ProviderSchemaLookupKey` embeds that policy beside resource/path identity and the two
+    resolver-routing fields.
+  - `ProviderSchemaLookupKey::from` exhaustively destructures `ProviderSchemaUse`, naming every
+    deliberately ignored field. Preimage lowering receives only the embedded policy, so it cannot
+    read a future use field without first adding that field to memo identity.
+  - The regression sends the same values path to the same provider slot through stringified and
+    direct scalar routes in both orders. The resulting full schemas are byte-identical; a plain
+    string remains accepted, while a nested object admitted only by the stringified route is
+    rejected because the direct route also executes.
+  - The immutable final1 archive contains 88 binaries and 126 files. One schema dump writes 84
+    artifacts and one IR dump writes 18 artifacts; all tracked fixtures remain exact.
+  - The full-depth comparison against `0b2e7345` checks 121,055 probes across 60 charts and reports
+    zero flips. Mandatory coverage is 112,260/112,260 base and 7,465/7,465 third-level probes, with
+    28,874 bounded drops disclosed.
+
+- Deviations:
+  - No acceptance or fixture deviation occurred.
+  - The frozen plan offered either a typed cache-key closure or hoisting all provider resolution to
+    a phase artifact. This round takes the local typed subkey because it closes the live defect
+    immediately without pre-empting C4's independently scheduled phase-artifact work.
+  - Production Rust grows by 50 lines. The added enforcement type and exhaustive conversion replace
+    a flat key literal rather than deleting a representation; no LOC promise was registered.
+
+- Adjudication evidence:
+  - The final comparison records zero flips and therefore requires no individual Helm render
+    verdict. Helm 4.2.3 is selected by the pinned mise toolchain; the zero accepted-abort allowance
+    remains unspent.
+
+### Producer and route coverage
+
+| Route | Final cache identity | Verification |
+|---|---|---|
+| Direct scalar | `kind = Scalar`, `stringified = false`, plus all shared policy fields. | Nested structured input admitted only through textual conversion stays rejected. |
+| Stringified scalar | Same resource and slot but `stringified = true`. | Its wider provider preimage is resolved independently instead of reusing the direct candidate. |
+| Multi-kind resource | Resource kind candidates remain lookup inputs while every concrete kind reuses the same typed value-use policy. | Existing candidate-union tests and full fixture battery remain exact. |
+| Template-supplied/omitted members | Both collections remain inside `ProviderValueUsePolicy`. | Existing provider projection tests remain exact. |
+| Split and direct-range modes | Split-segment and range-shape fields remain inside the policy key. | Existing scalar segment and range tests remain exact. |
+| Merge-layer/range-key routing | These fields remain on the outer lookup key and are skipped or synthesized before ordinary lookup as before. | No merge/range fixture or acceptance cell changes. |
+
+### Review dossier
+
+- Focused regression: `cargo nextest run -p helm-schema-gen -E
+  'test(provider_schema_cache_distinguishes_stringified_scalar_uses)'`; exit 0, one test passes.
+- Enforcement proof: every production call to `provider_schema_for_value_use` passes a
+  `ProviderValueUsePolicy`; no call can pass the wider `ProviderSchemaUse` carrier.
+- Immutable build: `TMPDIR=target/arch-v4-a1-final1-build cargo nextest archive --workspace
+  --archive-file /private/tmp/arch-v4-a1-final1.tar.zst`; exit 0, 88 binaries and 126 files.
+- Clean schema dump: `TMPDIR=target/arch-v4-a1-final1-schema SCHEMA_DUMP=1 cargo nextest run
+  --archive-file /private/tmp/arch-v4-a1-final1.tar.zst --profile integration --no-fail-fast -E
+  'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=target/arch-v4-a1-final1-ir SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run
+  --archive-file /private/tmp/arch-v4-a1-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written.
+- Full-depth proof: `TMPDIR=target/arch-v4-a1-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=0b2e7345
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=target/arch-v4-a1-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=target/arch-v4-a1-final1-coverage.json ADJUDICATE_WITH_HELM=1
+  cargo nextest run --archive-file /private/tmp/arch-v4-a1-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells.
+- Public/wire decision: none. The new type and cache key remain crate-private; serialized contract
+  documents and public Rust APIs are unchanged.
+
+### Self-adversarial pass
+
+- Adding only `stringified: bool` to the flat key would fix today's collision but leave the policy
+  free to read the wider carrier again. The nested policy subkey makes memo completeness the only
+  route to a new lowering input.
+- Moving the entire `ProviderSchemaUse` into the key would over-key on outer guards, value-path
+  spelling, and presence-only facts that do not affect the cached candidate. The exhaustive
+  conversion names those deliberate exclusions without turning them into cache misses.
+- The regression reverses producer order because a single fixed order could pass while the first
+  candidate still pins both uses. Full-schema equality proves order independence, and the nested
+  object probe selects the restrictive direction rather than merely checking that outputs match.
+- Multi-kind lookup changes only resource identity for each candidate; reusing the same typed
+  value-use policy is correct because kind selection does not change stringification or source
+  transforms.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0.
+- `task test:all`; exit 0.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 62,132 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +50 (62,082 to 62,132).
