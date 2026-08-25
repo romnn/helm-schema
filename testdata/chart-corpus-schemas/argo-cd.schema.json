@@ -24051,48 +24051,6 @@
     "9A": {
       "anyOf": [
         {
-          "properties": {
-            "commitServer": {
-              "properties": {
-                "podLabels": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "podLabels"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "commitServer"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "global": {
-              "properties": {
-                "podLabels": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "podLabels"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "9B": {
-      "anyOf": [
-        {
           "not": {
             "properties": {
               "redis": {
@@ -24131,6 +24089,25 @@
           "type": "object"
         }
       ]
+    },
+    "9B": {
+      "additionalProperties": {},
+      "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.",
+      "properties": {
+        "networkPolicy": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "Annotations for Haproxy NetworkPolicy",
+              "type": [
+                "array",
+                "null",
+                "object"
+              ]
+            }
+          }
+        }
+      }
     },
     "9C": {
       "additionalProperties": {},
@@ -25035,25 +25012,6 @@
       }
     },
     "9R": {
-      "additionalProperties": {},
-      "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.",
-      "properties": {
-        "networkPolicy": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {
-              "description": "Annotations for Haproxy NetworkPolicy",
-              "type": [
-                "array",
-                "null",
-                "object"
-              ]
-            }
-          }
-        }
-      }
-    },
-    "9S": {
       "anyOf": [
         {
           "properties": {
@@ -25095,7 +25053,7 @@
         }
       ]
     },
-    "9T": {
+    "9S": {
       "anyOf": [
         {
           "properties": {
@@ -25137,7 +25095,7 @@
         }
       ]
     },
-    "9U": {
+    "9T": {
       "if": {
         "allOf": [
           {
@@ -25183,7 +25141,7 @@
       },
       "then": false
     },
-    "9V": {
+    "9U": {
       "anyOf": [
         {
           "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
@@ -25196,7 +25154,7 @@
         }
       ]
     },
-    "9W": {
+    "9V": {
       "properties": {
         "global": {
           "properties": {
@@ -25234,6 +25192,50 @@
         "global"
       ],
       "type": "object"
+    },
+    "9W": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "certificateSecret": {
+                "properties": {
+                  "crt": {}
+                },
+                "required": [
+                  "crt"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "certificateSecret"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "certificateSecret": {
+              "properties": {
+                "crt": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "crt"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "certificateSecret"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "9X": {
       "if": {
@@ -26329,37 +26331,46 @@
       ]
     },
     "9z": {
-      "additionalProperties": {},
-      "properties": {
-        "labels": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "string"
+      "anyOf": [
+        {
+          "properties": {
+            "commitServer": {
+              "properties": {
+                "podLabels": {
+                  "$ref": "#/$defs/t"
+                }
               },
-              "type": "object"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "type": "array"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            },
-            {
+              "required": [
+                "podLabels"
+              ],
               "type": "object"
             }
+          },
+          "required": [
+            "commitServer"
           ],
-          "description": "Set labels for the ServiceMonitor, use this to define your scrape label for Prometheus Operator"
+          "type": "object"
+        },
+        {
+          "properties": {
+            "global": {
+              "properties": {
+                "podLabels": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "podLabels"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
         }
-      }
+      ]
     },
     "A": {
       "properties": {
@@ -27347,50 +27358,6 @@
             "properties": {
               "certificateSecret": {
                 "properties": {
-                  "crt": {}
-                },
-                "required": [
-                  "crt"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "certificateSecret"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "certificateSecret": {
-              "properties": {
-                "crt": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "crt"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "certificateSecret"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "a6": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "certificateSecret": {
-                "properties": {
                   "key": {}
                 },
                 "required": [
@@ -27428,7 +27395,7 @@
         }
       ]
     },
-    "a7": {
+    "a6": {
       "allOf": [
         {
           "anyOf": [
@@ -27469,7 +27436,7 @@
         }
       ]
     },
-    "a8": {
+    "a7": {
       "additionalProperties": {},
       "description": "TLS certificate configuration via Secret\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/tls/#tls-certificates-used-by-argocd-server",
       "properties": {
@@ -27483,7 +27450,7 @@
         }
       }
     },
-    "a9": {
+    "a8": {
       "allOf": [
         {
           "properties": {
@@ -27526,6 +27493,43 @@
           }
         }
       ]
+    },
+    "a9": {
+      "properties": {
+        "global": {
+          "properties": {
+            "compatibility": {
+              "properties": {
+                "openshift": {
+                  "properties": {
+                    "adaptSecurityContext": {
+                      "enum": [
+                        "force"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "adaptSecurityContext"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "openshift"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "compatibility"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
     },
     "aA": {
       "if": {
@@ -28537,43 +28541,6 @@
       }
     },
     "aa": {
-      "properties": {
-        "global": {
-          "properties": {
-            "compatibility": {
-              "properties": {
-                "openshift": {
-                  "properties": {
-                    "adaptSecurityContext": {
-                      "enum": [
-                        "force"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "adaptSecurityContext"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "openshift"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "compatibility"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "ab": {
       "anyOf": [
         {
           "properties": {
@@ -28615,7 +28582,7 @@
         }
       ]
     },
-    "ac": {
+    "ab": {
       "allOf": [
         {
           "properties": {
@@ -28659,7 +28626,7 @@
         }
       ]
     },
-    "ad": {
+    "ac": {
       "anyOf": [
         {
           "properties": {
@@ -28701,7 +28668,7 @@
         }
       ]
     },
-    "ae": {
+    "ad": {
       "anyOf": [
         {
           "description": "The port that will be exposed by this service.",
@@ -28715,7 +28682,7 @@
       ],
       "description": "Repo server service port"
     },
-    "af": {
+    "ae": {
       "if": {
         "allOf": [
           {
@@ -28761,7 +28728,7 @@
       },
       "then": false
     },
-    "ag": {
+    "af": {
       "anyOf": [
         {
           "properties": {
@@ -28802,6 +28769,36 @@
           "type": "object"
         }
       ]
+    },
+    "ag": {
+      "additionalProperties": {},
+      "properties": {
+        "labels": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ],
+          "description": "Set labels for the ServiceMonitor, use this to define your scrape label for Prometheus Operator"
+        }
+      }
     },
     "ah": {
       "anyOf": [
@@ -69735,7 +69732,7 @@
                     "description": "Repo server service configuration",
                     "properties": {
                       "port": {
-                        "$ref": "#/$defs/ae"
+                        "$ref": "#/$defs/ad"
                       }
                     }
                   }
@@ -70438,7 +70435,7 @@
             "$ref": "#/$defs/cI"
           },
           {
-            "$ref": "#/$defs/9A"
+            "$ref": "#/$defs/9z"
           }
         ]
       },
@@ -72973,7 +72970,7 @@
             "$ref": "#/$defs/dc"
           },
           {
-            "$ref": "#/$defs/9S"
+            "$ref": "#/$defs/9R"
           }
         ]
       },
@@ -74335,7 +74332,7 @@
             "$ref": "#/$defs/dz"
           },
           {
-            "$ref": "#/$defs/ag"
+            "$ref": "#/$defs/af"
           }
         ]
       },
@@ -75384,7 +75381,7 @@
                 "$ref": "#/$defs/e"
               },
               {
-                "$ref": "#/$defs/9W"
+                "$ref": "#/$defs/9V"
               },
               {
                 "$ref": "#/$defs/aV"
@@ -75397,7 +75394,7 @@
                 "$ref": "#/$defs/b4"
               },
               {
-                "$ref": "#/$defs/9W"
+                "$ref": "#/$defs/9V"
               },
               {
                 "$ref": "#/$defs/d"
@@ -76679,7 +76676,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/9A"
+                "$ref": "#/$defs/9z"
               }
             ]
           },
@@ -76697,7 +76694,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/ag"
+                "$ref": "#/$defs/af"
               }
             ]
           },
@@ -76736,7 +76733,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/ad"
+                "$ref": "#/$defs/ac"
               }
             ]
           },
@@ -76787,7 +76784,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/9S"
+                "$ref": "#/$defs/9R"
               }
             ]
           },
@@ -76802,7 +76799,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/9T"
+                "$ref": "#/$defs/9S"
               }
             ]
           },
@@ -76817,7 +76814,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/ab"
+                "$ref": "#/$defs/aa"
               }
             ]
           }
@@ -79090,7 +79087,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/a9"
+        "$ref": "#/$defs/a8"
       },
       "then": {
         "allOf": [
@@ -81177,7 +81174,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/a9"
+            "$ref": "#/$defs/a8"
           },
           {
             "$ref": "#/$defs/5F"
@@ -81482,7 +81479,7 @@
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/ad"
+            "$ref": "#/$defs/ac"
           }
         ]
       },
@@ -83587,13 +83584,13 @@
                         "anyOf": [
                           {
                             "items": {
-                              "$ref": "#/$defs/a7"
+                              "$ref": "#/$defs/a6"
                             },
                             "type": "array"
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/a7"
+                              "$ref": "#/$defs/a6"
                             },
                             "type": "object"
                           },
@@ -84720,7 +84717,7 @@
                 "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
                 "properties": {
                   "haproxy": {
-                    "$ref": "#/$defs/9R"
+                    "$ref": "#/$defs/9B"
                   }
                 }
               }
@@ -88129,7 +88126,7 @@
             "$ref": "#/$defs/cX"
           },
           {
-            "$ref": "#/$defs/9T"
+            "$ref": "#/$defs/9S"
           }
         ]
       },
@@ -88641,7 +88638,7 @@
                 "description": "Server",
                 "properties": {
                   "certificateSecret": {
-                    "$ref": "#/$defs/a8"
+                    "$ref": "#/$defs/a7"
                   }
                 }
               }
@@ -90281,7 +90278,7 @@
             "$ref": "#/$defs/dh"
           },
           {
-            "$ref": "#/$defs/ab"
+            "$ref": "#/$defs/aa"
           }
         ]
       },
@@ -99790,7 +99787,7 @@
           "$ref": "#/$defs/aF"
         },
         {
-          "$ref": "#/$defs/9U"
+          "$ref": "#/$defs/9T"
         },
         {
           "$ref": "#/$defs/a0"
@@ -104439,7 +104436,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/a5"
+                "$ref": "#/$defs/9W"
               }
             ]
           },
@@ -104455,7 +104452,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/a6"
+                "$ref": "#/$defs/a5"
               }
             ]
           },
@@ -104475,7 +104472,7 @@
           "then": false
         },
         {
-          "$ref": "#/$defs/af"
+          "$ref": "#/$defs/ae"
         },
         {
           "$ref": "#/$defs/5I"
@@ -106665,7 +106662,7 @@
           "then": false
         },
         {
-          "$ref": "#/$defs/af"
+          "$ref": "#/$defs/ae"
         },
         {
           "$ref": "#/$defs/5I"
@@ -106680,7 +106677,7 @@
           "$ref": "#/$defs/aF"
         },
         {
-          "$ref": "#/$defs/9U"
+          "$ref": "#/$defs/9T"
         },
         {
           "$ref": "#/$defs/a0"
@@ -109554,7 +109551,7 @@
                     "description": "Prometheus redis-exporter sidecar",
                     "properties": {
                       "serviceMonitor": {
-                        "$ref": "#/$defs/9z"
+                        "$ref": "#/$defs/ag"
                       }
                     }
                   }
@@ -110955,7 +110952,7 @@
                         "description": "Official HAProxy embedded prometheus metrics settings.\nRef: https://github.com/haproxy/haproxy/tree/master/contrib/prometheus-exporter",
                         "properties": {
                           "serviceMonitor": {
-                            "$ref": "#/$defs/9z"
+                            "$ref": "#/$defs/ag"
                           }
                         }
                       }
@@ -111340,7 +111337,7 @@
             "additionalProperties": {},
             "properties": {
               "haproxy": {
-                "$ref": "#/$defs/9R"
+                "$ref": "#/$defs/9B"
               }
             }
           }
@@ -111392,7 +111389,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/9V"
+                                "$ref": "#/$defs/9U"
                               },
                               {
                                 "$ref": "#/$defs/Z"
@@ -112652,7 +112649,7 @@
                     "$ref": "#/$defs/7"
                   },
                   {
-                    "$ref": "#/$defs/9B"
+                    "$ref": "#/$defs/9A"
                   },
                   {
                     "$ref": "#/$defs/4m"
@@ -112662,7 +112659,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/9B"
+                    "$ref": "#/$defs/9A"
                   },
                   {
                     "$ref": "#/$defs/i"
@@ -113790,7 +113787,7 @@
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/aa"
+                "$ref": "#/$defs/a9"
               },
               {
                 "$ref": "#/$defs/bG"
@@ -113812,7 +113809,7 @@
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/aa"
+                "$ref": "#/$defs/a9"
               },
               {
                 "$ref": "#/$defs/ca"
@@ -117704,7 +117701,7 @@
               "description": "Repo server service labels"
             },
             "port": {
-              "$ref": "#/$defs/ae"
+              "$ref": "#/$defs/ad"
             },
             "portName": {
               "anyOf": [
@@ -117956,7 +117953,7 @@
             "additionalProperties": {},
             "properties": {
               "certificateSecret": {
-                "$ref": "#/$defs/a8"
+                "$ref": "#/$defs/a7"
               }
             }
           }
@@ -118033,7 +118030,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/ac"
+            "$ref": "#/$defs/ab"
           },
           "then": {
             "additionalProperties": {},
@@ -118112,7 +118109,7 @@
                 "$ref": "#/$defs/d3"
               },
               {
-                "$ref": "#/$defs/ac"
+                "$ref": "#/$defs/ab"
               },
               {
                 "allOf": [
@@ -121120,7 +121117,7 @@
                 "$ref": "#/$defs/20"
               },
               {
-                "$ref": "#/$defs/a5"
+                "$ref": "#/$defs/9W"
               },
               {
                 "$ref": "#/$defs/6y"
@@ -121136,7 +121133,7 @@
                 "$ref": "#/$defs/20"
               },
               {
-                "$ref": "#/$defs/a6"
+                "$ref": "#/$defs/a5"
               },
               {
                 "$ref": "#/$defs/6y"
@@ -121694,7 +121691,7 @@
             "server": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/9V"
+                  "$ref": "#/$defs/9U"
                 },
                 {
                   "$ref": "#/$defs/Z"

@@ -283,6 +283,8 @@ pub struct ConditionalPathOverlay {
 pub struct ConditionalOverlayEvidence {
     /// Behavioral facts observed in the selected branch.
     pub facts: ContractValuePathFacts,
+    /// Runtime domain of a range that executes in this branch.
+    pub range_domain: Option<RangeDomain>,
     /// Kubernetes metadata field roles reached in the branch.
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     /// JSON Schema type names implied by branch-local consumers.
@@ -308,6 +310,26 @@ impl ConditionalOverlayEvidence {
             requiredness: ContractRequirednessEvidence::default(),
             conditional_overlays: Vec::new(),
             requirement_implications: Vec::new(),
+        }
+    }
+}
+
+/// Runtime input kinds accepted by a range header in one conditional branch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum RangeDomain {
+    /// Arrays, objects, and null; integer counts are not accepted.
+    CollectionOnly,
+    /// Arrays, objects, null, and Helm's integer-count input channel.
+    CollectionOrIntegerCount,
+}
+
+impl RangeDomain {
+    /// Whether this branch retains Helm's integer-count input channel.
+    #[must_use]
+    pub const fn allows_integer(self) -> bool {
+        match self {
+            Self::CollectionOnly => false,
+            Self::CollectionOrIntegerCount => true,
         }
     }
 }

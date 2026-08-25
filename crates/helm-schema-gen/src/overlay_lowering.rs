@@ -535,9 +535,10 @@ pub(crate) fn collect_conditional_schemas(
                 ));
                 continue;
             }
-            let range_allows_integer = !overlay.evidence.facts.has_structured_item_descendants
-                && !overlay.evidence.facts.has_destructured_range_use
-                && !overlay.evidence.facts.has_string_contract_items;
+            let range_allows_integer = overlay
+                .evidence
+                .range_domain
+                .is_some_and(helm_schema_core::RangeDomain::allows_integer);
             let mut range_domain = crate::runtime_iterable_schema(range_allows_integer);
             let mut member_schemas = Vec::new();
             if let Some(member_schema) = member_descendant_projection(

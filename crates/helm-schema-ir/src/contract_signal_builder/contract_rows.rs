@@ -2,12 +2,12 @@ use super::{
     ApproximationRole, BTreeMap, BTreeSet, ConditionalGuard, ConditionalOverlayEvidence,
     ContractRequirednessEvidence, ContractRequirementImplication, ContractRequirementTarget,
     ContractUse, ContractValuePathFacts, FailValueRequirement, Guard, GuardDnf, MetadataFieldKind,
-    Predicate, ProviderSchemaUse, SourceUseFactSplit, ValueKind, collapse_layered_truthy_gates,
-    extend_lowerable_predicate, hard_negation_paths, lowerable_conditional_guard_set,
-    lowerable_conditional_guard_subset, path_accumulator, path_contains_wildcard,
-    predicate_is_structural_ancestor_guard, predicate_tests_source_type, predicate_to_guard,
-    provider_schema_use, range_guard_is_iteration_ancestor, ranged_member_parent,
-    record_member_range_requirement,
+    Predicate, ProviderSchemaUse, RangeDomain, SourceUseFactSplit, ValueKind,
+    collapse_layered_truthy_gates, extend_lowerable_predicate, hard_negation_paths,
+    lowerable_conditional_guard_set, lowerable_conditional_guard_subset, path_accumulator,
+    path_contains_wildcard, predicate_is_structural_ancestor_guard, predicate_tests_source_type,
+    predicate_to_guard, provider_schema_use, range_guard_is_iteration_ancestor,
+    ranged_member_parent, record_member_range_requirement,
 };
 
 #[derive(Default)]
@@ -82,6 +82,7 @@ pub(super) struct PathSchemaFactsAccumulator {
     pub(super) metadata_field_kinds: BTreeSet<MetadataFieldKind>,
     pub(super) provider_schema_uses: Vec<ProviderSchemaUse>,
     pub(super) facts: ContractValuePathFacts,
+    pub(super) range_domain: Option<RangeDomain>,
     pub(super) all_uses_nullable: bool,
 }
 
@@ -95,6 +96,7 @@ impl Default for PathSchemaFactsAccumulator {
                 all_render_uses_falsy_tolerant: true,
                 ..ContractValuePathFacts::default()
             },
+            range_domain: None,
             all_uses_nullable: true,
         }
     }
@@ -140,7 +142,22 @@ impl PathSchemaFactsAccumulator {
         }
     }
 
+    pub(super) fn record_range_domain(&mut self, range_domain: RangeDomain) {
+        self.range_domain = Some(match (self.range_domain, range_domain) {
+            (Some(RangeDomain::CollectionOnly), _) | (_, RangeDomain::CollectionOnly) => {
+                RangeDomain::CollectionOnly
+            }
+            (
+                None | Some(RangeDomain::CollectionOrIntegerCount),
+                RangeDomain::CollectionOrIntegerCount,
+            ) => RangeDomain::CollectionOrIntegerCount,
+        });
+    }
+
     pub(super) fn merge_union(&mut self, other: Self) {
+        if let Some(range_domain) = other.range_domain {
+            self.record_range_domain(range_domain);
+        }
         for provider_schema_use in other.provider_schema_uses {
             self.record_provider_schema_use(provider_schema_use);
         }
@@ -168,16 +185,25 @@ impl PathSchemaFactsAccumulator {
         global_facts: ContractValuePathFacts,
         type_hints: BTreeSet<String>,
     ) -> ConditionalOverlayEvidence {
-        let mut facts = self.facts(
+        let facts = self.facts(
             global_facts.has_referenced_descendants,
             global_facts.has_item_descendants,
             global_facts.has_structured_item_descendants,
         );
-        // Iteration shape is a path-global fact (see the range-site record):
-        // a branch hosting the path's rows keeps it even when the range
-        // record landed under a differently keyed guard set.
-        facts.has_destructured_range_use |= global_facts.has_destructured_range_use;
-        facts.has_json_decoded_range_use |= global_facts.has_json_decoded_range_use;
+        let mut range_domain = self.range_domain.or_else(|| {
+            facts.is_ranged_source.then_some(
+                if global_facts.has_destructured_range_use
+                    || global_facts.has_json_decoded_range_use
+                {
+                    RangeDomain::CollectionOnly
+                } else {
+                    RangeDomain::CollectionOrIntegerCount
+                },
+            )
+        });
+        if facts.has_structured_item_descendants || facts.has_string_contract_items {
+            range_domain = range_domain.map(|_| RangeDomain::CollectionOnly);
+        }
         // A runtime string contract recorded by this branch's own rows
         // types the branch; mutually exclusive branches that render the
         // path without the contract stay unaffected.
@@ -187,6 +213,7 @@ impl PathSchemaFactsAccumulator {
         }
         ConditionalOverlayEvidence {
             facts,
+            range_domain,
             metadata_field_kinds: self.metadata_field_kinds,
             type_hints,
             provider_schema_uses: self.provider_schema_uses,
@@ -1028,6 +1055,11 @@ pub(super) fn record_range_input_capture(
                 .entry(outer_guards.clone())
                 .or_default();
             branch.facts.is_nullable = true;
+            branch.record_range_domain(if destructured || json_decoded {
+                RangeDomain::CollectionOnly
+            } else {
+                RangeDomain::CollectionOrIntegerCount
+            });
             branch.record_facts(ContractValuePathFacts {
                 is_ranged_source: true,
                 has_destructured_range_use: destructured,

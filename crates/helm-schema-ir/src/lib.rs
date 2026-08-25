@@ -33,8 +33,8 @@ pub use helm_schema_core::escape_regex_literal;
 pub use helm_schema_core::{
     CapabilityGuard, ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
     ContractProvenance, ContractSchemaSignals, ContractValuePathFacts, Guard, GuardValue,
-    HelperBranch, HelperBranchBody, MetadataFieldKind, ProviderSchemaUse, ResourceRef, SourceSpan,
-    ValueKind, ValuesDefaultSource, YamlPath,
+    HelperBranch, HelperBranchBody, MetadataFieldKind, ProviderSchemaUse, RangeDomain, ResourceRef,
+    SourceSpan, ValueKind, ValuesDefaultSource, YamlPath,
 };
 pub use symbolic::{SymbolicIrContext, SymbolicPolicy};
 

@@ -20319,37 +20319,6 @@
     "9A": {
       "anyOf": [
         {
-          "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        {
-          "type": "array"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "9B": {
-      "anyOf": [
-        {
           "not": {
             "properties": {
               "kube-state-metrics": {
@@ -20407,7 +20376,7 @@
         }
       ]
     },
-    "9C": {
+    "9B": {
       "anyOf": [
         {
           "not": {
@@ -20465,7 +20434,7 @@
         }
       ]
     },
-    "9D": {
+    "9C": {
       "anyOf": [
         {
           "not": {
@@ -20523,7 +20492,7 @@
         }
       ]
     },
-    "9E": {
+    "9D": {
       "not": {
         "allOf": [
           {
@@ -20591,6 +20560,34 @@
           }
         ]
       }
+    },
+    "9E": {
+      "anyOf": [
+        {
+          "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
+        }
+      ]
     },
     "9F": {
       "anyOf": [
@@ -30919,37 +30916,6 @@
       ]
     },
     "BY": {
-      "anyOf": [
-        {
-          "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        {
-          "type": "array"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "BZ": {
       "additionalProperties": {},
       "description": "Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders\nRequires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards",
       "properties": {
@@ -30968,6 +30934,110 @@
           }
         }
       }
+    },
+    "BZ": {
+      "allOf": [
+        {
+          "properties": {
+            "kube-state-metrics": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "kube-state-metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "kube-state-metrics": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "flavor": {
+                      "enum": [
+                        "cilium"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "flavor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "kube-state-metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "kubeStateMetrics": {
+                    "properties": {
+                      "enabled": {}
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "kubeStateMetrics"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "kubeStateMetrics": {
+                  "properties": {
+                    "enabled": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "kubeStateMetrics"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
     },
     "Ba": {
       "not": {
@@ -33731,110 +33801,6 @@
       "type": "object"
     },
     "C0": {
-      "allOf": [
-        {
-          "properties": {
-            "kube-state-metrics": {
-              "properties": {
-                "networkPolicy": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "kube-state-metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "kube-state-metrics": {
-              "properties": {
-                "networkPolicy": {
-                  "properties": {
-                    "flavor": {
-                      "enum": [
-                        "cilium"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "flavor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "kube-state-metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "kubeStateMetrics": {
-                    "properties": {
-                      "enabled": {}
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "kubeStateMetrics"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "kubeStateMetrics": {
-                  "properties": {
-                    "enabled": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "kubeStateMetrics"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "C1": {
       "additionalProperties": false,
       "description": "keySecret defines the Secret containing the client key file for the targets.",
       "properties": {
@@ -33874,7 +33840,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "C2": {
+    "C1": {
       "allOf": [
         {
           "anyOf": [
@@ -33980,7 +33946,7 @@
         }
       ]
     },
-    "C3": {
+    "C2": {
       "additionalProperties": false,
       "description": "secret defines the Secret containing data to use for the targets.",
       "properties": {
@@ -34020,7 +33986,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "C4": {
+    "C3": {
       "allOf": [
         {
           "properties": {
@@ -34133,6 +34099,34 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    "C4": {
+      "anyOf": [
+        {
+          "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "object"
         }
       ]
     },
@@ -38669,6 +38663,64 @@
       ]
     },
     "DE": {
+      "allOf": [
+        {
+          "properties": {
+            "prometheus-windows-exporter": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "podMonitor": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podMonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "prometheus-windows-exporter"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "windowsMonitoring": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "windowsMonitoring"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DF": {
       "not": {
         "anyOf": [
           {
@@ -38746,7 +38798,7 @@
         ]
       }
     },
-    "DF": {
+    "DG": {
       "allOf": [
         {
           "properties": {
@@ -38807,7 +38859,7 @@
         }
       ]
     },
-    "DG": {
+    "DH": {
       "anyOf": [
         {
           "not": {
@@ -38865,7 +38917,7 @@
         }
       ]
     },
-    "DH": {
+    "DI": {
       "additionalProperties": {},
       "properties": {
         "explicitIpBlocks": {
@@ -38878,64 +38930,6 @@
           ]
         }
       }
-    },
-    "DI": {
-      "allOf": [
-        {
-          "properties": {
-            "prometheus-windows-exporter": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podMonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podMonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "prometheus-windows-exporter"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "windowsMonitoring": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "windowsMonitoring"
-          ],
-          "type": "object"
-        }
-      ]
     },
     "DJ": {
       "allOf": [
@@ -85227,56 +85221,6 @@
     "hh": {
       "anyOf": [
         {
-          "properties": {
-            "prometheus-node-exporter": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "imagePullSecrets": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "imagePullSecrets"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "prometheus-node-exporter"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "prometheus-node-exporter": {
-              "properties": {
-                "imagePullSecrets": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "imagePullSecrets"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "prometheus-node-exporter"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "hi": {
-      "anyOf": [
-        {
           "not": {
             "properties": {
               "kube-state-metrics": {
@@ -85329,6 +85273,56 @@
           },
           "required": [
             "kube-state-metrics"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "hi": {
+      "anyOf": [
+        {
+          "properties": {
+            "prometheus-node-exporter": {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "imagePullSecrets": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "imagePullSecrets"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "prometheus-node-exporter"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "prometheus-node-exporter": {
+              "properties": {
+                "imagePullSecrets": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "imagePullSecrets"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "prometheus-node-exporter"
           ],
           "type": "object"
         }
@@ -123438,66 +123432,6 @@
       "type": "object"
     },
     "pp": {
-      "allOf": [
-        {
-          "properties": {
-            "prometheusOperator": {
-              "properties": {
-                "networkPolicy": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "prometheusOperator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "prometheusOperator": {
-              "properties": {
-                "networkPolicy": {
-                  "properties": {
-                    "flavor": {
-                      "enum": [
-                        "cilium"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "flavor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "prometheusOperator"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "pq": {
       "anyOf": [
         {
           "properties": {
@@ -123555,7 +123489,7 @@
         }
       ]
     },
-    "pr": {
+    "pq": {
       "anyOf": [
         {
           "properties": {
@@ -123635,6 +123569,67 @@
               }
             }
           ]
+        }
+      ]
+    },
+    "pr": {
+      "allOf": [
+        {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "imageRenderer": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "imageRenderer"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "imageRenderer": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "limitEgress": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "limitEgress"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "imageRenderer"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -239804,46 +239799,16 @@
       "allOf": [
         {
           "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "imageRenderer": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "imageRenderer"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "imageRenderer": {
+            "prometheusOperator": {
               "properties": {
                 "networkPolicy": {
                   "properties": {
-                    "limitEgress": {
+                    "enabled": {
                       "$ref": "#/$defs/t"
                     }
                   },
                   "required": [
-                    "limitEgress"
+                    "enabled"
                   ],
                   "type": "object"
                 }
@@ -239855,7 +239820,36 @@
             }
           },
           "required": [
-            "imageRenderer"
+            "prometheusOperator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "prometheusOperator": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "flavor": {
+                      "enum": [
+                        "cilium"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "flavor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "prometheusOperator"
           ],
           "type": "object"
         }
@@ -287248,7 +287242,7 @@
             "$ref": "#/$defs/Er"
           },
           {
-            "$ref": "#/$defs/pp"
+            "$ref": "#/$defs/ps"
           },
           {
             "$ref": "#/$defs/ht"
@@ -288172,7 +288166,7 @@
             "$ref": "#/$defs/2V"
           },
           {
-            "$ref": "#/$defs/pr"
+            "$ref": "#/$defs/pq"
           }
         ]
       },
@@ -288703,7 +288697,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/pr"
+        "$ref": "#/$defs/pq"
       },
       "then": {
         "additionalProperties": {},
@@ -360264,7 +360258,7 @@
             "description": "Using default values from https://github.com/grafana-community/helm-charts/blob/main/charts/grafana/values.yaml",
             "properties": {
               "networkPolicy": {
-                "$ref": "#/$defs/DH"
+                "$ref": "#/$defs/DI"
               }
             }
           }
@@ -360788,7 +360782,7 @@
                 "$ref": "#/$defs/9"
               },
               {
-                "$ref": "#/$defs/DE"
+                "$ref": "#/$defs/DF"
               },
               {
                 "$ref": "#/$defs/17"
@@ -360801,7 +360795,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/DE"
+                "$ref": "#/$defs/DF"
               },
               {
                 "$ref": "#/$defs/17"
@@ -361377,7 +361371,7 @@
                 "description": "Using default values from https://github.com/grafana-community/helm-charts/blob/main/charts/grafana/values.yaml",
                 "properties": {
                   "sidecar": {
-                    "$ref": "#/$defs/BZ"
+                    "$ref": "#/$defs/BY"
                   }
                 }
               }
@@ -368838,7 +368832,7 @@
             "$ref": "#/$defs/CJ"
           },
           {
-            "$ref": "#/$defs/C0"
+            "$ref": "#/$defs/BZ"
           }
         ]
       },
@@ -370207,9 +370201,6 @@
                             "type": "array"
                           },
                           {
-                            "type": "integer"
-                          },
-                          {
                             "type": "null"
                           },
                           {
@@ -370743,7 +370734,7 @@
             "$ref": "#/$defs/CJ"
           },
           {
-            "$ref": "#/$defs/C0"
+            "$ref": "#/$defs/BZ"
           },
           {
             "$ref": "#/$defs/E1"
@@ -375055,7 +375046,7 @@
                 "$ref": "#/$defs/P"
               },
               {
-                "$ref": "#/$defs/9B"
+                "$ref": "#/$defs/9A"
               },
               {
                 "$ref": "#/$defs/yq"
@@ -375068,7 +375059,7 @@
                 "$ref": "#/$defs/6f"
               },
               {
-                "$ref": "#/$defs/9B"
+                "$ref": "#/$defs/9A"
               },
               {
                 "$ref": "#/$defs/S"
@@ -375199,7 +375190,7 @@
                 "$ref": "#/$defs/P"
               },
               {
-                "$ref": "#/$defs/hi"
+                "$ref": "#/$defs/hh"
               },
               {
                 "$ref": "#/$defs/32"
@@ -375209,7 +375200,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/hi"
+                "$ref": "#/$defs/hh"
               },
               {
                 "$ref": "#/$defs/S"
@@ -375303,7 +375294,7 @@
                 "$ref": "#/$defs/P"
               },
               {
-                "$ref": "#/$defs/9B"
+                "$ref": "#/$defs/9A"
               },
               {
                 "$ref": "#/$defs/32"
@@ -375322,7 +375313,7 @@
                 "$ref": "#/$defs/1D"
               },
               {
-                "$ref": "#/$defs/9B"
+                "$ref": "#/$defs/9A"
               },
               {
                 "$ref": "#/$defs/S"
@@ -375652,14 +375643,14 @@
                 "$ref": "#/$defs/P"
               },
               {
-                "$ref": "#/$defs/hi"
+                "$ref": "#/$defs/hh"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/hi"
+                "$ref": "#/$defs/hh"
               },
               {
                 "$ref": "#/$defs/S"
@@ -375790,7 +375781,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/DG"
+                "$ref": "#/$defs/DH"
               },
               {
                 "$ref": "#/$defs/P"
@@ -375803,7 +375794,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/DG"
+                "$ref": "#/$defs/DH"
               },
               {
                 "$ref": "#/$defs/S"
@@ -384303,7 +384294,7 @@
             "$ref": "#/$defs/Er"
           },
           {
-            "$ref": "#/$defs/pp"
+            "$ref": "#/$defs/ps"
           },
           {
             "$ref": "#/$defs/ht"
@@ -386364,7 +386355,7 @@
             "$ref": "#/$defs/1v"
           },
           {
-            "$ref": "#/$defs/pq"
+            "$ref": "#/$defs/pp"
           }
         ]
       },
@@ -386401,7 +386392,7 @@
                 "$ref": "#/$defs/yY"
               },
               {
-                "$ref": "#/$defs/pq"
+                "$ref": "#/$defs/pp"
               }
             ]
           },
@@ -386427,7 +386418,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/pq"
+                "$ref": "#/$defs/pp"
               }
             ]
           }
@@ -390695,7 +390686,7 @@
                 "$ref": "#/$defs/15"
               },
               {
-                "$ref": "#/$defs/9D"
+                "$ref": "#/$defs/9C"
               },
               {
                 "$ref": "#/$defs/9x"
@@ -390714,7 +390705,7 @@
                 "$ref": "#/$defs/15"
               },
               {
-                "$ref": "#/$defs/hh"
+                "$ref": "#/$defs/hi"
               },
               {
                 "$ref": "#/$defs/2N"
@@ -390724,7 +390715,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9D"
+                "$ref": "#/$defs/9C"
               },
               {
                 "$ref": "#/$defs/9x"
@@ -390746,7 +390737,7 @@
                 "$ref": "#/$defs/18"
               },
               {
-                "$ref": "#/$defs/hh"
+                "$ref": "#/$defs/hi"
               },
               {
                 "$ref": "#/$defs/2N"
@@ -391217,7 +391208,7 @@
                 "$ref": "#/$defs/15"
               },
               {
-                "$ref": "#/$defs/hh"
+                "$ref": "#/$defs/hi"
               }
             ]
           },
@@ -391227,7 +391218,7 @@
                 "$ref": "#/$defs/18"
               },
               {
-                "$ref": "#/$defs/hh"
+                "$ref": "#/$defs/hi"
               }
             ]
           }
@@ -393801,7 +393792,7 @@
             "$ref": "#/$defs/Dd"
           },
           {
-            "$ref": "#/$defs/C2"
+            "$ref": "#/$defs/C1"
           }
         ]
       },
@@ -393900,7 +393891,7 @@
             "$ref": "#/$defs/CL"
           },
           {
-            "$ref": "#/$defs/C2"
+            "$ref": "#/$defs/C1"
           }
         ]
       },
@@ -394748,7 +394739,7 @@
                 "$ref": "#/$defs/15"
               },
               {
-                "$ref": "#/$defs/9D"
+                "$ref": "#/$defs/9C"
               },
               {
                 "$ref": "#/$defs/9x"
@@ -394758,7 +394749,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9D"
+                "$ref": "#/$defs/9C"
               },
               {
                 "$ref": "#/$defs/9x"
@@ -394876,7 +394867,7 @@
                 "$ref": "#/$defs/15"
               },
               {
-                "$ref": "#/$defs/9D"
+                "$ref": "#/$defs/9C"
               },
               {
                 "$ref": "#/$defs/9x"
@@ -394889,7 +394880,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9D"
+                "$ref": "#/$defs/9C"
               },
               {
                 "$ref": "#/$defs/9x"
@@ -397216,7 +397207,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9C"
+                "$ref": "#/$defs/9B"
               },
               {
                 "$ref": "#/$defs/9w"
@@ -397235,7 +397226,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9C"
+                "$ref": "#/$defs/9B"
               },
               {
                 "$ref": "#/$defs/9w"
@@ -397525,7 +397516,7 @@
             "$ref": "#/$defs/CK"
           },
           {
-            "$ref": "#/$defs/DI"
+            "$ref": "#/$defs/DE"
           },
           {
             "$ref": "#/$defs/CC"
@@ -398157,7 +398148,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/DI"
+            "$ref": "#/$defs/DE"
           },
           {
             "$ref": "#/$defs/CC"
@@ -399058,7 +399049,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9C"
+                "$ref": "#/$defs/9B"
               },
               {
                 "$ref": "#/$defs/9w"
@@ -399071,7 +399062,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9C"
+                "$ref": "#/$defs/9B"
               },
               {
                 "$ref": "#/$defs/9w"
@@ -399122,7 +399113,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9C"
+                "$ref": "#/$defs/9B"
               },
               {
                 "$ref": "#/$defs/9w"
@@ -399138,7 +399129,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/9C"
+                "$ref": "#/$defs/9B"
               },
               {
                 "$ref": "#/$defs/9w"
@@ -401399,7 +401390,7 @@
             "$ref": "#/$defs/1A"
           },
           {
-            "$ref": "#/$defs/pp"
+            "$ref": "#/$defs/ps"
           },
           {
             "$ref": "#/$defs/he"
@@ -409930,7 +409921,7 @@
             "$ref": "#/$defs/P"
           },
           {
-            "$ref": "#/$defs/9B"
+            "$ref": "#/$defs/9A"
           },
           {
             "$ref": "#/$defs/f9"
@@ -409952,7 +409943,7 @@
             "$ref": "#/$defs/1D"
           },
           {
-            "$ref": "#/$defs/9B"
+            "$ref": "#/$defs/9A"
           },
           {
             "$ref": "#/$defs/f9"
@@ -411821,7 +411812,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/pr"
+            "$ref": "#/$defs/pq"
           },
           {
             "properties": {
@@ -415029,7 +415020,7 @@
                                     "$ref": "#/$defs/3H"
                                   },
                                   "keySecret": {
-                                    "$ref": "#/$defs/C1"
+                                    "$ref": "#/$defs/C0"
                                   },
                                   "maxVersion": {
                                     "$ref": "#/$defs/zt"
@@ -415055,7 +415046,7 @@
                                         "$ref": "#/$defs/C6"
                                       },
                                       "secret": {
-                                        "$ref": "#/$defs/C3"
+                                        "$ref": "#/$defs/C2"
                                       }
                                     },
                                     "type": "object"
@@ -415105,7 +415096,7 @@
                                         "$ref": "#/$defs/C6"
                                       },
                                       "secret": {
-                                        "$ref": "#/$defs/C3"
+                                        "$ref": "#/$defs/C2"
                                       }
                                     },
                                     "type": "object"
@@ -417624,7 +417615,7 @@
                     "description": "Configuration for Alertmanager service",
                     "properties": {
                       "loadBalancerSourceRanges": {
-                        "$ref": "#/$defs/9A"
+                        "$ref": "#/$defs/9E"
                       }
                     }
                   }
@@ -422228,9 +422219,6 @@
                         "type": "array"
                       },
                       {
-                        "type": "integer"
-                      },
-                      {
                         "type": "null"
                       },
                       {
@@ -422272,7 +422260,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "command": {
-                    "$ref": "#/$defs/BY"
+                    "$ref": "#/$defs/C4"
                   }
                 }
               },
@@ -428174,7 +428162,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "networkPolicy": {
-                    "$ref": "#/$defs/DH"
+                    "$ref": "#/$defs/DI"
                   }
                 }
               },
@@ -428534,7 +428522,7 @@
                     "description": "Add a separate remote image renderer deployment/service",
                     "properties": {
                       "command": {
-                        "$ref": "#/$defs/BY"
+                        "$ref": "#/$defs/C4"
                       }
                     }
                   }
@@ -429642,7 +429630,7 @@
                 "$ref": "#/$defs/Cs"
               },
               {
-                "$ref": "#/$defs/C4"
+                "$ref": "#/$defs/C3"
               }
             ]
           },
@@ -430038,7 +430026,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/C4"
+                "$ref": "#/$defs/C3"
               },
               {
                 "allOf": [
@@ -430284,7 +430272,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/ps"
+                "$ref": "#/$defs/pr"
               },
               {
                 "$ref": "#/$defs/oG"
@@ -430419,7 +430407,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/DF"
+                "$ref": "#/$defs/DG"
               },
               {
                 "$ref": "#/$defs/CN"
@@ -431161,7 +431149,7 @@
                 "$ref": "#/$defs/ba"
               },
               {
-                "$ref": "#/$defs/ps"
+                "$ref": "#/$defs/pr"
               },
               {
                 "$ref": "#/$defs/oG"
@@ -431404,7 +431392,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/DF"
+                "$ref": "#/$defs/DG"
               },
               {
                 "$ref": "#/$defs/yn"
@@ -431906,7 +431894,7 @@
                     "$ref": "#/$defs/e"
                   },
                   {
-                    "$ref": "#/$defs/9E"
+                    "$ref": "#/$defs/9D"
                   },
                   {
                     "$ref": "#/$defs/9v"
@@ -431925,7 +431913,7 @@
                     "$ref": "#/$defs/g0"
                   },
                   {
-                    "$ref": "#/$defs/9E"
+                    "$ref": "#/$defs/9D"
                   },
                   {
                     "$ref": "#/$defs/9v"
@@ -431947,7 +431935,7 @@
                     "$ref": "#/$defs/e"
                   },
                   {
-                    "$ref": "#/$defs/9E"
+                    "$ref": "#/$defs/9D"
                   },
                   {
                     "$ref": "#/$defs/9v"
@@ -431966,7 +431954,7 @@
                     "$ref": "#/$defs/6"
                   },
                   {
-                    "$ref": "#/$defs/9E"
+                    "$ref": "#/$defs/9D"
                   },
                   {
                     "$ref": "#/$defs/9v"
@@ -432731,7 +432719,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/ps"
+                "$ref": "#/$defs/pr"
               },
               {
                 "allOf": [
@@ -433092,7 +433080,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "sidecar": {
-                    "$ref": "#/$defs/BZ"
+                    "$ref": "#/$defs/BY"
                   }
                 }
               },
@@ -447171,7 +447159,7 @@
                         "$ref": "#/$defs/e"
                       },
                       {
-                        "$ref": "#/$defs/9E"
+                        "$ref": "#/$defs/9D"
                       },
                       {
                         "$ref": "#/$defs/9v"
@@ -447187,7 +447175,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/9E"
+                        "$ref": "#/$defs/9D"
                       },
                       {
                         "$ref": "#/$defs/9v"
@@ -451719,9 +451707,6 @@
                             "type": "array"
                           },
                           {
-                            "type": "integer"
-                          },
-                          {
                             "type": "null"
                           },
                           {
@@ -453511,7 +453496,7 @@
                                       ]
                                     },
                                     "keySecret": {
-                                      "$ref": "#/$defs/C1"
+                                      "$ref": "#/$defs/C0"
                                     },
                                     "maxVersion": {
                                       "$ref": "#/$defs/zt"
@@ -455694,7 +455679,7 @@
                     "description": "Configuration for Prometheus service",
                     "properties": {
                       "loadBalancerSourceRanges": {
-                        "$ref": "#/$defs/9A"
+                        "$ref": "#/$defs/9E"
                       }
                     }
                   }
@@ -457444,7 +457429,7 @@
                     "description": "Service for external access to sidecar\nEnabling this creates a service to expose thanos-sidecar outside the cluster.",
                     "properties": {
                       "loadBalancerSourceRanges": {
-                        "$ref": "#/$defs/9A"
+                        "$ref": "#/$defs/9E"
                       }
                     }
                   }
@@ -461219,7 +461204,7 @@
                             "description": "Configuration for Prometheus operator Webhook service",
                             "properties": {
                               "loadBalancerSourceRanges": {
-                                "$ref": "#/$defs/9A"
+                                "$ref": "#/$defs/9E"
                               }
                             }
                           }
@@ -462573,7 +462558,7 @@
                     "description": "Configuration for Prometheus operator service",
                     "properties": {
                       "loadBalancerSourceRanges": {
-                        "$ref": "#/$defs/9A"
+                        "$ref": "#/$defs/9E"
                       }
                     }
                   }
@@ -465954,9 +465939,6 @@
                             "type": "array"
                           },
                           {
-                            "type": "integer"
-                          },
-                          {
                             "type": "null"
                           },
                           {
@@ -468327,7 +468309,7 @@
                     "description": "Configuration for ThanosRuler service",
                     "properties": {
                       "loadBalancerSourceRanges": {
-                        "$ref": "#/$defs/9A"
+                        "$ref": "#/$defs/9E"
                       }
                     }
                   }

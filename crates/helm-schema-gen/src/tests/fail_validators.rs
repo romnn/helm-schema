@@ -1,5 +1,5 @@
 use super::*;
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -904,6 +904,62 @@ fn json_decoded_range_excludes_integer_without_changing_raw_range() {
             "raw Helm integer counts must remain rangeable: {raw_schema}"
         );
     }
+}
+
+#[test]
+fn complementary_raw_and_decoded_ranges_keep_branch_local_domains() -> eyre::Result<()> {
+    let source = indoc! {r"
+        {{- if .Values.decode }}
+        {{- range $item := (.Values.items | toJson | fromJson) }}
+        {{ $item }}
+        {{- end }}
+        {{- else }}
+        {{- range $item := $.Values.items }}
+        {{ $item }}
+        {{- end }}
+        {{- end }}
+    "};
+    let ir = parse_ir(source);
+    let signals = schema_signals_for(&ir);
+    let evidence = signals
+        .schema_evidence_by_value_path()
+        .get("items")
+        .ok_or_eyre("complementary range evidence")?;
+    let domains = evidence
+        .conditional_overlays
+        .iter()
+        .filter_map(|overlay| {
+            overlay
+                .evidence
+                .range_domain
+                .map(|domain| (overlay.guards.clone(), domain))
+        })
+        .collect::<BTreeMap<_, _>>();
+
+    sim_assert_eq!(
+        have: domains.values().copied().collect::<BTreeSet<_>>(),
+        want: BTreeSet::from([
+            helm_schema_core::RangeDomain::CollectionOnly,
+            helm_schema_core::RangeDomain::CollectionOrIntegerCount,
+        ])
+    );
+
+    let schema = schema_for_values_yaml(
+        ir,
+        Some(indoc! {"
+            decode: false
+            items: []
+        "}),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "decode": false, "items": 3 })),
+        "the raw branch retains integer counts: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "decode": true, "items": 3 })),
+        "the decoded branch rejects JSON numbers: {schema}"
+    );
+    Ok(())
 }
 
 #[test]

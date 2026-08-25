@@ -6058,52 +6058,6 @@
       }
     },
     "3R": {
-      "if": {
-        "properties": {
-          "enabled": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "enabled"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "entryPoints": {
-            "anyOf": [
-              {
-                "description": "EntryPoints defines the list of entry point names to bind to.\nEntry points have to be configured in the static configuration.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/\nDefault: all.",
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              {
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      }
-    },
-    "3S": {
       "allOf": [
         {
           "properties": {
@@ -6174,7 +6128,7 @@
         }
       ]
     },
-    "3T": {
+    "3S": {
       "allOf": [
         {
           "properties": {
@@ -6244,6 +6198,49 @@
           "type": "object"
         }
       ]
+    },
+    "3T": {
+      "if": {
+        "properties": {
+          "enabled": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "entryPoints": {
+            "anyOf": [
+              {
+                "description": "EntryPoints defines the list of entry point names to bind to.\nEntry points have to be configured in the static configuration.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/\nDefault: all.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
     },
     "3U": {
       "if": {
@@ -11351,77 +11348,6 @@
       ]
     },
     "4a": {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "type": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "type": {
-                "enum": [
-                  "inlinePlugin"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    "hostPath"
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "source": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              {
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      }
-    },
-    "4b": {
       "allOf": [
         {
           "properties": {
@@ -11483,7 +11409,7 @@
         }
       ]
     },
-    "4c": {
+    "4b": {
       "allOf": [
         {
           "properties": {
@@ -11542,6 +11468,61 @@
             "deployment"
           ],
           "type": "object"
+        }
+      ]
+    },
+    "4c": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "enabled": {
+                  "not": {
+                    "$ref": "#/$defs/t"
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "matchRule": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              },
+              "required": [
+                "matchRule"
+              ],
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {},
+            "enabled": {},
+            "entryPoints": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ]
+            },
+            "labels": {},
+            "matchRule": {},
+            "middlewares": {},
+            "services": {},
+            "tls": {}
+          }
         }
       ]
     },
@@ -12570,59 +12551,72 @@
       ]
     },
     "4u": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "enabled": {
-                  "not": {
-                    "$ref": "#/$defs/t"
-                  }
-                }
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "type": {
+                "$ref": "#/$defs/t"
               }
             },
-            {
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "type": {
+                "enum": [
+                  "inlinePlugin"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
               "properties": {
-                "matchRule": {
-                  "not": {
-                    "type": "null"
-                  }
+                "type": {
+                  "enum": [
+                    "hostPath"
+                  ]
                 }
               },
               "required": [
-                "matchRule"
+                "type"
               ],
               "type": "object"
             }
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {},
-            "enabled": {},
-            "entryPoints": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "source": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
                 }
-              ]
-            },
-            "labels": {},
-            "matchRule": {},
-            "middlewares": {},
-            "services": {},
-            "tls": {}
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ]
           }
         }
-      ]
+      }
     },
     "4v": {
       "properties": {
@@ -19950,10 +19944,6 @@
       }
     },
     "7J": {
-      "$ref": "#/$defs/helm-double-quoted-safe",
-      "description": "Enable metrics on services. Default: true"
-    },
-    "7K": {
       "properties": {
         "updateStrategy": {
           "$ref": "#/$defs/t"
@@ -19964,7 +19954,7 @@
       ],
       "type": "object"
     },
-    "7L": {
+    "7K": {
       "properties": {
         "kubernetesIngressNGINX": {}
       },
@@ -19973,18 +19963,18 @@
       ],
       "type": "object"
     },
-    "7M": {
+    "7L": {
       "description": "separator defines the string between concatenated SourceLabels.",
       "type": "string"
     },
-    "7N": {
+    "7M": {
       "description": "Enable optional CR for Prometheus Operator. See EXAMPLES.md for more details."
     },
-    "7O": {
+    "7N": {
       "$ref": "#/$defs/helm-double-quoted-safe",
       "description": "Enable metrics on entry points. Default: true"
     },
-    "7P": {
+    "7O": {
       "additionalProperties": {},
       "properties": {
         "addRoutersLabels": {
@@ -19992,7 +19982,7 @@
         }
       }
     },
-    "7Q": {
+    "7P": {
       "properties": {
         "kubernetesGateway": {
           "enum": [
@@ -20004,6 +19994,10 @@
         "kubernetesGateway"
       ],
       "type": "object"
+    },
+    "7Q": {
+      "$ref": "#/$defs/helm-double-quoted-safe",
+      "description": "Enable metrics on services. Default: true"
     },
     "7R": {
       "properties": {
@@ -34853,10 +34847,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/3T"
+            "$ref": "#/$defs/3S"
           },
           {
-            "$ref": "#/$defs/3S"
+            "$ref": "#/$defs/3R"
           }
         ]
       },
@@ -34991,10 +34985,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/3T"
+            "$ref": "#/$defs/3S"
           },
           {
-            "$ref": "#/$defs/3S"
+            "$ref": "#/$defs/3R"
           },
           {
             "$ref": "#/$defs/4A"
@@ -36429,13 +36423,13 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/4u"
+                "$ref": "#/$defs/4c"
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/4u"
+                "$ref": "#/$defs/4c"
               },
               "type": "object"
             },
@@ -36838,10 +36832,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4c"
+            "$ref": "#/$defs/4b"
           },
           {
-            "$ref": "#/$defs/4b"
+            "$ref": "#/$defs/4a"
           }
         ]
       },
@@ -37671,10 +37665,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4c"
+            "$ref": "#/$defs/4b"
           },
           {
-            "$ref": "#/$defs/4b"
+            "$ref": "#/$defs/4a"
           },
           {
             "$ref": "#/$defs/1p"
@@ -37824,7 +37818,7 @@
             "description": "metrics contains the specifications for which to use to calculate the desired replica count (the maximum replica count across all metrics will be used).",
             "properties": {
               "datadog": {
-                "$ref": "#/$defs/7P"
+                "$ref": "#/$defs/7O"
               }
             }
           }
@@ -38260,7 +38254,7 @@
             "description": "metrics contains the specifications for which to use to calculate the desired replica count (the maximum replica count across all metrics will be used).",
             "properties": {
               "influxdb2": {
-                "$ref": "#/$defs/7P"
+                "$ref": "#/$defs/7O"
               }
             }
           }
@@ -38608,7 +38602,7 @@
                 "description": "datadog:\nAddress instructs exporter to send metrics to datadog-agent at this address.\naddress: \"127.0.0.1:8125\"\nThe interval used by the exporter to push metrics to datadog-agent. Default=10s\npushInterval: 30s\nThe prefix to use for metrics collection. Default=\"traefik\"\nprefix: traefik\nEnable metrics on entry points. Default=true\naddEntryPointsLabels: false\nEnable metrics on routers. Default=false\naddRoutersLabels: true\nEnable metrics on services. Default=true\naddServicesLabels: false\ninfluxdb2:\nAddress instructs exporter to send metrics to influxdb v2 at this address.\naddress: localhost:8086\nToken with which to connect to InfluxDB v2.\ntoken: xxx\nOrganisation where metrics will be stored.\norg: \"\"\nBucket where metrics will be stored.\nbucket: \"\"\nThe interval used by the exporter to push metrics to influxdb. Default=10s\npushInterval: 30s\nAdditional labels (influxdb tags) on all metrics.\nadditionalLabels:\nenv: production\nfoo: bar\nEnable metrics on entry points. Default=true\naddEntryPointsLabels: false\nEnable metrics on routers. Default=false\naddRoutersLabels: true\nEnable metrics on services. Default=true\naddServicesLabels: false\nstatsd:\nAddress instructs exporter to send metrics to statsd at this address.\naddress: localhost:8125\nThe interval used by the exporter to push metrics to influxdb. Default=10s\npushInterval: 30s\nThe prefix to use for metrics collection. Default=\"traefik\"\nprefix: traefik\nEnable metrics on entry points. Default=true\naddEntryPointsLabels: false\nEnable metrics on routers. Default=false\naddRoutersLabels: true\nEnable metrics on services. Default=true\naddServicesLabels: false",
                 "properties": {
                   "addEntryPointsLabels": {
-                    "$ref": "#/$defs/7O"
+                    "$ref": "#/$defs/7N"
                   }
                 }
               }
@@ -38761,7 +38755,7 @@
                 "description": "datadog:\nAddress instructs exporter to send metrics to datadog-agent at this address.\naddress: \"127.0.0.1:8125\"\nThe interval used by the exporter to push metrics to datadog-agent. Default=10s\npushInterval: 30s\nThe prefix to use for metrics collection. Default=\"traefik\"\nprefix: traefik\nEnable metrics on entry points. Default=true\naddEntryPointsLabels: false\nEnable metrics on routers. Default=false\naddRoutersLabels: true\nEnable metrics on services. Default=true\naddServicesLabels: false\ninfluxdb2:\nAddress instructs exporter to send metrics to influxdb v2 at this address.\naddress: localhost:8086\nToken with which to connect to InfluxDB v2.\ntoken: xxx\nOrganisation where metrics will be stored.\norg: \"\"\nBucket where metrics will be stored.\nbucket: \"\"\nThe interval used by the exporter to push metrics to influxdb. Default=10s\npushInterval: 30s\nAdditional labels (influxdb tags) on all metrics.\nadditionalLabels:\nenv: production\nfoo: bar\nEnable metrics on entry points. Default=true\naddEntryPointsLabels: false\nEnable metrics on routers. Default=false\naddRoutersLabels: true\nEnable metrics on services. Default=true\naddServicesLabels: false\nstatsd:\nAddress instructs exporter to send metrics to statsd at this address.\naddress: localhost:8125\nThe interval used by the exporter to push metrics to influxdb. Default=10s\npushInterval: 30s\nThe prefix to use for metrics collection. Default=\"traefik\"\nprefix: traefik\nEnable metrics on entry points. Default=true\naddEntryPointsLabels: false\nEnable metrics on routers. Default=false\naddRoutersLabels: true\nEnable metrics on services. Default=true\naddServicesLabels: false",
                 "properties": {
                   "addServicesLabels": {
-                    "$ref": "#/$defs/7J"
+                    "$ref": "#/$defs/7Q"
                   }
                 }
               }
@@ -39519,7 +39513,7 @@
                 "description": "Prometheus is enabled by default.\nIt can be disabled by setting \"prometheus: null\"",
                 "properties": {
                   "addEntryPointsLabels": {
-                    "$ref": "#/$defs/7O"
+                    "$ref": "#/$defs/7N"
                   }
                 }
               }
@@ -39595,7 +39589,7 @@
                 "description": "Prometheus is enabled by default.\nIt can be disabled by setting \"prometheus: null\"",
                 "properties": {
                   "addServicesLabels": {
-                    "$ref": "#/$defs/7J"
+                    "$ref": "#/$defs/7Q"
                   }
                 }
               }
@@ -47024,7 +47018,7 @@
               {
                 "properties": {
                   "experimental": {
-                    "$ref": "#/$defs/7Q"
+                    "$ref": "#/$defs/7P"
                   }
                 },
                 "required": [
@@ -48900,7 +48894,7 @@
                 "not": {
                   "properties": {
                     "providers": {
-                      "$ref": "#/$defs/7L"
+                      "$ref": "#/$defs/7K"
                     }
                   },
                   "required": [
@@ -49217,7 +49211,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/7K"
+                    "$ref": "#/$defs/7J"
                   },
                   {
                     "$ref": "#/$defs/3"
@@ -49233,7 +49227,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/7K"
+                    "$ref": "#/$defs/7J"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -52754,10 +52748,10 @@
                   },
                   "then": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/4a"
+                      "$ref": "#/$defs/4u"
                     },
                     "items": {
-                      "$ref": "#/$defs/4a"
+                      "$ref": "#/$defs/4u"
                     }
                   }
                 }
@@ -53460,10 +53454,10 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/3R"
+            "$ref": "#/$defs/3T"
           },
           "items": {
-            "$ref": "#/$defs/3R"
+            "$ref": "#/$defs/3T"
           }
         },
         {
@@ -54160,7 +54154,7 @@
                                         "separator": {
                                           "anyOf": [
                                             {
-                                              "$ref": "#/$defs/7M"
+                                              "$ref": "#/$defs/7L"
                                             },
                                             {
                                               "$ref": "#/$defs/G"
@@ -54275,7 +54269,7 @@
                                           "$ref": "#/$defs/6N"
                                         },
                                         "separator": {
-                                          "$ref": "#/$defs/7M"
+                                          "$ref": "#/$defs/7L"
                                         },
                                         "sourceLabels": {
                                           "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
@@ -54516,7 +54510,7 @@
                 "additionalLabels": {},
                 "apiVersion": {},
                 "enabled": {
-                  "$ref": "#/$defs/7N"
+                  "$ref": "#/$defs/7M"
                 },
                 "namespace": {},
                 "rules": {}
@@ -54539,7 +54533,7 @@
                 "apiVersion": {},
                 "enableHttp2": {},
                 "enabled": {
-                  "$ref": "#/$defs/7N"
+                  "$ref": "#/$defs/7M"
                 },
                 "followRedirects": {},
                 "honorLabels": {},
@@ -54775,7 +54769,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/7Q"
+                "$ref": "#/$defs/7P"
               }
             ]
           },
@@ -54817,7 +54811,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/7L"
+                  "$ref": "#/$defs/7K"
                 }
               },
               {

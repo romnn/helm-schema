@@ -901,3 +901,173 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +41 (62,404 to 62,445).
+
+## A6 — branch-local range domain owned by IR
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing. IR publishes one branch-scoped `RangeDomain` on conditional overlay
+  evidence from the guarded range facts it already owns. Overlay finalization must not promote
+  decoded/destructured modes from sibling branches into that carrier, and gen must render the
+  carrier rather than recomputing integer admission from a different fact subset.
+- Acceptance baseline: `57277fb1` (A5).
+- Baseline production LOC: 62,445 Rust lines from `task tokei:core` on `57277fb1`.
+- Pre-registered acceptance expectations:
+  - TIGHTEN a live JSON-decoded guarded range from accepting integer counts to rejecting them; JSON
+    round-tripping produces non-iterable `float64` values in that branch.
+  - Preserve the integer-count lane in the complementary raw guarded branch. A decoded sibling may
+    not suppress the raw branch through path-global fact promotion.
+  - Preserve existing destructured-range, structured-member, string-member-contract, array, map,
+    null, and dormant-branch behavior. Any fixture or acceptance delta outside the guarded range
+    domain family stops the round for individual Helm 4.2.3 adjudication.
+  - Candidate-accepts/Helm-aborts allowance remains zero. Mandatory base and third-level probe
+    categories permit zero drops.
+
+- Measured results:
+  - Core now carries `RangeDomain::{CollectionOnly, CollectionOrIntegerCount}` on each
+    `ConditionalOverlayEvidence`. The carrier owns the range header's integer-count admission and
+    exposes one exhaustive `allows_integer` projection.
+  - IR records the carrier at the guarded range capture, intersects multiple range headers sharing
+    a branch, and completes it with existing structured/string member restrictions before
+    publishing the overlay. Decoded/destructured modes are no longer ORed in from path-global
+    sibling facts.
+  - Gen deletes the three-fact integer-domain reconstruction and renders the carrier. Member and
+    provider schemas continue to conjoin afterward as separate body constraints.
+  - Complementary-guard coverage proves the same path accepts integer counts only in its raw branch
+    and rejects them in its JSON-decoded branch. The existing isolated decoded/raw test remains
+    green.
+  - The immutable final7 archive contains 88 binaries and 126 files. Its clean schema and IR dumps
+    write 84 and 18 artifacts and are fixture-exact after the adjudicated carrier-driven updates.
+  - The full-depth comparison against `57277fb1` checks 121,055 probes across 60 charts and reports
+    zero flips, with 112,260/112,260 base and 7,465/7,465 third-level probes.
+
+- Deviations:
+  - The first compile preflight exited 101 because the new public carrier type was not yet included
+    in core's and IR's explicit facade re-export lists. Both lists now name `RangeDomain`; no failed
+    artifact was produced.
+  - The first complementary test rendered each member through `toYaml`, which independently
+    constrains the member/body domain and correctly removed the raw integer lane. The probe was
+    rewritten to a neutral whole-member render so it isolates only the range header distinction;
+    the body constraint remains covered elsewhere.
+  - The first lint preflight exited 201 on unnecessary hashes around that neutral raw string. The
+    hashes were removed without suppression.
+  - Rejected final1 published the header carrier without folding existing structured/string member
+    restrictions into IR's complete branch domain. The battery found four WIDEN cells, all false
+    accepts against Helm: Bitnami Redis `global.imagePullSecrets` and `image.pullSecrets`, Jenkins
+    `agent.additionalContainers`, and SigNoz `global.imagePullSecrets` with integer inputs. No
+    final1 fixture or dump was adopted.
+  - Final2 performs that intersection in IR, not gen, while keeping decoded/destructured header mode
+    branch-local. The four false accepts disappear and the complementary raw branch still passes.
+  - The first full integration sweep then exposed 28 corpus fixture deltas plus the lean temporal
+    wrapper. Explicit raw-branch carriers restore integer arms that the old path-global sibling
+    mode erased; definition extraction consequently renumbers many refs. The final2/final3 sweep
+    was stopped after the complete fixture list was audited rather than spending the remaining
+    gate time on a known failing tree.
+  - The full-depth prober reports zero acceptance flips across those byte deltas: independent body
+    and requirement constraints keep the accepted documents unchanged. The 28 corpus fixtures and
+    one lean fixture were adopted from one clean dump as the carrier was completed.
+  - Final4's syntactic strict-subset propagation fixed Sealed Secrets' provider row under a raw
+    range but missed SigNoz's logically equivalent De Morgan spelling of the same guard. Its full
+    integration run therefore failed those two focused controls, and the state was rejected.
+    Final5 converts each exact conditional guard set back to the shared `Predicate` vocabulary and
+    uses bounded `exactly_implies`; both focused controls pass.
+  - The first complete final5 integration run then reported 17 chart fixture mismatches plus the
+    lean temporal wrapper. Exact implication removed stale integer lanes from rows whose enclosing
+    range domain the earlier vector containment could not recognize; definition extraction also
+    renumbered refs. The already-complete final5 prober reported zero acceptance flips. Only those
+    18 files were copied from the single clean final5 dump. A final self-adversarial pass changed
+    the focused fallible test to return `eyre::Result` instead of using `expect`; the immutable
+    final7 archive and dumps therefore own the authoritative gates.
+  - Production Rust grows by 145 lines for the typed carrier, its accumulator ownership, exact
+    branch implication, and focused regression coverage. No LOC promise was registered.
+
+- Adjudication evidence:
+  - Rejected final1 was replayed by the battery with Helm 4.2.3: all four flips were candidate
+    accepts where Helm aborted. The design was discarded before fixture adoption.
+  - Final2/final3 reports zero flips and zero candidate-accepts/Helm-aborts cells. Because no
+    acceptance cell changes, there is no individual Helm replay to perform before adopting the 29
+    carrier-driven full-schema fixture bytes.
+
+### Producer and route coverage
+
+| Route | Range-domain owner | Verification |
+|---|---|---|
+| Guarded raw single-variable range | IR capture publishes `CollectionOrIntegerCount` | Complementary branch test accepts integer only here. |
+| Guarded JSON-decoded range | IR capture publishes `CollectionOnly` | Same test rejects integer in the decoded branch. |
+| Guarded destructured range | IR capture publishes `CollectionOnly` | Existing destructured-range suites remain exact. |
+| Multiple range headers in one branch | Accumulator intersects carriers | Exhaustive two-variant merge operation. |
+| Structured/string member body | IR completes carrier to `CollectionOnly` | Final1 false-accept family disappears; existing member suites pass. |
+| Overlay schema emission | Gen calls `RangeDomain::allows_integer` | Deleted three-fact reconstruction; corpus remains exact. |
+
+### Review dossier
+
+- Ownership audit: `range_allows_integer` in gen now reads only the typed carrier. The two
+  path-global decoded/destructured promotions in `conditional_overlay_evidence` are deleted;
+  guarded range capture is the producer.
+- Focused proof: `cargo nextest run -p helm-schema-gen`; exit 0, 616 tests pass, including the new
+  complementary branch matrix and existing decoded/raw isolation.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a6-final7-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-a6-final7.tar.zst`; exit 0, 88
+  binaries and 126 files. The final1 archive belongs to the rejected false-accept design; final2 and
+  final3 precede the adjudicated fixture adoption, and final4 precedes exact guard implication.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a6-final7-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a6-final7.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a6-final7-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a6-final7.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a6-final7-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=57277fb1
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-a6-final7-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-a6-final7-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-a6-final7.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells.
+- Public/wire decision: additive public API narrowing of ownership. `RangeDomain` and the
+  `ConditionalOverlayEvidence::range_domain` field are public because the public contract signal
+  tree exposes overlay evidence. No serialized wire format changes; these types do not derive
+  serde. Gen is the sole production reader in this round.
+
+### Self-adversarial pass
+
+- Adding `has_json_decoded_range_use` to gen's old conjunction would make a decoded sibling kill a
+  raw branch because overlay evidence previously ORed that fact path-wide. Recording the carrier at
+  each guarded range capture prevents that cross-branch contamination.
+- Header domain and body validity are distinct phases. IR owns the complete published range domain,
+  but structured/string member facts narrow it after the header carrier is recorded; gen only
+  renders the result and then conjoins concrete member schemas.
+- Two range headers under the same normalized guard both execute, so their accepted input domain is
+  the intersection: `CollectionOnly` absorbs `CollectionOrIntegerCount`. Union would recreate a
+  false accept.
+- A missing carrier on legacy ranged evidence falls back inside IR from that branch's own facts.
+  This compatibility path is not a second gen interpretation and keeps construction total while
+  every producer migrates through the accumulator.
+- A nested render row can spell the header condition differently after Boolean normalization.
+  Exact predicate implication, rather than vector containment, admits De Morgan-equivalent guards
+  while remaining unable to borrow from a complementary sibling.
+- The public enum names the input-channel distinction explicitly. It does not claim raw JSON
+  integers always render; the existing diagnostic still documents Helm's values-file versus
+  `--set` provenance difference.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected 201 preflight.
+- `task lint:fc`; exit 0.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0.
+- `task test:all`; exit 0.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 62,590 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +145 (62,445 to 62,590).

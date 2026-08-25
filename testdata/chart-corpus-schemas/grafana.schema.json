@@ -14538,42 +14538,6 @@
       "type": "null"
     },
     "4E": {
-      "additionalProperties": {},
-      "properties": {
-        "command": {
-          "anyOf": [
-            {
-              "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "type": "array"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "object"
-            }
-          ]
-        }
-      }
-    },
-    "4F": {
       "allOf": [
         {
           "properties": {
@@ -14690,7 +14654,7 @@
         }
       ]
     },
-    "4G": {
+    "4F": {
       "allOf": [
         {
           "properties": {
@@ -14807,7 +14771,7 @@
         }
       ]
     },
-    "4H": {
+    "4G": {
       "allOf": [
         {
           "properties": {
@@ -14923,6 +14887,39 @@
           ]
         }
       ]
+    },
+    "4H": {
+      "additionalProperties": {},
+      "properties": {
+        "command": {
+          "anyOf": [
+            {
+              "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      }
     },
     "4I": {
       "allOf": [
@@ -48696,9 +48693,6 @@
                     "type": "array"
                   },
                   {
-                    "type": "integer"
-                  },
-                  {
                     "type": "null"
                   },
                   {
@@ -48737,7 +48731,7 @@
             }
           },
           {
-            "$ref": "#/$defs/4E"
+            "$ref": "#/$defs/4H"
           },
           {
             "additionalProperties": {},
@@ -67383,7 +67377,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4H"
+            "$ref": "#/$defs/4G"
           },
           {
             "$ref": "#/$defs/4u"
@@ -67774,7 +67768,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4H"
+            "$ref": "#/$defs/4G"
           },
           {
             "$ref": "#/$defs/4u"
@@ -68266,7 +68260,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4F"
+            "$ref": "#/$defs/4E"
           },
           {
             "$ref": "#/$defs/4s"
@@ -68292,13 +68286,13 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4F"
+            "$ref": "#/$defs/4E"
           },
           {
             "$ref": "#/$defs/4s"
           },
           {
-            "$ref": "#/$defs/4G"
+            "$ref": "#/$defs/4F"
           },
           {
             "$ref": "#/$defs/4t"
@@ -68324,7 +68318,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4G"
+            "$ref": "#/$defs/4F"
           },
           {
             "$ref": "#/$defs/4t"
@@ -74509,7 +74503,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/4E"
+                "$ref": "#/$defs/4H"
               },
               {
                 "additionalProperties": {},
