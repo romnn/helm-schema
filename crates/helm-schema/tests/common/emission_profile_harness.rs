@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read as _;
 use std::path::{Component, Path};
 
@@ -326,40 +326,7 @@ pub(crate) fn structural_probe_battery_with_coverage(
                 .collect()
         })
         .unwrap_or_default();
-    let mut base_probes = vec![
-        ("defaults".to_string(), ProbeInstance::Defaults),
-        (
-            "all declared keys deleted".to_string(),
-            ProbeInstance::Coalesced(Value::Object(retained_dependency_defaults)),
-        ),
-    ];
-    let mut paths = Vec::new();
-    collect_paths(defaults, &mut Vec::new(), 2, &dependency_roots, &mut paths);
-    let replacements = [
-        Value::Null,
-        Value::Bool(false),
-        Value::Bool(true),
-        Value::from(0),
-        Value::from(1.5),
-        Value::String(String::new()),
-        Value::String("3".to_string()),
-        Value::String("not-a-value".to_string()),
-        Value::Array(Vec::new()),
-        Value::Array(vec![Value::Object(Map::new())]),
-        Value::Object(Map::new()),
-        Value::Object(Map::from_iter([("unknown".to_string(), Value::Bool(true))])),
-    ];
-    for path in paths {
-        let display = path.join(".");
-        for replacement in &replacements {
-            let mut patch = Value::Object(Map::new());
-            set_path(&mut patch, &path, replacement.clone());
-            base_probes.push((
-                format!("{display} <- {}", value_shape(replacement)),
-                ProbeInstance::SparseOverride(patch),
-            ));
-        }
-    }
+    let base_probes = base_probes(defaults, &dependency_roots, retained_dependency_defaults);
 
     let mut third_level_paths = Vec::new();
     collect_paths_at_depth(
@@ -418,6 +385,74 @@ pub(crate) fn structural_probe_battery_with_coverage(
         + 2 * coverage.composite_targets_without_payload
         + 2 * coverage.composite_pairs_dropped_by_cap;
     Ok((probes, coverage))
+}
+
+fn base_probes(
+    defaults: &Value,
+    protected_roots: &BTreeSet<String>,
+    retained_dependency_defaults: Map<String, Value>,
+) -> Vec<(String, ProbeInstance)> {
+    let base_probes = vec![
+        ("defaults".to_string(), ProbeInstance::Defaults),
+        (
+            "all declared keys deleted".to_string(),
+            ProbeInstance::Coalesced(Value::Object(retained_dependency_defaults)),
+        ),
+    ];
+    let mut paths = Vec::new();
+    collect_paths(defaults, &mut Vec::new(), 2, protected_roots, &mut paths);
+    let replacements = [
+        Value::Null,
+        Value::Bool(false),
+        Value::Bool(true),
+        Value::from(0),
+        Value::from(1.5),
+        Value::String(String::new()),
+        Value::String("3".to_string()),
+        Value::String("not-a-value".to_string()),
+        Value::Array(Vec::new()),
+        Value::Array(vec![Value::Object(Map::new())]),
+        Value::Object(Map::new()),
+        Value::Object(Map::from_iter([("unknown".to_string(), Value::Bool(true))])),
+    ];
+    let mut base_probe_buckets = BTreeMap::new();
+    for path in paths {
+        let display = path.join(".");
+        let top_level = path.first().cloned().unwrap_or_default();
+        for (replacement_index, replacement) in replacements.iter().enumerate() {
+            let mut patch = Value::Object(Map::new());
+            set_path(&mut patch, &path, replacement.clone());
+            base_probe_buckets
+                .entry((top_level.clone(), replacement_index))
+                .or_insert_with(Vec::new)
+                .push((
+                    format!("{display} <- {}", value_shape(replacement)),
+                    ProbeInstance::SparseOverride(patch),
+                ));
+        }
+    }
+    round_robin_base_probes(base_probes, base_probe_buckets)
+}
+
+pub(super) fn round_robin_base_probes(
+    mut probes: Vec<(String, ProbeInstance)>,
+    buckets: BTreeMap<(String, usize), Vec<(String, ProbeInstance)>>,
+) -> Vec<(String, ProbeInstance)> {
+    let mut buckets = buckets
+        .into_values()
+        .map(Vec::into_iter)
+        .collect::<Vec<_>>();
+    loop {
+        let before = probes.len();
+        for bucket in &mut buckets {
+            if let Some(probe) = bucket.next() {
+                probes.push(probe);
+            }
+        }
+        if probes.len() == before {
+            return probes;
+        }
+    }
 }
 
 pub(crate) fn guard_state_probes(

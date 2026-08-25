@@ -11,8 +11,9 @@ mod harness;
 use harness::{
     ContractVerdict, ControlCategory, GuardSamplingStrategy, ProbeCoverage, ProbeInstance,
     ProfileSchemas, SemanticControl, Transport, generate_profile_outputs, generate_profile_schemas,
-    read_chart_schema_fixture, read_json_fixture, read_root_defaults, sparse_override,
-    sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
+    read_chart_schema_fixture, read_json_fixture, read_root_defaults, round_robin_base_probes,
+    sparse_override, sparse_override_for_composed, structural_probe_battery,
+    structural_probe_battery_with_coverage,
 };
 
 #[derive(Debug, Serialize)]
@@ -48,6 +49,10 @@ fn validate_helm_adjudication_coverage(coverage: &HelmAdjudicationCoverage) -> e
 }
 
 fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
+    eyre::ensure!(
+        chart.base_emitted > 0,
+        "targeted probes consumed the base-probe budget: {chart:?}"
+    );
     eyre::ensure!(
         chart.base_dropped == 0,
         "base probes were truncated: {chart:?}"
@@ -102,6 +107,56 @@ fn probe_coverage_validation_rejects_synthetic_truncation() {
     };
 
     assert!(validate_probe_coverage(&coverage).is_err());
+}
+
+#[test]
+fn probe_coverage_validation_rejects_target_only_battery() {
+    let coverage = ProbeCoverage {
+        label: "synthetic target-only battery".to_string(),
+        total_emitted: 1,
+        ..ProbeCoverage::default()
+    };
+
+    assert!(validate_probe_coverage(&coverage).is_err());
+}
+
+#[test]
+fn capped_base_probes_visit_every_bucket_before_repeating() {
+    let mut buckets = std::collections::BTreeMap::new();
+    buckets.insert(
+        ("alpha".to_string(), 0),
+        vec![
+            ("alpha-0-first".to_string(), ProbeInstance::Defaults),
+            ("alpha-0-second".to_string(), ProbeInstance::Defaults),
+        ],
+    );
+    buckets.insert(
+        ("alpha".to_string(), 1),
+        vec![("alpha-1-first".to_string(), ProbeInstance::Defaults)],
+    );
+    buckets.insert(
+        ("beta".to_string(), 0),
+        vec![
+            ("beta-0-first".to_string(), ProbeInstance::Defaults),
+            ("beta-0-second".to_string(), ProbeInstance::Defaults),
+        ],
+    );
+
+    let labels = round_robin_base_probes(Vec::new(), buckets)
+        .into_iter()
+        .map(|(label, _)| label)
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(
+        have: labels,
+        want: vec![
+            "alpha-0-first",
+            "alpha-1-first",
+            "beta-0-first",
+            "alpha-0-second",
+            "beta-0-second",
+        ]
+    );
 }
 
 #[test]
