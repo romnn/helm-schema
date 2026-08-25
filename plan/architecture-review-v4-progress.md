@@ -307,3 +307,140 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +50 (62,082 to 62,132).
+
+## Round A2/G4 — separate values-key uniqueness from installed-chart identity
+
+- Status: landed in this round's `fix(engine)` commit.
+- Contract: behavior-bearing; validate declaration uniqueness through values keys, retain
+  name-based installed-chart lookup, model one vendored chart under multiple unique aliases with
+  `name -> Vec<metadata>`, and reject only duplicate installed entries sharing one internal name as
+  the measured nondeterministic case.
+- Acceptance baseline: `1146a3d7`.
+- Baseline production Rust LOC: 62,132.
+- Pre-registered acceptance expectations:
+  - Two declarations of one dependency name with distinct aliases are accepted when exactly one
+    vendored chart has that internal name; discovery publishes one chart context per alias with its
+    own values prefix and activation metadata.
+  - Distinct dependency names sharing one alias are rejected in one aggregated, deterministically
+    ordered values-key diagnostic before discovery.
+  - Repeating the same name and values key is rejected as a values-key collision, not described as
+    Helm installed-chart ambiguity.
+  - Two directory/tgz installed entries with one internal chart name are rejected in one
+    deterministic installed-identity diagnostic because Helm's association is nondeterministic.
+  - Ordinary `{name: redis, alias: cache}` lookup remains name-based and discovers `.Values.cache`;
+    no alias-keyed sole lookup map is introduced.
+  - Legacy `requirements.yaml` follows the same values-key policy as Helm v2 `Chart.yaml`.
+  - No corpus or luup2 chart is expected to change: the prior manifest audit found no affected
+    declaration. Any full-depth acceptance flip stops the round for Helm 4.2.3 adjudication before
+    fixture adoption; the accepted-abort allowance remains zero.
+
+- Measured results:
+  - Manifest validation builds a deterministic values-key index from `alias.unwrap_or(name)` and
+    rejects every key with multiple declarations in one aggregated diagnostic. The diagnostic names
+    the values root and each declaring dependency; it makes no Helm-ambiguity claim.
+  - Installed lookup remains keyed by the chart's internal name. Its value is now an ordered vector
+    of dependency metadata, so one vendored chart produces one context per unique alias with that
+    alias's activation facts.
+  - Discovery first inventories all vendored entries, then rejects repeated internal names in a
+    separate diagnostic whose wording names Helm's nondeterministic installed-entry association.
+    Only after that check does it recurse through the name-indexed metadata contexts.
+  - The former over-rejection tests are inverted: same-name/distinct-alias declarations pass for
+    Helm v2 and legacy manifests, including nested charts; the former distinct-name/shared-alias
+    acceptance case now rejects as a values-root collision.
+  - The structural battery's dependency-root inventory now retains every declared values key for
+    one installed name rather than only the last alias.
+  - The immutable final1 archive holds 88 binaries and 126 files. The 84-schema and 18-IR dumps are
+    fixture-exact. The full-depth comparison against `1146a3d7` checks 121,055 probes across 60
+    charts with zero flips, 112,260/112,260 base probes, and 7,465/7,465 third-level probes.
+
+- Deviations:
+  - A first `task lint` preflight exited 201 on one needless borrow in the new installed-entry test.
+    The borrow was removed without suppression; the repeated lint gate passed.
+  - No fixture or acceptance deviation occurred. The earlier 158-manifest audit prediction holds
+    for the committed corpus and the 32-chart downstream sweep.
+  - Production Rust grows by 54 lines because the discovery phase now represents one-to-many alias
+    metadata and performs a separate installed-entry identity check. No LOC promise was registered.
+
+- Adjudication evidence:
+  - The authoritative comparison records zero flips and zero candidate-accepts/Helm-aborts cells,
+    so no individual Helm render verdict or fixture adoption is needed.
+  - The behavior change is pinned by in-memory charts: one installed entry with two aliases is
+    deterministic and accepted; two installed entries with one internal name are rejected before
+    any order heuristic can choose an association.
+
+### Producer and route coverage
+
+| Declaration or installed shape | Final disposition | Verification |
+|---|---|---|
+| One name, two unique aliases, one vendored entry | One name-indexed metadata vector expands to two contexts. | Helm v2, legacy, and nested-chart tests pass. |
+| Distinct names, one alias | Values-key index rejects the shared `.Values` root. | Aggregated and focused two-name tests pass. |
+| Same name and same alias/key | Values-key index rejects the duplicate root before discovery. | The values-key diagnostic reports declaration multiplicity without claiming ambiguity. |
+| Ordinary name plus alias | Installed chart is still found by internal name and receives the alias prefix. | Existing alias and activation tests plus the new multi-alias test pass. |
+| Two installed directory entries, one internal name | Installed inventory rejects the repeated name with both source paths. | Deterministic duplicate-installed-name test passes. |
+| Dependency probe battery | All declared aliases for the installed name are protected from parent null-deletion probes. | Full-depth mandatory accounting stays 112,260/112,260 and 7,465/7,465. |
+
+### Review dossier
+
+- Focused matrix: `cargo nextest run -p helm-schema -E
+  'test(duplicate_dependency_values_keys_are_aggregated_before_discovery) or
+  test(one_vendored_chart_expands_to_each_unique_alias) or
+  test(legacy_requirements_support_one_chart_under_multiple_aliases) or
+  test(nested_chart_supports_one_dependency_under_multiple_aliases) or
+  test(distinct_dependency_names_cannot_share_one_values_key) or
+  test(duplicate_installed_chart_names_are_aggregated)'`; exit 0, six tests pass.
+- Immutable build: `TMPDIR=target/arch-v4-a2-final1-build cargo nextest archive --workspace
+  --archive-file /private/tmp/arch-v4-a2-final1.tar.zst`; exit 0, 88 binaries and 126 files.
+- Clean schema dump: `TMPDIR=target/arch-v4-a2-final1-schema SCHEMA_DUMP=1 cargo nextest run
+  --archive-file /private/tmp/arch-v4-a2-final1.tar.zst --profile integration --no-fail-fast -E
+  'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=target/arch-v4-a2-final1-ir SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run
+  --archive-file /private/tmp/arch-v4-a2-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written.
+- Full-depth proof: `TMPDIR=target/arch-v4-a2-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=1146a3d7
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=target/arch-v4-a2-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=target/arch-v4-a2-final1-coverage.json ADJUDICATE_WITH_HELM=1
+  cargo nextest run --archive-file /private/tmp/arch-v4-a2-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells.
+- Public/wire decision: the typed `CliError` variants change from the over-broad
+  `DuplicateDependencyNames` shape to separate declaration-key and installed-name failures. This is
+  an intentional public error-enum narrowing within the unreleased 0.0.x API; no serialized wire
+  document changes.
+
+### Self-adversarial pass
+
+- Re-keying the sole discovery map by alias would make the ordinary aliased chart undiscoverable.
+  The final two-index design validates aliases separately while retaining internal-name lookup.
+- Accepting same-name aliases without a vector would silently keep last-write-wins metadata. The
+  vector is consumed into one complete context per alias, including per-alias activation.
+- Expanding every installed entry across every same-name declaration would create a cross product
+  when two archives share an internal name. The installed inventory rejects that state before
+  expansion, so no filename or manifest order becomes policy.
+- A values-key collision is deterministic data loss, not Helm nondeterminism. Its diagnostic names
+  the shared `.Values` root; only the installed-name diagnostic mentions nondeterministic Helm
+  association.
+- Battery compatibility follows the same one-to-many mapping so the new supported aliases cannot be
+  probed as ordinary deletable parent keys.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected 201 preflight.
+- `task lint:fc`; exit 0.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0.
+- `task test:all`; exit 0.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 62,186 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +54 (62,132 to 62,186).

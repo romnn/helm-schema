@@ -1,6 +1,6 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use crate::chart::discovery;
@@ -336,7 +336,61 @@ fn dependency_aliases_and_activation_are_read_from_helm_v2_requirements() -> eyr
 }
 
 #[test]
-fn duplicate_dependency_names_are_aggregated_before_discovery() -> eyre::Result<()> {
+fn duplicate_dependency_values_keys_are_aggregated_before_discovery() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: first
+                alias: shared-root
+                version: 0.1.0
+              - name: second
+                alias: shared-root
+                version: 0.1.0
+              - name: third
+                alias: other-root
+                version: 0.1.0
+              - name: fourth
+                alias: other-root
+                version: 0.1.0
+        "},
+    )?;
+
+    let Err(error) = discover_chart_contexts(&chart_dir) else {
+        return Err(eyre::eyre!(
+            "duplicate dependency values keys were accepted"
+        ));
+    };
+    let diagnostic = error.to_string();
+    let CliError::DuplicateDependencyValuesKeys { path, details } = error else {
+        return Err(eyre::eyre!(
+            "unexpected duplicate-values-key result: {error}"
+        ));
+    };
+    sim_assert_eq!(have: path, want: "/Chart.yaml");
+    sim_assert_eq!(
+        have: details,
+        want: "  `other-root`: 2 declarations (`third`, `fourth`)\n  `shared-root`: 2 declarations (`first`, `second`)"
+    );
+    sim_assert_eq!(
+        have: diagnostic,
+        want: indoc! {r"
+            duplicate dependency values keys in /Chart.yaml:
+              `other-root`: 2 declarations (`third`, `fourth`)
+              `shared-root`: 2 declarations (`first`, `second`)
+            each dependency must own a unique .Values root
+        "}
+        .trim_end()
+    );
+    Ok(())
+}
+
+#[test]
+fn one_vendored_chart_expands_to_each_unique_alias() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
@@ -347,49 +401,52 @@ fn duplicate_dependency_names_are_aggregated_before_discovery() -> eyre::Result<
             dependencies:
               - name: shared
                 alias: alpha
-                version: 0.1.0
-              - name: other
-                alias: first
+                condition: alpha.enabled
                 version: 0.1.0
               - name: shared
                 alias: beta
-                version: 0.1.0
-              - name: other
-                alias: second
-                version: 0.1.0
-              - name: other
-                alias: third
+                condition: beta.enabled
                 version: 0.1.0
         "},
     )?;
+    test_util::write(
+        &chart_dir.join("charts/shared/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: shared
+            version: 0.1.0
+        "},
+    )?;
 
-    let Err(error) = discover_chart_contexts(&chart_dir) else {
-        return Err(eyre::eyre!("duplicate dependency names were accepted"));
-    };
-    let diagnostic = error.to_string();
-    let CliError::DuplicateDependencyNames { path, details } = error else {
-        return Err(eyre::eyre!("unexpected duplicate-name result: {error}"));
-    };
-    sim_assert_eq!(have: path, want: "/Chart.yaml");
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let activations = charts
+        .iter()
+        .filter(|chart| !chart.values_prefix.is_empty())
+        .map(|chart| {
+            (
+                chart.values_prefix.clone(),
+                chart.dependency_activation_chain[0].condition_paths.clone(),
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
     sim_assert_eq!(
-        have: details,
-        want: "  `other`: 3 declarations\n  `shared`: 2 declarations"
-    );
-    sim_assert_eq!(
-        have: diagnostic,
-        want: indoc! {r"
-            duplicate dependency names are not supported in /Chart.yaml:
-              `other`: 3 declarations
-              `shared`: 2 declarations
-            dependency names must be unique because Helm's installed-chart association is nondeterministic
-        "}
-        .trim_end()
+        have: activations,
+        want: BTreeMap::from([
+            (
+                vec!["alpha".to_string()],
+                vec!["alpha.enabled".to_string()]
+            ),
+            (
+                vec!["beta".to_string()],
+                vec!["beta.enabled".to_string()]
+            ),
+        ])
     );
     Ok(())
 }
 
 #[test]
-fn legacy_requirements_reject_duplicate_dependency_names() -> eyre::Result<()> {
+fn legacy_requirements_support_one_chart_under_multiple_aliases() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
@@ -411,22 +468,32 @@ fn legacy_requirements_reject_duplicate_dependency_names() -> eyre::Result<()> {
                 version: 0.1.0
         "},
     )?;
+    test_util::write(
+        &chart_dir.join("charts/shared/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v1
+            name: shared
+            version: 0.1.0
+        "},
+    )?;
 
-    let Err(error) = discover_chart_contexts(&chart_dir) else {
-        return Err(eyre::eyre!(
-            "legacy duplicate dependency names were accepted"
-        ));
-    };
-    let CliError::DuplicateDependencyNames { path, details } = error else {
-        return Err(eyre::eyre!("unexpected legacy duplicate result: {error}"));
-    };
-    sim_assert_eq!(have: path, want: "/requirements.yaml");
-    sim_assert_eq!(have: details, want: "  `shared`: 2 declarations");
+    let prefixes = discover_chart_contexts(&chart_dir)?
+        .into_iter()
+        .map(|chart| chart.values_prefix)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: prefixes,
+        want: BTreeSet::from([
+            Vec::new(),
+            vec!["alpha".to_string()],
+            vec!["beta".to_string()],
+        ])
+    );
     Ok(())
 }
 
 #[test]
-fn nested_chart_duplicate_dependency_names_report_their_manifest() -> eyre::Result<()> {
+fn nested_chart_supports_one_dependency_under_multiple_aliases() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
@@ -454,22 +521,33 @@ fn nested_chart_duplicate_dependency_names_report_their_manifest() -> eyre::Resu
                 version: 0.1.0
         "},
     )?;
+    test_util::write(
+        &chart_dir.join("charts/child/charts/shared/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: shared
+            version: 0.1.0
+        "},
+    )?;
 
-    let Err(error) = discover_chart_contexts(&chart_dir) else {
-        return Err(eyre::eyre!(
-            "nested duplicate dependency names were accepted"
-        ));
-    };
-    let CliError::DuplicateDependencyNames { path, details } = error else {
-        return Err(eyre::eyre!("unexpected nested duplicate result: {error}"));
-    };
-    sim_assert_eq!(have: path, want: "/charts/child/Chart.yaml");
-    sim_assert_eq!(have: details, want: "  `shared`: 2 declarations");
+    let prefixes = discover_chart_contexts(&chart_dir)?
+        .into_iter()
+        .map(|chart| chart.values_prefix)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: prefixes,
+        want: BTreeSet::from([
+            Vec::new(),
+            vec!["child".to_string()],
+            vec!["child".to_string(), "alpha".to_string()],
+            vec!["child".to_string(), "beta".to_string()],
+        ])
+    );
     Ok(())
 }
 
 #[test]
-fn distinct_dependency_names_remain_valid_when_aliases_match() -> eyre::Result<()> {
+fn distinct_dependency_names_cannot_share_one_values_key() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
@@ -487,8 +565,69 @@ fn distinct_dependency_names_remain_valid_when_aliases_match() -> eyre::Result<(
         "},
     )?;
 
-    let charts = discover_chart_contexts(&chart_dir)?;
-    sim_assert_eq!(have: charts.len(), want: 1);
+    let Err(CliError::DuplicateDependencyValuesKeys { path, details }) =
+        discover_chart_contexts(&chart_dir)
+    else {
+        return Err(eyre::eyre!("shared dependency values key was accepted"));
+    };
+    sim_assert_eq!(have: path, want: "/Chart.yaml");
+    sim_assert_eq!(
+        have: details,
+        want: "  `shared-root`: 2 declarations (`first`, `second`)"
+    );
+    Ok(())
+}
+
+#[test]
+fn duplicate_installed_chart_names_are_aggregated() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: shared
+                alias: alpha
+                version: 0.1.0
+              - name: shared
+                alias: beta
+                version: 0.1.0
+        "},
+    )?;
+    for directory in ["first", "second"] {
+        test_util::write(
+            &chart_dir.join(format!("charts/{directory}/Chart.yaml"))?,
+            indoc! {"
+                apiVersion: v2
+                name: shared
+                version: 0.1.0
+            "},
+        )?;
+    }
+
+    let Err(error) = discover_chart_contexts(&chart_dir) else {
+        return Err(eyre::eyre!("duplicate installed chart names were accepted"));
+    };
+    let diagnostic = error.to_string();
+    let CliError::DuplicateInstalledDependencyNames { path, details } = error else {
+        return Err(eyre::eyre!("unexpected installed-name result: {error}"));
+    };
+    sim_assert_eq!(have: path, want: "/charts");
+    sim_assert_eq!(
+        have: details,
+        want: "  `shared`: /charts/first, /charts/second"
+    );
+    sim_assert_eq!(
+        have: diagnostic,
+        want: indoc! {r"
+            duplicate installed dependency names in /charts:
+              `shared`: /charts/first, /charts/second
+            Helm's installed-entry association for duplicate internal names is nondeterministic
+        "}
+        .trim_end()
+    );
     Ok(())
 }
 

@@ -33,14 +33,25 @@ pub enum CliError {
         message: String,
     },
 
-    /// A chart declares the same dependency name more than once.
+    /// Multiple dependency declarations target the same values root.
     #[error(
-        "duplicate dependency names are not supported in {path}:\n{details}\ndependency names must be unique because Helm's installed-chart association is nondeterministic"
+        "duplicate dependency values keys in {path}:\n{details}\neach dependency must own a unique .Values root"
     )]
-    DuplicateDependencyNames {
+    DuplicateDependencyValuesKeys {
         /// Manifest containing the duplicate declarations.
         path: String,
-        /// Deterministically ordered names and declaration counts.
+        /// Deterministically ordered values keys and their declarations.
+        details: String,
+    },
+
+    /// Multiple vendored entries have the same internal chart name.
+    #[error(
+        "duplicate installed dependency names in {path}:\n{details}\nHelm's installed-entry association for duplicate internal names is nondeterministic"
+    )]
+    DuplicateInstalledDependencyNames {
+        /// Vendored charts directory containing the duplicate entries.
+        path: String,
+        /// Deterministically ordered internal names and entry paths.
         details: String,
     },
 

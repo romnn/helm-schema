@@ -801,7 +801,10 @@ fn chart_dependency_roots(chart_relative_path: &str) -> eyre::Result<BTreeSet<St
             .get("alias")
             .and_then(serde_yaml::Value::as_str)
             .unwrap_or(name);
-        values_keys_by_name.insert(name.to_string(), values_key.to_string());
+        values_keys_by_name
+            .entry(name.to_string())
+            .or_insert_with(Vec::new)
+            .push(values_key.to_string());
     }
 
     let charts_dir = chart.join("charts");
@@ -820,7 +823,11 @@ fn chart_dependency_roots(chart_relative_path: &str) -> eyre::Result<BTreeSet<St
                 None
             };
             if let Some(name) = name {
-                roots.insert(values_keys_by_name.get(&name).cloned().unwrap_or(name));
+                if let Some(values_keys) = values_keys_by_name.get(&name) {
+                    roots.extend(values_keys.iter().cloned());
+                } else {
+                    roots.insert(name);
+                }
             }
         }
     }

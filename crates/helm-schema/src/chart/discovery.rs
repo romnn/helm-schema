@@ -107,6 +107,7 @@ fn discover_chart_contexts_inner(
     let mut vendor_entries: Vec<VfsPath> = vendor_charts_dir.read_dir()?.collect();
     vendor_entries.sort_by_key(VfsPath::filename);
 
+    let mut installed_charts = Vec::new();
     for entry in vendor_entries {
         let sub_dir = if entry.is_dir()? {
             let chart_yaml_path = entry.join("Chart.yaml")?;
@@ -137,27 +138,37 @@ fn discover_chart_contexts_inner(
                 path: sub_dir.as_str().to_string(),
             })?;
 
+        installed_charts.push((sub_dir, sub_name));
+    }
+
+    reject_duplicate_installed_dependency_names(&installed_charts, &vendor_charts_dir)?;
+
+    for (sub_dir, sub_name) in installed_charts {
         let dependency_metadata = dependency_metadata_by_name
             .get(&sub_name)
             .cloned()
-            .unwrap_or_else(|| DependencyMetadata {
-                values_key: sub_name.clone(),
-                activation: ChartDependencyActivation::default(),
+            .unwrap_or_else(|| {
+                vec![DependencyMetadata {
+                    values_key: sub_name.clone(),
+                    activation: ChartDependencyActivation::default(),
+                }]
             });
 
-        let mut prefix = parent_prefix.to_vec();
-        prefix.push(dependency_metadata.values_key);
+        for dependency_metadata in dependency_metadata {
+            let mut prefix = parent_prefix.to_vec();
+            prefix.push(dependency_metadata.values_key);
 
-        // Only condition/tag-carrying edges add an activation level; an
-        // unconditional dependency keeps its parent's chain, so a child's
-        // chain always extends its parent's as a prefix.
-        let mut chain = dependency_activation_chain.to_vec();
-        let activation = dependency_metadata.activation;
-        if !activation.condition_paths.is_empty() || !activation.tag_paths.is_empty() {
-            chain.push(activation);
+            // Only condition/tag-carrying edges add an activation level; an
+            // unconditional dependency keeps its parent's chain, so a child's
+            // chain always extends its parent's as a prefix.
+            let mut chain = dependency_activation_chain.to_vec();
+            let activation = dependency_metadata.activation;
+            if !activation.condition_paths.is_empty() || !activation.tag_paths.is_empty() {
+                chain.push(activation);
+            }
+
+            discover_chart_contexts_inner(&sub_dir, &prefix, &chain, load_budget, out)?;
         }
-
-        discover_chart_contexts_inner(&sub_dir, &prefix, &chain, load_budget, out)?;
     }
 
     Ok(())
@@ -308,7 +319,7 @@ fn find_chart_dir(root: &VfsPath) -> EngineResult<Option<VfsPath>> {
 fn dependency_metadata_map(
     chart_yaml: &ChartYaml,
     parent_prefix: &[String],
-) -> BTreeMap<String, DependencyMetadata> {
+) -> BTreeMap<String, Vec<DependencyMetadata>> {
     let mut out = BTreeMap::new();
     let deps = chart_yaml.dependencies.as_deref().unwrap_or_default();
 
@@ -317,13 +328,12 @@ fn dependency_metadata_map(
             .alias
             .clone()
             .unwrap_or_else(|| dependency.name.clone());
-        out.insert(
-            dependency.name.clone(),
-            DependencyMetadata {
+        out.entry(dependency.name.clone())
+            .or_insert_with(Vec::new)
+            .push(DependencyMetadata {
                 values_key,
                 activation: dependency_activation(dependency, parent_prefix),
-            },
-        );
+            });
     }
 
     out
@@ -408,29 +418,69 @@ fn read_chart_yaml(chart_dir: &VfsPath) -> EngineResult<ChartYaml> {
             dependency_source = requirements_yaml.as_str().to_string();
         }
     }
-    reject_duplicate_dependency_names(
+    reject_duplicate_dependency_values_keys(
         metadata.dependencies.as_deref().unwrap_or_default(),
         dependency_source,
     )?;
     Ok(metadata)
 }
 
-fn reject_duplicate_dependency_names(
+fn reject_duplicate_dependency_values_keys(
     dependencies: &[ChartDependency],
     path: String,
 ) -> EngineResult<()> {
-    let mut counts = BTreeMap::new();
+    let mut declarations_by_values_key = BTreeMap::new();
     for dependency in dependencies {
-        *counts.entry(dependency.name.as_str()).or_insert(0_usize) += 1;
+        let values_key = dependency.alias.as_deref().unwrap_or(&dependency.name);
+        declarations_by_values_key
+            .entry(values_key)
+            .or_insert_with(Vec::new)
+            .push(dependency.name.as_str());
     }
-    let details = counts
+    let details = declarations_by_values_key
         .into_iter()
-        .filter(|(_, count)| *count > 1)
-        .map(|(name, count)| format!("  `{name}`: {count} declarations"))
+        .filter(|(_, names)| names.len() > 1)
+        .map(|(values_key, names)| {
+            let declarations = names
+                .iter()
+                .map(|name| format!("`{name}`"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!(
+                "  `{values_key}`: {} declarations ({declarations})",
+                names.len()
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n");
     if details.is_empty() {
         return Ok(());
     }
-    Err(CliError::DuplicateDependencyNames { path, details })
+    Err(CliError::DuplicateDependencyValuesKeys { path, details })
+}
+
+fn reject_duplicate_installed_dependency_names(
+    installed_charts: &[(VfsPath, String)],
+    charts_dir: &VfsPath,
+) -> EngineResult<()> {
+    let mut entries_by_name = BTreeMap::new();
+    for (chart_dir, name) in installed_charts {
+        entries_by_name
+            .entry(name)
+            .or_insert_with(Vec::new)
+            .push(chart_dir.as_str());
+    }
+    let details = entries_by_name
+        .into_iter()
+        .filter(|(_, paths)| paths.len() > 1)
+        .map(|(name, paths)| format!("  `{name}`: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("\n");
+    if details.is_empty() {
+        return Ok(());
+    }
+    Err(CliError::DuplicateInstalledDependencyNames {
+        path: charts_dir.as_str().to_string(),
+        details,
+    })
 }
