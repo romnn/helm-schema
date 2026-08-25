@@ -1419,7 +1419,198 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
         }),
         "every activation branch must carry the ancestor's condition, got {uses:#?}"
     );
+    Ok(())
+}
 
+fn activated_rewrite_chart() -> eyre::Result<VfsPath> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                version: 0.1.0
+                condition: child.enabled
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            child:
+              enabled: true
+              defaults:
+                token:
+                  value: fallback
+              profile:
+                name: demo
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        indoc! {"
+            enabled: true
+            defaults:
+              token:
+                value: fallback
+            profile:
+              name: demo
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/configmap.yaml")?,
+        indoc! {r#"
+            {{- $defaults := .Values.defaults -}}
+            {{- $_ := unset .Values "defaults" -}}
+            {{- $_ := set $ "Values" (mustMergeOverwrite $defaults $.Values) -}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: defaults
+            data:
+              token: {{ .Values.token.value | quote }}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/profile.yaml")?,
+        indoc! {r#"
+            {{- $_ := mustMergeOverwrite $.Values (index $.Values "profile") -}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: profile
+            data:
+              {{- if .Values.name }}
+              name: {{ .Values.name | b64enc | quote }}
+              {{- else }}
+              name: fallback
+              {{- end }}
+        "#},
+    )?;
+    Ok(chart_dir)
+}
+
+fn activated_rewrite_schema() -> eyre::Result<serde_json::Value> {
+    let chart_dir = activated_rewrite_chart()?;
+    let session = crate::AnalysisSession::new(crate::GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: crate::generation::SchemaProfile::default().into(),
+        provider: crate::provider::ProviderOptions {
+            disable_k8s_schemas: true,
+            allow_net: false,
+            ..Default::default()
+        },
+    });
+    let signals = session.contract_schema_signals()?;
+    let profile_name = signals.evidence_for("child.profile.name").ok_or_else(|| {
+        eyre::eyre!(
+            "expected activated root-overlay name evidence; paths={:?}",
+            signals
+                .schema_evidence_by_value_path()
+                .keys()
+                .filter(|path| path.contains("name") || path.contains("profile"))
+                .collect::<Vec<_>>()
+        )
+    })?;
+    assert!(
+        profile_name
+            .requirement_implications
+            .iter()
+            .any(|implication| !implication.outer_guards.is_empty()),
+        "expected an activation-scoped profile name implication: {profile_name:#?}"
+    );
+    let token_clause = signals
+        .terminal_clauses()
+        .iter()
+        .find(|clause| {
+            clause
+                .iter()
+                .flat_map(helm_schema_core::ConditionalGuard::value_paths)
+                .any(|path| path == "child.token")
+        })
+        .ok_or_else(|| eyre::eyre!("expected activated token absence clause"))?;
+    let guarded_source = signals
+        .guarded_values_default_sources()
+        .iter()
+        .find(|fact| fact.source.target_path == "child")
+        .ok_or_else(|| eyre::eyre!("expected activated child default source"))?;
+    assert!(
+        helm_schema_core::Predicate::all(
+            token_clause
+                .iter()
+                .map(helm_schema_core::ConditionalGuard::predicate)
+                .collect()
+        )
+        .exactly_implies(&helm_schema_core::Predicate::all(
+            guarded_source
+                .outer_guards
+                .iter()
+                .map(helm_schema_core::ConditionalGuard::predicate)
+                .collect()
+        )),
+        "token clause must select the guarded prepared-values branch: clause={token_clause:#?}; source={guarded_source:#?}"
+    );
+    Ok(session.generated_schema()?.schema)
+}
+
+#[test]
+fn dependency_activation_scopes_root_overlay_and_default_source_facts() -> eyre::Result<()> {
+    let schema = activated_rewrite_schema()?;
+    let validator = jsonschema::validator_for(&schema)?;
+
+    let active_defaults = json!({
+        "child": {
+            "enabled": true,
+            "defaults": { "token": { "value": "fallback" } },
+            "profile": { "name": "demo" }
+        }
+    });
+    let active_default_errors = validator
+        .iter_errors(&active_defaults)
+        .map(|error| error.to_string())
+        .collect::<Vec<_>>();
+    assert!(
+        active_default_errors.is_empty(),
+        "active runtime defaults should satisfy the target contract: {active_default_errors:#?}; schema={schema}"
+    );
+    assert!(!validator.is_valid(&json!({
+        "child": {
+            "enabled": true,
+            "defaults": { "token": { "value": "fallback" } },
+            "profile": { "name": 3 }
+        }
+    })));
+    assert!(
+        !validator.is_valid(&json!({
+            "child": {
+                "enabled": true,
+                "defaults": { "token": null },
+                "profile": { "name": "demo" }
+            }
+        })),
+        "an active merge with neither token spelling must reject: {schema}"
+    );
+    assert!(validator.is_valid(&json!({
+        "child": {
+            "enabled": false,
+            "defaults": {},
+            "profile": { "name": 3 }
+        }
+    })));
     Ok(())
 }
 

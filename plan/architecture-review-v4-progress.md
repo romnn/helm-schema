@@ -1071,3 +1071,171 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +145 (62,445 to 62,590).
+
+## A7 — activation-scoped overlay projection and default sources
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing. Preserve the two distinct fact channels across conditional chart
+  activation without pretending they share one consumption model. Root-overlay projection clones
+  abort-grade implications and conjoins the chart activation predicate. Default sources stay out
+  of unconditional values composition and instead participate in branch-aware prepared-values and
+  absence lowering only while their activation predicate holds.
+- Acceptance baseline: `e99d74b6` (A6).
+- Baseline production LOC: 62,590 Rust lines from `task tokei:core` on `e99d74b6`.
+- Pre-registered acceptance expectations:
+  - TIGHTEN wrong-kind and missing-value probes reached through a dependency-local root overlay
+    only while that dependency's `condition:`/`tags:` activation formula is true. Preserve the
+    disabled branch and every unrelated root or sibling dependency.
+  - WIDEN deletion probes only where an active dependency's runtime merge supplies the deleted
+    effective target from its guarded source. Preserve rejection when the source is also absent,
+    and do not apply those defaults while activation is false.
+  - Nested activation is the conjunction of every ancestor level; multiple condition/tag
+    alternatives remain alternatives rather than being flattened into one unconditional fact.
+  - Preserve unconditional root overlays and default sources byte-for-byte. Any fixture or
+    acceptance delta outside the two activation-scoped families stops the round for individual
+    Helm 4.2.3 adjudication. Candidate-accepts/Helm-aborts allowance remains zero. Mandatory base
+    and third-level probe categories permit zero drops.
+
+- Measured results:
+  - IR no longer clears either fact family. It moves default-source and root-overlay facts into
+    separate activation-scoped carriers, rebases both the carrier payloads and their guards, and
+    preserves them exhaustively through `ObservedFacts::absorb`.
+  - Root overlays now retain both their effective target root and source subtree. Core projects
+    each abort-grade implication from the target-relative suffix onto the source path and conjoins
+    the normalized activation disjunction; dependency scoping therefore produces
+    `child.profile.name`, never the duplicated `child.profile.child.name` spelling.
+  - Guarded default sources have their own public signal type and never enter the unconditional
+    composition set. Gen prepares an alternate composed/deeper/refill document for each exact
+    activation domain, selects it only when the lowered consumer predicate proves that domain, and
+    lowers the target/source absence alternative under the same activation.
+  - Identical facts from condition/tag alternatives are grouped by payload and retain one explicit
+    Boolean disjunction. Nested facts retain every ancestor guard. Multiple sources active under
+    one branch are applied together, while the existing unique-source-per-target abstention stays
+    intact.
+  - A conservative same-template execution boundary drops an activated default-source fact when
+    that contract has no rendered consumer outside the source subtree. This prevents a mutation in
+    one Helm template from becoming a fictitious default for a separately executed template;
+    helper-expanded and ordinary same-template consumers retain the fact.
+  - The focused chart matrix accepts the active source-supplied token and disabled invalid values,
+    rejects an active integer root-overlay name and a null-deleted source token, and pins the
+    carrier predicates beside the generated behavior.
+  - The immutable final2 archive contains 88 binaries and 126 files. Its clean schema and IR dumps
+    write 84 and 18 artifacts with zero fixture-byte changes.
+  - The full-depth comparison against `e99d74b6` checks 121,055 probes across 60 charts and reports
+    zero flips, with 112,260/112,260 base and 7,465/7,465 third-level probes.
+
+- Deviations:
+  - The first lint preflight exited 201 because guarded document preparation pushed
+    `LoweredEmissionPlan::build` over the line cap. The preparation became one named phase helper;
+    no suppression was added.
+  - The next lint preflight exited 201 on one needless raw-string hash and two oversized focused
+    tests. The hash was removed, chart construction and signal inspection became named test
+    helpers, and nested-carrier coverage moved into its compact IR operation test.
+  - Rejected final1 initially retained every guarded default source at chart scope. A direct Helm
+    4.2.3 preflight split the mutation and consumer across separate template files: the candidate
+    accepted the source-supplied document while Helm aborted because `.Values` mutation does not
+    cross template executions. No final1 artifact was adopted. The corrected design retains a
+    guarded source only with a same-contract rendered consumer; the explicit mutation-only test
+    pins the abstention.
+  - The first missing-source Helm input used `defaults: {}`, which Helm coalesced with the declared
+    mapping rather than deleting its `token`. The adjudication was corrected to the actual
+    null-deletion input `defaults.token: null`; Helm then aborted and the candidate rejected it.
+  - Production Rust grows by 548 lines. The measured shape contradicts no registered LOC promise:
+    preserving two semantically distinct guarded channels required a total carrier, scoped
+    overlay identity, prepared-document variants, and exhaustive conversion tests.
+
+- Adjudication evidence:
+  - Helm `v4.2.3+g43e8b7f` on the exact chart under
+    `target/arch-v4-a7-helm-probe`: declared active defaults render (exit 0); active
+    `profile.name=3` aborts at `b64enc` (exit 1); active `defaults.token=null` aborts at
+    `.Values.token.value` (exit 1); disabled with both invalid values renders no child manifests
+    (exit 0). The candidate verdicts are accept, reject, reject, accept respectively.
+  - The rejected cross-template preflight aborted in Helm at `.Values.token.value` while the first
+    candidate accepted it. That candidate was discarded before any fixture adoption.
+  - The final full-depth corpus reports zero flips and zero candidate-accepts/Helm-aborts cells, so
+    no corpus fixture required individual replay or adoption.
+
+### Producer and route coverage
+
+| Route | Expected owner | Verification |
+|---|---|---|
+| Unconditional root overlay | Scoped target/source pair with empty guards | Byte-exact corpus and existing Istiod regressions. |
+| Activated root overlay | Scoped pair plus activation predicate | Focused enabled/disabled implication test and Helm replay. |
+| Unconditional default source | Existing eager composition set | Byte-exact regression. |
+| Activated default source | Guarded source handled after exact activation selection | Focused active/inactive deletion and source-absence matrix. |
+| Nested dependency activation | Cross-product guard conjunction | IR two-level carrier test plus existing chart activation test. |
+| Multiple activation alternatives | One normalized disjunction per payload | Focused condition fallback and predicate-implication assertion. |
+| Separate template execution | Conservative carrier abstention | Mutation-only IR test and rejected Helm preflight. |
+
+### Review dossier
+
+- Carrier audit: the old `clear` calls are deleted. Unguarded sources remain the only input to
+  eager composition; guarded sources have one accessor and are consumed only by guarded document
+  preparation and guarded terminal absence lowering.
+- Focused proof: `cargo nextest run -p helm-schema-ir -E
+  'test(activation_guards_scope_values_default_sources) |
+  test(activation_drops_a_default_source_without_same_template_consumers) |
+  test(nested_activation_conjoins_every_default_source_guard) |
+  test(activation_guards_scope_dependency_root_overlay_twins)'`; exit 0, four tests pass.
+  `cargo nextest run -p helm-schema -E
+  'test(dependency_activation_scopes_root_overlay_and_default_source_facts)'`; exit 0.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a7-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-a7-final2.tar.zst`; exit 0, 88
+  binaries and 126 files. Final1 belongs to the rejected cross-template design.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a7-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a7-final2.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a7-final2-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-a7-final2.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a7-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=e99d74b6
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-a7-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-a7-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-a7-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells.
+- Public/wire decision: additive public API. `GuardedValuesDefaultSource`, its signal accessor, the
+  guarded/scoped root-overlay builder, and exact `ConditionalGuard` predicate reconstruction expose
+  the new phase boundary because `ContractSchemaSignals` is public. No serde type changes and no
+  inspection wire-format changes.
+
+### Self-adversarial pass
+
+- One generic guarded wrapper would invite eager composition of default sources. The implementation
+  keeps overlay implications and prepared values as distinct types and consumption paths.
+- Exact predicate implication selects prepared documents. Syntactic subset tests would miss the
+  normalized condition/tag disjunction and recreate the active-source false rejection.
+- Multiple guarded sources sharing one activation are composed together before absence lowering;
+  multiple sources for one target still abstain through the existing unique-source rule.
+- A payload grouped across activation alternatives keeps a Boolean disjunction, not an
+  unconditional fact. Nested conjunctions remain inside each disjunct.
+- Template execution is a semantic boundary: a mutation-only contract cannot lend defaults to a
+  sibling template. The conservative consumer-presence check prefers an open result if execution
+  scope cannot be proved.
+- Root-overlay rebasing uses target-relative suffixes. Carrying only the mapped source prefix would
+  duplicate a dependency root and project requirements to the wrong path.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the two rejected 201 preflights.
+- `task lint:fc`; exit 0.
+- `cargo nextest run --workspace`; exit 0, 1,285 tests pass.
+- `task test:integration`; exit 0, 564 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,853 tests pass and 24 are skipped.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,138 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +548 (62,590 to 63,138).

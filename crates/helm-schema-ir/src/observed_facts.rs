@@ -4,6 +4,25 @@ use crate::eval_effect::FailCapture;
 
 pub(crate) type TypeHints = BTreeMap<String, BTreeSet<String>>;
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct ActivatedValuesDefaultSource {
+    pub(crate) guards: Vec<crate::Guard>,
+    pub(crate) source: crate::ValuesDefaultSource,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct ActivatedValuesRootOverlay {
+    pub(crate) guards: Vec<crate::Guard>,
+    pub(crate) target_path: String,
+    pub(crate) source_path: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct ValuesRootOverlay {
+    pub(crate) target_path: String,
+    pub(crate) source_path: String,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum HintScope {
     Unconditional,
@@ -41,7 +60,9 @@ pub(crate) struct ObservedFacts {
     pub(crate) shape_erased_paths: BTreeSet<String>,
     pub(crate) range_modes: crate::range_modes::RangeModes,
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
+    pub(crate) activated_values_default_sources: BTreeSet<ActivatedValuesDefaultSource>,
+    pub(crate) values_root_overlays: BTreeSet<ValuesRootOverlay>,
+    pub(crate) activated_values_root_overlays: BTreeSet<ActivatedValuesRootOverlay>,
     pub(crate) values_root_helper_includes: BTreeSet<String>,
     pub(crate) captures: BTreeSet<FailCapture>,
 }
@@ -107,10 +128,41 @@ impl ObservedFacts {
                 source_path: map(&source.source_path),
             })
             .collect();
-        self.values_root_overlay_prefixes = std::mem::take(&mut self.values_root_overlay_prefixes)
+        self.activated_values_default_sources =
+            std::mem::take(&mut self.activated_values_default_sources)
+                .into_iter()
+                .map(|fact| ActivatedValuesDefaultSource {
+                    guards: fact
+                        .guards
+                        .into_iter()
+                        .map(|guard| guard.map_value_paths(map))
+                        .collect(),
+                    source: crate::ValuesDefaultSource {
+                        target_path: map(&fact.source.target_path),
+                        source_path: map(&fact.source.source_path),
+                    },
+                })
+                .collect();
+        self.values_root_overlays = std::mem::take(&mut self.values_root_overlays)
             .into_iter()
-            .map(|path| map(&path))
+            .map(|fact| ValuesRootOverlay {
+                target_path: map(&fact.target_path),
+                source_path: map(&fact.source_path),
+            })
             .collect();
+        self.activated_values_root_overlays =
+            std::mem::take(&mut self.activated_values_root_overlays)
+                .into_iter()
+                .map(|fact| ActivatedValuesRootOverlay {
+                    guards: fact
+                        .guards
+                        .into_iter()
+                        .map(|guard| guard.map_value_paths(map))
+                        .collect(),
+                    target_path: map(&fact.target_path),
+                    source_path: map(&fact.source_path),
+                })
+                .collect();
         self.captures = std::mem::take(&mut self.captures)
             .into_iter()
             .map(|mut capture| {
@@ -132,7 +184,9 @@ impl ObservedFacts {
             shape_erased_paths,
             range_modes,
             values_default_sources,
-            values_root_overlay_prefixes,
+            activated_values_default_sources,
+            values_root_overlays,
+            activated_values_root_overlays,
             values_root_helper_includes,
             captures,
         } = other;
@@ -146,8 +200,12 @@ impl ObservedFacts {
         self.range_modes.merge(range_modes);
         self.values_default_sources
             .extend(values_default_sources.iter().cloned());
-        self.values_root_overlay_prefixes
-            .extend(values_root_overlay_prefixes.iter().cloned());
+        self.activated_values_default_sources
+            .extend(activated_values_default_sources.iter().cloned());
+        self.values_root_overlays
+            .extend(values_root_overlays.iter().cloned());
+        self.activated_values_root_overlays
+            .extend(activated_values_root_overlays.iter().cloned());
         self.values_root_helper_includes
             .extend(values_root_helper_includes.iter().cloned());
         self.captures.extend(captures.iter().cloned());

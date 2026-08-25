@@ -470,8 +470,8 @@ impl Interpreter<'_> {
             .values_default_sources
             .extend(facts.values_default_sources.iter().cloned());
         self.observed_facts
-            .values_root_overlay_prefixes
-            .extend(facts.values_root_overlay_prefixes.iter().cloned());
+            .values_root_overlays
+            .extend(facts.values_root_overlays.iter().cloned());
         self.observed_facts
             .values_root_helper_includes
             .extend(facts.values_root_helper_includes.iter().cloned());

@@ -1,87 +1,9 @@
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalOverlayFlavor, ConditionalPathOverlay,
     ContractPathAccumulator, ContractPathSchemaEvidence, ContractSchemaSignals,
-    ContractValuePathFacts, Guard, MetadataFieldKind, PathSchemaFactsAccumulator, Predicate,
-    ProviderSchemaUse, collect_paths_with_descendants, record_member_access_implications,
+    ContractValuePathFacts, MetadataFieldKind, PathSchemaFactsAccumulator, ProviderSchemaUse,
+    collect_paths_with_descendants, record_member_access_implications,
 };
-
-fn conditional_guard_predicate(guard: &ConditionalGuard) -> Predicate {
-    match guard {
-        ConditionalGuard::Truthy { path } => Predicate::truthy_path(path.clone()),
-        ConditionalGuard::With { path } => Predicate::from(Guard::With { path: path.clone() }),
-        ConditionalGuard::Eq { path, value } => Predicate::from(Guard::Eq {
-            path: path.clone(),
-            value: value.clone(),
-        }),
-        ConditionalGuard::NotEq { path, value } => Predicate::from(Guard::NotEq {
-            path: path.clone(),
-            value: value.clone(),
-        }),
-        ConditionalGuard::Absent { path } => Predicate::from(Guard::Absent { path: path.clone() }),
-        ConditionalGuard::TypeIs { path, schema_type } => Predicate::from(Guard::TypeIs {
-            path: path.clone(),
-            schema_type: schema_type.clone(),
-        }),
-        ConditionalGuard::MatchesPattern { path, pattern } => {
-            Predicate::from(Guard::MatchesPattern {
-                path: path.clone(),
-                pattern: pattern.clone(),
-                templated: false,
-            })
-        }
-        ConditionalGuard::IntGt { path, bound } => Predicate::from(Guard::IntGt {
-            path: path.clone(),
-            bound: *bound,
-        }),
-        ConditionalGuard::IntLt { path, bound } => Predicate::from(Guard::IntLt {
-            path: path.clone(),
-            bound: *bound,
-        }),
-        ConditionalGuard::HasKey { path, key } => Predicate::from(Guard::HasKey {
-            path: path.clone(),
-            key: key.clone(),
-        }),
-        ConditionalGuard::ContainsMemberEquals {
-            path,
-            member,
-            value,
-        } => Predicate::from(Guard::ContainsMemberEquals {
-            path: path.clone(),
-            member: member.clone(),
-            value: value.clone(),
-        }),
-        ConditionalGuard::ContainsTruthyMember { path, member } => {
-            Predicate::from(Guard::ContainsTruthyMember {
-                path: path.clone(),
-                member: member.clone(),
-            })
-        }
-        ConditionalGuard::ContainsEquals { path, value } => {
-            Predicate::from(Guard::ContainsEquals {
-                path: path.clone(),
-                value: value.clone(),
-            })
-        }
-        ConditionalGuard::AtMostOneMember { path } => {
-            Predicate::from(Guard::AtMostOneMember { path: path.clone() })
-        }
-        ConditionalGuard::MinMembers { path, bound } => Predicate::from(Guard::MinMembers {
-            path: path.clone(),
-            bound: *bound,
-        }),
-        ConditionalGuard::Not(inner) => conditional_guard_predicate(inner).negated(),
-        ConditionalGuard::AllOf(guards) => {
-            Predicate::all(guards.iter().map(conditional_guard_predicate).collect())
-        }
-        ConditionalGuard::AnyOf(guards) => {
-            Predicate::Or(guards.iter().map(conditional_guard_predicate).collect())
-        }
-    }
-}
-
-fn conditional_guard_set_predicate(guards: &[ConditionalGuard]) -> Predicate {
-    Predicate::all(guards.iter().map(conditional_guard_predicate).collect())
-}
 
 fn kind_partitioned_overlays(overlay: ConditionalPathOverlay) -> Vec<ConditionalPathOverlay> {
     let mut kinds = BTreeSet::new();
@@ -422,16 +344,23 @@ impl ContractPathAccumulator {
         let range_domains = conditional_overlay_branches
             .iter()
             .filter_map(|(guards, branch)| {
-                branch
-                    .range_domain
-                    .map(|domain| (conditional_guard_set_predicate(guards), domain))
+                branch.range_domain.map(|domain| {
+                    (
+                        helm_schema_core::Predicate::all(
+                            guards.iter().map(ConditionalGuard::predicate).collect(),
+                        ),
+                        domain,
+                    )
+                })
             })
             .collect::<Vec<_>>();
         for (guards, branch) in &mut conditional_overlay_branches {
             if branch.range_domain.is_some() {
                 continue;
             }
-            let branch_predicate = conditional_guard_set_predicate(guards);
+            let branch_predicate = helm_schema_core::Predicate::all(
+                guards.iter().map(ConditionalGuard::predicate).collect(),
+            );
             for (range_predicate, range_domain) in &range_domains {
                 if branch_predicate.exactly_implies(range_predicate) {
                     branch.record_range_domain(*range_domain);

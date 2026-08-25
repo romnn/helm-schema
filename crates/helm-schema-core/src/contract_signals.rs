@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{GuardValue, ProviderSchemaUse};
+use crate::{Guard, GuardValue, Predicate, ProviderSchemaUse};
 
 /// Values-decidable guard expression that can be lowered into JSON Schema
 /// conditionals.
@@ -131,6 +131,178 @@ pub enum ConditionalGuard {
     AllOf(Vec<ConditionalGuard>),
     /// Disjunction of the enclosed guards.
     AnyOf(Vec<ConditionalGuard>),
+}
+
+impl ConditionalGuard {
+    /// Reconstructs the exact Boolean predicate represented by this schema guard.
+    #[must_use]
+    pub fn predicate(&self) -> Predicate {
+        match self {
+            Self::Truthy { path } => Predicate::truthy_path(path.clone()),
+            Self::With { path } => Predicate::from(Guard::With { path: path.clone() }),
+            Self::Eq { path, value } => Predicate::from(Guard::Eq {
+                path: path.clone(),
+                value: value.clone(),
+            }),
+            Self::NotEq { path, value } => Predicate::from(Guard::NotEq {
+                path: path.clone(),
+                value: value.clone(),
+            }),
+            Self::Absent { path } => Predicate::from(Guard::Absent { path: path.clone() }),
+            Self::TypeIs { path, schema_type } => Predicate::from(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.clone(),
+            }),
+            Self::MatchesPattern { path, pattern } => Predicate::from(Guard::MatchesPattern {
+                path: path.clone(),
+                pattern: pattern.clone(),
+                templated: false,
+            }),
+            Self::IntGt { path, bound } => Predicate::from(Guard::IntGt {
+                path: path.clone(),
+                bound: *bound,
+            }),
+            Self::IntLt { path, bound } => Predicate::from(Guard::IntLt {
+                path: path.clone(),
+                bound: *bound,
+            }),
+            Self::HasKey { path, key } => Predicate::from(Guard::HasKey {
+                path: path.clone(),
+                key: key.clone(),
+            }),
+            Self::ContainsMemberEquals {
+                path,
+                member,
+                value,
+            } => Predicate::from(Guard::ContainsMemberEquals {
+                path: path.clone(),
+                member: member.clone(),
+                value: value.clone(),
+            }),
+            Self::ContainsTruthyMember { path, member } => {
+                Predicate::from(Guard::ContainsTruthyMember {
+                    path: path.clone(),
+                    member: member.clone(),
+                })
+            }
+            Self::ContainsEquals { path, value } => Predicate::from(Guard::ContainsEquals {
+                path: path.clone(),
+                value: value.clone(),
+            }),
+            Self::AtMostOneMember { path } => {
+                Predicate::from(Guard::AtMostOneMember { path: path.clone() })
+            }
+            Self::MinMembers { path, bound } => Predicate::from(Guard::MinMembers {
+                path: path.clone(),
+                bound: *bound,
+            }),
+            Self::Not(inner) => inner.predicate().negated(),
+            Self::AllOf(guards) => Predicate::all(guards.iter().map(Self::predicate).collect()),
+            Self::AnyOf(guards) => Predicate::Or(guards.iter().map(Self::predicate).collect()),
+        }
+    }
+}
+
+impl TryFrom<&Guard> for ConditionalGuard {
+    type Error = ();
+
+    fn try_from(guard: &Guard) -> Result<Self, Self::Error> {
+        Ok(match guard {
+            Guard::Truthy { path } => Self::Truthy { path: path.clone() },
+            Guard::Not { path } => Self::Not(Box::new(Self::Truthy { path: path.clone() })),
+            Guard::Eq { path, value } => Self::Eq {
+                path: path.clone(),
+                value: value.clone(),
+            },
+            Guard::NotEq { path, value } => Self::NotEq {
+                path: path.clone(),
+                value: value.clone(),
+            },
+            Guard::Absent { path } => Self::Absent { path: path.clone() },
+            Guard::MatchesPattern {
+                path,
+                pattern,
+                templated: false,
+            } => Self::MatchesPattern {
+                path: path.clone(),
+                pattern: pattern.clone(),
+            },
+            Guard::Or { paths } => Self::AnyOf(
+                paths
+                    .iter()
+                    .map(|path| Self::Truthy { path: path.clone() })
+                    .collect(),
+            ),
+            Guard::AnyOf { alternatives } => Self::AnyOf(
+                alternatives
+                    .iter()
+                    .map(|guards| {
+                        guards
+                            .iter()
+                            .map(Self::try_from)
+                            .collect::<Result<Vec<_>, _>>()
+                            .map(Self::AllOf)
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
+            ),
+            Guard::With { path } => Self::With { path: path.clone() },
+            Guard::TypeIs { path, schema_type } => Self::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.clone(),
+            },
+            Guard::NotTypeIs { path, schema_type } => Self::Not(Box::new(Self::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.clone(),
+            })),
+            Guard::IntGt { path, bound } => Self::IntGt {
+                path: path.clone(),
+                bound: *bound,
+            },
+            Guard::IntLt { path, bound } => Self::IntLt {
+                path: path.clone(),
+                bound: *bound,
+            },
+            Guard::AtMostOneMember { path } => Self::AtMostOneMember { path: path.clone() },
+            Guard::MinMembers { path, bound } => Self::MinMembers {
+                path: path.clone(),
+                bound: *bound,
+            },
+            Guard::HasKey { path, key } => Self::HasKey {
+                path: path.clone(),
+                key: key.clone(),
+            },
+            Guard::NotHasKey { path, key } => Self::Not(Box::new(Self::HasKey {
+                path: path.clone(),
+                key: key.clone(),
+            })),
+            Guard::ContainsEquals { path, value } => Self::ContainsEquals {
+                path: path.clone(),
+                value: value.clone(),
+            },
+            Guard::ContainsMemberEquals {
+                path,
+                member,
+                value,
+            } => Self::ContainsMemberEquals {
+                path: path.clone(),
+                member: member.clone(),
+                value: value.clone(),
+            },
+            Guard::ContainsTruthyMember { path, member } => Self::ContainsTruthyMember {
+                path: path.clone(),
+                member: member.clone(),
+            },
+            Guard::MatchesPattern {
+                templated: true, ..
+            }
+            | Guard::NotMatchesPattern { .. }
+            | Guard::RangeKeyPrefix { .. }
+            | Guard::RangeKeyEquals { .. }
+            | Guard::RangeKeyMatches { .. }
+            | Guard::Range { .. }
+            | Guard::Default { .. } => return Err(()),
+        })
+    }
 }
 
 impl ConditionalGuard {
@@ -418,6 +590,15 @@ pub struct ValuesDefaultSource {
     pub target_path: String,
     /// Chart values subtree supplying defaults.
     pub source_path: String,
+}
+
+/// A chart-wide default source that executes only in one activation branch.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct GuardedValuesDefaultSource {
+    /// Chart activation conditions under which the runtime merge executes.
+    pub outer_guards: Vec<ConditionalGuard>,
+    /// Target/source pair applied while the guards hold.
+    pub source: ValuesDefaultSource,
 }
 
 /// One guarded runtime requirement on a values path.
@@ -738,6 +919,7 @@ pub struct ContractSchemaSignals {
     unconditionally_omitted_value_paths: BTreeSet<String>,
     direct_ranged_value_paths: BTreeSet<String>,
     values_default_sources: BTreeSet<ValuesDefaultSource>,
+    guarded_values_default_sources: BTreeSet<GuardedValuesDefaultSource>,
     values_program_wrappers: BTreeSet<ValuesProgramWrapper>,
     /// Values paths whose nodes must not gain a wrapper alternative: a
     /// strict string consumer reads them before the engine's values-root
@@ -818,6 +1000,7 @@ impl ContractSchemaSignals {
             unconditionally_omitted_value_paths,
             direct_ranged_value_paths,
             values_default_sources: BTreeSet::new(),
+            guarded_values_default_sources: BTreeSet::new(),
             values_program_wrappers: BTreeSet::new(),
             values_program_wrapper_exclusions: BTreeSet::new(),
             terminal_clauses,
@@ -840,6 +1023,22 @@ impl ContractSchemaSignals {
         &self.values_default_sources
     }
 
+    /// Attaches runtime default sources scoped by chart activation.
+    #[must_use]
+    pub fn with_guarded_values_default_sources(
+        mut self,
+        sources: impl IntoIterator<Item = GuardedValuesDefaultSource>,
+    ) -> Self {
+        self.guarded_values_default_sources.extend(sources);
+        self
+    }
+
+    /// Runtime default sources that must not enter unconditional composition.
+    #[must_use]
+    pub fn guarded_values_default_sources(&self) -> &BTreeSet<GuardedValuesDefaultSource> {
+        &self.guarded_values_default_sources
+    }
+
     /// Projects fail-grade contracts on effective-root paths onto their
     /// prefixed spellings for every in-place root overlay
     /// (`mustMergeOverwrite $.Values (index $.Values "pilot")`): a member
@@ -852,65 +1051,112 @@ impl ContractSchemaSignals {
     /// conditions are supplied at the root, not through the same overlay.
     #[must_use]
     pub fn with_root_overlay_requirement_implications(
-        mut self,
+        self,
         prefixes: impl IntoIterator<Item = String>,
     ) -> Self {
-        for prefix in prefixes {
-            if prefix.trim().is_empty() {
-                continue;
-            }
-            let twins: Vec<(String, Vec<ContractRequirementImplication>)> = self
-                .schema_evidence_by_value_path
-                .iter()
-                .filter(|(path, evidence)| {
-                    !evidence.requirement_implications.is_empty()
-                        && path.as_str() != prefix
-                        && !crate::values_path_is_descendant(path, &prefix)
-                        && !crate::values_path_is_descendant(&prefix, path)
-                })
-                .map(|(path, evidence)| {
-                    let implications = evidence
-                        .requirement_implications
-                        .iter()
-                        .map(|implication| {
-                            let mut twin = implication.clone();
-                            twin.outer_guards = twin
-                                .outer_guards
-                                .into_iter()
-                                .map(|guard| {
-                                    guard.map_value_paths(&mut |guard_path: &str| {
-                                        if guard_path == path
-                                            || crate::values_path_is_descendant(guard_path, path)
-                                        {
-                                            prefixed_value_path(&prefix, guard_path)
-                                        } else {
-                                            guard_path.to_string()
-                                        }
-                                    })
+        self.with_guarded_root_overlay_requirement_implications(
+            prefixes
+                .into_iter()
+                .map(|prefix| (Vec::<ConditionalGuard>::new(), prefix)),
+        )
+    }
+
+    /// Projects abort-grade root-overlay requirements under activation guards.
+    #[must_use]
+    pub fn with_guarded_root_overlay_requirement_implications(
+        self,
+        overlays: impl IntoIterator<Item = (Vec<ConditionalGuard>, String)>,
+    ) -> Self {
+        self.with_scoped_guarded_root_overlay_requirement_implications(
+            overlays
+                .into_iter()
+                .map(|(guards, source_path)| (guards, String::new(), source_path)),
+        )
+    }
+
+    /// Projects abort-grade requirements across a scoped in-place values overlay.
+    #[must_use]
+    pub fn with_scoped_guarded_root_overlay_requirement_implications(
+        mut self,
+        overlays: impl IntoIterator<Item = (Vec<ConditionalGuard>, String, String)>,
+    ) -> Self {
+        for (activation_guards, target_path, source_path) in overlays {
+            self.project_root_overlay_requirements(&target_path, &source_path, &activation_guards);
+        }
+        self
+    }
+
+    fn project_root_overlay_requirements(
+        &mut self,
+        target_path: &str,
+        source_path: &str,
+        activation_guards: &[ConditionalGuard],
+    ) {
+        if source_path.trim().is_empty() {
+            return;
+        }
+        let twins: Vec<(String, Vec<ContractRequirementImplication>)> = self
+            .schema_evidence_by_value_path
+            .iter()
+            .filter(|(path, evidence)| {
+                !evidence.requirement_implications.is_empty()
+                    && (path.as_str() == target_path
+                        || crate::values_path_is_descendant(path, target_path))
+                    && path.as_str() != source_path
+                    && !crate::values_path_is_descendant(path, source_path)
+                    && !crate::values_path_is_descendant(source_path, path)
+            })
+            .map(|(path, evidence)| {
+                let implications = evidence
+                    .requirement_implications
+                    .iter()
+                    .map(|implication| {
+                        let mut twin = implication.clone();
+                        twin.outer_guards = twin
+                            .outer_guards
+                            .into_iter()
+                            .map(|guard| {
+                                guard.map_value_paths(&mut |guard_path: &str| {
+                                    if guard_path == path
+                                        || crate::values_path_is_descendant(guard_path, path)
+                                    {
+                                        overlay_source_value_path(
+                                            target_path,
+                                            source_path,
+                                            guard_path,
+                                        )
+                                    } else {
+                                        guard_path.to_string()
+                                    }
                                 })
-                                .collect();
-                            twin
-                        })
-                        .collect();
-                    (prefixed_value_path(&prefix, path), implications)
-                })
-                .collect();
-            for (twin_path, implications) in twins {
-                let entry = self
-                    .schema_evidence_by_value_path
-                    .entry(twin_path.clone())
-                    .or_insert_with(|| ContractPathSchemaEvidence {
-                        value_path: twin_path,
-                        ..ContractPathSchemaEvidence::default()
-                    });
-                for implication in implications {
-                    if !entry.requirement_implications.contains(&implication) {
-                        entry.requirement_implications.push(implication);
-                    }
+                            })
+                            .chain(activation_guards.iter().cloned())
+                            .collect();
+                        twin.outer_guards.sort();
+                        twin.outer_guards.dedup();
+                        twin
+                    })
+                    .collect();
+                (
+                    overlay_source_value_path(target_path, source_path, path),
+                    implications,
+                )
+            })
+            .collect();
+        for (twin_path, implications) in twins {
+            let entry = self
+                .schema_evidence_by_value_path
+                .entry(twin_path.clone())
+                .or_insert_with(|| ContractPathSchemaEvidence {
+                    value_path: twin_path,
+                    ..ContractPathSchemaEvidence::default()
+                });
+            for implication in implications {
+                if !entry.requirement_implications.contains(&implication) {
+                    entry.requirement_implications.push(implication);
                 }
             }
         }
-        self
     }
 
     /// Attaches chart-authored program-wrapper conventions.
@@ -993,9 +1239,14 @@ impl ContractSchemaSignals {
     }
 }
 
-fn prefixed_value_path(prefix: &str, path: &str) -> String {
-    let mut segments = crate::split_value_path(prefix);
-    segments.extend(crate::split_value_path(path));
+fn overlay_source_value_path(target_path: &str, source_path: &str, path: &str) -> String {
+    let target_segments = crate::split_value_path(target_path);
+    let path_segments = crate::split_value_path(path);
+    let suffix = path_segments
+        .strip_prefix(target_segments.as_slice())
+        .unwrap_or(path_segments.as_slice());
+    let mut segments = crate::split_value_path(source_path);
+    segments.extend(suffix.iter().cloned());
     crate::join_value_path(segments)
 }
 

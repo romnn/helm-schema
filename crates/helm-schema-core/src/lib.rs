@@ -26,7 +26,8 @@ pub use contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor, ConditionalPathOverlay,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractRequirementImplication,
     ContractRequirementTarget, ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement,
-    MetadataFieldKind, QuotedScalarStyle, RangeDomain, ValuesDefaultSource, ValuesProgramWrapper,
+    GuardedValuesDefaultSource, MetadataFieldKind, QuotedScalarStyle, RangeDomain,
+    ValuesDefaultSource, ValuesProgramWrapper,
 };
 pub use contract_use::{ContractUse, MergeLayerTransform, MergeLayersUse, SplitSegmentUse};
 pub use guard::{Guard, GuardValue};

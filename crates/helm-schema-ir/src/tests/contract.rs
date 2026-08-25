@@ -676,6 +676,158 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
 }
 
 #[test]
+fn activation_guards_scope_values_default_sources() {
+    let mut contract = ContractIr::default();
+    let mut facts = crate::observed_facts::ObservedFacts::default();
+    facts
+        .values_default_sources
+        .insert(crate::ValuesDefaultSource {
+            target_path: "child".to_string(),
+            source_path: "child.defaults".to_string(),
+        });
+    contract.absorb_observed_facts(&facts);
+    contract.push(ContractUse::new(
+        "child.token.value".to_string(),
+        YamlPath(vec!["data".to_string(), "token".to_string()]),
+        ValueKind::Scalar,
+        Vec::new(),
+        None,
+    ));
+    contract.append_guards_to_all_uses(&[Guard::Truthy {
+        path: "child.enabled".to_string(),
+    }]);
+
+    let signals = contract.finalize().into_schema_signals();
+    sim_assert_eq!(have: signals.values_default_sources().len(), want: 0);
+    sim_assert_eq!(
+        have: signals.guarded_values_default_sources(),
+        want: &std::collections::BTreeSet::from([
+            helm_schema_core::GuardedValuesDefaultSource {
+                outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                    path: "child.enabled".to_string(),
+                }],
+                source: crate::ValuesDefaultSource {
+                    target_path: "child".to_string(),
+                    source_path: "child.defaults".to_string(),
+                },
+            },
+        ])
+    );
+}
+
+#[test]
+fn activation_drops_a_default_source_without_same_template_consumers() {
+    let mut contract = ContractIr::default();
+    let mut facts = crate::observed_facts::ObservedFacts::default();
+    facts
+        .values_default_sources
+        .insert(crate::ValuesDefaultSource {
+            target_path: "child".to_string(),
+            source_path: "child.defaults".to_string(),
+        });
+    contract.absorb_observed_facts(&facts);
+    contract.append_guards_to_all_uses(&[Guard::Truthy {
+        path: "child.enabled".to_string(),
+    }]);
+
+    let signals = contract.finalize().into_schema_signals();
+    sim_assert_eq!(have: signals.values_default_sources().len(), want: 0);
+    sim_assert_eq!(
+        have: signals.guarded_values_default_sources().len(),
+        want: 0
+    );
+}
+
+#[test]
+fn nested_activation_conjoins_every_default_source_guard() {
+    let mut contract = ContractIr::default();
+    let mut facts = crate::observed_facts::ObservedFacts::default();
+    facts
+        .values_default_sources
+        .insert(crate::ValuesDefaultSource {
+            target_path: "mid.leaf".to_string(),
+            source_path: "mid.leaf.defaults".to_string(),
+        });
+    contract.absorb_observed_facts(&facts);
+    contract.push(ContractUse::new(
+        "mid.leaf.token.value".to_string(),
+        YamlPath(vec!["data".to_string(), "token".to_string()]),
+        ValueKind::Scalar,
+        Vec::new(),
+        None,
+    ));
+    contract.append_guards_to_all_uses(&[
+        Guard::Truthy {
+            path: "mid.enabled".to_string(),
+        },
+        Guard::Truthy {
+            path: "mid.leaf.enabled".to_string(),
+        },
+    ]);
+
+    let signals = contract.finalize().into_schema_signals();
+    let activation_paths = signals
+        .guarded_values_default_sources()
+        .iter()
+        .flat_map(|fact| fact.outer_guards.iter())
+        .flat_map(helm_schema_core::ConditionalGuard::value_paths)
+        .collect::<std::collections::BTreeSet<_>>();
+    sim_assert_eq!(
+        have: activation_paths,
+        want: std::collections::BTreeSet::from([
+            "mid.enabled".to_string(),
+            "mid.leaf.enabled".to_string(),
+        ])
+    );
+}
+
+#[test]
+fn activation_guards_scope_dependency_root_overlay_twins() -> eyre::Result<()> {
+    let mut contract = ContractIr::default();
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: Vec::new(),
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::StringRequirement {
+                path: "child.name".to_string(),
+                route: crate::eval_effect::StringRequirementRoute::Direct,
+                selection: Vec::new(),
+            },
+        }],
+    );
+    let mut facts = crate::observed_facts::ObservedFacts::default();
+    facts
+        .values_root_overlays
+        .insert(crate::observed_facts::ValuesRootOverlay {
+            target_path: "child".to_string(),
+            source_path: "child.profile".to_string(),
+        });
+    contract.absorb_observed_facts(&facts);
+    contract.append_guards_to_all_uses(&[Guard::Truthy {
+        path: "child.enabled".to_string(),
+    }]);
+
+    let signals = contract.finalize().into_schema_signals();
+    let evidence = signals
+        .evidence_for("child.profile.name")
+        .ok_or_eyre("expected activated root-overlay twin")?;
+    sim_assert_eq!(
+        have: evidence.requirement_implications.clone(),
+        want: vec![helm_schema_core::ContractRequirementImplication {
+            outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                path: "child.enabled".to_string(),
+            }],
+            target: helm_schema_core::ContractRequirementTarget::Value,
+            requirements: vec![helm_schema_core::FailValueRequirement::SchemaType(
+                "string".to_string(),
+            )],
+        }]
+    );
+    Ok(())
+}
+
+#[test]
 fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<()> {
     let path = "config.value";
     let mut contract = ContractIr::default();

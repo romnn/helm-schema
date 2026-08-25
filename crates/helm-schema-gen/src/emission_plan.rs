@@ -37,11 +37,132 @@ pub(crate) struct LoweredEmissionPlan {
 }
 
 #[derive(Clone)]
-struct RootValuesDocuments {
+pub(crate) struct RootValuesDocuments {
     composed: YamlValue,
     input_defaults: YamlValue,
     subchart_defaults: YamlValue,
     dependency_refill: YamlValue,
+    guarded: Vec<GuardedRootValuesDocuments>,
+}
+
+#[derive(Clone)]
+struct GuardedRootValuesDocuments {
+    guards: Vec<helm_schema_core::ConditionalGuard>,
+    composed: YamlValue,
+    subchart_defaults: YamlValue,
+    dependency_refill: YamlValue,
+}
+
+impl RootValuesDocuments {
+    pub(crate) fn condition_context<'a>(
+        &'a self,
+        guards: &[helm_schema_core::ConditionalGuard],
+        dependency_roots: &'a BTreeSet<Vec<String>>,
+    ) -> (
+        &'a YamlValue,
+        crate::condition_encoding::AbsenceDefaults<'a>,
+    ) {
+        let predicate = helm_schema_core::Predicate::all(
+            guards
+                .iter()
+                .map(helm_schema_core::ConditionalGuard::predicate)
+                .collect(),
+        );
+        let guarded = self
+            .guarded
+            .iter()
+            .filter(|documents| {
+                predicate.exactly_implies(&helm_schema_core::Predicate::all(
+                    documents
+                        .guards
+                        .iter()
+                        .map(helm_schema_core::ConditionalGuard::predicate)
+                        .collect(),
+                ))
+            })
+            .max_by_key(|documents| documents.guards.len());
+        let (composed, subchart_defaults, dependency_refill) = guarded.map_or(
+            (
+                &self.composed,
+                &self.subchart_defaults,
+                &self.dependency_refill,
+            ),
+            |documents| {
+                (
+                    &documents.composed,
+                    &documents.subchart_defaults,
+                    &documents.dependency_refill,
+                )
+            },
+        );
+        (
+            composed,
+            crate::condition_encoding::AbsenceDefaults {
+                deeper_stage: subchart_defaults,
+                dependency_refill,
+                dependency_roots,
+            },
+        )
+    }
+}
+
+fn prepare_guarded_values_documents(
+    signals: &ContractSchemaSignals,
+    composed: &YamlValue,
+    subchart_defaults: &YamlValue,
+    dependency_refill: &YamlValue,
+) -> Vec<GuardedRootValuesDocuments> {
+    let guarded_sources = signals
+        .guarded_values_default_sources()
+        .iter()
+        .map(|fact| (fact.outer_guards.clone(), fact.source.clone()))
+        .collect::<Vec<_>>();
+    guarded_sources
+        .iter()
+        .map(|(branch_guards, _)| branch_guards)
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .map(|branch_guards| {
+            let branch_predicate = helm_schema_core::Predicate::all(
+                branch_guards
+                    .iter()
+                    .map(helm_schema_core::ConditionalGuard::predicate)
+                    .collect(),
+            );
+            let sources = guarded_sources
+                .iter()
+                .filter(|(source_guards, _)| {
+                    branch_predicate.exactly_implies(&helm_schema_core::Predicate::all(
+                        source_guards
+                            .iter()
+                            .map(helm_schema_core::ConditionalGuard::predicate)
+                            .collect(),
+                    ))
+                })
+                .map(|(_, source)| source.clone())
+                .collect::<BTreeSet<_>>();
+            let mut branch_composed = composed.clone();
+            crate::values_yaml::apply_values_default_sources(&mut branch_composed, &sources);
+            let mut branch_subchart_defaults = subchart_defaults.clone();
+            crate::values_yaml::copy_values_default_sources(
+                &mut branch_subchart_defaults,
+                &branch_composed,
+                &sources,
+            );
+            let mut branch_dependency_refill = dependency_refill.clone();
+            crate::values_yaml::copy_values_default_sources(
+                &mut branch_dependency_refill,
+                &branch_composed,
+                &sources,
+            );
+            GuardedRootValuesDocuments {
+                guards: branch_guards.clone(),
+                composed: branch_composed,
+                subchart_defaults: branch_subchart_defaults,
+                dependency_refill: branch_dependency_refill,
+            }
+        })
+        .collect()
 }
 
 struct EmissionSupportPlan {
@@ -117,11 +238,18 @@ impl LoweredEmissionPlan {
             &composed,
             contract_schema_signals.values_default_sources(),
         );
+        let guarded = prepare_guarded_values_documents(
+            &contract_schema_signals,
+            &composed,
+            &subchart_defaults,
+            &dependency_refill,
+        );
         let documents = RootValuesDocuments {
             composed,
             input_defaults,
             subchart_defaults,
             dependency_refill,
+            guarded,
         };
         let resolved_paths = PathSchemaResolver::new(
             &contract_schema_signals,
@@ -212,16 +340,11 @@ impl LoweredEmissionPlan {
             selected_conditionals,
             &mut emission_report,
         );
-        let absence = crate::condition_encoding::AbsenceDefaults {
-            deeper_stage: &self.documents.subchart_defaults,
-            dependency_refill: &self.documents.dependency_refill,
-            dependency_roots: &self.support.dependency_roots,
-        };
         append_selected_constraints(
             &mut document,
             fallback_conditionals,
-            &self.documents.composed,
-            absence,
+            &self.documents,
+            &self.support.dependency_roots,
             &mut emission_report,
         );
         if !selected_terminals.is_empty() {
@@ -234,8 +357,10 @@ impl LoweredEmissionPlan {
                 &mut document,
                 &terminal_clauses,
                 self.contract_schema_signals.values_default_sources(),
-                &self.documents.composed,
-                absence,
+                self.contract_schema_signals
+                    .guarded_values_default_sources(),
+                &self.documents,
+                &self.support.dependency_roots,
             );
         }
         prune_unreachable_provider_definitions(&document, &mut provider_definitions);

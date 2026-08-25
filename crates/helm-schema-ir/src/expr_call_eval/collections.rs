@@ -1026,10 +1026,12 @@ pub(super) fn eval_merge(
     {
         for source in values.iter().skip(1) {
             if let Some(path) = source.unique_path().filter(|path| !path.is_empty()) {
-                effects
-                    .observed_facts
-                    .values_root_overlay_prefixes
-                    .insert(path);
+                effects.observed_facts.values_root_overlays.insert(
+                    crate::observed_facts::ValuesRootOverlay {
+                        target_path: String::new(),
+                        source_path: path,
+                    },
+                );
             }
         }
     }

@@ -5,7 +5,9 @@ use crate::contract_normalization::{
     canonicalize_contract_uses, drop_default_guard_subsumed_duplicates,
     drop_self_truthy_subsumed_duplicates, normalize_contract_uses,
 };
-use crate::observed_facts::{HintGrade, ObservedFacts};
+use crate::observed_facts::{
+    ActivatedValuesDefaultSource, ActivatedValuesRootOverlay, HintGrade, ObservedFacts,
+};
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
 /// Opaque guarded contract graph for one template interpretation.
@@ -122,12 +124,60 @@ impl ContractIr {
                 capture
             })
             .collect();
-        // A conditionally active chart cannot contribute unconditional
-        // effective defaults. Conditional default overlays are not yet part
-        // of the schema-signal vocabulary, so abstain instead of leaking them.
         if !guards.is_empty() {
-            self.observed_facts.values_default_sources.clear();
-            self.observed_facts.values_root_overlay_prefixes.clear();
+            let values_default_sources =
+                std::mem::take(&mut self.observed_facts.values_default_sources)
+                    .into_iter()
+                    .filter(|source| {
+                        self.uses.iter().chain(&self.dependency_uses).any(|use_| {
+                            !use_.path.0.is_empty()
+                                && use_.source_expr != source.target_path
+                                && use_.source_expr != source.source_path
+                                && !helm_schema_core::values_path_is_descendant(
+                                    &use_.source_expr,
+                                    &source.source_path,
+                                )
+                        })
+                    })
+                    .collect::<Vec<_>>();
+            let append_guards = |mut existing: Vec<Guard>| {
+                existing.extend(guards.iter().cloned());
+                existing.sort();
+                existing.dedup();
+                existing
+            };
+            self.observed_facts.activated_values_default_sources =
+                std::mem::take(&mut self.observed_facts.activated_values_default_sources)
+                    .into_iter()
+                    .map(|fact| ActivatedValuesDefaultSource {
+                        guards: append_guards(fact.guards),
+                        source: fact.source,
+                    })
+                    .chain(values_default_sources.into_iter().map(|source| {
+                        ActivatedValuesDefaultSource {
+                            guards: append_guards(Vec::new()),
+                            source,
+                        }
+                    }))
+                    .collect();
+            self.observed_facts.activated_values_root_overlays =
+                std::mem::take(&mut self.observed_facts.activated_values_root_overlays)
+                    .into_iter()
+                    .map(|fact| ActivatedValuesRootOverlay {
+                        guards: append_guards(fact.guards),
+                        target_path: fact.target_path,
+                        source_path: fact.source_path,
+                    })
+                    .chain(
+                        std::mem::take(&mut self.observed_facts.values_root_overlays)
+                            .into_iter()
+                            .map(|fact| ActivatedValuesRootOverlay {
+                                guards: append_guards(Vec::new()),
+                                target_path: fact.target_path,
+                                source_path: fact.source_path,
+                            }),
+                    )
+                    .collect();
         }
     }
 
