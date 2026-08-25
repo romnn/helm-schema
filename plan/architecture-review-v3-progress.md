@@ -10,14 +10,15 @@ Campaign baseline: 61,262 production Rust LOC (`task tokei:core` at
 Roman has resolved the decision points as follows:
 
 - **D1 = option 1**: reject chart declarations containing unquoted YAML-1.1
-  boolean-alias keys with one aggregated diagnostic (implemented in Step
-  11a, Wave 2 — not now).
+  boolean-alias keys with one aggregated diagnostic (implemented in Step 11a,
+  `1204b0f9`).
 - **D2 = option 3**: measure Helm's installed-entry-to-alias association
-  first, then model the measured identity (Step 11b, Wave 2 — not now).
+  first, then model the measured identity (Step 11b measured an ambiguous
+  association and reached its designed no-code blocker).
 - **D3 = option 1**: one typed selection-reachability carrier owned beside
   `EvalResult` — this unblocks Step 6a in this wave.
 - **D4 = option 1**: typed keyword subset plus lossless ordered
-  `extra_keywords` (Step 9, Wave 2 — not now).
+  `extra_keywords` (implemented in Step 9 operations 2–6).
 - **D5**: retain every vertical; produce the Step 1 feature-cost table so
   Roman can decide per row. No pruning in this campaign wave.
 
@@ -4871,7 +4872,7 @@ adjudication.
 
 ## Step 10 operation 1 — typed prepared values documents
 
-- Status: landed; commit pending.
+- Status: landed in `f352d98f`.
 - Contract: representation-only. Session preparation owns one
   `PreparedValuesDocuments` containing the parsed composed, dependency, and
   dependency-refill YAML documents. `ValuesSchemaInput` borrows that carrier;
@@ -5365,7 +5366,7 @@ adjudication.
 
 ## Step 11a — reject YAML 1.1 Boolean-alias declaration keys
 
-- Status: landed; commit pending.
+- Status: landed in `1204b0f9`.
 - Contract: behavior-bearing, D1 option 1. Reject chart declarations that
   contain unquoted YAML-1.1 Boolean-alias keys with one aggregated diagnostic
   before analysis. Preserve quoted keys, canonical Boolean spellings, and
@@ -5555,3 +5556,270 @@ adjudication.
     plan/architecture-review-v3-wave2.md`: exit 0.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: +148 (61,902 to 62,050).
+
+## Step 11b — model Helm's duplicate dependency-alias identity
+
+- Status: blocked by ambiguous Helm 4.2.3 measurement; no production change.
+- Contract: measure before code, then behavior-bearing only if Helm's
+  installed-entry-to-alias association is unambiguous. Give production and the
+  acceptance harness one shared typed dependency identity; never choose a
+  manifest-order heuristic unsupported by Helm.
+- Acceptance baseline: `1204b0f9`.
+- Baseline production Rust LOC: 62,050.
+
+### Pre-registered acceptance expectations
+
+- The disposable Helm 4.2.3 matrix distinguishes two installed entries with
+  the same internal chart name by child-authored identity defaults. It covers
+  directory entries and tgz archives carrying GNU-style leading `./` members,
+  then repeats both transports with manifest order reversed.
+- Each transport/order pair renders both aliases, isolates each alias with its
+  own activation condition, isolates each alias with its own tag, and
+  null-deletes each alias root so Helm's child-default refill identifies the
+  associated installed entry independently of ordinary parent overrides.
+- A measured association is unambiguous only if repeated invocations give the
+  same alias-to-installed-entry mapping in every ordinary, condition, tag, and
+  refill cell, and reversing manifest order yields one explainable structural
+  rule shared by directory and archive transports.
+- If any transport or route produces multiple mappings, silently drops an
+  installed entry, or disagrees without a structural identity, the step records
+  the exact probe charts as a designed measurement blocker and stops without
+  production code.
+- If measurement is unambiguous, production discovery and
+  `chart_dependency_roots` consume the same typed dependency identity. The
+  typed key must encode the measured association directly; a `BTreeMap` keyed
+  only by installed chart name and its last-write-wins behavior are deleted.
+- Corpus and luup2 audits are expected to find no duplicate installed-name
+  dependency declarations, so schema/IR fixtures and existing acceptance cells
+  are pre-registered for zero changes. New focused behavior controls cover
+  both association directions, reversed order, activation, tags, and refill.
+  Any unrelated fixture or acceptance flip stops for individual Helm
+  adjudication before adoption.
+
+### Measured results
+
+- The final measurement harness runs Helm `v4.2.3+g43e8b7f` against two child
+  charts whose internal name and version are both `shared`/`0.1.0`, while
+  child-authored defaults identify the installed content as A or B. Parent
+  dependencies alias those entries as `alpha` and `beta`.
+- Valid directory and standard-tgz controls cross forward/reversed manifest
+  order with forward/reversed installed filename order. Each of those eight
+  structural variants runs ordinary dual activation, alpha-only and beta-only
+  conditions, alpha-only and beta-only tags, and alpha-root and beta-root null
+  deletion/refill: 56 cells, 32 identical invocations per cell, 1,792 renders.
+- Fifty-five of the 56 valid cells observe both installed identities across
+  identical invocations. The remaining standard-tgz ordinary cell samples only
+  B in its 32 repetitions, but every condition, tag, and refill route on that
+  exact chart observes both A and B. There is no stable association in any
+  transport/order family.
+- Within one render, both live aliases always use the same selected installed
+  chart: A/A or B/B, never A/B. Isolating an alias through its condition or tag
+  preserves the nondeterministic A-or-B selection. Null-deleting an alias root
+  refills it with the selected chart's matching `refill-a` or `refill-b`
+  default, proving refill cannot supply an independent identity.
+- Reversing manifest order does not stabilize selection. Reversing directory
+  names or tgz filenames changes which winner often appears first but does not
+  eliminate either winner. Installed lexical order is therefore not a Helm
+  identity contract.
+- Four GNU-leading archive variants carry `./entry-a/Chart.yaml` and
+  `./entry-b/Chart.yaml`. All 28 route cells abort before association with
+  `error unpacking subchart entry-a.tgz ... Chart.yaml file is missing`.
+  Standard archives with `entry-a/Chart.yaml` and `entry-b/Chart.yaml` load and
+  exhibit the same ambiguity as directories.
+- A precise manifest audit parses 158 repository-corpus and luup2
+  `Chart.yaml` files and finds zero manifests with a repeated dependency
+  `name`. No existing chart enters the measured duplicate-name domain.
+- The frozen designed stop is reached. Production discovery and the acceptance
+  harness retain their existing last-entry maps because replacing them with
+  any installed-order or manifest-order key would claim determinism Helm does
+  not have. No production, test, fixture, or dependency file changes in this
+  step.
+
+### Deviations
+
+- The initial fail-fast harness found the blocker on repeat 3 of
+  `directory-forward` / `condition-alpha`: the first observations selected B,
+  then an identical invocation selected A. The harness was changed only in
+  ignored `target/` scratch to collect outcome sets and complete the matrix;
+  no artifact from the fail-fast run is adopted.
+- The first archive preflight was contaminated by macOS AppleDouble entries
+  such as `._entry-a`, which Helm rejected as content outside the base
+  directory. Those archives and their abort results were rejected. Every final
+  archive was rebuilt with `COPYFILE_DISABLE=1`; standard tgz controls then
+  loaded, while leading-`./` controls retained the distinct, reproducible
+  missing-`Chart.yaml` Helm verdict.
+- The pre-registration treated a silently dropped installed entry as a
+  blocker. Helm's observed A/A-or-B/B behavior does exactly that: one installed
+  same-name entry supplies every alias in a render and the other contributes
+  nothing, but which entry wins changes across identical invocations.
+- Step 11b has a zero production LOC delta because the frozen contract forbids
+  choosing an order heuristic after ambiguous measurement. Step 11 therefore
+  ends at +148 LOC, within its -50 to +150 band but leaving no implementation
+  for duplicate-name aliases.
+
+### Adjudication evidence
+
+- Exact probe sources remain under
+  `target/arch-v3-step11b-measure/children/{entry-a,entry-b}` and
+  `target/arch-v3-step11b-measure/parents/`. `run.zsh` executes all 84 final
+  cells (56 valid association cells plus 28 leading-`./` archive-abort cells)
+  32 times each and exits 0 after collecting every distinct result.
+- The exact single-cell reproducer
+  `helm template probe target/arch-v3-step11b-measure/parents/directory-forward
+  --skip-schema-validation` emits either the A/A or B/B alias pair across
+  repeats. The standard-tgz equivalent does the same; the GNU-leading
+  equivalent exits 1 with the missing-`Chart.yaml` error above.
+- No schema-acceptance change is proposed. A distinct blocker-final1 schema
+  dump writes 84 artifacts and its IR dump writes 18; both compare
+  byte-for-byte with Step 11a final2. The full-depth battery exits 0 in 72.339
+  seconds with 60 charts, 121,055 probes, zero flips, and zero Helm
+  adjudication failures.
+- Mandatory base coverage remains 112,260/112,260 and third-level coverage
+  remains 7,465/7,465, with zero drops. Bounded accounting remains 427 guard
+  pairs, 238 composite pairs, and 28,874 disclosed drops.
+
+### Producer and route coverage
+
+| Route | Structural variants | Helm 4.2.3 result |
+|---|---:|---|
+| Directory, both aliases | 4 order combinations | 4/4 observe A/A and B/B |
+| Directory, one condition live | 8 alias/order cells | 8/8 observe A and B |
+| Directory, one tag live | 8 alias/order cells | 8/8 observe A and B |
+| Directory, one root refilled | 8 alias/order cells | 8/8 refill from A and B |
+| Standard tgz, both aliases | 4 order combinations | 3/4 sample both; the fourth samples one winner but is ambiguous on every isolated route |
+| Standard tgz, one condition live | 8 alias/order cells | 8/8 observe A and B |
+| Standard tgz, one tag live | 8 alias/order cells | 8/8 observe A and B |
+| Standard tgz, one root refilled | 8 alias/order cells | 8/8 refill from A and B |
+| GNU-leading `./` tgz | 28 route/order cells | 28/28 abort before association |
+| Corpus and luup2 declarations | 158 manifests | zero repeated dependency names |
+
+### Review dossier
+
+- Installed-content proof: A and B have the same internal `name`/`version` and
+  identical templates; only `installedIdentity` and `refillToken` defaults
+  differ. Alias and parent tokens independently identify the manifest entry
+  and parent values root.
+- Order proof: forward/reverse manifest sequences and forward/reverse installed
+  filenames are crossed independently for directory and valid tgz transports.
+- Activation proof: conditions use absent-by-default `controls.alpha` and
+  `controls.beta` paths, while tags use `alpha-route` and `beta-route`, so each
+  mechanism is isolated without condition precedence masking tag behavior.
+- Refill proof: `alpha: null` and `beta: null` controls leave activation under
+  tags and expose the selected child-authored refill token with the expected
+  parent token missing only at the deleted root.
+- Transport proof: final tgz inputs are free of AppleDouble members. Standard
+  and leading-`./` member lists are retained separately, and the latter's abort
+  is replayed directly against Helm rather than inferred from our loader.
+- No-code proof: `git diff --exit-code 1204b0f9 -- Cargo.lock crates` exits 0.
+  The only tracked Step 11b/campaign-closeout change is this progress ledger.
+
+### Self-adversarial pass
+
+- Randomness pressure: 32 repeats per cell expose two winners where one-shot
+  probes falsely suggest first-entry or last-entry determinism.
+- Coupling pressure: alias, installed identity, parent root, and refill token
+  are separate fields, so a correct alias with the wrong installed chart
+  cannot masquerade as success.
+- Order pressure: both manifest and installed filename order are reversed;
+  neither predicts all results.
+- Activation pressure: condition and tag routes isolate both aliases, proving
+  nondeterminism is not caused by rendering two aliases concurrently.
+- Archive pressure: AppleDouble contamination is rejected explicitly, while
+  valid standard archives and intentionally GNU-leading archives receive
+  separate Helm verdicts.
+- Heuristic pressure: no typed key, ordinal, sorted-order choice, rejection
+  policy, or fixture expectation is added after the blocker.
+
+- Gates on the final Step 11b blocker/close-out tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,265/1,265 passed.
+  - `task test:integration`: exit 0; 562/562 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,831/1,831 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims, inherited PATH,
+    and explicit `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 62,050 production Rust LOC.
+  - `git diff --exit-code 1204b0f9 -- Cargo.lock crates`: exit 0.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: 0 (62,050 to 62,050).
+
+## Campaign close-out
+
+- Status: stopped at the designed Step 11b measurement blocker. Steps 1–11a
+  are landed; Step 11b is measured but deliberately unimplemented; D5 retains
+  every vertical, so optional Step 12 is not scheduled.
+- Final production Rust LOC: 62,050. Against the 61,262 campaign baseline this
+  is a net **+788 LOC**, not the frozen -3,380 to -1,320 estimate.
+
+### Production LOC ledger
+
+| Campaign round | Delta | Ending production Rust LOC |
+|---|---:|---:|
+| Baseline `44aa758` | — | 61,262 |
+| Step 1 | -50 | 61,212 |
+| Step 2 | +81 | 61,293 |
+| Step 3a | +83 | 61,376 |
+| Step 3b | -40 | 61,336 |
+| Step 4 | -226 | 61,110 |
+| Step 5 | +69 | 61,179 |
+| Step 6a | +129 | 61,308 |
+| Wave 2 remediation R0–R7 | +96 | 61,404 |
+| Step 6b.1–6b.5 | +454 | 61,858 |
+| Step 7a | +126 | 61,984 |
+| Step 7b | -426 | 61,558 |
+| Step 8 and checkpoint | +13 | 61,571 |
+| Step 9 operations 1–6 | +376 | 61,947 |
+| Step 10 operations 1–3 | -45 | 61,902 |
+| Step 11a | +148 | 62,050 |
+| Step 11b blocker | 0 | 62,050 |
+| **Campaign net** | **+788** | **62,050** |
+
+### Reconciliation with the frozen estimate
+
+- The frozen consolidation model predicted a 57,882–59,942 LOC final tree.
+  The actual 62,050 tree is 2,108 LOC above that range's upper edge and 788
+  LOC above baseline. The discrepancy is recorded directly; it is not offset
+  with vendored bytes, test deletion, or hypothetical future pruning.
+- Step 1 found 50 safe deletion lines rather than 180–280. Step 3 netted +43,
+  Step 5 +69, and Step 8 +13 because the audited phase boundaries and typed
+  semantic owners required explicit state that the frozen model had counted as
+  removable wrappers.
+- Selection consolidation was the largest miss: Step 6a, remediation, and 6b
+  total +679 rather than -450 to -100. Exact raw/rendered selection,
+  scope-preserving consumer lowering, and false-rejection controls were live
+  semantics, not parallel compatibility code that could be deleted wholesale.
+- Step 7 did deliver a -300 net reduction and Step 4 deleted 226 lines, but
+  those real consolidations could not pay for the carrier and totality work.
+- Step 9 added 376 lines instead of deleting 350–700. Lossless unknown-keyword
+  preservation, Boolean schemas, mixed combinators, provenance, and exact
+  full-schema round trips required typed representation; deleting `Foreign`
+  branches did not erase that semantic payload.
+- Step 10 removed every scheduled obsolete parser route and 4,321,160 tracked
+  vendored bytes, but only 45 net production Rust lines. The frozen 319 MiB
+  source claim and 100–300 Rust-line estimate described content not present in
+  the audited baseline.
+- Step 11a's deterministic authoring diagnostic consumed +148 and Step 11b
+  correctly added nothing after Helm proved the proposed identity ambiguous.
+  Deleting live semantics to force the total into the estimate would violate
+  the campaign's precision and simplicity-by-deletion contracts.
+
+### Residual deliberately unscheduled debt
+
+| Debt | Current measured size | Disposition |
+|---|---:|---|
+| Capability-probe table | 88 production lines in `capability_probe.rs` | Retained until an upstream enumerable manifest or eager complete-bundle architecture replaces the manual canonical-kind table. |
+| Typed `ValuesPath` newtype | 79 production occurrence lines under `crates/*/src`, excluding `src/tests` | Still string-backed; migration remains a separate semantic-currency campaign. |
+| Acceptance-battery bias | 1,074 harness lines plus 1,537 driver lines (2,611 test Rust lines) | Still schema-order-prefix biased and bounded at 50,000 probes/chart, 2,048 third-level deletions, 8 guard pairs, 24 guard attempts, 128 witnesses, and 8 composite pairs; all omissions remain machine-accounted. |
+
+- Campaign handoff: Roman decides whether the ambiguous duplicate-alias domain
+  warrants an explicit rejection policy, whether to start a v4 campaign for
+  residual debt, or whether to close the architecture campaign. No Step 12 or
+  post-campaign implementation is implied by this close-out.
