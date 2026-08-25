@@ -758,3 +758,146 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +170 (62,234 to 62,404).
+
+## A5 — refuse unfaithful composite truthiness under negation
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing. Make the existing faithfulness oracle reject the generic all-paths
+  truthiness fallback for both `MergedLayers` and `FirstTruthy` whenever their exact decoders
+  abstain. Cover field/selector projections as well as locals; do not begin B3's decoder/oracle
+  consolidation in this round.
+- Acceptance baseline: `90f16dcb` (A4).
+- Baseline production LOC: 62,404 Rust lines from `task tokei:core` on `90f16dcb`.
+- Pre-registered acceptance expectations:
+  - Only fail-branch reachability inherited through an undecodable `MergedLayers` or `FirstTruthy`
+    condition may change. An exactly decoded composite remains byte- and acceptance-identical.
+  - The affected family may TIGHTEN where the former negated all-paths approximation weakened an
+    abort requirement, or WIDEN where refusing the approximation makes the surrounding capture
+    abstain. Every changed cell requires individual Helm 4.2.3 adjudication; direction alone is not
+    a verdict.
+  - Ordinary raw-path, literal, call, derived-text, and exact merge/selection conditions remain
+    unchanged. Any fixture delta outside composite-truthiness fail reachability stops the round.
+  - Candidate-accepts/Helm-aborts allowance remains zero. Mandatory base and third-level probe
+    categories permit zero drops.
+
+- Measured results:
+  - `condition_lowering_is_faithful` now classifies `MergedLayers` and `FirstTruthy` as exact only
+    when their owned truthiness decoder succeeds, for both field/selector projections and locals.
+  - A distinct `ConditionFidelityUse::Control` mode preserves the established positive-polarity
+    all-paths approximation for structural control analysis. Recursive `not` always switches back
+    to exact use, so the approximation cannot cross a polarity inversion.
+  - Fragment assignment, block/inline control, kind-source, and condition-carrier call sites use the
+    control-grade query. Negation, exact default/merge decoding, De Morgan lowering, and literal
+    dispatch continue to require the exact query.
+  - Focused tests prove undecodable merged selectors and first-truthy locals are unfaithful for
+    exact use but remain usable for positive control, while decodable composites stay exact.
+  - The immutable final2 archive contains 88 binaries and 126 files. Its one clean schema dump and
+    IR dump write 84 and 18 artifacts and remain fixture-exact.
+  - The full-depth comparison against `90f16dcb` checks 121,055 probes across 60 charts and reports
+    zero flips, with 112,260/112,260 base and 7,465/7,465 third-level probes.
+
+- Deviations:
+  - Rejected preflight final1 applied the stricter answer to every consumer of the historic
+    `faithful` Boolean. The full-depth run exposed 98 flips and failed with 63
+    candidate-accepts/Helm-aborts cells, concentrated in Airflow `workers.*` and Kyverno
+    `*.imagePullSecrets`. Those positive structural consumers rely on a sound wider condition and
+    must not be made to abstain merely because that condition cannot be negated. No final1 fixture
+    or dump was adopted.
+  - The corrected final2 design makes the consumer intent explicit with a two-case private enum and
+    retains one recursive classification table. This is a temporary seam: B3 remains responsible
+    for returning exactness with the decoded predicate and deleting the oracle/table duality.
+  - The first lint preflight exited 201 when the direct patch crossed the 100-line limit. A local
+    composite-classification operation removed duplicated matching without a suppression. Two
+    subsequent lint preflights also exited 201 while the purpose-aware recursion remained one and
+    then four lines over the limit; field/selector classification was extracted as its own direct
+    method and lint passed.
+  - No corpus acceptance cell or fixture byte changed. The confirmed asymmetric oracle defect is
+    pinned by focused private tests; the current corpus has no mutation witness that reaches its
+    negated undecodable shape after positive-control preservation.
+  - Production Rust grows by 41 lines for the typed fidelity purpose and regression coverage. No
+    LOC promise was registered.
+
+- Adjudication evidence:
+  - Rejected final1 was individually replayed by the battery with Helm 4.2.3: 63 of its 98 changed
+    cells were candidate accepts where Helm aborted, so the design was discarded before fixture
+    adoption.
+  - Final2 reports zero flips and zero candidate-accepts/Helm-aborts cells. No fixture is adopted and
+    no additional individual replay is required.
+
+### Producer and route coverage
+
+| Consumer route | Fidelity use | Verification |
+|---|---|---|
+| Fail-branch negation / De Morgan | Exact | Composite regression and zero-allowance battery. |
+| `not` recursion | Exact regardless of enclosing use | Exhaustive call branch plus focused undecodable cases. |
+| Exact default, merge, and dispatch decoding | Exact | Existing condition-predicate and corpus suites remain exact. |
+| Block and inline structural control | Control | Final1 false-accept family disappears in final2; fixtures remain exact. |
+| Assignment truthy reductions | Control | Airflow/Kyverno corpus and reaudit controls remain exact. |
+| Kind/source branch carriers | Control at the positive boundary | Existing provider/kind partition fixtures remain exact. |
+
+### Review dossier
+
+- Oracle audit: every cross-module call site now names control-grade use; every remaining
+  `condition_lowering_is_faithful` call is within the condition decoder and sits at a polarity or
+  exactness boundary.
+- Focused proof: `cargo nextest run -p helm-schema-ir -E 'test(composite_truthiness)'`; exit 0, two
+  tests pass.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a5-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-a5-final2.tar.zst`; exit 0, 88
+  binaries and 126 files. The final1 archive and dumps belong to the rejected design.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a5-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a5-final2.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a5-final2-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a5-final2.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a5-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=90f16dcb
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-a5-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-a5-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-a5-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells.
+- Public/wire decision: none. The fidelity purpose and both queries are crate-private; contract
+  serialization, predicate wire shape, and schema ordering are unchanged.
+
+### Self-adversarial pass
+
+- A wider positive condition can be safe because it attributes fewer branch-specific guarantees;
+  negating that same wider condition reverses containment and is unsound. The purpose enum records
+  exactly that polarity boundary instead of treating one Boolean as universally meaningful.
+- `MergedLayers` already had a variable-only exactness check. The selector route and
+  `FirstTruthy` route now use the same exact composite classifier, closing both asymmetric holes.
+- Control mode deliberately reproduces the old field/selector approximation and the old
+  first-truthy-local fallback, but it does not relax merged locals, whose exact disjunction was
+  already required. The rejected final1 battery proves this distinction is load-bearing.
+- `not` ignores the caller's control purpose and recursively asks for exact fidelity. This prevents
+  a future control caller from accidentally laundering an all-paths approximation through a nested
+  negation.
+- The new purpose split is not presented as the final architecture. B3's scheduled
+  `Decoded::{Exact, Approximate}` result should make the distinction a property of one decode and
+  delete both query methods.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected 201 preflights.
+- `task lint:fc`; exit 0.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0.
+- `task test:all`; exit 0.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 62,445 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +41 (62,404 to 62,445).

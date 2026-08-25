@@ -121,6 +121,12 @@ fn single_string_verb_split(format: &str) -> Option<(&str, &str)> {
     (!prefix.contains('%') && !suffix.contains('%')).then_some((prefix, suffix))
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ConditionFidelityUse {
+    Exact,
+    Control,
+}
+
 impl ValuePathContext<'_> {
     fn exact_evaluated_truth_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
         eval_expr(expr, &self.expression_eval_env())
@@ -135,17 +141,24 @@ impl ValuePathContext<'_> {
     /// Rows tolerate approximate (wider) conditions; fail-branch NEGATION
     /// does not, so it consults this before trusting a captured stack.
     pub(crate) fn condition_lowering_is_faithful(&self, expr: &TemplateExpr) -> bool {
+        self.condition_lowering_fidelity(expr, ConditionFidelityUse::Exact)
+    }
+
+    pub(crate) fn condition_lowering_is_usable_for_control(&self, expr: &TemplateExpr) -> bool {
+        self.condition_lowering_fidelity(expr, ConditionFidelityUse::Control)
+    }
+
+    fn condition_lowering_fidelity(&self, expr: &TemplateExpr, use_: ConditionFidelityUse) -> bool {
         if self.exact_evaluated_truth_predicate(expr).is_some() {
             return true;
         }
         match expr.deparen() {
             TemplateExpr::VariableDefinition { value, .. }
-            | TemplateExpr::Assignment { value, .. } => self.condition_lowering_is_faithful(value),
+            | TemplateExpr::Assignment { value, .. } => {
+                self.condition_lowering_fidelity(value, use_)
+            }
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
-                if self.root_field_truthy_predicate(expr).is_some() {
-                    return true;
-                }
-                !self.paths_for_expr(expr).is_empty()
+                self.field_condition_lowering_fidelity(expr, use_)
             }
             TemplateExpr::Literal(_) => true,
             // A local bound to DERIVED TEXT (`$message := join "\n"
@@ -165,10 +178,12 @@ impl ValuePathContext<'_> {
                 }
                 // Layered merges decode through their own disjunction lane;
                 // the all-paths conjunction below is not faithful for them.
-                if let Some(AbstractValue::MergedLayers(layers)) =
-                    eval_expr(expr, &self.expression_eval_env()).value
+                if let Some(value) = eval_expr(expr, &self.expression_eval_env()).value
+                    && (matches!(value, AbstractValue::MergedLayers(_))
+                        || use_ == ConditionFidelityUse::Exact)
+                    && let Some(faithful) = composite_truthy_lowering_is_faithful(&value)
                 {
-                    return merged_layers_truthy_predicate(&layers).is_some();
+                    return faithful;
                 }
                 let paths = self.paths_for_expr(expr);
                 if paths.is_empty() {
@@ -187,7 +202,7 @@ impl ValuePathContext<'_> {
             TemplateExpr::Call { function, args } => match function.as_str() {
                 "and" | "or" => args
                     .iter()
-                    .all(|arg| self.condition_lowering_is_faithful(arg)),
+                    .all(|arg| self.condition_lowering_fidelity(arg, use_)),
                 "list" | "tuple" | "dict" => true,
                 "not" => {
                     args.first()
@@ -231,6 +246,25 @@ impl ValuePathContext<'_> {
             }
             _ => false,
         }
+    }
+
+    fn field_condition_lowering_fidelity(
+        &self,
+        expr: &TemplateExpr,
+        use_: ConditionFidelityUse,
+    ) -> bool {
+        if self.root_field_truthy_predicate(expr).is_some() {
+            return true;
+        }
+        if use_ == ConditionFidelityUse::Exact
+            && let Some(faithful) = eval_expr(expr, &self.expression_eval_env())
+                .value
+                .as_ref()
+                .and_then(composite_truthy_lowering_is_faithful)
+        {
+            return faithful;
+        }
+        !self.paths_for_expr(expr).is_empty()
     }
 
     pub(crate) fn condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
@@ -307,7 +341,7 @@ impl ValuePathContext<'_> {
                     .iter()
                     .enumerate()
                     .map(|(index, arg)| {
-                        if !negated && self.condition_lowering_is_faithful(arg) {
+                        if !negated && self.condition_lowering_is_usable_for_control(arg) {
                             self.condition_predicate_expr(arg)
                         } else if negated
                             && self.condition_lowering_is_faithful(arg)
@@ -3093,6 +3127,18 @@ fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predica
         }
     }
     Some(predicate_any(arms))
+}
+
+fn composite_truthy_lowering_is_faithful(value: &AbstractValue) -> Option<bool> {
+    match value {
+        AbstractValue::MergedLayers(layers) => {
+            Some(merged_layers_truthy_predicate(layers).is_some())
+        }
+        AbstractValue::FirstTruthy(candidates) => {
+            Some(first_truthy_truthy_predicate(candidates).is_some())
+        }
+        _ => None,
+    }
 }
 
 #[expect(

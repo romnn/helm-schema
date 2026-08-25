@@ -215,6 +215,71 @@ fn absent_custom_root_field_is_false_until_set() {
 }
 
 #[test]
+fn composite_truthiness_is_faithful_only_when_its_exact_decoder_succeeds() {
+    let undecodable_merge = AbstractValue::MergedLayers(vec![
+        AbstractValue::ValuesPath("base".to_string()),
+        AbstractValue::Unknown,
+    ]);
+    let undecodable_selection = AbstractValue::FirstTruthy(vec![
+        AbstractValue::ValuesPath("primary".to_string()),
+        AbstractValue::Unknown,
+    ]);
+    let bindings = HashMap::from([
+        (
+            "context".to_string(),
+            AbstractValue::Dict(BTreeMap::from([("merged".to_string(), undecodable_merge)])),
+        ),
+        ("selected".to_string(), undecodable_selection),
+    ]);
+    let context = condition_context(bindings);
+    let merged = parse_action_expressions("{{ $context.merged }}")
+        .into_iter()
+        .next()
+        .expect("merged selector condition");
+    let selected = parse_action_expressions("{{ $selected }}")
+        .into_iter()
+        .next()
+        .expect("first-truthy local condition");
+
+    assert!(!context.condition_lowering_is_faithful(&merged));
+    assert!(!context.condition_lowering_is_faithful(&selected));
+    assert!(context.condition_lowering_is_usable_for_control(&merged));
+    assert!(context.condition_lowering_is_usable_for_control(&selected));
+}
+
+#[test]
+fn decodable_composite_truthiness_remains_faithful() {
+    let bindings = HashMap::from([
+        (
+            "merged".to_string(),
+            AbstractValue::MergedLayers(vec![
+                AbstractValue::ValuesPath("base".to_string()),
+                AbstractValue::ValuesPath("override".to_string()),
+            ]),
+        ),
+        (
+            "selected".to_string(),
+            AbstractValue::FirstTruthy(vec![
+                AbstractValue::ValuesPath("primary".to_string()),
+                AbstractValue::ValuesPath("fallback".to_string()),
+            ]),
+        ),
+    ]);
+    let context = condition_context(bindings);
+    let merged = parse_action_expressions("{{ $merged }}")
+        .into_iter()
+        .next()
+        .expect("merged local condition");
+    let selected = parse_action_expressions("{{ $selected }}")
+        .into_iter()
+        .next()
+        .expect("first-truthy local condition");
+
+    assert!(context.condition_lowering_is_faithful(&merged));
+    assert!(context.condition_lowering_is_faithful(&selected));
+}
+
+#[test]
 fn quoted_empty_membership_preserves_false_and_zero_as_live_values() {
     let expr = parse_action_expressions(
         r#"{{ not (has (quote .Values.global.logLevel) (list "" (quote ""))) }}"#,

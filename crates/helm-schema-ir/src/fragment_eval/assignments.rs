@@ -448,7 +448,7 @@ impl Interpreter<'_> {
             let condition_truthy_reduction = {
                 let context = self.value_path_context();
                 context
-                    .condition_lowering_is_faithful(&assignment.rhs_expr)
+                    .condition_lowering_is_usable_for_control(&assignment.rhs_expr)
                     .then(|| context.condition_predicate_expr(&assignment.rhs_expr))
             };
             let output_effects = self.value_path_context().expression_output_effects(rhs);

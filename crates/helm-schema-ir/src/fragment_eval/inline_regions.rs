@@ -571,7 +571,7 @@ impl Interpreter<'_> {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
-                context.condition_lowering_is_faithful(header.expr()),
+                context.condition_lowering_is_usable_for_control(header.expr()),
             )
         };
         let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());

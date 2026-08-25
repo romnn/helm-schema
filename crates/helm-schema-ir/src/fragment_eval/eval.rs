@@ -897,7 +897,7 @@ impl<'a> Interpreter<'a> {
                 let [expr] = exprs.as_slice() else {
                     return Vec::new();
                 };
-                if !context.condition_lowering_is_faithful(expr) {
+                if !context.condition_lowering_is_usable_for_control(expr) {
                     return Vec::new();
                 }
                 let predicate = context.condition_predicate_expr(expr).normalize_boolean();

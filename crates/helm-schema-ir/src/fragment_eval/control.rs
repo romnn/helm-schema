@@ -590,7 +590,7 @@ impl Interpreter<'_> {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(expr),
-                context.condition_lowering_is_faithful(expr),
+                context.condition_lowering_is_usable_for_control(expr),
             )
         };
         for (variable, previous) in saved {
@@ -625,7 +625,7 @@ impl Interpreter<'_> {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
-                context.condition_lowering_is_faithful(header.expr()),
+                context.condition_lowering_is_usable_for_control(header.expr()),
                 context.bound_output_paths_expr(header.expr()),
             )
         };
@@ -841,7 +841,7 @@ impl Interpreter<'_> {
         let (mut predicate, mut faithful, bound_values, dot) = {
             let context = self.value_path_context();
             let predicate = context.with_condition_predicate_expr(header.expr());
-            let faithful = context.condition_lowering_is_faithful(header.expr());
+            let faithful = context.condition_lowering_is_usable_for_control(header.expr());
             (
                 predicate,
                 faithful,
@@ -1814,7 +1814,7 @@ impl Interpreter<'_> {
             other => vec![other],
         };
         for expr in conjunct_exprs {
-            if !context.condition_lowering_is_faithful(expr) {
+            if !context.condition_lowering_is_usable_for_control(expr) {
                 continue;
             }
             let conjuncts = match context.condition_predicate_expr(expr) {
