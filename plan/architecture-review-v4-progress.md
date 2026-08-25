@@ -444,3 +444,145 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +54 (62,132 to 62,186).
+
+## Round A3 — preserve escaped dot and backslash values-path segments
+
+- Status: landed in this round's `fix(ir)` commit.
+- Contract: behavior-bearing; replace raw dot splitting, joining, prefix stripping, and path
+  concatenation on the values-path currency with codec-aware helpers. This round repairs literal
+  dots and backslashes only; the literal `*` versus range-member distinction remains deferred to
+  B4b.
+- Acceptance baseline: `3e9dbf8e`.
+- Baseline production Rust LOC: 62,186.
+- Pre-registered acceptance expectations:
+  - Parent/member requirements for `dig`, strict presence, and ranged member fields attach to the
+    encoded structural parent when a literal key contains `.` or `\`.
+  - Merge-layer truthy collapse computes common suffixes, concrete roots, wildcard collection
+    prefixes, and relative member paths from decoded segments; only guards involving escaped
+    dot/backslash segments may change.
+  - Root-overlay requirement projection prefixes encoded paths structurally, without turning a
+    literal dotted segment into nested selectors.
+  - Wildcard detection and member-scope matching decode segments but continue treating the segment
+    string `"*"` as the existing range wildcard. No literal-star behavior is changed in this round.
+  - Acceptance flips are expected only for probes whose affected values path contains an escaped
+    dot or backslash and reaches one of the repaired routes. Every changed cell is adjudicated with
+    Helm 4.2.3 before fixture adoption; any unrelated flip stops the round.
+  - The zero candidate-accepts/Helm-aborts allowance remains fixed, and mandatory coverage permits
+    zero drops.
+
+- Measured results:
+  - Required-presence and ranged-member absence lowering now re-encodes parents with
+    `join_value_path`; raw `dig` subject captures do the same.
+  - Merge-layer truthy collapse decodes every layer into segments before computing its common
+    suffix, concrete roots, wildcard collection prefixes, and relative guard suffixes. Every
+    derived path is re-encoded through `join_value_path`.
+  - Root-overlay projection decodes and concatenates prefix/path segments in one private helper;
+    neither projected targets nor their local guards use raw string interpolation.
+  - Member requirement scopes use `append_value_path`; relative field requirements compare decoded
+    segment slices. Immediate-member tests now use a one-segment match instead of searching the
+    encoded suffix for a dot.
+  - Range-key concretization, conditional decoding, helper range-shape checks, prepared-values
+    descendant pruning, and provider member-presence synthesis all decode segments before wildcard
+    or ancestry decisions.
+  - The remaining production `split('.')` under the audited crates is Kubernetes-version parsing in
+    `analysis_db.rs`; the only other matches are test-local parsing of emitted JSON property names.
+  - The immutable final1 archive contains 88 binaries and 126 files. The clean schema and IR dumps
+    write 84 and 18 artifacts and remain fixture-exact.
+  - The full-depth comparison against `3e9dbf8e` checks 121,055 probes across 60 charts and reports
+    zero flips, with 112,260/112,260 base and 7,465/7,465 third-level probes.
+
+- Deviations:
+  - No registered escaped-key acceptance cell changed in the current corpus. The repaired paths are
+    live in focused dotted-key tests, but the 60-chart mutation battery did not synthesize a state
+    that distinguishes the formerly phantom parent from the encoded parent.
+  - A compile preflight failed at four slice-prefix calls because `Vec<String>` must be passed as a
+    slice pattern. Each call now passes `.as_slice()`; no failed-state artifact was produced.
+  - The first lint preflight then exited 201 on three needless borrows in wildcard decoding. The
+    borrows were removed without suppression and lint passed before the immutable archive build.
+  - Production Rust grows by 48 lines because decoded segment comparisons replace compressed raw
+    string operations. No LOC promise was registered.
+
+- Adjudication evidence:
+  - The final comparison records zero flips and zero candidate-accepts/Helm-aborts cells. No fixture
+    is adopted and no individual Helm replay is required.
+  - Existing literal-dotted index/get and leaked-secret path tests pass; they keep dotted keys as
+    single schema properties while exercising nested requirements beneath those keys.
+
+### Producer and route coverage
+
+| Path route | Codec-aware operation | Verification |
+|---|---|---|
+| Required presence / absence abort | Decode, pop leaf, `join_value_path` parent. | Existing fail/dig and full fixture suites remain exact. |
+| Raw `dig` subject | Decode subject and re-encode its parent before `HasKey`. | Dotted-key validator tests pass. |
+| Layered truthy collapse | Segment suffix comparison, encoded root/prefix/suffix reconstruction. | Merge/overlay fixtures and acceptance remain exact. |
+| Root overlay projection | Decode prefix and effective-root path, concatenate segments, encode once. | Istiod root-overlay tests and corpus fixture remain exact. |
+| Member scopes and fields | `append_value_path("*")`; segment-slice relative fields. | Range/fail/member suites remain exact. |
+| Range-key concretization | Segment-prefix replacement followed by one encoded reconstruction. | Range-key equality tests remain exact. |
+| Prepared-values pruning | Segment ancestry instead of encoded string prefix. | Values-default and fixture suites remain exact. |
+| Wildcard checks | `split_value_path` then exact `"*"` segment comparison. | Literal `*` semantics intentionally remain unchanged for B4b. |
+
+### Review dossier
+
+- Raw-operation audit: the production search for `split('.')`, raw dot joins, raw member-scope
+  formatting, and formatted-prefix stripping leaves only semver parsing; test-only JSON property
+  inspection remains outside the values-path currency.
+- Focused dotted-key proof: `cargo nextest run -p helm-schema-core -p helm-schema-gen -E
+  'test(value_path_currency_preserves_literal_dots_and_backslashes) or
+  test(literal_dotted_index_and_get_keys_generate_one_root_property) or test(/leaked_secret/)'`;
+  exit 0 for the selected generator dotted-key test. The core public-surface integration test is
+  profile-filtered here and runs in the complete integration gate.
+- Immutable build: `TMPDIR=target/arch-v4-a3-final1-build cargo nextest archive --workspace
+  --archive-file /private/tmp/arch-v4-a3-final1.tar.zst`; exit 0, 88 binaries and 126 files.
+- Clean schema dump: `TMPDIR=target/arch-v4-a3-final1-schema SCHEMA_DUMP=1 cargo nextest run
+  --archive-file /private/tmp/arch-v4-a3-final1.tar.zst --profile integration --no-fail-fast -E
+  'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=target/arch-v4-a3-final1-ir SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run
+  --archive-file /private/tmp/arch-v4-a3-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written.
+- Full-depth proof: `TMPDIR=target/arch-v4-a3-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=3e9dbf8e
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=target/arch-v4-a3-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=target/arch-v4-a3-final1-coverage.json ADJUDICATE_WITH_HELM=1
+  cargo nextest run --archive-file /private/tmp/arch-v4-a3-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells.
+- Public/wire decision: none. Existing public codec helpers are reused; no public type, function,
+  serialized path spelling, or ordering changes.
+
+### Self-adversarial pass
+
+- Raw interpolation of two already encoded paths can be byte-correct today but preserves no
+  compiler tooth. Decoding and encoding once makes the structural intent explicit and prevents a
+  future caller from supplying an unencoded segment.
+- Relative field logic cannot safely inspect the encoded suffix for `.` or `*`; those characters
+  may belong to one literal segment. Segment-slice matching distinguishes immediate members from
+  nested fields while retaining the current wildcard convention.
+- The range-key rewrite previously carried both `p.*` and `p.*.` string sentinels. The final form
+  carries only the encoded member path and computes a structural relative suffix, removing the
+  trailing-dot protocol.
+- Literal `*` remains represented by the same segment spelling as range membership. Every new
+  wildcard check intentionally preserves that collision; repairing it here would smuggle B4b
+  behavior into the dot/backslash round.
+- Semver `split('.')` and test-local emitted-property parsing are distinct domains and remain.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected 201 preflight.
+- `task lint:fc`; exit 0.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0.
+- `task test:all`; exit 0.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 62,234 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +48 (62,186 to 62,234).

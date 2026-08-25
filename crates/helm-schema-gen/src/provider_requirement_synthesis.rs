@@ -202,7 +202,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
         }
         let collection_path =
             helm_schema_core::join_value_path(collection_segments.iter().cloned());
-        let member_scope = format!("{collection_path}.*");
+        let member_scope = helm_schema_core::append_value_path(&collection_path, "*");
 
         let base_uses = std::iter::once((
             &[] as &[helm_schema_core::ConditionalGuard],
@@ -258,9 +258,11 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     continue;
                 }
                 let member_field = |path: &str| {
-                    path.strip_prefix(&format!("{member_scope}."))
-                        .filter(|field| !field.contains('*'))
-                        .map(helm_schema_core::split_value_path)
+                    let path = helm_schema_core::split_value_path(path);
+                    let member_scope = helm_schema_core::split_value_path(&member_scope);
+                    let field = path.strip_prefix(member_scope.as_slice())?;
+                    (!field.is_empty() && !field.iter().any(|segment| segment == "*"))
+                        .then(|| field.to_vec())
                 };
                 // A member guard becomes the exact dormant alternative:
                 // an else-arm escapes when its field is truthy, while a

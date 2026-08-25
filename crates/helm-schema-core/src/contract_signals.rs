@@ -860,7 +860,7 @@ impl ContractSchemaSignals {
                                         if guard_path == path
                                             || crate::values_path_is_descendant(guard_path, path)
                                         {
-                                            format!("{prefix}.{guard_path}")
+                                            prefixed_value_path(&prefix, guard_path)
                                         } else {
                                             guard_path.to_string()
                                         }
@@ -870,7 +870,7 @@ impl ContractSchemaSignals {
                             twin
                         })
                         .collect();
-                    (format!("{prefix}.{path}"), implications)
+                    (prefixed_value_path(&prefix, path), implications)
                 })
                 .collect();
             for (twin_path, implications) in twins {
@@ -969,6 +969,12 @@ impl ContractSchemaSignals {
     pub fn evidence_for(&self, value_path: &str) -> Option<&ContractPathSchemaEvidence> {
         self.schema_evidence_by_value_path.get(value_path)
     }
+}
+
+fn prefixed_value_path(prefix: &str, path: &str) -> String {
+    let mut segments = crate::split_value_path(prefix);
+    segments.extend(crate::split_value_path(path));
+    crate::join_value_path(segments)
 }
 
 /// Schema-generation facts for one input values path.

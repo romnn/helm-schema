@@ -221,7 +221,7 @@ pub(super) fn record_fail_conjunction(
             record_absence_abort_clause(terminal_clauses, capture, path);
             return;
         }
-        let parent = segments.join(".");
+        let parent = helm_schema_core::join_value_path(segments);
         record_value_requirement_capture(
             paths,
             capture,
@@ -262,7 +262,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 capture,
-                &segments.join("."),
+                &helm_schema_core::join_value_path(segments),
                 FailValueRequirement::HasMemberEvenDefaulted(member),
             );
             return;
@@ -430,14 +430,14 @@ pub(super) fn record_fail_conjunction(
                 .filter_map(|(path, mode)| mode.member_identity.then_some(path)),
         )
         .filter(|path| {
-            let member = format!("{path}.*");
+            let member = helm_schema_core::append_value_path(path, "*");
             test_candidate_paths.iter().any(|candidate| {
                 candidate == &member
                     || helm_schema_core::values_path_is_descendant(candidate, &member)
             })
         })
         .max_by_key(|path| helm_schema_core::split_value_path(path).len());
-    let member_scope = ranged.map(|path| format!("{path}.*"));
+    let member_scope = ranged.map(|path| helm_schema_core::append_value_path(path, "*"));
 
     let mut outer_guards = Vec::new();
     let mut member_tests: Vec<&Predicate> = Vec::new();
@@ -466,9 +466,9 @@ pub(super) fn record_fail_conjunction(
         // an outer condition of the arm.
         if let Some(scope) = &member_scope {
             if !paths_of.is_empty()
-                && paths_of
-                    .iter()
-                    .all(|path| path == scope || path.starts_with(&format!("{scope}.")))
+                && paths_of.iter().all(|path| {
+                    path == scope || helm_schema_core::values_path_is_descendant(path, scope)
+                })
             {
                 member_tests.push(predicate);
                 continue;
@@ -739,7 +739,7 @@ pub(super) fn record_range_key_prefix_requirement(
     let [(collection_path, prefix)] = prefixes.as_slice() else {
         return !prefixes.is_empty();
     };
-    let member_scope = format!("{collection_path}.*");
+    let member_scope = helm_schema_core::append_value_path(collection_path, "*");
     let has_matching_range = conjunction.iter().any(|predicate| {
         matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == collection_path)
     });
@@ -846,7 +846,7 @@ pub(super) fn record_range_key_matches_requirement(
     if !has_matching_range {
         return true;
     }
-    let member_scope = format!("{collection_path}.*");
+    let member_scope = helm_schema_core::append_value_path(collection_path, "*");
     let mut outer_guards = Vec::new();
     for predicate in conjunction {
         if key_match(predicate).is_some() {
@@ -1711,6 +1711,13 @@ pub(super) fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
 /// Requirements implied by the NEGATION of a failing test: the negation
 /// must hold for the value at `scope` (a member scope `p.*` or the path
 /// itself).
+fn relative_value_path(path: &str, scope: &str) -> Option<Vec<String>> {
+    let path = helm_schema_core::split_value_path(path);
+    let scope = helm_schema_core::split_value_path(scope);
+    let relative = path.strip_prefix(scope.as_slice())?;
+    (!relative.is_empty()).then(|| relative.to_vec())
+}
+
 pub(super) fn requirements_from_negation(
     predicate: &Predicate,
     scope: &str,
@@ -1731,9 +1738,11 @@ pub(super) fn requirements_from_negation(
             )])
         }
         Predicate::Guard(Guard::Absent { path }) => {
-            let member = path.strip_prefix(&format!("{scope}."))?;
-            (!member.contains('.'))
-                .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+            let member = relative_value_path(path, scope)?;
+            let [member] = member.as_slice() else {
+                return None;
+            };
+            Some(vec![FailValueRequirement::HasMember(member.clone())])
         }
         // A truthiness test over a member's FIELD negates to "the field,
         // when present, is Helm-falsy" (oauth2-proxy's legacy extraPaths
@@ -1741,27 +1750,24 @@ pub(super) fn requirements_from_negation(
         // restriction keeps absolute-path truthy stand-ins out. The
         // member's OWN truthiness (`if $config` around a ranged terminal)
         // negates to Helm-falsiness of the member value itself.
-        Predicate::Guard(Guard::Truthy { path }) if scope.contains(".*") => {
+        Predicate::Guard(Guard::Truthy { path }) if path_contains_wildcard(scope) => {
             if path == scope {
                 return Some(vec![FailValueRequirement::HelmFalsy]);
             }
-            let field = path.strip_prefix(&format!("{scope}."))?;
-            (!field.contains('*')).then(|| {
-                vec![FailValueRequirement::FieldHelmFalsy {
-                    path: helm_schema_core::split_value_path(field),
-                }]
-            })
+            let field = relative_value_path(path, scope)?;
+            (!field.iter().any(|segment| segment == "*"))
+                .then(|| vec![FailValueRequirement::FieldHelmFalsy { path: field }])
         }
         // ¬(field ≠ literal) is the exact equality, with presence riding
         // along exactly like the positive `eq` decode (Go's `ne` reads a
         // missing field as nil, which differs from every literal, so the
         // failing inequality HELD there — nats' jsonpatch `op` chain
         // negates to the enum of valid operations this way).
-        Predicate::Guard(Guard::NotEq { path, value }) if scope.contains(".*") => {
-            let field = path.strip_prefix(&format!("{scope}."))?;
-            (!field.contains('*')).then(|| {
+        Predicate::Guard(Guard::NotEq { path, value }) if path_contains_wildcard(scope) => {
+            let field = relative_value_path(path, scope)?;
+            (!field.iter().any(|segment| segment == "*")).then(|| {
                 vec![FailValueRequirement::FieldEquals {
-                    path: helm_schema_core::split_value_path(field),
+                    path: field,
                     value: value.clone(),
                 }]
             })
@@ -1778,11 +1784,13 @@ pub(super) fn requirements_from_negation(
         // conjunction of negations, which is the safe direction.
         Predicate::Guard(Guard::Eq { path, value }) => match value {
             GuardValue::String(text)
-                if path == scope && scope.contains(".*") && !text.is_empty() =>
+                if path == scope && path_contains_wildcard(scope) && !text.is_empty() =>
             {
                 Some(vec![FailValueRequirement::NotEquals(value.clone())])
             }
-            GuardValue::Int(_) | GuardValue::Bool(_) if path == scope && scope.contains(".*") => {
+            GuardValue::Int(_) | GuardValue::Bool(_)
+                if path == scope && path_contains_wildcard(scope) =>
+            {
                 Some(vec![FailValueRequirement::NotEquals(value.clone())])
             }
             // An equality on a member FIELD negates to "the field, when
@@ -1793,23 +1801,25 @@ pub(super) fn requirements_from_negation(
             // terminal through this arm). Empty-string arms stay dropped:
             // they ride `required` emptiness tests whose absence semantics
             // the tolerant-leaf encoding already covers.
-            GuardValue::String(text) if scope.contains(".*") && path != scope => {
+            GuardValue::String(text) if path_contains_wildcard(scope) && path != scope => {
                 if text.is_empty() {
                     return Some(Vec::new());
                 }
-                let field = path.strip_prefix(&format!("{scope}."))?;
-                (!field.contains('*')).then(|| {
+                let field = relative_value_path(path, scope)?;
+                (!field.iter().any(|segment| segment == "*")).then(|| {
                     vec![FailValueRequirement::FieldNotEquals {
-                        path: helm_schema_core::split_value_path(field),
+                        path: field,
                         value: value.clone(),
                     }]
                 })
             }
-            GuardValue::Int(_) | GuardValue::Bool(_) if scope.contains(".*") && path != scope => {
-                let field = path.strip_prefix(&format!("{scope}."))?;
-                (!field.contains('*')).then(|| {
+            GuardValue::Int(_) | GuardValue::Bool(_)
+                if path_contains_wildcard(scope) && path != scope =>
+            {
+                let field = relative_value_path(path, scope)?;
+                (!field.iter().any(|segment| segment == "*")).then(|| {
                     vec![FailValueRequirement::FieldNotEquals {
-                        path: helm_schema_core::split_value_path(field),
+                        path: field,
                         value: value.clone(),
                     }]
                 })
@@ -1853,37 +1863,36 @@ pub(super) fn requirements_from_holding(
         // the terminal-clause lane, whose guard encoding carries the
         // absence semantics a properties-anchored arm cannot.
         Predicate::Guard(Guard::Truthy { path }) if path == scope => {
-            if scope.contains(".*") {
+            if path_contains_wildcard(scope) {
                 Some(vec![FailValueRequirement::HelmTruthy])
             } else {
                 Some(Vec::new())
             }
         }
         Predicate::Guard(Guard::Truthy { path }) => {
-            let member = path.strip_prefix(&format!("{scope}."))?;
+            let member = relative_value_path(path, scope)?;
             // At a ranged member scope the exact form is "present and
             // Helm-truthy", including nested fields (traefik's
             // `http.tls.enabled` beside an http3 gate); the non-member
             // lane keeps its established presence-only decode.
-            if scope.contains(".*") {
-                return (!member.contains('*')).then(|| {
-                    vec![FailValueRequirement::FieldHelmTruthy {
-                        path: helm_schema_core::split_value_path(member),
-                    }]
-                });
+            if path_contains_wildcard(scope) {
+                return (!member.iter().any(|segment| segment == "*"))
+                    .then(|| vec![FailValueRequirement::FieldHelmTruthy { path: member }]);
             }
-            (!member.contains('.'))
-                .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+            let [member] = member.as_slice() else {
+                return None;
+            };
+            Some(vec![FailValueRequirement::HasMember(member.clone())])
         }
         // An equality on a member FIELD holding: the field is present and
         // equals the literal — Go's `eq` aborts on a nil operand, so
         // presence rides along (traefik's `eq $plugin.type "hostPath"`
         // dispatch arms negate their else-`fail` this way).
-        Predicate::Guard(Guard::Eq { path, value }) if scope.contains(".*") => {
-            let field = path.strip_prefix(&format!("{scope}."))?;
-            (!field.contains('*')).then(|| {
+        Predicate::Guard(Guard::Eq { path, value }) if path_contains_wildcard(scope) => {
+            let field = relative_value_path(path, scope)?;
+            (!field.iter().any(|segment| segment == "*")).then(|| {
                 vec![FailValueRequirement::FieldEquals {
-                    path: helm_schema_core::split_value_path(field),
+                    path: field,
                     value: value.clone(),
                 }]
             })
@@ -1897,9 +1906,11 @@ pub(super) fn requirements_from_holding(
         }
         Predicate::Not(inner) => match inner.as_ref() {
             Predicate::Guard(Guard::Absent { path }) => {
-                let member = path.strip_prefix(&format!("{scope}."))?;
-                (!member.contains('.'))
-                    .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+                let member = relative_value_path(path, scope)?;
+                let [member] = member.as_slice() else {
+                    return None;
+                };
+                Some(vec![FailValueRequirement::HasMember(member.clone())])
             }
             _ => requirements_from_negation(inner, scope),
         },

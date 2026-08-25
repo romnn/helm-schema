@@ -132,9 +132,15 @@ pub(super) fn eval_dig(
 /// as nil and aborts the same assertion; loki's null-deleted
 /// `storage_config`).
 fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
-    let Some((parent, leaf)) = helm_schema_core::split_value_path(path)
-        .split_last()
-        .map(|(leaf, parents)| (parents.join("."), leaf.clone()))
+    let Some((parent, leaf)) =
+        helm_schema_core::split_value_path(path)
+            .split_last()
+            .map(|(leaf, parents)| {
+                (
+                    helm_schema_core::join_value_path(parents.iter()),
+                    leaf.clone(),
+                )
+            })
     else {
         return Vec::new();
     };

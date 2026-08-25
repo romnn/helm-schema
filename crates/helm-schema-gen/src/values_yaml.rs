@@ -317,19 +317,21 @@ fn prune_referenced_descendant_schemas(
     value_path: &str,
     referenced_value_paths: &BTreeSet<String>,
 ) {
-    let descendant_prefix = format!("{value_path}.");
+    let value_path_segments = crate::split_value_path(value_path);
     let mut relative_paths_to_prune = BTreeSet::new();
     for descendant in referenced_value_paths {
-        let Some(relative_path) = descendant.strip_prefix(&descendant_prefix) else {
+        let descendant_segments = crate::split_value_path(descendant);
+        let Some(relative_segments) =
+            descendant_segments.strip_prefix(value_path_segments.as_slice())
+        else {
             continue;
         };
-        let relative_segments = crate::split_value_path(relative_path);
         if relative_segments.is_empty() {
             continue;
         }
         relative_paths_to_prune.insert(shortest_referenced_relative_path(
             value_path,
-            &relative_segments,
+            relative_segments,
             referenced_value_paths,
         ));
     }

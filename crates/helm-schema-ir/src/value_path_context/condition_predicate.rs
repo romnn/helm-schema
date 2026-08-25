@@ -3042,7 +3042,10 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
                 }
             }
             AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
-                if path.split('.').any(|segment| segment == "*") {
+                if helm_schema_core::split_value_path(path)
+                    .iter()
+                    .any(|segment| segment == "*")
+                {
                     return None;
                 }
                 arms.push(Predicate::truthy_path(path));
@@ -3052,7 +3055,10 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
             // fires arms whose member typing is null-relaxed, so the delta
             // stays in the accept direction.
             AbstractValue::OutputPath(path, meta) if meta.nil_scrubbed && !path.is_empty() => {
-                if path.split('.').any(|segment| segment == "*") {
+                if helm_schema_core::split_value_path(path)
+                    .iter()
+                    .any(|segment| segment == "*")
+                {
                     return None;
                 }
                 arms.push(Predicate::truthy_path(path));
@@ -3075,7 +3081,10 @@ fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predica
     for candidate in candidates {
         match candidate {
             AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
-                if path.split('.').any(|segment| segment == "*") {
+                if helm_schema_core::split_value_path(path)
+                    .iter()
+                    .any(|segment| segment == "*")
+                {
                     return None;
                 }
                 arms.push(Predicate::truthy_path(path.clone()));

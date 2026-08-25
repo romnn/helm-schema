@@ -76,9 +76,9 @@ pub(super) fn collapse_layered_truthy_gates(
     // Layers arrive member-projected (each ends with the row's shared
     // member suffix); the merge ROOTS are the layers with the longest
     // common dot-suffix stripped.
-    let split: Vec<Vec<&str>> = layers
+    let split: Vec<Vec<String>> = layers
         .iter()
-        .map(|layer| layer.split('.').collect())
+        .map(|layer| helm_schema_core::split_value_path(layer))
         .collect();
     let Some(first) = split.first() else {
         return guards;
@@ -108,12 +108,12 @@ pub(super) fn collapse_layered_truthy_gates(
         .iter()
         .map(|segments| {
             let keep = segments.len().saturating_sub(common);
-            segments.get(..keep).unwrap_or_default().join(".")
+            helm_schema_core::join_value_path(segments.get(..keep).unwrap_or_default())
         })
         .collect();
     let concrete_layers: Vec<&String> = roots
         .iter()
-        .filter(|layer| !layer.split('.').any(|segment| segment == "*"))
+        .filter(|layer| !path_contains_wildcard(layer))
         .collect();
     // A wildcard layer has no document-root spelling of its own, but a
     // per-set member can only supply the merged value when the set
@@ -126,26 +126,28 @@ pub(super) fn collapse_layered_truthy_gates(
     let wildcard_collections: Vec<String> = roots
         .iter()
         .filter_map(|layer| {
-            let segments: Vec<&str> = layer.split('.').collect();
+            let segments = helm_schema_core::split_value_path(layer);
             let wildcard = segments.iter().position(|segment| *segment == "*")?;
             let prefix = segments.get(..wildcard)?;
-            (!prefix.is_empty()).then(|| prefix.join("."))
+            (!prefix.is_empty()).then(|| helm_schema_core::join_value_path(prefix))
         })
         .collect();
-    let mut suffix_members: BTreeMap<&str, BTreeSet<usize>> = BTreeMap::new();
+    let mut suffix_members: BTreeMap<String, BTreeSet<usize>> = BTreeMap::new();
     for (index, guard) in guards.iter().enumerate() {
         let ConditionalGuard::Truthy { path } = guard else {
             continue;
         };
         for layer in &concrete_layers {
-            let Some(suffix) = path
-                .strip_prefix(layer.as_str())
-                .and_then(|rest| rest.strip_prefix('.'))
-            else {
+            let path_segments = helm_schema_core::split_value_path(path);
+            let layer_segments = helm_schema_core::split_value_path(layer);
+            let Some(suffix) = path_segments.strip_prefix(layer_segments.as_slice()) else {
                 continue;
             };
             if !suffix.is_empty() {
-                suffix_members.entry(suffix).or_default().insert(index);
+                suffix_members
+                    .entry(helm_schema_core::join_value_path(suffix))
+                    .or_default()
+                    .insert(index);
             }
         }
     }
@@ -239,10 +241,7 @@ pub(super) fn provider_schema_use(
     // (traefik's `mountPath: {{ $plugin.mountPath | quote }}`).
     let nil_omitting_ranged_leaf = contract_use.kind == ValueKind::Serialized
         && contract_use.nil_omitting
-        && contract_use
-            .source_expr
-            .split('.')
-            .any(|segment| segment == "*");
+        && path_contains_wildcard(&contract_use.source_expr);
     if contract_use.source_expr.trim().is_empty()
         || (matches!(
             contract_use.kind,
@@ -725,7 +724,9 @@ pub(super) fn record_member_range_requirement(
     for predicate in predicates {
         if matches!(
             predicate,
-            Predicate::Guard(Guard::Range { path }) if path == parent || path == &format!("{parent}.*")
+            Predicate::Guard(Guard::Range { path })
+                if path == parent
+                    || path == &helm_schema_core::append_value_path(parent, "*")
         ) {
             continue;
         }

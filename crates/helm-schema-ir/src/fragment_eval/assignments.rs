@@ -123,8 +123,8 @@ pub(super) fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variabl
 pub(super) struct RangeKeyConcretization {
     /// collection path → equated literal key.
     keyed: std::collections::BTreeMap<String, String>,
-    /// (`p.*`, `p.*.`, `p.name`) per keyed collection.
-    rewrites: Vec<(String, String, String)>,
+    /// (`p.*`, `p.name`) per keyed collection.
+    rewrites: Vec<(String, String)>,
 }
 
 impl RangeKeyConcretization {
@@ -143,8 +143,7 @@ impl RangeKeyConcretization {
             .iter()
             .map(|(path, key)| {
                 (
-                    format!("{path}.*"),
-                    format!("{path}.*."),
+                    helm_schema_core::append_value_path(path, "*"),
                     helm_schema_core::append_value_path(path, key),
                 )
             })
@@ -173,12 +172,18 @@ impl RangeKeyConcretization {
                 })
             }
             predicate => predicate.clone().map_value_paths(&mut |path: &str| {
-                for (member, member_prefix, concrete) in &self.rewrites {
+                for (member, concrete) in &self.rewrites {
                     if path == member {
                         return concrete.clone();
                     }
-                    if let Some(rest) = path.strip_prefix(member_prefix.as_str()) {
-                        return format!("{concrete}.{rest}");
+                    let path_segments = helm_schema_core::split_value_path(path);
+                    let member_segments = helm_schema_core::split_value_path(member);
+                    if let Some(rest) = path_segments.strip_prefix(member_segments.as_slice())
+                        && !rest.is_empty()
+                    {
+                        let mut concrete_segments = helm_schema_core::split_value_path(concrete);
+                        concrete_segments.extend(rest.iter().cloned());
+                        return helm_schema_core::join_value_path(concrete_segments);
                     }
                 }
                 path.to_string()
@@ -514,7 +519,10 @@ impl Interpreter<'_> {
                         ));
                         let exact = !condition.contains_approximation()
                             && condition.value_paths().iter().all(|path| {
-                                !path.starts_with('$') && !path.split('.').any(|part| part == "*")
+                                !path.starts_with('$')
+                                    && !helm_schema_core::split_value_path(path)
+                                        .iter()
+                                        .any(|part| part == "*")
                             });
                         if exact {
                             or_predicates(previous, condition)

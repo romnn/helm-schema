@@ -1824,7 +1824,9 @@ impl Interpreter<'_> {
             for conjunct in conjuncts {
                 if let Predicate::Guard(Guard::Eq { path, value }) = &conjunct
                     && !path.starts_with('$')
-                    && !path.split('.').any(|part| part == "*")
+                    && !helm_schema_core::split_value_path(path)
+                        .iter()
+                        .any(|part| part == "*")
                 {
                     return vec![Guard::NotEq {
                         path: path.clone(),
@@ -1839,7 +1841,9 @@ impl Interpreter<'_> {
                 if let Predicate::Not(inner) = &conjunct
                     && let Predicate::Guard(Guard::Truthy { path }) = inner.as_ref()
                     && !path.starts_with('$')
-                    && !path.split('.').any(|part| part == "*")
+                    && !helm_schema_core::split_value_path(path)
+                        .iter()
+                        .any(|part| part == "*")
                 {
                     return vec![Guard::Truthy { path: path.clone() }];
                 }
