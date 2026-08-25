@@ -50,6 +50,7 @@ mod provider_requirement_synthesis;
 mod range_collections;
 mod range_contracts;
 mod range_key_contracts;
+mod requirement_domain;
 mod resolve_policy;
 mod schema_node;
 mod shape_alternatives;

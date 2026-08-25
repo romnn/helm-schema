@@ -614,11 +614,6 @@ fn fail_requirement_runtime_types(
 ) -> BTreeSet<&'static str> {
     use helm_schema_core::ContractRequirementTarget;
 
-    let all_types = || {
-        BTreeSet::from([
-            "array", "boolean", "integer", "null", "number", "object", "string",
-        ])
-    };
     match &implication.target {
         ContractRequirementTarget::Members { allow_integer }
         | ContractRequirementTarget::MembersExceptKeys { allow_integer, .. }
@@ -635,78 +630,27 @@ fn fail_requirement_runtime_types(
             BTreeSet::from(["array", "null", "object"])
         }
         ContractRequirementTarget::Keys => BTreeSet::from(["array", "null", "object"]),
-        ContractRequirementTarget::Value => {
-            let mut types = all_types();
-            for requirement in &implication.requirements {
-                types.retain(|runtime_type| {
-                    requirement_admits_runtime_type(requirement, runtime_type)
-                });
-            }
-            types
-        }
+        ContractRequirementTarget::Value => crate::requirement_domain::admitted_json_value_kinds(
+            &implication.requirements,
+            crate::requirement_domain::RequirementPosition::WholeValue,
+        )
+        .into_iter()
+        .map(json_kind_runtime_type)
+        .collect(),
     }
 }
 
-fn requirement_admits_runtime_type(
-    requirement: &helm_schema_core::FailValueRequirement,
-    runtime_type: &str,
-) -> bool {
-    use helm_schema_core::FailValueRequirement;
-    match requirement {
-        FailValueRequirement::SchemaType(required)
-        | FailValueRequirement::ComparableKind(required) => {
-            runtime_type == "null"
-                || runtime_type == required
-                || required == "number" && runtime_type == "integer"
-        }
-        FailValueRequirement::SchemaTypeEvenNull(required) => {
-            runtime_type == required || required == "number" && runtime_type == "integer"
-        }
-        // Every runtime kind has a Helm-falsy escape spelling.
-        FailValueRequirement::TruthyImpliesSchemaType(_)
-        | FailValueRequirement::HelmFalsy
-        | FailValueRequirement::FieldHelmFalsy { .. }
-        | FailValueRequirement::FieldNotEquals { .. }
-        | FailValueRequirement::NotEquals(_)
-        // Constrains rendered content, not the value's kind (non-strings
-        // format as safe plain tokens, and every string kind has token-safe
-        // inhabitants).
-        | FailValueRequirement::QuotedSerializationSafe { .. }
-        | FailValueRequirement::PlainScalarSafe { .. } => true,
-        FailValueRequirement::PrintfStringOperand => {
-            matches!(runtime_type, "object" | "string")
-        }
-        FailValueRequirement::HelmTruthy => runtime_type != "null",
-        FailValueRequirement::FieldEquals { .. }
-        | FailValueRequirement::FieldPresentNotNull { .. }
-        | FailValueRequirement::FieldHelmTruthy { .. }
-        | FailValueRequirement::HasMember(_)
-        | FailValueRequirement::HasMemberEvenDefaulted(_) => runtime_type == "object",
-        FailValueRequirement::NotSchemaType(rejected) => {
-            runtime_type != rejected && !(rejected == "number" && runtime_type == "integer")
-        }
-        FailValueRequirement::MatchesPattern { .. }
-        | FailValueRequirement::NotMatchesPattern { .. }
-        | FailValueRequirement::StringLengthBounds { .. } => runtime_type == "string",
-        FailValueRequirement::MemberHost { handled_kinds, .. } => {
-            runtime_type == "object" || handled_kinds.iter().any(|handled| handled == runtime_type)
-        }
-        FailValueRequirement::Iterable { allow_integer } => {
-            matches!(runtime_type, "array" | "null" | "object")
-                || *allow_integer && runtime_type == "integer"
-        }
-        FailValueRequirement::IndexableAt(_) => {
-            matches!(runtime_type, "array" | "string")
-        }
-        FailValueRequirement::SplitSegmentsAtLeast {
-            allow_non_string, ..
-        } => runtime_type == "string" || *allow_non_string,
-        // A kind survives when SOME alternative fully admits it.
-        FailValueRequirement::AnyOf(alternatives) => alternatives.iter().any(|alternative| {
-            alternative
-                .iter()
-                .all(|requirement| requirement_admits_runtime_type(requirement, runtime_type))
-        }),
+fn json_kind_runtime_type(
+    kind: crate::requirement_domain::JsonValueKind,
+) -> &'static str {
+    match kind {
+        crate::requirement_domain::JsonValueKind::Null => "null",
+        crate::requirement_domain::JsonValueKind::Boolean => "boolean",
+        crate::requirement_domain::JsonValueKind::Integer => "integer",
+        crate::requirement_domain::JsonValueKind::NonIntegerNumber => "number",
+        crate::requirement_domain::JsonValueKind::String => "string",
+        crate::requirement_domain::JsonValueKind::Array => "array",
+        crate::requirement_domain::JsonValueKind::Object => "object",
     }
 }
 

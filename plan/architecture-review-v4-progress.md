@@ -586,3 +586,175 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +48 (62,186 to 62,234).
+
+## A4 — owned JSON-kind and integer-range requirement operations
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing. Replace the disagreeing stringly requirement interpreters with two
+  distinct owned operations: `admitted_json_value_kinds` for set-valued JSON kind-domain reasoning,
+  with disjoint integer and non-integer-number classes, and `integer_range_constraint` for the
+  value-sensitive universal constraint over members emitted by Helm integer ranges. Schema
+  spellings must be projections of the appropriate operation; kind membership must not stand in
+  for the integer-count quantifier.
+- Acceptance baseline: `30e49d82` (A3).
+- Baseline production LOC: 62,234 Rust lines from `task tokei:core` on `30e49d82`.
+- Pre-registered acceptance expectations:
+  - WIDEN only the ranged-integer lane for member requirements whose JSON kind domain admits
+    integers through `SchemaType("number")`, `SchemaTypeEvenNull("number")`, or the corresponding
+    exact alternative. Positive integer counts render because each produced member is an integer.
+  - TIGHTEN or WIDEN an integer-count lane only where its per-member requirement has a
+    value-sensitive boundary. `HelmTruthy` admits no positive count because member zero is falsy;
+    `HelmFalsy` admits count one but not count two; a supported integer `NotEquals(n)` admits counts
+    only through `n` when `n` is nonnegative and every count when `n` is negative. A truthy-scoped
+    nonnumeric type admits at most count one because member zero escapes the consumer.
+  - Array-item and object-value member schemas remain byte-identical; only the separate integer
+    range arm may change. Ordinary whole-value requirement domains may change spelling internally
+    but not acceptance.
+  - Every changed corpus cell is adjudicated individually with Helm 4.2.3 before fixture adoption.
+    Any unrelated acceptance flip, fixture byte change outside the registered integer arms, or
+    candidate-accepts/Helm-aborts cell stops the round. Mandatory base and third-level coverage
+    permit zero drops.
+
+- Measured results:
+  - `JsonValueKind` is a disjoint seven-case domain. Integer and non-integer number are distinct,
+    and the `number` schema spelling expands to both instead of relying on string comparison.
+  - `admitted_json_value_kinds` owns exhaustive requirement-domain interpretation. Whole-value and
+    per-member null semantics use the typed `RequirementPosition` rather than the former Boolean
+    mode, and overlay-domain comparison consumes the same operation.
+  - `integer_range_constraint` separately computes the universal bound over generated members. It
+    returns an unbounded lane, an inclusive maximum count, or `None` to abstain; conjunction takes
+    the tighter bound and `AnyOf` takes the wider representable bound.
+  - Member and member-except-key integer arms project that constraint to `maximum`; ranged array
+    keys project the identical index sequence to `maxItems`. The object-key domain remains the
+    independent string-kind projection.
+  - Focused full-schema tests prove the formerly rejected `SchemaType("number")` member lane is an
+    unbounded integer count and that ranged keys use the value-sensitive bound. Operation tests pin
+    integer/non-integer-number separation plus the truthy, falsy, and integer-not-equals boundaries.
+  - The immutable final3 archive contains 88 binaries and 126 files. Its clean schema and IR dumps
+    write 84 and 18 artifacts and are fixture-exact after the two adjudicated fixture updates.
+  - The full-depth comparison against `30e49d82` checks 121,055 probes across 60 charts and reports
+    zero flips, with 112,260/112,260 base and 7,465/7,465 third-level probes.
+
+- Deviations:
+  - The first lint preflight exited 201 because Clippy grouped `HelmTruthy` with other variants
+    returning the same zero bound. The exhaustive patterns were combined without a suppression;
+    no failed-state artifact was produced.
+  - The first immutable-archive preflight exited 101 before archive creation because Clang requires
+    the absolute step-local `TMPDIR` to exist. The directory was created explicitly and the
+    unchanged tree was archived under the distinct final2 name.
+  - The existing optional-leaf rustdoc sat immediately before the deleted kind helper only because
+    the included file ended there; inserting the new projection helpers would have attached that
+    comment to the wrong operation. It now sits beside `optional_leaf_object_path_schema`, the
+    function it describes.
+  - `NotEquals(Float)` returns `None`: integer/float comparison compatibility is not inferred from
+    JSON kinds. The IR producer already drops float not-equals member arms, so this abstention has
+    no live route or fixture effect.
+  - No registered corpus cell flipped. The precise numeric-count defect is outside the current 60
+    charts' generated probes and is held by a direct full-schema regression instead.
+  - The first complete integration gate exited 100 on two registered byte deltas: Jenkins' primary
+    and secondary ingress TLS integer arms became the shared zero-bound definition, and Traefik's
+    `ports` integer arm gained `maximum: 1`. Old and candidate schemas both reject the constructed
+    distinguishing documents through independent constraints, and Helm aborts them too. Only those
+    two adjudicated fixture files were adopted; the final archive was rebuilt afterward.
+  - Production Rust grows by 170 lines because the two formerly conflated questions become
+    exhaustive operations with a disjoint kind type and focused tests. No LOC promise was
+    registered.
+
+- Adjudication evidence:
+  - The final comparison records zero flips and zero candidate-accepts/Helm-aborts cells. No fixture
+    acceptance changes are adopted.
+  - Jenkins `controller.ingress.tls=1` with ingress enabled: old schema rejects, candidate rejects,
+    and `helm template` exits 1 at `len .` with `len of type int64`. The same probe for
+    `controller.secondaryingress.tls=1` with its required hostname exits 1 at the corresponding
+    `len .` call. The fixture-only ref rewrite therefore adds a redundant zero bound.
+  - Traefik `ports=2`: old schema rejects, candidate rejects, and `helm template
+    --skip-schema-validation` exits 1 because `service.yaml` cannot range over integer 2. The
+    fixture-only `maximum: 1` is likewise redundant to the chart's other iterable constraints.
+  - Helm 4.2.3 is the pinned adjudicator. The registered generated-member sequence is the frozen
+    plan's `0..N-1` integer-count model; no direct raw-integer `range` assumption was added.
+
+### Producer and route coverage
+
+| Requirement route | Owned operation | Verification |
+|---|---|---|
+| Whole-value overlay domain | `admitted_json_value_kinds(WholeValue)` | Existing overlay/full corpus schemas remain byte-exact. |
+| Member array/object schema | Existing exact requirement-schema lowering with typed `Member` position | Focused full-schema and complete generator suites pass. |
+| Integer-count member lane | `integer_range_constraint` projected to `maximum` | Number, truthy, falsy, and not-equals operation tests pass. |
+| Ranged array-key lane | Same constraint projected to `maxItems` | Focused full-schema key test and range-key suite pass. |
+| Object-key lane | String membership from `admitted_json_value_kinds(Member)` | Existing pattern/property-name and corpus schemas remain exact. |
+| Alternative/conjunctive requirements | Union/intersection of typed constraints | Exhaustive operation match plus complete workspace suite. |
+
+### Review dossier
+
+- Interpreter audit: the deleted `requirements_allow_runtime_kind` and
+  `requirement_admits_runtime_type` have no remaining call sites. Requirement kind membership is
+  owned by `admitted_json_value_kinds`; integer count bounds are owned only by
+  `integer_range_constraint`.
+- Focused proof: `cargo nextest run -p helm-schema-gen -E 'test(requirement_domain)'`; exit 0,
+  four tests pass. `cargo nextest run -p helm-schema-gen`; exit 0, 615 tests pass.
+- Immutable build: after the rejected missing-directory final1 preflight and the superseded
+  pre-adjudication final2 archive, `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a4-final3-build
+  cargo nextest archive --workspace --archive-file /private/tmp/arch-v4-a4-final3.tar.zst`; exit 0,
+  88 binaries and 126
+  files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a4-final3-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a4-final3.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a4-final3-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a4-final3.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a4-final3-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=30e49d82
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-a4-final3-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-a4-final3-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-a4-final3.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells.
+- Public/wire decision: none. Both new types and operations are crate-private; serialized schemas,
+  path spellings, and ordering stay unchanged outside the corrected integer arm.
+
+### Self-adversarial pass
+
+- JSON Schema `number` cannot be represented as one runtime label without losing whether a value
+  is an integer. The disjoint enum prevents both the former false rejection and a future accidental
+  `number == integer` string shortcut.
+- Kind membership is existential over inhabitants; an integer-count lane is universal over every
+  generated member. Keeping separate operations makes it impossible for truthiness-sensitive
+  requirements to inherit the existential answer.
+- `HelmTruthy` rejects every positive count because zero is always generated first. `HelmFalsy`
+  accepts count one because its sole member is zero, then rejects count two when member one appears.
+  An excluded nonnegative integer `n` first appears when count exceeds `n`, hence inclusive
+  `maximum: n`.
+- Array keys and integer-count members share the same generated sequence but different JSON Schema
+  hosts. One typed constraint projected to `maxItems` or `maximum` closes that hand-synced semantic
+  pair without conflating their schemas.
+- Field-host requirements still force a zero integer count at `MembersAt` before their leaf
+  requirement is considered: generated integers cannot host the selected field. That separate
+  structural rule is unchanged.
+- The corpus's zero flips are not treated as proof that the defect was unreachable. The direct
+  full-schema regression constructs the exact `Members { allow_integer: true }` carrier and pins
+  the corrected emitted schema.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected 201 preflight.
+- `task lint:fc`; exit 0.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0 after the rejected exit-100 pre-adjudication sweep.
+- `task test:all`; exit 0.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 62,404 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +170 (62,234 to 62,404).

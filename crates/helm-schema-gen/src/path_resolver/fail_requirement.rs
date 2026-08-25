@@ -15,10 +15,14 @@ pub(crate) fn fail_requirement_schema<'a>(
     for implication in implications {
         let requirement = fail_value_requirement_schema(
             &implication.requirements,
-            !matches!(
+            if matches!(
                 &implication.target,
                 helm_schema_core::ContractRequirementTarget::Value
-            ),
+            ) {
+                crate::requirement_domain::RequirementPosition::WholeValue
+            } else {
+                crate::requirement_domain::RequirementPosition::Member
+            },
         );
         if is_empty_schema(&requirement) {
             continue;
@@ -34,15 +38,7 @@ pub(crate) fn fail_requirement_schema<'a>(
                     }),
                 ];
                 if *allow_integer {
-                    let integer =
-                        if requirements_allow_runtime_kind(&implication.requirements, "integer") {
-                            serde_json::json!({ "type": "integer" })
-                        } else {
-                            // Nonpositive integer ranges execute no iterations,
-                            // so no member reaches the body requirement.
-                            serde_json::json!({ "type": "integer", "maximum": 0 })
-                        };
-                    arms.push(integer);
+                    arms.extend(integer_range_schema(&implication.requirements));
                 }
                 arms.push(serde_json::json!({ "type": "null" }));
                 parts.push(serde_json::json!({ "anyOf": arms }));
@@ -64,13 +60,7 @@ pub(crate) fn fail_requirement_schema<'a>(
                     }),
                 ];
                 if *allow_integer {
-                    let integer =
-                        if requirements_allow_runtime_kind(&implication.requirements, "integer") {
-                            serde_json::json!({ "type": "integer" })
-                        } else {
-                            serde_json::json!({ "type": "integer", "maximum": 0 })
-                        };
-                    arms.push(integer);
+                    arms.extend(integer_range_schema(&implication.requirements));
                 }
                 arms.push(serde_json::json!({ "type": "null" }));
                 parts.push(serde_json::json!({ "anyOf": arms }));
@@ -185,12 +175,17 @@ pub(crate) fn fail_requirement_schema<'a>(
                 }));
             }
             helm_schema_core::ContractRequirementTarget::Keys => {
-                let mut object =
-                    if requirements_allow_runtime_kind(&implication.requirements, "string") {
-                        serde_json::json!({ "type": "object" })
-                    } else {
-                        serde_json::json!({ "type": "object", "maxProperties": 0 })
-                    };
+                let member_kinds = crate::requirement_domain::admitted_json_value_kinds(
+                    &implication.requirements,
+                    crate::requirement_domain::RequirementPosition::Member,
+                );
+                let mut object = if member_kinds
+                    .contains(&crate::requirement_domain::JsonValueKind::String)
+                {
+                    serde_json::json!({ "type": "object" })
+                } else {
+                    serde_json::json!({ "type": "object", "maxProperties": 0 })
+                };
                 // Pattern requirements constrain each KEY's spelling
                 // (traefik's uppercase gate); string keys are structural in
                 // YAML maps, so only the pattern itself needs encoding.
@@ -253,16 +248,16 @@ pub(crate) fn fail_requirement_schema<'a>(
                         }
                     }
                 }
-                let array = if requirements_allow_runtime_kind(&implication.requirements, "integer")
-                {
-                    serde_json::json!({ "type": "array" })
-                } else {
-                    // An empty array never evaluates the range body, so no
-                    // integer key reaches the strict consumer.
-                    serde_json::json!({ "type": "array", "maxItems": 0 })
-                };
+                let array = integer_range_constraint_schema(
+                    &implication.requirements,
+                    "array",
+                    "maxItems",
+                );
+                let mut arms = vec![object];
+                arms.extend(array);
+                arms.push(serde_json::json!({ "type": "null" }));
                 parts.push(serde_json::json!({
-                    "anyOf": [object, array, { "type": "null" }]
+                    "anyOf": arms
                 }));
             }
         }
@@ -270,71 +265,30 @@ pub(crate) fn fail_requirement_schema<'a>(
     (merge_schema_list(parts), insertion_abstentions)
 }
 
-/// Like [`required_object_path_schema`], but the LEAF member stays
-/// optional: nil-tolerant requirements (comparison operands) constrain the
-/// field only when it is present. Intermediate segments stay required
-/// because field access through an absent parent aborts rendering with a
-/// nil-pointer error before the tolerant leaf comparison runs.
-fn requirements_allow_runtime_kind(
+fn integer_range_schema(
+    requirements: &[helm_schema_core::FailValueRequirement],
+) -> Option<Value> {
+    integer_range_constraint_schema(requirements, "integer", "maximum")
+}
+
+fn integer_range_constraint_schema(
     requirements: &[helm_schema_core::FailValueRequirement],
     schema_type: &str,
-) -> bool {
-    use helm_schema_core::FailValueRequirement;
+    maximum_keyword: &str,
+) -> Option<Value> {
+    use crate::requirement_domain::IntegerRangeConstraint;
 
-    requirements.iter().all(|requirement| match requirement {
-        FailValueRequirement::SchemaType(required)
-        // Null is asserted away before Sprig's missing-key handling runs.
-        | FailValueRequirement::SchemaTypeEvenNull(required) => required == schema_type,
-        // Every runtime kind has a Helm-falsy spelling that escapes the
-        // consumer, so the truthy-scoped requirement excludes no kind.
-        FailValueRequirement::TruthyImpliesSchemaType(_)
-        // Every runtime kind has a Helm-falsy spelling.
-        | FailValueRequirement::HelmFalsy
-        | FailValueRequirement::NotEquals(_)
-        // Applies only to present fields on objects; every other kind
-        // passes vacuously (a missing field differs from every literal).
-        | FailValueRequirement::FieldNotEquals { .. }
-        // The requirement constrains rendered CONTENT, not the value's kind
-        // (non-strings format as safe plain tokens, and every string kind
-        // has token-safe inhabitants).
-        | FailValueRequirement::QuotedSerializationSafe { .. }
-        | FailValueRequirement::PlainScalarSafe { .. }
-        // The field constraint applies only to objects carrying the field;
-        // every other kind passes vacuously.
-        | FailValueRequirement::FieldHelmFalsy { .. } => true,
-        // Every runtime kind except null has truthy inhabitants.
-        FailValueRequirement::HelmTruthy => schema_type != "null",
-        FailValueRequirement::ComparableKind(required) => {
-            required == schema_type || schema_type == "null"
+    match crate::requirement_domain::integer_range_constraint(requirements)? {
+        IntegerRangeConstraint::Any => Some(serde_json::json!({ "type": schema_type })),
+        IntegerRangeConstraint::Maximum(maximum) => {
+            let mut schema = serde_json::Map::from_iter([(
+                "type".to_string(),
+                serde_json::json!(schema_type),
+            )]);
+            schema.insert(maximum_keyword.to_string(), serde_json::json!(maximum));
+            Some(Value::Object(schema))
         }
-        FailValueRequirement::PrintfStringOperand => {
-            matches!(schema_type, "object" | "string")
-        }
-        FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
-        FailValueRequirement::MatchesPattern { .. }
-        | FailValueRequirement::NotMatchesPattern { .. }
-        | FailValueRequirement::StringLengthBounds { .. } => schema_type == "string",
-        FailValueRequirement::Iterable { allow_integer } => {
-            matches!(schema_type, "array" | "object" | "null")
-                || schema_type == "integer" && *allow_integer
-        }
-        FailValueRequirement::HasMember(_)
-        | FailValueRequirement::HasMemberEvenDefaulted(_)
-        | FailValueRequirement::FieldEquals { .. }
-        // Presence of a (truthy or non-null) field needs an object host.
-        | FailValueRequirement::FieldPresentNotNull { .. }
-        | FailValueRequirement::FieldHelmTruthy { .. } => schema_type == "object",
-        FailValueRequirement::MemberHost { handled_kinds, .. } => {
-            schema_type == "object" || handled_kinds.iter().any(|kind| kind == schema_type)
-        }
-        FailValueRequirement::IndexableAt(_) => matches!(schema_type, "array" | "string"),
-        FailValueRequirement::SplitSegmentsAtLeast {
-            allow_non_string, ..
-        } => schema_type == "string" || *allow_non_string,
-        FailValueRequirement::AnyOf(alternatives) => alternatives
-            .iter()
-            .any(|alternative| requirements_allow_runtime_kind(alternative, schema_type)),
-    })
+    }
 }
 
 #[expect(
@@ -343,7 +297,7 @@ fn requirements_allow_runtime_kind(
 )]
 fn fail_value_requirement_schema(
     requirements: &[helm_schema_core::FailValueRequirement],
-    per_member: bool,
+    position: crate::requirement_domain::RequirementPosition,
 ) -> Value {
     use helm_schema_core::FailValueRequirement;
     let mut parts = Vec::new();
@@ -351,7 +305,7 @@ fn fail_value_requirement_schema(
     for requirement in requirements {
         match requirement {
             FailValueRequirement::SchemaType(schema_type) => {
-                if per_member {
+                if position == crate::requirement_domain::RequirementPosition::Member {
                     parts.push(type_schema(schema_type));
                 } else {
                     parts.push(crate::schema_model::type_union_schema([
@@ -583,7 +537,7 @@ fn fail_value_requirement_schema(
             FailValueRequirement::AnyOf(alternatives) => {
                 let arms: Vec<Value> = alternatives
                     .iter()
-                    .map(|alternative| fail_value_requirement_schema(alternative, per_member))
+                    .map(|alternative| fail_value_requirement_schema(alternative, position))
                     .collect();
                 // Field-based alternatives all READ a member field, and a
                 // field read aborts on non-object members, so the

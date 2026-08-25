@@ -419,6 +419,11 @@ fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
 
 include!("path_resolver/fail_requirement.rs");
 
+/// Like [`required_object_path_schema`], but the LEAF member stays
+/// optional: nil-tolerant requirements (comparison operands) constrain the
+/// field only when it is present. Intermediate segments stay required
+/// because field access through an absent parent aborts rendering with a
+/// nil-pointer error before the tolerant leaf comparison runs.
 fn optional_leaf_object_path_schema(path: &[String], leaf: Value) -> Value {
     let Some((last, parents)) = path.split_last() else {
         return leaf;
