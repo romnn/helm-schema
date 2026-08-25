@@ -15,6 +15,24 @@ pub enum CliError {
     #[error("yaml error: {0}")]
     Yaml(#[from] serde_yaml::Error),
 
+    /// Values declarations use keys whose spelling Helm normalizes ambiguously.
+    #[error(
+        "unquoted YAML 1.1 Boolean-alias keys are not supported in chart declarations:\n{details}"
+    )]
+    YamlBooleanAliasKeys {
+        /// Deterministically ordered file locations and source spellings.
+        details: String,
+    },
+
+    /// A values declaration could not be structurally inspected for key style.
+    #[error("failed to inspect YAML Boolean-alias keys in {path}: {message}")]
+    YamlBooleanAliasScan {
+        /// Values declaration being inspected.
+        path: String,
+        /// YAML parser failure.
+        message: String,
+    },
+
     /// JSON input or output could not be decoded or encoded.
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),

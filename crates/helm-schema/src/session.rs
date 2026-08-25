@@ -70,6 +70,7 @@ struct PreparedSession {
 impl PreparedSession {
     fn from_generate_options(opts: &GenerateOptions) -> EngineResult<Self> {
         let charts = &chart::discover_chart_contexts(&opts.chart_dir)?;
+        chart::reject_legacy_boolean_alias_keys(charts, &opts.values_files)?;
 
         let defines = chart::build_define_index(charts, opts.include_tests)?;
         let composed_values =

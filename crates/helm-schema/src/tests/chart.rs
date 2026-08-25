@@ -1,10 +1,161 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use std::collections::BTreeMap;
+use std::fmt::Write as _;
 
 use crate::chart::discovery;
 use crate::chart::*;
+use crate::error::CliError;
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn legacy_boolean_alias_keys_are_aggregated_across_values_declarations() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {r#"
+            on: root
+            canonical: {true: allowed, false: allowed}
+            quoted: {"no": allowed, 'YES': allowed}
+            tagged: {!!str off: allowed}
+            value: on
+            flow: {Yes: root-flow, "OFF": allowed}
+            sequence:
+              - {n: nested-sequence}
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        "nested: {Off: child}\n",
+    )?;
+
+    let override_dir = tempfile::tempdir()?;
+    let override_path = override_dir.path().join("override.yaml");
+    std::fs::write(&override_path, "Y: override\n")?;
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let Err(error) =
+        reject_legacy_boolean_alias_keys(&charts, std::slice::from_ref(&override_path))
+    else {
+        return Err(eyre::eyre!("plain legacy aliases were accepted"));
+    };
+    let CliError::YamlBooleanAliasKeys { details } = error else {
+        return Err(eyre::eyre!("unexpected rejection: {error}"));
+    };
+
+    let mut want = vec![
+        "/charts/child/values.yaml:1:10: unquoted key `Off`".to_string(),
+        "/values.yaml:1:1: unquoted key `on`".to_string(),
+        "/values.yaml:6:8: unquoted key `Yes`".to_string(),
+        "/values.yaml:8:6: unquoted key `n`".to_string(),
+        format!("{}:1:1: unquoted key `Y`", override_path.display()),
+    ];
+    want.sort();
+    let want = want
+        .into_iter()
+        .map(|line| format!("  {line}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    sim_assert_eq!(have: details, want: want);
+    Ok(())
+}
+
+#[test]
+fn every_measured_legacy_boolean_alias_spelling_is_rejected() -> eyre::Result<()> {
+    let aliases = [
+        "y", "Y", "yes", "Yes", "YES", "n", "N", "no", "No", "NO", "on", "On", "ON", "off", "Off",
+        "OFF",
+    ];
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    let mut source = String::new();
+    for alias in aliases {
+        writeln!(source, "{alias}: value")?;
+    }
+    test_util::write(&chart_dir.join("values.yaml")?, source)?;
+
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let Err(CliError::YamlBooleanAliasKeys { details }) =
+        reject_legacy_boolean_alias_keys(&charts, &[])
+    else {
+        return Err(eyre::eyre!("a measured legacy alias spelling was accepted"));
+    };
+    let want = aliases
+        .iter()
+        .enumerate()
+        .map(|(index, alias)| format!("  /values.yaml:{}:1: unquoted key `{alias}`", index + 1))
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: details, want: want.join("\n"));
+    Ok(())
+}
+
+#[test]
+fn boolean_alias_rejection_precedes_template_analysis() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "yes: rejected\n")?;
+    test_util::write(
+        &chart_dir.join("templates/broken.yaml")?,
+        "{{ if definitely not a valid action }}\n",
+    )?;
+
+    let result = crate::AnalysisSession::new(crate::GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: crate::generation::SchemaProfile::default().into(),
+        provider: crate::provider::ProviderOptions {
+            disable_k8s_schemas: true,
+            allow_net: false,
+            ..Default::default()
+        },
+    })
+    .analysis();
+    let Err(error) = result else {
+        return Err(eyre::eyre!("legacy alias did not stop preparation"));
+    };
+    let CliError::YamlBooleanAliasKeys { details } = error else {
+        return Err(eyre::eyre!(
+            "analysis ran before declaration validation: {error}"
+        ));
+    };
+    sim_assert_eq!(
+        have: details,
+        want: "  /values.yaml:1:1: unquoted key `yes`"
+    );
+    Ok(())
+}
 
 #[test]
 fn chart_metadata_becomes_segmented_static_root_strings() -> eyre::Result<()> {

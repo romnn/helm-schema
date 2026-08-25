@@ -5197,7 +5197,7 @@ adjudication.
 
 ## Step 10 operation 3 — delete the hybrid Helm/YAML grammars
 
-- Status: landed; commit pending.
+- Status: landed in `3e3a67f2`.
 - Contract: representation-only. Delete `helm_schema_ast::parse_helm_template`,
   the hybrid Helm/YAML grammar bindings and build entries, both obsolete
   vendored grammar trees, their grammar-specific tests and fixtures, and direct
@@ -5362,3 +5362,196 @@ adjudication.
   - `git diff --check`: exit 0.
 - Measured production LOC delta: -82 (61,984 to 61,902); cumulative Step 10
   delta through operation 3: -45.
+
+## Step 11a — reject YAML 1.1 Boolean-alias declaration keys
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing, D1 option 1. Reject chart declarations that
+  contain unquoted YAML-1.1 Boolean-alias keys with one aggregated diagnostic
+  before analysis. Preserve quoted keys, canonical Boolean spellings, and
+  `--set` path behavior.
+- Acceptance baseline: `3e3a67f2`.
+- Baseline production Rust LOC: 61,902.
+
+### Pre-registered acceptance expectations
+
+- Before implementation, the complete Round 71 live matrix is rerun against
+  pinned Helm 4.2.3 and records defaults, 32 collision replays, layered values
+  files, quoted aliases, and `--set` paths.
+- Declaration scanning covers every discovered chart's `values.yaml` plus
+  explicit values files supplied as analysis inputs. It identifies only plain,
+  unquoted mapping keys whose decoded spelling is `y`, `Y`, `yes`, `Yes`,
+  `YES`, `n`, `N`, `no`, `No`, `NO`, `on`, `On`, `ON`, `off`, `Off`, or
+  `OFF` according to the D1 contract's legacy alias set. Canonical
+  `true`/`false` spellings are outside that measured legacy set and remain
+  unchanged.
+- One invocation reports one deterministic aggregated diagnostic naming every
+  affected file/key location before chart analysis or schema emission begins.
+  No first-error-only lane or parser normalization is authorized.
+- Quoted spellings such as `"on"` and `'no'` remain string keys. CLI `--set`
+  paths remain literal strings and are unaffected because they are not chart
+  declarations.
+- Corpus and luup2 discovery sweeps find zero affected declarations, so tracked
+  schema/IR fixtures are expected to remain byte-identical. Any unrelated
+  acceptance flip stops the step for Helm adjudication before fixture adoption.
+
+### Measured results
+
+- The complete Round 71 matrix was run before implementation against Helm
+  4.2.3. Defaults, 32 repeated collision renders, a layered values file,
+  quoted aliases, and `--set` paths all pass. The repeated mixed-key collision
+  observes both permitted winners, `"legacy"` and `"quoted"`, in one run and
+  reconfirms that deterministic normalization would invent a Helm guarantee.
+- Session preparation now scans every discovered root and dependency
+  `values.yaml` plus every explicit values file before define indexing, values
+  composition, template parsing, IR construction, or schema emission.
+- A style-preserving YAML event walk distinguishes mapping keys from values at
+  arbitrary nesting, including flow mappings and mappings inside sequences.
+  It rejects all 16 measured case-sensitive legacy spellings and reports their
+  file, line, column, and source spelling in one deterministically sorted
+  `YamlBooleanAliasKeys` error.
+- Double-quoted, single-quoted, and explicitly `!!str`-tagged spellings remain
+  strings. Canonical `true` and `false` keys remain unchanged. `--set` paths
+  never enter the declaration scanner and preserve their literal Helm path
+  behavior.
+- Focused controls cover all 16 spellings, root and dependency values,
+  explicit values files, block and flow mappings, a sequence-nested mapping,
+  ordinary scalar values, quoted keys, canonical booleans, explicit string
+  tags, aggregation order, and rejection before an invalid template reaches
+  analysis.
+- The immutable final2 archive contains 88 binaries and 132 files. Its single
+  clean schema dump passes 62/62 and writes 84 artifacts; its single clean IR
+  dump passes 1/1 and writes 18 artifacts. Both trees are byte-identical to
+  the Step 10 operation 3 final1 trees.
+- The full-depth battery compares 60 chart lanes and 121,055 probes with
+  `3e3a67f2`, reports zero corpus acceptance flips, and requires zero per-cell
+  Helm adjudications. The corpus discovery sweep and the downstream 32-chart
+  sweep find no affected declaration.
+
+### Deviations
+
+- A considered design reused `TemplatedDocument`, but that CST intentionally
+  owns templated YAML line layout and treats flow collections as scalar runs;
+  it cannot enumerate nested keys in `{on: value}`. The accepted design uses
+  a bounded YAML event parser only to retain key position and scalar style; it
+  does not construct or retain a second values document representation.
+- The first exhaustive-spelling test preflight failed because the expected
+  diagnostic strings were sorted lexically, placing line 10 before line 2,
+  while production correctly sorts typed numeric locations. The assertion was
+  corrected to numeric source order. No dump, fixture, or acceptance artifact
+  was produced or adopted from that rejected test state.
+- The first final gate on the final1 archive found a test-only
+  `clippy::format_collect` violation in the exhaustive spelling control. The
+  source construction now uses a direct `writeln!` loop. The final1 archive,
+  dumps, coverage report, and otherwise-successful zero-flip probe were all
+  rejected; no final1 artifact is adopted by this step. The immediate lint
+  rerun then exposed an ast-grep warning on the test's escaped multiline chart
+  manifest; it was converted to `indoc!` before the final2 archive build.
+- The first final2 IR dump invocation detached from its tool wrapper after
+  extraction, so the command's own exit code was unavailable. Its batch was
+  rejected despite writing 18 matching artifacts. A distinct final2-ir2
+  `TMPDIR` reran the one IR batch from the same immutable archive, surfaced
+  exit 0, and is the only accepted final2 IR dump.
+- The first downstream gate preflight replaced the inherited `PATH` instead of
+  only prefixing it, hiding luup2's `jv` executable. All 32 workers therefore
+  failed after schema generation at the host-tool lint boundary; the run is
+  rejected as gate evidence. Downstream `git status --short` remained clean.
+  The required rerun prefixes the shim directory to the inherited `PATH`,
+  keeps the explicit `HELM_SCHEMA_BIN`, and passes all 32 charts.
+- The behavior-bearing policy intentionally rejects declarations that Helm can
+  render. This is not recorded as an inferred schema tightening: D1 option 1
+  classifies the legacy spellings as authoring errors because collision winners
+  are not deterministic. Quoted declarations and literal `--set` paths remain
+  accepted exactly as selected by the frozen decision.
+- Step 11a adds 148 production Rust LOC, reaching the upper edge of the frozen
+  combined Step 11 estimate (-50 to +150) before Step 11b. The event walk,
+  typed errors, and deterministic aggregation are the minimum audited shape;
+  no live control or diagnostic detail is removed to manufacture headroom.
+
+### Adjudication evidence
+
+- Before code, the ignored Round 71 test exits 0 under Helm 4.2.3 and observes
+  both collision winners while proving quoted and `--set` behavior. The same
+  test executes from the immutable final2 archive after implementation, exits
+  0 in 0.901 seconds, and observes the same two-winner set.
+- Schema artifact identity against `3e3a67f2` exits 0 across all 84 artifacts;
+  IR artifact identity exits 0 across all 18 artifacts. No fixture is changed
+  or adopted.
+- The ignored Round 74 battery exits 0 in 72.225 seconds: 60 charts, 121,055
+  probes, zero flips, zero Helm adjudication failures, and zero
+  candidate-accepts/Helm-aborts cells against a zero allowance.
+- Mandatory base coverage is 112,260/112,260 and mandatory third-level
+  coverage is 7,465/7,465, with zero drops in both categories. Bounded
+  accounting reports 427 guard pairs, 238 composite pairs, and 28,874
+  disclosed drops.
+
+### Producer and route coverage
+
+| Declaration route | Scanner disposition | Final proof |
+|---|---|---|
+| Root `values.yaml` | Scanned before preparation | Root block/flow and pre-analysis controls |
+| Directory dependency `values.yaml` | Scanned through discovered `ChartContext` | Nested dependency aggregation control |
+| Packaged dependency `values.yaml` | Scanned through the extracted VFS context | Full corpus and luup2 archive sweeps |
+| Explicit values file | Scanned as a declaration input | Aggregated filesystem-file control |
+| Quoted or `!!str` key | Preserved as a string | Exact negative controls |
+| Canonical `true`/`false` key | Outside the legacy set | Exact negative controls |
+| CLI `--set` path | Does not enter declaration scanning | Round 71 live replay |
+
+### Review dossier
+
+- Immutable build proof: `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0` and the
+  distinct final2 build `TMPDIR` create
+  `/private/tmp/arch-v3-step11a-final2.tar.zst` in 3m55s. Every accepted dump,
+  acceptance probe, and final Round 71 replay executes from that archive.
+- Clean schema proof: `SCHEMA_DUMP=1`, the final2 schema `TMPDIR`, the final2
+  archive, the integration profile, and the established schema/corpus filter
+  exit 0 with 62/62 tests and 84 artifacts.
+- Clean IR proof: `SYMBOLIC_DUMP=1 IR_DUMP=1`, the final2-ir2 `TMPDIR`, the
+  final2 archive, and `test(ir_corpus_fixtures_match)` exit 0 with 1/1 and 18
+  artifacts.
+- Exact-artifact proof: separate `diff -rq --exclude 'nextest-*'` comparisons
+  of the Step 10 operation 3 and Step 11a schema and IR directories both exit
+  0.
+- Full-depth proof: baseline `3e3a67f2`, the accepted final2 schema dump, the
+  final2 coverage path, `ADJUDICATE_WITH_HELM=1`, and the ignored Round 74 test
+  execute from the final2 archive and produce the counts above.
+- Ownership: discovery owns which declaration files participate; the bounded
+  event walk owns only lexical key style and location; existing serde values
+  composition remains the sole semantic values model; session preparation owns
+  the rejection boundary.
+
+### Self-adversarial pass
+
+- False-positive pressure: quoted, tagged-string, canonical-boolean, scalar
+  value, comment, and nested-value lanes are outside the rejection set.
+- False-negative pressure: all 16 measured spellings, flow mappings, mappings
+  nested in sequences, root/dependency files, and explicit files are exercised.
+- Phase pressure: an invalid template beside an alias returns the aggregated
+  declaration error, proving analysis has not started.
+- Aggregation pressure: findings sort by typed path/line/column/spelling and
+  deduplicate identical source locations rather than returning the first key.
+- Parser-compatibility pressure: the complete 60-chart corpus preflight passes
+  562/562 after every values file is inspected; the downstream sweep repeats
+  the compatibility proof over 32 independently maintained charts.
+- Policy pressure: the implementation does not normalize aliases, choose a
+  collision winner, rewrite `.Values` paths, or inspect `--set` syntax.
+
+- Gates on the final Step 11a tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 48 combinations, zero warnings or errors.
+  - `cargo nextest run --workspace`: exit 0; 1,265/1,265 passed.
+  - `task test:integration`: exit 0; 562/562 passed, 24 skipped.
+  - `task test:all`: exit 0; 1,831/1,831 passed, 24 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0 with the established macOS shims, inherited PATH,
+    and explicit `HELM_SCHEMA_BIN`; all 32 charts pass.
+  - Downstream `git status --short`: exit 0 with no output.
+  - `task tokei:core`: exit 0; 62,050 production Rust LOC.
+  - `git diff --exit-code 44aa758 -- plan/architecture-review-v3.md
+    plan/schema-emission-profiles.md`: exit 0.
+  - `git diff --exit-code 5ef11aa --
+    plan/architecture-review-v3-wave2.md`: exit 0.
+  - `git diff --check`: exit 0.
+- Measured production LOC delta: +148 (61,902 to 62,050).
