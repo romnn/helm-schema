@@ -33,6 +33,17 @@ pub enum CliError {
         message: String,
     },
 
+    /// A chart declares the same dependency name more than once.
+    #[error(
+        "duplicate dependency names are not supported in {path}:\n{details}\ndependency names must be unique because Helm's installed-chart association is nondeterministic"
+    )]
+    DuplicateDependencyNames {
+        /// Manifest containing the duplicate declarations.
+        path: String,
+        /// Deterministically ordered names and declaration counts.
+        details: String,
+    },
+
     /// JSON input or output could not be decoded or encoded.
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),

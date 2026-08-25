@@ -398,13 +398,39 @@ fn read_chart_yaml(chart_dir: &VfsPath) -> EngineResult<ChartYaml> {
     };
 
     let mut metadata: ChartYaml = serde_yaml::from_str(&path.read_to_string()?)?;
+    let mut dependency_source = path.as_str().to_string();
     if metadata.dependencies.is_none() {
         let requirements_yaml = chart_dir.join("requirements.yaml")?;
         if requirements_yaml.is_file()? {
             let requirements: RequirementsYaml =
                 serde_yaml::from_str(&requirements_yaml.read_to_string()?)?;
             metadata.dependencies = requirements.dependencies;
+            dependency_source = requirements_yaml.as_str().to_string();
         }
     }
+    reject_duplicate_dependency_names(
+        metadata.dependencies.as_deref().unwrap_or_default(),
+        dependency_source,
+    )?;
     Ok(metadata)
+}
+
+fn reject_duplicate_dependency_names(
+    dependencies: &[ChartDependency],
+    path: String,
+) -> EngineResult<()> {
+    let mut counts = BTreeMap::new();
+    for dependency in dependencies {
+        *counts.entry(dependency.name.as_str()).or_insert(0_usize) += 1;
+    }
+    let details = counts
+        .into_iter()
+        .filter(|(_, count)| *count > 1)
+        .map(|(name, count)| format!("  `{name}`: {count} declarations"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    if details.is_empty() {
+        return Ok(());
+    }
+    Err(CliError::DuplicateDependencyNames { path, details })
 }

@@ -336,6 +336,163 @@ fn dependency_aliases_and_activation_are_read_from_helm_v2_requirements() -> eyr
 }
 
 #[test]
+fn duplicate_dependency_names_are_aggregated_before_discovery() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: shared
+                alias: alpha
+                version: 0.1.0
+              - name: other
+                alias: first
+                version: 0.1.0
+              - name: shared
+                alias: beta
+                version: 0.1.0
+              - name: other
+                alias: second
+                version: 0.1.0
+              - name: other
+                alias: third
+                version: 0.1.0
+        "},
+    )?;
+
+    let Err(error) = discover_chart_contexts(&chart_dir) else {
+        return Err(eyre::eyre!("duplicate dependency names were accepted"));
+    };
+    let diagnostic = error.to_string();
+    let CliError::DuplicateDependencyNames { path, details } = error else {
+        return Err(eyre::eyre!("unexpected duplicate-name result: {error}"));
+    };
+    sim_assert_eq!(have: path, want: "/Chart.yaml");
+    sim_assert_eq!(
+        have: details,
+        want: "  `other`: 3 declarations\n  `shared`: 2 declarations"
+    );
+    sim_assert_eq!(
+        have: diagnostic,
+        want: indoc! {r"
+            duplicate dependency names are not supported in /Chart.yaml:
+              `other`: 3 declarations
+              `shared`: 2 declarations
+            dependency names must be unique because Helm's installed-chart association is nondeterministic
+        "}
+        .trim_end()
+    );
+    Ok(())
+}
+
+#[test]
+fn legacy_requirements_reject_duplicate_dependency_names() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v1
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("requirements.yaml")?,
+        indoc! {"
+            dependencies:
+              - name: shared
+                alias: alpha
+                version: 0.1.0
+              - name: shared
+                alias: beta
+                version: 0.1.0
+        "},
+    )?;
+
+    let Err(error) = discover_chart_contexts(&chart_dir) else {
+        return Err(eyre::eyre!(
+            "legacy duplicate dependency names were accepted"
+        ));
+    };
+    let CliError::DuplicateDependencyNames { path, details } = error else {
+        return Err(eyre::eyre!("unexpected legacy duplicate result: {error}"));
+    };
+    sim_assert_eq!(have: path, want: "/requirements.yaml");
+    sim_assert_eq!(have: details, want: "  `shared`: 2 declarations");
+    Ok(())
+}
+
+#[test]
+fn nested_chart_duplicate_dependency_names_report_their_manifest() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+            dependencies:
+              - name: shared
+                alias: alpha
+                version: 0.1.0
+              - name: shared
+                alias: beta
+                version: 0.1.0
+        "},
+    )?;
+
+    let Err(error) = discover_chart_contexts(&chart_dir) else {
+        return Err(eyre::eyre!(
+            "nested duplicate dependency names were accepted"
+        ));
+    };
+    let CliError::DuplicateDependencyNames { path, details } = error else {
+        return Err(eyre::eyre!("unexpected nested duplicate result: {error}"));
+    };
+    sim_assert_eq!(have: path, want: "/charts/child/Chart.yaml");
+    sim_assert_eq!(have: details, want: "  `shared`: 2 declarations");
+    Ok(())
+}
+
+#[test]
+fn distinct_dependency_names_remain_valid_when_aliases_match() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: first
+                alias: shared-root
+                version: 0.1.0
+              - name: second
+                alias: shared-root
+                version: 0.1.0
+        "},
+    )?;
+
+    let charts = discover_chart_contexts(&chart_dir)?;
+    sim_assert_eq!(have: charts.len(), want: 1);
+    Ok(())
+}
+
+#[test]
 fn vendored_chart_archive_respects_load_budget() -> eyre::Result<()> {
     use std::io::Write;
 
