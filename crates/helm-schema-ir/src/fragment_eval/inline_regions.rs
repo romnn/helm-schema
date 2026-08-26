@@ -27,6 +27,7 @@ use super::hole_effects::RenderedDemotion;
 use super::holes::expr_contains_fail_call;
 use super::lower::{
     LowerScope, MAX_SCALAR_ARM_FANOUT, lower_scalar_dispatch_arms, lower_value_scalar_arms,
+    over_cap_scalar_taint,
 };
 
 impl Interpreter<'_> {
@@ -162,8 +163,7 @@ impl Interpreter<'_> {
         self.locals
             .join_scalar_dispatch_arms(&entry_locals, &local_arm_states, true);
         if arms.len() > MAX_SCALAR_ARM_FANOUT {
-            let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
-            return vec![(Predicate::True, parts)];
+            return over_cap_scalar_taint(arms);
         }
         arms
     }

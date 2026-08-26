@@ -485,6 +485,10 @@ impl Interpreter<'_> {
             // every per-variable fact, but a write-through's monotonicity
             // poison must stay sticky across later writes.
             let previously_cleared = self.locals.truthiness_clears.contains(&assignment.variable);
+            let previously_abstained = self
+                .locals
+                .truthiness_abstentions
+                .contains(&assignment.variable);
             let truthy_reduction = match assignment.kind {
                 crate::fragment_assignment::AssignmentKind::Declaration => rhs_truthy_reduction
                     .or_else(|| {
@@ -603,6 +607,20 @@ impl Interpreter<'_> {
                     .insert(assignment.variable.clone(), predicate);
             } else {
                 self.locals.truthy_reductions.remove(&assignment.variable);
+            }
+            match assignment.kind {
+                crate::fragment_assignment::AssignmentKind::Declaration => {
+                    self.locals
+                        .truthiness_abstentions
+                        .remove(&assignment.variable);
+                }
+                crate::fragment_assignment::AssignmentKind::Assignment if previously_abstained => {
+                    self.locals.truthy_reductions.remove(&assignment.variable);
+                    self.locals
+                        .truthiness_abstentions
+                        .insert(assignment.variable.clone());
+                }
+                crate::fragment_assignment::AssignmentKind::Assignment => {}
             }
             // A write-through that does not imply truthiness can leave the
             // local falsy after an earlier truthy write, so an enclosing

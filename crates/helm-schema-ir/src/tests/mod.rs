@@ -3,6 +3,7 @@ mod contract_signals;
 mod expr_eval;
 mod expr_eval_helper_hooks;
 mod fragment_expr_eval;
+mod fragment_fanout;
 mod fragment_scope_eval;
 mod function_semantics;
 mod ip_item_pattern;

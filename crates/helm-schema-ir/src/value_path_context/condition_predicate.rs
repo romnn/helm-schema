@@ -149,6 +149,11 @@ impl ValuePathContext<'_> {
     }
 
     fn condition_lowering_fidelity(&self, expr: &TemplateExpr, use_: ConditionFidelityUse) -> bool {
+        if let TemplateExpr::Variable(name) = expr.deparen()
+            && self.truthiness_abstains(name)
+        {
+            return false;
+        }
         if self.exact_evaluated_truth_predicate(expr).is_some() {
             return true;
         }
@@ -1039,6 +1044,25 @@ impl ValuePathContext<'_> {
         })
     }
 
+    fn truthiness_abstains(&self, name: &str) -> bool {
+        self.template_truthiness_abstentions.contains(name)
+            || self
+                .template_truthiness_abstentions
+                .contains(name.trim_start_matches('$'))
+    }
+
+    pub(crate) fn condition_uses_truthiness_abstention(&self, expr: &TemplateExpr) -> bool {
+        let mut abstains = false;
+        expr.walk(|part| {
+            if let TemplateExpr::Variable(name) = part
+                && self.truthiness_abstains(name)
+            {
+                abstains = true;
+            }
+        });
+        abstains
+    }
+
     fn negated_or_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
         let predicates = args
             .iter()
@@ -1587,13 +1611,16 @@ impl ValuePathContext<'_> {
         if let Some(predicate) = self.root_field_truthy_predicate(expr) {
             return Some(predicate);
         }
-        if let TemplateExpr::Variable(name) = expr.deparen()
-            && let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
+        if let TemplateExpr::Variable(name) = expr.deparen() {
+            if self.truthiness_abstains(name) {
+                return None;
+            }
+            if let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
                 self.template_truthy_reductions
                     .get(name.trim_start_matches('$'))
-            })
-        {
-            return Some(predicate.clone());
+            }) {
+                return Some(predicate.clone());
+            }
         }
         if let TemplateExpr::Variable(name) = expr.deparen()
             && let Some(predicate) = self.get_binding_truthy_predicate(name)
@@ -2416,6 +2443,11 @@ impl ValuePathContext<'_> {
     }
 
     fn single_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        if let TemplateExpr::Variable(name) = expr.deparen()
+            && self.truthiness_abstains(name)
+        {
+            return None;
+        }
         if let Some(predicate) = self.exact_evaluated_truth_predicate(expr) {
             return Some(predicate);
         }

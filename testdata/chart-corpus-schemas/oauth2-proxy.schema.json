@@ -49702,7 +49702,8 @@
               "description": "haproxy.cfg `check fall` setting"
             },
             "checkInterval": {
-              "description": "haproxy.cfg `check inter` setting"
+              "description": "haproxy.cfg `check inter` setting",
+              "type": "string"
             },
             "containerPort": {
               "description": "Modify HAProxy deployment container port"
@@ -50435,9 +50436,6 @@
         "splitBrainDetection": {
           "additionalProperties": {},
           "properties": {
-            "interval": {
-              "description": "Interval between redis sentinel and server split brain checks (in seconds)"
-            },
             "livenessProbe": {
               "description": "liveness probe parameters for split brain container"
             },
@@ -50446,8 +50444,7 @@
             },
             "resources": {
               "description": "splitBrainDetection resources"
-            },
-            "retryInterval": {}
+            }
           }
         },
         "sysctlImage": {

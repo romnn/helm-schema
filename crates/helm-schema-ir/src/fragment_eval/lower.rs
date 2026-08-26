@@ -59,6 +59,27 @@ pub(crate) const MAX_SCALAR_ARMS: usize = 8;
 /// (conditions dropped, meta kept) so pathological templates stay bounded.
 pub(crate) const MAX_SCALAR_ARM_FANOUT: usize = 64;
 
+pub(crate) fn over_cap_scalar_taint(
+    arms: Vec<(PathCondition, Vec<StringPart>)>,
+) -> Vec<(PathCondition, Vec<StringPart>)> {
+    let mut paths = BTreeSet::new();
+    for (_, parts) in arms {
+        for part in parts {
+            match part {
+                StringPart::Text(_) => {}
+                StringPart::Splice(splice) => {
+                    paths.insert(splice.values_path);
+                }
+                StringPart::Taint(taint) => paths.extend(taint.paths),
+            }
+        }
+    }
+    vec![(
+        Predicate::True,
+        vec![StringPart::Taint(TaintPart::abstaining(paths))],
+    )]
+}
+
 /// Effect-derived context under which a hole's value lowers: which paths the
 /// expression defaulted, transformed, or serialized, which paths carry
 /// chart-level `set … default` normalization, and the per-path binding-time
@@ -765,8 +786,7 @@ fn lower_alternative_scalar_arms<'v>(
     }
     arms.extend(conditional_arms);
     if arms.len() > MAX_SCALAR_ARM_FANOUT {
-        let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
-        return vec![(Predicate::True, parts)];
+        return over_cap_scalar_taint(arms);
     }
     arms
 }

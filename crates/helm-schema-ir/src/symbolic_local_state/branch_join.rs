@@ -53,6 +53,10 @@ pub(super) fn joined_branch_outcomes(
             |state| &state.truthy_reductions,
             |values| Some(join_predicate_union(values)),
         ),
+        truthiness_abstentions: outcomes
+            .iter()
+            .flat_map(|state| state.truthiness_abstentions.iter().cloned())
+            .collect(),
         // Any branch's falsy-capable reassignment poisons the accumulator's
         // monotonicity, so the marks union.
         truthiness_clears: outcomes

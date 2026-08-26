@@ -396,6 +396,32 @@ fn branch_join_unions_truthy_reductions_across_outcomes() {
 }
 
 #[test]
+fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
+    let mut entry = SymbolicLocalState::default();
+    entry
+        .truthy_reductions
+        .insert("message".to_string(), Predicate::False);
+    let mut branch = entry.clone();
+    branch
+        .truthy_reductions
+        .insert("message".to_string(), Predicate::truthy_path("result"));
+    let condition = Predicate::all(
+        (0..6)
+            .map(|index| Predicate::truthy_path(format!("guard.{index}")))
+            .collect(),
+    );
+
+    branch.conjoin_changed_truthy_reductions(&entry, &condition);
+    sim_assert_eq!(have: branch.truthy_reductions.get("message"), want: None);
+    assert!(branch.truthiness_abstentions.contains("message"));
+
+    let mut joined = entry.clone();
+    joined.join_branch_outcomes(&entry, &[branch, entry.clone()]);
+    sim_assert_eq!(have: joined.truthy_reductions.get("message"), want: None);
+    assert!(joined.truthiness_abstentions.contains("message"));
+}
+
+#[test]
 fn exact_if_join_conditions_an_untouched_entry_truthy_reduction() {
     let mut entry = SymbolicLocalState::default();
     entry

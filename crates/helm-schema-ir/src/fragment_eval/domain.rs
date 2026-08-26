@@ -228,7 +228,7 @@ pub enum StringPart {
 }
 
 /// Unknown rendered text inside a scalar with its influencing paths.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TaintPart {
     /// The `.Values` paths that flowed into the unknown text.
     pub paths: BTreeSet<String>,
@@ -237,11 +237,19 @@ pub struct TaintPart {
     pub(crate) structured_value: Option<crate::abstract_value::AbstractValue>,
     /// Whether `structured_value` was serialized as JSON at this boundary.
     pub(crate) json_serialized: bool,
+    /// Whether this unknown text may publish a value-kind claim.
+    pub(crate) claims_value_kind: bool,
     /// The render site the taint was observed at.
     pub site: Option<Rc<SiteFacts>>,
     /// Helper-body source sites the taint was derived through (spliced
     /// summary content keeps its body sites here).
     pub provenance: Vec<ContractProvenance>,
+}
+
+impl Default for TaintPart {
+    fn default() -> Self {
+        Self::new(BTreeSet::new())
+    }
 }
 
 impl TaintPart {
@@ -252,8 +260,18 @@ impl TaintPart {
             paths,
             structured_value: None,
             json_serialized: false,
+            claims_value_kind: true,
             site: None,
             provenance: Vec::new(),
+        }
+    }
+
+    /// Provenance-only taint used when bounded fanout must abstain.
+    #[must_use]
+    pub(crate) fn abstaining(paths: BTreeSet<String>) -> Self {
+        Self {
+            claims_value_kind: false,
+            ..Self::new(paths)
         }
     }
 
@@ -262,6 +280,7 @@ impl TaintPart {
             paths: value.fragment_rendered_paths(),
             structured_value: Some(value),
             json_serialized: true,
+            claims_value_kind: true,
             site: None,
             provenance: Vec::new(),
         }

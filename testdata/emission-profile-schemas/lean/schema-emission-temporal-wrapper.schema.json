@@ -5669,9 +5669,6 @@
       ]
     },
     "2b": {
-      "additionalProperties": {}
-    },
-    "2c": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -5709,7 +5706,7 @@
         "null"
       ]
     },
-    "2d": {
+    "2c": {
       "additionalProperties": false,
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
@@ -5735,7 +5732,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "2e": {
+    "2d": {
       "additionalProperties": {},
       "properties": {
         "additionalEnv": {
@@ -5922,7 +5919,7 @@
         }
       }
     },
-    "2f": {
+    "2e": {
       "additionalProperties": {},
       "properties": {
         "subPath": {
@@ -6093,7 +6090,7 @@
         }
       }
     },
-    "2g": {
+    "2f": {
       "allOf": [
         {
           "anyOf": [
@@ -6251,7 +6248,7 @@
         }
       ]
     },
-    "2h": {
+    "2g": {
       "allOf": [
         {
           "properties": {
@@ -6392,7 +6389,7 @@
         }
       ]
     },
-    "2i": {
+    "2h": {
       "additionalProperties": {},
       "properties": {
         "pullPolicy": {
@@ -6400,7 +6397,7 @@
         }
       }
     },
-    "2j": {
+    "2i": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -6408,7 +6405,7 @@
         }
       }
     },
-    "2k": {
+    "2j": {
       "additionalProperties": {},
       "properties": {
         "hostPath": {
@@ -6416,7 +6413,7 @@
         }
       }
     },
-    "2l": {
+    "2k": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -6424,11 +6421,14 @@
         }
       }
     },
-    "2m": {
+    "2l": {
       "description": "runAsUser: 11000\nrunAsGroup: 11000\ncapabilities:\ndrop:\n- ALL"
     },
-    "2n": {
+    "2m": {
       "$ref": "#/$defs/providerSchema40"
+    },
+    "2n": {
+      "additionalProperties": {}
     },
     "2o": {
       "description": "HostAliases is an optional list of hosts and IPs that will be injected into the pod's hosts file if specified. This is only valid for non-hostNetwork pods.",
@@ -154824,7 +154824,7 @@
                 "description": "additionalVolumes:\n- name: secret-with-certs\nsecret:\nsecretName: secret-with-certs\nadditionalVolumeMounts:\n- name: secret-with-certs\nmountPath: /path/to/certs/",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/2i"
+                    "$ref": "#/$defs/2h"
                   }
                 }
               }
@@ -159138,7 +159138,7 @@
               "then": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/2e"
+                    "$ref": "#/$defs/2d"
                   },
                   {
                     "$ref": "#/$defs/7a"
@@ -160022,7 +160022,7 @@
                                           "$ref": "#/$defs/58"
                                         },
                                         "seLinuxOptions": {
-                                          "$ref": "#/$defs/2c"
+                                          "$ref": "#/$defs/2b"
                                         },
                                         "seccompProfile": {
                                           "$ref": "#/$defs/2P"
@@ -160425,7 +160425,7 @@
                                     "$ref": "#/$defs/91"
                                   },
                                   "seLinuxOptions": {
-                                    "$ref": "#/$defs/2c"
+                                    "$ref": "#/$defs/2b"
                                   },
                                   "seccompProfile": {
                                     "$ref": "#/$defs/2P"
@@ -161920,11 +161920,11 @@
                     "properties": {
                       "secretMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/2j"
+                          "$ref": "#/$defs/2i"
                         },
                         "description": "A list of secrets and their paths to mount inside the pod\nThis is useful for mounting certificates for security and for mounting\nthe X-Pack license\n- name: elastic-certificates\nsecretName: elastic-certificates\npath: /usr/share/elasticsearch/config/certs\ndefaultMode: 0755",
                         "items": {
-                          "$ref": "#/$defs/2j"
+                          "$ref": "#/$defs/2i"
                         }
                       }
                     }
@@ -161934,11 +161934,11 @@
                     "properties": {
                       "secretMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/2f"
+                          "$ref": "#/$defs/2e"
                         },
                         "description": "A list of secrets and their paths to mount inside the pod\nThis is useful for mounting certificates for security and for mounting\nthe X-Pack license\n- name: elastic-certificates\nsecretName: elastic-certificates\npath: /usr/share/elasticsearch/config/certs\ndefaultMode: 0755",
                         "items": {
-                          "$ref": "#/$defs/2f"
+                          "$ref": "#/$defs/2e"
                         }
                       }
                     }
@@ -161979,7 +161979,7 @@
                             "$ref": "#/$defs/58"
                           },
                           "seLinuxOptions": {
-                            "$ref": "#/$defs/2c"
+                            "$ref": "#/$defs/2b"
                           },
                           "seccompProfile": {
                             "$ref": "#/$defs/2P"
@@ -163198,7 +163198,9 @@
                   "description": "additionals labels"
                 },
                 "lifecycle": {},
-                "logLevel": {},
+                "logLevel": {
+                  "type": "string"
+                },
                 "masterService": {
                   "description": "The service that non master groups will try to connect to when joining the cluster\nThis should be set to clusterName + \"-\" + nodeGroup for your master group"
                 },
@@ -163346,7 +163348,15 @@
                   "$ref": "#/$defs/1s"
                 },
                 "tls": {
-                  "$ref": "#/$defs/2b"
+                  "additionalProperties": {},
+                  "properties": {
+                    "caFile": {},
+                    "certFile": {},
+                    "enableHostVerification": {},
+                    "enabled": {},
+                    "keyFile": {},
+                    "serverName": {}
+                  }
                 },
                 "tolerations": {},
                 "transportPort": {},
@@ -163494,13 +163504,13 @@
                     "$ref": "#/$defs/1E"
                   },
                   {
-                    "$ref": "#/$defs/2h"
+                    "$ref": "#/$defs/2g"
                   },
                   {
                     "$ref": "#/$defs/1z"
                   },
                   {
-                    "$ref": "#/$defs/2g"
+                    "$ref": "#/$defs/2f"
                   }
                 ]
               },
@@ -163918,7 +163928,7 @@
                                       ]
                                     },
                                     "secretRef": {
-                                      "$ref": "#/$defs/2d"
+                                      "$ref": "#/$defs/2c"
                                     },
                                     "user": {
                                       "anyOf": [
@@ -163969,7 +163979,7 @@
                                       ]
                                     },
                                     "secretRef": {
-                                      "$ref": "#/$defs/2d"
+                                      "$ref": "#/$defs/2c"
                                     },
                                     "volumeID": {
                                       "anyOf": [
@@ -164042,7 +164052,7 @@
                                       ]
                                     },
                                     "nodePublishSecretRef": {
-                                      "$ref": "#/$defs/2d"
+                                      "$ref": "#/$defs/2c"
                                     },
                                     "readOnly": {
                                       "$ref": "#/$defs/k5"
@@ -164712,7 +164722,7 @@
                                       ]
                                     },
                                     "secretRef": {
-                                      "$ref": "#/$defs/2d"
+                                      "$ref": "#/$defs/2c"
                                     }
                                   },
                                   "required": [
@@ -165040,7 +165050,7 @@
                                       ]
                                     },
                                     "secretRef": {
-                                      "$ref": "#/$defs/2d"
+                                      "$ref": "#/$defs/2c"
                                     },
                                     "targetPortal": {
                                       "anyOf": [
@@ -165566,7 +165576,7 @@
                                       ]
                                     },
                                     "secretRef": {
-                                      "$ref": "#/$defs/2d"
+                                      "$ref": "#/$defs/2c"
                                     },
                                     "user": {
                                       "anyOf": [
@@ -165780,7 +165790,7 @@
                                       "$ref": "#/$defs/9E"
                                     },
                                     "secretRef": {
-                                      "$ref": "#/$defs/2d"
+                                      "$ref": "#/$defs/2c"
                                     },
                                     "volumeName": {
                                       "anyOf": [
@@ -166907,11 +166917,11 @@
                     "properties": {
                       "extraSecretMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/2f"
+                          "$ref": "#/$defs/2e"
                         },
                         "description": "Additional grafana server secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsecretName: grafana-secret-files\nreadOnly: true\nsubPath: \"\"\nfor AWS EKS (cloudwatch) use the following (see also instruction in env: above)\n- name: aws-iam-token\nmountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount\nreadOnly: true\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token\nfor CSI e.g. Azure Key Vault use the following\n- name: secrets-store-inline\nmountPath: /run/secrets\nreadOnly: true\ncsi:\ndriver: secrets-store.csi.k8s.io\nreadOnly: true\nvolumeAttributes:\nsecretProviderClass: \"akv-grafana-spc\"\nnodePublishSecretRef:                       # Only required when using service principal mode\nname: grafana-akv-creds                  # Only required when using service principal mode",
                         "items": {
-                          "$ref": "#/$defs/2f"
+                          "$ref": "#/$defs/2e"
                         }
                       }
                     }
@@ -167061,11 +167071,11 @@
                     "properties": {
                       "extraVolumeMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/2f"
+                          "$ref": "#/$defs/2e"
                         },
                         "description": "Additional grafana server volume mounts\nDefines additional volume mounts.\n- name: extra-volume-0\nmountPath: /mnt/volume0\nreadOnly: true\n- name: extra-volume-1\nmountPath: /mnt/volume1\nreadOnly: true\n- name: grafana-secrets\nmountPath: /mnt/volume2",
                         "items": {
-                          "$ref": "#/$defs/2f"
+                          "$ref": "#/$defs/2e"
                         }
                       }
                     }
@@ -167089,11 +167099,11 @@
                     "properties": {
                       "extraVolumes": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/2l"
+                          "$ref": "#/$defs/2k"
                         },
                         "description": "Additional Grafana server volumes\n- name: extra-volume-0\nexistingClaim: volume-claim\n- name: extra-volume-1\nhostPath:\npath: /usr/shared/\ntype: \"\"\n- name: grafana-secrets\ncsi:\ndriver: secrets-store.csi.k8s.io\nreadOnly: true\nvolumeAttributes:\nsecretProviderClass: \"grafana-env-spc\"",
                         "items": {
-                          "$ref": "#/$defs/2l"
+                          "$ref": "#/$defs/2k"
                         }
                       }
                     }
@@ -167483,7 +167493,7 @@
                     "$ref": "#/$defs/44"
                   },
                   {
-                    "$ref": "#/$defs/2h"
+                    "$ref": "#/$defs/2g"
                   },
                   {
                     "$ref": "#/$defs/3U"
@@ -167504,7 +167514,7 @@
                     "$ref": "#/$defs/43"
                   },
                   {
-                    "$ref": "#/$defs/2g"
+                    "$ref": "#/$defs/2f"
                   },
                   {
                     "$ref": "#/$defs/3W"
@@ -167821,10 +167831,10 @@
               "if": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/2h"
+                    "$ref": "#/$defs/2g"
                   },
                   {
-                    "$ref": "#/$defs/2g"
+                    "$ref": "#/$defs/2f"
                   }
                 ]
               },
@@ -168146,7 +168156,7 @@
                       "envRenderSecret": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/2b"
+                            "$ref": "#/$defs/2n"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -168301,7 +168311,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "downloadDashboardsImage": {
-                        "$ref": "#/$defs/2i"
+                        "$ref": "#/$defs/2h"
                       }
                     }
                   }
@@ -169025,7 +169035,7 @@
                     "$ref": "#/$defs/44"
                   },
                   {
-                    "$ref": "#/$defs/2h"
+                    "$ref": "#/$defs/2g"
                   },
                   {
                     "$ref": "#/$defs/3U"
@@ -169064,7 +169074,7 @@
                     "$ref": "#/$defs/43"
                   },
                   {
-                    "$ref": "#/$defs/2g"
+                    "$ref": "#/$defs/2f"
                   },
                   {
                     "$ref": "#/$defs/3W"
@@ -171000,7 +171010,7 @@
                     "$ref": "#/$defs/44"
                   },
                   {
-                    "$ref": "#/$defs/2h"
+                    "$ref": "#/$defs/2g"
                   },
                   {
                     "$ref": "#/$defs/3U"
@@ -171045,7 +171055,7 @@
                     "$ref": "#/$defs/43"
                   },
                   {
-                    "$ref": "#/$defs/2g"
+                    "$ref": "#/$defs/2f"
                   },
                   {
                     "$ref": "#/$defs/3W"
@@ -171108,7 +171118,7 @@
                     "$ref": "#/$defs/44"
                   },
                   {
-                    "$ref": "#/$defs/2h"
+                    "$ref": "#/$defs/2g"
                   },
                   {
                     "$ref": "#/$defs/3U"
@@ -171150,7 +171160,7 @@
                     "$ref": "#/$defs/43"
                   },
                   {
-                    "$ref": "#/$defs/2g"
+                    "$ref": "#/$defs/2f"
                   },
                   {
                     "$ref": "#/$defs/3W"
@@ -175227,7 +175237,7 @@
                   "description": "Extra paths to prepend to every host configuration. This is useful when working with annotation based services.\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nOr for k8s > 1.19\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
                 },
                 "hosts": {
-                  "$ref": "#/$defs/2b"
+                  "$ref": "#/$defs/2n"
                 },
                 "labels": {
                   "$ref": "#/$defs/di"
@@ -175835,7 +175845,6 @@
               "type": "boolean"
             },
             "mysqlPassword": {},
-            "mysqlUser": {},
             "service": {
               "$ref": "#/$defs/du"
             }
@@ -175850,7 +175859,6 @@
               "type": "boolean"
             },
             "postgresqlPassword": {},
-            "postgresqlUser": {},
             "service": {
               "$ref": "#/$defs/du"
             }
@@ -176196,11 +176204,11 @@
                         "properties": {
                           "extraSecretMounts": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/2j"
+                              "$ref": "#/$defs/2i"
                             },
                             "description": "Additional Alertmanager Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: alertmanager-secret-files\nreadOnly: true",
                             "items": {
-                              "$ref": "#/$defs/2j"
+                              "$ref": "#/$defs/2i"
                             }
                           }
                         }
@@ -176287,7 +176295,7 @@
                         "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
                         "properties": {
                           "image": {
-                            "$ref": "#/$defs/2i"
+                            "$ref": "#/$defs/2h"
                           }
                         }
                       }
@@ -176721,7 +176729,7 @@
                                 ]
                               },
                               "seLinuxOptions": {
-                                "$ref": "#/$defs/2c"
+                                "$ref": "#/$defs/2b"
                               },
                               "seccompProfile": {
                                 "$ref": "#/$defs/2P"
@@ -178507,11 +178515,11 @@
                             "properties": {
                               "loadBalancerSourceRanges": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2n"
+                                  "$ref": "#/$defs/2m"
                                 },
                                 "description": "Only allow access to loadBalancerIP from these IPs\nif you want to force a specific nodePort. Must be use with service.type=NodePort\nnodePort:",
                                 "items": {
-                                  "$ref": "#/$defs/2n"
+                                  "$ref": "#/$defs/2m"
                                 }
                               }
                             }
@@ -178880,11 +178888,11 @@
                             "properties": {
                               "extraConfigmapMounts": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2l"
+                                  "$ref": "#/$defs/2k"
                                 },
                                 "description": "Additional configmap-reload mounts\n- name: prometheus-alerts\nmountPath: /etc/alerts.d\nsubPath: \"\"\nconfigMap: prometheus-alerts\nreadOnly: true",
                                 "items": {
-                                  "$ref": "#/$defs/2l"
+                                  "$ref": "#/$defs/2k"
                                 }
                               }
                             }
@@ -179223,11 +179231,11 @@
                         "properties": {
                           "extraHostPathMounts": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/2k"
+                              "$ref": "#/$defs/2j"
                             },
                             "description": "Additional Prometheus server hostPath mounts\n- name: certs-dir\nmountPath: /etc/kubernetes/certs\nsubPath: \"\"\nhostPath: /etc/kubernetes/certs\nreadOnly: true",
                             "items": {
-                              "$ref": "#/$defs/2k"
+                              "$ref": "#/$defs/2j"
                             }
                           }
                         }
@@ -179454,11 +179462,11 @@
                         "properties": {
                           "extraSecretMounts": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/2j"
+                              "$ref": "#/$defs/2i"
                             },
                             "description": "Additional Prometheus server Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: prom-secret-files\nreadOnly: true",
                             "items": {
-                              "$ref": "#/$defs/2j"
+                              "$ref": "#/$defs/2i"
                             }
                           }
                         }
@@ -180770,7 +180778,7 @@
                         "description": "kube-state-metrics sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics",
                         "properties": {
                           "image": {
-                            "$ref": "#/$defs/2i"
+                            "$ref": "#/$defs/2h"
                           }
                         }
                       }
@@ -182186,7 +182194,7 @@
                             "description": "Configure kube-rbac-proxy. When enabled, creates one kube-rbac-proxy container per exposed HTTP endpoint (metrics and telemetry if enabled).\nThe requests are served through the same service but requests are then HTTPS.",
                             "properties": {
                               "image": {
-                                "$ref": "#/$defs/2i"
+                                "$ref": "#/$defs/2h"
                               }
                             }
                           }
@@ -186040,11 +186048,11 @@
                             "properties": {
                               "loadBalancerSourceRanges": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2n"
+                                  "$ref": "#/$defs/2m"
                                 },
                                 "description": "Only allow access to the loadBalancerIP from these IPs",
                                 "items": {
-                                  "$ref": "#/$defs/2n"
+                                  "$ref": "#/$defs/2m"
                                 }
                               }
                             }
@@ -186780,7 +186788,7 @@
                                     "$ref": "#/$defs/58"
                                   },
                                   "seLinuxOptions": {
-                                    "$ref": "#/$defs/2c"
+                                    "$ref": "#/$defs/2b"
                                   },
                                   "seccompProfile": {
                                     "$ref": "#/$defs/2P"
@@ -186903,11 +186911,11 @@
                         "properties": {
                           "extraHostVolumeMounts": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/2k"
+                              "$ref": "#/$defs/2j"
                             },
                             "description": "Additional mounts from the host to node-exporter container\n- name: <mountName>\nhostPath: <hostPath>\nhttps://kubernetes.io/docs/concepts/storage/volumes/#hostpath-volume-types\ntype: \"\" (Default)|DirectoryOrCreate|Directory|FileOrCreate|File|Socket|CharDevice|BlockDevice\nmountPath: <mountPath>\nreadOnly: true|false\nmountPropagation: None|HostToContainer|Bidirectional",
                             "items": {
-                              "$ref": "#/$defs/2k"
+                              "$ref": "#/$defs/2j"
                             }
                           }
                         }
@@ -187747,11 +187755,11 @@
                         "properties": {
                           "sidecarHostVolumeMounts": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/2k"
+                              "$ref": "#/$defs/2j"
                             },
                             "description": "Additional mounts from the host to sidecar containers\n- name: <mountName>\nhostPath: <hostPath>\nmountPath: <mountPath>\nreadOnly: true|false\nmountPropagation: None|HostToContainer|Bidirectional",
                             "items": {
-                              "$ref": "#/$defs/2k"
+                              "$ref": "#/$defs/2j"
                             }
                           }
                         }
@@ -187767,11 +187775,11 @@
                         "properties": {
                           "sidecarHostVolumeMounts": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/2l"
+                              "$ref": "#/$defs/2k"
                             },
                             "description": "Additional mounts from the host to sidecar containers\n- name: <mountName>\nhostPath: <hostPath>\nmountPath: <mountPath>\nreadOnly: true|false\nmountPropagation: None|HostToContainer|Bidirectional",
                             "items": {
-                              "$ref": "#/$defs/2l"
+                              "$ref": "#/$defs/2k"
                             }
                           }
                         }
@@ -192322,7 +192330,7 @@
                         "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
                         "properties": {
                           "image": {
-                            "$ref": "#/$defs/2i"
+                            "$ref": "#/$defs/2h"
                           }
                         }
                       }
@@ -195816,11 +195824,11 @@
                             "properties": {
                               "extraLabels": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2n"
+                                  "$ref": "#/$defs/2m"
                                 },
                                 "description": "Prometheus server Ingress additional labels",
                                 "items": {
-                                  "$ref": "#/$defs/2n"
+                                  "$ref": "#/$defs/2m"
                                 }
                               }
                             }
@@ -198966,7 +198974,7 @@
                   "description": "Sets web configuration\nTo enable basic authentication, provide basicAuthUsers as a map\nbasicAuthUsers:\nusername: password",
                   "properties": {
                     "basicAuthUsers": {
-                      "$ref": "#/$defs/2b"
+                      "$ref": "#/$defs/2n"
                     }
                   }
                 }
@@ -199612,9 +199620,6 @@
                             "namespace": {}
                           }
                         },
-                        "numHistoryShards": {
-                          "description": "IMPORTANT: This value cannot be changed, once it's set."
-                        },
                         "persistence": {
                           "additionalProperties": {},
                           "description": "Define your TLS configuration here. See https://docs.temporal.io/references/configuration#tls\nfor configuration options. You must also use `server.additionalVolumeMounts` and `server.additionalVolumes`\nto mount certificates (from Secret or ConfigMap etc) to the path you use below.\ntls:\ninternode:\nserver:\ncertFile: /path/to/internode/cert/file\nkeyFile: /path/to/internode/key/file\nrequireClientAuth: true\nclientCaFiles:\n- /path/to/internode/serverCa\nclient:\nserverName: dnsSanInInternodeCertificate\nrootCaFiles:\n- /path/to/internode/serverCa\nfrontend:\nserver:\ncertFile: /path/to/frontend/cert/file\nkeyFile: /path/to/frontend/key/file\nrequireClientAuth: true\nclientCaFiles:\n- /path/to/internode/serverCa\n- /path/to/sdkClientPool1/ca\n- /path/to/sdkClientPool2/ca\nclient:\nserverName: dnsSanInFrontendCertificate\nrootCaFiles:\n- /path/to/frontend/serverCa\nDefine your Authorizer and ClaimMapper configuration here. See https://docs.temporal.io/self-hosted-guide/security#authorization\nauthorization:\njwtKeyProvider:\nkeySourceURIs:\n- http://localhost:/jwks.json\nrefreshInterval: 1m\npermissionsClaimName: permissions\nauthorizer: default\nclaimMapper: default",
@@ -199626,12 +199631,12 @@
                                   "additionalProperties": {},
                                   "properties": {
                                     "cassandra": {
-                                      "$ref": "#/$defs/2b"
+                                      "$ref": "#/$defs/2n"
                                     },
                                     "driver": {},
                                     "faultInjection": {},
                                     "sql": {
-                                      "$ref": "#/$defs/2b"
+                                      "$ref": "#/$defs/2n"
                                     }
                                   },
                                   "type": "object"
@@ -199641,7 +199646,6 @@
                                 }
                               ]
                             },
-                            "defaultStore": {},
                             "visibility": {
                               "anyOf": [
                                 {
@@ -199691,7 +199695,7 @@
                                     "driver": {},
                                     "elasticsearch": {},
                                     "sql": {
-                                      "$ref": "#/$defs/2b"
+                                      "$ref": "#/$defs/2n"
                                     }
                                   },
                                   "type": "object"
@@ -199771,7 +199775,7 @@
                             },
                             "tolerations": {},
                             "topologySpreadConstraints": {
-                              "$ref": "#/$defs/2m"
+                              "$ref": "#/$defs/2l"
                             }
                           },
                           "type": "object"
@@ -199816,7 +199820,7 @@
                             },
                             "tolerations": {},
                             "topologySpreadConstraints": {
-                              "$ref": "#/$defs/2m"
+                              "$ref": "#/$defs/2l"
                             }
                           },
                           "type": "object"
@@ -200068,7 +200072,7 @@
                 ]
               },
               "then": {
-                "$ref": "#/$defs/2e"
+                "$ref": "#/$defs/2d"
               }
             },
             {
@@ -200133,7 +200137,7 @@
                                 "$ref": "#/$defs/91"
                               },
                               "seLinuxOptions": {
-                                "$ref": "#/$defs/2c"
+                                "$ref": "#/$defs/2b"
                               },
                               "seccompProfile": {
                                 "additionalProperties": false,
@@ -201094,7 +201098,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "history": {
-                        "$ref": "#/$defs/2e"
+                        "$ref": "#/$defs/2d"
                       }
                     }
                   },
@@ -201508,7 +201512,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "internalFrontend": {
-                        "$ref": "#/$defs/2e"
+                        "$ref": "#/$defs/2d"
                       }
                     }
                   },
@@ -201852,7 +201856,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "matching": {
-                        "$ref": "#/$defs/2e"
+                        "$ref": "#/$defs/2d"
                       }
                     }
                   },
@@ -203093,7 +203097,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "worker": {
-                        "$ref": "#/$defs/2e"
+                        "$ref": "#/$defs/2d"
                       }
                     }
                   },
@@ -203456,7 +203460,7 @@
                 },
                 "tolerations": {},
                 "topologySpreadConstraints": {
-                  "$ref": "#/$defs/2m"
+                  "$ref": "#/$defs/2l"
                 }
               },
               "type": "object"
@@ -203479,7 +203483,7 @@
                 "resources": {},
                 "tolerations": {},
                 "topologySpreadConstraints": {
-                  "$ref": "#/$defs/2m"
+                  "$ref": "#/$defs/2l"
                 }
               },
               "type": "object"
@@ -203657,7 +203661,7 @@
                     "replicaCount": {},
                     "resources": {},
                     "securityContext": {
-                      "$ref": "#/$defs/2m"
+                      "$ref": "#/$defs/2l"
                     },
                     "service": {
                       "anyOf": [
@@ -203801,7 +203805,7 @@
                                 "$ref": "#/$defs/91"
                               },
                               "seLinuxOptions": {
-                                "$ref": "#/$defs/2c"
+                                "$ref": "#/$defs/2b"
                               },
                               "seccompProfile": {
                                 "additionalProperties": false,
@@ -204075,7 +204079,7 @@
             "replicaCount": {},
             "resources": {},
             "securityContext": {
-              "$ref": "#/$defs/2m"
+              "$ref": "#/$defs/2l"
             },
             "service": {
               "additionalProperties": {},

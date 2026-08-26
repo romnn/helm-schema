@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{DefineIndex, parse_action_expressions};
 use test_util::prelude::sim_assert_eq;
@@ -129,6 +129,7 @@ fn condition_context_with_defines(
         Box::leak(Box::new(template_output_meta));
     let template_scalar_dispatches = Box::leak(Box::new(HashMap::new()));
     let template_truthy_reductions = Box::leak(Box::new(HashMap::new()));
+    let template_truthiness_abstentions = Box::leak(Box::new(BTreeSet::new()));
     let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
 
@@ -147,6 +148,7 @@ fn condition_context_with_defines(
         template_default_paths,
         template_output_meta,
         template_truthy_reductions,
+        template_truthiness_abstentions,
         typeof_bindings,
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
@@ -857,6 +859,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
         template_default_paths: Box::leak(Box::new(HashMap::new())),
         template_output_meta: Box::leak(Box::new(HashMap::new())),
         template_truthy_reductions: Box::leak(Box::new(HashMap::new())),
+        template_truthiness_abstentions: Box::leak(Box::new(BTreeSet::new())),
         typeof_bindings: Box::leak(Box::new(HashMap::new())),
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),

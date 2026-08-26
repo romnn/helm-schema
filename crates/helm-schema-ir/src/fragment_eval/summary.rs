@@ -819,6 +819,10 @@ fn project_node(
                     }
                     StringPart::Taint(taint) => {
                         has_non_text = true;
+                        if !taint.claims_value_kind {
+                            values.push(AbstractValue::Widened(taint.paths.clone()));
+                            continue;
+                        }
                         let mut meta = scalar_taint_row_meta(taint, conditions);
                         meta.partial_text |= partial;
                         if let Some(value) = &taint.structured_value {
@@ -943,6 +947,9 @@ fn collect_rendered_node(
                         splice_row_meta(splice, conditions),
                     ),
                     StringPart::Taint(taint) => {
+                        if !taint.claims_value_kind {
+                            continue;
+                        }
                         let meta = scalar_taint_row_meta(taint, conditions);
                         for path in &taint.paths {
                             push_rendered_row(
@@ -1081,11 +1088,16 @@ fn append_suppressed_node_reads(
                         splice.meta.site.as_deref(),
                         &splice.meta.provenance,
                     ),
-                    StringPart::Taint(taint) => (
-                        taint.paths.iter().collect(),
-                        taint.site.as_deref(),
-                        &taint.provenance,
-                    ),
+                    StringPart::Taint(taint) => {
+                        if !taint.claims_value_kind {
+                            continue;
+                        }
+                        (
+                            taint.paths.iter().collect(),
+                            taint.site.as_deref(),
+                            &taint.provenance,
+                        )
+                    }
                 };
                 let meta = taint_row_meta(site, provenance, conditions);
                 for path in paths {

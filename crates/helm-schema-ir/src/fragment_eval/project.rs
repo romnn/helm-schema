@@ -365,6 +365,9 @@ fn project_parts(
                 }
             }
             StringPart::Taint(taint) => {
+                if !taint.claims_value_kind {
+                    continue;
+                }
                 for taint_path in &taint.paths {
                     if taint_path.is_empty() {
                         continue;

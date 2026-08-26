@@ -782,7 +782,13 @@ fn rendered_identity_equals(
             })
         }));
     }
-    TruthCondition::from_subsets(any_predicates(matches), Predicate::False, exact)
+    let when_true = any_predicates(matches);
+    let when_false = if exact {
+        when_true.negated()
+    } else {
+        Predicate::False
+    };
+    TruthCondition::from_subsets(when_true, when_false, exact)
 }
 
 fn rendered_constant(parts: &[ScalarRenderPart]) -> Option<String> {
@@ -891,7 +897,11 @@ impl TruthCondition {
 
         let when_true = normalized_factored(when_true);
         let when_false = normalized_factored(when_false);
-        if complete {
+        let disjoint = Predicate::all(vec![when_true.clone(), when_false.clone()])
+            .exactly_implies(&Predicate::False);
+        let exhaustive = Predicate::True
+            .exactly_implies(&Predicate::Or(vec![when_true.clone(), when_false.clone()]));
+        if complete && disjoint && exhaustive {
             return Self::Exact(when_true);
         }
         if when_true == Predicate::True {

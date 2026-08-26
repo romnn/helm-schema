@@ -1239,3 +1239,165 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +548 (62,590 to 63,138).
+
+## A8 — bounded exactness and fanout abstention
+
+- Status: complete; commit pending.
+- Contract: behavior-bearing, three corrected operations. `TruthCondition` may become exact only
+  when its proven polarities are both disjoint and exhaustive. All three scalar fanout sites must
+  replace over-cap alternatives with one unconditional taint carrying only the union of influencing
+  paths. A changed truthy reduction that cannot be stamped within `MAX_STAMPED_GUARDS` must be
+  removed before branch joining.
+- Acceptance baseline: `c9967847` (A7).
+- Baseline production LOC: 63,138 Rust lines from `task tokei:core` on `c9967847`.
+- Pre-registered acceptance expectations:
+  - WIDEN only predicates previously narrowed through a `complete=true` claim whose true/false
+    subsets are not both disjoint and exhaustive. Preserve every genuinely total partition.
+  - WIDEN only over-cap scalar fragments whose old unconditional concatenation invented text or
+    quote-context claims. The fallback retains influencing paths but no rendered-value semantics.
+  - WIDEN only branch-local truthy reductions that exceed the stamping cap; the reduction must not
+    escape through the later union join. Preserve every reduction at or below the cap.
+  - These are bounded stress families and are expected to produce zero corpus fixture or acceptance
+    changes. Any other delta stops the round for individual Helm 4.2.3 adjudication.
+    Candidate-accepts/Helm-aborts allowance remains zero; mandatory base and third-level probe
+    categories permit zero drops.
+
+- Measured results:
+  - All three operations are implemented. `TruthCondition::from_subsets` proves both polarity
+    obligations through the bounded BDD; the rendered-identity producer now supplies the exact
+    complement it already knows instead of an empty false subset.
+  - The three fanout sites share one collapse operation. It deletes all text and splice semantics,
+    unions only influencing paths, and publishes a provenance-only taint that cannot emit a
+    scalar/value-kind claim.
+  - Truthy stamping separates the monotone accumulator's newly added alternatives from its entry
+    alternatives. A changed contribution that already implies the branch condition needs no
+    stamp; a stamp that still exceeds six guards removes the reduction and records a truthiness
+    abstention before the later union join.
+  - The authoritative corpus has zero acceptance flips across 60 charts and 121,055 emitted
+    probes. Mandatory base coverage is 112,260/112,260 and third-level coverage is
+    7,465/7,465, both with zero drops.
+  - Six schema fixtures change byte-for-byte: Argo CD, Datadog, Falco, Harbor, oauth2-proxy, and
+    the lean temporal-wrapper lane. The full-depth battery finds no acceptance delta in any of
+    them; the symbolic-IR corpus remains byte-exact.
+- Deviations:
+  - The pre-registration expected zero fixture changes. The six byte changes above were not
+    adopted until the final immutable dump and complete old-vs-new battery established zero
+    acceptance flips and zero accepted-abort cells. They are disclosed rather than described as
+    normalization.
+  - Final1 retained an unstamped fragment-value fallback after deleting the reduction; Falco's
+    defaults became a candidate rejection. Rejected, and no artifact was adopted.
+  - Final2 added an abstention marker but exposed an under-specified rendered-identity equality:
+    its `complete=true` producer supplied `False` rather than the known complement. Airflow,
+    Cilium, and Datadog then admitted candidate-accepts/Helm-aborts cells. Rejected; the producer
+    was corrected before a new archive.
+  - Final3 still made Prometheus reject Helm-renderable non-string values and made Velero accept
+    Helm-aborting legacy object forms. Isolation proved the former came from mutating a stored
+    reduction merely to measure its compact size, and the latter from replacing the accumulator's
+    non-truth value carrier. Both designs were rejected.
+  - Final6/7 normalized a large reduction before applying the bound. Kyverno consumed one CPU core
+    for 776 seconds before the run was interrupted; this was an algorithmic regression, not
+    macOS execution-policy latency. The preflight was rejected and replaced with bounded,
+    non-expanding implication checks.
+  - Final8 through final14 were successive rejected cap preflights. Prometheus and Velero exposed
+    that the entry accumulator must be separated from only the newly added alternative, nested
+    presence implies parent-key/range liveness, and representation-mutating DNF minimization is not
+    acceptable merely to prove a stamp redundant. No dump from those code states was adopted.
+  - Final15 passed the battery but was superseded by a smaller equivalent implementation before
+    adoption. Final16/17 then failed four merge-shadowing unit teeth: truthy child paths jointly
+    implied matching parent-presence disjunctions, but the bounded implication checker only handled
+    one consequent at a time. The corrected pairwise disjunction proof restores all four teeth.
+    Final18 established the final production behavior; final19 rebuilds the same code with every
+    adjudicated fixture embedded and is the sole authoritative artifact.
+  - The clean final6 dump hit the repository's former ten-minute nextest termination threshold
+    while Kyverno was still running. The separately committed infrastructure round `78fb04a7`
+    raises integration and CI termination to the already-established three-hour job ceiling; it is
+    not folded into A8.
+- Adjudication evidence:
+  - Helm version: v4.2.3, pinned by `82f0ea11` and used by the authoritative prober.
+  - Final16 reports zero acceptance flips, so there are no changed cells requiring individual
+    fixture adoption. The zero candidate-accepts/Helm-aborts allowance is satisfied exactly.
+  - Rejected preflights were individually replayed before further engineering: Falco defaults,
+    Prometheus `server.useExistingClusterRoleName`, Velero legacy backup/snapshot location objects,
+    and the Airflow/Cilium/Datadog cells named above. No artifact from a failing replay was copied
+    into `testdata/`.
+
+### Producer and route coverage
+
+| Route | Corrected operation | Verification |
+|---|---|---|
+| Truth subset construction | Bounded disjointness and exhaustiveness proof | Direct exact/overlap/gap matrix. |
+| Cross-segment scalar fanout | Unconditional path-only taint | Focused over-cap fragment test. |
+| Alternative scalar fanout | Same path-only taint helper | Focused choice/first-truthy over-cap test. |
+| Inline branch scalar fanout | Same path-only taint helper | Focused inline-control over-cap test. |
+| Truthy reduction stamping cap | Remove changed reduction | Direct state test plus branch-join regression. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-ir -E
+  'test(over_cap_branch_stamp_removes_the_changed_truthy_reduction) |
+  test(over_cap_scalar_arms_keep_only_influencing_paths) |
+  test(complete_subset_claim_requires_a_total_disjoint_partition)'`; exit 0. Focused final-tree
+  corpus generation for Falco, Kyverno, Prometheus, and Velero also exits 0; Kyverno returns to
+  18.5 seconds after the rejected unbounded-normalization preflight.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a8-final19-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-a8-final19.tar.zst`; exit 0, 88
+  binaries and 126 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a8-final19-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a8-final19.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and 84 artifacts are written.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a8-final19-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-a8-final19.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written. The same archive without dump variables passes against every existing IR fixture.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-a8-final19-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=c9967847
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-a8-final19-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-a8-final19-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-a8-final19.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: no public API or wire-format change. The additional `TaintPart` state is
+  crate-private, `Default` preserves the prior ordinary-taint behavior, and the abstaining
+  constructor is crate-private.
+
+### Self-adversarial pass
+
+- A `complete` Boolean is not a proof of both polarities. The direct gap and overlap cases remain
+  partial even when the caller passes `true`; the rendered-identity producer must publish its
+  actual false subset.
+- An ordinary scalar taint still implies partial rendered text. Reusing it for fanout abstention
+  recreated a Prometheus string false rejection, so provenance-only taint is an explicit state and
+  every value-kind publisher checks it.
+- Removing a truthy reduction is insufficient if condition lowering immediately reconstructs the
+  same claim from the local's fragment value. The abstention marker crosses snapshots, joins, and
+  condition contexts without deleting non-truth shape facts.
+- A monotone accumulator's entry alternatives were already scoped when they were recorded. Only
+  its newly added alternative is eligible for the current branch stamp; stamping the whole union
+  creates exponential predicates and false decisions.
+- BDD normalization is bounded for the exactness proof, but invoking it as a pre-cap simplifier on
+  a large accumulator defeats the bound. The final stamp proof performs no distributive expansion.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,288 tests pass.
+- `task test:integration`; exit 0, 564 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,856 tests pass and 24 are skipped, including all four live-network
+  tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,457 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +319 (63,138 to 63,457).

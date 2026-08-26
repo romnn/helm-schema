@@ -63398,9 +63398,31 @@
               "description": "deduplication of the Falco events",
               "properties": {
                 "leaderElection": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/3"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "description": "enable the leader election for cluster mode"
                 },
                 "timeWindowSeconds": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/3"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "description": "duration in seconds for the deduplication time window"
                 }
               }
@@ -63409,9 +63431,31 @@
               "description": "default notifiers for all rules"
             },
             "listenAddress": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/3"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
               "description": "listen address"
             },
             "listenPort": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/3"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "listen port"
             },
             "minio": {
@@ -63449,9 +63493,6 @@
                   "additionalProperties": {},
                   "description": "loki",
                   "properties": {
-                    "apiKey": {
-                      "description": "api key"
-                    },
                     "createIndexTemplate": {},
                     "customHeaders": {
                       "description": "custom headers"
@@ -63460,69 +63501,17 @@
                     "numberOfShards": {},
                     "tenant": {
                       "description": "tenant"
-                    },
-                    "url": {},
-                    "user": {
-                      "description": "user"
                     }
                   }
                 },
                 "slack": {
-                  "additionalProperties": {},
-                  "description": "slack",
-                  "properties": {
-                    "footer": {
-                      "description": "footer"
-                    },
-                    "format": {
-                      "description": "format"
-                    },
-                    "icon": {
-                      "description": "icon"
-                    },
-                    "username": {
-                      "description": "username"
-                    },
-                    "webhookUrl": {
-                      "description": "webhook url"
-                    }
-                  }
+                  "description": "slack"
                 },
                 "smtp": {
-                  "additionalProperties": {},
-                  "description": "smtp",
-                  "properties": {
-                    "format": {
-                      "description": "format"
-                    },
-                    "from": {
-                      "description": "from"
-                    },
-                    "hostPort": {
-                      "description": "host:port"
-                    },
-                    "password": {
-                      "description": "password"
-                    },
-                    "tls": {
-                      "description": "enable tls"
-                    },
-                    "to": {
-                      "description": "to"
-                    },
-                    "user": {
-                      "description": "user"
-                    }
-                  }
+                  "description": "smtp"
                 },
                 "webhook": {
-                  "additionalProperties": {},
-                  "description": "webhook",
-                  "properties": {
-                    "url": {
-                      "description": "url"
-                    }
-                  }
+                  "description": "webhook"
                 }
               }
             },
@@ -63530,30 +63519,93 @@
               "additionalProperties": {},
               "description": "open telemetry parameters",
               "properties": {
-                "collectorEndpoint": {
-                  "description": "collector endpoint"
-                },
                 "collectorPort": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/3"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "description": "collector port"
                 },
                 "collectorUseInsecureGrpc": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/3"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "description": "use insecure grpc"
                 },
                 "metricsEnabled": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/3"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "description": "enable otel metrics"
                 },
                 "tracesEnabled": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/3"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "description": "enable otel traces"
                 }
               }
             },
             "printAllEvents": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/3"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "print in stdout all received events, not only those which match a rule"
             },
             "rulesOverride": {
               "description": "User-defined additional rules for rules_override.yaml"
             },
             "watchRules": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/3"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "auto reload the rules when the files change"
             }
           }

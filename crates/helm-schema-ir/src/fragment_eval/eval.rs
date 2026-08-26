@@ -1012,6 +1012,7 @@ impl<'a> Interpreter<'a> {
             template_default_paths: &self.locals.default_paths,
             template_output_meta: &self.locals.output_meta,
             template_truthy_reductions: &self.locals.truthy_reductions,
+            template_truthiness_abstentions: &self.locals.truthiness_abstentions,
             typeof_bindings: &self.locals.typeof_sources,
             int_cast_bindings: &self.locals.int_cast_sources,
             fragment_context: FragmentEvalContext::new(self.db),
@@ -1286,6 +1287,9 @@ impl<'a> Interpreter<'a> {
                     );
                 }
                 StringPart::Taint(taint) => {
+                    if !taint.claims_value_kind {
+                        continue;
+                    }
                     for path in &taint.paths {
                         self.push_read(path, &[]);
                     }

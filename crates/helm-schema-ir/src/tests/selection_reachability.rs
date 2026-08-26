@@ -139,6 +139,23 @@ fn condition_polarities_preserve_independent_partial_proofs() {
 }
 
 #[test]
+fn complete_subset_claim_requires_a_total_disjoint_partition() {
+    let selected = Predicate::truthy_path("selected");
+    let fallback = selected.negated();
+
+    let exact = TruthCondition::from_subsets(selected.clone(), fallback, true);
+    sim_assert_eq!(have: exact.predicate(), want: Some(&selected));
+
+    let gap = TruthCondition::from_subsets(selected.clone(), Predicate::False, true);
+    sim_assert_eq!(have: gap.predicate(), want: None);
+    sim_assert_eq!(have: gap.when_true(), want: selected.clone());
+
+    let overlap = TruthCondition::from_subsets(selected.clone(), selected.clone(), true);
+    sim_assert_eq!(have: overlap.predicate(), want: None);
+    sim_assert_eq!(have: overlap.when_false(), want: selected);
+}
+
+#[test]
 fn approximate_reachability_lowers_distinct_output_and_execution_roles() {
     let subset = Predicate::truthy_path("alpha");
     let paths = BTreeSet::from(["alpha".to_string()]);

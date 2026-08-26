@@ -30,4 +30,6 @@ pub use dump::dump_document;
 pub use eval::{EvaluatedDocument, ValueRead};
 
 pub(crate) use eval::{BodyEvalFacts, eval_document};
+#[cfg(test)]
+pub(crate) use lower::over_cap_scalar_taint;
 pub(crate) use project::contract_ir_from_document;

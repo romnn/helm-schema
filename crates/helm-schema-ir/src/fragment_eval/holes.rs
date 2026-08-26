@@ -27,7 +27,7 @@ use super::eval::Interpreter;
 use super::hole_effects::RenderedDemotion;
 use super::lower::{
     LowerScope, MAX_SCALAR_ARM_FANOUT, MAX_SCALAR_ARMS, lower_scalar_dispatch,
-    lower_scalar_dispatch_arms, lower_value, lower_value_scalar_arms,
+    lower_scalar_dispatch_arms, lower_value, lower_value_scalar_arms, over_cap_scalar_taint,
 };
 use super::summary::splice_summary;
 
@@ -216,8 +216,7 @@ fn combine_scalar_arms(
         let mut arms = base;
         arms.extend(segment);
         if arms.len() > MAX_SCALAR_ARM_FANOUT {
-            let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
-            return vec![(Predicate::True, parts)];
+            return over_cap_scalar_taint(arms);
         }
         return arms;
     }

@@ -621,15 +621,17 @@ impl Interpreter<'_> {
                 SelectionTruthReachability::unknown(SelectionTruthSource::RawInput),
             );
         };
-        let (mut predicate, mut faithful, bound_values) = {
+        let (mut predicate, mut faithful, bound_values, truthiness_abstains) = {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
                 context.condition_lowering_is_usable_for_control(header.expr()),
                 context.bound_output_paths_expr(header.expr()),
+                context.condition_uses_truthiness_abstention(header.expr()),
             )
         };
         let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
+        let evaluated_truth = abstain_truth(evaluated_truth, truthiness_abstains);
         let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
         if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
             predicate = exact;
@@ -659,15 +661,23 @@ impl Interpreter<'_> {
         let faithful = faithful && !overlay_entry_is_partial;
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            let evaluated_subset = (!overlay_entry_is_partial)
-                .then(|| evaluated_truth.when_true().proven_selected_subset())
-                .filter(|subset| *subset != Predicate::False);
-            predicate = self.approximate_arm_predicate(
-                header.expr(),
-                marker,
-                overlay_entry_subset.unwrap_or_default(),
-                evaluated_subset,
-            );
+            predicate = if truthiness_abstains {
+                Predicate::approximate(
+                    marker,
+                    self.value_path_context()
+                        .resolved_values_paths_from_expr(header.expr()),
+                )
+            } else {
+                let evaluated_subset = (!overlay_entry_is_partial)
+                    .then(|| evaluated_truth.when_true().proven_selected_subset())
+                    .filter(|subset| *subset != Predicate::False);
+                self.approximate_arm_predicate(
+                    header.expr(),
+                    marker,
+                    overlay_entry_subset.unwrap_or_default(),
+                    evaluated_subset,
+                )
+            };
         }
         for path in &bound_values {
             self.push_control_read(path, &[]);
@@ -838,7 +848,7 @@ impl Interpreter<'_> {
                 SelectionTruthReachability::unknown(SelectionTruthSource::RawInput),
             );
         };
-        let (mut predicate, mut faithful, bound_values, dot) = {
+        let (mut predicate, mut faithful, bound_values, dot, truthiness_abstains) = {
             let context = self.value_path_context();
             let predicate = context.with_condition_predicate_expr(header.expr());
             let faithful = context.condition_lowering_is_usable_for_control(header.expr());
@@ -847,9 +857,11 @@ impl Interpreter<'_> {
                 faithful,
                 context.bound_output_paths_expr(header.expr()),
                 context.with_body_fragment_value_expr(header.expr()),
+                context.condition_uses_truthiness_abstention(header.expr()),
             )
         };
         let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
+        let evaluated_truth = abstain_truth(evaluated_truth, truthiness_abstains);
         let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
         if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
             predicate = exact;
@@ -869,9 +881,15 @@ impl Interpreter<'_> {
         }
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            predicate = self
-                .value_path_context()
-                .approximate_condition_predicate_expr(header.expr(), &marker);
+            let context = self.value_path_context();
+            predicate = if truthiness_abstains {
+                Predicate::approximate(
+                    marker,
+                    context.resolved_values_paths_from_expr(header.expr()),
+                )
+            } else {
+                context.approximate_condition_predicate_expr(header.expr(), &marker)
+            };
         }
         // The with-predicate is pushed before its reads so the reads carry
         // the `Guard::With` markers, mirroring the current walker. Inexact
@@ -2151,6 +2169,14 @@ impl Interpreter<'_> {
             self.root_value_dispatches_observed
                 .insert(key.clone(), dispatch);
         }
+    }
+}
+
+fn abstain_truth(truth: SelectionTruthReachability, abstains: bool) -> SelectionTruthReachability {
+    if abstains {
+        SelectionTruthReachability::unknown(SelectionTruthSource::RawInput)
+    } else {
+        truth
     }
 }
 

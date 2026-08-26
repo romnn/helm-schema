@@ -28,6 +28,10 @@ pub(crate) struct SymbolicLocalState {
     /// nonempty. An explicit [`Predicate::False`] is the empty seed; a
     /// missing entry means the local's truthiness is not structurally known.
     pub(crate) truthy_reductions: HashMap<String, Predicate>,
+    /// Locals whose branch predicate exceeded the bounded stamping budget.
+    /// Their truthiness must abstain instead of falling back to the local's
+    /// unguarded value paths.
+    pub(crate) truthiness_abstentions: BTreeSet<String>,
     /// Locals that received a reassignment which does not imply truthiness
     /// (an explicit falsy write, or a condition-valued write). Such a write
     /// makes the accumulator last-write-wins instead of monotone, so a
@@ -93,6 +97,7 @@ struct VariableLocalState {
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
     scalar_dispatch: Option<ScalarValueDispatch>,
     truthy_reduction: Option<Predicate>,
+    truthiness_abstained: bool,
     truthiness_cleared: bool,
     typeof_source: Option<BTreeMap<String, HelperOutputMeta>>,
     int_cast_source: Option<IntCastSource>,
@@ -142,7 +147,8 @@ impl SymbolicLocalState {
     /// Bounded on both sides: an approximate arm condition would only
     /// poison every consumer into abstention, and unbounded conjoining at
     /// nested joins grows reductions combinatorially, so oversized results
-    /// keep the old unstamped semantics instead.
+    /// drop the reduction instead of letting an unstamped branch claim
+    /// escape through a later join.
     pub(crate) fn conjoin_changed_truthy_reductions(
         &mut self,
         entry: &Self,
@@ -166,20 +172,52 @@ impl SymbolicLocalState {
             self.truthy_reductions
                 .retain(|variable, _| !clears.contains(variable));
         }
-        let condition_guards = predicate_guard_count(condition);
-        for (variable, reduction) in &mut self.truthy_reductions {
-            if entry.truthy_reductions.get(variable) == Some(reduction)
+        let mut dropped = Vec::new();
+        self.truthy_reductions.retain(|variable, reduction| {
+            let entry_reduction = entry.truthy_reductions.get(variable);
+            if entry_reduction == Some(reduction)
                 || matches!(reduction, Predicate::False)
                 || reduction.contains_approximation()
             {
-                continue;
+                return true;
             }
-            if condition_guards + predicate_guard_count(reduction) > MAX_STAMPED_GUARDS {
-                continue;
+            if predicate_guard_count(condition) + predicate_guard_count(reduction)
+                <= MAX_STAMPED_GUARDS
+            {
+                *reduction = quantify_range_member_reduction(condition, reduction)
+                    .map(Predicate::from)
+                    .unwrap_or_else(|| Predicate::all(vec![condition.clone(), reduction.clone()]));
+                return true;
             }
-            *reduction = quantify_range_member_reduction(condition, reduction)
-                .map(Predicate::from)
-                .unwrap_or_else(|| Predicate::all(vec![condition.clone(), reduction.clone()]));
+            let changed = entry_reduction
+                .and_then(|entry| changed_truthy_reduction(entry, reduction))
+                .unwrap_or_else(|| reduction.clone());
+            if predicate_implies(&changed, condition) {
+                return true;
+            }
+            let stamped =
+                if let Some(quantified) = quantify_range_member_reduction(condition, &changed) {
+                    Predicate::from(quantified)
+                } else {
+                    if predicate_guard_count(condition) + predicate_guard_count(&changed)
+                        > MAX_STAMPED_GUARDS
+                    {
+                        dropped.push(variable.clone());
+                        return false;
+                    }
+                    Predicate::all(vec![condition.clone(), changed])
+                };
+            if predicate_guard_count(&stamped) > MAX_STAMPED_GUARDS {
+                dropped.push(variable.clone());
+                return false;
+            }
+            *reduction = entry_reduction.map_or(stamped.clone(), |entry| {
+                union_truthy_reductions(entry, &stamped)
+            });
+            true
+        });
+        for variable in dropped {
+            self.truthiness_abstentions.insert(variable);
         }
     }
 
@@ -262,6 +300,7 @@ impl SymbolicLocalState {
             output_meta: self.output_meta.get(variable).cloned(),
             scalar_dispatch: self.scalar_dispatches.get(variable).cloned(),
             truthy_reduction: self.truthy_reductions.get(variable).cloned(),
+            truthiness_abstained: self.truthiness_abstentions.contains(variable),
             truthiness_cleared: self.truthiness_clears.contains(variable),
             typeof_source: self.typeof_sources.get(variable).cloned(),
             int_cast_source: self.int_cast_sources.get(variable).cloned(),
@@ -278,6 +317,7 @@ impl SymbolicLocalState {
             || self.output_meta.contains_key(variable)
             || self.scalar_dispatches.contains_key(variable)
             || self.truthy_reductions.contains_key(variable)
+            || self.truthiness_abstentions.contains(variable)
             || self.typeof_sources.contains_key(variable)
             || self.int_cast_sources.contains_key(variable)
             || self.range_member_values.contains_key(variable)
@@ -309,6 +349,11 @@ impl SymbolicLocalState {
             variable,
             previous.truthy_reduction,
         );
+        if previous.truthiness_abstained {
+            self.truthiness_abstentions.insert(variable.to_string());
+        } else {
+            self.truthiness_abstentions.remove(variable);
+        }
         if previous.truthiness_cleared {
             self.truthiness_clears.insert(variable.to_string());
         } else {
@@ -350,6 +395,7 @@ impl SymbolicLocalState {
         self.output_meta.remove(variable);
         self.scalar_dispatches.remove(variable);
         self.truthy_reductions.remove(variable);
+        self.truthiness_abstentions.remove(variable);
         self.truthiness_clears.remove(variable);
         self.typeof_sources.remove(variable);
         self.int_cast_sources.remove(variable);
@@ -438,5 +484,147 @@ fn predicate_guard_count(predicate: &Predicate) -> usize {
         Predicate::And(items) | Predicate::Or(items) => {
             items.iter().map(predicate_guard_count).sum()
         }
+    }
+}
+
+fn changed_truthy_reduction(entry: &Predicate, reduction: &Predicate) -> Option<Predicate> {
+    if matches!(entry, Predicate::False) {
+        return Some(reduction.clone());
+    }
+    let Predicate::Or(reduction_items) = reduction else {
+        return None;
+    };
+    let entry_items = match entry {
+        Predicate::Or(items) => items.as_slice(),
+        predicate => std::slice::from_ref(predicate),
+    };
+    if !entry_items
+        .iter()
+        .all(|item| reduction_items.contains(item))
+    {
+        return None;
+    }
+    let changed = reduction_items
+        .iter()
+        .filter(|item| !entry_items.contains(item))
+        .cloned()
+        .collect::<Vec<_>>();
+    Some(match changed.as_slice() {
+        [] => Predicate::False,
+        [predicate] => predicate.clone(),
+        _ => Predicate::Or(changed),
+    })
+}
+
+fn union_truthy_reductions(left: &Predicate, right: &Predicate) -> Predicate {
+    if matches!(left, Predicate::False) {
+        return right.clone();
+    }
+    if matches!(right, Predicate::False) || left == right {
+        return left.clone();
+    }
+    match left {
+        Predicate::Or(predicates) => {
+            let mut predicates = predicates.clone();
+            if !predicates.contains(right) {
+                predicates.push(right.clone());
+            }
+            Predicate::Or(predicates)
+        }
+        _ => Predicate::Or(vec![left.clone(), right.clone()]),
+    }
+}
+
+fn predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> bool {
+    if antecedent.exactly_implies(consequent) {
+        return true;
+    }
+    if let (Predicate::Or(antecedents), Predicate::Or(consequents)) = (antecedent, consequent) {
+        return antecedents.iter().all(|antecedent| {
+            consequents
+                .iter()
+                .any(|consequent| predicate_implies(antecedent, consequent))
+        });
+    }
+    match consequent {
+        Predicate::And(predicates) => predicates
+            .iter()
+            .all(|predicate| predicate_implies(antecedent, predicate)),
+        Predicate::Or(predicates) => predicates
+            .iter()
+            .any(|predicate| predicate_implies(antecedent, predicate)),
+        _ => match antecedent {
+            Predicate::Or(predicates) => predicates
+                .iter()
+                .all(|predicate| predicate_implies(predicate, consequent)),
+            Predicate::And(predicates) => predicates
+                .iter()
+                .any(|predicate| predicate_implies(predicate, consequent)),
+            _ => leaf_predicate_implies(antecedent, consequent),
+        },
+    }
+}
+
+fn leaf_predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> bool {
+    let Some(present_path) = predicate_present_path(antecedent) else {
+        return false;
+    };
+    match consequent {
+        Predicate::Not(inner) => matches!(
+            inner.as_ref(),
+            Predicate::Guard(Guard::Absent { path })
+                if path == present_path || path_is_strict_ancestor(path, present_path)
+        ),
+        Predicate::Guard(Guard::HasKey { path, key }) => {
+            let mut key_path = helm_schema_core::split_value_path(path);
+            key_path.push(key.clone());
+            helm_schema_core::split_value_path(present_path).starts_with(&key_path)
+        }
+        Predicate::Guard(Guard::Truthy { path }) if path == present_path => match antecedent {
+            Predicate::Guard(Guard::Eq { value, .. }) => guard_value_is_truthy(value),
+            Predicate::Guard(Guard::MatchesPattern { pattern, .. }) => {
+                regex::Regex::new(pattern).is_ok_and(|pattern| !pattern.is_match(""))
+            }
+            _ => false,
+        },
+        Predicate::Guard(Guard::Range { path } | Guard::Truthy { path }) => {
+            path_is_strict_ancestor(path, present_path)
+        }
+        _ => false,
+    }
+}
+
+fn predicate_present_path(predicate: &Predicate) -> Option<&str> {
+    match predicate {
+        Predicate::Not(inner) => match inner.as_ref() {
+            Predicate::Guard(Guard::Absent { path }) => Some(path),
+            _ => None,
+        },
+        Predicate::Guard(
+            Guard::Truthy { path }
+            | Guard::Eq { path, .. }
+            | Guard::MatchesPattern { path, .. }
+            | Guard::NotMatchesPattern { path, .. }
+            | Guard::TypeIs { path, .. },
+        ) => Some(path),
+        _ => None,
+    }
+}
+
+fn path_is_strict_ancestor(parent: &str, child: &str) -> bool {
+    let parent = helm_schema_core::split_value_path(parent);
+    let child = helm_schema_core::split_value_path(child);
+    child.len() > parent.len() && child.starts_with(&parent)
+}
+
+fn guard_value_is_truthy(value: &helm_schema_core::GuardValue) -> bool {
+    match value {
+        helm_schema_core::GuardValue::String(text) => !text.is_empty(),
+        helm_schema_core::GuardValue::Bool(value) => *value,
+        helm_schema_core::GuardValue::Int(value) => *value != 0,
+        helm_schema_core::GuardValue::Float(text) => {
+            text.parse::<f64>().is_ok_and(|value| value != 0.0)
+        }
+        helm_schema_core::GuardValue::Null => false,
     }
 }
