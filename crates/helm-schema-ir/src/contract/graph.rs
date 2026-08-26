@@ -720,13 +720,17 @@ fn project_global_range_modes(
     let Some(dependency_global) = global_sources.last() else {
         return;
     };
-    let dependency_segments = helm_schema_core::split_value_path(dependency_global);
+    let dependency_path = helm_schema_core::ValuesPath::parse(dependency_global);
+    let dependency_segments = dependency_path
+        .segments()
+        .map(str::to_string)
+        .collect::<Vec<_>>();
     let projected_paths = range_modes
         .iter()
         .filter_map(|(path, mode)| {
-            let segments = helm_schema_core::split_value_path(path);
+            let segments = path.segments().map(str::to_string).collect::<Vec<_>>();
             let relative = segments.strip_prefix(dependency_segments.as_slice())?;
-            Some((path.to_string(), relative.to_vec(), mode))
+            Some((path.encode(), relative.to_vec(), mode))
         })
         .collect::<Vec<_>>();
 
@@ -734,7 +738,7 @@ fn project_global_range_modes(
         range_modes.remove(&path);
         if relative.is_empty() {
             for global_source in global_sources {
-                range_modes.merge_mode(global_source.clone(), mode);
+                range_modes.merge_mode(global_source, mode);
             }
             continue;
         }
@@ -742,14 +746,12 @@ fn project_global_range_modes(
             continue;
         }
         for global_source in global_sources {
-            range_modes.merge_mode(
-                helm_schema_core::join_value_path(
-                    helm_schema_core::split_value_path(global_source)
-                        .into_iter()
-                        .chain(relative.iter().cloned()),
-                ),
-                mode,
+            let projected = helm_schema_core::join_value_path(
+                helm_schema_core::split_value_path(global_source)
+                    .into_iter()
+                    .chain(relative.iter().cloned()),
             );
+            range_modes.merge_mode(&projected, mode);
         }
     }
 }

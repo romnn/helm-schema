@@ -2436,7 +2436,7 @@
 
 ## B4a.1 — introduce the segmented `ValuesPath` carrier
 
-- Status: complete; commit pending.
+- Status: landed in `e5aaf250`.
 - Contract: representation-only introduction of the core `ValuesPath` value object with a private
   segmented representation, explicit `parse`/`from_segments`/`encode` boundaries, structural
   navigation, custom string serde, and manual ordering identical to the legacy encoded-string
@@ -2555,3 +2555,74 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +125 (63,428 to 63,553).
+
+## B4a.2a — migrate IR range-mode keys
+
+- Status: complete; commit pending.
+- Contract: representation-only migration of `RangeModes` map keys to `ValuesPath`, the first of
+  the three IR-internal carriers named by B4a. Raw strings may be parsed at existing producer/query
+  boundaries, but the map retains no parallel encoded path key.
+- Acceptance baseline: `e5aaf250` (B4a.1).
+- Baseline production LOC: 63,553 Rust lines from `task tokei:core` on `e5aaf250`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, wire, ordering, or corpus acceptance changes. All encoded
+    strings leaving IR must preserve exact bytes and order.
+  - Structural prefix and relative-path operations over range keys use `ValuesPath`; explicit
+    `encode()` is confined to legacy capture/builder boundaries.
+  - The migration must not add `Deref`, `AsRef<str>`, `Display`, string-comparison shims, or a cached
+    encoded field to make old string operations compile.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results: `RangeModes` now stores `BTreeMap<ValuesPath, RangeMode>`; structural global
+  projection consumes typed segments and legacy capture/builder boundaries encode explicitly. Two
+  focused tests pin escaped identity, legacy order, and union after remapping. Schema and IR dumps
+  are byte-identical to B4a.1; 60 charts and 121,055 probes report zero flips, zero mandatory drops,
+  and zero candidate-accepts/Helm-aborts cells.
+- Deviations:
+  - The initial preflight attempted all three IR-private carriers together. The compiler exposed
+    121 call sites spanning independent abstract-value and fragment-splice domains after the first
+    structural fixes. That state was rejected and fully removed. The IR migration is split into
+    `RangeModes`, `AbstractValue`, and `Splice` subrounds so each interface remains reviewable and
+    byte-exact; no archive, dump, fixture, or test artifact from the rejected combined state is
+    adopted.
+- Adjudication evidence: zero flips require no Helm cell adjudication; adjudication ran enabled with
+  zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Range modes | Same per-path union/remap/query facts | Range and fail-capture suites. |
+| Builder/capture boundaries | Same encoded strings | Symbolic-IR and schema byte comparisons. |
+
+### Review dossier
+
+- Focused proof: two range-mode tests pass. Immutable archive
+  `/private/tmp/arch-v4-b4a2a-final1.tar.zst` contains 87 binaries and 125 files. The clean 62-test
+  schema dump and one-test/18-artifact IR dump are recursively byte-identical to B4a.1. The
+  full-depth prober passes with 121,055 probes and 28,868 unchanged disclosed bounded reductions.
+- Public/wire decision: none; `RangeModes` is crate-private and all boundary strings retain exact
+  bytes and order.
+
+### Self-adversarial pass
+
+- Typed key ordering inherits B4a.1's legacy encoded-string `Ord`; remapping parses only after the
+  existing string callback and unions collisions exactly once. The rejected combined-carrier
+  preflight was fully reverted before the authoritative archive.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 combinations, 13 packages, three targets; 1,064.17 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass.
+- `task test:integration`; exit 0, 558 pass, 24 skipped; 930.365 seconds.
+- `task test:all`; exit 0, 1,870 pass, 24 skipped including live-network tests; 984.682 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 63,564 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +11 (63,553 to 63,564).

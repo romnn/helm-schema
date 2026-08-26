@@ -411,7 +411,7 @@ pub(super) fn record_fail_conjunction(
         .collect();
     let conjunction = &conjunction;
     let execution_range_paths = conjunction.iter().filter_map(|predicate| match predicate {
-        Predicate::Guard(Guard::Range { path }) => Some(path.as_str()),
+        Predicate::Guard(Guard::Range { path }) => Some(path.clone()),
         _ => None,
     });
     let test_candidate_paths = conjunction
@@ -432,7 +432,8 @@ pub(super) fn record_fail_conjunction(
             capture
                 .ranged
                 .iter()
-                .filter_map(|(path, mode)| mode.member_identity.then_some(path)),
+                .filter(|(_, mode)| mode.member_identity)
+                .map(|(path, _)| path.encode()),
         )
         .filter(|path| {
             let member = helm_schema_core::append_value_path(path, "*");
@@ -442,7 +443,9 @@ pub(super) fn record_fail_conjunction(
             })
         })
         .max_by_key(|path| helm_schema_core::split_value_path(path).len());
-    let member_scope = ranged.map(|path| helm_schema_core::append_value_path(path, "*"));
+    let member_scope = ranged
+        .as_deref()
+        .map(|path| helm_schema_core::append_value_path(path, "*"));
 
     let mut outer_guards = Vec::new();
     let mut member_tests: Vec<&Predicate> = Vec::new();
@@ -450,7 +453,7 @@ pub(super) fn record_fail_conjunction(
     let mut test_paths: BTreeSet<String> = BTreeSet::new();
     for predicate in conjunction {
         if let Predicate::Guard(Guard::Range { path }) = predicate {
-            if ranged == Some(path.as_str()) {
+            if ranged.as_deref() == Some(path.as_str()) {
                 continue;
             }
             // An iteration conjunct outside the member test: the body
@@ -605,8 +608,8 @@ pub(super) fn record_fail_conjunction(
         }
         return;
     }
-    let target = if let Some(path) = ranged {
-        path.to_string()
+    let target = if let Some(path) = &ranged {
+        path.clone()
     } else {
         let Some(path) = test_paths.into_iter().next() else {
             return;
@@ -633,17 +636,19 @@ pub(super) fn record_fail_conjunction(
     outer_guards.dedup();
     let implication = ContractRequirementImplication {
         outer_guards,
-        target: ranged.map_or(ContractRequirementTarget::Value, |path| {
-            let mode = range_modes.mode(path);
-            let allow_integer = !mode.destructured && !mode.json_decoded;
-            match member_field {
-                Some(target_path) => ContractRequirementTarget::MembersAt {
-                    target_path,
-                    allow_integer,
-                },
-                None => ContractRequirementTarget::Members { allow_integer },
-            }
-        }),
+        target: ranged
+            .as_deref()
+            .map_or(ContractRequirementTarget::Value, |path| {
+                let mode = range_modes.mode(path);
+                let allow_integer = !mode.destructured && !mode.json_decoded;
+                match member_field {
+                    Some(target_path) => ContractRequirementTarget::MembersAt {
+                        target_path,
+                        allow_integer,
+                    },
+                    None => ContractRequirementTarget::Members { allow_integer },
+                }
+            }),
         requirements,
     };
     let acc = path_accumulator(paths, &target);

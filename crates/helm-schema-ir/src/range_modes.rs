@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use helm_schema_core::ValuesPath;
+
 /// How `range` iterates one values path.
 ///
 /// A default (all-false) mode means the path carries no range facts; absent
@@ -29,13 +31,16 @@ pub(crate) struct RangeMode {
 /// flavor behind.
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct RangeModes {
-    modes: BTreeMap<String, RangeMode>,
+    modes: BTreeMap<ValuesPath, RangeMode>,
 }
 
 impl RangeModes {
     /// The mode recorded for a path; all-false when nothing was recorded.
     pub(crate) fn mode(&self, path: &str) -> RangeMode {
-        self.modes.get(path).copied().unwrap_or_default()
+        self.modes
+            .get(&ValuesPath::parse(path))
+            .copied()
+            .unwrap_or_default()
     }
 
     pub(crate) fn mark_input_identity(&mut self, path: &str) {
@@ -65,16 +70,16 @@ impl RangeModes {
         }
     }
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = (&str, RangeMode)> {
-        self.modes.iter().map(|(path, mode)| (path.as_str(), *mode))
+    pub(crate) fn iter(&self) -> impl Iterator<Item = (&ValuesPath, RangeMode)> {
+        self.modes.iter().map(|(path, mode)| (path, *mode))
     }
 
     pub(crate) fn remove(&mut self, path: &str) -> Option<RangeMode> {
-        self.modes.remove(path)
+        self.modes.remove(&ValuesPath::parse(path))
     }
 
-    pub(crate) fn merge_mode(&mut self, path: String, mode: RangeMode) {
-        let merged = self.modes.entry(path).or_default();
+    pub(crate) fn merge_mode(&mut self, path: &str, mode: RangeMode) {
+        let merged = self.modes.entry(ValuesPath::parse(path)).or_default();
         merged.input_identity |= mode.input_identity;
         merged.member_identity |= mode.member_identity;
         merged.json_decoded |= mode.json_decoded;
@@ -88,7 +93,7 @@ impl RangeModes {
     {
         let mut mapped = RangeModes::default();
         for (path, mode) in &self.modes {
-            let target = map(path);
+            let target = ValuesPath::parse(&map(&path.encode()));
             let merged = mapped.modes.entry(target).or_default();
             merged.input_identity |= mode.input_identity;
             merged.member_identity |= mode.member_identity;
@@ -102,6 +107,6 @@ impl RangeModes {
         if path.trim().is_empty() {
             return;
         }
-        set(self.modes.entry(path.to_string()).or_default());
+        set(self.modes.entry(ValuesPath::parse(path)).or_default());
     }
 }
