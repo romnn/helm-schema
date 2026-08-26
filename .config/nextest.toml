@@ -37,9 +37,11 @@ retries = 0
 # Whole-chart analyses are CPU-heavy and single-threaded. Bounding aggregate
 # concurrency avoids starving every chart when the host is already loaded.
 test-threads = 4
-# These shell out to `helm lint`, whose schema validator is far slower than
-# generation itself, so the ceiling is higher than the default profile's.
-slow-timeout = { period = "120s", terminate-after = 5, grace-period = "10s" }
+# These shell out to `helm lint`, and macOS may additionally scan each fresh
+# test binary before execution. Keep reporting at two minutes, but leave the
+# same three-hour ceiling as the enclosing CI job for a process still making
+# progress.
+slow-timeout = { period = "120s", terminate-after = 90, grace-period = "10s" }
 
 [profile.network]
 default-filter = "binary(/^network_/)"
@@ -55,7 +57,7 @@ default-filter = "all()"
 fail-fast = false
 retries = 0
 test-threads = 4
-slow-timeout = { period = "120s", terminate-after = 5, grace-period = "10s" }
+slow-timeout = { period = "120s", terminate-after = 90, grace-period = "10s" }
 
 # Network binaries keep their retry/backoff/serialization semantics inside
 # the all-inclusive ci profile.
