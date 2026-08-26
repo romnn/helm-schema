@@ -2197,7 +2197,7 @@
 
 ## B1.3 — derived serde and real generator modules
 
-- Status: complete; commit pending.
+- Status: landed in `a79c0c47`.
 - Contract: representation-only deletion of the `WireContractUse` mirror in favor of direct
   `Deserialize`, plus conversion of five generator `include!` fragments into real Rust modules
   whose explicit visibility lists are compiler-checked.
@@ -2312,3 +2312,124 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +11 (63,417 to 63,428).
+
+## G2 stage 1 — generated transform-by-position behavior suite
+
+- Status: complete; commit pending.
+- Contract: test-infrastructure-only addition of generated synthetic microcharts that pin current
+  transform behavior at identity projection, member identity, range subject, `hasKey` decoding,
+  and splice lowering positions. Each case must assert its produced semantic fact before asserting
+  the complete generated schema. Exhaustive `Transform::ALL`, mixed-branch, removal/clear, scalar
+  dispatch, quoted/plain capture, and payload-bearing-state coverage remains registered for G2
+  stage 2 during B2.
+- Acceptance baseline: `a79c0c47` (B1.3).
+- Baseline production LOC: 63,428 Rust lines from `task tokei:core` on `a79c0c47`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, wire, or corpus acceptance changes. This round adds only
+    generated tests and their test-local case vocabulary.
+  - Every generated microchart must prove the intended IR/schema-signal fact before comparing the
+    entire schema value; a schema-only selective assertion is not sufficient.
+  - The suite must exercise all five consuming-position families with at least one
+    identity-preserving and one identity-breaking transform route. It must not invent a production
+    `Transform` enum early or make test-only production hooks.
+  - Any existing fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance remains zero; mandatory base and third-level categories permit zero
+    drops.
+
+- Measured results:
+  - One generated matrix owns ten synthetic microchart cells: a raw and transformed route for each
+    of identity projection, member identity, range subject, `hasKey` host decoding, and splice
+    lowering.
+  - Every cell asserts the produced `ContractUse` or `ContractValuePathFacts`/requirement fact
+    before comparing the complete emitted schema. The suite pins stringified serialized uses,
+    JSON-decoded range integer exclusion, parsed-map `hasKey` abstention, YAML-serialized splices,
+    and the current identity-preserving JSON member projection.
+  - Schema and symbolic-IR corpus dumps remain byte-for-byte identical to B1.3. The full-depth
+    battery covers 60 charts and 121,055 probes with zero acceptance flips, zero mandatory base or
+    third-level drops, and zero candidate-accepts/Helm-aborts cells.
+- Deviations:
+  - The first inspection preflight printed the ten cells' uses, schema signals, and schemas instead
+    of asserting them. It established the measured current matrix, then was deleted; no archive,
+    dump, or fixture from the inspection scaffold was adopted.
+  - The first assertion preflight used a nonexistent `serde_json::Map::from` array conversion and
+    failed to compile. The test now collects the single property explicitly; no artifact from the
+    rejected state was produced.
+- Adjudication evidence: zero acceptance flips require no Helm cell adjudication. The prober ran
+  with Helm adjudication enabled and reports zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Identity projection | Preserve only exact raw-value identities | Produced contract fact, then full schema equality. |
+| Member identity | Preserve member projection only for structural identity | Produced member fact, then full schema equality. |
+| Range subject | Retain the transform-specific iterable domain | Produced range fact, then full schema equality. |
+| `hasKey` decoding | Bind the host kind without reviving transformed input identity | Produced requirement fact, then full schema equality. |
+| Splice lowering | Preserve transform-specific scalar/fragment placement | Produced render fact, then full schema equality. |
+
+### Review dossier
+
+- Focused proof: `transforms_keep_their_position_specific_facts_and_schemas` passes all ten matrix
+  cells. The test returns `eyre::Result`, reports missing facts as ordinary errors, and uses
+  `sim_assert_eq!` for every equality.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-g2s1-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-g2s1-final1.tar.zst`; exit 0, 86
+  binaries and 124 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-g2s1-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-g2s1-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the B1.3 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-g2s1-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-g2s1-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written. A
+  recursive byte comparison against the B1.3 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-g2s1-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=a79c0c47
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-g2s1-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-g2s1-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-g2s1-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells. Mandatory base and third-level categories have zero drops; 28,868 disclosed bounded
+  reductions remain unchanged.
+- Public/wire decision: none. The matrix is crate-private test code and changes neither public Rust
+  API nor serialized formats.
+
+### Self-adversarial pass
+
+- The matrix does not infer correctness from final schema alone. Each branch first proves the
+  specific producer fact B2 will migrate, so a later transform carrier cannot accidentally get the
+  right schema through a different path.
+- Raw comparison cells prevent the transformed route from redefining a position's baseline. The
+  JSON member cell deliberately pins that roundtripping preserves member projection, while the JSON
+  range cell independently pins that decoding removes Helm's integer-count lane.
+- Parsed-map `hasKey` is not asserted as a raw object requirement: the transform supplies the map
+  host. Its cell instead pins pathless fragment/serialization evidence and the absence of a raw
+  `SchemaType("object")` implication.
+- G2 stage 1 is intentionally not exhaustive over the future vocabulary. `Transform::ALL`,
+  mixed-branch merge/clear semantics, capture positions, and payload-bearing identity breakers stay
+  explicit stage-2 obligations rather than being falsely claimed here.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings; 451.48 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,306 tests pass.
+- `task test:integration`; exit 0, 554 tests pass and 24 are skipped; 915.430 seconds.
+- `task test:all`; exit 0, 1,864 tests pass and 24 are skipped, including all live-network tests;
+  970.298 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,428 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: 0 (63,428 to 63,428); 260 test Rust lines added.

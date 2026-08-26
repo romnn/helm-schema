@@ -55,6 +55,7 @@ mod resolve_policy;
 mod schema_node;
 mod shape_alternatives;
 mod string_transform_contracts;
+mod transform_position_matrix;
 mod validator_reachability;
 
 /// Provider chains resolve against the COMMITTED bundle with downloads off:
