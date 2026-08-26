@@ -22,333 +22,338 @@ pub(super) fn record_fail_conjunction(
     capture: &crate::eval_effect::FailCapture,
     range_modes: &crate::range_modes::RangeModes,
 ) {
-    if let crate::eval_effect::CaptureKind::RangeKeyStrings {
-        paths: range_key_string_paths,
-    } = &capture.kind
-    {
-        record_range_key_string_requirements(paths, capture, range_key_string_paths, range_modes);
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::CollectionItems {
-        paths: collection_paths,
-        schema_type,
-        pattern,
-    } = &capture.kind
-    {
-        record_collection_item_requirements(
-            paths,
-            capture,
-            collection_paths,
+    match &capture.kind {
+        crate::eval_effect::CaptureKind::RangeKeyStrings {
+            paths: range_key_string_paths,
+        } => {
+            record_range_key_string_requirements(
+                paths,
+                capture,
+                range_key_string_paths,
+                range_modes,
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::CollectionItems {
+            paths: collection_paths,
             schema_type,
-            pattern.as_deref(),
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::IndexAccess { path, index } = &capture.kind {
-        record_index_access_requirement(paths, capture, path, *index);
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::SplitIndexAccess {
-        paths: source_paths,
-        separator,
-        index,
-        total_text_preimage,
-    } = &capture.kind
-    {
-        record_split_index_access_requirement(
-            paths,
-            capture,
-            source_paths,
+            pattern,
+        } => {
+            record_collection_item_requirements(
+                paths,
+                capture,
+                collection_paths,
+                schema_type,
+                pattern.as_deref(),
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::IndexAccess { path, index } => {
+            record_index_access_requirement(paths, capture, path, *index);
+            return;
+        }
+        crate::eval_effect::CaptureKind::SplitIndexAccess {
+            paths: source_paths,
             separator,
-            *index,
-            *total_text_preimage,
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::ValueType {
-        path,
-        schema_type,
-        null_aborts,
-    } = &capture.kind
-    {
-        record_value_requirement_capture(
-            paths,
-            capture,
+            index,
+            total_text_preimage,
+        } => {
+            record_split_index_access_requirement(
+                paths,
+                capture,
+                source_paths,
+                separator,
+                *index,
+                *total_text_preimage,
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::ValueType {
             path,
-            if *null_aborts {
-                FailValueRequirement::SchemaTypeEvenNull(schema_type.clone())
-            } else {
-                FailValueRequirement::SchemaType(schema_type.clone())
-            },
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::StringRequirement {
-        path,
-        route,
-        selection,
-    } = &capture.kind
-    {
-        if *route == crate::eval_effect::StringRequirementRoute::Serialized {
-            return;
-        }
-        if *route == crate::eval_effect::StringRequirementRoute::Selected
-            && let Some(requirement_capture) =
-                selected_member_requirement_capture(capture, path, selection)
-        {
+            schema_type,
+            null_aborts,
+        } => {
             record_value_requirement_capture(
                 paths,
-                &requirement_capture,
+                capture,
                 path,
-                FailValueRequirement::SchemaType("string".to_string()),
+                if *null_aborts {
+                    FailValueRequirement::SchemaTypeEvenNull(schema_type.clone())
+                } else {
+                    FailValueRequirement::SchemaType(schema_type.clone())
+                },
             );
             return;
         }
-        let mut requirement_capture = capture.clone();
-        requirement_capture
-            .conjunction
-            .extend(selection.iter().cloned());
-        requirement_capture.conjunction.sort();
-        requirement_capture.conjunction.dedup();
-        if *route == crate::eval_effect::StringRequirementRoute::Direct
-            && requirement_capture.conjunction.is_empty()
-        {
-            record_unconditional_string_requirement_facts(paths, path);
-        } else if string_requirement_has_execution_scope(&requirement_capture, path, range_modes) {
-            record_value_requirement_capture(
-                paths,
-                &requirement_capture,
-                path,
-                FailValueRequirement::SchemaType("string".to_string()),
-            );
-            if let Some(collection_path) = member_range_path(path)
-                && requirement_capture.conjunction.iter().all(|predicate| {
-                    matches!(
-                        predicate,
-                        Predicate::Guard(Guard::Range { path }) if path == &collection_path
-                    )
-                })
-                && requirement_capture
-                    .ranged
-                    .mode(&collection_path)
-                    .member_identity
+        crate::eval_effect::CaptureKind::StringRequirement {
+            path,
+            route,
+            selection,
+        } => {
+            match route {
+                crate::eval_effect::StringRequirementRoute::Serialized => return,
+                crate::eval_effect::StringRequirementRoute::Selected => {
+                    if let Some(requirement_capture) =
+                        selected_member_requirement_capture(capture, path, selection)
+                    {
+                        record_value_requirement_capture(
+                            paths,
+                            &requirement_capture,
+                            path,
+                            FailValueRequirement::SchemaType("string".to_string()),
+                        );
+                        return;
+                    }
+                }
+                crate::eval_effect::StringRequirementRoute::Direct
+                | crate::eval_effect::StringRequirementRoute::Scoped => {}
+            }
+            let mut requirement_capture = capture.clone();
+            requirement_capture
+                .conjunction
+                .extend(selection.iter().cloned());
+            requirement_capture.conjunction.sort();
+            requirement_capture.conjunction.dedup();
+            if *route == crate::eval_effect::StringRequirementRoute::Direct
+                && requirement_capture.conjunction.is_empty()
             {
                 record_unconditional_string_requirement_facts(paths, path);
-            }
-        }
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::RangeInput {
-        path,
-        destructured,
-        json_decoded,
-    } = &capture.kind
-    {
-        record_range_input_capture(paths, capture, path, *destructured, *json_decoded);
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::RangeSelection {
-        path,
-        chain,
-        allow_integer,
-    } = &capture.kind
-    {
-        // A `with` selection stamps one positive marker per candidate beside
-        // the chain's disjunction. Helper transfer may spell those markers
-        // as `Truthy` instead of `With`. Remove exactly one marker per path
-        // only when the complete stamp is present; the capture's appended
-        // selection tail remains, as do genuine enclosing conditions.
-        let mut capture = capture.clone();
-        let has_chain_disjunction = capture
-            .conjunction
-            .iter()
-            .any(|predicate| predicate_is_truthy_disjunction_over(predicate, chain));
-        let has_all_markers = chain.iter().all(|candidate| {
-            capture.conjunction.iter().any(|predicate| {
-                matches!(
-                    predicate,
-                    Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
-                        if path == candidate
-                )
-            })
-        });
-        if has_chain_disjunction && has_all_markers {
-            let mut remaining_markers = chain.iter().cloned().collect::<BTreeSet<_>>();
-            capture.conjunction.retain(|predicate| {
-                if predicate_is_truthy_disjunction_over(predicate, chain) {
-                    return false;
+            } else if string_requirement_has_execution_scope(
+                &requirement_capture,
+                path,
+                range_modes,
+            ) {
+                record_value_requirement_capture(
+                    paths,
+                    &requirement_capture,
+                    path,
+                    FailValueRequirement::SchemaType("string".to_string()),
+                );
+                if let Some(collection_path) = member_range_path(path)
+                    && requirement_capture.conjunction.iter().all(|predicate| {
+                        matches!(
+                            predicate,
+                            Predicate::Guard(Guard::Range { path }) if path == &collection_path
+                        )
+                    })
+                    && requirement_capture
+                        .ranged
+                        .mode(&collection_path)
+                        .member_identity
+                {
+                    record_unconditional_string_requirement_facts(paths, path);
                 }
-                let Predicate::Guard(
-                    Guard::Truthy { path: marker } | Guard::With { path: marker },
-                ) = predicate
-                else {
-                    return true;
-                };
-                !remaining_markers.remove(marker)
+            }
+            return;
+        }
+        crate::eval_effect::CaptureKind::RangeInput {
+            path,
+            destructured,
+            json_decoded,
+        } => {
+            record_range_input_capture(paths, capture, path, *destructured, *json_decoded);
+            return;
+        }
+        crate::eval_effect::CaptureKind::RangeSelection {
+            path,
+            chain,
+            allow_integer,
+        } => {
+            // A `with` selection stamps one positive marker per candidate beside
+            // the chain's disjunction. Helper transfer may spell those markers
+            // as `Truthy` instead of `With`. Remove exactly one marker per path
+            // only when the complete stamp is present; the capture's appended
+            // selection tail remains, as do genuine enclosing conditions.
+            let mut capture = capture.clone();
+            let has_chain_disjunction = capture
+                .conjunction
+                .iter()
+                .any(|predicate| predicate_is_truthy_disjunction_over(predicate, chain));
+            let has_all_markers = chain.iter().all(|candidate| {
+                capture.conjunction.iter().any(|predicate| {
+                    matches!(
+                        predicate,
+                        Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
+                            if path == candidate
+                    )
+                })
             });
-        }
-        record_value_requirement_capture(
-            paths,
-            &capture,
-            path,
-            FailValueRequirement::Iterable {
-                allow_integer: *allow_integer,
-            },
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::DigSubject { path } = &capture.kind {
-        record_value_requirement_capture(
-            paths,
-            capture,
-            path,
-            FailValueRequirement::SchemaTypeEvenNull("object".to_string()),
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::RequiredPresence { path } = &capture.kind {
-        // The presence claim lands on the PARENT as a required member so
-        // the arm fires when the subject itself is absent. A TOP-LEVEL
-        // subject has no parent slot to carry that member, so it takes the
-        // document-level absence clause instead — the same vehicle the
-        // navigated-host and nil-strict-operand claims use for their own
-        // top-level paths (kube-prometheus-stack's `customRules`).
-        let mut segments = helm_schema_core::split_value_path(path);
-        let Some(member) = segments.pop() else {
-            return;
-        };
-        if segments.is_empty() {
-            record_absence_abort_clause(terminal_clauses, capture, path);
+            if has_chain_disjunction && has_all_markers {
+                let mut remaining_markers = chain.iter().cloned().collect::<BTreeSet<_>>();
+                capture.conjunction.retain(|predicate| {
+                    if predicate_is_truthy_disjunction_over(predicate, chain) {
+                        return false;
+                    }
+                    let Predicate::Guard(
+                        Guard::Truthy { path: marker } | Guard::With { path: marker },
+                    ) = predicate
+                    else {
+                        return true;
+                    };
+                    !remaining_markers.remove(marker)
+                });
+            }
+            record_value_requirement_capture(
+                paths,
+                &capture,
+                path,
+                FailValueRequirement::Iterable {
+                    allow_integer: *allow_integer,
+                },
+            );
             return;
         }
-        let parent = helm_schema_core::join_value_path(segments);
-        record_value_requirement_capture(
-            paths,
-            capture,
-            &parent,
-            FailValueRequirement::HasMemberEvenDefaulted(member),
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::AbsenceAborts { path } = &capture.kind {
-        // A ranged MEMBER FIELD's absence has no document-level spelling —
-        // the clause would have to name one visited member — but the member's
-        // own slot states it exactly, as a required member of every visited
-        // member (the minio chart's `tpl .accessKey $`). The member itself
-        // (a bare `A.*`) keeps no claim: a range only visits members that
-        // exist.
-        if path_contains_wildcard(path) {
+        crate::eval_effect::CaptureKind::DigSubject { path } => {
+            record_value_requirement_capture(
+                paths,
+                capture,
+                path,
+                FailValueRequirement::SchemaTypeEvenNull("object".to_string()),
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::RequiredPresence { path } => {
+            // The presence claim lands on the PARENT as a required member so
+            // the arm fires when the subject itself is absent. A TOP-LEVEL
+            // subject has no parent slot to carry that member, so it takes the
+            // document-level absence clause instead — the same vehicle the
+            // navigated-host and nil-strict-operand claims use for their own
+            // top-level paths (kube-prometheus-stack's `customRules`).
             let mut segments = helm_schema_core::split_value_path(path);
             let Some(member) = segments.pop() else {
                 return;
             };
-            if member == "*" || segments.is_empty() {
+            if segments.is_empty() {
+                record_absence_abort_clause(terminal_clauses, capture, path);
                 return;
             }
-            // A gate on the operand's OWN truthiness excludes absence
-            // outright, so the claim would only restate the gate (grafana
-            // reads `tpl .prefix $` inside `if .prefix`). This is the
-            // member-quantified case of the same self-mention rule the
-            // document-level clause applies.
-            if capture.conjunction.iter().any(|predicate| {
-                matches!(
-                    predicate,
-                    Predicate::Guard(Guard::Truthy { path: guard } | Guard::With { path: guard })
-                        if guard == path
-                )
-            }) {
-                return;
-            }
+            let parent = helm_schema_core::join_value_path(segments);
             record_value_requirement_capture(
                 paths,
                 capture,
-                &helm_schema_core::join_value_path(segments),
+                &parent,
                 FailValueRequirement::HasMemberEvenDefaulted(member),
             );
             return;
         }
-        record_absence_abort_clause(terminal_clauses, capture, path);
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::ComparableKind { path, schema_type } = &capture.kind {
-        record_value_requirement_capture(
-            paths,
-            capture,
+        crate::eval_effect::CaptureKind::AbsenceAborts { path } => {
+            // A ranged MEMBER FIELD's absence has no document-level spelling —
+            // the clause would have to name one visited member — but the member's
+            // own slot states it exactly, as a required member of every visited
+            // member (the minio chart's `tpl .accessKey $`). The member itself
+            // (a bare `A.*`) keeps no claim: a range only visits members that
+            // exist.
+            if path_contains_wildcard(path) {
+                let mut segments = helm_schema_core::split_value_path(path);
+                let Some(member) = segments.pop() else {
+                    return;
+                };
+                if member == "*" || segments.is_empty() {
+                    return;
+                }
+                // A gate on the operand's OWN truthiness excludes absence
+                // outright, so the claim would only restate the gate (grafana
+                // reads `tpl .prefix $` inside `if .prefix`). This is the
+                // member-quantified case of the same self-mention rule the
+                // document-level clause applies.
+                if capture.conjunction.iter().any(|predicate| {
+                    matches!(
+                        predicate,
+                        Predicate::Guard(
+                            Guard::Truthy { path: guard } | Guard::With { path: guard }
+                        ) if guard == path
+                    )
+                }) {
+                    return;
+                }
+                record_value_requirement_capture(
+                    paths,
+                    capture,
+                    &helm_schema_core::join_value_path(segments),
+                    FailValueRequirement::HasMemberEvenDefaulted(member),
+                );
+                return;
+            }
+            record_absence_abort_clause(terminal_clauses, capture, path);
+            return;
+        }
+        crate::eval_effect::CaptureKind::ComparableKind { path, schema_type } => {
+            record_value_requirement_capture(
+                paths,
+                capture,
+                path,
+                FailValueRequirement::ComparableKind(schema_type.clone()),
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::ValuePattern {
             path,
-            FailValueRequirement::ComparableKind(schema_type.clone()),
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::ValuePattern {
-        path,
-        pattern,
-        templated,
-    } = &capture.kind
-    {
-        record_value_requirement_capture(
-            paths,
-            capture,
+            pattern,
+            templated,
+        } => {
+            record_value_requirement_capture(
+                paths,
+                capture,
+                path,
+                FailValueRequirement::MatchesPattern {
+                    pattern: pattern.clone(),
+                    templated: *templated,
+                },
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::QuotedSerialization {
             path,
-            FailValueRequirement::MatchesPattern {
-                pattern: pattern.clone(),
-                templated: *templated,
-            },
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::QuotedSerialization {
-        path,
-        style,
-        templated,
-    } = &capture.kind
-    {
-        record_value_requirement_capture(
-            paths,
-            capture,
+            style,
+            templated,
+        } => {
+            record_value_requirement_capture(
+                paths,
+                capture,
+                path,
+                FailValueRequirement::QuotedSerializationSafe {
+                    style: *style,
+                    templated: *templated,
+                },
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::PrintfStringOperand { path } => {
+            record_value_requirement_capture(
+                paths,
+                capture,
+                path,
+                FailValueRequirement::PrintfStringOperand,
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::PlainSlotText {
             path,
-            FailValueRequirement::QuotedSerializationSafe {
-                style: *style,
-                templated: *templated,
-            },
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::PrintfStringOperand { path } = &capture.kind {
-        record_value_requirement_capture(
-            paths,
-            capture,
-            path,
-            FailValueRequirement::PrintfStringOperand,
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::PlainSlotText {
-        path,
-        token_initial,
-        templated,
-    } = &capture.kind
-    {
-        record_value_requirement_capture(
-            paths,
-            capture,
-            path,
-            FailValueRequirement::PlainScalarSafe {
-                token_initial: *token_initial,
-                templated: *templated,
-            },
-        );
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
-        paths: collection_paths,
-    } = &capture.kind
-    {
-        record_range_key_plain_slot_requirements(paths, capture, collection_paths, range_modes);
-        return;
-    }
-    if let crate::eval_effect::CaptureKind::MemberAccess { handled_kinds } = &capture.kind {
-        record_member_access_capture(paths, capture, handled_kinds, range_modes);
-        return;
+            token_initial,
+            templated,
+        } => {
+            record_value_requirement_capture(
+                paths,
+                capture,
+                path,
+                FailValueRequirement::PlainScalarSafe {
+                    token_initial: *token_initial,
+                    templated: *templated,
+                },
+            );
+            return;
+        }
+        crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
+            paths: collection_paths,
+        } => {
+            record_range_key_plain_slot_requirements(paths, capture, collection_paths, range_modes);
+            return;
+        }
+        crate::eval_effect::CaptureKind::MemberAccess { handled_kinds } => {
+            record_member_access_capture(paths, capture, handled_kinds, range_modes);
+            return;
+        }
+        crate::eval_effect::CaptureKind::Fail => {}
     }
     // An approximate enclosing condition abstains unless it admits a sound
     // positive strengthening (it can only ever be an OUTER guard — the

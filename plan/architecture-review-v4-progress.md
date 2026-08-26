@@ -1842,7 +1842,7 @@
 
 ## S-D1 — narrow the IR fragment domain
 
-- Status: complete; commit pending.
+- Status: landed in `8429e2bd`.
 - Contract: representation-only move of the two fragment golden-test modules into `src/tests/`,
   followed by crate-private fragment-domain visibility, deletion of the one-field
   `SymbolicIrContextInner` wrapper, removal of its redundant `Rc` layer, and deletion of
@@ -1957,3 +1957,109 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: -17 (63,229 to 63,212).
+
+## B1.1 — exhaustive capture-kind dispatcher
+
+- Status: complete; commit pending.
+- Contract: representation-only conversion of `record_fail_conjunction` from an ordered
+  `if let` ladder into one exhaustive early-return `CaptureKind` match with no wildcard. Only
+  `CaptureKind::Fail` may reach the generic fail-negation tail. `StringRequirement` gets its own
+  exhaustive nested `StringRequirementRoute` match because its four routes are behavior-sensitive.
+- Acceptance baseline: `8429e2bd` (S-D1).
+- Baseline production LOC: 63,212 Rust lines from `task tokei:core` on `8429e2bd`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, or acceptance changes. Every existing capture kind and
+    string-requirement route must execute the same lowering body and return at the same boundary.
+  - `Selected` string requirements retain their member-scope rewrite when available and their
+    existing execution-scoped fallback otherwise; `Serialized` still abstains; `Direct` alone may
+    publish unconditional facts; `Scoped` stays conditional.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - Replaced the 18-arm ordered `if let` ladder with one exhaustive 19-variant `CaptureKind`
+    match. Every specialized kind records through its existing helper and returns; the explicit
+    `Fail` arm is the only path into generic predicate negation.
+  - `StringRequirement` contains an exhaustive nested match over `Direct`, `Scoped`, `Selected`,
+    and `Serialized`. `Selected` retains its member rewrite and scoped fallback; the common tail is
+    reached only by the three non-serialized routes.
+  - The 57-test focused contract/signal suite passes without expected-value edits. Schema and
+    symbolic-IR dumps are byte-for-byte identical to S-D1.
+  - The full-depth battery covers 60 charts and 121,055 probes with zero acceptance flips;
+    mandatory base coverage is 112,260/112,260 and third-level coverage is 7,465/7,465, both with
+    zero drops.
+- Deviations: none. The first compiled dispatcher passed the focused suite, lint, and immutable
+  battery; no rejected code-state artifact was produced.
+- Adjudication evidence: Helm v4.2.3. This representation-only round has zero changed fixture
+  bytes, zero acceptance flips, and zero candidate-accepts/Helm-aborts cells; no fixture required
+  adoption.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Every `CaptureKind` variant | Same dedicated lowering and early return | Compiler-exhaustive match plus existing suite. |
+| `StringRequirement::Serialized` | Abstain | Focused string-route controls. |
+| `StringRequirement::Selected` | Member rewrite or scoped fallback | Existing selected-member tests and corpus. |
+| `StringRequirement::Direct` | Unconditional only with empty scope | Existing direct string controls. |
+| `StringRequirement::Scoped` | Conditional capture only | Existing scoped controls. |
+| `CaptureKind::Fail` | Sole generic-negation fallthrough | Focused fail-lowering suite. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-ir -E
+  'test(/tests::contract::/) | test(/tests::contract_signals::/)'`; exit 0, all 57 contract and
+  signal tests pass.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b11-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b11-final1.tar.zst`; exit 0, 86
+  binaries and 124 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b11-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b11-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the S-D1 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b11-final1-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b11-final1.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written. A recursive byte comparison against the S-D1 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b11-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=8429e2bd
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b11-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b11-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b11-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: none. Both enums and the dispatcher are crate-private; serialized contracts
+  and public APIs are unchanged.
+
+### Self-adversarial pass
+
+- `Selected` cannot simply return after its nested match: when no member-range rewrite applies, its
+  exact selection predicates must still join the ordinary scoped capture. The common tail remains
+  reachable for that case.
+- `Serialized` returns from the nested match before any selection predicate or string type fact is
+  published, preserving the certified-serializer abstention.
+- The final `Fail` arm is syntactically explicit and empty. Adding a new capture kind now fails
+  compilation at this semantic dispatch point instead of silently falling into fail negation.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,304 tests pass.
+- `task test:integration`; exit 0, 551 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,859 tests pass and 24 are skipped, including all live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,217 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +5 (63,212 to 63,217).
