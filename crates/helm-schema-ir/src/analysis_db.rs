@@ -1200,21 +1200,24 @@ impl BoundHelperCallCacheKey {
         resolution: &BoundHelperCallResolution,
         seen: BTreeSet<String>,
     ) -> Self {
+        let BoundHelperCallResolution {
+            bindings,
+            dot,
+            root_truthy_predicates,
+            root_value_dispatches,
+        } = resolution;
         Self {
             name: name.to_string(),
-            bindings: resolution
-                .bindings
+            bindings: bindings
                 .iter()
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect(),
-            dot: resolution.dot.clone(),
-            root_truthy_predicates: resolution
-                .root_truthy_predicates
+            dot: dot.clone(),
+            root_truthy_predicates: root_truthy_predicates
                 .iter()
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect(),
-            root_value_dispatches: resolution
-                .root_value_dispatches
+            root_value_dispatches: root_value_dispatches
                 .iter()
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect(),

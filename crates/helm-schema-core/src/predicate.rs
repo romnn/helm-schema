@@ -315,35 +315,11 @@ impl Predicate {
         paths
     }
 
-    /// Projects this formula into the contract guard vocabulary.
-    pub fn contract_guards(&self) -> Vec<Guard> {
-        match self {
-            Self::True | Self::False | Self::Approximate { .. } => Vec::new(),
-            Self::Guard(guard) => vec![guard.clone()],
-            Self::Not(inner) => negated_contract_guards(inner),
-            Self::And(predicates) => predicates.iter().flat_map(Self::contract_guards).collect(),
-            Self::Or(predicates) => or_contract_guards(predicates),
-        }
-    }
-
-    /// Whether [`Self::contract_guards`] represents this predicate
-    /// EXACTLY: the flattened guard conjunction selects the same states.
-    /// Negations distribute by De Morgan down to negatable guard leaves;
-    /// a negation reaching a leaf the vocabulary cannot flip flattens to
-    /// NOTHING, which an `And` flatten would silently drop — a fail
-    /// conjunction missing such a conjunct negates into states the
-    /// validator never rejects, so callers keep those conjuncts as raw
-    /// predicates instead.
+    /// Projects this formula exactly into the contract guard vocabulary.
+    /// `None` means some predicate node has no exact guard spelling.
     #[must_use]
-    pub fn contract_guards_are_exact(&self) -> bool {
-        match self {
-            Self::True | Self::Guard(_) => true,
-            Self::False | Self::Approximate { .. } => false,
-            Self::Not(inner) => negation_flattens_exactly(inner),
-            Self::And(predicates) | Self::Or(predicates) => {
-                predicates.iter().all(Self::contract_guards_are_exact)
-            }
-        }
+    pub fn contract_guards(&self) -> Option<Vec<Guard>> {
+        flatten_contract_guards(self, false)
     }
 
     fn collect_value_paths(&self, out: &mut BTreeSet<String>) {
@@ -422,9 +398,11 @@ impl Predicate {
     pub fn contract_guard_stack(predicates: &[Self]) -> Vec<Guard> {
         let mut guards = Vec::new();
         for predicate in predicates {
-            for guard in predicate.contract_guards() {
-                if !guards.contains(&guard) {
-                    guards.push(guard);
+            if let Some(projected) = predicate.contract_guards() {
+                for guard in projected {
+                    if !guards.contains(&guard) {
+                        guards.push(guard);
+                    }
                 }
             }
         }
@@ -470,107 +448,79 @@ impl Predicate {
     }
 }
 
-/// Whether [`negated_contract_guards`] flattens `¬inner` exactly: every
-/// De Morgan leaf must be a negatable guard (`True`/`False` leaves are
-/// excluded — the guard vocabulary cannot spell a constant).
-fn negation_flattens_exactly(inner: &Predicate) -> bool {
-    match inner {
-        Predicate::Guard(
-            Guard::Truthy { .. }
-            | Guard::With { .. }
-            | Guard::Not { .. }
-            | Guard::Or { .. }
-            | Guard::Eq { .. }
-            | Guard::NotEq { .. }
-            | Guard::TypeIs { .. }
-            | Guard::NotTypeIs { .. }
-            | Guard::HasKey { .. }
-            | Guard::NotHasKey { .. },
-        ) => true,
-        Predicate::Not(inner) => inner.contract_guards_are_exact(),
-        Predicate::And(predicates) | Predicate::Or(predicates) => {
-            predicates.iter().all(negation_flattens_exactly)
-        }
-        _ => false,
-    }
-}
-
-fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
-    match inner {
-        Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) => {
-            vec![Guard::Not { path: path.clone() }]
-        }
-        Predicate::Guard(Guard::Not { path }) => vec![Guard::Truthy { path: path.clone() }],
-        Predicate::Guard(Guard::Or { paths }) => paths
+fn flatten_contract_guards(predicate: &Predicate, negated: bool) -> Option<Vec<Guard>> {
+    match (predicate, negated) {
+        (Predicate::True, false) => Some(Vec::new()),
+        (Predicate::True | Predicate::False | Predicate::Approximate { .. }, true)
+        | (Predicate::False | Predicate::Approximate { .. }, false) => None,
+        (Predicate::Guard(guard), false) => Some(vec![guard.clone()]),
+        (Predicate::Guard(Guard::Or { paths }), true) => Some(
+            paths
+                .iter()
+                .map(|path| Guard::Not { path: path.clone() })
+                .collect(),
+        ),
+        (Predicate::Guard(guard), true) => negated_guard(guard).map(|guard| vec![guard]),
+        (Predicate::Not(inner), polarity) => flatten_contract_guards(inner, !polarity),
+        (Predicate::And(predicates), false) | (Predicate::Or(predicates), true) => predicates
             .iter()
-            .map(|path| Guard::Not { path: path.clone() })
-            .collect(),
-        Predicate::Guard(Guard::Eq { path, value }) => vec![Guard::NotEq {
-            path: path.clone(),
-            value: value.clone(),
-        }],
-        Predicate::Guard(Guard::NotEq { path, value }) => vec![Guard::Eq {
-            path: path.clone(),
-            value: value.clone(),
-        }],
-        Predicate::Guard(Guard::TypeIs { path, schema_type }) => vec![Guard::NotTypeIs {
-            path: path.clone(),
-            schema_type: schema_type.clone(),
-        }],
-        Predicate::Guard(Guard::NotTypeIs { path, schema_type }) => vec![Guard::TypeIs {
-            path: path.clone(),
-            schema_type: schema_type.clone(),
-        }],
-        Predicate::Guard(Guard::HasKey { path, key }) => vec![Guard::NotHasKey {
-            path: path.clone(),
-            key: key.clone(),
-        }],
-        Predicate::Guard(Guard::NotHasKey { path, key }) => vec![Guard::HasKey {
-            path: path.clone(),
-            key: key.clone(),
-        }],
-        Predicate::Not(inner) => inner.contract_guards(),
-        // ¬(p₁ ∨ … ∨ pₙ) = ¬p₁ ∧ … ∧ ¬pₙ: a plain conjunction, exact only
-        // when every disjunct negates exactly (an empty flatten anywhere
-        // abstains the whole negation instead of silently dropping it).
-        Predicate::Or(predicates) => {
-            let mut guards = Vec::new();
-            for predicate in predicates {
-                let negated = negated_contract_guards(predicate);
-                if negated.is_empty() {
-                    return Vec::new();
-                }
-                guards.extend(negated);
-            }
-            guards
-        }
-        // ¬(p₁ ∧ … ∧ pₙ) = ¬p₁ ∨ … ∨ ¬pₙ: one alternative per conjunct,
-        // sharing the disjunction normalization of the positive `Or` lane.
-        Predicate::And(predicates) => {
-            let mut alternatives = Vec::new();
-            for predicate in predicates {
-                let negated = negated_contract_guards(predicate);
-                if negated.is_empty() {
-                    return Vec::new();
-                }
-                alternatives.push(negated);
-            }
-            alternatives_to_guards(alternatives)
-        }
-        _ => Vec::new(),
+            .map(|predicate| flatten_contract_guards(predicate, negated))
+            .collect::<Option<Vec<_>>>()
+            .map(|guards| guards.into_iter().flatten().collect()),
+        (Predicate::Or(predicates), false) | (Predicate::And(predicates), true) => predicates
+            .iter()
+            .map(|predicate| flatten_contract_guards(predicate, negated))
+            .collect::<Option<Vec<_>>>()
+            .map(alternatives_to_guards),
     }
 }
 
-fn or_contract_guards(predicates: &[Predicate]) -> Vec<Guard> {
-    let alternatives = predicates
-        .iter()
-        .map(Predicate::contract_guards)
-        .collect::<Vec<_>>();
-
-    if alternatives.iter().any(Vec::is_empty) {
-        return Vec::new();
+fn negated_guard(guard: &Guard) -> Option<Guard> {
+    match guard {
+        Guard::Truthy { path } | Guard::With { path } => Some(Guard::Not { path: path.clone() }),
+        Guard::Not { path } => Some(Guard::Truthy { path: path.clone() }),
+        Guard::Eq { path, value } => Some(Guard::NotEq {
+            path: path.clone(),
+            value: value.clone(),
+        }),
+        Guard::NotEq { path, value } => Some(Guard::Eq {
+            path: path.clone(),
+            value: value.clone(),
+        }),
+        Guard::TypeIs { path, schema_type } => Some(Guard::NotTypeIs {
+            path: path.clone(),
+            schema_type: schema_type.clone(),
+        }),
+        Guard::NotTypeIs { path, schema_type } => Some(Guard::TypeIs {
+            path: path.clone(),
+            schema_type: schema_type.clone(),
+        }),
+        Guard::HasKey { path, key } => Some(Guard::NotHasKey {
+            path: path.clone(),
+            key: key.clone(),
+        }),
+        Guard::NotHasKey { path, key } => Some(Guard::HasKey {
+            path: path.clone(),
+            key: key.clone(),
+        }),
+        Guard::Absent { .. }
+        | Guard::MatchesPattern { .. }
+        | Guard::NotMatchesPattern { .. }
+        | Guard::RangeKeyPrefix { .. }
+        | Guard::RangeKeyEquals { .. }
+        | Guard::RangeKeyMatches { .. }
+        | Guard::Or { .. }
+        | Guard::AnyOf { .. }
+        | Guard::Range { .. }
+        | Guard::Default { .. }
+        | Guard::IntGt { .. }
+        | Guard::IntLt { .. }
+        | Guard::AtMostOneMember { .. }
+        | Guard::MinMembers { .. }
+        | Guard::ContainsEquals { .. }
+        | Guard::ContainsMemberEquals { .. }
+        | Guard::ContainsTruthyMember { .. } => None,
     }
-    alternatives_to_guards(alternatives)
 }
 
 /// Normalize a disjunction of guard conjunctions into guard form: a single

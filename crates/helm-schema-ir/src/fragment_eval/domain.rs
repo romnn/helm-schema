@@ -371,22 +371,44 @@ pub(crate) struct SpliceMeta {
 
 impl SpliceMeta {
     pub(crate) fn is_input_identity(&self) -> bool {
-        self.input_identity
-            && !self.encoded
-            && !self.shape_erased
-            && !self.stringified
-            && !self.nil_omitted
-            && !self.yaml_serialized
-            && !self.templated_yaml
-            && !self.plain_slot_string_format
-            && !self.json_serialized
-            && self.lexical_escapes.is_empty()
-            && self.split_segment.is_none()
-            && self.merge_layers.is_none()
-            && !self.range_key
-            && self.omitted_members.is_empty()
-            && !self.digest
-            && !self.merge_operand
+        let Self {
+            input_identity,
+            defaulted: _,
+            encoded,
+            shape_erased,
+            stringified,
+            nil_omitted,
+            yaml_serialized,
+            templated_yaml,
+            plain_slot_string_format,
+            json_serialized,
+            json_decoded: _,
+            lexical_escapes,
+            split_segment,
+            merge_layers,
+            range_key,
+            omitted_members,
+            digest,
+            merge_operand,
+            provenance: _,
+            site: _,
+        } = self;
+        *input_identity
+            && !encoded
+            && !shape_erased
+            && !stringified
+            && !nil_omitted
+            && !yaml_serialized
+            && !templated_yaml
+            && !plain_slot_string_format
+            && !json_serialized
+            && lexical_escapes.is_empty()
+            && split_segment.is_none()
+            && merge_layers.is_none()
+            && !range_key
+            && omitted_members.is_empty()
+            && !digest
+            && !merge_operand
     }
 }
 

@@ -265,14 +265,31 @@ impl ContractUse {
     where
         F: FnMut(&str) -> String,
     {
-        self.source_expr = map(&self.source_expr);
-        self.condition.map_value_paths(map);
-        if let Some(merge) = &mut self.merge_layers {
+        let Self {
+            source_expr,
+            path: _,
+            kind: _,
+            condition,
+            resource: _,
+            provenance: _,
+            stringified: _,
+            template_supplied_member_keys: _,
+            split_segment: _,
+            merge_layers,
+            range_key: _,
+            nil_omitting: _,
+            omitted_members,
+            digest: _,
+            merge_operand: _,
+        } = self;
+        *source_expr = map(source_expr);
+        condition.map_value_paths(map);
+        if let Some(merge) = merge_layers {
             for layer in &mut merge.layers {
                 *layer = map(layer);
             }
         }
-        for retain_guards in self.omitted_members.values_mut() {
+        for retain_guards in omitted_members.values_mut() {
             for guard in retain_guards {
                 *guard = guard.clone().map_value_paths(map);
             }

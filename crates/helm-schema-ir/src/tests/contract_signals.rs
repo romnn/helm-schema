@@ -638,7 +638,7 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
         signals
             .evidence_for("serviceAccount.name")
             .is_some_and(|evidence| evidence.facts.has_render_use
-                && evidence.facts.all_render_uses_self_guarded),
+                && evidence.facts.all_render_uses_self_guarded.holds()),
         "contract value-path facts should own render-use evidence",
     );
     assert!(
@@ -651,7 +651,7 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
         signals
             .evidence_for("serviceAccount.name")
             .is_some_and(|evidence| evidence.facts.has_render_use
-                && evidence.facts.all_render_uses_self_guarded
+                && evidence.facts.all_render_uses_self_guarded.holds()
                 && evidence.facts.is_nullable),
         "contract value-path facts should bundle nullable render-use evidence",
     );
@@ -675,7 +675,10 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
     assert!(service_account_evidence.is_referenced_value_path);
     assert!(
         service_account_evidence.facts.has_render_use
-            && service_account_evidence.facts.all_render_uses_self_guarded
+            && service_account_evidence
+                .facts
+                .all_render_uses_self_guarded
+                .holds()
             && service_account_evidence.facts.is_nullable,
         "path evidence should carry render/nullability facts",
     );
@@ -1556,7 +1559,7 @@ fn statically_true_short_circuit_arm_keeps_its_values_execution_guard() -> eyre:
         .ok_or_eyre("live branch lost its values evidence")?;
     assert!(
         evidence.facts.has_self_guarded_render_use
-            && evidence.facts.all_render_uses_self_guarded
+            && evidence.facts.all_render_uses_self_guarded.holds()
             && !evidence.facts.has_unconditional_render_use,
         "the constant capability operand must not erase the preceding values execution guard: \
          evidence={evidence:#?}; uses={uses:#?}"

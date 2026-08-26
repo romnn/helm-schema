@@ -1250,12 +1250,48 @@ fn overlay_source_value_path(target_path: &str, source_path: &str, path: &str) -
     crate::join_value_path(segments)
 }
 
+/// Universally quantified fact whose empty-set identity is `true`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AllUses(bool);
+
+impl Default for AllUses {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
+impl AllUses {
+    /// Creates a universal fact from an already-aggregated result.
+    #[must_use]
+    pub const fn new(value: bool) -> Self {
+        Self(value)
+    }
+
+    /// Returns the quantified Boolean result.
+    #[must_use]
+    pub const fn holds(self) -> bool {
+        self.0
+    }
+}
+
+impl std::ops::BitAndAssign<bool> for AllUses {
+    fn bitand_assign(&mut self, rhs: bool) {
+        self.0 &= rhs;
+    }
+}
+
+impl std::ops::BitAndAssign<Self> for AllUses {
+    fn bitand_assign(&mut self, rhs: Self) {
+        self.0 &= rhs.0;
+    }
+}
+
 /// Schema-generation facts for one input values path.
 ///
 /// This bundles the contract-owned path state that schema lowering needs, so
 /// generator code does not have to reconstruct semantic facts from multiple
 /// lower-level projections.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractValuePathFacts {
     /// Whether analysis observed referenced paths below this path.
     pub has_referenced_descendants: bool,
@@ -1325,7 +1361,7 @@ pub struct ContractValuePathFacts {
     /// Whether any rendering sink is guarded by this path's own truthiness.
     pub has_self_guarded_render_use: bool,
     /// Whether every rendering sink is guarded by this path's own truthiness.
-    pub all_render_uses_self_guarded: bool,
+    pub all_render_uses_self_guarded: AllUses,
     /// A render consumed this path as one layer of an ordered merge: the
     /// generator synthesizes the layer's typing as root arms, and the
     /// layer's synthetic self-truthiness guard must not drive base
@@ -1343,11 +1379,50 @@ pub struct ContractValuePathFacts {
     /// consuming the raw value. Unlike `all_render_uses_self_guarded`, this
     /// bit feeds ONLY the base falsy escape — never overlay-branch routing or
     /// declared-default placement.
-    pub all_render_uses_falsy_tolerant: bool,
+    pub all_render_uses_falsy_tolerant: AllUses,
     /// Whether a direct range guard protects a rendering sink for this path.
     pub has_self_range_guard_render_use: bool,
     /// Whether observed semantics explicitly admit null.
     pub is_nullable: bool,
+}
+
+#[expect(
+    clippy::derivable_impls,
+    reason = "the exhaustive field list makes every new semantic fact choose its aggregation identity"
+)]
+impl Default for ContractValuePathFacts {
+    fn default() -> Self {
+        Self {
+            has_referenced_descendants: false,
+            has_item_descendants: false,
+            has_structured_item_descendants: false,
+            used_as_fragment: false,
+            used_as_serialized: false,
+            used_as_yaml_serialized: false,
+            has_string_contract: false,
+            has_non_self_guarded_string_contract: false,
+            has_string_contract_items: false,
+            used_as_pathless_fragment: false,
+            accepted_values_root_fragment: false,
+            accepted_dependency_values_root_fragment: false,
+            is_ranged_source: false,
+            is_direct_ranged_source: false,
+            has_destructured_range_use: false,
+            has_json_decoded_range_use: false,
+            is_partial_scalar_value_path: false,
+            has_render_use: false,
+            has_non_control_use: false,
+            has_unlayered_non_control_use: false,
+            has_unconditional_render_use: false,
+            has_self_guarded_render_use: false,
+            all_render_uses_self_guarded: AllUses::default(),
+            has_merge_layered_use: false,
+            has_parsed_map_layered_use: false,
+            all_render_uses_falsy_tolerant: AllUses::default(),
+            has_self_range_guard_render_use: false,
+            is_nullable: false,
+        }
+    }
 }
 
 impl ContractValuePathFacts {
@@ -1359,8 +1434,8 @@ impl ContractValuePathFacts {
         falsy_tolerant: Option<bool>,
     ) {
         if !self.has_render_use {
-            self.all_render_uses_self_guarded = true;
-            self.all_render_uses_falsy_tolerant = true;
+            self.all_render_uses_self_guarded = AllUses::default();
+            self.all_render_uses_falsy_tolerant = AllUses::default();
         }
         self.has_render_use = true;
         self.has_self_range_guard_render_use |= range_guarded;
@@ -1375,28 +1450,58 @@ impl ContractValuePathFacts {
 
     /// Merges rendering facts collected by another analysis branch.
     pub fn merge_render_use_facts(&mut self, other: Self) {
-        if !other.has_render_use {
+        let Self {
+            has_referenced_descendants: _,
+            has_item_descendants: _,
+            has_structured_item_descendants: _,
+            used_as_fragment: _,
+            used_as_serialized: _,
+            used_as_yaml_serialized: _,
+            has_string_contract: _,
+            has_non_self_guarded_string_contract: _,
+            has_string_contract_items: _,
+            used_as_pathless_fragment: _,
+            accepted_values_root_fragment: _,
+            accepted_dependency_values_root_fragment: _,
+            is_ranged_source: _,
+            is_direct_ranged_source: _,
+            has_destructured_range_use: _,
+            has_json_decoded_range_use: _,
+            is_partial_scalar_value_path: _,
+            has_render_use,
+            has_non_control_use: _,
+            has_unlayered_non_control_use: _,
+            has_unconditional_render_use,
+            has_self_guarded_render_use,
+            all_render_uses_self_guarded,
+            has_merge_layered_use,
+            has_parsed_map_layered_use,
+            all_render_uses_falsy_tolerant,
+            has_self_range_guard_render_use,
+            is_nullable: _,
+        } = other;
+        if !has_render_use {
             return;
         }
         if !self.has_render_use {
-            self.all_render_uses_self_guarded = true;
-            self.all_render_uses_falsy_tolerant = true;
+            self.all_render_uses_self_guarded = AllUses::default();
+            self.all_render_uses_falsy_tolerant = AllUses::default();
         }
         self.has_render_use = true;
-        self.has_unconditional_render_use |= other.has_unconditional_render_use;
-        self.has_self_guarded_render_use |= other.has_self_guarded_render_use;
-        self.has_merge_layered_use |= other.has_merge_layered_use;
-        self.has_parsed_map_layered_use |= other.has_parsed_map_layered_use;
-        self.has_self_range_guard_render_use |= other.has_self_range_guard_render_use;
-        self.all_render_uses_self_guarded &= other.all_render_uses_self_guarded;
-        self.all_render_uses_falsy_tolerant &= other.all_render_uses_falsy_tolerant;
+        self.has_unconditional_render_use |= has_unconditional_render_use;
+        self.has_self_guarded_render_use |= has_self_guarded_render_use;
+        self.has_merge_layered_use |= has_merge_layered_use;
+        self.has_parsed_map_layered_use |= has_parsed_map_layered_use;
+        self.has_self_range_guard_render_use |= has_self_range_guard_render_use;
+        self.all_render_uses_self_guarded &= all_render_uses_self_guarded;
+        self.all_render_uses_falsy_tolerant &= all_render_uses_falsy_tolerant;
     }
 
     #[must_use]
     pub(crate) fn has_non_self_guarded_render_use(self) -> bool {
         self.has_render_use
             && !self.has_self_guarded_render_use
-            && !self.all_render_uses_self_guarded
+            && !self.all_render_uses_self_guarded.holds()
     }
 }
 

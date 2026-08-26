@@ -613,13 +613,15 @@ impl Interpreter<'_> {
             };
         }
         let guards = predicate.contract_guards();
-        for guard in &guards {
-            for path in guard.value_paths() {
-                self.push_control_read(path, std::slice::from_ref(guard));
+        if let Some(guards) = &guards {
+            for guard in guards {
+                for path in guard.value_paths() {
+                    self.push_control_read(path, std::slice::from_ref(guard));
+                }
+                self.push_predicate(Predicate::from(guard.clone()));
             }
-            self.push_predicate(Predicate::from(guard.clone()));
         }
-        if guards.is_empty() {
+        if guards.as_ref().is_none_or(Vec::is_empty) {
             self.push_predicate(predicate.clone());
         }
         let semantic_truth = if evaluated_truth.when_true().exact_predicate().is_none() && faithful

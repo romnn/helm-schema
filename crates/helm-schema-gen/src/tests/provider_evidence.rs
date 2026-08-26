@@ -2627,7 +2627,7 @@ fn textual_rows_are_not_inherently_falsy_tolerant() -> eyre::Result<()> {
         .ok_or_eyre("expected textual repository evidence")?;
 
     sim_assert_eq!(
-        have: evidence.facts.all_render_uses_falsy_tolerant,
+        have: evidence.facts.all_render_uses_falsy_tolerant.holds(),
         want: false
     );
     Ok(())

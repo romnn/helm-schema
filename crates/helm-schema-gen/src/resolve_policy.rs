@@ -134,7 +134,8 @@ impl ValuePathSchemaFacts {
         guard_predicate_schema: &Value,
     ) -> bool {
         self.values_yaml.is_empty_string
-            && ((self.contract.has_render_use && self.contract.all_render_uses_self_guarded)
+            && ((self.contract.has_render_use
+                && self.contract.all_render_uses_self_guarded.holds())
                 || schema_allows_type(provider_schema, "string")
                 || is_scalar_like_schema(type_hint_schema)
                 || is_scalar_like_schema(guard_predicate_schema))
@@ -150,7 +151,7 @@ impl ValuePathSchemaFacts {
                 || (schema_allows_type(provider_schema, "object")
                     && (self.contract.used_as_fragment
                         || (self.contract.has_render_use
-                            && self.contract.all_render_uses_self_guarded))))
+                            && self.contract.all_render_uses_self_guarded.holds()))))
     }
 }
 
@@ -457,9 +458,9 @@ impl ResolvePolicy {
             && !facts.contract.is_direct_ranged_source
             && !facts.contract.has_non_self_guarded_string_contract
             && ((facts.contract.has_render_use
-                && ((facts.contract.all_render_uses_self_guarded
+                && ((facts.contract.all_render_uses_self_guarded.holds()
                     && !facts.contract.has_unconditional_render_use)
-                    || (facts.contract.all_render_uses_falsy_tolerant
+                    || (facts.contract.all_render_uses_falsy_tolerant.holds()
                         && !facts.contract.has_referenced_descendants)))
                 || fallback_hint_only_typing)
         {
@@ -489,7 +490,7 @@ impl ResolvePolicy {
         // reaches a consumer (datadog `datadog.securityContext`).
         let self_guarded_structure_tolerates_null = facts.contract.is_nullable
             && facts.contract.has_render_use
-            && facts.contract.all_render_uses_self_guarded
+            && facts.contract.all_render_uses_self_guarded.holds()
             && is_object_or_array_schema(&merged);
         // A parent-level null removes a dependency-owned override before
         // the subchart coalesces its own default back in. That spelling is
@@ -536,7 +537,7 @@ impl ResolvePolicy {
                 facts.contract.has_structured_item_descendants
                     && !facts.contract.has_destructured_range_use,
                 facts.contract.has_render_use
-                    && facts.contract.all_render_uses_self_guarded
+                    && facts.contract.all_render_uses_self_guarded.holds()
                     && !facts.contract.has_merge_layered_use,
                 facts.contract.used_as_fragment && !facts.contract.is_ranged_source,
             )
@@ -836,7 +837,7 @@ pub(crate) fn conditional_target_schema(
     // away again, which is why it is restored after them.
     let facts = overlay.evidence.facts;
     if facts.has_render_use
-        && facts.all_render_uses_self_guarded
+        && facts.all_render_uses_self_guarded.holds()
         && !facts.has_unconditional_render_use
         && !facts.is_direct_ranged_source
         && !crate::schema_model::is_empty_schema(&schema)

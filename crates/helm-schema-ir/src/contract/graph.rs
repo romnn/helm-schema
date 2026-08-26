@@ -199,16 +199,23 @@ impl ContractIr {
     where
         F: FnMut(&str) -> String,
     {
-        for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
+        let Self {
+            uses,
+            dependency_uses,
+            observed_facts,
+            values_program_wrappers,
+            values_program_wrapper_exclusions,
+            dependency_values_root_fragments,
+        } = self;
+        for contract_use in uses.iter_mut().chain(dependency_uses) {
             contract_use.map_value_paths(&mut map);
         }
-        self.dependency_values_root_fragments =
-            std::mem::take(&mut self.dependency_values_root_fragments)
-                .into_iter()
-                .map(|path| map(&path))
-                .collect();
-        self.observed_facts.map_value_paths(&mut map);
-        self.values_program_wrappers = std::mem::take(&mut self.values_program_wrappers)
+        *dependency_values_root_fragments = std::mem::take(dependency_values_root_fragments)
+            .into_iter()
+            .map(|path| map(&path))
+            .collect();
+        observed_facts.map_value_paths(&mut map);
+        *values_program_wrappers = std::mem::take(values_program_wrappers)
             .into_iter()
             .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
                 scope_path: map(&wrapper.scope_path),
@@ -216,11 +223,10 @@ impl ContractIr {
                 spread: wrapper.spread,
             })
             .collect();
-        self.values_program_wrapper_exclusions =
-            std::mem::take(&mut self.values_program_wrapper_exclusions)
-                .into_iter()
-                .map(|path| map(&path))
-                .collect();
+        *values_program_wrapper_exclusions = std::mem::take(values_program_wrapper_exclusions)
+            .into_iter()
+            .map(|path| map(&path))
+            .collect();
     }
 
     /// Projects dependency `global.*` contracts through Helm's parent-first

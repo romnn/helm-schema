@@ -10,9 +10,9 @@ fn or_truthy_predicate_projects_to_or_guard() {
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
-        want: vec![Guard::Or {
+        want: Some(vec![Guard::Or {
             paths: vec!["first".to_string(), "second".to_string()]
-        }]
+        }])
     );
 }
 
@@ -25,9 +25,9 @@ fn negated_truthy_predicate_projects_to_not_guard() {
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
-        want: vec![Guard::Not {
+        want: Some(vec![Guard::Not {
             path: "enabled".to_string()
-        }]
+        }])
     );
 }
 
@@ -41,9 +41,9 @@ fn double_negated_truthy_predicate_projects_to_truthy_guard() {
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
-        want: vec![Guard::Truthy {
+        want: Some(vec![Guard::Truthy {
             path: "enabled".to_string()
-        }]
+        }])
     );
 }
 
@@ -56,10 +56,10 @@ fn negated_eq_predicate_projects_to_not_eq_guard() {
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
-        want: vec![Guard::NotEq {
+        want: Some(vec![Guard::NotEq {
             path: "mode".to_string(),
             value: GuardValue::string("prod"),
-        }]
+        }])
     );
 }
 
@@ -72,10 +72,10 @@ fn not_eq_predicate_projects_to_not_eq_guard() {
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
-        want: vec![Guard::NotEq {
+        want: Some(vec![Guard::NotEq {
             path: "mode".to_string(),
             value: GuardValue::string("disabled"),
-        }]
+        }])
     );
 }
 
@@ -93,7 +93,7 @@ fn mixed_or_predicate_projects_to_structural_any_of_guard() {
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
-        want: vec![Guard::AnyOf {
+        want: Some(vec![Guard::AnyOf {
             alternatives: vec![
                 vec![Guard::Truthy {
                     path: "first".to_string(),
@@ -103,7 +103,7 @@ fn mixed_or_predicate_projects_to_structural_any_of_guard() {
                     value: GuardValue::string("prod"),
                 }],
             ],
-        }]
+        }])
     );
 }
 
@@ -130,8 +130,18 @@ fn approximate_predicate_keeps_an_opaque_complement_without_becoming_a_guard() {
         have: predicate.negated(),
         want: Predicate::Not(Box::new(predicate.clone()))
     );
-    sim_assert_eq!(have: predicate.contract_guards(), want: Vec::<Guard>::new());
+    sim_assert_eq!(have: predicate.contract_guards(), want: None);
     assert!(predicate.contains_approximation());
+}
+
+#[test]
+fn inexact_conjunction_abstains_as_a_whole() {
+    let predicate = Predicate::And(vec![
+        Predicate::truthy_path("enabled"),
+        Predicate::approximate("opaque", ["mode".to_string()].into_iter().collect()),
+    ]);
+
+    sim_assert_eq!(have: predicate.contract_guards(), want: None);
 }
 
 #[test]

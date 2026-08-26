@@ -1,6 +1,8 @@
 //! Public semantic-contract parsing and path utility regressions.
 
-use helm_schema_core::{ApiPresenceQuery, join_value_path, split_value_path};
+use helm_schema_core::{
+    ApiPresenceQuery, ContractValuePathFacts, join_value_path, split_value_path,
+};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -29,5 +31,36 @@ fn value_path_currency_preserves_literal_dots_and_backslashes() {
     sim_assert_eq!(
         have: split_value_path(&path),
         want: segments.map(str::to_string).to_vec()
+    );
+}
+
+#[test]
+fn empty_path_facts_use_the_universal_identity() {
+    let facts = ContractValuePathFacts::default();
+
+    sim_assert_eq!(
+        have: (
+            facts.has_render_use,
+            facts.all_render_uses_self_guarded.holds(),
+            facts.all_render_uses_falsy_tolerant.holds(),
+        ),
+        want: (false, true, true)
+    );
+}
+
+#[test]
+fn render_use_merges_preserve_universal_quantification() {
+    let mut contribution = ContractValuePathFacts::default();
+    contribution.record_render_use(false, Some(false), Some(false));
+    let mut merged = ContractValuePathFacts::default();
+    merged.merge_render_use_facts(contribution);
+
+    sim_assert_eq!(
+        have: (
+            merged.has_render_use,
+            merged.all_render_uses_self_guarded.holds(),
+            merged.all_render_uses_falsy_tolerant.holds(),
+        ),
+        want: (true, false, false)
     );
 }

@@ -210,7 +210,7 @@ fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact() -> eyre
         .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing IR-derived fact for {path}"));
     assert!(
-        ir_fact.all_render_uses_self_guarded,
+        ir_fact.all_render_uses_self_guarded.holds(),
         "IR-derived chart fact should stay self-guarded: {ir_fact:#?}"
     );
 

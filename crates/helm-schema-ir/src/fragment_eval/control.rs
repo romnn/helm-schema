@@ -603,10 +603,10 @@ impl Interpreter<'_> {
                 }
             }
         }
-        if !faithful || !predicate.contract_guards_are_exact() {
+        if !faithful {
             return Vec::new();
         }
-        predicate.contract_guards()
+        predicate.contract_guards().unwrap_or_default()
     }
 
     fn activate_if(
@@ -712,8 +712,8 @@ impl Interpreter<'_> {
             other => vec![other.clone()],
         };
         for conjunct in conjuncts {
-            if conjunct.contract_guards_are_exact() {
-                for guard in &conjunct.contract_guards() {
+            if let Some(guards) = conjunct.contract_guards() {
+                for guard in &guards {
                     for path in guard.value_paths() {
                         self.push_control_read(path, std::slice::from_ref(guard));
                     }
@@ -899,8 +899,8 @@ impl Interpreter<'_> {
             other => vec![other.clone()],
         };
         for conjunct in conjuncts {
-            if conjunct.contract_guards_are_exact() {
-                for guard in &conjunct.contract_guards() {
+            if let Some(guards) = conjunct.contract_guards() {
+                for guard in &guards {
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
             } else if !matches!(conjunct, Predicate::True) {
@@ -910,7 +910,7 @@ impl Interpreter<'_> {
         for path in &bound_values {
             self.push_control_read(path, &[]);
         }
-        for guard in &predicate.contract_guards() {
+        for guard in &predicate.contract_guards().unwrap_or_default() {
             for path in guard.value_paths() {
                 self.push_control_read(path, &[]);
             }

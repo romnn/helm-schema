@@ -397,6 +397,8 @@ fn dependency_default_refill_accepts_null_without_parent_consumer() {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts {
                 has_render_use: true,
+                all_render_uses_self_guarded: helm_schema_core::AllUses::new(false),
+                all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
                 ..ContractValuePathFacts::default()
             },
             ValuesYamlPathFacts {
@@ -427,6 +429,8 @@ fn dependency_default_refill_accepts_null_without_parent_consumer() {
             ContractValuePathFacts {
                 has_render_use: true,
                 has_unconditional_render_use: true,
+                all_render_uses_self_guarded: helm_schema_core::AllUses::new(false),
+                all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
                 ..ContractValuePathFacts::default()
             },
             ValuesYamlPathFacts {
@@ -448,6 +452,8 @@ fn dependency_default_refill_accepts_null_without_parent_consumer() {
             ContractValuePathFacts {
                 has_render_use: true,
                 accepted_dependency_values_root_fragment: true,
+                all_render_uses_self_guarded: helm_schema_core::AllUses::new(false),
+                all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
                 ..ContractValuePathFacts::default()
             },
             ValuesYamlPathFacts {

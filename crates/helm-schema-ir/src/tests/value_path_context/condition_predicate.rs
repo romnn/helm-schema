@@ -19,6 +19,7 @@ fn parse_condition(text: &str) -> Vec<Guard> {
     condition_context(HashMap::new())
         .condition_predicate_expr(&top)
         .contract_guards()
+        .unwrap_or_default()
 }
 
 fn parse_condition_with_template_bindings(
@@ -101,6 +102,7 @@ fn parse_condition_with_template_facts(
     condition_context_with_output_meta(template_bindings, template_output_meta)
         .condition_predicate_expr(&top)
         .contract_guards()
+        .unwrap_or_default()
 }
 
 fn condition_context(
@@ -798,7 +800,7 @@ fn with_predicates_preserve_header_projection_semantics() {
 
     sim_assert_eq!(
         have: with_predicate.contract_guards(),
-        want: vec![
+        want: Some(vec![
             Guard::With {
                 path: "service.enabled".to_string(),
             },
@@ -827,7 +829,7 @@ fn with_predicates_preserve_header_projection_semantics() {
             Guard::Not {
                 path: "service.disabled".to_string(),
             },
-        ]
+        ])
     );
     sim_assert_eq!(
         have: Predicate::all(Predicate::False.with_context_predicates()),
@@ -876,7 +878,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
 
     sim_assert_eq!(
         have: guards,
-        want: vec![Guard::AnyOf {
+        want: Some(vec![Guard::AnyOf {
             alternatives: vec![
                 vec![Guard::Eq {
                     path: "profile".to_string(),
@@ -887,6 +889,6 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
                     value: GuardValue::string("demo"),
                 }],
             ],
-        }],
+        }]),
     );
 }

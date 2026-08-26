@@ -161,23 +161,49 @@ impl HelperOutputMeta {
     }
 
     pub(crate) fn is_input_member_identity(&self) -> bool {
-        self.input_identity
-            && !self.shape_erased
-            && !self.nil_omitted
-            && !self.stringified
-            && !self.yaml_serialized
-            && !self.templated_yaml
-            && !self.derived_text
-            && !self.partial_text
-            && !self.plain_slot_string_format
-            && !self.json_serialized
-            && !self.json_decoded
-            && !self.nil_scrubbed
-            && !self.parsed_map
-            && self.merge_layers.is_none()
-            && self.lexical_escapes.is_empty()
-            && self.empty_fold_spellings.is_none()
-            && self.empty_rescue.is_none()
+        let Self {
+            predicates: _,
+            input_identity,
+            defaulted: _,
+            shape_erased,
+            nil_omitted,
+            stringified,
+            yaml_serialized,
+            templated_yaml,
+            derived_text,
+            partial_text,
+            plain_slot_string_format,
+            json_serialized,
+            json_decoded,
+            nil_scrubbed,
+            parsed_map,
+            merge_layers,
+            provenance: _,
+            suppress_predicate_paths: _,
+            capture_exclusions: _,
+            lexical_escapes,
+            omitted_keys: _,
+            empty_fold_spellings,
+            empty_rescue,
+            default_fallback: _,
+        } = self;
+        *input_identity
+            && !shape_erased
+            && !nil_omitted
+            && !stringified
+            && !yaml_serialized
+            && !templated_yaml
+            && !derived_text
+            && !partial_text
+            && !plain_slot_string_format
+            && !json_serialized
+            && !json_decoded
+            && !nil_scrubbed
+            && !parsed_map
+            && merge_layers.is_none()
+            && lexical_escapes.is_empty()
+            && empty_fold_spellings.is_none()
+            && empty_rescue.is_none()
     }
 
     pub(crate) fn is_identity_preserving_default(&self) -> bool {
@@ -185,23 +211,49 @@ impl HelperOutputMeta {
     }
 
     fn is_structurally_untransformed(&self) -> bool {
-        !self.shape_erased
-            && !self.nil_omitted
-            && !self.stringified
-            && !self.yaml_serialized
-            && !self.templated_yaml
-            && !self.derived_text
-            && !self.partial_text
-            && !self.plain_slot_string_format
-            && !self.json_serialized
-            && !self.json_decoded
-            && !self.nil_scrubbed
-            && !self.parsed_map
-            && self.merge_layers.is_none()
-            && self.omitted_keys.is_empty()
-            && self.lexical_escapes.is_empty()
-            && self.empty_fold_spellings.is_none()
-            && self.empty_rescue.is_none()
+        let Self {
+            predicates: _,
+            input_identity: _,
+            defaulted: _,
+            shape_erased,
+            nil_omitted,
+            stringified,
+            yaml_serialized,
+            templated_yaml,
+            derived_text,
+            partial_text,
+            plain_slot_string_format,
+            json_serialized,
+            json_decoded,
+            nil_scrubbed,
+            parsed_map,
+            merge_layers,
+            provenance: _,
+            suppress_predicate_paths: _,
+            capture_exclusions: _,
+            lexical_escapes,
+            omitted_keys,
+            empty_fold_spellings,
+            empty_rescue,
+            default_fallback: _,
+        } = self;
+        !shape_erased
+            && !nil_omitted
+            && !stringified
+            && !yaml_serialized
+            && !templated_yaml
+            && !derived_text
+            && !partial_text
+            && !plain_slot_string_format
+            && !json_serialized
+            && !json_decoded
+            && !nil_scrubbed
+            && !parsed_map
+            && merge_layers.is_none()
+            && omitted_keys.is_empty()
+            && lexical_escapes.is_empty()
+            && empty_fold_spellings.is_none()
+            && empty_rescue.is_none()
     }
 
     pub(crate) fn merge(&mut self, other: &Self) {

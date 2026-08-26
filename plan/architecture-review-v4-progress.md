@@ -1960,7 +1960,7 @@
 
 ## B1.1 — exhaustive capture-kind dispatcher
 
-- Status: complete; commit pending.
+- Status: landed in `86ff2213`.
 - Contract: representation-only conversion of `record_fail_conjunction` from an ordered
   `if let` ladder into one exhaustive early-return `CaptureKind` match with no wildcard. Only
   `CaptureKind::Fail` may reach the generic fail-negation tail. `StringRequirement` gets its own
@@ -2063,3 +2063,134 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +5 (63,212 to 63,217).
+
+## B1.2 — exhaustive semantic destructures
+
+- Status: complete; commit pending.
+- Contract: representation-only compiler-enforcement sweep across both `ContractValuePathFacts`
+  merges, all struct-level values-path mappers, `BoundHelperCallCacheKey::from_resolution`, the
+  predicate contract-guard twins, and both identity predicates. Universally quantified render-use
+  bits gain an `AllUses` identity wrapper whose default is true.
+- Acceptance baseline: `86ff2213` (B1.1).
+- Baseline production LOC: 63,217 Rust lines from `task tokei:core` on `86ff2213`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, or acceptance changes. `AllUses` must preserve every
+    existing computed Boolean while making empty/default aggregation use the mathematical identity
+    `true` instead of the derived-Boolean default `false`.
+  - Path rebasing must rewrite exactly the fields it rewrites today and name every deliberately
+    unmapped field in exhaustive destructures. Helper cache keys must retain the same complete key.
+  - Predicate guard projection must return the same guard vectors and exactness verdicts from one
+    owner. Identity predicates must retain their current truth tables.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - Added `AllUses`, whose `Default` is the universal empty-set identity `true`, and replaced both
+    universal render-use Booleans. `ContractValuePathFacts` now has an explicit exhaustive default;
+    both render-fact merges exhaustively destructure the carrier and choose every field's merge or
+    deliberate non-merge behavior.
+  - `ContractUse`, `ObservedFacts`, and `ContractIr` path mapping now begin with exhaustive
+    destructures. Rendered YAML paths, helper names, and other deliberately unmapped fields are
+    named explicitly; existing rebasing behavior is unchanged.
+  - `BoundHelperCallCacheKey::from_resolution` destructures all four semantic resolution fields
+    before cloning them into the key, keeping future inputs from silently escaping cache identity.
+  - Collapsed `contract_guards`, `contract_guards_are_exact`, the separate negation recursion, and
+    the `Or` helper into one polarity-aware `Option<Vec<Guard>>` flatten. `None` is the sole inexact
+    result, so callers cannot accidentally consume a partial vector after ignoring exactness.
+  - Both helper-output identity predicates and the fragment splice identity predicate exhaustively
+    destructure their carriers, preserving the current truth tables while making new fields fail
+    compilation at the classification sites.
+  - Schema and symbolic-IR dumps are byte-for-byte identical to B1.1. The full-depth battery covers
+    60 charts and 121,055 probes with zero acceptance flips; mandatory base coverage is
+    112,260/112,260 and third-level coverage is 7,465/7,465, both with zero drops.
+- Deviations:
+  - The first compiler preflight intentionally exposed every Boolean call site and every old
+    guard-vector consumer. Those compile failures guided explicit `.holds()` and `Option` handling;
+    no immutable artifact was produced from an uncompilable state.
+  - The first lint preflight rejected the mandated explicit `ContractValuePathFacts::default` as
+    derivable. A narrow `#[expect(clippy::derivable_impls)]` records why the exhaustive field list is
+    semantic enforcement and remains self-validating.
+  - Final1's immutable dumps and prober were byte-exact, but the full unit gate found one failing
+    synthetic resolve-policy tooth: it set `has_render_use: true` with `..default()` and implicitly
+    relied on the old false universal defaults. Final1 was rejected. Four synthetic literals now
+    state their intended universal facts explicitly; their focused suite passes 27/27. A fresh
+    final2 archive is the sole adopted artifact.
+- Adjudication evidence: Helm v4.2.3. Final2 has zero changed fixture bytes, zero acceptance flips,
+  and zero candidate-accepts/Helm-aborts cells; no fixture required adoption.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Path-fact branch merges | Same union and universal quantification | Direct identity/merge matrix. |
+| `ContractUse`, `ObservedFacts`, `ContractIr` path maps | Same mapped and unmapped fields | Existing rebasing tests plus exhaustive destructures. |
+| Bound helper cache key | Same bindings/dot/root facts/seen set | Existing cache identity suite. |
+| Positive/negative guard flattening | Same vector and exactness | Predicate truth-table suite. |
+| Helper/splice identity | Same classifications | Existing identity tests. |
+
+### Review dossier
+
+- Focused proof: 39 core predicate tests, four core public-surface tests, 101 IR
+  condition/path/identity tests, and 27 resolve-policy/shape tests all pass. The focused tests pin
+  universal identity, false contribution merging, whole-formula guard abstention, path rebasing,
+  and identity classifications.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b12-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b12-final2.tar.zst`; exit 0, 86
+  binaries and 124 files. Final1 is rejected as described above.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b12-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b12-final2.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the B1.1 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b12-final2-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b12-final2.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written. A
+  recursive byte comparison against the B1.1 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b12-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=86ff2213
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b12-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b12-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b12-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: deliberate Rust API enforcement. The two public universal fields now use
+  `AllUses` instead of `bool`; callers read them through `holds()`. `Predicate::contract_guards`
+  now returns `Option<Vec<Guard>>`, and `contract_guards_are_exact` is deleted because exactness is
+  represented by `Some`. No serialized wire format changes.
+
+### Self-adversarial pass
+
+- `AllUses::default() == true` is safe only as an aggregation identity. Synthetic tests that assert
+  a render exists must state whether all uses satisfy a property; the rejected final1 proved that
+  implicit false assumptions can no longer hide in `..default()`.
+- An inexact `And` must not keep exact sibling guards while dropping its opaque conjunct. The new
+  direct regression proves the whole flatten returns `None`, and control-flow callers retain the
+  original raw predicate in that case.
+- The path mappers explicitly leave rendered document paths and helper include names unchanged.
+  Their destructures make those omissions reviewable rather than relying on fields not mentioned
+  by the old imperative bodies.
+- The helper cache key still owns clones of bindings, dot, root truth predicates, root dispatches,
+  and the seen set; the destructure changes compile-time completeness, not key equality.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected derivable-default preflight.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,305 tests pass.
+- `task test:integration`; exit 0, 553 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,862 tests pass and 24 are skipped, including all live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,417 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +200 (63,217 to 63,417).

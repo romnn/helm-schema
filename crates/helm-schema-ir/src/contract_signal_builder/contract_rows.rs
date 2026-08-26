@@ -91,11 +91,7 @@ impl Default for PathSchemaFactsAccumulator {
         Self {
             metadata_field_kinds: BTreeSet::new(),
             provider_schema_uses: Vec::new(),
-            facts: ContractValuePathFacts {
-                all_render_uses_self_guarded: true,
-                all_render_uses_falsy_tolerant: true,
-                ..ContractValuePathFacts::default()
-            },
+            facts: ContractValuePathFacts::default(),
             range_domain: None,
             all_uses_nullable: true,
         }
@@ -114,26 +110,55 @@ impl PathSchemaFactsAccumulator {
     }
 
     pub(super) fn record_facts(&mut self, facts: ContractValuePathFacts) {
-        self.facts.used_as_fragment |= facts.used_as_fragment;
-        self.facts.used_as_serialized |= facts.used_as_serialized;
-        self.facts.used_as_yaml_serialized |= facts.used_as_yaml_serialized;
-        self.facts.has_string_contract |= facts.has_string_contract;
-        self.facts.has_non_self_guarded_string_contract |=
-            facts.has_non_self_guarded_string_contract;
-        self.facts.has_string_contract_items |= facts.has_string_contract_items;
-        self.facts.used_as_pathless_fragment |= facts.used_as_pathless_fragment;
-        self.facts.accepted_values_root_fragment |= facts.accepted_values_root_fragment;
-        self.facts.accepted_dependency_values_root_fragment |=
-            facts.accepted_dependency_values_root_fragment;
-        self.facts.is_ranged_source |= facts.is_ranged_source;
-        self.facts.is_direct_ranged_source |= facts.is_direct_ranged_source;
-        self.facts.has_destructured_range_use |= facts.has_destructured_range_use;
-        self.facts.has_json_decoded_range_use |= facts.has_json_decoded_range_use;
-        self.facts.is_partial_scalar_value_path |= facts.is_partial_scalar_value_path;
-        self.facts.is_nullable |= facts.is_nullable;
-        self.facts.has_non_control_use |= facts.has_non_control_use;
-        self.facts.has_unlayered_non_control_use |= facts.has_unlayered_non_control_use;
         self.facts.merge_render_use_facts(facts);
+        let ContractValuePathFacts {
+            has_referenced_descendants: _,
+            has_item_descendants: _,
+            has_structured_item_descendants: _,
+            used_as_fragment,
+            used_as_serialized,
+            used_as_yaml_serialized,
+            has_string_contract,
+            has_non_self_guarded_string_contract,
+            has_string_contract_items,
+            used_as_pathless_fragment,
+            accepted_values_root_fragment,
+            accepted_dependency_values_root_fragment,
+            is_ranged_source,
+            is_direct_ranged_source,
+            has_destructured_range_use,
+            has_json_decoded_range_use,
+            is_partial_scalar_value_path,
+            has_render_use: _,
+            has_non_control_use,
+            has_unlayered_non_control_use,
+            has_unconditional_render_use: _,
+            has_self_guarded_render_use: _,
+            all_render_uses_self_guarded: _,
+            has_merge_layered_use: _,
+            has_parsed_map_layered_use: _,
+            all_render_uses_falsy_tolerant: _,
+            has_self_range_guard_render_use: _,
+            is_nullable,
+        } = facts;
+        self.facts.used_as_fragment |= used_as_fragment;
+        self.facts.used_as_serialized |= used_as_serialized;
+        self.facts.used_as_yaml_serialized |= used_as_yaml_serialized;
+        self.facts.has_string_contract |= has_string_contract;
+        self.facts.has_non_self_guarded_string_contract |= has_non_self_guarded_string_contract;
+        self.facts.has_string_contract_items |= has_string_contract_items;
+        self.facts.used_as_pathless_fragment |= used_as_pathless_fragment;
+        self.facts.accepted_values_root_fragment |= accepted_values_root_fragment;
+        self.facts.accepted_dependency_values_root_fragment |=
+            accepted_dependency_values_root_fragment;
+        self.facts.is_ranged_source |= is_ranged_source;
+        self.facts.is_direct_ranged_source |= is_direct_ranged_source;
+        self.facts.has_destructured_range_use |= has_destructured_range_use;
+        self.facts.has_json_decoded_range_use |= has_json_decoded_range_use;
+        self.facts.is_partial_scalar_value_path |= is_partial_scalar_value_path;
+        self.facts.has_non_control_use |= has_non_control_use;
+        self.facts.has_unlayered_non_control_use |= has_unlayered_non_control_use;
+        self.facts.is_nullable |= is_nullable;
     }
 
     pub(super) fn record_provider_schema_use(&mut self, provider_schema_use: ProviderSchemaUse) {

@@ -399,7 +399,8 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts {
                 has_render_use: true,
-                all_render_uses_self_guarded: true,
+                all_render_uses_self_guarded: helm_schema_core::AllUses::default(),
+                all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
                 is_nullable: true,
                 ..ContractValuePathFacts::default()
             },
