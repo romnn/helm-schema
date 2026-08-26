@@ -322,10 +322,12 @@ impl Interpreter<'_> {
                 for (condition, fragment) in &out.arms.clone() {
                     if let AbstractFragment::Splice(splice) = fragment
                         && splice.kind == ValueKind::Fragment
-                        && splice.values_path.ends_with(".*")
+                        && splice.values_path.item_parent().is_some()
                     {
-                        let path = splice.values_path.clone();
-                        self.record_document_root_mapping(&path, vec![condition.clone()]);
+                        self.record_document_root_mapping(
+                            &splice.values_path.encode(),
+                            vec![condition.clone()],
+                        );
                     }
                 }
             }
@@ -930,6 +932,7 @@ impl Interpreter<'_> {
                         };
                     }
                     StringPart::Splice(splice) => {
+                        let path = splice.values_path.encode();
                         let raw = splice.kind == ValueKind::PartialScalar
                             && !splice.meta.encoded
                             && !splice.meta.shape_erased
@@ -937,8 +940,8 @@ impl Interpreter<'_> {
                             && !splice.meta.json_serialized
                             && splice.meta.split_segment.is_none()
                             && !splice.meta.range_key
-                            && !splice.values_path.is_empty()
-                            && !templated.contains(&splice.values_path);
+                            && splice.values_path.segments().len() != 0
+                            && !templated.contains(&path);
                         // A `tpl` render is the raw value's own text whenever
                         // that value carries no template action, so an
                         // UNQUOTED position still binds the plain token's
@@ -948,16 +951,16 @@ impl Interpreter<'_> {
                         // where a `: ` turns the command item into a mapping).
                         if state == QuoteContext::None
                             && value_slot
-                            && templated.contains(&splice.values_path)
+                            && templated.contains(&path)
                             && !splice.meta.encoded
                             && (!splice.meta.shape_erased || splice.meta.stringified)
                             && !splice.meta.yaml_serialized
                             && !splice.meta.json_serialized
                             && splice.meta.split_segment.is_none()
                         {
-                            claims.plain_templated.insert(splice.values_path.clone());
+                            claims.plain_templated.insert(path.clone());
                         }
-                        if templated.contains(&splice.values_path)
+                        if templated.contains(&path)
                             && !splice.meta.encoded
                             && (!splice.meta.shape_erased || splice.meta.stringified)
                             && !splice.meta.yaml_serialized
@@ -966,14 +969,10 @@ impl Interpreter<'_> {
                         {
                             match state {
                                 QuoteContext::Double => {
-                                    claims
-                                        .double_quoted_templated
-                                        .insert(splice.values_path.clone());
+                                    claims.double_quoted_templated.insert(path.clone());
                                 }
                                 QuoteContext::Single => {
-                                    claims
-                                        .single_quoted_templated
-                                        .insert(splice.values_path.clone());
+                                    claims.single_quoted_templated.insert(path.clone());
                                 }
                                 QuoteContext::None => {}
                             }
@@ -983,10 +982,10 @@ impl Interpreter<'_> {
                         }
                         match state {
                             QuoteContext::Double => {
-                                claims.double_quoted.insert(splice.values_path.clone());
+                                claims.double_quoted.insert(path.clone());
                             }
                             QuoteContext::Single => {
-                                claims.single_quoted.insert(splice.values_path.clone());
+                                claims.single_quoted.insert(path.clone());
                             }
                             QuoteContext::None
                                 if index == 0 && !preceding_text && !splice.meta.defaulted =>
@@ -995,7 +994,7 @@ impl Interpreter<'_> {
                                 // Helm-falsy input (the empty list included)
                                 // renders the fallback instead of the raw
                                 // value.
-                                claims.token_initial.insert(splice.values_path.clone());
+                                claims.token_initial.insert(path.clone());
                             }
                             QuoteContext::None => {}
                         }

@@ -283,7 +283,7 @@ impl TaintPart {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Splice {
     /// The dotted `.Values` path (never empty).
-    pub values_path: String,
+    pub values_path: helm_schema_core::ValuesPath,
     /// Whether the path renders a whole scalar, part of a scalar, or a YAML
     /// fragment at this position.
     pub kind: ValueKind,

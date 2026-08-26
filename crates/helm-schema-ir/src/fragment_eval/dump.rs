@@ -117,7 +117,7 @@ fn fmt_splice(splice: &Splice) -> String {
         ValueKind::TemplatedYamlSerialized => "templated-yaml-serialized",
         ValueKind::WidenedDependency => "widened-dependency",
     };
-    let mut rendered = format!("splice {} {kind}", splice.values_path);
+    let mut rendered = format!("splice {} {kind}", splice.values_path.encode());
     if splice.meta.defaulted {
         rendered.push_str(" defaulted");
     }

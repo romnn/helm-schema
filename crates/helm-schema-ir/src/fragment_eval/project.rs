@@ -399,7 +399,7 @@ fn splice_row(
     let mut condition = GuardDnf::from_conjunction(conditions.iter().cloned());
     if splice.meta.defaulted {
         let default_guard = Guard::Default {
-            path: splice.values_path.clone(),
+            path: splice.values_path.encode(),
         };
         condition = condition.conjoined_with_guards([default_guard.clone()]);
     }
@@ -423,7 +423,10 @@ fn splice_row(
                     role: helm_schema_core::ApproximationRole::OutputSelection,
                     sound_subset: Some(sound_subset),
                     ..
-                } if predicate.value_paths().contains(&splice.values_path) => {
+                } if predicate
+                    .value_paths()
+                    .contains(&splice.values_path.encode()) =>
+                {
                     sound_subset.as_ref().clone()
                 }
                 other => other.clone(),
@@ -451,7 +454,7 @@ fn splice_row(
         splice.kind
     };
     let mut row = placed_row(
-        splice.values_path.clone(),
+        splice.values_path.encode(),
         path,
         kind,
         condition,

@@ -1368,7 +1368,7 @@ fn splice_arm(
     (
         Predicate::True,
         AbstractFragment::Splice(Splice {
-            values_path: path.to_string(),
+            values_path: helm_schema_core::ValuesPath::parse(path),
             kind,
             meta: SpliceMeta {
                 site: site.cloned(),

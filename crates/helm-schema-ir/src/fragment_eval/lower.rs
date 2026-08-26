@@ -68,7 +68,7 @@ pub(crate) fn over_cap_scalar_taint(
             match part {
                 StringPart::Text(_) => {}
                 StringPart::Splice(splice) => {
-                    paths.insert(splice.values_path);
+                    paths.insert(splice.values_path.encode());
                 }
                 StringPart::Taint(taint) => paths.extend(taint.paths),
             }
@@ -112,7 +112,7 @@ impl LowerScope<'_> {
             || self.defaulted_paths.contains(path)
             || self.chart_value_defaults.contains(path);
         Splice {
-            values_path: path.to_string(),
+            values_path: helm_schema_core::ValuesPath::parse(path),
             kind,
             meta: SpliceMeta {
                 input_identity: helper_meta.is_some_and(HelperOutputMeta::is_input_identity),
@@ -398,7 +398,7 @@ pub(crate) fn lower_value(
                         if let AbstractFragment::Splice(splice) = fragment
                             && layer_paths
                                 .get(position)
-                                .is_some_and(|path| splice.values_path == *path)
+                                .is_some_and(|path| splice.values_path.encode() == *path)
                         {
                             splice.meta.merge_layers = Some(helm_schema_core::MergeLayersUse {
                                 layers: layer_paths.clone(),

@@ -2629,7 +2629,7 @@
 
 ## B4a.2b — migrate abstract-value path identities
 
-- Status: complete; commit pending.
+- Status: landed in `054f7ed8`.
 - Contract: representation-only migration of the frozen plan's named
   `AbstractValue::ValuesPath(String)` carrier to segmented `ValuesPath`. Decoded/output/range-key
   transform variants remain in their current representation until B2 migrates their transform
@@ -2706,3 +2706,68 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +118 (63,564 to 63,682).
+
+## B4a.2c — migrate fragment splice paths
+
+- Status: complete; commit pending.
+- Contract: representation-only migration of fragment `Splice.values_path` to segmented
+  `ValuesPath`. Fragment construction, placement, metadata lookup, rendered-row projection, and
+  capture boundaries must preserve exact encoded output.
+- Acceptance baseline: `054f7ed8` (B4a.2b).
+- Baseline production LOC: 63,682 Rust lines from `task tokei:core` on `054f7ed8`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, wire, ordering, or corpus acceptance changes.
+  - Item-parent and root checks use structural methods; explicit encoding occurs only at still-string
+    metadata/effects/rendered-row boundaries.
+  - No coercion trait, comparison shim, cached encoding, or parallel splice path field is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results: `Splice.values_path` now stores segmented `ValuesPath`; construction and
+  structural item/root tests stay typed, while metadata, effects, rendered rows, captures, and dump
+  text encode explicitly. All 393 focused IR tests pass. Schema and IR dumps are byte-exact; 60
+  charts and 121,055 probes report zero flips, zero mandatory drops, and zero
+  candidate-accepts/Helm-aborts cells.
+- Deviations: none.
+- Adjudication evidence: zero flips require no Helm cell adjudication; adjudication ran enabled with
+  zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Splice construction | Same path and metadata | Fragment unit/golden suites. |
+| Placement/rendered rows | Same encoded contract sources | Schema/IR byte dumps. |
+| Capture/effect lookups | Same range/string/provider behavior | Full IR/gen and corpus suites. |
+
+### Review dossier
+
+- Focused proof: 393/393 IR tests pass. Immutable archive
+  `/private/tmp/arch-v4-b4a2c-final1.tar.zst` contains 87 binaries and 125 files. The clean 62-test
+  schema dump and one-test/18-artifact IR dump are recursively byte-identical to B4a.2b. The
+  full-depth prober passes 121,055 probes with 28,868 unchanged disclosed bounded reductions.
+- Public/wire decision: none; `Splice` is crate-private and its golden dump and every external path
+  preserve exact legacy bytes.
+
+### Self-adversarial pass
+
+- Item-parent and root decisions use `item_parent()` and structural segment count. Every string map,
+  capture, rendered row, contract use, and diagnostic/dump boundary calls `encode()` explicitly.
+- The dump compiler failure proved no accidental `Display` escape hatch exists; the golden formatter
+  was migrated at its legitimate wire boundary.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 combinations, 13 packages, three targets; 1,040.44 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass.
+- `task test:integration`; exit 0, 558 pass, 24 skipped; 917.204 seconds.
+- `task test:all`; exit 0, 1,870 pass, 24 skipped including live-network tests; 975.923 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 63,684 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +2 (63,682 to 63,684).

@@ -371,7 +371,7 @@ fn scalar_render_contribution(parts: &[StringPart]) -> Option<Vec<ScalarRenderPa
                     return None;
                 }
                 rendered.push(ScalarRenderPart::Identity {
-                    path: splice.values_path.clone(),
+                    path: splice.values_path.encode(),
                     stringified: true,
                     lexical_escapes: splice.meta.lexical_escapes.clone(),
                 });
@@ -815,7 +815,7 @@ fn project_node(
                         has_non_text = true;
                         let mut meta = splice_row_meta(splice, conditions);
                         meta.partial_text |= partial;
-                        values.push(AbstractValue::OutputPath(splice.values_path.clone(), meta));
+                        values.push(AbstractValue::OutputPath(splice.values_path.encode(), meta));
                     }
                     StringPart::Taint(taint) => {
                         has_non_text = true;
@@ -845,7 +845,7 @@ fn project_node(
         }
         AbstractFragment::Splice(splice) => {
             vec![AbstractValue::OutputPath(
-                splice.values_path.clone(),
+                splice.values_path.encode(),
                 splice_row_meta(splice, conditions),
             )]
         }
@@ -941,7 +941,7 @@ fn collect_rendered_node(
                     StringPart::Text(_) => {}
                     StringPart::Splice(splice) => push_rendered_row(
                         rows,
-                        &splice.values_path,
+                        &splice.values_path.encode(),
                         splice.kind,
                         splice.meta.encoded,
                         splice_row_meta(splice, conditions),
@@ -968,7 +968,7 @@ fn collect_rendered_node(
             if !suppressed {
                 push_rendered_row(
                     rows,
-                    &splice.values_path,
+                    &splice.values_path.encode(),
                     splice.kind,
                     splice.meta.encoded,
                     splice_row_meta(splice, conditions),
@@ -1078,13 +1078,13 @@ fn append_suppressed_node_reads(
         AbstractFragment::Scalar(scalar) if scalar.suppressed => {
             for part in &scalar.parts {
                 let (paths, site, provenance): (
-                    Vec<&String>,
+                    Vec<String>,
                     Option<&SiteFacts>,
                     &[ContractProvenance],
                 ) = match part {
                     StringPart::Text(_) => continue,
                     StringPart::Splice(splice) => (
-                        vec![&splice.values_path],
+                        vec![splice.values_path.encode()],
                         splice.meta.site.as_deref(),
                         &splice.meta.provenance,
                     ),
@@ -1093,7 +1093,7 @@ fn append_suppressed_node_reads(
                             continue;
                         }
                         (
-                            taint.paths.iter().collect(),
+                            taint.paths.iter().cloned().collect(),
                             taint.site.as_deref(),
                             &taint.provenance,
                         )
@@ -1105,7 +1105,7 @@ fn append_suppressed_node_reads(
                         continue;
                     }
                     let read = ValueRead {
-                        values_path: path.clone(),
+                        values_path: path,
                         kind: ValueKind::Scalar,
                         condition: GuardDnf::from_conjunction(conditions.iter().cloned()),
                         resource: None,

@@ -1240,14 +1240,14 @@ impl<'a> Interpreter<'a> {
         // `: ` opens a nested mapping and Helm's decode fails.
         if let [StringPart::Splice(splice)] = string.parts.as_slice()
             && splice.meta.range_key
-            && !splice.values_path.is_empty()
+            && splice.values_path.segments().len() != 0
             && !self.helper_scope
         {
             let capture = crate::eval_effect::FailCapture {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
-                    paths: [splice.values_path.clone()].into_iter().collect(),
+                    paths: [splice.values_path.encode()].into_iter().collect(),
                 },
             };
             self.observed_facts.captures.insert(capture);
@@ -1262,7 +1262,7 @@ impl<'a> Interpreter<'a> {
                     let mut extra = Vec::new();
                     if splice.meta.defaulted {
                         extra.push(Guard::Default {
-                            path: splice.values_path.clone(),
+                            path: splice.values_path.encode(),
                         });
                     }
                     // A key position formats every SCALAR (a numeric label
@@ -1278,7 +1278,7 @@ impl<'a> Interpreter<'a> {
                         None => (None, Vec::new()),
                     };
                     self.push_read_row(
-                        &splice.values_path,
+                        &splice.values_path.encode(),
                         crate::ValueKind::PartialScalar,
                         &extra,
                         resource,
