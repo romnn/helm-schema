@@ -587,10 +587,10 @@ impl Interpreter<'_> {
                     Some(AbstractValue::ValuesPath(parent)),
                     Some(AbstractValue::ValuesPath(child)),
                 ) = (&previous_fragment_value, &fragment_value)
-                && helm_schema_core::values_path_is_descendant(child, parent)
+                && child.is_descendant_of(parent)
             {
                 let presence = Predicate::from(crate::Guard::Absent {
-                    path: child.clone(),
+                    path: child.encode(),
                 })
                 .negated();
                 let guarded = self.active_predicates.iter().any(|active| match active {

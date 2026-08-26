@@ -11,6 +11,12 @@ use crate::{Guard, GuardValue};
 
 use super::*;
 
+macro_rules! values_path {
+    ($path:expr $(,)?) => {
+        AbstractValue::ValuesPath(helm_schema_core::ValuesPath::parse(&$path))
+    };
+}
+
 fn parse_condition(text: &str) -> Vec<Guard> {
     let wrapped = format!("{{{{ {text} }}}}");
     let Some(top) = parse_action_expressions(&wrapped).into_iter().next() else {
@@ -62,10 +68,7 @@ fn invalid_kind_is_absence_or_null_instead_of_truthiness() {
 
 #[test]
 fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
-    let template_bindings = HashMap::from([(
-        "selected".to_string(),
-        AbstractValue::ValuesPath("value".to_string()),
-    )]);
+    let template_bindings = HashMap::from([("selected".to_string(), values_path!("value"))]);
     let mut metadata = HelperOutputMeta {
         input_identity: true,
         ..HelperOutputMeta::default()
@@ -220,14 +223,10 @@ fn absent_custom_root_field_is_false_until_set() {
 
 #[test]
 fn composite_truthiness_is_faithful_only_when_its_exact_decoder_succeeds() {
-    let undecodable_merge = AbstractValue::MergedLayers(vec![
-        AbstractValue::ValuesPath("base".to_string()),
-        AbstractValue::Unknown,
-    ]);
-    let undecodable_selection = AbstractValue::FirstTruthy(vec![
-        AbstractValue::ValuesPath("primary".to_string()),
-        AbstractValue::Unknown,
-    ]);
+    let undecodable_merge =
+        AbstractValue::MergedLayers(vec![values_path!("base"), AbstractValue::Unknown]);
+    let undecodable_selection =
+        AbstractValue::FirstTruthy(vec![values_path!("primary"), AbstractValue::Unknown]);
     let bindings = HashMap::from([
         (
             "context".to_string(),
@@ -256,17 +255,11 @@ fn decodable_composite_truthiness_remains_faithful() {
     let bindings = HashMap::from([
         (
             "merged".to_string(),
-            AbstractValue::MergedLayers(vec![
-                AbstractValue::ValuesPath("base".to_string()),
-                AbstractValue::ValuesPath("override".to_string()),
-            ]),
+            AbstractValue::MergedLayers(vec![values_path!("base"), values_path!("override")]),
         ),
         (
             "selected".to_string(),
-            AbstractValue::FirstTruthy(vec![
-                AbstractValue::ValuesPath("primary".to_string()),
-                AbstractValue::ValuesPath("fallback".to_string()),
-            ]),
+            AbstractValue::FirstTruthy(vec![values_path!("primary"), values_path!("fallback")]),
         ),
     ]);
     let context = condition_context(bindings);
@@ -583,10 +576,7 @@ fn has_key_on_known_dict_is_structural_not_value_truthy() {
     let template_bindings = HashMap::from([(
         "arg".to_string(),
         AbstractValue::Dict(BTreeMap::from([
-            (
-                "customLabels".to_string(),
-                AbstractValue::ValuesPath("commonLabels".to_string()),
-            ),
+            ("customLabels".to_string(), values_path!("commonLabels")),
             ("context".to_string(), AbstractValue::RootContext),
         ])),
     )]);
@@ -624,10 +614,7 @@ fn eq_value_preserves_dot_values_substring_inside_string() {
 
 #[test]
 fn alias_comparison_preserves_typed_predicates() {
-    let aliases = HashMap::from([(
-        "mode".to_string(),
-        AbstractValue::ValuesPath("service.type".to_string()),
-    )]);
+    let aliases = HashMap::from([("mode".to_string(), values_path!("service.type"))]);
 
     sim_assert_eq!(
         have: parse_condition_with_template_bindings(r#"eq $mode "ClusterIP""#, aliases),
@@ -688,10 +675,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
             )]));
         meta.default_fallback = Some(GuardValue::string("skipIfMissing"));
         condition_context_with_output_meta(
-            HashMap::from([(
-                "mode".to_string(),
-                AbstractValue::ValuesPath(path.to_string()),
-            )]),
+            HashMap::from([("mode".to_string(), values_path!(path))]),
             HashMap::from([(
                 "mode".to_string(),
                 BTreeMap::from([(path.to_string(), meta)]),
@@ -763,8 +747,8 @@ fn alias_or_predicate_projects_to_path_disjunction() {
     let aliases = HashMap::from([(
         "annotations".to_string(),
         AbstractValue::choice(vec![
-            AbstractValue::ValuesPath("service.annotations".to_string()),
-            AbstractValue::ValuesPath("global.annotations".to_string()),
+            values_path!("service.annotations"),
+            values_path!("global.annotations"),
         ])
         .expect("choice has paths"),
     )]);

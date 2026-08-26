@@ -49,7 +49,7 @@ fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
 
 #[test]
 fn condition_reachability_distinguishes_raw_identities_from_rendered_scalars() {
-    let raw = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()));
+    let raw = EvalResult::from_value(values_path!("alpha"));
     sim_assert_eq!(
         have: raw.selection_reachability.as_ref(),
         want: Some(&SelectionReachability::exact(
@@ -260,7 +260,7 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
         want: SelectionReachability::never(SelectionTruthSource::RawInput)
     );
 
-    let raw = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()));
+    let raw = EvalResult::from_value(values_path!("alpha"));
     sim_assert_eq!(
         have: default_primary_selection(&raw),
         want: SelectionReachability::exact(
@@ -282,15 +282,15 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
         )],
         complete: true,
     };
-    let rendered = EvalResult::from_value(AbstractValue::ValuesPath("alpha".to_string()))
-        .with_scalar_dispatch(dispatch.clone());
+    let rendered =
+        EvalResult::from_value(values_path!("alpha")).with_scalar_dispatch(dispatch.clone());
     sim_assert_eq!(
         have: default_primary_selection(&rendered),
         want: SelectionReachability::from((&dispatch, SelectionPolarity::Falsy))
     );
 
     let chain = EvalResult::from_value(AbstractValue::FirstTruthy(vec![
-        AbstractValue::ValuesPath("alpha".to_string()),
+        values_path!("alpha"),
         AbstractValue::JsonDecodedPath("beta".to_string()),
     ]));
     sim_assert_eq!(

@@ -6,8 +6,14 @@ use crate::analysis_db::{
 };
 use test_util::prelude::sim_assert_eq;
 
+macro_rules! values_path {
+    ($path:expr $(,)?) => {
+        AbstractValue::ValuesPath(helm_schema_core::ValuesPath::parse(&$path))
+    };
+}
+
 fn path(value: &str) -> AbstractValue {
-    AbstractValue::ValuesPath(value.to_string())
+    values_path!(value)
 }
 
 fn string(value: &str) -> AbstractValue {
@@ -277,7 +283,7 @@ fn omit_keys_removes_known_map_entries_but_preserves_values_root() {
 fn paths_descend_structured_maps() {
     let value = AbstractValue::Dict(BTreeMap::from([(
         "metadata".to_string(),
-        AbstractValue::ValuesPath("podLabels".to_string()),
+        values_path!("podLabels"),
     )]));
 
     sim_assert_eq!(have: value.paths(), want: paths(&["podLabels"]));
@@ -295,7 +301,7 @@ fn values_root_abstains_from_fragment_path_extraction() {
 fn fragment_paths_stay_shallow_while_rendered_paths_descend_structures() {
     let value = AbstractValue::Dict(BTreeMap::from([(
         "metadata".to_string(),
-        AbstractValue::ValuesPath("podLabels".to_string()),
+        values_path!("podLabels"),
     )]));
 
     sim_assert_eq!(have: value.fragment_source_paths(), want: BTreeSet::new());
@@ -309,7 +315,7 @@ fn fragment_paths_stay_shallow_while_rendered_paths_descend_structures() {
 fn fragment_range_item_does_not_iterate_map_values() {
     let value = AbstractValue::Dict(BTreeMap::from([(
         "name".to_string(),
-        AbstractValue::ValuesPath("containers.name".to_string()),
+        values_path!("containers.name"),
     )]));
 
     sim_assert_eq!(have: value.fragment_range_item(), want: None);

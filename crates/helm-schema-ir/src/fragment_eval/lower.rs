@@ -234,11 +234,11 @@ pub(crate) fn lower_value(
             }
         }
         AbstractValue::ValuesPath(path) => {
-            if path.is_empty() {
+            if path.segments().len() == 0 {
                 Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
             } else {
                 let mut out = Guarded::empty();
-                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
+                for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind) {
                     splice.meta.input_identity = true;
                     out.arms.push((condition, AbstractFragment::Splice(splice)));
                 }
@@ -588,11 +588,11 @@ pub(crate) fn lower_value_scalar_arms(
             vec![(Predicate::True, vec![StringPart::Splice(splice)])]
         }
         AbstractValue::ValuesPath(path) => {
-            if path.is_empty() {
+            if path.segments().len() == 0 {
                 Vec::new()
             } else {
                 scope
-                    .path_splice_arms(path, kind)
+                    .path_splice_arms(&path.encode(), kind)
                     .into_iter()
                     .map(|(condition, mut splice)| {
                         splice.meta.input_identity = true;

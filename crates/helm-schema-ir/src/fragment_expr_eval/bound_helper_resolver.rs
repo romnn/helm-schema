@@ -326,9 +326,11 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
             &mut seen,
         );
         let (path, mut meta) = match operand.value.as_ref()?.clone().without_widened()? {
-            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)
-                if !path.is_empty() =>
-            {
+            AbstractValue::ValuesPath(path) if path.segments().len() != 0 => (
+                path.encode(),
+                crate::helper_meta::HelperOutputMeta::default(),
+            ),
+            AbstractValue::JsonDecodedPath(path) if !path.is_empty() => {
                 (path, crate::helper_meta::HelperOutputMeta::default())
             }
             AbstractValue::OutputPath(path, meta) if meta.json_decoded && !path.is_empty() => {

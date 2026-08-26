@@ -188,13 +188,13 @@ fn abstract_value_type_is(
 ) -> TruthCondition {
     match value {
         AbstractValue::ValuesPath(path) => {
-            if path.is_empty() {
+            if path.segments().len() == 0 {
                 TruthCondition::exact(bool_predicate(schema_type == "object"))
             } else if matches!(type_name, "int64" | "float64") {
-                values_numeric_type_truth(path, type_name)
+                values_numeric_type_truth(&path.encode(), type_name)
             } else {
                 TruthCondition::exact(Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
+                    path: path.encode(),
                     schema_type: schema_type.to_string(),
                 }))
             }

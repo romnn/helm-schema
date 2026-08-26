@@ -609,7 +609,7 @@ fn project_structured_taint_value(
 ) -> AbstractValue {
     match value {
         AbstractValue::ValuesPath(path) => {
-            AbstractValue::OutputPath(path.clone(), outer_meta.clone())
+            AbstractValue::OutputPath(path.encode(), outer_meta.clone())
         }
         AbstractValue::JsonDecodedPath(path) => {
             let mut meta = outer_meta.clone();

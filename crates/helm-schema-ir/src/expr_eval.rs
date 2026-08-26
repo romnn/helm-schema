@@ -452,7 +452,9 @@ fn values_path_value(tail: &[String], env: &EvalEnv) -> AbstractValue {
     if tail.is_empty() {
         AbstractValue::values_root()
     } else {
-        AbstractValue::ValuesPath(helm_schema_core::join_value_path(tail))
+        AbstractValue::ValuesPath(helm_schema_core::ValuesPath::from_segments(
+            tail.iter().cloned(),
+        ))
     }
 }
 

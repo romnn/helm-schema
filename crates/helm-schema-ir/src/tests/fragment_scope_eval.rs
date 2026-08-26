@@ -123,13 +123,10 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
     let mut locals = HashMap::from([(
         "config".to_string(),
         AbstractValue::Dict(BTreeMap::from([
-            (
-                "name".to_string(),
-                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
-            ),
+            ("name".to_string(), values_path!("serviceAccount.name")),
             (
                 "annotations".to_string(),
-                AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+                values_path!("serviceAccount.annotations"),
             ),
         ])),
     )]);
@@ -156,11 +153,11 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
             fallback: Box::new(AbstractValue::Dict(BTreeMap::from([
                 (
                     "name".to_string(),
-                    AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+                    values_path!("serviceAccount.name"),
                 ),
                 (
                     "annotations".to_string(),
-                    AbstractValue::ValuesPath("serviceAccount.annotations".to_string()),
+                    values_path!("serviceAccount.annotations"),
                 ),
             ]))),
         })

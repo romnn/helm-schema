@@ -41,7 +41,7 @@ pub(super) fn record_string_transform_effects(
         if function == "toString"
             && let Some(AbstractValue::ValuesPath(path)) = value
         {
-            effects.stringified_paths.insert(path.clone());
+            effects.stringified_paths.insert(path.encode());
         }
         effects
             .derived_range_key_paths
@@ -215,7 +215,16 @@ fn parser_operand_identity_paths(
         paths: &mut BTreeSet<String>,
     ) {
         match value {
-            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            AbstractValue::ValuesPath(path) => {
+                let path = path.encode();
+                if total_string_preimage
+                    || (!effects.observed_facts.shape_erased_paths.contains(&path)
+                        && !effects.derived_text_paths.contains(&path))
+                {
+                    paths.insert(path);
+                }
+            }
+            AbstractValue::JsonDecodedPath(path) => {
                 if total_string_preimage
                     || (!effects.observed_facts.shape_erased_paths.contains(path)
                         && !effects.derived_text_paths.contains(path))
@@ -405,8 +414,7 @@ pub(super) fn record_string_consumer_effects(
     effects: &mut Effects,
 ) {
     for path in paths {
-        let direct_identity =
-            matches!(value, Some(AbstractValue::ValuesPath(identity)) if identity == path);
+        let direct_identity = matches!(value, Some(AbstractValue::ValuesPath(identity)) if identity.encode() == *path);
         let requirements = string_operand_requirements(value, effects, path);
         for (route, conjunction) in requirements {
             let capture = crate::eval_effect::FailCapture {
@@ -447,11 +455,11 @@ fn string_operand_requirements(
             Vec::new()
         } else {
             let conjunctions = operand_selection_conjunctions(effects, path);
-            let exact_identity = matches!(
-                value,
-                Some(AbstractValue::ValuesPath(candidate) | AbstractValue::JsonDecodedPath(candidate))
-                    if candidate == path
-            );
+            let exact_identity = match value {
+                Some(AbstractValue::ValuesPath(candidate)) => candidate.encode() == path,
+                Some(AbstractValue::JsonDecodedPath(candidate)) => candidate == path,
+                _ => false,
+            };
             if !exact_identity && conjunctions.iter().all(Vec::is_empty) {
                 return Vec::new();
             }
@@ -606,10 +614,11 @@ pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut
     };
     // The whole values root is always present; only a member has an
     // absence to claim (`index $.Values $key`).
-    if path.is_empty() {
+    if path.segments().len() == 0 {
         return;
     }
-    for conjunction in strict_operand_selection_conjunctions(operand, path) {
+    let path = path.encode();
+    for conjunction in strict_operand_selection_conjunctions(operand, &path) {
         let capture = crate::eval_effect::FailCapture {
             conjunction,
             ranged: crate::range_modes::RangeModes::default(),
@@ -684,9 +693,16 @@ pub(super) fn record_collection_item_kind_result(
         direct_collection: bool,
     ) {
         match value {
-            AbstractValue::ValuesPath(path)
-            | AbstractValue::JsonDecodedPath(path)
-            | AbstractValue::OutputPath(path, _) => {
+            AbstractValue::ValuesPath(path) => {
+                if direct_collection {
+                    collection_paths.insert(path.encode());
+                } else if let Some(parent) = path.item_parent() {
+                    collection_paths.insert(parent.encode());
+                } else {
+                    individual_paths.insert(path.encode());
+                }
+            }
+            AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
                 if direct_collection {
                     collection_paths.insert(path.clone());
                 } else if let Some(parent) = path.strip_suffix(".*") {
@@ -889,6 +905,10 @@ struct StrictLayerWalk {
 /// the layer path's presence (the airflow worker-set members). Scoping to
 /// truthy layer values keeps the capture inside the states where the
 /// layer demonstrably feeds the consumer.
+#[expect(
+    clippy::too_many_lines,
+    reason = "the exhaustive raw, decoded, and rendered identity arms keep transform ownership reviewable"
+)]
 pub(super) fn layered_strict_operand_identity_paths(
     operand: &EvalResult,
 ) -> Vec<(String, Vec<Predicate>)> {
@@ -901,9 +921,24 @@ pub(super) fn layered_strict_operand_identity_paths(
         out: &mut Vec<(String, Vec<Predicate>)>,
     ) -> StrictLayerWalk {
         match value {
-            AbstractValue::ValuesPath(path)
-            | AbstractValue::JsonDecodedPath(path)
-            | AbstractValue::OutputPath(path, _) => {
+            AbstractValue::ValuesPath(path) => {
+                let path = path.encode();
+                if emit && strict_operand_path_is_clean(&path, effects) {
+                    let mut conditions = shadow.to_vec();
+                    if layered {
+                        conditions.push(Predicate::truthy_path(path.clone()));
+                    }
+                    let entry = (path.clone(), conditions);
+                    if !out.contains(&entry) {
+                        out.push(entry);
+                    }
+                }
+                StrictLayerWalk {
+                    paths: BTreeSet::from([path]),
+                    absence_expressible: true,
+                }
+            }
+            AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
                 if emit && strict_operand_path_is_clean(path, effects) {
                     let mut conditions = shadow.to_vec();
                     if layered {

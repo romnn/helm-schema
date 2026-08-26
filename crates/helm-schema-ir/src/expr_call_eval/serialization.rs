@@ -475,11 +475,11 @@ pub(super) fn eval_tpl(
         let subject_paths = identity_value_paths(template.value.as_ref());
         record_string_consumer_effects(template.value.as_ref(), &subject_paths, &mut effects);
         if let Some(path) = template.value.as_ref().and_then(|value| match value {
-            AbstractValue::ValuesPath(path) => Some(path),
-            AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path),
+            AbstractValue::ValuesPath(path) => Some(path.encode()),
+            AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path.clone()),
             _ => None,
         }) {
-            effects.templated_text_identity_paths.insert(path.clone());
+            effects.templated_text_identity_paths.insert(path);
         }
         record_range_key_string_consumer_effects(template.value.as_ref(), &mut effects);
         // The rendered result is DERIVED TEXT: the raw argument is a Go

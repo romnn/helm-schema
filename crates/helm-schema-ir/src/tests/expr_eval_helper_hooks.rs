@@ -19,14 +19,9 @@ impl HelperCallValueResolver for StaticResolver {
         _arg: Option<&TemplateExpr>,
     ) -> Option<EvalResult> {
         match name {
-            "common.name" => Some(EvalResult::from_value(AbstractValue::ValuesPath(
-                "nameOverride".to_string(),
-            ))),
+            "common.name" => Some(EvalResult::from_value(values_path!("nameOverride"))),
             "common.labels" => Some(EvalResult::from_value(AbstractValue::Dict(BTreeMap::from(
-                [(
-                    "app".to_string(),
-                    AbstractValue::ValuesPath("labels.app".to_string()),
-                )],
+                [("app".to_string(), values_path!("labels.app"))],
             )))),
             "partial.feature" => Some(EvalResult::none().with_scalar_dispatch(
                 ScalarValueDispatch {
@@ -59,7 +54,7 @@ fn dict_value_can_be_nested_helper_call() {
         have: eval(r#"dict "name" (include "common.name" .)"#),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
-            AbstractValue::ValuesPath("nameOverride".to_string()),
+            values_path!("nameOverride"),
         )])))
     );
 }
@@ -68,7 +63,7 @@ fn dict_value_can_be_nested_helper_call() {
 fn printf_preserves_nested_helper_provenance_path() {
     sim_assert_eq!(
         have: eval(r#"printf "%s-sfx" (include "common.name" .)"#),
-        want: Some(AbstractValue::ValuesPath("nameOverride".to_string()))
+        want: Some(values_path!("nameOverride"))
     );
 }
 
@@ -79,7 +74,7 @@ fn pipeline_merge_can_consume_nested_helper_call() {
         want: Some(AbstractValue::Dict(BTreeMap::from([
             (
                 "app".to_string(),
-                AbstractValue::ValuesPath("labels.app".to_string()),
+                values_path!("labels.app"),
             ),
             (
                 "base".to_string(),
@@ -96,11 +91,11 @@ fn integer_index_on_values_path_uses_array_item_wildcard_with_helper_context() {
         want: Some(AbstractValue::Dict(BTreeMap::from([
             (
                 "name".to_string(),
-                AbstractValue::ValuesPath("nameOverride".to_string()),
+                values_path!("nameOverride"),
             ),
             (
                 "value".to_string(),
-                AbstractValue::ValuesPath("items.*".to_string()),
+                values_path!("items.*"),
             ),
         ])))
     );

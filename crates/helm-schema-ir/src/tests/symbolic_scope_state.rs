@@ -5,11 +5,11 @@ use test_util::prelude::sim_assert_eq;
 fn branch_join_restores_control_state_to_entry() {
     let mut state = SymbolicScopeState::default();
     state.push_predicate_if_absent(Predicate::truthy_path("enabled"));
-    state.push_dot_binding(Some(AbstractValue::ValuesPath("root".to_string())));
+    state.push_dot_binding(Some(values_path!("root")));
     let entry = state.snapshot();
 
     state.push_predicate_if_absent(Predicate::truthy_path("branch"));
-    state.push_dot_binding(Some(AbstractValue::ValuesPath("branch".to_string())));
+    state.push_dot_binding(Some(values_path!("branch")));
     let branch = state.snapshot();
 
     state.restore(entry.clone());
@@ -23,7 +23,7 @@ fn branch_join_restores_control_state_to_entry() {
     );
     sim_assert_eq!(
         have: state.current_dot_fragment(),
-        want: Some(AbstractValue::ValuesPath("root".to_string()))
+        want: Some(values_path!("root"))
     );
 }
 

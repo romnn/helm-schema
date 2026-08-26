@@ -389,10 +389,7 @@ fn defaulted_helper_merge_does_not_require_the_raw_source() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let fragment_context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let call_argument = single_expr(".Values.configMap");
     let summary_env = EvalEnv::from_helper_context(Some(&root_bindings), None);
     let mut summary_seen = HashSet::new();
@@ -737,7 +734,7 @@ fn context_local() -> HashMap<String, AbstractValue> {
         "ctx".to_string(),
         AbstractValue::Dict(BTreeMap::from([(
             "config".to_string(),
-            AbstractValue::ValuesPath("serviceAccount".to_string()),
+            values_path!("serviceAccount"),
         )])),
     )])
 }
@@ -762,10 +759,7 @@ fn helper_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {
 #[test]
 fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
     let expr = single_expr(".");
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
         have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
@@ -793,10 +787,7 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let include = single_expr(r#"include "use-fips-images" .Values"#);
     let TemplateExpr::Call { args, .. } = &include else {
         panic!("include expression");
@@ -856,10 +847,7 @@ fn nested_helper_scalar_output_reuses_the_inner_dispatch() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "feature.enabled.forwarded" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -896,10 +884,7 @@ fn negated_include_uses_the_rendered_scalar_dispatch_truthiness() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"not (include "container-runtime-support-enabled" .)"#);
     let include_expr = single_expr(r#"include "container-runtime-support-enabled" ."#);
     let mut include_seen = HashSet::new();
@@ -957,10 +942,7 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let fragment_context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let header = single_expr(
         r#"and (not (include "container-runtime-support-enabled" .)) .Values.images.enabled"#,
     );
@@ -1041,10 +1023,7 @@ fn print_literal_helper_arms_form_an_exact_scalar_dispatch() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "feature.mode" .Values) "enabled""#);
     let mut seen = HashSet::new();
 
@@ -1090,10 +1069,7 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
     );
     let context = helper_context(&analysis_db);
     let mut root_bindings = analysis_db.static_root_fields().clone();
-    root_bindings.insert(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    );
+    root_bindings.insert("Values".to_string(), values_path!(""));
     let expr =
         single_expr(r#"eq (include "capabilities.ingress.apiVersion" .) "networking.k8s.io/v1""#);
     let mut seen = HashSet::new();
@@ -1158,10 +1134,7 @@ fn root_context_forwarding_keeps_static_capability_scalars() {
     );
     let context = helper_context(&analysis_db);
     let mut root_bindings = analysis_db.static_root_fields().clone();
-    root_bindings.insert(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    );
+    root_bindings.insert("Values".to_string(), values_path!(""));
     let expr = single_expr(r#"eq (include "capabilities.forward" (dict "context" .)) "modern""#);
     let mut seen = HashSet::new();
 
@@ -1198,10 +1171,7 @@ fn helper_local_reassignments_join_into_one_scalar_dispatch() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "feature.local" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -1248,10 +1218,7 @@ fn helper_range_fallback_retains_the_root_provider_candidate() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"include "select.container-context" (list .Values.worker .Values)"#);
     let mut seen = HashSet::new();
 
@@ -1352,10 +1319,7 @@ fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"include "feature.normalize" ."#);
     let mut seen = HashSet::new();
 
@@ -1426,10 +1390,7 @@ fn chart_annotation_policy_decides_helper_output() {
     );
     let context = helper_context(&analysis_db);
     let mut root_bindings = analysis_db.static_root_fields().clone();
-    root_bindings.insert(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    );
+    root_bindings.insert("Values".to_string(), values_path!(""));
     let expr = single_expr(r#"include "common.fips.enabled" ."#);
     let mut seen = HashSet::new();
 
@@ -1466,10 +1427,7 @@ fn nonrendering_control_regions_do_not_multiply_scalar_dispatch_states() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "feature.constant" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -1504,10 +1462,7 @@ fn statically_false_inline_branch_contributes_no_helper_effects() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "feature.constant" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -1545,10 +1500,7 @@ fn helper_conditions_preserve_stringified_trimmed_local_values() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "version.is-seven" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -1605,10 +1557,7 @@ fn helper_output_equality_decodes_a_versioned_boolean_dispatch() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "envoy.enabled" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -1641,10 +1590,7 @@ fn helper_output_retains_a_token_initial_printf_argument() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"include "image" ."#);
     let mut seen = HashSet::new();
 
@@ -1712,10 +1658,7 @@ fn helper_scalar_output_retains_known_arms_beside_an_unknown_arm() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "feature.partial" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -1757,10 +1700,7 @@ fn helper_scalar_output_combines_structural_and_projected_known_arms() {
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let expr = single_expr(r#"eq (include "feature.mixed" .) "true""#);
     let mut seen = HashSet::new();
 
@@ -1898,10 +1838,7 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
 #[test]
 fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
     let expr = single_expr("$");
-    let root_bindings = HashMap::from([(
-        "Values".to_string(),
-        AbstractValue::ValuesPath(String::new()),
-    )]);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
         have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
@@ -1921,7 +1858,7 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
         have: context_value_from_outer_expr(&expr, Some(&fragment_locals), None, None, None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
-            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            values_path!("serviceAccount.name"),
         )])))
     );
 }
@@ -1935,7 +1872,7 @@ fn helper_value_fragment_local_selector_uses_shared_expression_eval() {
 
     sim_assert_eq!(
         have: binding,
-        want: Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
+        want: Some(values_path!("serviceAccount.name"))
     );
 }
 
@@ -1948,7 +1885,7 @@ fn helper_value_fragment_local_dict_uses_shared_expression_eval() {
         have: binding,
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
-            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            values_path!("serviceAccount.name"),
         )])))
     );
 }
@@ -1960,7 +1897,7 @@ fn helper_value_fragment_local_index_uses_shared_expression_eval() {
 
     sim_assert_eq!(
         have: binding,
-        want: Some(AbstractValue::ValuesPath("serviceAccount.name".to_string()))
+        want: Some(values_path!("serviceAccount.name"))
     );
 }
 

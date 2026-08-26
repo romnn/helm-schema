@@ -1,3 +1,11 @@
+macro_rules! values_path {
+    ($path:expr $(,)?) => {
+        crate::abstract_value::AbstractValue::ValuesPath(helm_schema_core::ValuesPath::parse(
+            &$path,
+        ))
+    };
+}
+
 mod contract;
 mod contract_signals;
 mod expr_eval;

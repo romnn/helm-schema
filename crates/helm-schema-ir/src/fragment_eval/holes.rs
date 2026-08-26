@@ -459,6 +459,10 @@ impl Interpreter<'_> {
     ///
     /// Both claims describe the TEXT this source renders, so a helper body
     /// defers them to whatever sink its caller splices the body into.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "the exhaustive slot-source cases keep every capture route visible in one dispatch"
+    )]
     fn record_plain_slot_text(&mut self, value: Option<&AbstractValue>, effects: &Effects) {
         // A later stage that reshapes the text (`b64enc`, `quote`) is what the
         // slot renders, so the raw value's own characters no longer reach it
@@ -483,11 +487,13 @@ impl Interpreter<'_> {
             captures.push(crate::eval_effect::CaptureKind::RangeKeyPlainSlot { paths: key_paths });
         }
         if let Some(AbstractValue::ValuesPath(path)) = value
-            && effects.templated_text_identity_paths.contains(path)
-            && reaches_slot(path)
+            && effects
+                .templated_text_identity_paths
+                .contains(&path.encode())
+            && reaches_slot(&path.encode())
         {
             captures.push(crate::eval_effect::CaptureKind::PlainSlotText {
-                path: path.clone(),
+                path: path.encode(),
                 token_initial: true,
                 templated: true,
             });

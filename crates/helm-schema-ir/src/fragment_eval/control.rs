@@ -1995,7 +1995,7 @@ fn attach_reassignment_exclusion(
         AbstractValue::ValuesPath(path) => {
             let mut meta = crate::helper_meta::HelperOutputMeta::default();
             meta.capture_exclusions.extend(exclusion.iter().cloned());
-            AbstractValue::OutputPath(path.clone(), meta)
+            AbstractValue::OutputPath(path.encode(), meta)
         }
         AbstractValue::JsonDecodedPath(path) => {
             let mut meta = crate::helper_meta::HelperOutputMeta {

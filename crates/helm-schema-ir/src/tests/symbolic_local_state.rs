@@ -15,7 +15,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "image".to_string(),
-        Some(AbstractValue::ValuesPath("image".to_string())),
+        Some(values_path!("image")),
     );
     state
         .chart_value_defaults
@@ -26,7 +26,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "image".to_string(),
-        Some(AbstractValue::ValuesPath("otherImage".to_string())),
+        Some(values_path!("otherImage")),
     );
     state.insert_range_domain("key".to_string(), vec!["a".to_string()]);
     state
@@ -38,7 +38,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
 
     sim_assert_eq!(
         have: state.fragment_values.get("image"),
-        want: Some(&AbstractValue::ValuesPath("image".to_string()))
+        want: Some(&values_path!("image"))
     );
     assert!(state.range_domains.is_empty());
     sim_assert_eq!(
@@ -53,20 +53,20 @@ fn local_scope_restores_shadowed_fragment_value() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("outer".to_string())),
+        Some(values_path!("outer")),
     );
 
     state.enter_local_scope();
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("inner".to_string())),
+        Some(values_path!("inner")),
     );
     state.exit_local_scope();
 
     sim_assert_eq!(
         have: state.fragment_values.get("name"),
-        want: Some(&AbstractValue::ValuesPath("outer".to_string()))
+        want: Some(&values_path!("outer"))
     );
 }
 
@@ -76,20 +76,20 @@ fn local_scope_keeps_assignment_to_outer_fragment_value() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("outer".to_string())),
+        Some(values_path!("outer")),
     );
 
     state.enter_local_scope();
     state.bind_fragment_value(
         AssignmentKind::Assignment,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("assigned".to_string())),
+        Some(values_path!("assigned")),
     );
     state.exit_local_scope();
 
     sim_assert_eq!(
         have: state.fragment_values.get("name"),
-        want: Some(&AbstractValue::ValuesPath("assigned".to_string()))
+        want: Some(&values_path!("assigned"))
     );
 }
 
@@ -157,14 +157,14 @@ fn fragment_assignment_replaces_outer_get_binding() {
     state.bind_fragment_value(
         AssignmentKind::Assignment,
         "value".to_string(),
-        Some(AbstractValue::ValuesPath("assigned".to_string())),
+        Some(values_path!("assigned")),
     );
     state.exit_local_scope();
 
     assert!(!state.get_bindings.contains_key("value"));
     sim_assert_eq!(
         have: state.fragment_values.get("value"),
-        want: Some(&AbstractValue::ValuesPath("assigned".to_string()))
+        want: Some(&values_path!("assigned"))
     );
 }
 
@@ -174,7 +174,7 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "key".to_string(),
-        Some(AbstractValue::ValuesPath("outer".to_string())),
+        Some(values_path!("outer")),
     );
 
     state.enter_local_scope();
@@ -184,7 +184,7 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
     assert!(!state.range_domains.contains_key("key"));
     sim_assert_eq!(
         have: state.fragment_values.get("key"),
-        want: Some(&AbstractValue::ValuesPath("outer".to_string()))
+        want: Some(&values_path!("outer"))
     );
 }
 
@@ -194,7 +194,7 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("outer".to_string())),
+        Some(values_path!("outer")),
     );
     state.default_paths.insert(
         "name".to_string(),
@@ -205,7 +205,7 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("inner".to_string())),
+        Some(values_path!("inner")),
     );
     state.default_paths.insert(
         "name".to_string(),
@@ -225,7 +225,7 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("outer".to_string())),
+        Some(values_path!("outer")),
     );
     state.default_paths.insert(
         "name".to_string(),
@@ -236,7 +236,7 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
     state.bind_fragment_value(
         AssignmentKind::Assignment,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("assigned".to_string())),
+        Some(values_path!("assigned")),
     );
     state.default_paths.insert(
         "name".to_string(),
@@ -256,7 +256,7 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("outer".to_string())),
+        Some(values_path!("outer")),
     );
     state
         .output_meta
@@ -266,7 +266,7 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("inner".to_string())),
+        Some(values_path!("inner")),
     );
     state
         .output_meta
@@ -285,7 +285,7 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
     state.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("outer".to_string())),
+        Some(values_path!("outer")),
     );
     state
         .output_meta
@@ -295,7 +295,7 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
     state.bind_fragment_value(
         AssignmentKind::Assignment,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("assigned".to_string())),
+        Some(values_path!("assigned")),
     );
     state
         .output_meta
@@ -340,7 +340,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     entry.bind_fragment_value(
         AssignmentKind::Declaration,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("entry".to_string())),
+        Some(values_path!("entry")),
     );
     let entry_snapshot = entry.clone();
 
@@ -348,13 +348,13 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     first.bind_fragment_value(
         AssignmentKind::Assignment,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("first".to_string())),
+        Some(values_path!("first")),
     );
     let mut second = entry.clone();
     second.bind_fragment_value(
         AssignmentKind::Assignment,
         "name".to_string(),
-        Some(AbstractValue::ValuesPath("second".to_string())),
+        Some(values_path!("second")),
     );
 
     let mut joined = entry;
@@ -364,8 +364,8 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
         have: joined.fragment_values.get("name"),
         want: Some(&AbstractValue::Choice(
             [
-                AbstractValue::ValuesPath("first".to_string()),
-                AbstractValue::ValuesPath("second".to_string())
+                values_path!("first"),
+                values_path!("second")
             ]
             .into_iter()
             .collect()

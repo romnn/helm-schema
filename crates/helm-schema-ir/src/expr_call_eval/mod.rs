@@ -735,11 +735,16 @@ fn eval_direct_invocation(
             // identity: ranging the result binds the key domain, and
             // plucking a ranged key back out of the same map is a member
             // projection.
-            if function == "keys"
-                && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
-                    &operand.value
-            {
-                result.value = Some(AbstractValue::KeysList(path.clone()));
+            if function == "keys" {
+                match &operand.value {
+                    Some(AbstractValue::ValuesPath(path)) => {
+                        result.value = Some(AbstractValue::KeysList(path.encode()));
+                    }
+                    Some(AbstractValue::JsonDecodedPath(path)) => {
+                        result.value = Some(AbstractValue::KeysList(path.clone()));
+                    }
+                    _ => {}
+                }
             }
             result
         }
@@ -1224,11 +1229,16 @@ fn eval_piped_invocation(
                 identity_value_paths(operand.value.as_ref()),
                 &mut result.effects,
             );
-            if function == "keys"
-                && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
-                    &operand.value
-            {
-                result.value = Some(AbstractValue::KeysList(path.clone()));
+            if function == "keys" {
+                match &operand.value {
+                    Some(AbstractValue::ValuesPath(path)) => {
+                        result.value = Some(AbstractValue::KeysList(path.encode()));
+                    }
+                    Some(AbstractValue::JsonDecodedPath(path)) => {
+                        result.value = Some(AbstractValue::KeysList(path.clone()));
+                    }
+                    _ => {}
+                }
             }
             result
         }
@@ -1503,7 +1513,7 @@ fn direct_quoted_falsy_pattern_condition(
     };
     Some(TruthCondition::from_subsets(
         Predicate::False,
-        Predicate::truthy_path(path).negated(),
+        Predicate::truthy_path(path.encode()).negated(),
         false,
     ))
 }

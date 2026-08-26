@@ -38,9 +38,10 @@ pub(super) fn complete_string_set(value: Option<&AbstractValue>) -> Option<BTree
 pub(super) fn identity_value_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
     fn collect(value: &AbstractValue, paths: &mut BTreeSet<String>) {
         match value {
-            AbstractValue::ValuesPath(path)
-            | AbstractValue::JsonDecodedPath(path)
-            | AbstractValue::OutputPath(path, _) => {
+            AbstractValue::ValuesPath(path) => {
+                paths.insert(path.encode());
+            }
+            AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
                 paths.insert(path.clone());
             }
             AbstractValue::Choice(choices) => {
@@ -91,9 +92,10 @@ pub(super) fn identity_value_paths(value: Option<&AbstractValue>) -> BTreeSet<St
 pub(super) fn serialization_payload_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
     fn collect(value: &AbstractValue, paths: &mut BTreeSet<String>) {
         match value {
-            AbstractValue::ValuesPath(path)
-            | AbstractValue::JsonDecodedPath(path)
-            | AbstractValue::OutputPath(path, _) => {
+            AbstractValue::ValuesPath(path) => {
+                paths.insert(path.encode());
+            }
+            AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
                 paths.insert(path.clone());
             }
             AbstractValue::Dict(entries) => {
@@ -188,22 +190,23 @@ pub(super) fn escape_wrapped_identity(
 ) -> Option<AbstractValue> {
     match value {
         AbstractValue::ValuesPath(path) => {
-            if effects.observed_facts.shape_erased_paths.contains(path)
-                || effects.derived_text_paths.contains(path)
+            let path = path.encode();
+            if effects.observed_facts.shape_erased_paths.contains(&path)
+                || effects.derived_text_paths.contains(&path)
                 || effects
                     .local_output_meta
-                    .get(path)
+                    .get(&path)
                     .is_some_and(|meta| meta.shape_erased || meta.derived_text)
             {
                 return None;
             }
             let mut meta = effects
                 .local_output_meta
-                .get(path)
+                .get(&path)
                 .cloned()
                 .unwrap_or_default();
             meta.lexical_escapes.insert(escape);
-            Some(AbstractValue::OutputPath(path.clone(), meta))
+            Some(AbstractValue::OutputPath(path, meta))
         }
         AbstractValue::OutputPath(path, meta) => {
             if meta.shape_erased

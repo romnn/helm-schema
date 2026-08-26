@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::helper_meta::HelperOutputMeta;
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[expect(
@@ -11,7 +11,7 @@ use helm_schema_core::Predicate;
 pub(crate) enum AbstractValue {
     Top,
     Unknown,
-    ValuesPath(String),
+    ValuesPath(ValuesPath),
     /// Input identity whose runtime value came back through JSON decoding.
     JsonDecodedPath(String),
     /// Key produced by directly ranging a values-backed collection.
@@ -133,7 +133,7 @@ impl AbstractValue {
     }
 
     pub(crate) fn values_root() -> Self {
-        Self::ValuesPath(String::new())
+        Self::ValuesPath(ValuesPath::default())
     }
 
     /// Returns the path whose runtime value this value is structurally
@@ -144,7 +144,8 @@ impl AbstractValue {
     /// which permits structural projection.
     pub(crate) fn direct_values_identity(&self) -> Option<String> {
         match self {
-            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.clone()),
+            Self::ValuesPath(path) => Some(path.encode()),
+            Self::JsonDecodedPath(path) => Some(path.clone()),
             Self::OutputPath(path, meta) if meta.is_input_identity() || meta.json_decoded => {
                 Some(path.clone())
             }
@@ -159,7 +160,8 @@ impl AbstractValue {
     /// recorded transform, such as a pattern tested after `tpl`.
     pub(crate) fn input_identity_path(&self) -> Option<String> {
         match self {
-            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.clone()),
+            Self::ValuesPath(path) => Some(path.encode()),
+            Self::JsonDecodedPath(path) => Some(path.clone()),
             Self::OutputPath(path, meta) if meta.input_identity => Some(path.clone()),
             _ => None,
         }
@@ -275,7 +277,12 @@ impl AbstractValue {
         suppress_values_root: bool,
     ) {
         match self {
-            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
+            Self::ValuesPath(path) => {
+                if !suppress_values_root || path.segments().len() != 0 {
+                    out.insert(path.encode());
+                }
+            }
+            Self::JsonDecodedPath(path) => {
                 if !suppress_values_root || !path.is_empty() {
                     out.insert(path.clone());
                 }
@@ -380,11 +387,11 @@ impl AbstractValue {
         meta_by_path: &BTreeMap<String, HelperOutputMeta>,
     ) -> Self {
         match self {
-            Self::ValuesPath(path) => match meta_by_path.get(&path) {
+            Self::ValuesPath(path) => match meta_by_path.get(&path.encode()) {
                 Some(meta) => {
                     let mut meta = meta.clone();
                     meta.input_identity = true;
-                    Self::OutputPath(path, meta)
+                    Self::OutputPath(path.encode(), meta)
                 }
                 None => Self::ValuesPath(path),
             },
@@ -625,7 +632,21 @@ impl AbstractValue {
 
     pub(crate) fn require_rendered_source_presence(self) -> Self {
         match self {
-            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
+            Self::ValuesPath(path) => {
+                let encoded = path.encode();
+                let mut meta = HelperOutputMeta {
+                    input_identity: true,
+                    ..HelperOutputMeta::default()
+                };
+                meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
+                    helm_schema_core::Guard::Absent {
+                        path: encoded.clone(),
+                    },
+                )
+                .negated()]));
+                Self::OutputPath(encoded, meta)
+            }
+            Self::JsonDecodedPath(path) => {
                 let mut meta = HelperOutputMeta {
                     input_identity: true,
                     ..HelperOutputMeta::default()
@@ -680,7 +701,11 @@ impl AbstractValue {
 
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
         match self {
-            Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
+            Self::ValuesPath(path) => {
+                let mut path = path.clone();
+                path.push("*");
+                Some(Self::ValuesPath(path))
+            }
             Self::KeysList(path) => Some(Self::RangeKey(path.clone())),
             Self::JsonDecodedPath(path) => Some(Self::JsonDecodedPath(item_path(path))),
             Self::OutputPath(path, meta) if meta.is_input_identity() || meta.json_decoded => {
@@ -838,7 +863,12 @@ impl AbstractValue {
     }
 
     pub(crate) fn path_choices(paths: BTreeSet<String>) -> Option<Self> {
-        Self::choice(paths.into_iter().map(Self::ValuesPath).collect())
+        Self::choice(
+            paths
+                .into_iter()
+                .map(|path| Self::ValuesPath(ValuesPath::parse(&path)))
+                .collect(),
+        )
     }
 
     pub(crate) fn widened(paths: BTreeSet<String>) -> Option<Self> {
@@ -880,7 +910,7 @@ impl AbstractValue {
 
     pub(crate) fn mark_json_decoded(self) -> Self {
         match self {
-            Self::ValuesPath(path) => Self::JsonDecodedPath(path),
+            Self::ValuesPath(path) => Self::JsonDecodedPath(path.encode()),
             Self::OutputPath(path, mut meta) => {
                 meta.json_decoded = true;
                 Self::OutputPath(path, meta)
@@ -1010,9 +1040,8 @@ impl AbstractValue {
 
     pub(crate) fn values_root_structure(&self) -> Option<Self> {
         match self {
-            Self::ValuesPath(path) | Self::JsonDecodedPath(path) if path.is_empty() => {
-                Some(self.clone())
-            }
+            Self::ValuesPath(path) if path.segments().len() == 0 => Some(self.clone()),
+            Self::JsonDecodedPath(path) if path.is_empty() => Some(self.clone()),
             Self::OutputPath(path, _) if path.is_empty() => Some(self.clone()),
             Self::Dict(entries) => {
                 let entries = entries
@@ -1179,7 +1208,8 @@ impl AbstractValue {
         let mut paths = Vec::new();
         for candidate in candidates {
             match candidate {
-                Self::ValuesPath(path) | Self::JsonDecodedPath(path) => paths.push(path.clone()),
+                Self::ValuesPath(path) => paths.push(path.encode()),
+                Self::JsonDecodedPath(path) => paths.push(path.clone()),
                 Self::OutputPath(path, meta) if meta.is_input_identity() => {
                     paths.push(path.clone());
                 }
@@ -1200,11 +1230,11 @@ impl AbstractValue {
 
         match self {
             Self::ValuesPath(prefix) => {
-                let mut segments = helm_schema_core::split_value_path(prefix);
-                segments.extend(rest.iter().cloned());
-                Some(Self::ValuesPath(helm_schema_core::join_value_path(
-                    segments,
-                )))
+                let mut path = prefix.clone();
+                for segment in rest {
+                    path.push(segment);
+                }
+                Some(Self::ValuesPath(path))
             }
             Self::JsonDecodedPath(prefix) => {
                 let mut segments = helm_schema_core::split_value_path(prefix);
@@ -1276,7 +1306,9 @@ impl AbstractValue {
                     if tail.is_empty() {
                         Some(Self::values_root())
                     } else {
-                        Some(Self::ValuesPath(helm_schema_core::join_value_path(tail)))
+                        Some(Self::ValuesPath(ValuesPath::from_segments(
+                            tail.iter().cloned(),
+                        )))
                     }
                 } else {
                     None
@@ -1552,7 +1584,7 @@ impl AbstractValue {
         }
 
         match self {
-            Self::ValuesPath(path) if remove.contains(&path) => None,
+            Self::ValuesPath(path) if remove.contains(&path.encode()) => None,
             Self::JsonDecodedPath(path) if remove.contains(&path) => None,
             Self::OutputPath(path, _) if remove.contains(&path) => None,
             Self::ValuesPath(_)

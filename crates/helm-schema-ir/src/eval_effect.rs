@@ -1055,7 +1055,8 @@ impl EvalResult {
 
     pub(crate) fn from_value(value: AbstractValue) -> Self {
         let scalar_dispatch = match &value {
-            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            AbstractValue::ValuesPath(path) => Some(ScalarValueDispatch::identity(path.encode())),
+            AbstractValue::JsonDecodedPath(path) => {
                 Some(ScalarValueDispatch::identity(path.clone()))
             }
             AbstractValue::StringSet(values) if values.len() == 1 => values.first().map(|value| {
@@ -1154,29 +1155,33 @@ impl EvalResult {
 
     pub(crate) fn exact_input_identity(&self) -> Option<String> {
         let path = match self.value.as_ref()? {
-            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => path,
+            AbstractValue::ValuesPath(path) => path.encode(),
+            AbstractValue::JsonDecodedPath(path) => path.clone(),
             AbstractValue::OutputPath(path, meta)
                 if meta.is_input_identity() && meta.predicates.is_empty() =>
             {
-                path
+                path.clone()
             }
             _ => return None,
         };
-        (!self.effects.defaults.contains(path)
-            && !self.effects.local_default_paths.contains(path)
-            && !self.effects.derived_text_paths.contains(path)
+        (!self.effects.defaults.contains(&path)
+            && !self.effects.local_default_paths.contains(&path)
+            && !self.effects.derived_text_paths.contains(&path)
             && self
                 .effects
                 .local_output_meta
-                .get(path)
+                .get(&path)
                 .is_none_or(|meta| meta.predicates.is_empty()))
-        .then(|| path.clone())
+        .then_some(path)
     }
 }
 
 fn truth_for_value(value: Option<&AbstractValue>) -> TruthCondition {
     match value {
-        Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) => {
+        Some(AbstractValue::ValuesPath(path)) => {
+            TruthCondition::exact(helm_schema_core::Predicate::truthy_path(path.encode()))
+        }
+        Some(AbstractValue::JsonDecodedPath(path)) => {
             TruthCondition::exact(helm_schema_core::Predicate::truthy_path(path.clone()))
         }
         _ => TruthCondition::Unknown,

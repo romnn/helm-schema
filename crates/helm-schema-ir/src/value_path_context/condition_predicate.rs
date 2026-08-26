@@ -3107,7 +3107,13 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
                     return Some(Predicate::True);
                 }
             }
-            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            AbstractValue::ValuesPath(path) => {
+                if path.segments().any(|segment| segment == "*") {
+                    return None;
+                }
+                arms.push(Predicate::truthy_path(path.encode()));
+            }
+            AbstractValue::JsonDecodedPath(path) => {
                 if helm_schema_core::split_value_path(path)
                     .iter()
                     .any(|segment| segment == "*")
@@ -3146,7 +3152,13 @@ fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predica
     let mut arms = Vec::new();
     for candidate in candidates {
         match candidate {
-            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            AbstractValue::ValuesPath(path) => {
+                if path.segments().any(|segment| segment == "*") {
+                    return None;
+                }
+                arms.push(Predicate::truthy_path(path.encode()));
+            }
+            AbstractValue::JsonDecodedPath(path) => {
                 if helm_schema_core::split_value_path(path)
                     .iter()
                     .any(|segment| segment == "*")
@@ -3288,7 +3300,17 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                 _ => Some(predicate_any(resolved)),
             }
         }
-        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => Some(
+        AbstractValue::ValuesPath(path) => Some(
+            Predicate::from(Guard::Absent {
+                path: {
+                    let mut path = path.clone();
+                    path.push(key);
+                    path.encode()
+                },
+            })
+            .negated(),
+        ),
+        AbstractValue::JsonDecodedPath(path) => Some(
             Predicate::from(Guard::Absent {
                 path: helm_schema_core::append_value_path(path, key),
             })

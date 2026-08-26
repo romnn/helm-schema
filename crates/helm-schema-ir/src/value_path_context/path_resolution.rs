@@ -169,30 +169,29 @@ impl ValuePathContext<'_> {
 
 fn range_input_identity(value: &AbstractValue, effects: &Effects) -> Option<RangeSubjectIdentity> {
     let (path, json_decoded) = match value {
-        AbstractValue::ValuesPath(path) => (path, false),
-        AbstractValue::JsonDecodedPath(path) => (path, true),
+        AbstractValue::ValuesPath(path) => (path.encode(), false),
+        AbstractValue::JsonDecodedPath(path) => (path.clone(), true),
         AbstractValue::OutputPath(path, meta) => {
             if !meta.json_decoded && !output_meta_preserves_range_shape(meta) {
                 return None;
             }
-            (path, meta.json_decoded)
+            (path.clone(), meta.json_decoded)
         }
         _ => return None,
     };
-    if !json_decoded && !path_preserves_range_shape(path, effects) {
+    if !json_decoded && !path_preserves_range_shape(&path, effects) {
         return None;
     }
-    Some(RangeSubjectIdentity {
-        path: path.clone(),
-        json_decoded,
-    })
+    Some(RangeSubjectIdentity { path, json_decoded })
 }
 
 fn range_member_value(value: &AbstractValue, effects: &Effects) -> Option<AbstractValue> {
     match value {
-        AbstractValue::ValuesPath(path) if path_preserves_range_shape(path, effects) => Some(
-            AbstractValue::ValuesPath(helm_schema_core::append_value_path(path, "*")),
-        ),
+        AbstractValue::ValuesPath(path) if path_preserves_range_shape(&path.encode(), effects) => {
+            let mut path = path.clone();
+            path.push("*");
+            Some(AbstractValue::ValuesPath(path))
+        }
         AbstractValue::JsonDecodedPath(path) => Some(AbstractValue::JsonDecodedPath(
             helm_schema_core::append_value_path(path, "*"),
         )),
@@ -254,9 +253,11 @@ fn range_member_value(value: &AbstractValue, effects: &Effects) -> Option<Abstra
 
 fn range_layer_member_value(value: &AbstractValue, effects: &Effects) -> Option<AbstractValue> {
     match value {
-        AbstractValue::ValuesPath(path) => Some(AbstractValue::ValuesPath(
-            helm_schema_core::append_value_path(path, "*"),
-        )),
+        AbstractValue::ValuesPath(path) => {
+            let mut path = path.clone();
+            path.push("*");
+            Some(AbstractValue::ValuesPath(path))
+        }
         AbstractValue::JsonDecodedPath(path) => Some(AbstractValue::JsonDecodedPath(
             helm_schema_core::append_value_path(path, "*"),
         )),
@@ -298,8 +299,8 @@ fn single_member_collection_identity(value: &AbstractValue) -> Option<RangeSubje
     ) {
         match value {
             AbstractValue::ValuesPath(path) => {
-                if let Some(parent) = path.strip_suffix(".*") {
-                    identities.insert((parent.to_string(), false));
+                if let Some(parent) = path.item_parent() {
+                    identities.insert((parent.encode(), false));
                 } else {
                     *has_other_path = true;
                 }

@@ -297,9 +297,8 @@ fn known_literal_truthiness(value: &AbstractValue) -> Option<bool> {
 
 pub(super) fn direct_raw_identity_path(value: Option<&AbstractValue>) -> Option<String> {
     match value? {
-        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
-            Some(path.clone())
-        }
+        AbstractValue::ValuesPath(path) => Some(path.encode()),
+        AbstractValue::JsonDecodedPath(path) => Some(path.clone()),
         _ => None,
     }
 }
@@ -449,8 +448,8 @@ fn empty_rescue_paths(
     for arm in arms {
         let (path, meta) = match arm {
             arm if is_empty_literal(arm) => continue,
-            AbstractValue::OutputPath(path, meta) => (path, Some(meta)),
-            AbstractValue::ValuesPath(path) => (path, None),
+            AbstractValue::OutputPath(path, meta) => (path.clone(), Some(meta)),
+            AbstractValue::ValuesPath(path) => (path.encode(), None),
             _ => return None,
         };
         // `empty_fold_spellings` is produced only for the exact
@@ -460,7 +459,7 @@ fn empty_rescue_paths(
         // original transform flags.
         let stringified = meta
             .is_some_and(|meta| meta.stringified || meta.empty_fold_spellings.is_some())
-            || stringified_in_effects(path);
+            || stringified_in_effects(&path);
         if !stringified {
             return None;
         }
@@ -472,7 +471,7 @@ fn empty_rescue_paths(
             None if has_empty_literal_arm => return None,
             None => {}
         }
-        rescues.push((path.clone(), spellings));
+        rescues.push((path, spellings));
     }
     (!rescues.is_empty()).then_some(rescues)
 }
@@ -617,10 +616,12 @@ pub(super) fn eval_pluck(
         if let Some(AbstractValue::RangeKey(key_source)) = &key.value {
             let map = eval_expr_with_helper_calls(map_expr, env, resolver);
             let member = match &map.value {
-                Some(
-                    value
-                    @ (AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)),
-                ) if path == key_source => value.fragment_range_item(),
+                Some(value @ AbstractValue::ValuesPath(path)) if &path.encode() == key_source => {
+                    value.fragment_range_item()
+                }
+                Some(value @ AbstractValue::JsonDecodedPath(path)) if path == key_source => {
+                    value.fragment_range_item()
+                }
                 _ => None,
             };
             if let Some(member) = member {

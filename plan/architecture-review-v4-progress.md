@@ -2558,7 +2558,7 @@
 
 ## B4a.2a — migrate IR range-mode keys
 
-- Status: complete; commit pending.
+- Status: landed in `fed82111`.
 - Contract: representation-only migration of `RangeModes` map keys to `ValuesPath`, the first of
   the three IR-internal carriers named by B4a. Raw strings may be parsed at existing producer/query
   boundaries, but the map retains no parallel encoded path key.
@@ -2626,3 +2626,83 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +11 (63,553 to 63,564).
+
+## B4a.2b — migrate abstract-value path identities
+
+- Status: complete; commit pending.
+- Contract: representation-only migration of the frozen plan's named
+  `AbstractValue::ValuesPath(String)` carrier to segmented `ValuesPath`. Decoded/output/range-key
+  transform variants remain in their current representation until B2 migrates their transform
+  provenance and payloads together.
+- Acceptance baseline: `fed82111` (B4a.2a).
+- Baseline production LOC: 63,564 Rust lines from `task tokei:core` on `fed82111`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, wire, ordering, or corpus acceptance changes.
+  - Selector application, range-item projection, root recognition, ancestry, and removal operate
+    structurally; explicit encoding occurs only at unmigrated carrier boundaries.
+  - No string coercion trait, comparison shim, cached encoding, or parallel identity field may be
+    added.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results: `AbstractValue::ValuesPath` now stores segmented `ValuesPath`; root/member/range
+  navigation is structural and all still-string effects, predicates, output metadata, and contract
+  boundaries encode explicitly. All 393 focused IR tests pass. Schema and IR dumps are byte-exact;
+  60 charts and 121,055 probes report zero flips, zero mandatory drops, and zero
+  candidate-accepts/Helm-aborts cells.
+- Deviations:
+  - A preflight migrated all five path-shaped variants together and exposed 166 compiler sites
+    spanning decoded/output/range-key transform domains. The state was rejected and reduced to the
+    exact `AbstractValue::ValuesPath(String)` item named by B4a; no archive, dump, or fixture from
+    the rejected state is adopted. The remaining variants stay coupled to B2's transform-carrier
+    migration rather than being split from their payload semantics here.
+  - The first test migration retained 129 redundant `.to_string()` calls behind its test-local
+    constructor macro; lint rejected that state. A bounded mechanical rewrite removed only those
+    macro-argument allocations. No artifact from the rejected state was adopted.
+- Adjudication evidence: zero flips require no Helm cell adjudication; adjudication ran enabled with
+  zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Raw/decoded/output identities | Same identity and metadata selection | Abstract-value and expression suites. |
+| Range keys/items | Same collection/member projection | Range and fail-capture suites. |
+| Root/member selection | Same escaped structural paths | Selector and helper suites. |
+| Effects/contract boundaries | Same encoded bytes and order | Schema/IR dumps and full-depth battery. |
+
+### Review dossier
+
+- Focused proof: 393/393 IR tests pass. Immutable archive
+  `/private/tmp/arch-v4-b4a2b-final1.tar.zst` contains 87 binaries and 125 files. The clean 62-test
+  schema dump and one-test/18-artifact IR dump are recursively byte-identical to B4a.2a. The
+  full-depth prober passes 121,055 probes with 28,868 unchanged disclosed bounded reductions.
+- Public/wire decision: none; `AbstractValue` is crate-private and every external path remains the
+  exact legacy encoded string.
+
+### Self-adversarial pass
+
+- The raw identity is encoded only when entering still-string Effects, predicates, output metadata,
+  scalar dispatch, or contract facts. Selector append, range-item append, root recognition,
+  descendant checks, and item-parent checks are structural.
+- Two function-level `too_many_lines` expectations document exhaustive identity/source dispatches
+  whose explicit typed arm raised them just over the lint threshold; splitting would scatter the
+  invariant. No broad lint allowance was added.
+- Test-local `values_path!` macros eliminate fixture boilerplate without adding a production
+  compatibility constructor or string coercion trait.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 combinations, 13 packages, three targets; 1,076.38 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass.
+- `task test:integration`; exit 0, 558 pass, 24 skipped; 922.300 seconds.
+- `task test:all`; exit 0, 1,870 pass, 24 skipped including live-network tests; 975.868 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 63,682 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +118 (63,564 to 63,682).

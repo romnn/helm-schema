@@ -253,17 +253,17 @@ fn advanced_traversal_value(
     let paths = values
         .iter()
         .map(|value| match value {
-            AbstractValue::ValuesPath(path) => Some(path.as_str()),
+            AbstractValue::ValuesPath(path) => Some(path),
             _ => None,
         })
         .collect::<Option<Vec<_>>>()?;
     let deepest = paths
         .iter()
         .copied()
-        .max_by_key(|path| helm_schema_core::split_value_path(path).len())?;
+        .max_by_key(|path| path.segments().len())?;
     if !paths
         .iter()
-        .all(|path| *path == deepest || helm_schema_core::values_path_is_descendant(deepest, path))
+        .all(|path| *path == deepest || deepest.is_descendant_of(path))
     {
         return None;
     }
@@ -271,7 +271,7 @@ fn advanced_traversal_value(
         .iter()
         .zip(&paths)
         .any(|(state, path)| *path == deepest && state.traversal_advances.contains(variable));
-    marked.then(|| AbstractValue::ValuesPath(deepest.to_string()))
+    marked.then(|| AbstractValue::ValuesPath(deepest.clone()))
 }
 
 /// Join one per-variable local-state map across branch outcomes.
