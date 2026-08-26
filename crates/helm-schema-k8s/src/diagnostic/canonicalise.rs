@@ -13,8 +13,8 @@ pub(super) fn canonicalise_candidates(v: &mut Vec<ApiVersionCandidate>) {
     v.sort_by(|a, b| {
         a.api_version
             .cmp(&b.api_version)
-            .then_with(|| format!("{:?}", a.source).cmp(&format!("{:?}", b.source)))
-            .then_with(|| format!("{:?}", a.origin).cmp(&format!("{:?}", b.origin)))
+            .then_with(|| a.source.cmp(&b.source))
+            .then_with(|| a.origin.cmp(&b.origin))
     });
     v.dedup();
 }

@@ -1,6 +1,6 @@
 use crate::lookup::ProviderOrigin;
 
-use super::candidate::{ApiVersionCandidate, InferenceSource};
+use super::candidate::ApiVersionCandidate;
 use super::inference_outcome::ApiVersionInferenceOutcome;
 
 /// Cross-provider aggregation rule for Feature D.
@@ -101,27 +101,9 @@ fn sort_candidates(candidates: &mut [ApiVersionCandidate]) {
     candidates.sort_by(|a, b| {
         a.api_version
             .cmp(&b.api_version)
-            .then_with(|| source_rank(a.source).cmp(&source_rank(b.source)))
-            .then_with(|| origin_rank(a.origin).cmp(&origin_rank(b.origin)))
+            .then_with(|| a.source.cmp(&b.source))
+            .then_with(|| a.origin.cmp(&b.origin))
     });
-}
-
-fn source_rank(source: InferenceSource) -> u8 {
-    match source {
-        InferenceSource::ChartLocalCrd => 0,
-        InferenceSource::Shortlist => 1,
-        InferenceSource::LocalCacheScan => 2,
-        InferenceSource::OnlineProbe => 3,
-    }
-}
-
-fn origin_rank(origin: ProviderOrigin) -> u8 {
-    match origin {
-        ProviderOrigin::LocalOverride => 0,
-        ProviderOrigin::ChartLocalCrd => 1,
-        ProviderOrigin::DefaultCatalog => 2,
-        ProviderOrigin::KubernetesOpenApi => 3,
-    }
 }
 
 #[cfg(test)]

@@ -132,6 +132,80 @@ fn diagnostic_payload_canonicalised_on_insert() {
 }
 
 #[test]
+fn ambiguous_candidates_use_inference_priority_order() {
+    let sink = DiagnosticSink::new();
+    let api_version = "example.com/v1";
+    sink.push(Diagnostic::AmbiguousApiVersion {
+        kind: "Example".to_string(),
+        candidates: vec![
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::OnlineProbe,
+                origin: ProviderOrigin::KubernetesOpenApi,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::Shortlist,
+                origin: ProviderOrigin::KubernetesOpenApi,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::Shortlist,
+                origin: ProviderOrigin::LocalOverride,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::LocalCacheScan,
+                origin: ProviderOrigin::DefaultCatalog,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::ChartLocalCrd,
+                origin: ProviderOrigin::ChartLocalCrd,
+            },
+        ],
+    });
+
+    let actual = sink
+        .snapshot()
+        .into_iter()
+        .find_map(|diagnostic| match diagnostic {
+            Diagnostic::AmbiguousApiVersion { candidates, .. } => Some(candidates),
+            _ => None,
+        });
+    sim_assert_eq!(
+        have: actual,
+        want: Some(vec![
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::ChartLocalCrd,
+                origin: ProviderOrigin::ChartLocalCrd,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::Shortlist,
+                origin: ProviderOrigin::LocalOverride,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::Shortlist,
+                origin: ProviderOrigin::KubernetesOpenApi,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::LocalCacheScan,
+                origin: ProviderOrigin::DefaultCatalog,
+            },
+            ApiVersionCandidate {
+                api_version: api_version.to_string(),
+                source: InferenceSource::OnlineProbe,
+                origin: ProviderOrigin::KubernetesOpenApi,
+            },
+        ])
+    );
+}
+
+#[test]
 fn diagnostic_dedupe_per_resource() {
     // 5 ResolvedFromFallbackVersion events for the same (kind, api_version,
     // resolved_version) triple → exactly one entry in the sink.

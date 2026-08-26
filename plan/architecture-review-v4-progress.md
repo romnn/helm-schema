@@ -1619,7 +1619,7 @@
 
 ## S-A3 — required-in-parent single descent
 
-- Status: complete; commit pending.
+- Status: landed in `12b2f79a`.
 - Contract: behavior-bearing replacement of the independent parent re-descent with one path descent
   that returns the actual parent selected alongside the leaf. Requiredness must be read from that
   parent, eliminating the repeated provider walk and the must-agree junctor invariant.
@@ -1727,3 +1727,115 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: -8 (63,253 to 63,245).
+
+## S-A4 — derive inference candidate ordering
+
+- Status: complete; commit pending.
+- Contract: behavior-bearing deletion of the two hand-written rank tables and the diagnostic
+  sink's `Debug`-string ordering. Both aggregation and diagnostic canonicalisation must use the
+  enums' derived declaration order, with one test pinning declaration-order-as-priority.
+- Acceptance baseline: `12b2f79a` (S-A3).
+- Baseline production LOC: 63,245 Rust lines from `task tokei:core` on `12b2f79a`.
+- Pre-registered acceptance expectations:
+  - Inference resolution remains identical because both rank tables already reproduce the enums'
+    declaration order exactly.
+  - Ambiguous diagnostic candidates with the same `api_version` change from alphabetical
+    `Debug`-name order to declaration-priority order: sources become `ChartLocalCrd`, `Shortlist`,
+    `LocalCacheScan`, `OnlineProbe`; origins become `LocalOverride`, `ChartLocalCrd`,
+    `DefaultCatalog`, `KubernetesOpenApi`. This one diagnostic-order family is expected and must
+    not change the candidate set.
+  - Schema and symbolic-IR fixtures must remain byte-exact with zero acceptance flips. Any other
+    diagnostic or acceptance delta stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - Aggregation and diagnostic canonicalisation now compare `InferenceSource` and `ProviderOrigin`
+    directly. The two exhaustive hand-written rank functions and the allocating `Debug`-string
+    comparisons are deleted.
+  - One direct test pins both enum declaration orders as the priority contract. The existing
+    same-version aggregation tooth still selects `Shortlist` over `LocalCacheScan`.
+  - The registered diagnostic-order family changes exactly as expected: the candidate set is
+    unchanged, while equal-api-version candidates follow source priority and then origin priority.
+  - Schema and symbolic-IR dumps are byte-for-byte identical to S-A3. The full-depth battery covers
+    60 charts and 121,055 probes with zero acceptance flips; mandatory base coverage is
+    112,260/112,260 and third-level coverage is 7,465/7,465, both with zero drops.
+- Deviations:
+  - The first focused compilation warned that `InferenceSource` remained imported by production
+    after the rank-table deletion. The type is now imported only by the private test module; the
+    warning-producing preflight preceded lint and no immutable artifact was built from it.
+- Adjudication evidence: Helm v4.2.3. The sole changed family is diagnostic candidate ordering and
+  is adjudicated by exact candidate-vector equality; candidate membership and inference winners
+  remain unchanged. The Helm-backed schema battery has zero changed cells and zero
+  candidate-accepts/Helm-aborts cells, so no fixture required adoption.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Inference-source tie break | Declaration order is priority | Direct exhaustive enum-order test. |
+| Provider-origin tie break | Declaration order is priority | Same exhaustive test. |
+| Resolved same-version candidates | Same winner | Aggregator priority regression. |
+| Ambiguous diagnostic candidates | Priority order, unchanged set | Canonicalisation regression. |
+| Schema consumers | No emitted-schema change | Byte-exact corpus and full-depth battery. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-k8s -E
+  'test(declaration_order_is_inference_priority)'` and `cargo nextest run -p helm-schema-k8s
+  --profile integration -E 'test(ambiguous_candidates_use_inference_priority_order) |
+  test(api_version_guess_aggregates_across_providers)'`; both exit 0, three tests pass.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa4-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-sa4-final1.tar.zst`; exit 0, 88
+  binaries and 126 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa4-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sa4-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the S-A3 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa4-final1-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sa4-final1.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written. A recursive byte comparison against the S-A3 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa4-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=12b2f79a
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sa4-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sa4-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-sa4-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: the public enum variants and their derived ordering were already part of
+  the Rust API. This round deliberately makes ambiguous diagnostic JSON candidate arrays follow
+  that documented priority instead of alphabetical debug names; the candidate set and field
+  representation are unchanged.
+
+### Self-adversarial pass
+
+- Declaration order is now semantic priority, so the exhaustive order test is load-bearing: future
+  variant insertion or reordering must update the priority contract deliberately.
+- Sorting still begins with `api_version`, preserving deterministic grouping and the aggregator's
+  first/last single-version shortcut. Only equal-version tie breakers changed.
+- `Debug` formatting is no longer a hidden wire-order dependency. Diagnostic canonicalisation and
+  inference selection now share the same typed comparisons without a helper facade or duplicate
+  table.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected unused-import preflight.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,292 tests pass.
+- `task test:integration`; exit 0, 563 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,859 tests pass and 24 are skipped, including all live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,229 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: -16 (63,245 to 63,229).

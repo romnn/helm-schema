@@ -1,4 +1,5 @@
 use super::*;
+use crate::inference::InferenceSource;
 use test_util::prelude::sim_assert_eq;
 
 fn candidate(
@@ -11,6 +12,43 @@ fn candidate(
         source,
         origin,
     }
+}
+
+#[test]
+fn declaration_order_is_inference_priority() {
+    let mut sources = vec![
+        InferenceSource::OnlineProbe,
+        InferenceSource::LocalCacheScan,
+        InferenceSource::Shortlist,
+        InferenceSource::ChartLocalCrd,
+    ];
+    sources.sort();
+    sim_assert_eq!(
+        have: sources,
+        want: vec![
+            InferenceSource::ChartLocalCrd,
+            InferenceSource::Shortlist,
+            InferenceSource::LocalCacheScan,
+            InferenceSource::OnlineProbe,
+        ]
+    );
+
+    let mut origins = vec![
+        ProviderOrigin::KubernetesOpenApi,
+        ProviderOrigin::DefaultCatalog,
+        ProviderOrigin::ChartLocalCrd,
+        ProviderOrigin::LocalOverride,
+    ];
+    origins.sort();
+    sim_assert_eq!(
+        have: origins,
+        want: vec![
+            ProviderOrigin::LocalOverride,
+            ProviderOrigin::ChartLocalCrd,
+            ProviderOrigin::DefaultCatalog,
+            ProviderOrigin::KubernetesOpenApi,
+        ]
+    );
 }
 
 #[test]
