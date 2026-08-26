@@ -417,7 +417,9 @@ fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
     }
 }
 
-include!("path_resolver/fail_requirement.rs");
+mod fail_requirement;
+
+pub(crate) use fail_requirement::fail_requirement_schema;
 
 /// Like [`required_object_path_schema`], but the LEAF member stays
 /// optional: nil-tolerant requirements (comparison operands) constrain the

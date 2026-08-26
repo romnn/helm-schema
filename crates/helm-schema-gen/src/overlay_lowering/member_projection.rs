@@ -1,3 +1,9 @@
+use super::{
+    BTreeSet, ConditionalBaseEffect, ConditionalFlavor, ConditionalGuard, ConditionalPathOverlay,
+    ContractSchemaSignals, EmissionOrigin, LoweredConjunct, ProviderSchemaFragment,
+    ResolvedPathSchema, ResourceSchemaOracle, SchemaNode, Value, YamlValue, split_value_path,
+};
+
 pub(crate) fn member_descendant_projection(
     target_segments: &[String],
     descendants: &[&ResolvedPathSchema],
@@ -45,7 +51,7 @@ pub(crate) fn member_descendant_projection(
     Some(member_schema.unwrap_or_else(|| SchemaNode::untyped_member_host().into_value()))
 }
 
-fn structural_collection_member_projection(schema: &Value) -> Option<Value> {
+pub(super) fn structural_collection_member_projection(schema: &Value) -> Option<Value> {
     if crate::schema_model::is_empty_schema(schema) {
         return None;
     }
@@ -159,7 +165,7 @@ fn structural_collection_member_projection(schema: &Value) -> Option<Value> {
 /// integer-typed exactly where the `OpenShift` adaptation certainly does
 /// not run). Keys without retain guards stay subtracted: their survival
 /// is undecidable, so their typing abstains.
-fn append_omitted_member_arms(
+pub(super) fn append_omitted_member_arms(
     conditionals: &mut Vec<LoweredConjunct>,
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
@@ -252,7 +258,7 @@ fn append_omitted_member_arms(
     clippy::too_many_lines,
     reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
 )]
-fn append_merge_shadow_arms(
+pub(super) fn append_merge_shadow_arms(
     conditionals: &mut Vec<LoweredConjunct>,
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
@@ -526,7 +532,7 @@ fn dereferenced_payload_subschema(
     }
 }
 
-fn is_unconditional_self_presence_overlay(
+pub(super) fn is_unconditional_self_presence_overlay(
     target_value_path: &str,
     overlay: &ConditionalPathOverlay,
 ) -> bool {
@@ -540,7 +546,9 @@ fn is_unconditional_self_presence_overlay(
     )
 }
 
-fn is_bare_iterable_implication(implication: &helm_schema_core::ContractRequirementImplication) -> bool {
+pub(super) fn is_bare_iterable_implication(
+    implication: &helm_schema_core::ContractRequirementImplication,
+) -> bool {
     matches!(
         &implication.target,
         helm_schema_core::ContractRequirementTarget::Value
@@ -550,7 +558,7 @@ fn is_bare_iterable_implication(implication: &helm_schema_core::ContractRequirem
     )
 }
 
-fn member_implication_covers_range_domain(
+pub(super) fn member_implication_covers_range_domain(
     implications: &[helm_schema_core::ContractRequirementImplication],
     guards: &[ConditionalGuard],
 ) -> bool {
@@ -565,7 +573,7 @@ fn member_implication_covers_range_domain(
     })
 }
 
-fn implication_has_self_truthy_guard(
+pub(super) fn implication_has_self_truthy_guard(
     implication: &helm_schema_core::ContractRequirementImplication,
     target_value_path: &str,
 ) -> bool {
@@ -582,7 +590,7 @@ fn implication_has_self_truthy_guard(
 /// PRESENCE — `¬Absent(target)` or a `HasKey` naming the target as its
 /// parent's member. Such arms fire only where the value exists, so the
 /// base must keep its independent resolution.
-fn implication_has_self_presence_guard(
+pub(super) fn implication_has_self_presence_guard(
     implication: &helm_schema_core::ContractRequirementImplication,
     target_value_path: &str,
 ) -> bool {
@@ -600,7 +608,7 @@ fn implication_has_self_presence_guard(
     })
 }
 
-fn resolved_schema_admits_fail_requirement_domain(
+pub(super) fn resolved_schema_admits_fail_requirement_domain(
     resolved_schema: &Value,
     implication: &helm_schema_core::ContractRequirementImplication,
 ) -> bool {
@@ -640,9 +648,7 @@ fn fail_requirement_runtime_types(
     }
 }
 
-fn json_kind_runtime_type(
-    kind: crate::requirement_domain::JsonValueKind,
-) -> &'static str {
+fn json_kind_runtime_type(kind: crate::requirement_domain::JsonValueKind) -> &'static str {
     match kind {
         crate::requirement_domain::JsonValueKind::Null => "null",
         crate::requirement_domain::JsonValueKind::Boolean => "boolean",
@@ -727,7 +733,7 @@ fn runtime_types_for_declared_type(schema_type: &str) -> BTreeSet<&'static str> 
     }
 }
 
-fn relax_required_members_supplied_by_default(schema: &mut Value, default: &YamlValue) {
+pub(super) fn relax_required_members_supplied_by_default(schema: &mut Value, default: &YamlValue) {
     let (Some(schema), YamlValue::Mapping(defaults)) = (schema.as_object_mut(), default) else {
         return;
     };

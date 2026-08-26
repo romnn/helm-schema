@@ -66,7 +66,7 @@ impl MergeLayersUse {
 }
 
 /// A contract claim for one observed values path.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ContractUse {
     /// Canonical values path or expression that supplied the rendered value.
     pub source_expr: String,
@@ -128,61 +128,6 @@ pub struct ContractUse {
     /// rejects a Helm-falsy input at the base.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub merge_operand: bool,
-}
-
-impl<'de> Deserialize<'de> for ContractUse {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct WireContractUse {
-            source_expr: String,
-            path: YamlPath,
-            kind: ValueKind,
-            condition: GuardDnf,
-            resource: Option<ResourceRef>,
-            #[serde(default)]
-            provenance: Vec<ContractProvenance>,
-            #[serde(default)]
-            stringified: bool,
-            #[serde(default)]
-            template_supplied_member_keys: std::collections::BTreeSet<String>,
-            #[serde(default)]
-            split_segment: Option<SplitSegmentUse>,
-            #[serde(default)]
-            merge_layers: Option<MergeLayersUse>,
-            #[serde(default)]
-            range_key: bool,
-            #[serde(default)]
-            nil_omitting: bool,
-            #[serde(default)]
-            omitted_members: std::collections::BTreeMap<String, Vec<Guard>>,
-            #[serde(default)]
-            digest: bool,
-            #[serde(default)]
-            merge_operand: bool,
-        }
-
-        let wire = WireContractUse::deserialize(deserializer)?;
-        Ok(Self {
-            source_expr: wire.source_expr,
-            path: wire.path,
-            kind: wire.kind,
-            condition: wire.condition,
-            resource: wire.resource,
-            provenance: wire.provenance,
-            stringified: wire.stringified,
-            template_supplied_member_keys: wire.template_supplied_member_keys,
-            split_segment: wire.split_segment,
-            merge_layers: wire.merge_layers,
-            range_key: wire.range_key,
-            nil_omitting: wire.nil_omitting,
-            omitted_members: wire.omitted_members,
-            digest: wire.digest,
-            merge_operand: wire.merge_operand,
-        })
-    }
 }
 
 impl ContractUse {

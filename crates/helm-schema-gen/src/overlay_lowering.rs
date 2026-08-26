@@ -650,5 +650,22 @@ pub(crate) fn collect_conditional_schemas(
     (conditionals, insertion_abstentions)
 }
 
-include!("overlay_lowering/member_projection.rs");
-include!("overlay_lowering/conditional_constraints.rs");
+mod conditional_constraints;
+mod member_projection;
+
+pub(crate) use conditional_constraints::{
+    ConditionalHostPreparation, append_selected_constraints, append_terminal_clauses,
+    prepare_conditional_hosts,
+};
+use conditional_constraints::{
+    conditional_ancestor_segments, guards_supported_for_conditional_lowering,
+    implication_guards_supported, partition_guard_scopes, resolve_overlay_target_schema,
+};
+use member_projection::{
+    append_merge_shadow_arms, append_omitted_member_arms, implication_has_self_presence_guard,
+    implication_has_self_truthy_guard, is_bare_iterable_implication,
+    is_unconditional_self_presence_overlay, member_implication_covers_range_domain,
+    relax_required_members_supplied_by_default, resolved_schema_admits_fail_requirement_domain,
+    structural_collection_member_projection,
+};
+pub(crate) use member_projection::{member_descendant_projection, schema_runtime_types};

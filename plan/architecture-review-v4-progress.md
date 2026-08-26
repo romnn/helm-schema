@@ -2066,7 +2066,7 @@
 
 ## B1.2 — exhaustive semantic destructures
 
-- Status: complete; commit pending.
+- Status: landed in `0e042d29`.
 - Contract: representation-only compiler-enforcement sweep across both `ContractValuePathFacts`
   merges, all struct-level values-path mappers, `BoundHelperCallCacheKey::from_resolution`, the
   predicate contract-guard twins, and both identity predicates. Universally quantified render-use
@@ -2194,3 +2194,121 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +200 (63,217 to 63,417).
+
+## B1.3 — derived serde and real generator modules
+
+- Status: complete; commit pending.
+- Contract: representation-only deletion of the `WireContractUse` mirror in favor of direct
+  `Deserialize`, plus conversion of five generator `include!` fragments into real Rust modules
+  whose explicit visibility lists are compiler-checked.
+- Acceptance baseline: `0e042d29` (B1.2).
+- Baseline production LOC: 63,417 Rust lines from `task tokei:core` on `0e042d29`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, JSON wire, diagnostic, or acceptance changes. `ContractUse` must
+    deserialize every existing field/default exactly as before; `GuardDnf` remains deliberately
+    lossy across its public guard projection and is not represented as round-trip serialization.
+  - The five module moves preserve every function body and call edge. Interface visibility may
+    narrow to the actual parent/crate consumers but no production caller may disappear.
+  - Any fixture, wire, or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance remains zero; mandatory base and third-level categories permit zero
+    drops.
+
+- Measured results:
+  - `ContractUse` now derives `Deserialize` directly. The private `WireContractUse` field mirror
+    and conversion are deleted, while serde field defaults and the flattened `GuardDnf` projection
+    remain byte-compatible.
+  - The five textual `include!` fragments are ordinary child modules with explicit imports and
+    compiler-checked `pub(super)`/`pub(crate)` interfaces. Function bodies and call edges are
+    unchanged.
+  - Schema and symbolic-IR dumps are byte-for-byte identical to B1.2. The full-depth battery
+    covers 60 charts and 121,055 probes with zero acceptance flips, zero mandatory base or
+    third-level drops, and zero candidate-accepts/Helm-aborts cells.
+- Deviations:
+  - Protocol deviation: the ledger section was appended after the initial compiler preflight
+    rather than before the first edit. The zero-change acceptance contract was stated in the active
+    handoff and reiterated in commentary before implementation, and no immutable archive, dump, or
+    fixture adoption occurred before this entry. This timing error is recorded rather than hidden.
+  - The first compiler preflight rejected the mechanically moved fragments because their former
+    textual parent scope had hidden the child interfaces. The functions used by parents were made
+    `pub(super)` and the sibling-facing APIs remained `pub(crate)`; no artifact from the rejected
+    state was adopted.
+  - The first lint preflight rejected the fragments' temporary `use super::*` imports. Each module
+    now names only the types and functions it consumes. No artifact from the wildcard-import state
+    was adopted.
+- Adjudication evidence: zero acceptance flips require no Helm cell adjudication. The prober ran
+  with Helm adjudication enabled and reports zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| `ContractUse` current wire | Exact field/default decode | Round-trip and legacy-default tests. |
+| `GuardDnf` wire projection | Same deliberate lossy guard form | Existing serde fixtures. |
+| Overlay member/conditional modules | Same lowerings | Full gen unit and corpus suites. |
+| Path fail-requirement module | Same requirement schemas | Requirement-domain suite. |
+| Resolve-policy scalar/default modules | Same schema decisions | Resolve-policy and shape suites. |
+
+### Review dossier
+
+- Focused proof: all five core public-surface tests pass, including a new legacy-default decode
+  test, and all 616 generator unit tests pass after the module moves.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b13-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b13-final1.tar.zst`; exit 0, 86
+  binaries and 124 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b13-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b13-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the B1.2 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b13-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b13-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written. A
+  recursive byte comparison against the B1.2 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b13-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=0e042d29
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b13-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b13-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b13-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells. Mandatory base and third-level categories have zero drops; 28,868 disclosed bounded
+  reductions remain unchanged.
+- Public/wire decision: the public `ContractUse` JSON wire is deliberately unchanged. Replacing its
+  private deserialization mirror with a derive changes no public Rust signature. Generator module
+  boundaries are crate-internal visibility narrowing only. `GuardDnf` documentation now states
+  that its deserializer reconstructs the public guard projection rather than opaque predicates.
+
+### Self-adversarial pass
+
+- The legacy-default test omits every optional `ContractUse` wire field, proving the derive retains
+  the former mirror's defaults rather than merely round-tripping current full documents.
+- Explicit child imports expose the five real module dependencies in source. Parent-only entry
+  points are `pub(super)`; APIs used by other generator modules retain only crate visibility.
+- `GuardDnf` is intentionally not advertised as round-trip serde: serialization has always emitted
+  the public guard projection and cannot recreate opaque internal predicates. The new comment
+  prevents the direct `ContractUse` derive from implying a stronger invariant.
+- Recursive schema and IR comparisons exclude only nextest's extracted archive directories; all
+  authored dump artifacts participate in the byte comparison.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the two rejected preflights above.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings; 1,648.33 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,305 tests pass.
+- `task test:integration`; exit 0, 554 tests pass and 24 are skipped; 924.023 seconds.
+- `task test:all`; exit 0, 1,863 tests pass and 24 are skipped, including all live-network tests;
+  978.196 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,428 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +11 (63,417 to 63,428).

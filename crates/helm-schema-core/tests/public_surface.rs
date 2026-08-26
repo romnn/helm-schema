@@ -1,7 +1,8 @@
 //! Public semantic-contract parsing and path utility regressions.
 
 use helm_schema_core::{
-    ApiPresenceQuery, ContractValuePathFacts, join_value_path, split_value_path,
+    ApiPresenceQuery, ContractUse, ContractValuePathFacts, Guard, ValueKind, YamlPath,
+    join_value_path, split_value_path,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -63,4 +64,27 @@ fn render_use_merges_preserve_universal_quantification() {
         ),
         want: (true, false, false)
     );
+}
+
+#[test]
+fn contract_use_derived_deserialize_preserves_legacy_defaults() {
+    let have = serde_json::from_value::<ContractUse>(serde_json::json!({
+        "condition": [[{ "path": "enabled", "type": "truthy" }]],
+        "kind": "Scalar",
+        "path": [],
+        "resource": null,
+        "source_expr": "name",
+    }))
+    .ok();
+    let want = ContractUse::new(
+        "name".to_string(),
+        YamlPath::default(),
+        ValueKind::Scalar,
+        vec![Guard::Truthy {
+            path: "enabled".to_string(),
+        }],
+        None,
+    );
+
+    sim_assert_eq!(have: have, want: Some(want));
 }

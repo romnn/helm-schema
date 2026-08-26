@@ -1,4 +1,12 @@
-pub(crate) fn resolve_overlay_target_schema(
+use super::{
+    BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, EmissionClass, EmissionReport,
+    GuardValue, LoweredConjunct, NestedGuardScope, PathSchemaResolver, ResolvedPathSchema,
+    ResourceSchemaOracle, SchemaDocument, SchemaNode, Value, YamlValue, build_condition_clauses,
+    common_prefix_len, evaluate_guard_set_on_values, guard_encodes_fully, split_value_path,
+    yaml_value_at_path,
+};
+
+pub(super) fn resolve_overlay_target_schema(
     target_value_path: &str,
     overlay: &ConditionalPathOverlay,
     provider: &dyn ResourceSchemaOracle,
@@ -7,7 +15,7 @@ pub(crate) fn resolve_overlay_target_schema(
     PathSchemaResolver::resolve_single_path_evidence(&evidence, provider)
 }
 
-fn partition_guard_scopes(
+pub(super) fn partition_guard_scopes(
     target_segments: &[String],
     guards: &[ConditionalGuard],
 ) -> Option<(Vec<ConditionalGuard>, Vec<NestedGuardScope>)> {
@@ -76,7 +84,7 @@ fn partition_guard_scopes(
     Some((outer_guards, nested_guard_scopes))
 }
 
-fn conditional_ancestor_segments(
+pub(super) fn conditional_ancestor_segments(
     target_segments: &[String],
     guards: &[ConditionalGuard],
 ) -> Vec<String> {
@@ -90,7 +98,7 @@ fn conditional_ancestor_segments(
     shared_prefix
 }
 
-fn guards_supported_for_conditional_lowering(
+pub(super) fn guards_supported_for_conditional_lowering(
     guards: &[ConditionalGuard],
     resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
     values_yaml_doc: &YamlValue,
@@ -109,7 +117,7 @@ fn guards_supported_for_conditional_lowering(
 /// - truthy guards over other undeclared-but-resolved paths lower
 ///   type-generically: the requirement is a hard render failure, and a
 ///   fabricated guard path merely leaves the arm inactive.
-fn implication_guards_supported(
+pub(super) fn implication_guards_supported(
     guards: &[ConditionalGuard],
     target_value_path: &str,
     resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
@@ -377,8 +385,7 @@ fn append_values_default_source_absence_clauses(
                 .filter(|guard| *guard != &ConditionalGuard::Absent { path: path.clone() })
                 .cloned()
                 .collect::<Vec<_>>();
-            let (values_yaml_doc, absence) =
-                documents.condition_context(guards, dependency_roots);
+            let (values_yaml_doc, absence) = documents.condition_context(guards, dependency_roots);
             let mut conditions = build_condition_clauses(
                 &remaining_guards,
                 &[],

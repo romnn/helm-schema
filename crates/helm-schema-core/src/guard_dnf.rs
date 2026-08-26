@@ -184,6 +184,8 @@ impl Serialize for GuardDnf {
 }
 
 impl<'de> Deserialize<'de> for GuardDnf {
+    /// Reconstructs only the public guard projection written by `Serialize`.
+    /// Opaque predicate details are deliberately not a round-trip wire format.
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,

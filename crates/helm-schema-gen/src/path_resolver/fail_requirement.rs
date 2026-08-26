@@ -1,3 +1,9 @@
+use super::{
+    SchemaNode, Value, ecma_compatible_pattern, empty_schema, guard_value_to_json, is_empty_schema,
+    merge_schema_list, optional_leaf_object_path_schema, plain_scalar_safe_schema,
+    required_object_path_schema, type_schema,
+};
+
 /// Schema for `fail`-branch requirements. Non-member requirements accept
 /// null alongside the demanded type: fail tests routinely sit behind
 /// `default`-chained locals, where a null input takes the fallback and
@@ -179,13 +185,12 @@ pub(crate) fn fail_requirement_schema<'a>(
                     &implication.requirements,
                     crate::requirement_domain::RequirementPosition::Member,
                 );
-                let mut object = if member_kinds
-                    .contains(&crate::requirement_domain::JsonValueKind::String)
-                {
-                    serde_json::json!({ "type": "object" })
-                } else {
-                    serde_json::json!({ "type": "object", "maxProperties": 0 })
-                };
+                let mut object =
+                    if member_kinds.contains(&crate::requirement_domain::JsonValueKind::String) {
+                        serde_json::json!({ "type": "object" })
+                    } else {
+                        serde_json::json!({ "type": "object", "maxProperties": 0 })
+                    };
                 // Pattern requirements constrain each KEY's spelling
                 // (traefik's uppercase gate); string keys are structural in
                 // YAML maps, so only the pattern itself needs encoding.
@@ -248,11 +253,8 @@ pub(crate) fn fail_requirement_schema<'a>(
                         }
                     }
                 }
-                let array = integer_range_constraint_schema(
-                    &implication.requirements,
-                    "array",
-                    "maxItems",
-                );
+                let array =
+                    integer_range_constraint_schema(&implication.requirements, "array", "maxItems");
                 let mut arms = vec![object];
                 arms.extend(array);
                 arms.push(serde_json::json!({ "type": "null" }));
@@ -265,9 +267,7 @@ pub(crate) fn fail_requirement_schema<'a>(
     (merge_schema_list(parts), insertion_abstentions)
 }
 
-fn integer_range_schema(
-    requirements: &[helm_schema_core::FailValueRequirement],
-) -> Option<Value> {
+fn integer_range_schema(requirements: &[helm_schema_core::FailValueRequirement]) -> Option<Value> {
     integer_range_constraint_schema(requirements, "integer", "maximum")
 }
 
@@ -281,10 +281,8 @@ fn integer_range_constraint_schema(
     match crate::requirement_domain::integer_range_constraint(requirements)? {
         IntegerRangeConstraint::Any => Some(serde_json::json!({ "type": schema_type })),
         IntegerRangeConstraint::Maximum(maximum) => {
-            let mut schema = serde_json::Map::from_iter([(
-                "type".to_string(),
-                serde_json::json!(schema_type),
-            )]);
+            let mut schema =
+                serde_json::Map::from_iter([("type".to_string(), serde_json::json!(schema_type))]);
             schema.insert(maximum_keyword.to_string(), serde_json::json!(maximum));
             Some(Value::Object(schema))
         }
@@ -326,17 +324,13 @@ fn fail_value_requirement_schema(
                 parts.push(
                     SchemaNode::any_of(vec![
                         SchemaNode::from_value(type_schema(schema_type)),
-                        SchemaNode::not(
-                            crate::condition_encoding::helm_truthy_condition_schema(),
-                        ),
+                        SchemaNode::not(crate::condition_encoding::helm_truthy_condition_schema()),
                     ])
                     .into_value(),
                 );
             }
             FailValueRequirement::HelmTruthy => {
-                parts.push(
-                    crate::condition_encoding::helm_truthy_condition_schema().into_value(),
-                );
+                parts.push(crate::condition_encoding::helm_truthy_condition_schema().into_value());
             }
             FailValueRequirement::HelmFalsy => {
                 parts.push(
@@ -361,10 +355,9 @@ fn fail_value_requirement_schema(
             // is exactly the tolerance the negated truthiness test needs:
             // an absent or falsy field renders, a truthy one aborts.
             FailValueRequirement::FieldHelmFalsy { path } => {
-                let mut node = SchemaNode::not(
-                    crate::condition_encoding::helm_truthy_condition_schema(),
-                )
-                .into_value();
+                let mut node =
+                    SchemaNode::not(crate::condition_encoding::helm_truthy_condition_schema())
+                        .into_value();
                 for segment in path.iter().rev() {
                     node = serde_json::json!({ "properties": { segment: node } });
                 }

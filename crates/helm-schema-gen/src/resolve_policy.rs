@@ -807,7 +807,19 @@ fn subtract_omitted_members(
     schema
 }
 
-include!("resolve_policy/scalar_preimage.rs");
+mod scalar_preimage;
+
+#[cfg(test)]
+pub(crate) use scalar_preimage::plain_scalar_safe_comment_string_schema;
+use scalar_preimage::{
+    helm_falsy_schema, plain_scalar_provider_preimage, split_segment_provider_preimage,
+    stringified_plain_scalar_provider_preimage, templated_yaml_provider_preimage,
+};
+pub(crate) use scalar_preimage::{
+    plain_scalar_structural_exclusions, printf_string_formattable_mapping_schema,
+    printf_string_formattable_string_schema, schema_covers_strict_plain_scalar_string,
+    split_segment_pattern, strict_plain_scalar_string_schema,
+};
 
 pub(crate) fn conditional_target_schema(
     target_value_path: &str,
@@ -1083,4 +1095,12 @@ fn schema_allows_non_falsy_type(schema: &Value, schema_type: &str) -> bool {
     schema_allows_type(schema, schema_type)
 }
 
-include!("resolve_policy/declared_default.rs");
+mod declared_default;
+
+pub(crate) use declared_default::{
+    open_objects_rejecting_declared_members, preserve_declared_default_in_schema,
+};
+use declared_default::{
+    schema_accepts_json_value, schema_type_for_guard_value,
+    should_merge_values_yaml_into_conditional_branch, should_open_fragment_values_schema,
+};

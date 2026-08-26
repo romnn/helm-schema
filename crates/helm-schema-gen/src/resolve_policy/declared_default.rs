@@ -1,3 +1,9 @@
+use super::{
+    HELM_TRUTHY_DEFINITION_NAME, PLAIN_SCALAR_NULL_TOKEN_PATTERN, SchemaNode, Value,
+    ValuePathSchemaFacts, empty_schema, helm_truthy_definition_schema, is_object_or_array_schema,
+    is_scalar_like_schema, union_schema_list, value_references_helm_truthy,
+};
+
 pub(crate) fn open_objects_rejecting_declared_members(schema: Value, declared: &Value) -> Value {
     preserve_declared_default(schema, declared, false)
 }
@@ -7,7 +13,11 @@ pub(crate) fn preserve_declared_default_in_schema(schema: Value, declared: &Valu
     preserve_declared_plain_scalar_empty_defaults(schema, declared)
 }
 
-fn preserve_declared_default(mut schema: Value, declared: &Value, preserve_scalar: bool) -> Value {
+pub(super) fn preserve_declared_default(
+    mut schema: Value,
+    declared: &Value,
+    preserve_scalar: bool,
+) -> Value {
     let (Some(schema_object), Some(declared_object)) =
         (schema.as_object_mut(), declared.as_object())
     else {
@@ -98,7 +108,10 @@ fn preserve_declared_default(mut schema: Value, declared: &Value, preserve_scala
     schema
 }
 
-fn preserve_declared_plain_scalar_empty_defaults(mut schema: Value, declared: &Value) -> Value {
+pub(super) fn preserve_declared_plain_scalar_empty_defaults(
+    mut schema: Value,
+    declared: &Value,
+) -> Value {
     if declared.as_str() == Some("") {
         return if has_plain_scalar_implicit_token_exclusion(&schema)
             && !schema_accepts_json_value(&schema, declared)
@@ -180,11 +193,11 @@ fn preserve_declared_plain_scalar_empty_defaults(mut schema: Value, declared: &V
     schema
 }
 
-fn has_plain_scalar_implicit_token_exclusion(schema: &Value) -> bool {
+pub(super) fn has_plain_scalar_implicit_token_exclusion(schema: &Value) -> bool {
     SchemaNode::from_value(schema.clone()).has_negated_pattern(PLAIN_SCALAR_NULL_TOKEN_PATTERN)
 }
 
-fn should_merge_values_yaml_into_conditional_branch(
+pub(super) fn should_merge_values_yaml_into_conditional_branch(
     branch_schema: &Value,
     values_yaml_schema: &Value,
 ) -> bool {
@@ -192,7 +205,7 @@ fn should_merge_values_yaml_into_conditional_branch(
         || (is_scalar_like_schema(branch_schema) && is_scalar_like_schema(values_yaml_schema))
 }
 
-fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
+pub(super) fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
     let document = value_references_helm_truthy(schema).then(|| {
         serde_json::json!({
             "$defs": {
@@ -206,13 +219,16 @@ fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
         .unwrap_or(false)
 }
 
-fn should_open_fragment_values_schema(schema: &Value, facts: ValuePathSchemaFacts) -> bool {
+pub(super) fn should_open_fragment_values_schema(
+    schema: &Value,
+    facts: ValuePathSchemaFacts,
+) -> bool {
     !facts.values_yaml.is_mapping
         || facts.values_yaml.is_empty_map
         || fixed_object_schema_has_object_or_array_child(schema)
 }
 
-fn fixed_object_schema_has_object_or_array_child(schema: &Value) -> bool {
+pub(super) fn fixed_object_schema_has_object_or_array_child(schema: &Value) -> bool {
     schema
         .as_object()
         .and_then(|object| object.get("properties"))
@@ -220,7 +236,7 @@ fn fixed_object_schema_has_object_or_array_child(schema: &Value) -> bool {
         .is_some_and(|properties| properties.values().any(is_object_or_array_schema))
 }
 
-fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {
+pub(super) fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {
     match value {
         Value::String(_) => Some("string"),
         Value::Bool(_) => Some("boolean"),

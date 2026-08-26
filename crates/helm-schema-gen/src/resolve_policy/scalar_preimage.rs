@@ -1,9 +1,17 @@
+use super::{
+    HELM_TRUTHY_DEFINITION_NAME, PLAIN_SCALAR_BOOL_TOKEN_PATTERN,
+    PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN, PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN,
+    PLAIN_SCALAR_NULL_TOKEN_PATTERN, PLAIN_SCALAR_NUMBER_TOKEN_PATTERN,
+    PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN, SchemaNode, Value, is_annotation_keyword,
+    merge_schema_list, schema_allows_type, schema_type, union_schema_list,
+};
+
 /// Preimage of a provider slot observed through ONE separator-delimited
 /// segment of the raw string (tempo's `regexSplit ":" . -1 | last` port
 /// suffix): an integer-typed slot admits exactly the strings whose named
 /// segment spells an integer. Any other slot type abstains — a string
 /// segment leaves the source effectively unconstrained.
-fn split_segment_provider_preimage(
+pub(super) fn split_segment_provider_preimage(
     schema: &Value,
     segment: &helm_schema_core::SplitSegmentUse,
 ) -> Option<Value> {
@@ -29,11 +37,11 @@ pub(crate) fn split_segment_pattern(
     })
 }
 
-fn plain_scalar_provider_preimage(schema: Value) -> Value {
+pub(super) fn plain_scalar_provider_preimage(schema: Value) -> Value {
     plain_scalar_provider_preimage_with(schema)
 }
 
-fn stringified_plain_scalar_provider_preimage(schema: Value) -> Value {
+pub(super) fn stringified_plain_scalar_provider_preimage(schema: Value) -> Value {
     let preserves_plain_string = schema_covers_strict_plain_scalar_string(&schema);
     let scalar_preimage = plain_scalar_provider_preimage(schema);
     if preserves_plain_string {
@@ -208,7 +216,7 @@ pub(crate) fn schema_covers_strict_plain_scalar_string(schema: &Value) -> bool {
         .all(|exclusion| strict_exclusions.contains(exclusion))
 }
 
-fn schema_rejects_strict_plain_scalar_string(schema: &Value) -> bool {
+pub(super) fn schema_rejects_strict_plain_scalar_string(schema: &Value) -> bool {
     let Some(object) = schema.as_object() else {
         return false;
     };
@@ -246,7 +254,7 @@ pub(crate) fn printf_string_formattable_mapping_schema() -> Value {
     })
 }
 
-fn scalar_plain_string_preimage(schema: Value) -> Value {
+pub(super) fn scalar_plain_string_preimage(schema: Value) -> Value {
     let mut exclusions = plain_scalar_structural_exclusions(true);
     let unconstrained_string = schema.as_object().is_some_and(|object| {
         [
@@ -296,7 +304,7 @@ fn scalar_plain_string_preimage(schema: Value) -> Value {
     ])
 }
 
-fn scalar_null_preimage(schema: Value) -> Value {
+pub(super) fn scalar_null_preimage(schema: Value) -> Value {
     let rendered_null_string = serde_json::json!({
         "anyOf": [
             {
@@ -316,7 +324,7 @@ fn scalar_null_preimage(schema: Value) -> Value {
     union_schema_list(vec![schema, rendered_null_string])
 }
 
-fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
+pub(super) fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
     let Some(object) = schema.as_object() else {
         return schema;
     };
@@ -343,7 +351,7 @@ fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
     union_schema_list(vec![schema, string_schema])
 }
 
-fn scalar_boolean_preimage(schema: Value) -> Value {
+pub(super) fn scalar_boolean_preimage(schema: Value) -> Value {
     let Some(object) = schema.as_object() else {
         return schema;
     };
@@ -351,7 +359,10 @@ fn scalar_boolean_preimage(schema: Value) -> Value {
     union_schema_list(vec![schema, string_schema])
 }
 
-fn scalar_string_preimage(object: &serde_json::Map<String, Value>, pattern: &str) -> Value {
+pub(super) fn scalar_string_preimage(
+    object: &serde_json::Map<String, Value>,
+    pattern: &str,
+) -> Value {
     let mut schema = serde_json::Map::new();
     schema.insert("type".to_string(), Value::String("string".to_string()));
     if let Some(values) = object.get("enum").and_then(Value::as_array) {
@@ -373,7 +384,7 @@ fn scalar_string_preimage(object: &serde_json::Map<String, Value>, pattern: &str
     Value::Object(schema)
 }
 
-fn helm_falsy_schema() -> Value {
+pub(super) fn helm_falsy_schema() -> Value {
     SchemaNode::not(SchemaNode::reference(format!(
         "#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"
     )))
@@ -389,7 +400,7 @@ fn helm_falsy_schema() -> Value {
 /// `tpl` then changes only strings containing template actions, so those
 /// program strings bypass constraints on the rendered string while every
 /// structural and action-free constraint remains intact.
-fn templated_yaml_provider_preimage(mut schema: Value) -> Value {
+pub(super) fn templated_yaml_provider_preimage(mut schema: Value) -> Value {
     fn admit_template_programs(schema: &mut Value) {
         helm_schema_json_schema_walk::visit_subschemas_mut(schema, &mut admit_template_programs);
         if schema_allows_type(schema, "string") {
