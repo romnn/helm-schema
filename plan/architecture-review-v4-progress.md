@@ -2315,7 +2315,7 @@
 
 ## G2 stage 1 — generated transform-by-position behavior suite
 
-- Status: complete; commit pending.
+- Status: landed in `07429db6`.
 - Contract: test-infrastructure-only addition of generated synthetic microcharts that pin current
   transform behavior at identity projection, member identity, range subject, `hasKey` decoding,
   and splice lowering positions. Each case must assert its produced semantic fact before asserting
@@ -2433,3 +2433,125 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: 0 (63,428 to 63,428); 260 test Rust lines added.
+
+## B4a.1 — introduce the segmented `ValuesPath` carrier
+
+- Status: complete; commit pending.
+- Contract: representation-only introduction of the core `ValuesPath` value object with a private
+  segmented representation, explicit `parse`/`from_segments`/`encode` boundaries, structural
+  navigation, custom string serde, and manual ordering identical to the legacy encoded-string
+  order. No semantic carrier migrates in this first crate-local round.
+- Acceptance baseline: `07429db6` (G2 stage 1).
+- Baseline production LOC: 63,428 Rust lines from `task tokei:core` on `07429db6`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, wire, ordering, or corpus acceptance changes. The new
+    type is additive until the following crate-by-crate carrier migrations.
+  - `parse(path).encode()` must preserve the legacy canonical spelling, including escaped dots and
+    backslashes; serde must use that same string wire. `Ord` must compare exactly as the legacy
+    encoded `String`, not by segment vectors.
+  - The carrier exposes no `Deref<Target = str>`, `AsRef<str>`, or `Display`. Callers must choose a
+    structural operation or an explicit encoded-string boundary.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - Added public `ValuesPath` with a private `Vec<String>` representation, explicit parsing and
+    encoding, structural navigation, custom string serde, and manual ordering over the legacy
+    encoded character stream. It implements no string-coercion traits.
+  - The existing `join_value_path`, `split_value_path`, and `append_value_path` APIs delegate to the
+    carrier without changing their signatures or canonical output. Four public integration tests
+    pin escaped-dot/backslash parsing, navigation, serde bytes, and B-tree order.
+  - Schema and symbolic-IR corpus dumps remain byte-for-byte identical to G2 stage 1. The
+    full-depth battery covers 60 charts and 121,055 probes with zero acceptance flips, zero
+    mandatory base or third-level drops, and zero candidate-accepts/Helm-aborts cells.
+- Deviations:
+  - The first workspace preflight ran the focused test and `cargo check` concurrently, so the two
+    Cargo processes serialized on build locks. Both completed successfully, but this saved no
+    latency and is not repeated for shared-target Cargo work.
+  - The first focused preflight reported a missing crate-level doc on the new integration test.
+    The test gained a factual module doc and the final lint is warning-free; no archive or dump was
+    produced from the warning-bearing state.
+  - Self-review caught that the first helper delegation changed `join_value_path`'s generic bound
+    from `AsRef<str>` to `Into<String>`. The original public signature was restored before the
+    authoritative matrix and archive; no artifact from the narrowed-API state was adopted.
+- Adjudication evidence: zero acceptance flips require no Helm cell adjudication. The prober ran
+  with Helm adjudication enabled and reports zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Legacy string parse/encode | Canonical bytes preserved | Escaped-segment and empty-segment matrix. |
+| Segment construction/navigation | Structural operations avoid string parsing | `segments`, `parent`, `push`, descendant, and item-parent tests. |
+| JSON wire | Same encoded JSON string | Custom serde full-value equality. |
+| B-tree order | Same as encoded `String` order | Adversarial sorted-set comparison. |
+| Existing callers | No behavior change | Immutable corpus and full-depth battery. |
+
+### Review dossier
+
+- Focused proof: four `helm-schema-core/tests/value_path.rs` tests pass. They cover canonicalization
+  of empty separators and non-special backslashes, literal dot/backslash segments, empty-segment
+  push compatibility, strict descendant semantics, trailing item parents, JSON wire equality, and
+  adversarial ordering against encoded `String` values.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a1-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a1-final1.tar.zst`; exit 0, 87
+  binaries and 125 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a1-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a1-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the G2 stage-1 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a1-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a1-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written. A
+  recursive byte comparison against the G2 stage-1 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a1-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=07429db6
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a1-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a1-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a1-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells. Mandatory base and third-level categories have zero drops; 28,868 disclosed bounded
+  reductions remain unchanged.
+- Public/wire decision: deliberate additive public API. `ValuesPath` is exported from core so the
+  following crate migrations share one semantic carrier. Its JSON wire is the existing encoded
+  string, and the pre-existing helper signatures remain unchanged. No existing public item narrows
+  or changes format in this round.
+
+### Self-adversarial pass
+
+- `Ord` compares an iterator of encoded Unicode scalar values rather than the segment vector. UTF-8
+  preserves scalar-value order, so this is exactly the legacy `String` byte order without allocating
+  a temporary encoding at every B-tree comparison.
+- Equality and hashing use canonical segments, matching ordering because parsing canonicalizes
+  redundant separators and escaping. The tests include spellings whose segment-vector order would
+  differ from encoded order.
+- `item_parent` recognizes the legacy trailing literal `*` because B4b owns the later
+  `EachMember`/literal-star distinction. B4a does not smuggle that behavior change into the carrier.
+- The compatibility free functions now have one parser/encoder implementation while retaining the
+  old argument and return types. No downstream carrier changes are hidden in this introductory
+  round.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings; 1,715.53 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,306 tests pass.
+- `task test:integration`; exit 0, 558 tests pass and 24 are skipped; 939.252 seconds.
+- `task test:all`; exit 0, 1,868 tests pass and 24 are skipped, including all live-network tests;
+  993.208 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,553 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +125 (63,428 to 63,553).
