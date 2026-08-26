@@ -16,8 +16,7 @@ use std::sync::Arc;
 use color_eyre::eyre;
 use helm_schema_core::ApiPresenceQuery;
 use helm_schema_k8s::{
-    K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry,
-    SourceProbeTraceOutcome, default_source_id,
+    K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, default_source_id,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -89,7 +88,7 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() -> e
 }
 
 #[test]
-fn traced_offline_partial_cache_records_uncertain_source_probe() -> eyre::Result<()> {
+fn offline_partial_cache_abstains_without_fetching() -> eyre::Result<()> {
     let cache_dir = tmp_dir("capability_oracle_trace_partial")?;
     let primary = "v1.35.0";
     let source_id = default_source_id();
@@ -101,35 +100,21 @@ fn traced_offline_partial_cache_records_uncertain_source_probe() -> eyre::Result
     )
     .expect("plant unrelated file");
 
+    let fetcher = Arc::new(MockFetcher::new());
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec![primary.to_string()],
         None,
     ))
     .with_cache_dir(cache_dir)
     .with_allow_download(false)
-    .with_fetcher(Arc::new(MockFetcher::new()));
+    .with_fetcher(fetcher.clone());
     let query =
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
 
-    let traced = provider.capability_has_query_at_primary_version_traced(&query);
+    let answer = provider.capability_has_query_at_primary_version(&query);
 
-    sim_assert_eq!(have: traced.answer, want: None);
-    assert!(
-        traced.trace.entries().iter().any(|entry| matches!(
-            entry,
-            LookupTraceEntry::ApiPresenceSourceProbe {
-                source_id,
-                k8s_version,
-                filename,
-                outcome: SourceProbeTraceOutcome::Uncertain,
-                ..
-            } if source_id == default_source_id()
-                && k8s_version == primary
-                && filename == "horizontalpodautoscaler-autoscaling-v2.json"
-        )),
-        "offline partial cache must expose the uncertain HPA source probe in the trace: {:?}",
-        traced.trace.entries()
-    );
+    sim_assert_eq!(have: answer, want: None);
+    sim_assert_eq!(have: fetcher.total_calls(), want: 0);
     Ok(())
 }
 
@@ -191,47 +176,37 @@ fn online_404_returns_authoritative_false_and_caches_negative() -> eyre::Result<
 
     // Second probe in the same process: negative cache should
     // short-circuit and still return Some(false) without re-fetching.
-    // The fetcher's call count would prove no second request was
-    // made, but the MockFetcher in this codebase doesn't expose that
-    // — the contract here is "returns the same authoritative answer".
+    let calls_after_first = mock.total_calls();
     let second = provider.capability_has_query_at_primary_version(&query);
     sim_assert_eq!(
         have: second,
         want: Some(false),
         "second probe in same process must still be authoritatively absent; got {second:?}"
     );
+    sim_assert_eq!(have: calls_after_first, want: 1);
+    sim_assert_eq!(have: mock.total_calls(), want: calls_after_first);
     Ok(())
 }
 
 #[test]
-fn traced_online_404_records_authoritative_absent_source_probe() -> eyre::Result<()> {
+fn online_404_returns_false_after_one_source_fetch() -> eyre::Result<()> {
     let cache_dir = tmp_dir("capability_oracle_trace_404")?;
     let primary = "v1.35.0";
+    let fetcher = Arc::new(MockFetcher::new());
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec![primary.to_string()],
         None,
     ))
     .with_cache_dir(cache_dir)
     .with_allow_download(true)
-    .with_fetcher(Arc::new(MockFetcher::new()));
+    .with_fetcher(fetcher.clone());
     let query =
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
 
-    let traced = provider.capability_has_query_at_primary_version_traced(&query);
+    let answer = provider.capability_has_query_at_primary_version(&query);
 
-    sim_assert_eq!(have: traced.answer, want: Some(false));
-    assert!(
-        traced.trace.entries().iter().any(|entry| matches!(
-            entry,
-            LookupTraceEntry::ApiPresenceSourceProbe {
-                filename,
-                outcome: SourceProbeTraceOutcome::AuthoritativelyAbsent,
-                ..
-            } if filename == "horizontalpodautoscaler-autoscaling-v2.json"
-        )),
-        "online 404 must expose the authoritative absent source probe in the trace: {:?}",
-        traced.trace.entries()
-    );
+    sim_assert_eq!(have: answer, want: Some(false));
+    sim_assert_eq!(have: fetcher.total_calls(), want: 1);
     Ok(())
 }
 

@@ -16,8 +16,8 @@ use crate::inference::shortlist::canonical_api_version_for_kind;
 use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::source_bundle::{SourceBundleNode, bundle_source_definition};
 use crate::lookup::{
-    K8sSchemaProvider, LookupTrace, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
-    ProviderSchemaSource, SourceProbeTraceOutcome, TracedApiPresenceOutcome,
+    K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+    ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
@@ -295,23 +295,12 @@ impl KubernetesJsonSchemaProvider {
     /// offline-safety contract — live on
     /// [`crate::source_cache::SourceDocOutcome`], which this probe
     /// shares with resource lookup.
-    fn probe_at(
-        &self,
-        source: &SchemaSource,
-        version: &str,
-        filename: &str,
-    ) -> SourceProbeTraceOutcome {
-        match probe_source_schema_doc(
+    fn probe_at(&self, source: &SchemaSource, version: &str, filename: &str) -> SourceDocOutcome {
+        probe_source_schema_doc(
             &self.doc_request(source, version, filename),
             &self.mem,
             mem_key(&source.source_id, version, filename),
-        ) {
-            SourceDocOutcome::Found(_) => SourceProbeTraceOutcome::Found,
-            SourceDocOutcome::AuthoritativelyAbsent => {
-                SourceProbeTraceOutcome::AuthoritativelyAbsent
-            }
-            SourceDocOutcome::Uncertain => SourceProbeTraceOutcome::Uncertain,
-        }
+        )
     }
 }
 
@@ -470,76 +459,25 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     /// completeness of a partial offline run doesn't get to vote on
     /// what the chart would emit.
     fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
-        self.capability_has_query_at_primary_version_traced(query)
-            .answer
-    }
-
-    /// Traced form of
-    /// [`K8sSchemaProvider::capability_has_query_at_primary_version`].
-    fn capability_has_query_at_primary_version_traced(
-        &self,
-        query: &ApiPresenceQuery,
-    ) -> TracedApiPresenceOutcome {
-        let mut trace = LookupTrace::default();
-        let Some(primary) = self.versions.primary() else {
-            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
-            return TracedApiPresenceOutcome {
-                answer: None,
-                trace,
-            };
-        };
-        let Some(probe) = build_capability_probe(query) else {
-            trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, None);
-            return TracedApiPresenceOutcome {
-                answer: None,
-                trace,
-            };
-        };
+        let primary = self.versions.primary()?;
+        let probe = build_capability_probe(query)?;
         let candidates = candidate_filenames_for_resource(&probe);
         // Aggregate the outcome across (source × filename) pairs.
         // Found-ness short-circuits to `Some(true)`. Without that, the
         // worst case across all probes decides — any uncertain probe
         // beats an authoritative absent, since one source might have
         // it even if the other authoritatively doesn't.
-        let mut worst = SourceProbeTraceOutcome::AuthoritativelyAbsent;
+        let mut uncertain = false;
         for filename in &candidates {
             for source in &self.mirrors.sources {
-                let outcome = self.probe_at(source, primary, filename);
-                trace.record_api_presence_source_probe(
-                    ProviderOrigin::KubernetesOpenApi,
-                    &source.source_id,
-                    primary,
-                    filename,
-                    outcome,
-                );
-                match outcome {
-                    SourceProbeTraceOutcome::Found => {
-                        trace.record_api_presence_provider(
-                            ProviderOrigin::KubernetesOpenApi,
-                            Some(true),
-                        );
-                        return TracedApiPresenceOutcome {
-                            answer: Some(true),
-                            trace,
-                        };
-                    }
-                    SourceProbeTraceOutcome::Uncertain => {
-                        worst = SourceProbeTraceOutcome::Uncertain;
-                    }
-                    SourceProbeTraceOutcome::AuthoritativelyAbsent => {
-                        // worst stays at AuthoritativelyAbsent unless
-                        // some other probe already set it to Uncertain.
-                    }
+                match self.probe_at(source, primary, filename) {
+                    SourceDocOutcome::Found(_) => return Some(true),
+                    SourceDocOutcome::Uncertain => uncertain = true,
+                    SourceDocOutcome::AuthoritativelyAbsent => {}
                 }
             }
         }
-        let answer = match worst {
-            SourceProbeTraceOutcome::Found => Some(true),
-            SourceProbeTraceOutcome::AuthoritativelyAbsent => Some(false),
-            SourceProbeTraceOutcome::Uncertain => None,
-        };
-        trace.record_api_presence_provider(ProviderOrigin::KubernetesOpenApi, answer);
-        TracedApiPresenceOutcome { answer, trace }
+        (!uncertain).then_some(false)
     }
 
     fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {

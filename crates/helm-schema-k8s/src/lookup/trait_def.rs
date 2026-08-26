@@ -4,7 +4,6 @@ use crate::diagnostic::Diagnostic;
 use crate::inference::candidate::ApiVersionCandidate;
 
 use super::provider_result::ProviderLookupResult;
-use super::trace::{LookupTrace, TracedApiPresenceOutcome};
 
 /// Provides JSON Schema fragments for Kubernetes resource fields.
 ///
@@ -94,17 +93,5 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     /// version concept — `LocalOverride`, `DefaultCatalog` — abstain).
     fn capability_has_query_at_primary_version(&self, _query: &ApiPresenceQuery) -> Option<bool> {
         None
-    }
-
-    /// Same answer as [`Self::capability_has_query_at_primary_version`], plus
-    /// the executed provider-side knowledge probes.
-    fn capability_has_query_at_primary_version_traced(
-        &self,
-        query: &ApiPresenceQuery,
-    ) -> TracedApiPresenceOutcome {
-        let answer = self.capability_has_query_at_primary_version(query);
-        let mut trace = LookupTrace::default();
-        trace.record_api_presence_provider(self.origin(), answer);
-        TracedApiPresenceOutcome { answer, trace }
     }
 }

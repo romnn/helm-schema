@@ -59,9 +59,8 @@ pub use local_schema_universe::{
     resource_schemas_from_crd_document_with_source,
 };
 pub use lookup::{
-    Chain, K8sSchemaProvider, LookupTrace, LookupTraceEntry, LookupTraceOutcome,
-    ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment, ProviderSchemaSource,
-    ProviderSourceFragment, SourceProbeTraceOutcome, TracedApiPresenceOutcome, TracedLookupOutcome,
+    Chain, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+    ProviderSchemaSource, ProviderSourceFragment,
 };
 
 #[cfg(test)]

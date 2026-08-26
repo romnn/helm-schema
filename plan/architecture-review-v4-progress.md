@@ -1404,7 +1404,7 @@
 
 ## S-A1 — total sibling-junctor expansion
 
-- Status: complete; commit pending.
+- Status: landed in `3bfc6942`.
 - Contract: behavior-bearing deletion of the first-junctor early return in provider-schema
   expansion. The existing generic keyword walk must expand every `allOf`, `anyOf`, and `oneOf`
   sibling instead of resolving only the first keyword present.
@@ -1501,3 +1501,118 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: -8 (63,457 to 63,449).
+
+## S-A2 — delete the fused lookup trace
+
+- Status: complete; commit pending.
+- Contract: behavior-bearing deletion of both production-dead `LookupTrace` halves, their duplicate
+  tri-state, and both recorders. Resource lookup must carry local-override-unreadable directly on
+  the chain outcome at the decision point; API-presence lookup keeps only its answer. Offline tests
+  are re-pinned to answers and recorded fetcher calls.
+- Acceptance baseline: `3bfc6942` (S-A1).
+- Baseline production LOC: 63,449 Rust lines from `task tokei:core` on `3bfc6942`.
+- Pre-registered acceptance expectations:
+  - Schema resolution, capability answers, provider ordering, and fetch/cache behavior remain
+    unchanged; zero schema fixture or acceptance flips are expected.
+  - The local-override-unreadable diagnostic begins firing when a local provider owns the resource
+    but cannot read its document and the chain cannot resolve elsewhere. This diagnostic-only
+    family is the sole expected behavioral delta.
+  - Any other diagnostic or acceptance delta stops the round before fixture adoption. The
+    candidate-accepts/Helm-aborts allowance remains zero; mandatory base and third-level probe
+    categories permit zero drops.
+
+- Measured results:
+  - Deleted `LookupTrace`, both traced result wrappers, the source-probe trace tri-state, and the
+    provider/chain recorders. Resource and capability lookup now return their existing semantic
+    outcomes directly.
+  - Added `ChainLookupOutcome::LocalOverrideUnreadable` at the provider decision point. Candidate
+    planning retains the first such diagnostic and publishes it only after every candidate misses;
+    an ordinary missing resource still follows the existing missing-schema route.
+  - Capability probes now use `SourceDocOutcome` directly. The offline matrix proves the same
+    positive, authoritative-negative, and uncertain answers together with the same fetcher-call
+    counts, so the cache-safety contract is preserved without a second tri-state.
+  - The authoritative schema and symbolic-IR corpora remain byte-exact. The full-depth battery
+    covers 60 charts and 121,055 probes with zero acceptance flips; mandatory base coverage is
+    112,260/112,260 and third-level coverage is 7,465/7,465, both with zero drops.
+- Deviations:
+  - The first lint preflight rejected two `let ... else` expressions in the simplified capability
+    path under `clippy::question_mark`. They were replaced with the direct `?` form before the
+    immutable archive was built; no rejected-state artifact was adopted.
+  - Removing the direct traced-chain test initially left the unreadable-override tooth below the
+    production diagnostic projection. The final test drives `schema_fragment_for_use` through the
+    real resource oracle and asserts the emitted diagnostic, so the pre-registered behavior is
+    pinned at its actual consumer boundary.
+- Adjudication evidence: Helm v4.2.3. The sole registered delta is diagnostic-only and is pinned by
+  the local-override regression; the schema battery reports zero changed cells and zero
+  candidate-accepts/Helm-aborts cells, so no fixture required adoption.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Resource found after earlier misses | Same fragment, no trace allocation | Chain provider-order test. |
+| Owned local override unreadable, terminal miss | Direct outcome diagnostic | Focused diagnostic regression. |
+| Ordinary terminal miss | Existing missing-schema diagnostic only | Focused negative control. |
+| API-presence positive/negative/uncertain | Same tri-state answer | Offline oracle matrix plus fetcher calls. |
+| Resource-qualified capability probe | Same direct provider sequence | Existing capability tests. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-k8s --profile integration -E
+  'binary(lookup_chain) | binary(capability_oracle_offline)'`; exit 0, 23 tests pass. The ordinary
+  crate suite also passes 70 tests.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa2-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-sa2-final2.tar.zst`; exit 0, 88
+  binaries and 126 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa2-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sa2-final2.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass and every fixture is byte-exact.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa2-final2-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sa2-final2.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes, 18 artifacts are
+  written, and every fixture is byte-exact.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa2-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=3bfc6942
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sa2-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sa2-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-sa2-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: this round deliberately narrows the public Rust API by deleting the dead
+  trace types and traced methods. `ChainLookupOutcome` gains the explicit unreadable-override
+  variant needed by the surviving semantic path. No serialized wire format changes.
+
+### Self-adversarial pass
+
+- An unreadable local document is not the same as an absent resource. Carrying it as a typed chain
+  outcome prevents the diagnostic from depending on a discarded execution log while still
+  allowing a later candidate to resolve successfully.
+- An uncertain capability probe remains potentially live. Folding the trace tri-state into
+  `SourceDocOutcome` preserves `None` whenever any source is uncertain and no source succeeds;
+  only an all-authoritative miss returns `Some(false)`.
+- Provider lookup caching remains keyed and ordered exactly as before. The deletion changes what
+  is retained after each lookup, not which provider is called or which semantic result wins.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected question-mark preflight.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,289 tests pass.
+- `task test:integration`; exit 0, 562 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,855 tests pass and 24 are skipped, including all live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,253 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: -196 (63,449 to 63,253).

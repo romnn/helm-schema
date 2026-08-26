@@ -12,7 +12,6 @@ use super::miss_diagnostics::MissingLookupDiagnostics;
 use super::provider_result::ProviderLookupResult;
 use super::provider_schema_fragment::ProviderSchemaFragment;
 use super::resource_lookup_plan::resource_lookup_candidates;
-use super::trace::{LookupTrace, TracedApiPresenceOutcome, TracedLookupOutcome};
 use super::trait_def::K8sSchemaProvider;
 
 /// Composed provider chain with precedence
@@ -72,7 +71,7 @@ impl Chain {
         resource: &ResourceRef,
         path: &YamlPath,
     ) -> ChainLookupOutcome {
-        self.resolve_against_chain_traced(resource, path).outcome
+        self.resolve_concrete_resource(resource, path, true)
     }
 
     /// Resolves and returns only the materialized schema fragment.
@@ -85,38 +84,16 @@ impl Chain {
             .into_schema_fragment()
     }
 
-    /// Resolve a single concrete `(apiVersion, kind)` and keep the executed
-    /// provider attempts. The current public schema APIs still consume only the
-    /// outcome; diagnostics can later be projected from this trace.
-    pub fn resolve_against_chain_traced(
-        &self,
-        resource: &ResourceRef,
-        path: &YamlPath,
-    ) -> TracedLookupOutcome {
-        self.resolve_concrete_resource(resource, path, true)
-    }
-
-    /// Answer a typed `.Capabilities.APIVersions.Has` query and retain the
-    /// executed provider/source probes. The first provider that can answer wins,
+    /// Answer a typed `.Capabilities.APIVersions.Has` query. The first provider that can answer wins,
     /// matching [`K8sSchemaProvider::capability_has_query_at_primary_version`].
-    pub fn capability_has_query_at_primary_version_traced(
-        &self,
-        query: &ApiPresenceQuery,
-    ) -> TracedApiPresenceOutcome {
-        let mut trace = LookupTrace::default();
+    fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
         for provider in &self.providers {
-            let provider_outcome = provider.capability_has_query_at_primary_version_traced(query);
-            let answer = provider_outcome.answer;
-            trace.extend_entries(provider_outcome.trace.into_entries());
+            let answer = provider.capability_has_query_at_primary_version(query);
             if answer.is_some() {
-                return TracedApiPresenceOutcome { answer, trace };
+                return answer;
             }
         }
-
-        TracedApiPresenceOutcome {
-            answer: None,
-            trace,
-        }
+        None
     }
 
     fn schema_fragment_for_resource_needing_inference(
@@ -163,14 +140,26 @@ impl Chain {
         path: &YamlPath,
     ) -> Option<ProviderSchemaFragment> {
         let mut any_resolved_owner = false;
+        let mut local_override_unreadable = None;
         for candidate in resource_lookup_candidates(resource, self) {
-            let outcome = self
-                .resolve_concrete_resource(&candidate, path, false)
-                .outcome;
+            let outcome = self.resolve_concrete_resource(&candidate, path, false);
             match outcome {
                 ChainLookupOutcome::Resolved(Some(schema)) => return Some(schema),
                 ChainLookupOutcome::Resolved(None) => any_resolved_owner = true,
                 ChainLookupOutcome::MissingSchema => {}
+                ChainLookupOutcome::LocalOverrideUnreadable {
+                    override_path,
+                    io_error,
+                } => {
+                    local_override_unreadable.get_or_insert_with(|| {
+                        Diagnostic::LocalOverrideUnreadable {
+                            kind: candidate.kind.clone(),
+                            api_version: candidate.api_version.clone(),
+                            override_path,
+                            io_error,
+                        }
+                    });
+                }
             }
         }
 
@@ -178,8 +167,7 @@ impl Chain {
             return None;
         }
 
-        let miss_trace = LookupTrace::default();
-        self.emit_missing_lookup_diagnostics(resource, &miss_trace);
+        self.emit_missing_lookup_diagnostics(resource, local_override_unreadable);
         None
     }
 
@@ -189,15 +177,12 @@ impl Chain {
         resource: &ResourceRef,
         path: &YamlPath,
         commit_miss_diagnostics: bool,
-    ) -> TracedLookupOutcome {
-        let mut trace = LookupTrace::default();
+    ) -> ChainLookupOutcome {
         for (provider_index, provider) in self.providers.iter().enumerate() {
             let result = self.provider_lookup_cache.get_or_compute(
                 ProviderLookupCacheKey::new(provider_index, resource, path),
                 || provider.lookup(resource, path),
             );
-            trace.record_provider(resource, provider.origin(), &result);
-
             let outcome = match result {
                 ProviderLookupResult::Found {
                     schema,
@@ -207,10 +192,14 @@ impl Chain {
                     Some(ChainLookupOutcome::Resolved(Some(schema)))
                 }
                 ProviderLookupResult::PathUnresolved => Some(ChainLookupOutcome::Resolved(None)),
-                ProviderLookupResult::ResourceDocMissing { .. }
-                    if provider.origin() == ProviderOrigin::LocalOverride =>
-                {
-                    Some(ChainLookupOutcome::MissingSchema)
+                ProviderLookupResult::ResourceDocMissing {
+                    source_path,
+                    io_error,
+                } if provider.origin() == ProviderOrigin::LocalOverride => {
+                    Some(ChainLookupOutcome::LocalOverrideUnreadable {
+                        override_path: source_path,
+                        io_error,
+                    })
                 }
                 ProviderLookupResult::ResourceDocMissing { .. }
                 | ProviderLookupResult::NotOwned => None,
@@ -219,37 +208,54 @@ impl Chain {
             if let Some(outcome) = outcome {
                 return self.finish_concrete_resource_lookup(
                     resource,
-                    TracedLookupOutcome { outcome, trace },
+                    outcome,
                     commit_miss_diagnostics,
                 );
             }
         }
 
-        let traced = TracedLookupOutcome {
-            outcome: ChainLookupOutcome::MissingSchema,
-            trace,
-        };
-        self.finish_concrete_resource_lookup(resource, traced, commit_miss_diagnostics)
+        self.finish_concrete_resource_lookup(
+            resource,
+            ChainLookupOutcome::MissingSchema,
+            commit_miss_diagnostics,
+        )
     }
 
     fn finish_concrete_resource_lookup(
         &self,
         resource: &ResourceRef,
-        traced: TracedLookupOutcome,
+        outcome: ChainLookupOutcome,
         commit_miss_diagnostics: bool,
-    ) -> TracedLookupOutcome {
-        if commit_miss_diagnostics && matches!(traced.outcome, ChainLookupOutcome::MissingSchema) {
-            self.emit_missing_lookup_diagnostics(resource, &traced.trace);
+    ) -> ChainLookupOutcome {
+        if commit_miss_diagnostics {
+            let local_override_unreadable = match &outcome {
+                ChainLookupOutcome::LocalOverrideUnreadable {
+                    override_path,
+                    io_error,
+                } => Some(Diagnostic::LocalOverrideUnreadable {
+                    kind: resource.kind.clone(),
+                    api_version: resource.api_version.clone(),
+                    override_path: override_path.clone(),
+                    io_error: io_error.clone(),
+                }),
+                ChainLookupOutcome::MissingSchema => None,
+                ChainLookupOutcome::Resolved(_) => return outcome,
+            };
+            self.emit_missing_lookup_diagnostics(resource, local_override_unreadable);
         }
-        traced
+        outcome
     }
 
-    fn emit_missing_lookup_diagnostics(&self, resource: &ResourceRef, trace: &LookupTrace) {
+    fn emit_missing_lookup_diagnostics(
+        &self,
+        resource: &ResourceRef,
+        local_override_unreadable: Option<Diagnostic>,
+    ) {
         let Some(sink) = self.sink.as_ref() else {
             return;
         };
         let diagnostics = MissingLookupDiagnostics::new(self.providers.as_slice(), self);
-        for diagnostic in diagnostics.project(resource, trace) {
+        for diagnostic in diagnostics.project(resource, local_override_unreadable) {
             sink.push(diagnostic);
         }
     }
@@ -334,8 +340,7 @@ impl ResourceSchemaOracle for Chain {
 
 impl CapabilityOracle for Chain {
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool> {
-        self.capability_has_query_at_primary_version_traced(query)
-            .answer
+        self.capability_has_query_at_primary_version(query)
     }
 }
 

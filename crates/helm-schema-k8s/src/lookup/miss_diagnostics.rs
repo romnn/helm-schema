@@ -1,10 +1,9 @@
-use helm_schema_core::{CapabilityOracle, ProviderOrigin, ResourceRef};
+use helm_schema_core::{CapabilityOracle, ResourceRef};
 
 use crate::diagnostic::Diagnostic;
 use crate::filename::candidate_filenames_for_resource;
 
 use super::resource_lookup_plan::missing_schema_attribution_candidates;
-use super::trace::{LookupTrace, LookupTraceEntry, LookupTraceOutcome};
 use super::trait_def::K8sSchemaProvider;
 
 /// Projects user-facing diagnostics from a failed knowledge lookup trace.
@@ -24,8 +23,12 @@ impl<'a> MissingLookupDiagnostics<'a> {
         }
     }
 
-    pub(crate) fn project(&self, resource: &ResourceRef, trace: &LookupTrace) -> Vec<Diagnostic> {
-        if let Some(diagnostic) = local_override_unreadable(trace) {
+    pub(crate) fn project(
+        &self,
+        resource: &ResourceRef,
+        local_override_unreadable: Option<Diagnostic>,
+    ) -> Vec<Diagnostic> {
+        if let Some(diagnostic) = local_override_unreadable {
             return vec![diagnostic];
         }
         let mut diagnostics = Vec::new();
@@ -82,26 +85,6 @@ fn missing_schema_hint(resource: &ResourceRef) -> Option<String> {
         );
     }
     None
-}
-
-fn local_override_unreadable(trace: &LookupTrace) -> Option<Diagnostic> {
-    trace.entries().iter().find_map(|entry| match entry {
-        LookupTraceEntry::ResourceProvider {
-            resource: attempted_resource,
-            provider: ProviderOrigin::LocalOverride,
-            outcome:
-                LookupTraceOutcome::ResourceDocMissing {
-                    source_path,
-                    io_error,
-                },
-        } => Some(Diagnostic::LocalOverrideUnreadable {
-            kind: attempted_resource.kind.clone(),
-            api_version: attempted_resource.api_version.clone(),
-            override_path: source_path.clone(),
-            io_error: io_error.clone(),
-        }),
-        _ => None,
-    })
 }
 
 #[cfg(test)]

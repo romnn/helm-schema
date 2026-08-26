@@ -6,8 +6,8 @@ use helm_schema_core::{
     ApiPresenceQuery, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath,
 };
 use helm_schema_k8s::{
-    Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, LookupTraceEntry, LookupTraceOutcome,
-    ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
+    Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, ProviderLookupResult, ProviderOrigin,
+    ProviderSchemaFragment,
 };
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
@@ -208,7 +208,7 @@ fn chain_emits_missing_schema_only_at_chain_layer() {
 fn chain_local_override_unreadable_does_not_fall_through() {
     // Local claims the resource (has_resource=true) but its file is
     // unreadable, so the chain emits LocalOverrideUnreadable and returns
-    // MissingSchema, never falling through to CRD or K8s.
+    // no schema, never falling through to CRD or K8s.
     let local = FakeProvider::new(
         ProviderOrigin::LocalOverride,
         true,
@@ -231,7 +231,7 @@ fn chain_local_override_unreadable_does_not_fall_through() {
     let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)])
         .with_diagnostic_sink(diagnostics.clone());
 
-    let schema = chain.schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()));
+    let schema = chain.schema_fragment_for_use(&provider_use(YamlPath(Vec::new()), resource()));
     assert!(
         schema.is_none(),
         "override-unreadable must NOT silently use CRD/K8s schema"
@@ -285,123 +285,6 @@ fn chain_non_override_resource_doc_missing_falls_through() {
         have: schema,
         want: Some(Value::String("k8s-wins".to_string())),
         "non-override ResourceDocMissing falls through to next provider"
-    );
-}
-
-#[test]
-fn traced_resolution_records_provider_attempts_until_resolution() {
-    let local = FakeProvider::new(
-        ProviderOrigin::LocalOverride,
-        false,
-        FakeBehaviour::NotOwned,
-    );
-    let crd = FakeProvider::new(
-        ProviderOrigin::DefaultCatalog,
-        true,
-        FakeBehaviour::ResourceDocMissing {
-            path: String::new(),
-            io: "transient".to_string(),
-        },
-    );
-    let k8s = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        true,
-        FakeBehaviour::Found(Value::String("k8s-wins".to_string())),
-    );
-    let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
-
-    let target = resource();
-    let traced = chain.resolve_against_chain_traced(&target, &YamlPath(Vec::new()));
-    let attempts: Vec<(String, String, ProviderOrigin, LookupTraceOutcome)> = traced
-        .trace
-        .entries()
-        .iter()
-        .map(|entry| match entry {
-            LookupTraceEntry::ResourceProvider {
-                resource,
-                provider,
-                outcome,
-            } => (
-                resource.api_version.clone(),
-                resource.kind.clone(),
-                *provider,
-                outcome.clone(),
-            ),
-            other => panic!("unexpected trace entry: {other:?}"),
-        })
-        .collect();
-
-    sim_assert_eq!(
-        have: attempts,
-        want: vec![
-            (
-                target.api_version.clone(),
-                target.kind.clone(),
-                ProviderOrigin::LocalOverride,
-                LookupTraceOutcome::NotOwned,
-            ),
-            (
-                target.api_version.clone(),
-                target.kind.clone(),
-                ProviderOrigin::DefaultCatalog,
-                LookupTraceOutcome::ResourceDocMissing {
-                    source_path: String::new(),
-                    io_error: "transient".to_string(),
-                },
-            ),
-            (
-                target.api_version.clone(),
-                target.kind.clone(),
-                ProviderOrigin::KubernetesOpenApi,
-                LookupTraceOutcome::Found {
-                    resolved_k8s_version: None,
-                },
-            ),
-        ]
-    );
-}
-
-#[test]
-fn traced_capability_query_records_provider_attempts_until_answer() {
-    let local = FakeProvider::new(
-        ProviderOrigin::LocalOverride,
-        false,
-        FakeBehaviour::NotOwned,
-    );
-    let crd = FakeProvider::new(
-        ProviderOrigin::DefaultCatalog,
-        false,
-        FakeBehaviour::NotOwned,
-    );
-    let k8s = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    )
-    .with_capability("autoscaling/v2", true);
-    let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
-    let query =
-        ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
-
-    let traced = chain.capability_has_query_at_primary_version_traced(&query);
-    let attempts: Vec<(ProviderOrigin, Option<bool>)> = traced
-        .trace
-        .entries()
-        .iter()
-        .map(|entry| match entry {
-            LookupTraceEntry::ApiPresenceProvider { provider, answer } => (*provider, *answer),
-            other => panic!("unexpected trace entry: {other:?}"),
-        })
-        .collect();
-
-    sim_assert_eq!(have: traced.answer, want: Some(true));
-    sim_assert_eq!(
-        have: attempts,
-        want: vec![
-            (ProviderOrigin::LocalOverride, None),
-            (ProviderOrigin::DefaultCatalog, None),
-            (ProviderOrigin::KubernetesOpenApi, Some(true)),
-        ]
     );
 }
 

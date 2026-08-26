@@ -3,8 +3,7 @@ use super::provider_schema_fragment::ProviderSchemaFragment;
 /// Result of a single provider answering "do you own this resource,
 /// and if so, can you resolve this path?". Provider-local: emits no
 /// diagnostics directly. The chain ([`crate::lookup::Chain`])
-/// records these outcomes in a lookup trace, projects diagnostics
-/// from final misses, and returns the public
+/// projects diagnostics from final misses and returns the public
 /// [`crate::lookup::ChainLookupOutcome`].
 // Transient by-value result; the `Found` variant's size does not justify
 // boxing the other (unit) variants.
