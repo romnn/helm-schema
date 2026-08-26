@@ -42,6 +42,86 @@ fn full_expansion_resolves_every_sibling_junctor() {
     );
 }
 
+#[test]
+fn path_descent_reads_required_from_the_selected_junctor_parent() {
+    let root = SchemaDoc::new(json!({
+        "type": "object",
+        "properties": {
+            "spec": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "required": ["selected"],
+                        "properties": {
+                            "selected": { "type": "string" }
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "fallback": { "type": "boolean" }
+                        }
+                    }
+                ]
+            }
+        }
+    }));
+    let mut ctx = ResolveCtx::new(|_| None, "root.json".to_string(), root.clone());
+    let path = ["spec".to_string(), "selected".to_string()];
+
+    let actual =
+        descend_schema_path_expanding_leaf_with_location(&mut ctx, "root.json", root.root(), &path)
+            .map(|leaf| (leaf.schema().clone(), leaf.required_in_parent()));
+
+    sim_assert_eq!(
+        have: actual,
+        want: Some((json!({ "type": "string" }), true))
+    );
+}
+
+#[test]
+fn terminal_collection_segments_are_not_required_leaves() {
+    let root = SchemaDoc::new(json!({
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+            "items": {
+                "type": "array",
+                "items": { "type": "string" }
+            },
+            "labels": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+            }
+        }
+    }));
+    let mut ctx = ResolveCtx::new(|_| None, "root.json".to_string(), root.clone());
+    let array_path = ["items[*]".to_string()];
+    let array_required = descend_schema_path_expanding_leaf_with_location(
+        &mut ctx,
+        "root.json",
+        root.root(),
+        &array_path,
+    )
+    .map(|leaf| leaf.required_in_parent());
+
+    let mut ctx = ResolveCtx::new(|_| None, "root.json".to_string(), root.clone());
+    let dynamic_path = [
+        "labels".to_string(),
+        helm_schema_core::DYNAMIC_MAPPING_VALUE_SEGMENT.to_string(),
+    ];
+    let dynamic_required = descend_schema_path_expanding_leaf_with_location(
+        &mut ctx,
+        "root.json",
+        root.root(),
+        &dynamic_path,
+    )
+    .map(|leaf| leaf.required_in_parent());
+
+    sim_assert_eq!(have: array_required, want: Some(false));
+    sim_assert_eq!(have: dynamic_required, want: Some(false));
+}
+
 fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
     let mut current = schema;
     for segment in path {

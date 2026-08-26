@@ -1504,7 +1504,7 @@
 
 ## S-A2 — delete the fused lookup trace
 
-- Status: complete; commit pending.
+- Status: landed in `390bd303`.
 - Contract: behavior-bearing deletion of both production-dead `LookupTrace` halves, their duplicate
   tri-state, and both recorders. Resource lookup must carry local-override-unreadable directly on
   the chain outcome at the decision point; API-presence lookup keeps only its answer. Offline tests
@@ -1616,3 +1616,114 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: -196 (63,449 to 63,253).
+
+## S-A3 — required-in-parent single descent
+
+- Status: complete; commit pending.
+- Contract: behavior-bearing replacement of the independent parent re-descent with one path descent
+  that returns the actual parent selected alongside the leaf. Requiredness must be read from that
+  parent, eliminating the repeated provider walk and the must-agree junctor invariant.
+- Acceptance baseline: `390bd303` (S-A2).
+- Baseline production LOC: 63,253 Rust lines from `task tokei:core` on `390bd303`.
+- Pre-registered acceptance expectations:
+  - A leaf reached through a junctor reads `required` from the exact branch that supplied that leaf,
+    including when the containing node has no top-level `required` list. This is the sole expected
+    behavior family.
+  - Ordinary property paths, array-item paths, dynamic mapping values, cross-file references, and
+    unresolved paths retain their current schema and requiredness outcomes.
+  - The authoritative corpus is expected to remain byte-exact with zero acceptance flips. Any
+    changed fixture or acceptance cell stops the round for individual Helm v4.2.3 adjudication
+    before adoption. Candidate-accepts/Helm-aborts allowance remains zero; mandatory base and
+    third-level categories permit zero drops.
+
+- Measured results:
+  - `descend_schema_path_node` now returns the parent selected for the final segment together with
+    the leaf. `required_in_parent` reads that exact node instead of rebuilding a root and walking
+    the prefix a second time.
+  - The direct `anyOf` regression proves a leaf whose `required` membership exists only inside the
+    selected branch is marked provider-required. Terminal array-item and dynamic-mapping segments
+    remain non-required; both cross-file location/expansion controls remain exact.
+  - Schema and symbolic-IR dumps are byte-for-byte identical to S-A2. The full-depth battery covers
+    60 charts and 121,055 probes with zero acceptance flips; mandatory base coverage is
+    112,260/112,260 and third-level coverage is 7,465/7,465, both with zero drops.
+- Deviations:
+  - The first immutable-archive preflight named a step-local `TMPDIR` before creating the directory;
+    clang failed immediately with `unable to make temporary file`. No archive or dump was produced.
+    A distinct pre-created final2 directory was used for the sole authoritative archive and every
+    downstream artifact.
+- Adjudication evidence: Helm v4.2.3. The selected-junctor-parent correction is pinned directly,
+  while the authoritative corpus has zero changed fixture bytes, zero acceptance flips, and zero
+  candidate-accepts/Helm-aborts cells; no fixture required adoption.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Plain property leaf | Same parent `required` membership | Existing provider-required tests. |
+| Leaf selected inside a junctor | Requiredness from selected branch | New direct branch regression. |
+| Cross-file parent or leaf `$ref` | Same location and expanded schema | Existing cross-file descent matrix. |
+| Array item or dynamic mapping | Never provider-required | Focused negative controls. |
+| Missing path | Same abstention | Existing lookup tests and corpus. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-k8s -E
+  'test(path_descent_reads_required_from_the_selected_junctor_parent) |
+  test(terminal_collection_segments_are_not_required_leaves) |
+  test(lazy_path_descent_matches_full_expansion_for_cross_file_array_ref) |
+  test(lazy_path_descent_reports_leaf_source_location_after_cross_file_refs)'`; exit 0, four tests
+  pass.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa3-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-sa3-final2.tar.zst`; exit 0, 88
+  binaries and 126 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa3-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sa3-final2.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the S-A2 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa3-final2-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sa3-final2.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written. A recursive byte comparison against the S-A2 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa3-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=390bd303
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sa3-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sa3-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-sa3-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: none. The changed descent functions and parent carrier are crate-private;
+  public schema fragments and serialized formats are unchanged.
+
+### Self-adversarial pass
+
+- Capturing the node before the final descent would still be wrong when the final segment is found
+  inside a junctor. The segment function therefore returns the resolved branch node that actually
+  supplied the child, not merely the caller's containing node.
+- Cross-file `$ref` resolution still happens at the same per-segment boundary. The returned parent
+  is post-reference and post-junctor selection, while the leaf retains its source location before
+  expansion.
+- Empty paths have no parent and remain non-required. Terminal `[*]` and dynamic-map markers are
+  rejected before consulting the selected parent's `required` array.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,291 tests pass.
+- `task test:integration`; exit 0, 562 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,857 tests pass and 24 are skipped, including all live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,245 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: -8 (63,253 to 63,245).

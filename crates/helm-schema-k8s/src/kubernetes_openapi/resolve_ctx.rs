@@ -329,11 +329,11 @@ pub(crate) fn descend_schema_path_expanding_leaf_with_location<
     path: &[String],
 ) -> Option<ResolvedSchemaLeaf> {
     let root = ResolvedSchemaNode::root(current_filename.to_string(), schema.clone());
-    let leaf = descend_schema_path_node(ctx, root, path)?;
+    let (parent, leaf) = descend_schema_path_node(ctx, root, path)?;
     let location = leaf.location.clone();
     let source_schema = leaf.schema.clone();
     let expanded = expand_schema_node_at(ctx, leaf, 0).into_schema();
-    let required_in_parent = final_segment_required_in_parent(ctx, current_filename, schema, path);
+    let required_in_parent = final_segment_required_in_parent(parent.as_ref(), path);
     Some(ResolvedSchemaLeaf::new(
         location,
         source_schema,
@@ -344,16 +344,9 @@ pub(crate) fn descend_schema_path_expanding_leaf_with_location<
 
 /// Whether the path's final segment is a plain property the parent object
 /// schema lists in `required`. Item segments (`x[*]`), dynamic mapping
-/// values, and paths the parent resolves through `additionalProperties`
-/// are never provider-required, and a parent that cannot be re-descended
-/// abstains to `false`.
-fn final_segment_required_in_parent<F: FnMut(&str) -> Option<SchemaDoc>>(
-    ctx: &mut ResolveCtx<F>,
-    current_filename: &str,
-    schema: &Value,
-    path: &[String],
-) -> bool {
-    let Some((leaf_segment, parents)) = path.split_last() else {
+/// values, and a missing parent are never provider-required.
+fn final_segment_required_in_parent(parent: Option<&ResolvedSchemaNode>, path: &[String]) -> bool {
+    let Some((leaf_segment, _)) = path.split_last() else {
         return false;
     };
     if leaf_segment.ends_with("[*]")
@@ -361,13 +354,7 @@ fn final_segment_required_in_parent<F: FnMut(&str) -> Option<SchemaDoc>>(
     {
         return false;
     }
-    let root = ResolvedSchemaNode::root(current_filename.to_string(), schema.clone());
-    let Some(parent) = descend_schema_path_node(ctx, root, parents) else {
-        return false;
-    };
-    let Some(parent) = resolve_direct_ref(ctx, parent, 0) else {
-        return false;
-    };
+    let Some(parent) = parent else { return false };
     parent
         .schema
         .get("required")
@@ -383,14 +370,17 @@ fn descend_schema_path_node<F: FnMut(&str) -> Option<SchemaDoc>>(
     ctx: &mut ResolveCtx<F>,
     mut node: ResolvedSchemaNode,
     path: &[String],
-) -> Option<ResolvedSchemaNode> {
+) -> Option<(Option<ResolvedSchemaNode>, ResolvedSchemaNode)> {
+    let mut parent = None;
     for (depth, segment) in path.iter().enumerate() {
         if depth > 64 {
-            return Some(node);
+            return Some((parent, node));
         }
-        node = descend_one_schema_path_segment(ctx, node, segment, depth)?;
+        let (resolved_parent, next) = descend_one_schema_path_segment(ctx, node, segment, depth)?;
+        parent = Some(resolved_parent);
+        node = next;
     }
-    Some(node)
+    Some((parent, node))
 }
 
 fn descend_one_schema_path_segment<F: FnMut(&str) -> Option<SchemaDoc>>(
@@ -398,7 +388,7 @@ fn descend_one_schema_path_segment<F: FnMut(&str) -> Option<SchemaDoc>>(
     node: ResolvedSchemaNode,
     segment: &str,
     depth: usize,
-) -> Option<ResolvedSchemaNode> {
+) -> Option<(ResolvedSchemaNode, ResolvedSchemaNode)> {
     let node = resolve_direct_ref(ctx, node, depth)?;
 
     for keyword in ["allOf", "anyOf", "oneOf"] {
@@ -457,7 +447,7 @@ fn descend_one_schema_path_segment<F: FnMut(&str) -> Option<SchemaDoc>>(
         };
     }
 
-    Some(next)
+    Some((node, next))
 }
 
 fn resolve_direct_ref<F: FnMut(&str) -> Option<SchemaDoc>>(
