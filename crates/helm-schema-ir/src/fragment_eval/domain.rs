@@ -18,7 +18,7 @@ use helm_schema_core::Predicate;
 /// envelope items rebase their emitted paths below `items[*]`), and the
 /// site's source provenance. Shared by every row one hole produces.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct SiteFacts {
+pub(crate) struct SiteFacts {
     /// The resource containing this site, when its document declares one.
     pub resource: Option<ResourceRef>,
     /// Path segments the containing resource span strips from emitted paths.
@@ -31,7 +31,7 @@ pub struct SiteFacts {
 ///
 /// This is exactly the existing typed predicate lattice; the fragment domain
 /// deliberately introduces no parallel guard representation.
-pub type PathCondition = Predicate;
+pub(crate) type PathCondition = Predicate;
 
 /// A guarded alternative set: each arm materializes when its condition
 /// holds. An arm with [`Predicate::True`] is unconditional; several arms are
@@ -40,7 +40,7 @@ pub type PathCondition = Predicate;
 /// *contribution candidates*, and mutual exclusivity is expressed only by
 /// contradictory conditions).
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Guarded<T> {
+pub(crate) struct Guarded<T> {
     /// The guarded arms in document order.
     pub arms: Vec<(PathCondition, T)>,
 }
@@ -63,14 +63,6 @@ impl<T> Guarded<T> {
     pub fn unconditional(node: T) -> Self {
         Self {
             arms: vec![(Predicate::True, node)],
-        }
-    }
-
-    /// A single arm under `condition`.
-    #[must_use]
-    pub fn conditional(condition: PathCondition, node: T) -> Self {
-        Self {
-            arms: vec![(condition, node)],
         }
     }
 
@@ -102,7 +94,7 @@ impl<T> Guarded<T> {
 /// [`Predicate::True`] as identity. Operand order is preserved (outer
 /// condition first) so lowered guard stacks read root-to-leaf.
 #[must_use]
-pub fn and_conditions(outer: PathCondition, inner: PathCondition) -> PathCondition {
+pub(crate) fn and_conditions(outer: PathCondition, inner: PathCondition) -> PathCondition {
     let mut parts = Vec::new();
     for condition in [outer, inner] {
         match condition {
@@ -130,7 +122,7 @@ pub fn and_conditions(outer: PathCondition, inner: PathCondition) -> PathConditi
     clippy::large_enum_variant,
     reason = "boxing rendered fragments would add allocation and pointer chasing in the interpreter hot path"
 )]
-pub enum AbstractFragment {
+pub(crate) enum AbstractFragment {
     /// A YAML mapping.
     Mapping(Mapping),
     /// A YAML sequence.
@@ -148,14 +140,14 @@ pub enum AbstractFragment {
 /// A YAML mapping: entries in document order, one entry per key (repeated
 /// keys across branches merge their guarded value arms).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Mapping {
+pub(crate) struct Mapping {
     /// The mapping entries in first-seen document order.
     pub entries: Vec<MappingEntry>,
 }
 
 /// One mapping entry: the key and its guarded value alternatives.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct MappingEntry {
+pub(crate) struct MappingEntry {
     /// The entry key.
     pub key: EntryKey,
     /// The guarded value alternatives for this key.
@@ -165,7 +157,7 @@ pub struct MappingEntry {
 /// A mapping key: literal text, or a templated key whose text is only
 /// partially known.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum EntryKey {
+pub(crate) enum EntryKey {
     /// A plain literal key (unquoted).
     Literal(String),
     /// A templated key. Projections attribute the entry's value at the
@@ -177,7 +169,7 @@ pub enum EntryKey {
 
 /// A YAML sequence: guarded items in document order.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Sequence {
+pub(crate) struct Sequence {
     /// The sequence items in document order.
     pub items: Vec<Guarded<AbstractFragment>>,
 }
@@ -189,7 +181,7 @@ pub struct Sequence {
 /// treat identically (every contribution attributes at the scalar's
 /// position).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct AbstractString {
+pub(crate) struct AbstractString {
     /// The scalar parts in render order.
     pub parts: Vec<StringPart>,
     /// The scalar is a render-suppressed text blob (a block scalar body):
@@ -215,7 +207,7 @@ impl AbstractString {
     clippy::large_enum_variant,
     reason = "string parts are traversed in hot projection loops and benefit from inline storage"
 )]
-pub enum StringPart {
+pub(crate) enum StringPart {
     /// Literal text alternatives. A singleton set is plain source text;
     /// larger sets arise when a hole statically evaluates to a finite string
     /// set (branch literals, `printf` over string sets, …).
@@ -229,7 +221,7 @@ pub enum StringPart {
 
 /// Unknown rendered text inside a scalar with its influencing paths.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TaintPart {
+pub(crate) struct TaintPart {
     /// The `.Values` paths that flowed into the unknown text.
     pub paths: BTreeSet<String>,
     /// Exact structure serialized into this text, retained so a later
@@ -289,7 +281,7 @@ impl TaintPart {
 
 /// A `.Values` path rendered at a fragment position.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Splice {
+pub(crate) struct Splice {
     /// The dotted `.Values` path (never empty).
     pub values_path: String,
     /// Whether the path renders a whole scalar, part of a scalar, or a YAML
@@ -299,24 +291,12 @@ pub struct Splice {
     pub meta: SpliceMeta,
 }
 
-impl Splice {
-    /// A plain scalar splice with default meta.
-    #[must_use]
-    pub fn scalar(values_path: impl Into<String>) -> Self {
-        Self {
-            values_path: values_path.into(),
-            kind: ValueKind::Scalar,
-            meta: SpliceMeta::default(),
-        }
-    }
-}
-
 /// Splice metadata: defaultedness, encoding, and source provenance.
 ///
 /// Deliberately *no* predicates here — helper-internal branch conditions
 /// lower into [`Guarded`] arms so the guard structure stays in the tree.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct SpliceMeta {
+pub(crate) struct SpliceMeta {
     /// The splice carries the raw values-path value rather than merely an
     /// influence on derived output. Positive execution subsets may project a
     /// provider contract through this row without constraining an operand of
@@ -412,7 +392,7 @@ impl SpliceMeta {
 
 /// An opaque fragment position: content unknown, influence preserved.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Opaque {
+pub(crate) struct Opaque {
     /// The `.Values` paths that flowed into the unknown content.
     pub taint: BTreeSet<String>,
     /// The hole kind the opaque content renders as (scalar holes taint as
@@ -439,7 +419,10 @@ impl Default for Opaque {
 /// Stamp `site` onto every row-producing node below `guarded` that has no
 /// site yet (nested-file content arrives already stamped by its own
 /// interpreter and keeps its facts).
-pub fn stamp_fragment_sites(guarded: &mut Guarded<AbstractFragment>, site: Option<&Rc<SiteFacts>>) {
+pub(crate) fn stamp_fragment_sites(
+    guarded: &mut Guarded<AbstractFragment>,
+    site: Option<&Rc<SiteFacts>>,
+) {
     if site.is_none() {
         return;
     }
@@ -475,7 +458,7 @@ fn stamp_node_sites(node: &mut AbstractFragment, site: Option<&Rc<SiteFacts>>) {
 }
 
 /// Stamp `site` onto every splice and taint part that has no site yet.
-pub fn stamp_part_sites(parts: &mut [StringPart], site: Option<&Rc<SiteFacts>>) {
+pub(crate) fn stamp_part_sites(parts: &mut [StringPart], site: Option<&Rc<SiteFacts>>) {
     if site.is_none() {
         return;
     }

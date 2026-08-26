@@ -12,6 +12,7 @@
 mod assignments;
 mod control;
 mod domain;
+#[cfg(test)]
 mod dump;
 mod eval;
 mod files;
@@ -22,14 +23,14 @@ mod lower;
 mod project;
 pub(crate) mod summary;
 
-pub use domain::{
-    AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Opaque,
-    PathCondition, Sequence, SiteFacts, Splice, SpliceMeta, StringPart, TaintPart, and_conditions,
-};
-pub use dump::dump_document;
-pub use eval::{EvaluatedDocument, ValueRead};
+#[cfg(test)]
+pub(crate) use domain::{StringPart, TaintPart};
+#[cfg(test)]
+pub(crate) use dump::dump_document;
+#[cfg(test)]
+pub(crate) use eval::EvaluatedDocument;
 
-pub(crate) use eval::{BodyEvalFacts, eval_document};
+pub(crate) use eval::{BodyEvalFacts, ValueRead, eval_document};
 #[cfg(test)]
 pub(crate) use lower::over_cap_scalar_taint;
 pub(crate) use project::contract_ir_from_document;

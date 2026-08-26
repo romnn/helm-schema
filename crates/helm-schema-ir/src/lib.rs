@@ -11,7 +11,7 @@ mod eval_env;
 mod expr_call_eval;
 mod expr_eval;
 mod fragment_assignment;
-pub mod fragment_eval;
+pub(crate) mod fragment_eval;
 mod fragment_expr_eval;
 mod function_semantics;
 mod helper_literal_dispatch;

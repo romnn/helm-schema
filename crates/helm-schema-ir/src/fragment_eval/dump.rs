@@ -12,7 +12,7 @@ use super::eval::EvaluatedDocument;
 
 /// Render an evaluated document as a deterministic dump.
 #[must_use]
-pub fn dump_document(document: &EvaluatedDocument) -> String {
+pub(crate) fn dump_document(document: &EvaluatedDocument) -> String {
     let mut out = String::new();
     dump_guarded(&document.root, 0, &mut out);
     if !document.reads.is_empty() {

@@ -29,11 +29,7 @@ pub struct SymbolicPolicy {
 /// semantics; a cache miss and cache hit return the same structural facts.
 #[derive(Clone)]
 pub struct SymbolicIrContext {
-    inner: Rc<SymbolicIrContextInner>,
-}
-
-struct SymbolicIrContextInner {
-    analysis_db: IrAnalysisDb,
+    analysis_db: Rc<IrAnalysisDb>,
 }
 
 impl SymbolicIrContext {
@@ -41,9 +37,7 @@ impl SymbolicIrContext {
     #[tracing::instrument(skip_all)]
     pub fn new(defines: &DefineIndex) -> Self {
         Self {
-            inner: Rc::new(SymbolicIrContextInner {
-                analysis_db: IrAnalysisDb::new(defines),
-            }),
+            analysis_db: Rc::new(IrAnalysisDb::new(defines)),
         }
     }
 
@@ -68,9 +62,7 @@ impl SymbolicIrContext {
     #[must_use]
     pub fn with_policy(defines: &DefineIndex, policy: SymbolicPolicy) -> Self {
         Self {
-            inner: Rc::new(SymbolicIrContextInner {
-                analysis_db: IrAnalysisDb::with_policy(defines, policy),
-            }),
+            analysis_db: Rc::new(IrAnalysisDb::with_policy(defines, policy)),
         }
     }
 
@@ -94,8 +86,12 @@ impl SymbolicIrContext {
     /// Evaluate a template into the abstract fragment domain, reusing this
     /// context's memoized helper analyses.
     #[must_use]
-    pub fn eval_document_fragment(&self, src: &str) -> crate::fragment_eval::EvaluatedDocument {
-        crate::fragment_eval::eval_document(src, None, &self.inner.analysis_db)
+    #[cfg(test)]
+    pub(crate) fn eval_document_fragment(
+        &self,
+        src: &str,
+    ) -> crate::fragment_eval::EvaluatedDocument {
+        crate::fragment_eval::eval_document(src, None, &self.analysis_db)
     }
 
     fn generate_contract_ir_with_provenance(
@@ -103,13 +99,11 @@ impl SymbolicIrContext {
         src: &str,
         source_path: Option<&str>,
     ) -> ContractIr {
-        let document =
-            crate::fragment_eval::eval_document(src, source_path, &self.inner.analysis_db);
+        let document = crate::fragment_eval::eval_document(src, source_path, &self.analysis_db);
         let mut contract = crate::fragment_eval::contract_ir_from_document(&document);
         for name in &document.observed_facts.values_root_helper_includes {
             contract.extend_values_program_wrappers(
-                self.inner
-                    .analysis_db
+                self.analysis_db
                     .program_wrapper_sentinels(name)
                     .into_iter()
                     .map(|(key, spread)| helm_schema_core::ValuesProgramWrapper {

@@ -3,10 +3,10 @@
 //! compose across nested control regions. Pins the B4 regression where both
 //! were dropped (luup3 `common.*` dict-config pattern).
 
+use crate::SymbolicIrContext;
+use crate::fragment_eval::dump_document;
 use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
-use helm_schema_ir::SymbolicIrContext;
-use helm_schema_ir::fragment_eval::dump_document;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -169,7 +169,7 @@ fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
     assert!(
         finalized.uses().iter().any(|use_| {
             use_.source_expr == "cfg"
-                && use_.kind == helm_schema_ir::ValueKind::Fragment
+                && use_.kind == crate::ValueKind::Fragment
                 && use_.path.0 == ["spec".to_string(), "config".to_string()]
         }),
         "the ranged map splice should project at spec.config: {finalized:#?}"
@@ -200,7 +200,7 @@ fn ranged_resource_with_bound_dynamic_entries_attach_below_literal_key() {
     assert!(
         finalized.uses().iter().any(|use_| {
             use_.source_expr == "configuration.backupStorageLocation.*.config"
-                && use_.kind == helm_schema_ir::ValueKind::Fragment
+                && use_.kind == crate::ValueKind::Fragment
                 && use_.path.0 == ["spec".to_string(), "config".to_string()]
         }),
         "the ranged resource map splice should project at spec.config: {finalized:#?}"
@@ -217,7 +217,7 @@ fn velero_backup_location_config_attaches_below_config_key() -> eyre::Result<()>
     assert!(
         finalized.uses().iter().any(|use_| {
             use_.source_expr == "configuration.backupStorageLocation.*.config"
-                && use_.kind == helm_schema_ir::ValueKind::Fragment
+                && use_.kind == crate::ValueKind::Fragment
                 && use_.path.0 == ["spec".to_string(), "config".to_string()]
         }),
         "Velero's config map splice should project at spec.config:\n{}",

@@ -1730,7 +1730,7 @@
 
 ## S-A4 — derive inference candidate ordering
 
-- Status: complete; commit pending.
+- Status: landed in `0c74988d`.
 - Contract: behavior-bearing deletion of the two hand-written rank tables and the diagnostic
   sink's `Debug`-string ordering. Both aggregation and diagnostic canonicalisation must use the
   enums' derived declaration order, with one test pinning declaration-order-as-priority.
@@ -1839,3 +1839,121 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: -16 (63,245 to 63,229).
+
+## S-D1 — narrow the IR fragment domain
+
+- Status: complete; commit pending.
+- Contract: representation-only move of the two fragment golden-test modules into `src/tests/`,
+  followed by crate-private fragment-domain visibility, deletion of the one-field
+  `SymbolicIrContextInner` wrapper, removal of its redundant `Rc` layer, and deletion of
+  constructors that become provably dead. This API narrowing precedes B2/B4 by design.
+- Acceptance baseline: `0c74988d` (S-A4).
+- Baseline production LOC: 63,229 Rust lines from `task tokei:core` on `0c74988d`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, fragment-golden, diagnostic, or acceptance changes. The two moved
+    test modules must execute the same test bodies with byte-exact expected strings.
+  - `SymbolicIrContext` remains public with the same construction and contract-generation
+    behavior; only the test-only fragment evaluation surface and fragment-domain types are removed
+    from the public Rust API.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - Moved `fragment_golden.rs` and `fragment_dict_config_guards.rs` from crate integration targets
+    into `src/tests/`. All 12 test bodies and their reviewed expected strings are unchanged and pass
+    from the private test module tree.
+  - Made the `fragment_eval` module, its domain types, evaluated document/read carriers, dump, and
+    `eval_document_fragment` crate-private or test-only. Broad domain re-exports disappeared; only
+    the two test-used types retain a test-only re-export.
+  - Deleted `Guarded::conditional` and `Splice::scalar`, the two constructors exposed only because
+    the domain was public and unused by production or private tests.
+  - Deleted one-field `SymbolicIrContextInner`; `SymbolicIrContext` now shares `Rc<IrAnalysisDb>`
+    directly, preserving clone/cache semantics with one fewer allocation and dereference layer.
+  - Schema and symbolic-IR dumps are byte-for-byte identical to S-A4. The full-depth battery covers
+    60 charts and 121,055 probes with zero acceptance flips; mandatory base coverage is
+    112,260/112,260 and third-level coverage is 7,465/7,465, both with zero drops.
+- Deviations:
+  - The first visibility preflight left the former broad domain re-export in place and compiled the
+    dump/evaluation hook in non-test builds. `cargo check` reported unused imports and dead dump
+    functions. That state was rejected; the final tree removes the re-export and gates the golden
+    hook under `cfg(test)`. No immutable artifact was produced from the warning state.
+  - `task test:integration` decreases from 563 to 551 because the 12 moved golden tests no longer
+    form integration binaries. This is an intentional test-layout transfer, not a coverage drop:
+    `cargo nextest run --workspace` increases from 1,292 to 1,304 and the combined suite remains
+    exactly 1,859 tests.
+- Adjudication evidence: Helm v4.2.3. This representation-only round has zero changed fixture
+  bytes, zero acceptance flips, and zero candidate-accepts/Helm-aborts cells; no fixture required
+  adoption.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Fragment golden dumps | Same byte strings after module move | Moved golden module suite. |
+| Dict-context guard goldens | Same guards and projections | Moved dict-config module suite. |
+| Public contract generation | Same `ContractIr` | Full unit/integration corpus. |
+| Context reuse | Same shared analysis cache | Existing multi-template session tests. |
+| Fragment projection | Same schema and IR output | Immutable dumps and full-depth battery. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-ir -E
+  'test(/fragment_(golden|dict_config_guards)/)'`; exit 0, all 12 moved tests pass. `cargo check -p
+  helm-schema-ir --tests`; exit 0 with no warnings after the rejected visibility preflight.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd1-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-sd1-final1.tar.zst`; exit 0, 86
+  binaries and 124 files. The two-binary reduction is exactly the moved integration-test targets.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd1-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sd1-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the S-A4 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd1-final1-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sd1-final1.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are
+  written. A recursive byte comparison against the S-A4 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd1-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=0c74988d
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sd1-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sd1-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-sd1-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: deliberate Rust API narrowing. `helm_schema_ir::fragment_eval`, its
+  fragment-domain and evaluated-document types, `dump_document`, and
+  `SymbolicIrContext::eval_document_fragment` are no longer public. The audit found no production
+  workspace consumer; the only external consumers were the two moved golden targets. No wire
+  format changes.
+
+### Self-adversarial pass
+
+- `SymbolicIrContext` still derives `Clone`, and cloning still shares the same `IrAnalysisDb` cache;
+  moving the `Rc` inward changes neither ownership nor cache identity.
+- The dump module is test-only, but the fragment interpreter and projection remain production code.
+  Only the observation hook used by the moved goldens is cfg-gated.
+- Moving tests out of `tests/` could silently reduce the integration profile. The explicit 12-test
+  focused run, +12 unit-suite count, unchanged combined-suite count, and byte-exact dumps account
+  for every moved tooth.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,304 tests pass.
+- `task test:integration`; exit 0, 551 tests pass and 24 are skipped; the 12-test decrease is the
+  disclosed move into the unit suite.
+- `task test:all`; exit 0, 1,859 tests pass and 24 are skipped, including all live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,212 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: -17 (63,229 to 63,212).

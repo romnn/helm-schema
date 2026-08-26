@@ -71,7 +71,7 @@ use super::domain::{
 /// The result of evaluating one template source: the abstract rendered
 /// document plus the pathless value reads observed along the way.
 #[derive(Debug, Default)]
-pub struct EvaluatedDocument {
+pub(crate) struct EvaluatedDocument {
     /// The guarded abstract fragment for the whole source (all YAML
     /// documents merged; per-document projection is a later-stage concern).
     pub root: Guarded<AbstractFragment>,
@@ -87,7 +87,7 @@ pub struct EvaluatedDocument {
 
 /// One pathless `.Values` read with the guards active at the read site.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ValueRead {
+pub(crate) struct ValueRead {
     /// The dotted `.Values` path that was read.
     pub values_path: String,
     /// The value shape observed at the read (helper rows demoted at capture

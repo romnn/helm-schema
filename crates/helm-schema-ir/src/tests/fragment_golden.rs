@@ -4,9 +4,9 @@
 //! statement, not a regenerated snapshot; update it only with a reasoned
 //! change.
 
+use crate::SymbolicIrContext;
+use crate::fragment_eval::dump_document;
 use helm_schema_ast::DefineIndex;
-use helm_schema_ir::SymbolicIrContext;
-use helm_schema_ir::fragment_eval::dump_document;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
