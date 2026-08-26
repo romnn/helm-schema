@@ -1242,7 +1242,7 @@
 
 ## A8 — bounded exactness and fanout abstention
 
-- Status: complete; commit pending.
+- Status: landed in `90c037b6`.
 - Contract: behavior-bearing, three corrected operations. `TruthCondition` may become exact only
   when its proven polarities are both disjoint and exhaustive. All three scalar fanout sites must
   replace over-cap alternatives with one unconditional taint carrying only the union of influencing
@@ -1401,3 +1401,103 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +319 (63,138 to 63,457).
+
+## S-A1 — total sibling-junctor expansion
+
+- Status: complete; commit pending.
+- Contract: behavior-bearing deletion of the first-junctor early return in provider-schema
+  expansion. The existing generic keyword walk must expand every `allOf`, `anyOf`, and `oneOf`
+  sibling instead of resolving only the first keyword present.
+- Acceptance baseline: `90c037b6` (A8).
+- Baseline production LOC: 63,457 Rust lines from `task tokei:core` on `90c037b6`.
+- Pre-registered acceptance expectations:
+  - Resolve `$ref`s under every sibling junctor while preserving their keyword, item order, and
+    surrounding node exactly.
+  - The expansion is semantically equivalent for valid provider documents and is expected to
+    produce zero corpus acceptance flips and zero fixture changes. A changed cell stops the round
+    for individual Helm 4.2.3 adjudication before any fixture is adopted.
+  - Candidate-accepts/Helm-aborts allowance remains zero; mandatory base and third-level probe
+    categories permit zero drops.
+
+- Measured results:
+  - Deleted the eight-line first-junctor loop and early return. The existing exhaustive keyword
+    walker now expands all schema-array keywords, so sibling `allOf`, `anyOf`, and `oneOf` arrays
+    are processed in one pass.
+  - The authoritative corpus remains byte-exact. The full-depth battery covers 60 charts and
+    121,055 probes with zero acceptance flips; mandatory base and third-level categories have zero
+    drops.
+- Deviations: the first immutable archive's focused test returned `eyre::Result<()>` despite having
+  no fallible setup, so `task lint` rejected it under `clippy::unnecessary_wraps`. Removing the
+  unused result channel was test-only and produced final2; production code, the clean dump, and all
+  acceptance results are unchanged.
+- Adjudication evidence: Helm v4.2.3; zero changed acceptance cells and zero
+  candidate-accepts/Helm-aborts cells, so no fixture required individual adoption.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| `allOf` plus sibling `anyOf` | Both arrays expanded | Direct provider-document equality test. |
+| `anyOf` plus sibling `oneOf` | Both arrays expanded | Same exhaustive sibling matrix. |
+| Nested `$ref` inside each item | Resolved through ordinary recursion | Cross-file provider fixture. |
+| Node without junctors | Existing generic keyword behavior | Byte-exact corpus. |
+
+### Review dossier
+
+- Focused proof: `cargo nextest run -p helm-schema-k8s -E
+  'test(full_expansion_resolves_every_sibling_junctor)'`; exit 0. One cross-file document carries
+  all three sibling junctors and proves each referenced item expands while the sibling title and
+  item order remain exact.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa1-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-sa1-final2.tar.zst`; exit 0, 88
+  binaries and 126 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa1-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sa1-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass, 84 artifacts are written, and every fixture is byte-exact.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa1-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-sa1-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sa1-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=90c037b6
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sa1-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sa1-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-sa1-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells.
+- Public/wire decision: none. The deleted branch and new crate-private test do not alter public API
+  or serialized formats.
+
+### Self-adversarial pass
+
+- The generic walker classifies junctors as schema arrays and retains the parent node while replacing
+  each array value, so deleting the special case does not change sibling-key ownership.
+- `$ref` cycle detection and the depth cap still execute inside each array item's ordinary recursive
+  expansion; total sibling traversal does not weaken either bound.
+- Boolean schema children remain skipped exactly as before, and non-schema data keywords are not
+  traversed.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0 after the rejected unnecessary-result preflight.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across Linux, Windows, and
+  macOS, with zero errors and warnings.
+- `cargo nextest run --workspace`; exit 0, 1,289 tests pass.
+- `task test:integration`; exit 0, 564 tests pass and 24 are skipped.
+- `task test:all`; exit 0, 1,857 tests pass and 24 are skipped, including all four live-network
+  tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`; exit 0, 32/32 charts
+  pass.
+- `task tokei:core`; exit 0, 63,449 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: -8 (63,457 to 63,449).

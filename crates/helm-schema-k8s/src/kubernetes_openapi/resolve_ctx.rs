@@ -249,15 +249,6 @@ fn expand_schema_node_at<F: FnMut(&str) -> Option<SchemaDoc>>(
         return out;
     }
 
-    for keyword in ["allOf", "anyOf", "oneOf"] {
-        if let Some(branches) = node.schema.get(keyword).and_then(Value::as_array) {
-            let expanded = expand_schema_array_at(ctx, &node, keyword, branches, depth + 1);
-            let mut obj = node.schema.as_object().cloned().unwrap_or_default();
-            obj.insert(keyword.to_string(), expanded);
-            return ResolvedSchemaNode::at(node.location, Value::Object(obj));
-        }
-    }
-
     let mut obj = match node.schema.as_object() {
         Some(o) => o.clone(),
         None => return node,

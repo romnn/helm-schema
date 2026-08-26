@@ -5,6 +5,43 @@ use serde_json::{Value, json};
 
 use super::*;
 
+#[test]
+fn full_expansion_resolves_every_sibling_junctor() {
+    let definitions = SchemaDoc::new(json!({
+        "definitions": {
+            "All": { "type": "object" },
+            "Any": { "type": "string" },
+            "One": { "type": "integer" }
+        }
+    }));
+    let mut ctx = ResolveCtx::new(
+        move |filename| (filename == "defs.json").then(|| definitions.clone()),
+        "root.json".to_string(),
+        SchemaDoc::new(json!({})),
+    );
+    let node = ResolvedSchemaNode::root(
+        "root.json",
+        json!({
+            "title": "sibling junctors",
+            "allOf": [{ "$ref": "defs.json#/definitions/All" }],
+            "anyOf": [{ "$ref": "defs.json#/definitions/Any" }],
+            "oneOf": [{ "$ref": "defs.json#/definitions/One" }]
+        }),
+    );
+
+    let expanded = expand_schema_node_at(&mut ctx, node, 0).into_schema();
+
+    sim_assert_eq!(
+        have: expanded,
+        want: json!({
+            "title": "sibling junctors",
+            "allOf": [{ "type": "object" }],
+            "anyOf": [{ "type": "string" }],
+            "oneOf": [{ "type": "integer" }]
+        })
+    );
+}
+
 fn descend_schema_path(schema: &Value, path: &[String]) -> Option<Value> {
     let mut current = schema;
     for segment in path {
