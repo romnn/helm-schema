@@ -2472,7 +2472,7 @@ fn compound_sound_subset_scopes_provider_payloads() {
         helm_schema_core::Predicate::Or(vec![
             helm_schema_core::Predicate::truthy_path("create"),
             helm_schema_core::Predicate::from(Guard::Eq {
-                path: "mode".to_string(),
+                path: helm_schema_core::ValuesPath::parse("mode"),
                 value: GuardValue::String("live".to_string()),
             }),
         ]),
@@ -2640,7 +2640,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-            path: "webhook.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("webhook.enabled"),
         }]),
         resource: None,
         provenance: Vec::new(),
@@ -2984,7 +2984,7 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
             !use_.single_guard_conjunction().iter().any(|guard| {
                 matches!(
                     guard,
-                    Guard::Default { path } if path == "serviceAccount.name"
+                    Guard::Default { path } if path.encode() == "serviceAccount.name"
                 )
             })
         }),
@@ -3035,7 +3035,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             path: YamlPath(Vec::new()),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-                path: "serviceMonitor.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("serviceMonitor.enabled"),
             }]),
             resource: Some(ResourceRef::concrete(
                 "monitoring.coreos.com/v1".to_string(),
@@ -3061,7 +3061,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             ]),
             kind: ValueKind::Fragment,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-                path: "serviceMonitor.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("serviceMonitor.enabled"),
             }]),
             resource: Some(ResourceRef::concrete(
                 "monitoring.coreos.com/v1".to_string(),

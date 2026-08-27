@@ -11,7 +11,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
             }]),
             resource: None,
             provenance: Vec::new(),
@@ -159,7 +159,7 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
             }]),
             resource: None,
             provenance: Vec::new(),
@@ -234,7 +234,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Not {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
             }]),
             resource: None,
             provenance: Vec::new(),
@@ -281,7 +281,7 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::NotEq {
-                path: "feature.mode".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.mode"),
                 value: GuardValue::string("disabled"),
             }]),
             resource: None,
@@ -368,7 +368,7 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
                 value: GuardValue::Bool(false),
             }]),
             resource: None,
@@ -448,7 +448,7 @@ fn equal_nil_guard_treats_absent_path_as_matching_nil() {
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
-                path: "feature.tag".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.tag"),
                 value: GuardValue::Null,
             }]),
             resource: None,
@@ -502,8 +502,8 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Or {
                 paths: vec![
-                    "feature.enabled".to_string(),
-                    "global.featureEnabled".to_string(),
+                    helm_schema_core::ValuesPath::parse("feature.enabled"),
+                    helm_schema_core::ValuesPath::parse("global.featureEnabled"),
                 ],
             }]),
             resource: None,
@@ -563,15 +563,15 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
                 alternatives: vec![
                     vec![
                         Guard::Truthy {
-                            path: "feature.enabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("feature.enabled"),
                         },
                         Guard::Eq {
-                            path: "feature.mode".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("feature.mode"),
                             value: GuardValue::string("prod"),
                         },
                     ],
                     vec![Guard::Eq {
-                        path: "global.mode".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("global.mode"),
                         value: GuardValue::string("prod"),
                     }],
                 ],
@@ -643,7 +643,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
-                path: "mode".to_string(),
+                path: helm_schema_core::ValuesPath::parse("mode"),
                 value: GuardValue::string("name"),
             }]),
             resource: None,
@@ -663,7 +663,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             kind: ValueKind::Fragment,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
-                path: "mode".to_string(),
+                path: helm_schema_core::ValuesPath::parse("mode"),
                 value: GuardValue::string("labels"),
             }]),
             resource: None,
@@ -738,7 +738,7 @@ fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
-            path: "mode".to_string(),
+            path: helm_schema_core::ValuesPath::parse("mode"),
             value: GuardValue::string("enabled"),
         }]),
         resource: None,
@@ -829,7 +829,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             kind: ValueKind::Fragment,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
-                path: "mode".to_string(),
+                path: helm_schema_core::ValuesPath::parse("mode"),
                 value: GuardValue::string("labels"),
             }]),
             resource: None,
@@ -910,7 +910,7 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
         path: YamlPath(vec!["data".to_string(), "host".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-            path: "mode".to_string(),
+            path: helm_schema_core::ValuesPath::parse("mode"),
         }]),
         resource: None,
         provenance: Vec::new(),

@@ -3,6 +3,8 @@ use std::fmt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Number;
 
+use crate::ValuesPath;
+
 /// Scalar literal used by values-decidable guard comparisons.
 ///
 /// Helm `eq` / `ne` conditions can compare against strings, booleans, numbers,
@@ -105,24 +107,24 @@ pub enum Guard {
     /// Simple truthy check: `if .Values.X`
     Truthy {
         /// Values path tested for truthiness.
-        path: String,
+        path: ValuesPath,
     },
     /// Negated truthy check: `if not .Values.X`
     Not {
         /// Values path tested for falsiness.
-        path: String,
+        path: ValuesPath,
     },
     /// Equality check: `if eq .Values.X "value"` / `if eq .Values.X false`.
     Eq {
         /// Values path compared with the literal.
-        path: String,
+        path: ValuesPath,
         /// Literal required at the path.
         value: GuardValue,
     },
     /// Inequality check: `if ne .Values.X "value"` / `if ne .Values.X false`.
     NotEq {
         /// Values path compared with the literal.
-        path: String,
+        path: ValuesPath,
         /// Literal excluded at the path.
         value: GuardValue,
     },
@@ -130,7 +132,7 @@ pub enum Guard {
     /// semantically distinct from false values.
     Absent {
         /// Values path whose absence selects the branch.
-        path: String,
+        path: ValuesPath,
     },
     /// The path's string value matches a literal regular expression:
     /// `if regexMatch "…" .Values.X`. `regexMatch` type-asserts a string
@@ -140,7 +142,7 @@ pub enum Guard {
     /// template action is admitted regardless (its render may match).
     MatchesPattern {
         /// Values path subjected to the pattern test.
-        path: String,
+        path: ValuesPath,
         /// Literal regular expression required by the branch.
         pattern: String,
         /// Whether matching occurs after rendering the value through `tpl`.
@@ -154,7 +156,7 @@ pub enum Guard {
     /// raw-string mismatch subset.
     NotMatchesPattern {
         /// Values path subjected to the pattern test.
-        path: String,
+        path: ValuesPath,
         /// Literal regular expression excluded by the branch.
         pattern: String,
     },
@@ -163,7 +165,7 @@ pub enum Guard {
     /// not to the collection value itself.
     RangeKeyPrefix {
         /// Values path of the ranged collection.
-        path: String,
+        path: ValuesPath,
         /// Literal prefix required of the current key.
         prefix: String,
     },
@@ -174,7 +176,7 @@ pub enum Guard {
     /// for every OTHER member and has no key-presence encoding.
     RangeKeyEquals {
         /// Values path of the ranged collection.
-        path: String,
+        path: ValuesPath,
         /// Literal key selected by the branch.
         key: String,
     },
@@ -184,14 +186,14 @@ pub enum Guard {
     /// collection's key domain (traefik's uppercase `ingressRoute` gate).
     RangeKeyMatches {
         /// Values path of the ranged collection.
-        path: String,
+        path: ValuesPath,
         /// Regular expression required of the current key.
         pattern: String,
     },
     /// Disjunction: `if or .Values.A .Values.B`
     Or {
         /// Values paths whose truthiness forms the disjunction.
-        paths: Vec<String>,
+        paths: Vec<ValuesPath>,
     },
     /// Disjunction whose arms may each contain a conjunction of typed guards.
     ///
@@ -207,14 +209,14 @@ pub enum Guard {
     /// scalar. This should not contribute a boolean type hint downstream.
     Range {
         /// Values path used as the range source.
-        path: String,
+        path: ValuesPath,
     },
     /// Body of `with .Values.X` block. This distinguishes header binding from
     /// `if`-style truthy checks. The bound path is null-tolerant by
     /// construction because `with nil` skips the body.
     With {
         /// Values path selected as the branch context.
-        path: String,
+        path: ValuesPath,
     },
     /// Rendered via a `default ... <path>` fallback, either in prefix form
     /// (`default "x" .Values.X`) or pipeline form (`.Values.X | default "x"`).
@@ -225,7 +227,7 @@ pub enum Guard {
     /// a non-null default.
     Default {
         /// Values path protected by a fallback.
-        path: String,
+        path: ValuesPath,
     },
     /// A `typeIs "<json type>" <path>` check in template logic.
     ///
@@ -235,7 +237,7 @@ pub enum Guard {
     /// string even when another branch renders it as a YAML object fragment.
     TypeIs {
         /// Values path subjected to the type test.
-        path: String,
+        path: ValuesPath,
         /// JSON Schema type name selected by the branch.
         schema_type: String,
     },
@@ -248,7 +250,7 @@ pub enum Guard {
     /// EVERY type of the dispatched path.
     NotTypeIs {
         /// Values path subjected to the type test.
-        path: String,
+        path: ValuesPath,
         /// JSON Schema type name excluded by the branch.
         schema_type: String,
     },
@@ -261,7 +263,7 @@ pub enum Guard {
     /// condition whose negation must also hold.
     IntGt {
         /// Values path subjected to the integer comparison.
-        path: String,
+        path: ValuesPath,
         /// Exclusive lower bound.
         bound: i64,
     },
@@ -272,7 +274,7 @@ pub enum Guard {
     /// this guard may only strengthen positive-polarity consumers.
     IntLt {
         /// Values path subjected to the integer comparison.
-        path: String,
+        path: ValuesPath,
         /// Exclusive upper bound.
         bound: i64,
     },
@@ -285,14 +287,14 @@ pub enum Guard {
     /// strengthen positive-polarity consumers.
     AtMostOneMember {
         /// Values path expected to hold the bounded collection.
-        path: String,
+        path: ValuesPath,
     },
     /// The value at `path` is a mapping with at least `bound` members —
     /// the exact meaning of `gt (keys X | len) N` (`keys` aborts on
     /// non-maps, so the render reaches the body only for maps).
     MinMembers {
         /// Values path expected to hold the mapping.
-        path: String,
+        path: ValuesPath,
         /// Inclusive minimum number of mapping members.
         bound: i64,
     },
@@ -303,7 +305,7 @@ pub enum Guard {
     /// counts explicit null as absent for the nil-safe selector lanes.
     HasKey {
         /// Values path expected to hold a mapping.
-        path: String,
+        path: ValuesPath,
         /// Literal mapping key whose presence selects the branch.
         key: String,
     },
@@ -312,7 +314,7 @@ pub enum Guard {
     /// This is the exact logical complement of [`Guard::HasKey`].
     NotHasKey {
         /// Values path expected to hold a mapping.
-        path: String,
+        path: ValuesPath,
         /// Literal mapping key whose absence selects the branch.
         key: String,
     },
@@ -324,7 +326,7 @@ pub enum Guard {
     /// secret keys on `has "cookie-secret" .Values.config.requiredSecretKeys`).
     ContainsEquals {
         /// Values path expected to hold a list.
-        path: String,
+        path: ValuesPath,
         /// Literal that at least one list item must equal.
         value: GuardValue,
     },
@@ -333,7 +335,7 @@ pub enum Guard {
     /// set inside a range under an equality test.
     ContainsMemberEquals {
         /// Values path expected to hold the iterated collection.
-        path: String,
+        path: ValuesPath,
         /// Member name compared within each collection item.
         member: String,
         /// Literal that at least one member must equal.
@@ -344,7 +346,7 @@ pub enum Guard {
     /// set inside a range under a truthiness test.
     ContainsTruthyMember {
         /// Values path expected to hold the iterated collection.
-        path: String,
+        path: ValuesPath,
         /// Member whose truthiness selects the sentinel state.
         member: String,
     },
@@ -401,7 +403,7 @@ impl Guard {
 
     /// Return all `.Values.*` paths referenced by this guard.
     #[must_use]
-    pub fn value_paths(&self) -> Vec<&str> {
+    pub fn value_paths(&self) -> Vec<String> {
         match self {
             Guard::Truthy { path }
             | Guard::Not { path }
@@ -427,9 +429,9 @@ impl Guard {
             | Guard::ContainsEquals { path, .. }
             | Guard::ContainsMemberEquals { path, .. }
             | Guard::ContainsTruthyMember { path, .. } => {
-                vec![path.as_str()]
+                vec![path.encode()]
             }
-            Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
+            Guard::Or { paths } => paths.iter().map(ValuesPath::encode).collect(),
             Guard::AnyOf { alternatives } => alternatives
                 .iter()
                 .flat_map(|alternative| alternative.iter().flat_map(Guard::value_paths))
@@ -439,87 +441,108 @@ impl Guard {
 
     /// Rewrite value paths carried by this guard.
     #[must_use]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping the exhaustive path rewrite in one match makes variant coverage auditable"
+    )]
     pub fn map_value_paths<F>(self, map: &mut F) -> Self
     where
         F: FnMut(&str) -> String,
     {
         match self {
-            Guard::Truthy { path } => Guard::Truthy { path: map(&path) },
-            Guard::Not { path } => Guard::Not { path: map(&path) },
+            Guard::Truthy { path } => Guard::Truthy {
+                path: map_values_path(&path, map),
+            },
+            Guard::Not { path } => Guard::Not {
+                path: map_values_path(&path, map),
+            },
             Guard::Eq { path, value } => Guard::Eq {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 value,
             },
             Guard::NotEq { path, value } => Guard::NotEq {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 value,
             },
-            Guard::Absent { path } => Guard::Absent { path: map(&path) },
+            Guard::Absent { path } => Guard::Absent {
+                path: map_values_path(&path, map),
+            },
             Guard::MatchesPattern {
                 path,
                 pattern,
                 templated,
             } => Guard::MatchesPattern {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 pattern,
                 templated,
             },
             Guard::NotMatchesPattern { path, pattern } => Guard::NotMatchesPattern {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 pattern,
             },
             Guard::RangeKeyEquals { path, key } => Guard::RangeKeyEquals {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 key,
             },
             Guard::RangeKeyPrefix { path, prefix } => Guard::RangeKeyPrefix {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 prefix,
             },
             Guard::RangeKeyMatches { path, pattern } => Guard::RangeKeyMatches {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 pattern,
             },
             Guard::Or { paths } => Guard::Or {
-                paths: paths.into_iter().map(|path| map(&path)).collect(),
+                paths: paths
+                    .into_iter()
+                    .map(|path| map_values_path(&path, map))
+                    .collect(),
             },
             Guard::AnyOf { alternatives } => Guard::AnyOf {
                 alternatives: map_guard_alternatives(alternatives, map),
             },
-            Guard::Range { path } => Guard::Range { path: map(&path) },
-            Guard::With { path } => Guard::With { path: map(&path) },
-            Guard::Default { path } => Guard::Default { path: map(&path) },
+            Guard::Range { path } => Guard::Range {
+                path: map_values_path(&path, map),
+            },
+            Guard::With { path } => Guard::With {
+                path: map_values_path(&path, map),
+            },
+            Guard::Default { path } => Guard::Default {
+                path: map_values_path(&path, map),
+            },
             Guard::TypeIs { path, schema_type } => Guard::TypeIs {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 schema_type,
             },
             Guard::NotTypeIs { path, schema_type } => Guard::NotTypeIs {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 schema_type,
             },
             Guard::IntGt { path, bound } => Guard::IntGt {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 bound,
             },
             Guard::IntLt { path, bound } => Guard::IntLt {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 bound,
             },
-            Guard::AtMostOneMember { path } => Guard::AtMostOneMember { path: map(&path) },
+            Guard::AtMostOneMember { path } => Guard::AtMostOneMember {
+                path: map_values_path(&path, map),
+            },
             Guard::MinMembers { path, bound } => Guard::MinMembers {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 bound,
             },
             Guard::HasKey { path, key } => Guard::HasKey {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 key,
             },
             Guard::NotHasKey { path, key } => Guard::NotHasKey {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 key,
             },
             Guard::ContainsEquals { path, value } => Guard::ContainsEquals {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 value,
             },
             Guard::ContainsMemberEquals {
@@ -527,16 +550,23 @@ impl Guard {
                 member,
                 value,
             } => Guard::ContainsMemberEquals {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 member,
                 value,
             },
             Guard::ContainsTruthyMember { path, member } => Guard::ContainsTruthyMember {
-                path: map(&path),
+                path: map_values_path(&path, map),
                 member,
             },
         }
     }
+}
+
+fn map_values_path<F>(path: &ValuesPath, map: &mut F) -> ValuesPath
+where
+    F: FnMut(&str) -> String,
+{
+    ValuesPath::parse(&map(&path.encode()))
 }
 
 fn map_guard_alternatives<F>(alternatives: Vec<Vec<Guard>>, map: &mut F) -> Vec<Vec<Guard>>

@@ -95,7 +95,7 @@ fn guard_gates_hint(guard: &Guard, path: &str) -> bool {
         }
         | Guard::ContainsTruthyMember {
             path: guard_path, ..
-        } => !guard_path.trim().is_empty() && foreign(guard_path),
+        } => guard_path.segments().len() != 0 && foreign(&guard_path.encode()),
         // A type test PARTITIONS its subject: hints observed under
         // it hold only for the tested types, even on the hinted
         // path itself (a self-truthy guard, by contrast, only
@@ -108,10 +108,10 @@ fn guard_gates_hint(guard: &Guard, path: &str) -> bool {
         }
         | Guard::NotMatchesPattern {
             path: guard_path, ..
-        } => !guard_path.trim().is_empty(),
+        } => guard_path.segments().len() != 0,
         Guard::Or { paths } => paths
             .iter()
-            .any(|guard_path| !guard_path.trim().is_empty() && foreign(guard_path)),
+            .any(|guard_path| guard_path.segments().len() != 0 && foreign(&guard_path.encode())),
         Guard::AnyOf { alternatives } => alternatives
             .iter()
             .flatten()
@@ -223,9 +223,10 @@ pub(super) fn predicate_applies_to_flowing_path(
         }
         _ => return true,
     };
+    let predicate_path = predicate_path.encode();
     predicate_path == path
-        || !flowing.contains(predicate_path)
-        || crate::helper_meta::values_paths_are_related(predicate_path, path)
+        || !flowing.contains(&predicate_path)
+        || crate::helper_meta::values_paths_are_related(&predicate_path, path)
 }
 
 impl Interpreter<'_> {
@@ -638,7 +639,9 @@ impl Interpreter<'_> {
             }
             let mut extra = Vec::new();
             if defaulted.contains(path) {
-                extra.push(Guard::Default { path: path.clone() });
+                extra.push(Guard::Default {
+                    path: helm_schema_core::ValuesPath::parse(path),
+                });
             }
             let (resource, provenance) = match &self.current_site {
                 Some(site) => (

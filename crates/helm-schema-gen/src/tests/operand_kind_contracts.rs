@@ -1828,13 +1828,13 @@ fn helper_json_array_range_scopes_body_rows_by_payload_liveness() {
         have: &use_.condition,
         want: &helm_schema_core::GuardDnf::from_guards([
             Guard::Truthy {
-                path: "namespaces".to_string(),
+                path: helm_schema_core::ValuesPath::parse("namespaces"),
             },
             Guard::Truthy {
-                path: "rbac.create".to_string(),
+                path: helm_schema_core::ValuesPath::parse("rbac.create"),
             },
             Guard::Truthy {
-                path: "roleName".to_string(),
+                path: helm_schema_core::ValuesPath::parse("roleName"),
             },
         ])
     );

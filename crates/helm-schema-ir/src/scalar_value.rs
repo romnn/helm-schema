@@ -500,7 +500,7 @@ impl ScalarValue {
                 Predicate::False
             }),
             Self::Identity(path) => TruthCondition::exact(Predicate::from(Guard::Eq {
-                path: path.clone(),
+                path: helm_schema_core::ValuesPath::parse(path),
                 value: target.clone(),
             })),
             Self::Rendered(parts) => {
@@ -531,7 +531,7 @@ impl ScalarValue {
                     return TruthCondition::exact(Predicate::False);
                 };
                 let predicate = Predicate::from(Guard::MatchesPattern {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     pattern: format!("^{}$", crate::escape_regex_literal(target)),
                     templated: false,
                 });
@@ -573,7 +573,7 @@ impl ScalarValue {
             }),
             Self::PrintfStringIdentity(path) => Some(
                 helm_schema_core::Predicate::from(helm_schema_core::Guard::MatchesPattern {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     pattern: "^$".to_string(),
                     templated: false,
                 })
@@ -601,7 +601,7 @@ impl ScalarValue {
                 TruthCondition::Unknown
             }
             Self::Identity(path) => TruthCondition::exact(Predicate::from(Guard::MatchesPattern {
-                path: path.clone(),
+                path: helm_schema_core::ValuesPath::parse(path),
                 pattern: pattern.to_string(),
                 templated: false,
             })),
@@ -624,7 +624,7 @@ impl ScalarValue {
                     return TruthCondition::Unknown;
                 };
                 let raw_match = Predicate::from(Guard::MatchesPattern {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     pattern: pattern.to_string(),
                     templated: false,
                 });
@@ -645,7 +645,7 @@ impl ScalarValue {
                                     | crate::helper_meta::LexicalEscape::CutAtToken(token) => token,
                                 };
                                 Predicate::from(Guard::MatchesPattern {
-                                    path: path.clone(),
+                                    path: helm_schema_core::ValuesPath::parse(path),
                                     pattern: crate::escape_regex_literal(token),
                                     templated: false,
                                 })
@@ -667,7 +667,7 @@ impl ScalarValue {
                 // string-restricted rendering keeps the guard exact.
                 if *stringified {
                     let raw_string_mismatch = Predicate::from(Guard::NotMatchesPattern {
-                        path: path.clone(),
+                        path: helm_schema_core::ValuesPath::parse(path),
                         pattern: pattern.to_string(),
                     });
                     TruthCondition::from_subsets(predicate, raw_string_mismatch, false)
@@ -740,7 +740,7 @@ fn rendered_identity_equals(
         lexical_escapes,
     );
     let mut matches = vec![Predicate::from(Guard::MatchesPattern {
-        path: path.to_string(),
+        path: helm_schema_core::ValuesPath::parse(path),
         pattern: string_pattern,
         templated: false,
     })];
@@ -776,7 +776,7 @@ fn rendered_identity_equals(
         matches.extend(preimage.into_iter().filter_map(|value| {
             (!matches!(value, GuardValue::String(_))).then(|| {
                 Predicate::from(Guard::Eq {
-                    path: path.to_string(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     value,
                 })
             })

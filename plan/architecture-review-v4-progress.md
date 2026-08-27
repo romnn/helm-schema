@@ -589,7 +589,7 @@
 
 ## A4 — owned JSON-kind and integer-range requirement operations
 
-- Status: landed; commit pending.
+- Status: landed in `c72e7d1e`.
 - Contract: behavior-bearing. Replace the disagreeing stringly requirement interpreters with two
   distinct owned operations: `admitted_json_value_kinds` for set-valued JSON kind-domain reasoning,
   with disjoint integer and non-integer-number classes, and `integer_range_constraint` for the
@@ -2874,3 +2874,128 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +19 (63,684 to 63,703).
+
+## B4a.3b — migrate atomic guard paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of all value-path payloads in the public `Guard` enum to
+  segmented `ValuesPath`, including the `Or.paths` collection and recursively nested `AnyOf`
+  alternatives. Literal patterns, keys, members, schema types, and comparison values remain in
+  their distinct string/scalar domains. JSON guard bytes and legacy ordering stay exact.
+- Acceptance baseline: `c72e7d1e` (B4a.3a).
+- Baseline production LOC: 63,703 Rust lines from `task tokei:core` on `c72e7d1e`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, JSON wire, ordering, or corpus acceptance changes.
+  - Guard serde emits and accepts the exact legacy escaped strings; `Guard::value_paths` remains an
+    explicit encoded-string boundary for unmigrated consumers, while `map_value_paths` applies its
+    existing string callback before reconstructing typed paths.
+  - Every atomic guard constructor and pattern match migrates compiler-exhaustively. No coercion
+    trait, parallel path field, comparison shim, cached encoding, or unrelated string newtype is
+    allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results: all 25 single-path `Guard` variants and `Guard::Or.paths` now store segmented
+  `ValuesPath`; `AnyOf` remains recursively exhaustive through `Guard`. Custom `ValuesPath` serde
+  preserves the exact guard JSON strings, manual `Ord` preserves canonical guard and DNF order,
+  and `value_paths`/`map_value_paths` encode only at their existing public string-callback
+  boundaries. String ancestry, wildcard, relative-member, and key-concretization readers exposed by
+  the compiler now operate on segments. The 432-test focused core+IR suite passes. Schema and
+  symbolic-IR dumps are recursively byte-exact; 60 charts and 121,055 probes report zero flips,
+  zero mandatory drops, and zero candidate-accepts/Helm-aborts cells.
+- Deviations:
+  - The first compiler preflight exposed 47 core production sites and then 286 IR production sites,
+    including raw comparison, prefix/suffix, wildcard, and ancestry protocols rather than only
+    constructors. The full atomic-guard scope was retained: every reader was migrated structurally
+    or given an explicit encode at a genuinely still-string carrier. No compatibility comparison
+    trait was added.
+  - A test-only mechanical preflight rewrote every literal field ending in `path`, which included
+    unrelated string-backed DTOs such as `ConditionalGuard` and provider uses. Workspace
+    all-target compilation rejected that state; compiler-selected rows were restored and Guard-only
+    test construction was migrated explicitly. No archive, dump, fixture, or result from the
+    rejected state is adopted.
+  - Exhaustive `Guard` path remapping and `Guard`→`ConditionalGuard` conversion crossed the
+    repository's 100-line lint threshold after explicit conversion made every variant visible.
+    Narrow self-validating `too_many_lines` expectations keep each exhaustive match auditable; the
+    underlying needless ownership warning in the remap helper was fixed by borrowing.
+  - The final1 archive, dumps, prober, and complete gates were clean, but the final self-adversarial
+    search found four typed→encode→parse cycles at already-typed `AbstractValue` and `Splice`
+    boundaries. That state was rejected despite byte identity. Direct typed clones replaced the
+    cycles; only final2 artifacts and gates are authoritative. Final2 schema and IR dumps are also
+    recursively byte-identical to final1, so no artifact or fixture from the rejected state is
+    adopted.
+- Adjudication evidence: zero flips require no Helm cell adjudication; adjudication ran enabled with
+  zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Scalar guard variants | Same truth, comparison, pattern, type, and collection semantics | Core guard/predicate suites. |
+| `Or` and nested `AnyOf` | Same canonical order, deduplication, and recursive paths | Guard-DNF and serde tests. |
+| IR/gen consumers | Same encoded diagnostics, contracts, and schema output | Full workspace, dumps, and prober. |
+
+### Review dossier
+
+- Focused proof: 432/432 core and IR tests pass, including Guard DNF canonicalization, JSON serde,
+  predicate normalization, typed condition extraction, wildcard/member scoping, and guard lowering.
+  Workspace all-target compilation and all-target/all-feature Clippy pass warning-free.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3b-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a3b-final2.tar.zst`; exit 0, 87
+  binaries and 125 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3b-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a3b-final2.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 182.472 seconds. A recursive byte comparison against the B4a.3a dump
+  exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3b-final2-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a3b-final2.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.104 seconds and 18 artifacts are
+  written. A recursive byte comparison against the B4a.3a dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3b-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=c72e7d1e
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3b-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3b-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a3b-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 68.726 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868 disclosed
+  bounded reductions remain unchanged.
+- Public/wire decision: the public `Guard` variant fields narrow from `String`/`Vec<String>` to
+  `ValuesPath`/`Vec<ValuesPath>`, and `Guard::value_paths` now returns owned encoded strings instead
+  of borrowed strings because typed paths have no cached encoding. `map_value_paths` deliberately
+  retains its existing string callback as a public rewrite boundary. JSON bytes, variant tags,
+  field names, and ordering remain exact. No `Deref`, `AsRef<str>`, `Display`, `From<&str>`, or
+  cross-type comparison implementation was added.
+
+### Self-adversarial pass
+
+- Literal regexes, mapping keys, member names, schema-type names, markers, and comparison values
+  remain in their distinct domains. Only values identities are newtyped.
+- Range ancestry, member-relative paths, range-key concretization, and wildcard detection use
+  segments. Compatibility with the legacy literal `*` spelling is intentionally retained until
+  B4b introduces `EachMember`; this round makes no literal-star behavior claim.
+- `ConditionalGuard` remains string-backed for its separately pre-registered migration. Every
+  Guard↔ConditionalGuard seam parses or encodes explicitly, and the byte-exact symbolic dump proves
+  the temporary boundary preserves the existing contract.
+- Manual encoded-string ordering remains the only `ValuesPath::Ord`; `Guard::Or` canonicalization,
+  nested `AnyOf`, DNF sets, serde, and all 18 symbolic fixtures therefore retain exact legacy order.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free; 4 minutes 44 seconds.
+- `task lint:fc`; exit 0, 48 combinations, 13 packages, three targets; 1,376.32 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass; 174.936 seconds execution time.
+- `task test:integration`; exit 0, 558 pass, 24 skipped; 1,453.192 seconds.
+- `task test:all`; exit 0, 1,870 pass, 24 skipped including live-network tests; 1,535.351 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 63,929 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +226 (63,703 to 63,929).

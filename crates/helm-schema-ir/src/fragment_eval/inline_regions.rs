@@ -269,7 +269,9 @@ impl Interpreter<'_> {
         self.record_selection_range_captures(range_subject.value.as_ref(), destructured);
         let mut own = Vec::new();
         for path in source_paths {
-            let guard = Guard::Range { path: path.clone() };
+            let guard = Guard::Range {
+                path: helm_schema_core::ValuesPath::parse(path),
+            };
             self.push_control_read(path, std::slice::from_ref(&guard));
             own.push(Predicate::from(guard.clone()));
             self.push_predicate(Predicate::from(guard));
@@ -616,7 +618,7 @@ impl Interpreter<'_> {
         if let Some(guards) = &guards {
             for guard in guards {
                 for path in guard.value_paths() {
-                    self.push_control_read(path, std::slice::from_ref(guard));
+                    self.push_control_read(&path, std::slice::from_ref(guard));
                 }
                 self.push_predicate(Predicate::from(guard.clone()));
             }

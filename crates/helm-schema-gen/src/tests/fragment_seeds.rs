@@ -281,10 +281,14 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![
             Guard::Truthy {
-                path: "signoz-otel-gateway.serviceAccount.create".to_string(),
+                path: helm_schema_core::ValuesPath::parse(
+                    "signoz-otel-gateway.serviceAccount.create",
+                ),
             },
             Guard::Default {
-                path: "signoz-otel-gateway.serviceAccount.name".to_string(),
+                path: helm_schema_core::ValuesPath::parse(
+                    "signoz-otel-gateway.serviceAccount.name",
+                ),
             },
         ]),
         resource: None,
@@ -354,7 +358,7 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
         ]),
         kind: ValueKind::Fragment,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-            path: "clickhouse.securityContext.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("clickhouse.securityContext.enabled"),
         }]),
         resource: None,
         provenance: Vec::new(),
@@ -406,7 +410,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             path: YamlPath(vec!["env[*]".to_string(), "valueFrom".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-                path: "signoz.smtpVars.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("signoz.smtpVars.enabled"),
             }]),
             resource: None,
             provenance: Vec::new(),
@@ -430,7 +434,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             ]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-                path: "signoz.smtpVars.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("signoz.smtpVars.enabled"),
             }]),
             resource: None,
             provenance: Vec::new(),
@@ -507,7 +511,7 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
         ]),
         kind: ValueKind::Fragment,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-            path: "alertmanager.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("alertmanager.enabled"),
         }]),
         resource: None,
         provenance: Vec::new(),
@@ -554,7 +558,7 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
         path: YamlPath(vec!["data".to_string()]),
         kind: ValueKind::Fragment,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-            path: "clickhouse.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("clickhouse.enabled"),
         }]),
         resource: None,
         provenance: Vec::new(),
@@ -647,10 +651,10 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 kind: ValueKind::Scalar,
                 condition: helm_schema_core::GuardDnf::from_guards(vec![
                     Guard::Truthy {
-                        path: "serviceAccount.create".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("serviceAccount.create"),
                     },
                     Guard::Default {
-                        path: "serviceAccount.name".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("serviceAccount.name"),
                     },
                 ]),
                 resource: None,
@@ -675,7 +679,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 ]),
                 kind: ValueKind::Scalar,
                 condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Not {
-                    path: "serviceAccount.create".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("serviceAccount.create"),
                 }]),
                 resource: None,
                 provenance: Vec::new(),

@@ -444,11 +444,11 @@ impl ValuePathContext<'_> {
             let mut guards = vec![guard];
             if default_collides {
                 guards.push(Guard::NotEq {
-                    path: source.path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&source.path),
                     value: helm_schema_core::GuardValue::Int(0),
                 });
                 guards.push(Guard::NotEq {
-                    path: source.path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&source.path),
                     value: helm_schema_core::GuardValue::string(""),
                 });
             }
@@ -461,14 +461,14 @@ impl ValuePathContext<'_> {
         Some(Predicate::Or(vec![
             arm(
                 Guard::IntLt {
-                    path: source.path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&source.path),
                     bound: literal,
                 },
                 "lt",
             ),
             arm(
                 Guard::IntGt {
-                    path: source.path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&source.path),
                     bound: literal,
                 },
                 "gt",
@@ -581,11 +581,11 @@ impl ValuePathContext<'_> {
             // which renders as truthy "<nil>".
             return Some(Predicate::all(vec![
                 Predicate::from(Guard::HasKey {
-                    path: parent,
+                    path: helm_schema_core::ValuesPath::parse(&parent),
                     key: (*leaf_key).to_string(),
                 }),
                 Predicate::from(Guard::NotEq {
-                    path,
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     value: GuardValue::string(""),
                 }),
             ]));
@@ -596,7 +596,7 @@ impl ValuePathContext<'_> {
         ) {
             let path = self.single_resolved_values_path_expr(subject)?;
             return Some(Predicate::from(Guard::NotEq {
-                path,
+                path: helm_schema_core::ValuesPath::parse(&path),
                 value: GuardValue::string(""),
             }));
         }
@@ -675,7 +675,7 @@ impl ValuePathContext<'_> {
             return None;
         };
         let predicate = Predicate::from(Guard::RangeKeyEquals {
-            path: path.clone(),
+            path: helm_schema_core::ValuesPath::parse(path),
             key: literal.to_string(),
         });
         Some(if negated {
@@ -701,7 +701,7 @@ impl ValuePathContext<'_> {
             return None;
         };
         Some(Predicate::from(Guard::RangeKeyPrefix {
-            path: path.clone(),
+            path: helm_schema_core::ValuesPath::parse(path),
             prefix: prefix.to_string(),
         }))
     }
@@ -739,7 +739,7 @@ impl ValuePathContext<'_> {
             && let Some(path) = self.single_resolved_values_path_expr(map_expr)
         {
             return Some(Predicate::from(Guard::MinMembers {
-                path,
+                path: helm_schema_core::ValuesPath::parse(&path),
                 bound: bound.checked_add(1)?,
             }));
         }
@@ -870,7 +870,7 @@ impl ValuePathContext<'_> {
         for path in &subject_paths {
             for name in &names {
                 arms.push(Predicate::from(Guard::Eq {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     value: GuardValue::string(name),
                 }));
             }
@@ -1123,7 +1123,7 @@ impl ValuePathContext<'_> {
             // `ingressRoute` gate).
             AbstractValue::RangeKey(collection) if !collection.is_empty() => {
                 return Some(Predicate::from(Guard::RangeKeyMatches {
-                    path: collection,
+                    path: helm_schema_core::ValuesPath::parse(&collection),
                     pattern: pattern.to_string(),
                 }));
             }
@@ -1138,7 +1138,7 @@ impl ValuePathContext<'_> {
         // The string contract from `tpl`'s input assertion still stands.
         let templated = self.subject_is_derived_text(subject, &path);
         Some(Predicate::from(Guard::MatchesPattern {
-            path,
+            path: helm_schema_core::ValuesPath::parse(&path),
             pattern: pattern.to_string(),
             templated,
         }))
@@ -1167,7 +1167,7 @@ impl ValuePathContext<'_> {
             format!("^{}", crate::escape_regex_literal(affix))
         };
         Some(Predicate::from(Guard::MatchesPattern {
-            path,
+            path: helm_schema_core::ValuesPath::parse(&path),
             pattern,
             templated,
         }))
@@ -1186,7 +1186,7 @@ impl ValuePathContext<'_> {
             .input_identity_path()
             .filter(|path| !path.is_empty())?;
         Some(Predicate::from(Guard::MatchesPattern {
-            path,
+            path: helm_schema_core::ValuesPath::parse(&path),
             pattern: crate::escape_regex_literal(needle),
             templated: false,
         }))
@@ -1281,7 +1281,7 @@ impl ValuePathContext<'_> {
             .into_iter()
             .map(|path| match &schema_type {
                 Some(schema_type) => Predicate::from(Guard::TypeIs {
-                    path,
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     schema_type: schema_type.clone(),
                 }),
                 None => Predicate::invalid_kind_path(path),
@@ -1430,7 +1430,7 @@ impl ValuePathContext<'_> {
                     .into_iter()
                     .map(|value| {
                         Predicate::from(Guard::Eq {
-                            path: path.clone(),
+                            path: helm_schema_core::ValuesPath::parse(&path),
                             value,
                         })
                     })
@@ -1452,7 +1452,10 @@ impl ValuePathContext<'_> {
             if paths.next().is_some() {
                 return None;
             }
-            return Some(Predicate::from(Guard::ContainsEquals { path, value }));
+            return Some(Predicate::from(Guard::ContainsEquals {
+                path: helm_schema_core::ValuesPath::parse(&path),
+                value,
+            }));
         }
         let targets: Vec<String> = match haystack.deparen() {
             TemplateExpr::Call { function, args } if function == "list" && !args.is_empty() => args
@@ -1497,13 +1500,15 @@ impl ValuePathContext<'_> {
                 return None;
             }
             return Some(Predicate::Or(vec![
-                Predicate::from(Guard::Absent { path: path.clone() }),
+                Predicate::from(Guard::Absent {
+                    path: helm_schema_core::ValuesPath::parse(&path),
+                }),
                 Predicate::from(Guard::Eq {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     value: GuardValue::Null,
                 }),
                 Predicate::from(Guard::Eq {
-                    path,
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     value: GuardValue::string(""),
                 }),
             ]));
@@ -1525,7 +1530,7 @@ impl ValuePathContext<'_> {
                 .into_iter()
                 .map(|target| {
                     Predicate::from(Guard::Eq {
-                        path: path.clone(),
+                        path: helm_schema_core::ValuesPath::parse(&path),
                         value: GuardValue::string(target),
                     })
                 })
@@ -1877,7 +1882,12 @@ impl ValuePathContext<'_> {
         }
         paths.sort();
         paths.dedup();
-        paths.into_iter().map(|path| Guard::Not { path }).collect()
+        paths
+            .into_iter()
+            .map(|path| Guard::Not {
+                path: helm_schema_core::ValuesPath::parse(&path),
+            })
+            .collect()
     }
 
     /// Sound positive strengthenings of otherwise-undecodable comparison
@@ -1957,7 +1967,7 @@ impl ValuePathContext<'_> {
             return Vec::new();
         };
         vec![Guard::MatchesPattern {
-            path,
+            path: helm_schema_core::ValuesPath::parse(&path),
             pattern: format!("^[\\s\\S]{{{},}}$", bound + 1),
             templated: false,
         }]
@@ -1995,11 +2005,11 @@ impl ValuePathContext<'_> {
         };
         let mut guards = vec![
             Guard::TypeIs {
-                path: source.path.clone(),
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 schema_type: "integer".to_string(),
             },
             Guard::NotEq {
-                path: source.path.clone(),
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 value: helm_schema_core::GuardValue::Int(literal),
             },
         ];
@@ -2008,7 +2018,7 @@ impl ValuePathContext<'_> {
         // raw 0 no longer satisfies `ne`, so exclude it from the claim.
         if literal != 0 && source.default_int == Some(literal) {
             guards.push(Guard::NotEq {
-                path: source.path,
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 value: helm_schema_core::GuardValue::Int(0),
             });
         }
@@ -2048,11 +2058,11 @@ impl ValuePathContext<'_> {
         };
         let mut guards = vec![
             Guard::IntGt {
-                path: source.path.clone(),
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 bound: below,
             },
             Guard::IntLt {
-                path: source.path.clone(),
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 bound: above,
             },
         ];
@@ -2061,7 +2071,7 @@ impl ValuePathContext<'_> {
         // raw 0 no longer satisfies the equality, so exclude it.
         if literal == 0 && source.default_int.is_some_and(|fallback| fallback != 0) {
             guards.push(Guard::NotEq {
-                path: source.path,
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 value: helm_schema_core::GuardValue::Int(0),
             });
         }
@@ -2137,7 +2147,7 @@ impl ValuePathContext<'_> {
                 _ => return Vec::new(),
             };
             guards.push(Guard::NotEq {
-                path: path.clone(),
+                path: helm_schema_core::ValuesPath::parse(&path),
                 value,
             });
         }
@@ -2205,7 +2215,7 @@ impl ValuePathContext<'_> {
             return Vec::new();
         };
         vec![Guard::MatchesPattern {
-            path,
+            path: helm_schema_core::ValuesPath::parse(&path),
             pattern: crate::helper_meta::pattern_with_lexical_escapes(&pattern, &escapes),
             templated: false,
         }]
@@ -2366,12 +2376,12 @@ impl ValuePathContext<'_> {
         };
         let mut guards = vec![if greater {
             Guard::IntGt {
-                path: source.path.clone(),
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 bound,
             }
         } else {
             Guard::IntLt {
-                path: source.path.clone(),
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 bound,
             }
         }];
@@ -2388,7 +2398,7 @@ impl ValuePathContext<'_> {
         });
         if zero_claims && fallback_escapes {
             guards.push(Guard::NotEq {
-                path: source.path,
+                path: helm_schema_core::ValuesPath::parse(&source.path),
                 value: helm_schema_core::GuardValue::Int(0),
             });
         }
@@ -2610,7 +2620,7 @@ impl ValuePathContext<'_> {
                                     .map(|path| {
                                         predicate_any(vec![
                                             Predicate::from(Guard::Eq {
-                                                path: path.clone(),
+                                                path: helm_schema_core::ValuesPath::parse(path),
                                                 value: value.clone(),
                                             }),
                                             Predicate::truthy_path(path.clone()).negated(),
@@ -2624,7 +2634,9 @@ impl ValuePathContext<'_> {
                                     .iter()
                                     .map(|path| {
                                         Predicate::from(Guard::Eq {
-                                            path: path.clone(),
+                                            path: helm_schema_core::ValuesPath::parse(
+                                                &path.clone(),
+                                            ),
                                             value: value.clone(),
                                         })
                                     })
@@ -2696,12 +2708,12 @@ impl ValuePathContext<'_> {
                 .map(|candidate| {
                     if negated {
                         Predicate::from(Guard::NotEq {
-                            path: path.clone(),
+                            path: helm_schema_core::ValuesPath::parse(&path),
                             value: candidate,
                         })
                     } else {
                         Predicate::from(Guard::Eq {
-                            path: path.clone(),
+                            path: helm_schema_core::ValuesPath::parse(&path),
                             value: candidate,
                         })
                     }
@@ -2931,7 +2943,7 @@ impl ValuePathContext<'_> {
                 .iter()
                 .map(|schema_type| {
                     Predicate::from(Guard::TypeIs {
-                        path: path.clone(),
+                        path: helm_schema_core::ValuesPath::parse(&path),
                         schema_type: (*schema_type).to_string(),
                     })
                 })
@@ -2991,7 +3003,7 @@ impl ValuePathContext<'_> {
         for (path, meta) in sources {
             let type_predicate = match schema_type {
                 Some(schema_type) => Predicate::from(Guard::TypeIs {
-                    path,
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     schema_type: schema_type.to_string(),
                 }),
                 None => Predicate::invalid_kind_path(path),
@@ -3302,17 +3314,19 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
         }
         AbstractValue::ValuesPath(path) => Some(
             Predicate::from(Guard::Absent {
-                path: {
+                path: helm_schema_core::ValuesPath::parse(&{
                     let mut path = path.clone();
                     path.push(key);
                     path.encode()
-                },
+                }),
             })
             .negated(),
         ),
         AbstractValue::JsonDecodedPath(path) => Some(
             Predicate::from(Guard::Absent {
-                path: helm_schema_core::append_value_path(path, key),
+                path: helm_schema_core::ValuesPath::parse(&helm_schema_core::append_value_path(
+                    path, key,
+                )),
             })
             .negated(),
         ),
@@ -3325,7 +3339,9 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
         {
             Some(
                 Predicate::from(Guard::Absent {
-                    path: helm_schema_core::append_value_path(path, key),
+                    path: helm_schema_core::ValuesPath::parse(
+                        &helm_schema_core::append_value_path(path, key),
+                    ),
                 })
                 .negated(),
             )
@@ -3336,7 +3352,9 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
         // misselection there only widens.
         AbstractValue::OutputPath(path, meta) if meta.nil_scrubbed && !path.is_empty() => Some(
             Predicate::from(Guard::Absent {
-                path: helm_schema_core::append_value_path(path, key),
+                path: helm_schema_core::ValuesPath::parse(&helm_schema_core::append_value_path(
+                    path, key,
+                )),
             })
             .negated(),
         ),
@@ -3360,8 +3378,9 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                         matches!(
                             predicate,
                             Predicate::Guard(Guard::Truthy { path: guarded })
-                                if guarded != path
-                                    && helm_schema_core::values_path_is_descendant(path, guarded)
+                                if guarded.encode() != *path
+                                    && helm_schema_core::ValuesPath::parse(path)
+                                        .is_descendant_of(guarded)
                         )
                     })
                 })
@@ -3373,7 +3392,9 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
         {
             Some(
                 Predicate::from(Guard::Absent {
-                    path: helm_schema_core::append_value_path(path, key),
+                    path: helm_schema_core::ValuesPath::parse(
+                        &helm_schema_core::append_value_path(path, key),
+                    ),
                 })
                 .negated(),
             )

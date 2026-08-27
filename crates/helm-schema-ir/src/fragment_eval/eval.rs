@@ -1048,14 +1048,14 @@ impl<'a> Interpreter<'a> {
     pub(super) fn record_required_condition(&mut self, subject_path: &str) {
         let empty = Predicate::Or(vec![
             Predicate::from(Guard::Absent {
-                path: subject_path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(subject_path),
             }),
             Predicate::from(Guard::Eq {
-                path: subject_path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(subject_path),
                 value: helm_schema_core::GuardValue::Null,
             }),
             Predicate::from(Guard::Eq {
-                path: subject_path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(subject_path),
                 value: helm_schema_core::GuardValue::string(""),
             }),
         ]);
@@ -1262,7 +1262,7 @@ impl<'a> Interpreter<'a> {
                     let mut extra = Vec::new();
                     if splice.meta.defaulted {
                         extra.push(Guard::Default {
-                            path: splice.values_path.encode(),
+                            path: splice.values_path.clone(),
                         });
                     }
                     // A key position formats every SCALAR (a numeric label
@@ -1326,7 +1326,7 @@ impl<'a> Interpreter<'a> {
             .conjoined(&helper_condition);
         if meta.defaulted {
             condition = condition.conjoined_with_guards([Guard::Default {
-                path: values_path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(values_path),
             }]);
         }
         self.push_read_row_with_condition(
@@ -1363,9 +1363,10 @@ impl<'a> Interpreter<'a> {
                         },
                         _ => return true,
                     };
+                    let path = path.encode();
                     path == claim_path
-                        || !sibling_claims.contains(path)
-                        || crate::helper_meta::values_paths_are_related(path, claim_path)
+                        || !sibling_claims.contains(&path)
+                        || crate::helper_meta::values_paths_are_related(&path, claim_path)
                 })
                 .cloned(),
         )
@@ -1468,7 +1469,7 @@ impl<'a> Interpreter<'a> {
                         self.member_host_conversions
                             .iter()
                             .filter(|conversion| {
-                                &conversion.path == target
+                                conversion.path == target.encode()
                                     && conversion
                                         .outer_predicates
                                         .iter()

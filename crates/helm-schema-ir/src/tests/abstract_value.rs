@@ -211,7 +211,7 @@ fn guard_metadata_preserves_raw_identity_through_member_selection() {
         have: crate::value_path_context::value_has_key(&expected, "runAsUser"),
         want: Some(
             Predicate::from(helm_schema_core::Guard::Absent {
-                path: "workers.celery.sets.*.securityContexts.pod.runAsUser".to_string(),
+                path: helm_schema_core::ValuesPath::parse("workers.celery.sets.*.securityContexts.pod.runAsUser"),
             })
             .negated()
         )

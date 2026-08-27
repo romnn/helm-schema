@@ -1037,7 +1037,7 @@ impl Interpreter<'_> {
         for path in agreed.token_initial {
             captures.push(crate::eval_effect::FailCapture {
                 conjunction: vec![Predicate::from(crate::Guard::TypeIs {
-                    path,
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     schema_type: "array".to_string(),
                 })],
                 ranged: crate::range_modes::RangeModes::default(),

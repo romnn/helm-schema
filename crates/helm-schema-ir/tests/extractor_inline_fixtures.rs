@@ -33,26 +33,26 @@ fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
 
 fn truthy(p: &str) -> Guard {
     Guard::Truthy {
-        path: p.to_string(),
+        path: helm_schema_core::ValuesPath::parse(p),
     }
 }
 
 fn range_guard(p: &str) -> Guard {
     Guard::Range {
-        path: p.to_string(),
+        path: helm_schema_core::ValuesPath::parse(p),
     }
 }
 
 fn eq(p: &str, value: &str) -> Guard {
     Guard::Eq {
-        path: p.to_string(),
+        path: helm_schema_core::ValuesPath::parse(p),
         value: GuardValue::string(value),
     }
 }
 
 fn not(p: &str) -> Guard {
     Guard::Not {
-        path: p.to_string(),
+        path: helm_schema_core::ValuesPath::parse(p),
     }
 }
 
@@ -576,7 +576,7 @@ fn local_storage_class_alias_emits_guarded_leaf_use() {
                     .single_guard_conjunction()
                     .contains(&truthy("global.storageClass"))
                 && use_.single_guard_conjunction().contains(&Guard::Default {
-                    path: "global.storageClass".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("global.storageClass"),
                 })
         }),
         "expected a rendered `storageClassName` use for global.storageClass carrying both Truthy and Default guards; got {ir:#?}",
@@ -1166,7 +1166,7 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
     sim_assert_eq!(
         have: flag_uses[0].single_guard_conjunction(),
         want: vec![helm_schema_ir::Guard::Truthy {
-            path: "featureFlag".to_string()
+            path: helm_schema_core::ValuesPath::parse("featureFlag")
         }],
         "helper-context condition source use keeps its own condition",
     );

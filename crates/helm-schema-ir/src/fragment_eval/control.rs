@@ -650,8 +650,7 @@ impl Interpreter<'_> {
             let subset = self.definite_member_condition_sound_subset(header.expr());
             let subset_paths: BTreeSet<String> = subset
                 .iter()
-                .flat_map(|guard| guard.value_paths())
-                .map(str::to_string)
+                .flat_map(helm_schema_core::Guard::value_paths)
                 .collect();
             (!subset.is_empty() && subset_paths != predicate.value_paths()).then_some(subset)
         } else {
@@ -715,7 +714,7 @@ impl Interpreter<'_> {
             if let Some(guards) = conjunct.contract_guards() {
                 for guard in &guards {
                     for path in guard.value_paths() {
-                        self.push_control_read(path, std::slice::from_ref(guard));
+                        self.push_control_read(&path, std::slice::from_ref(guard));
                     }
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
@@ -820,7 +819,7 @@ impl Interpreter<'_> {
         if !accumulator_is_empty || self.loop_depth != 1 {
             return Vec::new();
         }
-        let ranged_paths: BTreeSet<&String> = self
+        let ranged_paths: BTreeSet<&helm_schema_core::ValuesPath> = self
             .active_predicates
             .iter()
             .filter_map(|predicate| match predicate {
@@ -912,7 +911,7 @@ impl Interpreter<'_> {
         }
         for guard in &predicate.contract_guards().unwrap_or_default() {
             for path in guard.value_paths() {
-                self.push_control_read(path, &[]);
+                self.push_control_read(&path, &[]);
             }
         }
         if let TemplateExpr::VariableDefinition { name, .. } = header.expr()
@@ -1073,7 +1072,9 @@ impl Interpreter<'_> {
         let mut own = Vec::new();
         let mut extra = Contributions::default();
         for path in &source_paths {
-            let predicate = Predicate::from(Guard::Range { path: path.clone() });
+            let predicate = Predicate::from(Guard::Range {
+                path: helm_schema_core::ValuesPath::parse(path),
+            });
             if emit_header_read && !renders_scalar_items {
                 // A helper-scope read carries the range guard only when the
                 // range iterates the path ITSELF (or the destructured form):
@@ -1089,7 +1090,9 @@ impl Interpreter<'_> {
                 let direct_range_of_path =
                     destructured || input_identity_path.as_deref() == Some(path.as_str());
                 if !self.helper_scope || direct_range_of_path {
-                    let guard = Guard::Range { path: path.clone() };
+                    let guard = Guard::Range {
+                        path: helm_schema_core::ValuesPath::parse(path),
+                    };
                     self.push_control_read(path, std::slice::from_ref(&guard));
                 } else {
                     self.push_control_read(path, &[]);
@@ -1776,7 +1779,7 @@ impl Interpreter<'_> {
             else {
                 return None;
             };
-            if guard_path != *path {
+            if guard_path.encode() != *path {
                 return None;
             }
             spellings.insert(value);
@@ -1841,10 +1844,8 @@ impl Interpreter<'_> {
             };
             for conjunct in conjuncts {
                 if let Predicate::Guard(Guard::Eq { path, value }) = &conjunct
-                    && !path.starts_with('$')
-                    && !helm_schema_core::split_value_path(path)
-                        .iter()
-                        .any(|part| part == "*")
+                    && !path.encode().starts_with('$')
+                    && !path.segments().any(|part| part == "*")
                 {
                     return vec![Guard::NotEq {
                         path: path.clone(),
@@ -1858,10 +1859,8 @@ impl Interpreter<'_> {
                 // empty-tag → agent-version fallback).
                 if let Predicate::Not(inner) = &conjunct
                     && let Predicate::Guard(Guard::Truthy { path }) = inner.as_ref()
-                    && !path.starts_with('$')
-                    && !helm_schema_core::split_value_path(path)
-                        .iter()
-                        .any(|part| part == "*")
+                    && !path.encode().starts_with('$')
+                    && !path.segments().any(|part| part == "*")
                 {
                     return vec![Guard::Truthy { path: path.clone() }];
                 }

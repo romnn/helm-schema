@@ -194,7 +194,7 @@ fn abstract_value_type_is(
                 values_numeric_type_truth(&path.encode(), type_name)
             } else {
                 TruthCondition::exact(Predicate::from(Guard::TypeIs {
-                    path: path.encode(),
+                    path: path.clone(),
                     schema_type: schema_type.to_string(),
                 }))
             }
@@ -204,7 +204,7 @@ fn abstract_value_type_is(
                 values_numeric_type_truth(path, type_name)
             } else {
                 TruthCondition::exact(Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     schema_type: schema_type.to_string(),
                 }))
             }
@@ -265,11 +265,11 @@ fn type_is_for_alternatives<'a>(
 
 fn values_numeric_type_truth(path: &str, type_name: &str) -> TruthCondition {
     let integer = Predicate::from(Guard::TypeIs {
-        path: path.to_string(),
+        path: helm_schema_core::ValuesPath::parse(path),
         schema_type: "integer".to_string(),
     });
     let number = Predicate::from(Guard::TypeIs {
-        path: path.to_string(),
+        path: helm_schema_core::ValuesPath::parse(path),
         schema_type: "number".to_string(),
     });
     match type_name {
@@ -291,11 +291,11 @@ fn json_decoded_numeric_type_truth(
     match type_name {
         "int64" => TruthCondition::exact(Predicate::False),
         "float64" => TruthCondition::exact(Predicate::from(Guard::TypeIs {
-            path: path.to_string(),
+            path: helm_schema_core::ValuesPath::parse(path),
             schema_type: "number".to_string(),
         })),
         _ => TruthCondition::exact(Predicate::from(Guard::TypeIs {
-            path: path.to_string(),
+            path: helm_schema_core::ValuesPath::parse(path),
             schema_type: schema_type.to_string(),
         })),
     }
@@ -426,7 +426,10 @@ fn equality_condition(operands: &[EvalResult], raw_identity_operands: &[bool]) -
                 && let Some(path) = direct_raw_identity_path(right.value.as_ref())
                 && let Some(value) = dispatch.constant_value()
             {
-                return TruthCondition::exact(Predicate::from(Guard::Eq { path, value }));
+                return TruthCondition::exact(Predicate::from(Guard::Eq {
+                    path: helm_schema_core::ValuesPath::parse(&path),
+                    value,
+                }));
             }
         }
         (None, Some(dispatch)) => {
@@ -434,7 +437,10 @@ fn equality_condition(operands: &[EvalResult], raw_identity_operands: &[bool]) -
                 && let Some(path) = direct_raw_identity_path(left.value.as_ref())
                 && let Some(value) = dispatch.constant_value()
             {
-                return TruthCondition::exact(Predicate::from(Guard::Eq { path, value }));
+                return TruthCondition::exact(Predicate::from(Guard::Eq {
+                    path: helm_schema_core::ValuesPath::parse(&path),
+                    value,
+                }));
             }
         }
         (None, None) => {}

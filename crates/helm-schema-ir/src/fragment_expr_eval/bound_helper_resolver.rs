@@ -290,7 +290,7 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
             meta.parsed_map = true;
             meta.conjoin_branches(&std::collections::BTreeSet::from([
                 helm_schema_core::Predicate::from(helm_schema_core::Guard::TypeIs {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     schema_type: "object".to_string(),
                 }),
             ]));

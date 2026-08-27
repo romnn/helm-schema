@@ -13,7 +13,7 @@ fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
         YamlPath(vec!["spec".to_string(), "enabled".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Truthy {
-            path: "feature.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("feature.enabled"),
         }],
         None,
     );
@@ -84,7 +84,7 @@ fn canonicalization_keeps_range_key_and_value_rows_distinct() {
         YamlPath(vec!["data".to_string()]),
         ValueKind::PartialScalar,
         vec![Guard::Range {
-            path: "config".to_string(),
+            path: helm_schema_core::ValuesPath::parse("config"),
         }],
         None,
     );
@@ -109,7 +109,7 @@ fn canonicalization_merges_complementary_conditions_across_render_sites() {
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
             }],
             None,
             vec![ContractProvenance::new(
@@ -123,7 +123,7 @@ fn canonicalization_merges_complementary_conditions_across_render_sites() {
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Not {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
             }],
             None,
             vec![ContractProvenance::new(
@@ -154,7 +154,7 @@ fn canonicalization_collapses_conditions_from_the_same_render_site() {
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
             }],
             None,
             vec![provenance.clone()],
@@ -164,7 +164,7 @@ fn canonicalization_collapses_conditions_from_the_same_render_site() {
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Not {
-                path: "feature.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.enabled"),
             }],
             None,
             vec![provenance],
@@ -189,14 +189,14 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
         "Secret".to_string(),
     ));
     let base_guards = vec![Guard::NotEq {
-        path: "auth.username".to_string(),
+        path: helm_schema_core::ValuesPath::parse("auth.username"),
         value: GuardValue::string("postgres"),
     }];
     let mut self_truthy_guards = base_guards.clone();
     self_truthy_guards.insert(
         0,
         Guard::Truthy {
-            path: "auth.password".to_string(),
+            path: helm_schema_core::ValuesPath::parse("auth.password"),
         },
     );
     let mut uses = vec![
@@ -221,12 +221,9 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
     normalize_contract_uses(&mut uses);
 
     sim_assert_eq!(have: uses.len(), want: 1);
-    assert!(
-        uses[0]
-            .single_guard_conjunction()
-            .iter()
-            .any(|guard| { matches!(guard, Guard::Truthy { path } if path == "auth.password") })
-    );
+    assert!(uses[0].single_guard_conjunction().iter().any(|guard| {
+        matches!(guard, Guard::Truthy { path } if path.encode() == "auth.password")
+    }));
 }
 
 #[test]
@@ -236,12 +233,12 @@ fn normalization_drops_subsumed_truthy_branch_across_provenance_sites() {
         "Secret".to_string(),
     ));
     let base_guards = vec![Guard::NotEq {
-        path: "auth.username".to_string(),
+        path: helm_schema_core::ValuesPath::parse("auth.username"),
         value: GuardValue::string("postgres"),
     }];
     let mut self_truthy_guards = base_guards.clone();
     self_truthy_guards.push(Guard::Truthy {
-        path: "auth.password".to_string(),
+        path: helm_schema_core::ValuesPath::parse("auth.password"),
     });
     let mut uses = vec![
         ContractUse::with_provenances(

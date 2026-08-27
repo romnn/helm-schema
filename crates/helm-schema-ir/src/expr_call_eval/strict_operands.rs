@@ -814,7 +814,7 @@ pub(super) fn record_forbidden_kind(
     effects: &mut Effects,
 ) {
     conjunction.push(Predicate::from(crate::Guard::TypeIs {
-        path: path.to_string(),
+        path: helm_schema_core::ValuesPath::parse(path),
         schema_type: schema_type.to_string(),
     }));
     push_fail_capture(conjunction, effects);
@@ -989,8 +989,9 @@ pub(super) fn layered_strict_operand_identity_paths(
                     let walk = collect(layer, effects, &shadow, emit && unshadowed, true, out);
                     if walk.absence_expressible && !walk.paths.is_empty() {
                         for path in &walk.paths {
-                            shadow
-                                .push(Predicate::from(crate::Guard::Absent { path: path.clone() }));
+                            shadow.push(Predicate::from(crate::Guard::Absent {
+                                path: helm_schema_core::ValuesPath::parse(path),
+                            }));
                         }
                     } else {
                         unshadowed = false;

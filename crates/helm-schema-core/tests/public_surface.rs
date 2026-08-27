@@ -81,7 +81,7 @@ fn contract_use_derived_deserialize_preserves_legacy_defaults() {
         YamlPath::default(),
         ValueKind::Scalar,
         vec![Guard::Truthy {
-            path: "enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("enabled"),
         }],
         None,
     );

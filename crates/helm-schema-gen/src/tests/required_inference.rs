@@ -70,7 +70,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Default {
-                path: "feature".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature"),
             }]),
             resource: None,
             provenance: Vec::new(),
@@ -143,7 +143,7 @@ fn explicit_nested_values_defaults_suppress_required_inference() {
         path: YamlPath(Vec::new()),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Eq {
-            path: "controller.kind".to_string(),
+            path: helm_schema_core::ValuesPath::parse("controller.kind"),
             value: GuardValue::string("Deployment"),
         }]),
         resource: None,

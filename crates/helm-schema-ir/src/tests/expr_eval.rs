@@ -391,7 +391,7 @@ fn get_requires_its_values_backed_host_to_be_an_object() {
                 ) && capture.conjunction
                     == vec![
                         Predicate::from(Guard::TypeIs {
-                            path: "contexts.*".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("contexts.*"),
                             schema_type: "object".to_string(),
                         })
                         .negated(),
@@ -427,7 +427,7 @@ fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
                         if matches!(
                             inner.as_ref(),
                             Predicate::Guard(Guard::TypeIs { path, schema_type })
-                                if path == "resources.limits" && schema_type == "object"
+                                if path.encode() == "resources.limits" && schema_type == "object"
                         )
                 )
             })
@@ -437,10 +437,10 @@ fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
         have: &target_capture.conjunction,
         want: &vec![
             Predicate::Not(Box::new(Predicate::Guard(Guard::Absent {
-                path: "resources.limits".to_string(),
+                path: helm_schema_core::ValuesPath::parse("resources.limits"),
             }))),
             Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
-                path: "resources.limits".to_string(),
+                path: helm_schema_core::ValuesPath::parse("resources.limits"),
                 schema_type: "object".to_string(),
             }))),
         ],
@@ -466,7 +466,7 @@ fn ungrouped_selector_still_requires_the_intermediate_member() {
                     crate::eval_effect::CaptureKind::MemberAccess { .. }
                 ) && capture.conjunction
                     == vec![Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
-                        path: "resources.limits".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("resources.limits"),
                         schema_type: "object".to_string(),
                     })))]
             })
@@ -768,11 +768,11 @@ fn values_numeric_type_spellings_remain_provenance_dependent() {
         &EvalEnv::default(),
     );
     let integer = Predicate::from(Guard::TypeIs {
-        path: "value".to_string(),
+        path: helm_schema_core::ValuesPath::parse("value"),
         schema_type: "integer".to_string(),
     });
     let number = Predicate::from(Guard::TypeIs {
-        path: "value".to_string(),
+        path: helm_schema_core::ValuesPath::parse("value"),
         schema_type: "number".to_string(),
     });
 
@@ -785,7 +785,7 @@ fn values_numeric_type_spellings_remain_provenance_dependent() {
         want: Predicate::all(vec![
             number.clone(),
             Predicate::from(Guard::TypeIs {
-                path: "value".to_string(),
+                path: helm_schema_core::ValuesPath::parse("value"),
                 schema_type: "integer".to_string(),
             })
             .negated(),
@@ -806,7 +806,7 @@ fn stringified_pattern_truth_keeps_raw_string_subsets() {
     sim_assert_eq!(
         have: result.truth.when_true(),
         want: Predicate::from(Guard::MatchesPattern {
-            path: "value".to_string(),
+            path: helm_schema_core::ValuesPath::parse("value"),
             pattern: "^[0-9]+$".to_string(),
             templated: false,
         })
@@ -814,7 +814,7 @@ fn stringified_pattern_truth_keeps_raw_string_subsets() {
     sim_assert_eq!(
         have: result.truth.when_false(),
         want: Predicate::from(Guard::NotMatchesPattern {
-            path: "value".to_string(),
+            path: helm_schema_core::ValuesPath::parse("value"),
             pattern: "^[0-9]+$".to_string(),
         })
     );
@@ -830,7 +830,7 @@ fn stringified_contains_uses_go_compatible_literal_pattern_syntax() {
     sim_assert_eq!(
         have: result.truth.when_true(),
         want: Predicate::from(Guard::MatchesPattern {
-            path: "value".to_string(),
+            path: helm_schema_core::ValuesPath::parse("value"),
             pattern: "foo-bar".to_string(),
             templated: false,
         })
@@ -838,7 +838,7 @@ fn stringified_contains_uses_go_compatible_literal_pattern_syntax() {
     sim_assert_eq!(
         have: result.truth.when_false(),
         want: Predicate::from(Guard::NotMatchesPattern {
-            path: "value".to_string(),
+            path: helm_schema_core::ValuesPath::parse("value"),
             pattern: "foo-bar".to_string(),
         })
     );
@@ -1190,7 +1190,7 @@ fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::from(Guard::MatchesPattern {
-                path: "alpha".to_string(),
+                path: helm_schema_core::ValuesPath::parse("alpha"),
                 pattern: "^$".to_string(),
                 templated: false,
             }),
@@ -1663,11 +1663,11 @@ fn stringified_trimmed_equality_uses_the_transformed_scalar_value() {
         have: result.truth.predicate().cloned(),
         want: Some(Predicate::Or(vec![
             Predicate::from(Guard::Eq {
-                path: "image.tag".to_string(),
+                path: helm_schema_core::ValuesPath::parse("image.tag"),
                 value: GuardValue::Int(7),
             }),
             Predicate::from(Guard::MatchesPattern {
-                path: "image.tag".to_string(),
+                path: helm_schema_core::ValuesPath::parse("image.tag"),
                 pattern,
                 templated: false,
             }),
@@ -1854,26 +1854,26 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
     let enabled = Predicate::Or(vec![
         Predicate::Or(vec![
             Predicate::from(Guard::Eq {
-                path: "server.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("server.enabled"),
                 value: GuardValue::string("true"),
             }),
             Predicate::from(Guard::Eq {
-                path: "server.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("server.enabled"),
                 value: GuardValue::Bool(true),
             }),
         ]),
         Predicate::And(vec![
             Predicate::from(Guard::Eq {
-                path: "server.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("server.enabled"),
                 value: GuardValue::string("-"),
             }),
             Predicate::Or(vec![
                 Predicate::from(Guard::Eq {
-                    path: "global.enabled".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("global.enabled"),
                     value: GuardValue::string("true"),
                 }),
                 Predicate::from(Guard::Eq {
-                    path: "global.enabled".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("global.enabled"),
                     value: GuardValue::Bool(true),
                 }),
             ]),
@@ -1924,11 +1924,11 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
             enabled,
             Predicate::Or(vec![
                 Predicate::from(Guard::Eq {
-                    path: "server.service.enabled".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("server.service.enabled"),
                     value: GuardValue::string("true"),
                 }),
                 Predicate::from(Guard::Eq {
-                    path: "server.service.enabled".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("server.service.enabled"),
                     value: GuardValue::Bool(true),
                 }),
             ]),

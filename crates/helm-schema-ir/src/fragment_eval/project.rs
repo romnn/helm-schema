@@ -399,7 +399,7 @@ fn splice_row(
     let mut condition = GuardDnf::from_conjunction(conditions.iter().cloned());
     if splice.meta.defaulted {
         let default_guard = Guard::Default {
-            path: splice.values_path.encode(),
+            path: splice.values_path.clone(),
         };
         condition = condition.conjoined_with_guards([default_guard.clone()]);
     }

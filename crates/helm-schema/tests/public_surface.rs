@@ -888,7 +888,7 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
                 |use_| use_.condition.guard_conjunctions().iter().any(|guards| {
                     guards.as_slice()
                         == [Guard::Truthy {
-                            path: "kid.enabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
                         }]
                         .as_slice()
                 })
@@ -904,10 +904,10 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
                     guards.as_slice()
                         == [
                             Guard::Truthy {
-                                path: "global.kidEnabled".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
                             },
                             Guard::Absent {
-                                path: "kid.enabled".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("kid.enabled"),
                             },
                         ]
                         .as_slice()

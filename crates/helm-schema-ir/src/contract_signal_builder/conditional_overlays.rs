@@ -30,10 +30,11 @@ pub(super) fn lowerable_conditional_guard_set(
     // A key-equality conjunct subsumes its companion iteration conjunct:
     // the has-key lowering already implies the range reaches that member
     // (prometheus's serverFiles dispatch around the remoteWrite rows).
-    let key_equals_ranges: BTreeSet<&str> = predicates
+    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+    let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = predicates
         .iter()
         .filter_map(|predicate| match predicate {
-            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path),
             _ => None,
         })
         .collect();
@@ -47,9 +48,9 @@ pub(super) fn lowerable_conditional_guard_set(
         if matches!(
             predicate,
             Predicate::Guard(Guard::Range { path })
-                if path == &contract_use.source_expr
+                if path == &source_path
                     || range_guard_is_iteration_ancestor(&contract_use.source_expr, path)
-                    || key_equals_ranges.contains(path.as_str())
+                    || key_equals_ranges.contains(path)
         ) {
             continue;
         }
@@ -197,10 +198,11 @@ pub(super) fn lowerable_conditional_guard_subset(
     contract_use: &ContractUse,
     predicates: &[Predicate],
 ) -> Vec<ConditionalGuard> {
-    let key_equals_ranges: BTreeSet<&str> = predicates
+    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+    let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = predicates
         .iter()
         .filter_map(|predicate| match predicate {
-            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path),
             _ => None,
         })
         .collect();
@@ -211,9 +213,9 @@ pub(super) fn lowerable_conditional_guard_subset(
         if matches!(
             predicate,
             Predicate::Guard(Guard::Range { path })
-                if path == &contract_use.source_expr
+                if path == &source_path
                     || range_guard_is_iteration_ancestor(&contract_use.source_expr, path)
-                    || key_equals_ranges.contains(path.as_str())
+                    || key_equals_ranges.contains(path)
         ) {
             continue;
         }
@@ -363,12 +365,13 @@ pub(super) fn extend_lowerable_predicate(
     target_value_path: &str,
     out: &mut Vec<ConditionalGuard>,
 ) -> Option<()> {
+    let target = helm_schema_core::ValuesPath::parse(target_value_path);
     match predicate {
         Predicate::True
         | Predicate::False
         | Predicate::Approximate { .. }
         | Predicate::Guard(Guard::Range { .. }) => return None,
-        Predicate::Guard(Guard::With { path }) if path == target_value_path => {}
+        Predicate::Guard(Guard::With { path }) if path == &target => {}
         Predicate::Guard(Guard::With { .. }) => {
             out.push(predicate_to_guard(predicate, None)?);
         }
@@ -377,21 +380,21 @@ pub(super) fn extend_lowerable_predicate(
                 extend_lowerable_predicate(predicate, target_value_path, out)?;
             }
         }
-        Predicate::Guard(Guard::Default { path }) if path == target_value_path => {}
+        Predicate::Guard(Guard::Default { path }) if path == &target => {}
         // The row's own truthiness is nullability evidence (captured as
         // source null-tolerance), not a conditional shape over *other*
         // paths; like the self-default and self-negation arms it must not
         // poison the foreign overlay keys. Root-to-leaf guard stacks put it
         // on every `with .Values.x`-wrapped render since the fragment
         // interpreter landed.
-        Predicate::Guard(Guard::Truthy { path }) if path == target_value_path => {}
+        Predicate::Guard(Guard::Truthy { path }) if path == &target => {}
         // Self-negation carries the branch's own-arm exclusion, not a
         // conditional shape over *other* paths; the overlay keys stay on the
         // foreign conditions.
         Predicate::Not(inner)
             if matches!(
                 inner.as_ref(),
-                Predicate::Guard(Guard::Truthy { path }) if path == target_value_path
+                Predicate::Guard(Guard::Truthy { path }) if path == &target
             ) => {}
         // A type test on the row's own path (also negated or a disjunction
         // of such tests) partitions its domain (a type-switch arm). The
@@ -431,7 +434,9 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
     // range itself. Both readings of a truthy subject therefore terminate,
     // which is what this clause claims.
     if let Predicate::Guard(Guard::Range { path }) = predicate {
-        return Some(ConditionalGuard::Truthy { path: path.clone() });
+        return Some(ConditionalGuard::Truthy {
+            path: path.encode(),
+        });
     }
     if let Predicate::Approximate {
         sound_subset: Some(sound_subset),
@@ -488,9 +493,9 @@ pub(super) fn guard_to_conditional_guard(
     guard: &Guard,
     target_value_path: Option<&str>,
 ) -> Option<ConditionalGuard> {
-    let path = |path: &str| match target_value_path {
+    let path = |path: &helm_schema_core::ValuesPath| match target_value_path {
         Some(target_value_path) => lowerable_guard_path(path, target_value_path),
-        None => Some(path.to_string()),
+        None => Some(path.encode()),
     };
 
     match guard {
@@ -596,8 +601,10 @@ pub(super) fn guard_to_conditional_guard(
             // A member-count gate on the TARGET itself is load-bearing:
             // the render fires only for maps that large, so the arm must
             // keep the bound (external-secrets' `gt (keys . | len) 1`).
-            let path = if target_value_path == Some(value_path.as_str()) {
-                (!path_contains_wildcard(value_path)).then(|| value_path.clone())?
+            let path = if target_value_path
+                .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
+            {
+                (!values_path_contains_wildcard(value_path)).then(|| value_path.encode())?
             } else {
                 path(value_path)?
             };
@@ -614,8 +621,10 @@ pub(super) fn guard_to_conditional_guard(
             // structure (the `else` of `if typeIs "string" x` scopes an
             // object overlay to non-strings); only truthiness self-guards
             // are the row's own firing condition and stay stripped.
-            let path = if target_value_path == Some(value_path.as_str()) {
-                (!path_contains_wildcard(value_path)).then(|| value_path.clone())?
+            let path = if target_value_path
+                .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
+            {
+                (!values_path_contains_wildcard(value_path)).then(|| value_path.encode())?
             } else {
                 path(value_path)?
             };
@@ -630,8 +639,10 @@ pub(super) fn guard_to_conditional_guard(
         } => {
             // The dispatch complement is load-bearing on the target for the
             // same reason as the positive test above.
-            let path = if target_value_path == Some(value_path.as_str()) {
-                (!path_contains_wildcard(value_path)).then(|| value_path.clone())?
+            let path = if target_value_path
+                .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
+            {
+                (!values_path_contains_wildcard(value_path)).then(|| value_path.encode())?
             } else {
                 path(value_path)?
             };
@@ -720,13 +731,15 @@ pub(super) fn record_member_range_requirement(
     outer_allows_integer: bool,
     inner_allows_integer: bool,
 ) {
+    let parent_path = helm_schema_core::ValuesPath::parse(parent);
+    let member_path =
+        helm_schema_core::ValuesPath::parse(&helm_schema_core::append_value_path(parent, "*"));
     let mut outer_guards = Vec::new();
     for predicate in predicates {
         if matches!(
             predicate,
             Predicate::Guard(Guard::Range { path })
-                if path == parent
-                    || path == &helm_schema_core::append_value_path(parent, "*")
+                if path == &parent_path || path == &member_path
         ) {
             continue;
         }
@@ -763,8 +776,9 @@ pub(super) fn record_member_range_requirement(
 /// Whether a conjunct tests the TYPE of `source_expr`, positively or under
 /// negation.
 pub(super) fn predicate_tests_source_type(predicate: &Predicate, source_expr: &str) -> bool {
+    let source_path = helm_schema_core::ValuesPath::parse(source_expr);
     match predicate {
-        Predicate::Guard(Guard::TypeIs { path, .. }) => path == source_expr,
+        Predicate::Guard(Guard::TypeIs { path, .. }) => path == &source_path,
         Predicate::Not(inner) => predicate_tests_source_type(inner, source_expr),
         Predicate::And(items) | Predicate::Or(items) => items
             .iter()
@@ -783,8 +797,9 @@ pub(super) fn predicate_is_self_type_partition(
     predicate: &Predicate,
     target_value_path: &str,
 ) -> bool {
+    let target = helm_schema_core::ValuesPath::parse(target_value_path);
     match predicate {
-        Predicate::Guard(Guard::TypeIs { path, .. }) => path == target_value_path,
+        Predicate::Guard(Guard::TypeIs { path, .. }) => path == &target,
         Predicate::Not(inner) => predicate_is_self_type_partition(inner, target_value_path),
         Predicate::And(items) | Predicate::Or(items) => {
             !items.is_empty()
@@ -799,29 +814,45 @@ pub(super) fn predicate_is_self_type_partition(
     }
 }
 
-pub(super) fn lowerable_guard_path(path: &str, target_value_path: &str) -> Option<String> {
-    if path == target_value_path {
+pub(super) fn lowerable_guard_path(
+    path: &helm_schema_core::ValuesPath,
+    target_value_path: &str,
+) -> Option<String> {
+    let target = helm_schema_core::ValuesPath::parse(target_value_path);
+    if path == &target {
         return None;
     }
-    if !path_contains_wildcard(path) {
-        return Some(path.to_string());
+    if !values_path_contains_wildcard(path) {
+        return Some(path.encode());
     }
 
-    let path_segments = helm_schema_core::split_value_path(path);
+    let path_segments: Vec<&str> = path.segments().collect();
     let target_segments = helm_schema_core::split_value_path(target_value_path);
-    let last_wildcard = path_segments.iter().rposition(|segment| segment == "*")?;
+    let last_wildcard = path_segments.iter().rposition(|segment| *segment == "*")?;
     let member_prefix = path_segments.get(..=last_wildcard)?;
     // A wildcard guard is exact when every wildcard it contains identifies
     // the same ranged member as the target. Conditional lowering then
     // anchors at that shared member, so the remaining guard and target
     // suffixes are ordinary relative paths.
-    (target_segments.get(..=last_wildcard) == Some(member_prefix)).then(|| path.to_string())
+    target_segments
+        .get(..=last_wildcard)
+        .is_some_and(|segments| {
+            segments
+                .iter()
+                .map(String::as_str)
+                .eq(member_prefix.iter().copied())
+        })
+        .then(|| path.encode())
 }
 
 pub(super) fn path_contains_wildcard(path: &str) -> bool {
     helm_schema_core::split_value_path(path)
         .iter()
         .any(|segment| segment == "*")
+}
+
+fn values_path_contains_wildcard(path: &helm_schema_core::ValuesPath) -> bool {
+    path.segments().any(|segment| segment == "*")
 }
 
 /// A truthiness gate over one field of `collection`'s ranged members, which
@@ -838,16 +869,29 @@ pub(super) fn member_local_truthy_selector(
     let Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) = predicate else {
         return None;
     };
-    if constrained == Some(path.as_str()) {
+    if constrained
+        .is_some_and(|constrained| path == &helm_schema_core::ValuesPath::parse(constrained))
+    {
         return None;
     }
     // The suffix is the member-relative field when `path` addresses one
     // field of `collection`'s ranged members
     // (`users.*.existingSecret` under `users`). A deeper wildcard abstains:
     // it names members of that field, not the field itself.
-    let suffix = path.strip_prefix(collection)?.strip_prefix(".*.")?;
-    (!suffix.is_empty() && !suffix.contains('*'))
-        .then(|| helm_schema_core::split_value_path(suffix))
+    let collection = helm_schema_core::ValuesPath::parse(collection);
+    let path_segments: Vec<&str> = path.segments().collect();
+    let collection_segments: Vec<&str> = collection.segments().collect();
+    let suffix = path_segments.strip_prefix(collection_segments.as_slice())?;
+    let (member, suffix) = suffix.split_first()?;
+    if *member != "*" || suffix.is_empty() || suffix.contains(&"*") {
+        return None;
+    }
+    Some(
+        suffix
+            .iter()
+            .map(|segment| (*segment).to_string())
+            .collect(),
+    )
 }
 
 pub(super) fn ranged_member_parent(path: &str) -> Option<&str> {
@@ -855,11 +899,18 @@ pub(super) fn ranged_member_parent(path: &str) -> Option<&str> {
         .or_else(|| path.split_once(".*.").map(|(parent, _)| parent))
 }
 
-pub(super) fn range_guard_is_iteration_ancestor(source_path: &str, guard_path: &str) -> bool {
+pub(super) fn range_guard_is_iteration_ancestor(
+    source_path: &str,
+    guard_path: &helm_schema_core::ValuesPath,
+) -> bool {
     let source_segments = helm_schema_core::split_value_path(source_path);
-    let guard_segments = helm_schema_core::split_value_path(guard_path);
+    let guard_segments: Vec<&str> = guard_path.segments().collect();
     source_segments.len() > guard_segments.len()
-        && source_segments.starts_with(&guard_segments)
+        && source_segments
+            .iter()
+            .map(String::as_str)
+            .zip(guard_segments.iter().copied())
+            .all(|(source, guard)| source == guard)
         && source_segments
             .get(guard_segments.len())
             .is_some_and(|segment| segment == "*")
@@ -873,8 +924,13 @@ pub(super) fn predicate_is_structural_ancestor_guard(
         return false;
     };
     let source_segments = helm_schema_core::split_value_path(source_path);
-    let guard_segments = helm_schema_core::split_value_path(path);
-    source_segments.len() > guard_segments.len() && source_segments.starts_with(&guard_segments)
+    let guard_segments: Vec<&str> = path.segments().collect();
+    source_segments.len() > guard_segments.len()
+        && source_segments
+            .iter()
+            .map(String::as_str)
+            .zip(guard_segments.iter().copied())
+            .all(|(source, guard)| source == guard)
 }
 
 /// All strict ancestors of the referenced paths, the subset whose

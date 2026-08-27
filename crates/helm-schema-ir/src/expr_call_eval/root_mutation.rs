@@ -207,26 +207,26 @@ pub(super) fn root_set_stringified_comparison(
     let predicate = match target {
         "true" => root_set_predicate_any(vec![
             Predicate::from(Guard::Eq {
-                path: subject.clone(),
+                path: helm_schema_core::ValuesPath::parse(&subject),
                 value: GuardValue::string("true"),
             }),
             Predicate::from(Guard::Eq {
-                path: subject,
+                path: helm_schema_core::ValuesPath::parse(&subject),
                 value: GuardValue::Bool(true),
             }),
         ]),
         "false" => root_set_predicate_any(vec![
             Predicate::from(Guard::Eq {
-                path: subject.clone(),
+                path: helm_schema_core::ValuesPath::parse(&subject),
                 value: GuardValue::string("false"),
             }),
             Predicate::from(Guard::Eq {
-                path: subject,
+                path: helm_schema_core::ValuesPath::parse(&subject),
                 value: GuardValue::Bool(false),
             }),
         ]),
         target => Predicate::from(Guard::Eq {
-            path: subject,
+            path: helm_schema_core::ValuesPath::parse(&subject),
             value: GuardValue::string(target),
         }),
     };

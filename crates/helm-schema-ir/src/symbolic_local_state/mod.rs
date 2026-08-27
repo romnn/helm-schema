@@ -453,24 +453,24 @@ fn quantify_range_member_reduction(condition: &Predicate, reduction: &Predicate)
     else {
         return None;
     };
-    let range_segments = helm_schema_core::split_value_path(range_path);
-    let member_segments = helm_schema_core::split_value_path(member_path);
+    let range_segments: Vec<&str> = range_path.segments().collect();
+    let member_segments: Vec<&str> = member_path.segments().collect();
     let [wildcard, member] = member_segments.get(range_segments.len()..)? else {
         return None;
     };
-    if wildcard != "*" || member_segments.get(..range_segments.len())? != range_segments {
+    if *wildcard != "*" || member_segments.get(..range_segments.len())? != range_segments {
         return None;
     }
 
     match member_predicate {
         Predicate::Guard(Guard::Eq { value, .. }) => Some(Guard::ContainsMemberEquals {
             path: range_path.clone(),
-            member: member.clone(),
+            member: (*member).to_string(),
             value: value.clone(),
         }),
         Predicate::Guard(Guard::Truthy { .. }) => Some(Guard::ContainsTruthyMember {
             path: range_path.clone(),
-            member: member.clone(),
+            member: (*member).to_string(),
         }),
         _ => None,
     }
@@ -576,9 +576,9 @@ fn leaf_predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> boo
                 if path == present_path || path_is_strict_ancestor(path, present_path)
         ),
         Predicate::Guard(Guard::HasKey { path, key }) => {
-            let mut key_path = helm_schema_core::split_value_path(path);
-            key_path.push(key.clone());
-            helm_schema_core::split_value_path(present_path).starts_with(&key_path)
+            let mut key_path = path.clone();
+            key_path.push(key);
+            present_path == &key_path || present_path.is_descendant_of(&key_path)
         }
         Predicate::Guard(Guard::Truthy { path }) if path == present_path => match antecedent {
             Predicate::Guard(Guard::Eq { value, .. }) => guard_value_is_truthy(value),
@@ -594,7 +594,7 @@ fn leaf_predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> boo
     }
 }
 
-fn predicate_present_path(predicate: &Predicate) -> Option<&str> {
+fn predicate_present_path(predicate: &Predicate) -> Option<&helm_schema_core::ValuesPath> {
     match predicate {
         Predicate::Not(inner) => match inner.as_ref() {
             Predicate::Guard(Guard::Absent { path }) => Some(path),
@@ -611,10 +611,11 @@ fn predicate_present_path(predicate: &Predicate) -> Option<&str> {
     }
 }
 
-fn path_is_strict_ancestor(parent: &str, child: &str) -> bool {
-    let parent = helm_schema_core::split_value_path(parent);
-    let child = helm_schema_core::split_value_path(child);
-    child.len() > parent.len() && child.starts_with(&parent)
+fn path_is_strict_ancestor(
+    parent: &helm_schema_core::ValuesPath,
+    child: &helm_schema_core::ValuesPath,
+) -> bool {
+    child.is_descendant_of(parent)
 }
 
 fn guard_value_is_truthy(value: &helm_schema_core::GuardValue) -> bool {

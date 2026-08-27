@@ -159,42 +159,56 @@ fn fmt_condition(condition: &Predicate) -> String {
 
 fn fmt_guard(guard: &Guard) -> String {
     match guard {
-        Guard::Truthy { path } => format!("truthy({path})"),
-        Guard::Not { path } => format!("not({path})"),
-        Guard::Eq { path, value } => format!("eq({path} == {value})"),
-        Guard::NotEq { path, value } => format!("ne({path} != {value})"),
-        Guard::Absent { path } => format!("absent({path})"),
+        Guard::Truthy { path } => format!("truthy({})", path.encode()),
+        Guard::Not { path } => format!("not({})", path.encode()),
+        Guard::Eq { path, value } => format!("eq({} == {value})", path.encode()),
+        Guard::NotEq { path, value } => format!("ne({} != {value})", path.encode()),
+        Guard::Absent { path } => format!("absent({})", path.encode()),
         Guard::MatchesPattern {
             path,
             pattern,
             templated,
         } => {
             let suffix = if *templated { " templated" } else { "" };
-            format!("matches({path} ~ {pattern}{suffix})")
+            format!("matches({} ~ {pattern}{suffix})", path.encode())
         }
         Guard::NotMatchesPattern { path, pattern } => {
-            format!("notMatches({path} ~ {pattern})")
+            format!("notMatches({} ~ {pattern})", path.encode())
         }
         Guard::RangeKeyPrefix { path, prefix } => {
-            format!("rangeKeyPrefix({path}: {prefix})")
+            format!("rangeKeyPrefix({}: {prefix})", path.encode())
         }
         Guard::RangeKeyMatches { path, pattern } => {
-            format!("rangeKeyMatches({path} ~ {pattern})")
+            format!("rangeKeyMatches({} ~ {pattern})", path.encode())
         }
-        Guard::AtMostOneMember { path } => format!("atMostOneMember({path})"),
-        Guard::MinMembers { path, bound } => format!("minMembers({path} >= {bound})"),
-        Guard::HasKey { path, key } => format!("hasKey({path}: {key})"),
-        Guard::NotHasKey { path, key } => format!("notHasKey({path}: {key})"),
-        Guard::ContainsEquals { path, value } => format!("containsEquals({path} ∋ {value})"),
+        Guard::AtMostOneMember { path } => format!("atMostOneMember({})", path.encode()),
+        Guard::MinMembers { path, bound } => {
+            format!("minMembers({} >= {bound})", path.encode())
+        }
+        Guard::HasKey { path, key } => format!("hasKey({}: {key})", path.encode()),
+        Guard::NotHasKey { path, key } => format!("notHasKey({}: {key})", path.encode()),
+        Guard::ContainsEquals { path, value } => {
+            format!("containsEquals({} ∋ {value})", path.encode())
+        }
         Guard::ContainsMemberEquals {
             path,
             member,
             value,
-        } => format!("containsMemberEquals({path}.*.{member} == {value})"),
+        } => format!(
+            "containsMemberEquals({}.*.{member} == {value})",
+            path.encode()
+        ),
         Guard::ContainsTruthyMember { path, member } => {
-            format!("containsTruthyMember({path}.*.{member})")
+            format!("containsTruthyMember({}.*.{member})", path.encode())
         }
-        Guard::Or { paths } => format!("or({})", paths.join(", ")),
+        Guard::Or { paths } => format!(
+            "or({})",
+            paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode)
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
         Guard::AnyOf { alternatives } => {
             let rendered: Vec<String> = alternatives
                 .iter()
@@ -205,13 +219,19 @@ fn fmt_guard(guard: &Guard) -> String {
                 .collect();
             format!("anyOf({})", rendered.join(" | "))
         }
-        Guard::Range { path } => format!("range({path})"),
-        Guard::With { path } => format!("with({path})"),
-        Guard::Default { path } => format!("default({path})"),
-        Guard::TypeIs { path, schema_type } => format!("typeIs({path}: {schema_type})"),
-        Guard::NotTypeIs { path, schema_type } => format!("notTypeIs({path}: {schema_type})"),
-        Guard::IntGt { path, bound } => format!("intGt({path} > {bound})"),
-        Guard::IntLt { path, bound } => format!("intLt({path} < {bound})"),
-        Guard::RangeKeyEquals { path, key } => format!("rangeKeyEquals({path}[{key}])"),
+        Guard::Range { path } => format!("range({})", path.encode()),
+        Guard::With { path } => format!("with({})", path.encode()),
+        Guard::Default { path } => format!("default({})", path.encode()),
+        Guard::TypeIs { path, schema_type } => {
+            format!("typeIs({}: {schema_type})", path.encode())
+        }
+        Guard::NotTypeIs { path, schema_type } => {
+            format!("notTypeIs({}: {schema_type})", path.encode())
+        }
+        Guard::IntGt { path, bound } => format!("intGt({} > {bound})", path.encode()),
+        Guard::IntLt { path, bound } => format!("intLt({} < {bound})", path.encode()),
+        Guard::RangeKeyEquals { path, key } => {
+            format!("rangeKeyEquals({}[{key}])", path.encode())
+        }
     }
 }

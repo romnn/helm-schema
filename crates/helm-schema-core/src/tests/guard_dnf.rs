@@ -2,7 +2,11 @@ use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
 use super::GuardDnf;
-use crate::{ConditionalGuard, Guard, Predicate};
+use crate::{ConditionalGuard, Guard, Predicate, ValuesPath};
+
+fn path(value: &str) -> ValuesPath {
+    ValuesPath::parse(value)
+}
 
 fn truthy(path: &str) -> Predicate {
     Predicate::truthy_path(path)
@@ -58,7 +62,7 @@ fn contradictory_conjunction_is_never_live() {
 #[test]
 fn negated_equality_makes_its_equality_branch_never_live() {
     let equality = Predicate::from(Guard::Eq {
-        path: "mode".to_string(),
+        path: path("mode"),
         value: crate::GuardValue::string("prod"),
     });
     let condition = GuardDnf::from_conjunction([equality.clone(), equality.negated()]);
@@ -71,11 +75,11 @@ fn lowered_equality_and_inequality_are_never_live() {
     let value = crate::GuardValue::string("prod");
     let condition = GuardDnf::from_guards([
         Guard::Eq {
-            path: "mode".to_string(),
+            path: path("mode"),
             value: value.clone(),
         },
         Guard::NotEq {
-            path: "mode".to_string(),
+            path: path("mode"),
             value,
         },
     ]);
@@ -88,7 +92,7 @@ fn serialized_condition_uses_guard_conjunctions() {
     let condition = GuardDnf::from_disjunction([
         vec![truthy("first")],
         vec![Predicate::from(Guard::Default {
-            path: "second".to_string(),
+            path: path("second"),
         })],
     ]);
     let serialized = serde_json::to_value(&condition).expect("serialize guard DNF");

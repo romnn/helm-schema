@@ -14,19 +14,19 @@ fn contract_document_serializes_stable_guard_shape() {
             Guard::AnyOf {
                 alternatives: vec![
                     vec![Guard::Truthy {
-                        path: "kid.enabled".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("kid.enabled"),
                     }],
                     vec![Guard::Eq {
-                        path: "kid.mode".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("kid.mode"),
                         value: crate::GuardValue::string("prod"),
                     }],
                 ],
             },
             Guard::Or {
                 paths: vec![
-                    "global.kidEnabled".to_string(),
-                    "kid.enabled".to_string(),
-                    "tags.observability".to_string(),
+                    helm_schema_core::ValuesPath::parse("global.kidEnabled"),
+                    helm_schema_core::ValuesPath::parse("kid.enabled"),
+                    helm_schema_core::ValuesPath::parse("tags.observability"),
                 ],
             },
         ]),

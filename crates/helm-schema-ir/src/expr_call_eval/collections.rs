@@ -406,7 +406,7 @@ fn empty_fold_candidate_reachability(result: &EvalResult) -> Option<SelectionRea
             .cloned()
             .map(|value| {
                 Predicate::from(helm_schema_core::Guard::Eq {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     value,
                 })
             })

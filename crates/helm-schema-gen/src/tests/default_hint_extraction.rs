@@ -105,7 +105,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         path: YamlPath(vec!["data".into(), "guarded".into()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Default {
-            path: "image.tag".into(),
+            path: helm_schema_core::ValuesPath::parse("image.tag"),
         }]),
         resource: None,
         provenance: Vec::new(),

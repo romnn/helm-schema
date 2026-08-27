@@ -640,7 +640,7 @@ impl AbstractValue {
                 };
                 meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
                     helm_schema_core::Guard::Absent {
-                        path: encoded.clone(),
+                        path: helm_schema_core::ValuesPath::parse(&encoded),
                     },
                 )
                 .negated()]));
@@ -652,14 +652,18 @@ impl AbstractValue {
                     ..HelperOutputMeta::default()
                 };
                 meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
-                    helm_schema_core::Guard::Absent { path: path.clone() },
+                    helm_schema_core::Guard::Absent {
+                        path: helm_schema_core::ValuesPath::parse(&path),
+                    },
                 )
                 .negated()]));
                 Self::OutputPath(path, meta)
             }
             Self::OutputPath(path, mut meta) => {
                 meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
-                    helm_schema_core::Guard::Absent { path: path.clone() },
+                    helm_schema_core::Guard::Absent {
+                        path: helm_schema_core::ValuesPath::parse(&path),
+                    },
                 )
                 .negated()]));
                 Self::OutputPath(path, meta)

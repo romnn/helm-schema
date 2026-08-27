@@ -46,11 +46,11 @@ fn invalid_kind_is_absence_or_null_instead_of_truthiness() {
         have: predicate,
         want: Predicate::Or(vec![
             Predicate::from(Guard::Eq {
-                path: "hostUsers".to_string(),
+                path: helm_schema_core::ValuesPath::parse("hostUsers"),
                 value: GuardValue::Null,
             }),
             Predicate::from(Guard::Absent {
-                path: "hostUsers".to_string(),
+                path: helm_schema_core::ValuesPath::parse("hostUsers"),
             }),
         ]),
     );
@@ -88,7 +88,7 @@ fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
             template_output_meta,
         ),
         want: vec![Guard::Truthy {
-            path: "value".to_string(),
+            path: helm_schema_core::ValuesPath::parse("value"),
         }],
     );
 }
@@ -193,7 +193,7 @@ fn negated_include_uses_rendered_text_truthiness() {
 fn truthy_simple_path() {
     sim_assert_eq!(
         have: parse_condition(".Values.X"),
-        want: vec![Guard::Truthy { path: "X".into() }],
+        want: vec![Guard::Truthy { path: helm_schema_core::ValuesPath::parse("X") }],
     );
 }
 
@@ -201,7 +201,7 @@ fn truthy_simple_path() {
 fn not_simple_path() {
     sim_assert_eq!(
         have: parse_condition("not .Values.X"),
-        want: vec![Guard::Not { path: "X".into() }],
+        want: vec![Guard::Not { path: helm_schema_core::ValuesPath::parse("X") }],
     );
 }
 
@@ -288,14 +288,14 @@ fn quoted_empty_membership_preserves_false_and_zero_as_live_values() {
         have: condition_context(HashMap::new()).condition_predicate_expr(&expr),
         want: Predicate::Not(Box::new(Predicate::Or(vec![
             Predicate::from(Guard::Absent {
-                path: "global.logLevel".into(),
+                path: helm_schema_core::ValuesPath::parse("global.logLevel"),
             }),
             Predicate::from(Guard::Eq {
-                path: "global.logLevel".into(),
+                path: helm_schema_core::ValuesPath::parse("global.logLevel"),
                 value: GuardValue::Null,
             }),
             Predicate::from(Guard::Eq {
-                path: "global.logLevel".into(),
+                path: helm_schema_core::ValuesPath::parse("global.logLevel"),
                 value: GuardValue::string(""),
             }),
         ]))),
@@ -307,7 +307,10 @@ fn or_with_two_paths_emits_or_guard() {
     sim_assert_eq!(
         have: parse_condition("or .Values.A .Values.B"),
         want: vec![Guard::Or {
-            paths: vec!["A".into(), "B".into()],
+            paths: vec![
+                helm_schema_core::ValuesPath::parse("A"),
+                helm_schema_core::ValuesPath::parse("B"),
+            ],
         }],
     );
 }
@@ -317,7 +320,10 @@ fn or_paths_are_sorted() {
     sim_assert_eq!(
         have: parse_condition("or .Values.z .Values.a"),
         want: vec![Guard::Or {
-            paths: vec!["a".into(), "z".into()],
+            paths: vec![
+                helm_schema_core::ValuesPath::parse("a"),
+                helm_schema_core::ValuesPath::parse("z"),
+            ],
         }],
     );
 }
@@ -327,7 +333,10 @@ fn or_with_nested_helper_calls() {
     sim_assert_eq!(
         have: parse_condition("or (has .Values.A 1) (has .Values.B 2)"),
         want: vec![Guard::Or {
-            paths: vec!["A".into(), "B".into()],
+            paths: vec![
+                helm_schema_core::ValuesPath::parse("A"),
+                helm_schema_core::ValuesPath::parse("B"),
+            ],
         }],
     );
 }
@@ -339,10 +348,10 @@ fn or_with_equality_preserves_typed_alternative() {
         want: vec![Guard::AnyOf {
             alternatives: vec![
                 vec![Guard::Truthy {
-                    path: "enabled".into(),
+                    path: helm_schema_core::ValuesPath::parse("enabled"),
                 }],
                 vec![Guard::Eq {
-                    path: "mode".into(),
+                    path: helm_schema_core::ValuesPath::parse("mode"),
                     value: GuardValue::string("prod"),
                 }],
             ],
@@ -357,11 +366,11 @@ fn or_with_nested_and_preserves_conjunctive_alternative() {
         want: vec![Guard::AnyOf {
             alternatives: vec![
                 vec![
-                    Guard::Truthy { path: "a".into() },
-                    Guard::Truthy { path: "b".into() },
+                    Guard::Truthy { path: helm_schema_core::ValuesPath::parse("a") },
+                    Guard::Truthy { path: helm_schema_core::ValuesPath::parse("b") },
                 ],
                 vec![Guard::Eq {
-                    path: "mode".into(),
+                    path: helm_schema_core::ValuesPath::parse("mode"),
                     value: GuardValue::string("prod"),
                 }],
             ],
@@ -374,7 +383,7 @@ fn eq_with_string_literal() {
     sim_assert_eq!(
         have: parse_condition(r#"eq .Values.X "value""#),
         want: vec![Guard::Eq {
-            path: "X".into(),
+            path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("value"),
         }],
     );
@@ -385,7 +394,7 @@ fn eq_with_string_literal_containing_phantom_path() {
     sim_assert_eq!(
         have: parse_condition(r#"eq .Values.X ".Values.fake""#),
         want: vec![Guard::Eq {
-            path: "X".into(),
+            path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string(".Values.fake"),
         }],
     );
@@ -396,7 +405,7 @@ fn eq_with_bool_literal_preserves_exact_comparison() {
     sim_assert_eq!(
         have: parse_condition("eq .Values.enabled false"),
         want: vec![Guard::Eq {
-            path: "enabled".into(),
+            path: helm_schema_core::ValuesPath::parse("enabled"),
             value: GuardValue::Bool(false),
         }],
     );
@@ -407,7 +416,7 @@ fn eq_with_int_literal_preserves_exact_comparison() {
     sim_assert_eq!(
         have: parse_condition("eq .Values.replicas 3"),
         want: vec![Guard::Eq {
-            path: "replicas".into(),
+            path: helm_schema_core::ValuesPath::parse("replicas"),
             value: GuardValue::Int(3),
         }],
     );
@@ -418,7 +427,7 @@ fn eq_with_nil_literal_preserves_exact_comparison() {
     sim_assert_eq!(
         have: parse_condition("eq .Values.image.tag nil"),
         want: vec![Guard::Eq {
-            path: "image.tag".into(),
+            path: helm_schema_core::ValuesPath::parse("image.tag"),
             value: GuardValue::Null,
         }],
     );
@@ -429,8 +438,8 @@ fn eq_compare_two_values_falls_through_to_truthy() {
     sim_assert_eq!(
         have: parse_condition("eq .Values.X .Values.Y"),
         want: vec![
-            Guard::Truthy { path: "X".into() },
-            Guard::Truthy { path: "Y".into() },
+            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("X") },
+            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("Y") },
         ],
     );
 }
@@ -440,7 +449,7 @@ fn ne_with_string_literal_emits_not_eq() {
     sim_assert_eq!(
         have: parse_condition(r#"ne .Values.X "value""#),
         want: vec![Guard::NotEq {
-            path: "X".into(),
+            path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("value"),
         }],
     );
@@ -451,7 +460,7 @@ fn not_eq_literal_projects_to_not_eq() {
     sim_assert_eq!(
         have: parse_condition(r#"not (eq .Values.mode "disabled")"#),
         want: vec![Guard::NotEq {
-            path: "mode".into(),
+            path: helm_schema_core::ValuesPath::parse("mode"),
             value: GuardValue::string("disabled"),
         }],
     );
@@ -462,7 +471,7 @@ fn not_ne_literal_projects_to_eq() {
     sim_assert_eq!(
         have: parse_condition(r#"not (ne .Values.mode "disabled")"#),
         want: vec![Guard::Eq {
-            path: "mode".into(),
+            path: helm_schema_core::ValuesPath::parse("mode"),
             value: GuardValue::string("disabled"),
         }],
     );
@@ -473,8 +482,8 @@ fn and_falls_through_to_per_path_truthy() {
     sim_assert_eq!(
         have: parse_condition("and .Values.A .Values.B"),
         want: vec![
-            Guard::Truthy { path: "A".into() },
-            Guard::Truthy { path: "B".into() },
+            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("A") },
+            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("B") },
         ],
     );
 }
@@ -484,8 +493,8 @@ fn and_with_parens_falls_through_to_per_path_truthy() {
     sim_assert_eq!(
         have: parse_condition("and (.Values.A) (.Values.B)"),
         want: vec![
-            Guard::Truthy { path: "A".into() },
-            Guard::Truthy { path: "B".into() },
+            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("A") },
+            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("B") },
         ],
     );
 }
@@ -498,10 +507,10 @@ fn and_preserves_nested_not_guard() {
         ),
         want: vec![
             Guard::Truthy {
-                path: "prometheus.enabled".into()
+                path: helm_schema_core::ValuesPath::parse("prometheus.enabled")
             },
             Guard::Not {
-                path: "prometheus.podmonitor.enabled".into()
+                path: helm_schema_core::ValuesPath::parse("prometheus.podmonitor.enabled")
             },
         ],
     );
@@ -515,10 +524,13 @@ fn and_preserves_nested_or_guard() {
         ),
         want: vec![
             Guard::Truthy {
-                path: "ldap.enabled".into()
+                path: helm_schema_core::ValuesPath::parse("ldap.enabled")
             },
             Guard::Or {
-                paths: vec!["ldap.bind_password".into(), "ldap.bindpw".into()]
+                paths: vec![
+                    helm_schema_core::ValuesPath::parse("ldap.bind_password"),
+                    helm_schema_core::ValuesPath::parse("ldap.bindpw"),
+                ]
             },
         ],
     );
@@ -529,7 +541,7 @@ fn empty_path_is_falsey_guard() {
     sim_assert_eq!(
         have: parse_condition("empty .Values.service.loadBalancerIP"),
         want: vec![Guard::Not {
-            path: "service.loadBalancerIP".into()
+            path: helm_schema_core::ValuesPath::parse("service.loadBalancerIP")
         }],
     );
 }
@@ -539,7 +551,7 @@ fn not_empty_path_is_truthy_guard() {
     sim_assert_eq!(
         have: parse_condition("not (empty .Values.service.loadBalancerIP)"),
         want: vec![Guard::Truthy {
-            path: "service.loadBalancerIP".into()
+            path: helm_schema_core::ValuesPath::parse("service.loadBalancerIP")
         }],
     );
 }
@@ -550,10 +562,10 @@ fn not_or_paths_uses_demorgan_negated_guards() {
         have: parse_condition("not (or .Values.serviceMonitor.enabled .Values.podMonitor.enabled)"),
         want: vec![
             Guard::Not {
-                path: "podMonitor.enabled".into()
+                path: helm_schema_core::ValuesPath::parse("podMonitor.enabled")
             },
             Guard::Not {
-                path: "serviceMonitor.enabled".into()
+                path: helm_schema_core::ValuesPath::parse("serviceMonitor.enabled")
             },
         ],
     );
@@ -595,7 +607,7 @@ fn eq_value_preserves_literal_dot_star_substring() {
     sim_assert_eq!(
         have: parse_condition(r#"eq .Values.X "match.*foo""#),
         want: vec![Guard::Eq {
-            path: "X".into(),
+            path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("match.*foo"),
         }],
     );
@@ -606,7 +618,7 @@ fn eq_value_preserves_dot_values_substring_inside_string() {
     sim_assert_eq!(
         have: parse_condition(r#"eq .Values.X ".Values.fake""#),
         want: vec![Guard::Eq {
-            path: "X".into(),
+            path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string(".Values.fake"),
         }],
     );
@@ -619,7 +631,7 @@ fn alias_comparison_preserves_typed_predicates() {
     sim_assert_eq!(
         have: parse_condition_with_template_bindings(r#"eq $mode "ClusterIP""#, aliases),
         want: vec![Guard::Eq {
-            path: "service.type".to_string(),
+            path: helm_schema_core::ValuesPath::parse("service.type"),
             value: GuardValue::string("ClusterIP"),
         }],
     );
@@ -647,11 +659,11 @@ fn output_meta_comparison_preserves_typed_predicates() {
         ),
         want: vec![
             Guard::NotEq {
-                path: "auth.username".to_string(),
+                path: helm_schema_core::ValuesPath::parse("auth.username"),
                 value: GuardValue::string("postgres"),
             },
             Guard::NotEq {
-                path: "global.postgresql.auth.username".to_string(),
+                path: helm_schema_core::ValuesPath::parse("global.postgresql.auth.username"),
                 value: GuardValue::string("postgres"),
             },
         ],
@@ -697,7 +709,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
             Predicate::And(vec![
                 truthy.clone(),
                 Predicate::from(Guard::Eq {
-                    path: path.to_string(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     value: GuardValue::string("skipIfMissing"),
                 }),
             ]),
@@ -710,7 +722,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
         want: Predicate::And(vec![
             truthy.clone(),
             Predicate::from(Guard::Eq {
-                path: path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(path),
                 value: GuardValue::string("alwaysRender"),
             }),
         ]),
@@ -722,7 +734,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
             Predicate::And(vec![
                 truthy.clone(),
                 Predicate::from(Guard::NotEq {
-                    path: path.to_string(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     value: GuardValue::string("alwaysRender"),
                 }),
             ]),
@@ -735,7 +747,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
         want: Predicate::And(vec![
             truthy.clone(),
             Predicate::from(Guard::NotEq {
-                path: path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(path),
                 value: GuardValue::string("skipIfMissing"),
             }),
         ]),
@@ -757,9 +769,9 @@ fn alias_or_predicate_projects_to_path_disjunction() {
         have: parse_condition_with_template_bindings("or $annotations .Values.service.labels", aliases),
         want: vec![Guard::Or {
             paths: vec![
-                "global.annotations".to_string(),
-                "service.annotations".to_string(),
-                "service.labels".to_string(),
+                helm_schema_core::ValuesPath::parse("global.annotations"),
+                helm_schema_core::ValuesPath::parse("service.annotations"),
+                helm_schema_core::ValuesPath::parse("service.labels"),
             ],
         }],
     );
@@ -770,7 +782,7 @@ fn with_predicates_preserve_header_projection_semantics() {
     let predicate = Predicate::all(vec![
         Predicate::truthy_path("service.enabled"),
         Predicate::from(Guard::Eq {
-            path: "service.type".to_string(),
+            path: helm_schema_core::ValuesPath::parse("service.type"),
             value: GuardValue::string("ClusterIP"),
         }),
         Predicate::Or(vec![
@@ -786,32 +798,32 @@ fn with_predicates_preserve_header_projection_semantics() {
         have: with_predicate.contract_guards(),
         want: Some(vec![
             Guard::With {
-                path: "service.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("service.enabled"),
             },
             Guard::With {
-                path: "service.type".to_string(),
+                path: helm_schema_core::ValuesPath::parse("service.type"),
             },
             Guard::Eq {
-                path: "service.type".to_string(),
+                path: helm_schema_core::ValuesPath::parse("service.type"),
                 value: GuardValue::string("ClusterIP"),
             },
             Guard::With {
-                path: "service.annotations".to_string(),
+                path: helm_schema_core::ValuesPath::parse("service.annotations"),
             },
             Guard::With {
-                path: "global.annotations".to_string(),
+                path: helm_schema_core::ValuesPath::parse("global.annotations"),
             },
             Guard::Or {
                 paths: vec![
-                    "global.annotations".to_string(),
-                    "service.annotations".to_string(),
+                    helm_schema_core::ValuesPath::parse("global.annotations"),
+                    helm_schema_core::ValuesPath::parse("service.annotations"),
                 ],
             },
             Guard::With {
-                path: "service.disabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("service.disabled"),
             },
             Guard::Not {
-                path: "service.disabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("service.disabled"),
             },
         ])
     );
@@ -865,11 +877,11 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
         want: Some(vec![Guard::AnyOf {
             alternatives: vec![
                 vec![Guard::Eq {
-                    path: "profile".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("profile"),
                     value: GuardValue::string("ambient"),
                 }],
                 vec![Guard::Eq {
-                    path: "profile".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("profile"),
                     value: GuardValue::string("demo"),
                 }],
             ],

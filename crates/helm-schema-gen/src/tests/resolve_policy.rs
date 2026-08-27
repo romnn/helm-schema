@@ -478,7 +478,7 @@ fn pathless_conditional_target_does_not_own_descendant_defaults() {
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
-            path: "enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("enabled"),
         }]),
         resource: Some(ResourceRef::concrete(
             "v1".to_string(),

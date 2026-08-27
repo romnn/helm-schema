@@ -253,6 +253,7 @@ pub(super) fn record_contract_use(
     string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
     has_yaml_serialized_use: bool,
 ) {
+    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
     if contract_use.range_key {
         record_range_key_slot_use(paths, contract_use, range_modes);
         return;
@@ -281,7 +282,7 @@ pub(super) fn record_contract_use(
                         if matches!(
                             inner.as_ref(),
                             Predicate::Guard(Guard::Absent { path })
-                                if path == &contract_use.source_expr
+                                if path == &source_path
                         )
                 )
             })
@@ -301,8 +302,8 @@ pub(super) fn record_contract_use(
                     !matches!(
                         predicate,
                         Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
-                            if path != &contract_use.source_expr
-                                && merge.layers.contains(path)
+                            if path != &source_path
+                                && merge.layers.contains(&path.encode())
                     )
                 })
                 .collect()
@@ -369,7 +370,11 @@ pub(super) fn predicate_is_truthy_disjunction_over(
         })
         .collect::<BTreeSet<_>>();
     candidates.len() == alternatives.len()
-        && candidates == paths.iter().cloned().collect::<BTreeSet<_>>()
+        && candidates
+            == paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path))
+                .collect::<BTreeSet<_>>()
 }
 
 /// A row rendering the collection's RANGE KEY contributes exactly one fact:
@@ -472,6 +477,7 @@ pub(super) fn record_contract_use_conjunction(
     string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
     has_yaml_serialized_use: bool,
 ) {
+    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
     let kind_resolved = kind_branch_resolved_use(contract_use, predicates);
     let contract_use = kind_resolved.as_ref().unwrap_or(contract_use);
     if contract_use.kind == ValueKind::WidenedDependency {
@@ -495,7 +501,7 @@ pub(super) fn record_contract_use_conjunction(
                 matches!(
                     predicate,
                     Predicate::Guard(Guard::Range { path })
-                        if !range_modes.mode(path).member_identity
+                        if !range_modes.mode(&path.encode()).member_identity
                 )
             })
     }) {
@@ -620,7 +626,7 @@ pub(super) fn record_contract_use_conjunction(
     // A `x.*` member row fires BY `range x`: that Range predicate is the
     // row's own iteration, not a foreign condition gating it. It is NOT a
     // null-tolerance signal though — iteration does not skip null members.
-    let self_range_guarded = range_guard_paths.contains(contract_use.source_expr.as_str());
+    let self_range_guarded = range_guard_paths.contains(&source_path);
     let has_matching_self_guard = predicates.iter().any(|predicate| {
         matches!(
             predicate,
@@ -630,12 +636,12 @@ pub(super) fn record_contract_use_conjunction(
                     | Guard::Range { path }
                     | Guard::With { path }
                     | Guard::Default { path }
-            ) if path == &contract_use.source_expr
+            ) if path == &source_path
         )
     });
     let pathless_self_default_guarded = path_is_empty
         && predicates.iter().any(|predicate| {
-            matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
+            matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &source_path)
         });
     // A row dispatched by a type test on its own path belongs to a
     // type-switch (`if eq (typeOf .Values.x) "string" … else …`): values of
@@ -750,7 +756,7 @@ pub(super) fn record_contract_use_conjunction(
                             | Guard::With { path }
                             | Guard::Eq { path, .. }
                             | Guard::TypeIs { path, .. }
-                    ) if path == &contract_use.source_expr
+                    ) if path == &source_path
                 )
             });
         // A pathless scalar row is the value's influence on a control
@@ -955,7 +961,7 @@ pub(super) fn record_contract_use_conjunction(
         Predicate::Guard(Guard::Default { path }) => Some(path),
         _ => None,
     }) {
-        path_accumulator(paths, path)
+        path_accumulator(paths, &path.encode())
             .requiredness
             .has_default_fallback = true;
     }
@@ -976,7 +982,7 @@ pub(super) fn record_contract_use_conjunction(
         }
     }
     for path in predicates.iter().flat_map(Predicate::value_paths) {
-        if has_source && path == contract_use.source_expr.as_str() {
+        if has_source && path == contract_use.source_expr {
             continue;
         }
         let acc = path_accumulator(paths, &path);
@@ -988,7 +994,9 @@ pub(super) fn record_contract_use_conjunction(
                 is_nullable: true,
                 ..ContractValuePathFacts::default()
             };
-            path_accumulator(paths, &path).facts.record_facts(facts);
+            path_accumulator(paths, &path.encode())
+                .facts
+                .record_facts(facts);
         }
     }
 }
@@ -997,11 +1005,12 @@ pub(super) fn lowerable_range_outer_guards(
     ranged_path: &str,
     predicates: &[Predicate],
 ) -> Option<Vec<ConditionalGuard>> {
+    let ranged = helm_schema_core::ValuesPath::parse(ranged_path);
     let mut guards = Vec::new();
     for predicate in predicates {
         if matches!(
             predicate,
-            Predicate::Guard(Guard::Range { path }) if path == ranged_path
+            Predicate::Guard(Guard::Range { path }) if path == &ranged
         ) || matches!(
             predicate,
             Predicate::Guard(Guard::Range { path })
@@ -1016,7 +1025,7 @@ pub(super) fn lowerable_range_outer_guards(
         // entirely and must not receive its live-branch collection contract.
         if matches!(
             predicate,
-            Predicate::Guard(Guard::Default { path }) if path == ranged_path
+            Predicate::Guard(Guard::Default { path }) if path == &ranged
         ) {
             continue;
         }

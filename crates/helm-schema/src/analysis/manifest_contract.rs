@@ -178,14 +178,14 @@ fn level_activation_guard_sets(activation: &chart::ChartDependencyActivation) ->
     guard_sets
 }
 
-fn trimmed_nonempty(paths: &[String]) -> impl Iterator<Item = String> + '_ {
+fn trimmed_nonempty(paths: &[String]) -> impl Iterator<Item = helm_schema_core::ValuesPath> + '_ {
     paths.iter().filter_map(|path| {
         let path = path.trim();
-        (!path.is_empty()).then_some(path.to_string())
+        (!path.is_empty()).then(|| helm_schema_core::ValuesPath::parse(path))
     })
 }
 
-fn normalized_ordered_paths(paths: &[String]) -> Vec<String> {
+fn normalized_ordered_paths(paths: &[String]) -> Vec<helm_schema_core::ValuesPath> {
     let mut seen = std::collections::BTreeSet::new();
     let mut normalized = Vec::new();
     for path in trimmed_nonempty(paths) {
@@ -196,14 +196,14 @@ fn normalized_ordered_paths(paths: &[String]) -> Vec<String> {
     normalized
 }
 
-fn normalized_sorted_paths(paths: &[String]) -> Vec<String> {
+fn normalized_sorted_paths(paths: &[String]) -> Vec<helm_schema_core::ValuesPath> {
     let mut normalized = trimmed_nonempty(paths).collect::<Vec<_>>();
     normalized.sort();
     normalized.dedup();
     normalized
 }
 
-fn absent_guards(paths: &[String]) -> Vec<Guard> {
+fn absent_guards(paths: &[helm_schema_core::ValuesPath]) -> Vec<Guard> {
     paths
         .iter()
         .cloned()
@@ -211,7 +211,7 @@ fn absent_guards(paths: &[String]) -> Vec<Guard> {
         .collect()
 }
 
-fn truthy_tag_guard(tag_paths: &[String]) -> Guard {
+fn truthy_tag_guard(tag_paths: &[helm_schema_core::ValuesPath]) -> Guard {
     match tag_paths {
         [path] => Guard::Truthy { path: path.clone() },
         paths => Guard::Or {

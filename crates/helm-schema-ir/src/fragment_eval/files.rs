@@ -127,7 +127,7 @@ impl Interpreter<'_> {
                 source_path = path;
                 source = program;
                 selection_predicate = Some(Predicate::from(Guard::Eq {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     value: GuardValue::string(program),
                 }));
                 values_default_path = Some(path);
@@ -213,16 +213,16 @@ fn call_site_predicate_is_implied_by_selected_default(predicate: &Predicate, pat
             Predicate::True => Some(true),
             Predicate::False => Some(false),
             Predicate::Guard(Guard::Range { path } | Guard::Truthy { path }) => {
-                implied_kind(path).map(|_| true)
+                implied_kind(&path.encode()).map(|_| true)
             }
-            Predicate::Guard(Guard::Absent { path }) => implied_kind(path).map(|_| false),
+            Predicate::Guard(Guard::Absent { path }) => implied_kind(&path.encode()).map(|_| false),
             Predicate::Guard(Guard::TypeIs { path, schema_type }) => {
-                implied_kind(path).map(|kind| kind == schema_type)
+                implied_kind(&path.encode()).map(|kind| kind == schema_type)
             }
             Predicate::Guard(Guard::Eq {
                 path,
                 value: GuardValue::Null,
-            }) => implied_kind(path).map(|_| false),
+            }) => implied_kind(&path.encode()).map(|_| false),
             Predicate::Not(inner) => known_truth(inner, implied_kind).map(|value| !value),
             Predicate::And(items) => {
                 let values = items

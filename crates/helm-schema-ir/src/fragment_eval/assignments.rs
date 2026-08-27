@@ -122,14 +122,14 @@ pub(super) fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variabl
 /// `*`) abstain — the rewrite would fabricate nested segments.
 pub(super) struct RangeKeyConcretization {
     /// collection path → equated literal key.
-    keyed: std::collections::BTreeMap<String, String>,
+    keyed: std::collections::BTreeMap<helm_schema_core::ValuesPath, String>,
     /// (`p.*`, `p.name`) per keyed collection.
     rewrites: Vec<(String, String)>,
 }
 
 impl RangeKeyConcretization {
     pub(super) fn from_conjuncts<'a>(conjuncts: impl Iterator<Item = &'a Predicate>) -> Self {
-        let keyed: std::collections::BTreeMap<String, String> = conjuncts
+        let keyed: std::collections::BTreeMap<helm_schema_core::ValuesPath, String> = conjuncts
             .filter_map(|predicate| match predicate {
                 Predicate::Guard(crate::Guard::RangeKeyEquals { path, key })
                     if !key.contains('.') && !key.contains('*') =>
@@ -143,8 +143,8 @@ impl RangeKeyConcretization {
             .iter()
             .map(|(path, key)| {
                 (
-                    helm_schema_core::append_value_path(path, "*"),
-                    helm_schema_core::append_value_path(path, key),
+                    helm_schema_core::append_value_path(&path.encode(), "*"),
+                    helm_schema_core::append_value_path(&path.encode(), key),
                 )
             })
             .collect();
@@ -310,7 +310,9 @@ impl Interpreter<'_> {
                     else {
                         continue;
                     };
-                    if tested_path != &path || schema_type == "object" {
+                    if tested_path != &helm_schema_core::ValuesPath::parse(&path)
+                        || schema_type == "object"
+                    {
                         continue;
                     }
                     let mut outer_predicates = self
@@ -590,7 +592,7 @@ impl Interpreter<'_> {
                 && child.is_descendant_of(parent)
             {
                 let presence = Predicate::from(crate::Guard::Absent {
-                    path: child.encode(),
+                    path: child.clone(),
                 })
                 .negated();
                 let guarded = self.active_predicates.iter().any(|active| match active {

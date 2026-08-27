@@ -1,17 +1,21 @@
 use super::Predicate;
-use crate::{Guard, GuardValue};
+use crate::{Guard, GuardValue, ValuesPath};
 use test_util::prelude::sim_assert_eq;
+
+fn path(value: &str) -> ValuesPath {
+    ValuesPath::parse(value)
+}
 
 #[test]
 fn or_truthy_predicate_projects_to_or_guard() {
     let predicate = Predicate::from(Guard::Or {
-        paths: vec!["first".to_string(), "second".to_string()],
+        paths: vec![path("first"), path("second")],
     });
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
         want: Some(vec![Guard::Or {
-            paths: vec!["first".to_string(), "second".to_string()]
+            paths: vec![path("first"), path("second")]
         }])
     );
 }
@@ -19,14 +23,14 @@ fn or_truthy_predicate_projects_to_or_guard() {
 #[test]
 fn negated_truthy_predicate_projects_to_not_guard() {
     let predicate = Predicate::from(Guard::Truthy {
-        path: "enabled".to_string(),
+        path: path("enabled"),
     })
     .negated();
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
         want: Some(vec![Guard::Not {
-            path: "enabled".to_string()
+            path: path("enabled")
         }])
     );
 }
@@ -34,7 +38,7 @@ fn negated_truthy_predicate_projects_to_not_guard() {
 #[test]
 fn double_negated_truthy_predicate_projects_to_truthy_guard() {
     let predicate = Predicate::from(Guard::Truthy {
-        path: "enabled".to_string(),
+        path: path("enabled"),
     })
     .negated()
     .negated();
@@ -42,7 +46,7 @@ fn double_negated_truthy_predicate_projects_to_truthy_guard() {
     sim_assert_eq!(
         have: predicate.contract_guards(),
         want: Some(vec![Guard::Truthy {
-            path: "enabled".to_string()
+            path: path("enabled")
         }])
     );
 }
@@ -50,14 +54,14 @@ fn double_negated_truthy_predicate_projects_to_truthy_guard() {
 #[test]
 fn negated_eq_predicate_projects_to_not_eq_guard() {
     let predicate = Predicate::Not(Box::new(Predicate::from(Guard::Eq {
-        path: "mode".to_string(),
+        path: path("mode"),
         value: GuardValue::string("prod"),
     })));
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
         want: Some(vec![Guard::NotEq {
-            path: "mode".to_string(),
+            path: path("mode"),
             value: GuardValue::string("prod"),
         }])
     );
@@ -66,14 +70,14 @@ fn negated_eq_predicate_projects_to_not_eq_guard() {
 #[test]
 fn not_eq_predicate_projects_to_not_eq_guard() {
     let predicate = Predicate::from(Guard::NotEq {
-        path: "mode".to_string(),
+        path: path("mode"),
         value: GuardValue::string("disabled"),
     });
 
     sim_assert_eq!(
         have: predicate.contract_guards(),
         want: Some(vec![Guard::NotEq {
-            path: "mode".to_string(),
+            path: path("mode"),
             value: GuardValue::string("disabled"),
         }])
     );
@@ -83,10 +87,10 @@ fn not_eq_predicate_projects_to_not_eq_guard() {
 fn mixed_or_predicate_projects_to_structural_any_of_guard() {
     let predicate = Predicate::Or(vec![
         Predicate::from(Guard::Truthy {
-            path: "first".to_string(),
+            path: path("first"),
         }),
         Predicate::from(Guard::Eq {
-            path: "mode".to_string(),
+            path: path("mode"),
             value: GuardValue::string("prod"),
         }),
     ]);
@@ -96,10 +100,10 @@ fn mixed_or_predicate_projects_to_structural_any_of_guard() {
         want: Some(vec![Guard::AnyOf {
             alternatives: vec![
                 vec![Guard::Truthy {
-                    path: "first".to_string(),
+                    path: path("first"),
                 }],
                 vec![Guard::Eq {
-                    path: "mode".to_string(),
+                    path: path("mode"),
                     value: GuardValue::string("prod"),
                 }],
             ],
@@ -110,13 +114,13 @@ fn mixed_or_predicate_projects_to_structural_any_of_guard() {
 #[test]
 fn contract_guard_stack_dedupes_projected_guards() {
     let predicate = Predicate::from(Guard::Truthy {
-        path: "enabled".to_string(),
+        path: path("enabled"),
     });
 
     sim_assert_eq!(
         have: Predicate::contract_guard_stack(&[predicate.clone(), predicate]),
         want: vec![Guard::Truthy {
-            path: "enabled".to_string()
+            path: path("enabled")
         }]
     );
 }
@@ -189,11 +193,11 @@ fn boolean_normalization_collapses_complementary_branch_outputs() {
 #[test]
 fn boolean_normalization_canonicalizes_atomic_negative_guards() {
     let selected = Guard::Eq {
-        path: "mode".to_string(),
+        path: path("mode"),
         value: GuardValue::string("selected"),
     };
     let excluded = Guard::NotEq {
-        path: "mode".to_string(),
+        path: path("mode"),
         value: GuardValue::string("selected"),
     };
 

@@ -245,7 +245,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
         .find(|use_| use_.source_expr == "master.service.ports.redis");
 
     let int_gt = Predicate::from(Guard::IntGt {
-        path: "master.count".to_string(),
+        path: helm_schema_core::ValuesPath::parse("master.count"),
         bound: 0,
     });
     sim_assert_eq!(
@@ -258,7 +258,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
                 sound_subset: Some(Box::new(int_gt)),
             },
             Predicate::from(Guard::Not {
-                path: "sentinel.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("sentinel.enabled"),
             }),
         ]))
     );
@@ -1087,7 +1087,7 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
             Predicate::all(vec![
                 Predicate::truthy_path("kubeVersion"),
                 Predicate::from(Guard::MatchesPattern {
-                    path: "kubeVersion".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("kubeVersion"),
                     pattern,
                     templated: false,
                 }),
@@ -1351,7 +1351,7 @@ fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
         want: vec![vec![Predicate::Or(vec![
             Predicate::truthy_path("feature.mode"),
             Predicate::from(Guard::TypeIs {
-                path: "feature.mode".to_string(),
+                path: helm_schema_core::ValuesPath::parse("feature.mode"),
                 schema_type: "boolean".to_string(),
             })
             .negated(),
@@ -1523,11 +1523,11 @@ fn helper_conditions_preserve_stringified_trimmed_local_values() {
         have: result.truth.predicate().cloned(),
         want: Some(Predicate::Or(vec![
             Predicate::from(Guard::Eq {
-                path: "image.tag".to_string(),
+                path: helm_schema_core::ValuesPath::parse("image.tag"),
                 value: GuardValue::Int(7),
             }),
             Predicate::from(Guard::MatchesPattern {
-                path: "image.tag".to_string(),
+                path: helm_schema_core::ValuesPath::parse("image.tag"),
                 pattern,
                 templated: false,
             }),
@@ -1713,16 +1713,16 @@ fn helper_scalar_output_combines_structural_and_projected_known_arms() {
         &mut seen,
     );
     let explicit_is_null = Predicate::from(Guard::Eq {
-        path: "feature.explicit".to_string(),
+        path: helm_schema_core::ValuesPath::parse("feature.explicit"),
         value: GuardValue::Null,
     });
     let explicit_is_true = Predicate::Or(vec![
         Predicate::from(Guard::Eq {
-            path: "feature.explicit".to_string(),
+            path: helm_schema_core::ValuesPath::parse("feature.explicit"),
             value: GuardValue::Bool(true),
         }),
         Predicate::from(Guard::MatchesPattern {
-            path: "feature.explicit".to_string(),
+            path: helm_schema_core::ValuesPath::parse("feature.explicit"),
             pattern: "^true$".to_string(),
             templated: false,
         }),
@@ -2004,11 +2004,11 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
         .expect("worker legacy candidate");
     let earlier_candidate_skipped = Predicate::all(vec![
         Predicate::from(Guard::Absent {
-            path: "worker.securityContexts".to_string(),
+            path: helm_schema_core::ValuesPath::parse("worker.securityContexts"),
         })
         .negated(),
         Predicate::from(Guard::Absent {
-            path: "worker.securityContexts.pod".to_string(),
+            path: helm_schema_core::ValuesPath::parse("worker.securityContexts.pod"),
         })
         .negated(),
         Predicate::truthy_path("worker.securityContexts.pod"),
@@ -2034,7 +2034,7 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
         "structural hasKey predicates must resolve against the active range dot: {result:#?}"
     );
     let exact_host_capture = BTreeSet::from([Predicate::from(Guard::Absent {
-        path: "worker.securityContexts".to_string(),
+        path: helm_schema_core::ValuesPath::parse("worker.securityContexts"),
     })
     .negated()]);
     let host_captures = result
@@ -2139,11 +2139,11 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
     let invalid = |path: &str| {
         Predicate::Or(vec![
             Predicate::from(Guard::Eq {
-                path: path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(path),
                 value: GuardValue::Null,
             }),
             Predicate::from(Guard::Absent {
-                path: path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(path),
             }),
         ])
         .normalize_boolean()
@@ -2272,13 +2272,13 @@ fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
         have: decoded.truth,
         want: TruthCondition::exact(Predicate::all(vec![
             Predicate::from(Guard::Truthy {
-                path: "rbac.create".to_string(),
+                path: helm_schema_core::ValuesPath::parse("rbac.create"),
             }),
             Predicate::from(Guard::Truthy {
-                path: "server.namespaces".to_string(),
+                path: helm_schema_core::ValuesPath::parse("server.namespaces"),
             }),
             Predicate::from(Guard::Truthy {
-                path: "server.useExistingClusterRoleName".to_string(),
+                path: helm_schema_core::ValuesPath::parse("server.useExistingClusterRoleName"),
             }),
         ])),
         "the decoded list is live exactly where the helper appended a namespace"

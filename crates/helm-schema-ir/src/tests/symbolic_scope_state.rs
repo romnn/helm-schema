@@ -18,7 +18,7 @@ fn branch_join_restores_control_state_to_entry() {
     sim_assert_eq!(
         have: state.contract_guards(),
         want: vec![Guard::Truthy {
-            path: "enabled".to_string()
+            path: helm_schema_core::ValuesPath::parse("enabled")
         }]
     );
     sim_assert_eq!(

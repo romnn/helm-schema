@@ -588,11 +588,11 @@ fn global_source_selection_guards(
         guards.push(Guard::AnyOf {
             alternatives: vec![
                 vec![Guard::NotHasKey {
-                    path: helm_schema_core::join_value_path(container_segments),
+                    path: helm_schema_core::ValuesPath::from_segments(container_segments),
                     key: key.to_string(),
                 }],
                 vec![Guard::Eq {
-                    path: higher_source,
+                    path: helm_schema_core::ValuesPath::parse(&higher_source),
                     value: helm_schema_core::GuardValue::Null,
                 }],
             ],
@@ -602,11 +602,13 @@ fn global_source_selection_guards(
         let mut container_segments = helm_schema_core::split_value_path(source);
         container_segments.pop();
         guards.push(Guard::HasKey {
-            path: helm_schema_core::join_value_path(container_segments),
+            path: helm_schema_core::ValuesPath::parse(&helm_schema_core::join_value_path(
+                container_segments,
+            )),
             key: key.to_string(),
         });
         guards.push(Guard::NotEq {
-            path: source.to_string(),
+            path: helm_schema_core::ValuesPath::parse(source),
             value: helm_schema_core::GuardValue::Null,
         });
     }

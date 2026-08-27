@@ -129,11 +129,11 @@ fn partial_helper_truth_marks_later_short_circuit_member_access_incomplete() {
                 "and operand execution",
                 BTreeSet::from(["feature.gate".to_string()]),
                 vec![Guard::Truthy {
-                    path: "feature.gate".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("feature.gate"),
                 }],
             ),
             Predicate::from(Guard::TypeIs {
-                path: "host".to_string(),
+                path: helm_schema_core::ValuesPath::parse("host"),
                 schema_type: "object".to_string(),
             })
             .negated(),

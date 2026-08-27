@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::contract::ContractUse;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
-use helm_schema_core::{self as output_path, Predicate};
+use helm_schema_core::Predicate;
 
 /// Apply semantic finalization to claims produced by the interpreter.
 ///
@@ -176,12 +176,13 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
             let Some(contract_use) = uses.get(index) else {
                 continue;
             };
+            let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
             let predicates = predicates_by_index.get(index).cloned().unwrap_or_default();
             let has_self_truthy = predicates.iter().any(
-                |predicate| matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &contract_use.source_expr),
+                |predicate| matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &source_path),
             );
             if predicates.iter().any(
-                |predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr),
+                |predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &source_path),
             ) {
                 continue;
             }
@@ -203,7 +204,7 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
                         && predicates.is_subset(other_predicates)
                         && ((!has_self_truthy
                             && other_predicates.iter().any(|predicate| {
-                                matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &contract_use.source_expr)
+                                matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &source_path)
                             }))
                             || extra_predicates_are_truthy_parents(
                                 &predicates,
@@ -239,7 +240,7 @@ fn extra_predicates_are_truthy_parents(
                 matches!(
                     existing,
                     Predicate::Guard(Guard::Truthy { path: child })
-                        if output_path::values_path_is_descendant(child, parent)
+                        if child.is_descendant_of(parent)
                 )
             })
         })
@@ -257,9 +258,10 @@ fn render_site(contract_use: &ContractUse) -> RenderSite {
 }
 
 fn has_self_default_guard(contract_use: &ContractUse) -> bool {
+    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
     contract_predicates(contract_use)
         .iter()
-        .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr))
+        .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &source_path))
 }
 
 fn contract_predicates(contract_use: &ContractUse) -> BTreeSet<Predicate> {

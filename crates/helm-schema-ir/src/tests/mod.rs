@@ -53,7 +53,7 @@ pub(crate) fn raw_guard_sets(
             let mut condition = GuardDnf::from_guards(guards);
             if meta.defaulted {
                 condition = condition.conjoined_with_guards([Guard::Default {
-                    path: source_expr.to_string(),
+                    path: helm_schema_core::ValuesPath::parse(source_expr),
                 }]);
             }
             condition.guard_conjunctions()
@@ -82,14 +82,14 @@ fn simple_template_ir() {
     assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
         && u.single_guard_conjunction()
             == vec![Guard::Truthy {
-                path: "enabled".to_string()
+                path: helm_schema_core::ValuesPath::parse("enabled")
             }]));
     assert!(ir.uses().iter().any(|u| u.source_expr == "name"
         && u.path == YamlPath(vec!["foo".to_string()])
         && u.kind == ValueKind::Scalar
         && u.single_guard_conjunction()
             == vec![Guard::Truthy {
-                path: "enabled".to_string()
+                path: helm_schema_core::ValuesPath::parse("enabled")
             }]));
 }
 
@@ -397,7 +397,7 @@ fn document_guard_survives_helper_sibling_claim_scoping() {
         .unwrap_or_else(|| panic!("expected rendered port use: {ir:#?}"));
     assert!(
         port.single_guard_conjunction().contains(&Guard::Truthy {
-            path: "enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("enabled"),
         }),
         "the document guard executes outside the helper's sibling claims: {port:#?}"
     );
@@ -438,7 +438,7 @@ fn document_branch_guard_survives_local_helper_reassignment() {
         .unwrap_or_else(|| panic!("expected rendered payload use: {ir:#?}"));
     assert!(
         payload.single_guard_conjunction().contains(&Guard::Eq {
-            path: "mode".to_string(),
+            path: helm_schema_core::ValuesPath::parse("mode"),
             value: helm_schema_core::GuardValue::string("active"),
         }),
         "the assignment branch must remain on the local's rendered value: {payload:#?}"
@@ -467,10 +467,10 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() {
         have: primary.condition.guard_conjunctions(),
         want: vec![vec![
             Guard::Truthy {
-                path: "primary".to_string(),
+                path: helm_schema_core::ValuesPath::parse("primary"),
             },
             Guard::Default {
-                path: "primary".to_string(),
+                path: helm_schema_core::ValuesPath::parse("primary"),
             },
         ]]
     );
@@ -484,13 +484,13 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() {
         have: fallback.condition.guard_conjunctions(),
         want: vec![vec![
             Guard::Truthy {
-                path: "fallback".to_string(),
+                path: helm_schema_core::ValuesPath::parse("fallback"),
             },
             Guard::Not {
-                path: "primary".to_string(),
+                path: helm_schema_core::ValuesPath::parse("primary"),
             },
             Guard::Default {
-                path: "fallback".to_string(),
+                path: helm_schema_core::ValuesPath::parse("fallback"),
             },
         ]]
     );
@@ -637,7 +637,7 @@ fn scalar_helper_document_projection_preserves_scope_guard() {
     sim_assert_eq!(
         have: name_use.single_guard_conjunction(),
         want: vec![Guard::Truthy {
-            path: "enabled".to_string()
+            path: helm_schema_core::ValuesPath::parse("enabled")
         }]
     );
 }
@@ -686,18 +686,20 @@ fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() -
             .guard_conjunctions()
             .iter()
             .flatten()
-            .any(|guard| matches!(guard, Guard::Truthy { path } if path == "commonLabels"))),
+            .any(
+                |guard| matches!(guard, Guard::Truthy { path } if path.encode() == "commonLabels")
+            )),
         "commonLabels is the custom-label source, not a guard for the pathless common.names.name dependency: {pathless_name_override_uses:#?}"
     );
     let selected_default_branch = [
         Guard::Truthy {
-            path: "nameOverride".to_string(),
+            path: helm_schema_core::ValuesPath::parse("nameOverride"),
         },
         Guard::Truthy {
-            path: "networkPolicy.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("networkPolicy.enabled"),
         },
         Guard::Default {
-            path: "nameOverride".to_string(),
+            path: helm_schema_core::ValuesPath::parse("nameOverride"),
         },
     ];
     assert!(
@@ -720,12 +722,11 @@ fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() -
         name_override_uses
             .iter()
             .filter(|use_| use_.path == app_name_path)
-            .all(|use_| !use_
-                .condition
-                .guard_conjunctions()
-                .iter()
-                .flatten()
-                .any(|guard| matches!(guard, Guard::Not { path } if path == "nameOverride"))),
+            .all(
+                |use_| !use_.condition.guard_conjunctions().iter().flatten().any(
+                    |guard| matches!(guard, Guard::Not { path } if path.encode() == "nameOverride")
+                )
+            ),
         "a customLabels branch should not keep nameOverride=false after common.names.name is projected: {name_override_uses:#?}"
     );
     Ok(())
@@ -759,7 +760,7 @@ fn transitive_scalar_helper_default_projects_default_guard() {
             use_.source_expr == "nameOverride"
                 && use_.path == YamlPath(vec!["metadata".to_string(), "name".to_string()])
                 && use_.single_guard_conjunction().contains(&Guard::Default {
-                    path: "nameOverride".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("nameOverride"),
                 })
         }),
         "expected transitive helper default to survive into rendered contract use, got {:?}",

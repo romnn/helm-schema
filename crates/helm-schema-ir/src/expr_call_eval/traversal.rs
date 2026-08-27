@@ -96,9 +96,12 @@ pub(super) fn eval_dig(
                 // which is `Guard::Absent`'s negation.
                 vec![crate::eval_effect::FailCapture {
                     conjunction: vec![
-                        Predicate::from(crate::Guard::Absent { path: step.clone() }).negated(),
+                        Predicate::from(crate::Guard::Absent {
+                            path: helm_schema_core::ValuesPath::parse(&step),
+                        })
+                        .negated(),
                         Predicate::from(crate::Guard::TypeIs {
-                            path: step.clone(),
+                            path: helm_schema_core::ValuesPath::parse(&step),
                             schema_type: "object".to_string(),
                         })
                         .negated(),
@@ -154,7 +157,7 @@ fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
         },
         crate::eval_effect::FailCapture {
             conjunction: vec![Predicate::from(crate::Guard::HasKey {
-                path: parent,
+                path: helm_schema_core::ValuesPath::parse(&parent),
                 key: leaf,
             })],
             ranged: crate::range_modes::RangeModes::default(),
@@ -175,7 +178,7 @@ fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
 fn chain_subject_capture(path: &str) -> crate::eval_effect::FailCapture {
     crate::eval_effect::FailCapture {
         conjunction: vec![Predicate::from(crate::Guard::Truthy {
-            path: path.to_string(),
+            path: helm_schema_core::ValuesPath::parse(path),
         })],
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::DigSubject {
@@ -329,7 +332,7 @@ pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effe
             conjunction.extend(shadow.iter().cloned());
             conjunction.push(
                 Predicate::from(crate::Guard::TypeIs {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     schema_type: "object".to_string(),
                 })
                 .negated(),

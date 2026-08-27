@@ -115,7 +115,7 @@ fn record_grouped_member_access_captures(
     segments.extend(selected_path.iter().cloned());
     let receiver_guard = (!receiver_path.is_empty() && !missing_receiver_aborts).then(|| {
         Predicate::from(crate::Guard::Absent {
-            path: receiver_path.to_string(),
+            path: helm_schema_core::ValuesPath::parse(receiver_path),
         })
         .negated()
     });
@@ -154,7 +154,7 @@ fn record_member_host_capture(
     let mut conjunction = outer_predicates.to_vec();
     conjunction.push(
         Predicate::from(crate::Guard::TypeIs {
-            path: path.to_string(),
+            path: helm_schema_core::ValuesPath::parse(path),
             schema_type: "object".to_string(),
         })
         .negated(),

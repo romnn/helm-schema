@@ -32,7 +32,7 @@ fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicat
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Default {
-            path: "serviceAccount.name".to_string(),
+            path: helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         }],
         None,
     ));
@@ -44,7 +44,7 @@ fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicat
     sim_assert_eq!(
         have: value_uses.first().map(ContractUse::single_guard_conjunction),
         want: Some(vec![Guard::Default {
-            path: "serviceAccount.name".to_string(),
+            path: helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         }])
     );
 }
@@ -87,7 +87,7 @@ fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
 fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
     let resource = ResourceRef::concrete("v1".to_string(), "Secret".to_string());
     let guards = vec![Guard::NotEq {
-        path: "auth.username".to_string(),
+        path: helm_schema_core::ValuesPath::parse("auth.username"),
         value: GuardValue::string("postgres"),
     }];
     let mut contract = ContractIr::default();
@@ -142,18 +142,21 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
         ValueKind::Scalar,
         vec![
             Guard::Truthy {
-                path: "serviceAccount.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("serviceAccount.enabled"),
             },
             Guard::Or {
-                paths: vec!["pod.enabled".to_string(), "global.enabled".to_string()],
+                paths: vec![
+                    helm_schema_core::ValuesPath::parse("pod.enabled"),
+                    helm_schema_core::ValuesPath::parse("global.enabled"),
+                ],
             },
             Guard::AnyOf {
                 alternatives: vec![
                     vec![Guard::Truthy {
-                        path: "serviceAccount.create".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("serviceAccount.create"),
                     }],
                     vec![Guard::Eq {
-                        path: "serviceAccount.mode".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("serviceAccount.mode"),
                         value: crate::GuardValue::string("managed"),
                     }],
                 ],
@@ -176,7 +179,7 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     contract_use.omitted_members.insert(
         "automountServiceAccountToken".to_string(),
         vec![Guard::Truthy {
-            path: "serviceAccount.keepAutomount".to_string(),
+            path: helm_schema_core::ValuesPath::parse("serviceAccount.keepAutomount"),
         }],
     );
     contract.push(contract_use);
@@ -202,21 +205,21 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
         have: value_use.single_guard_conjunction(),
         want: vec![
             Guard::Truthy {
-                path: "subchart.serviceAccount.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("subchart.serviceAccount.enabled"),
             },
             Guard::Or {
                 paths: vec![
-                    "global.enabled".to_string(),
-                    "subchart.pod.enabled".to_string(),
+                    helm_schema_core::ValuesPath::parse("global.enabled"),
+                    helm_schema_core::ValuesPath::parse("subchart.pod.enabled"),
                 ],
             },
             Guard::AnyOf {
                 alternatives: vec![
                     vec![Guard::Truthy {
-                        path: "subchart.serviceAccount.create".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("subchart.serviceAccount.create"),
                     }],
                     vec![Guard::Eq {
-                        path: "subchart.serviceAccount.mode".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("subchart.serviceAccount.mode"),
                         value: crate::GuardValue::string("managed"),
                     }],
                 ],
@@ -243,7 +246,7 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
             .map(Vec::as_slice),
         want: Some(
             [Guard::Truthy {
-                path: "subchart.serviceAccount.keepAutomount".to_string(),
+                path: helm_schema_core::ValuesPath::parse("subchart.serviceAccount.keepAutomount"),
             }]
             .as_slice()
         )
@@ -278,11 +281,11 @@ fn dependency_global_projection_keeps_parent_override_and_child_fallback_arms() 
                 "global.imageRegistry".to_string(),
                 vec![
                     Guard::NotEq {
-                        path: "global.imageRegistry".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("global.imageRegistry"),
                         value: helm_schema_core::GuardValue::Null,
                     },
                     Guard::HasKey {
-                        path: "global".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("global"),
                         key: "imageRegistry".to_string(),
                     },
                 ]
@@ -292,11 +295,11 @@ fn dependency_global_projection_keeps_parent_override_and_child_fallback_arms() 
                 vec![Guard::AnyOf {
                     alternatives: vec![
                         vec![Guard::Eq {
-                            path: "global.imageRegistry".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("global.imageRegistry"),
                             value: helm_schema_core::GuardValue::Null,
                         }],
                         vec![Guard::NotHasKey {
-                            path: "global".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("global"),
                             key: "imageRegistry".to_string(),
                         }],
                     ],
@@ -333,11 +336,11 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
                 "global.imageRegistry".to_string(),
                 vec![
                     Guard::NotEq {
-                        path: "global.imageRegistry".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("global.imageRegistry"),
                         value: helm_schema_core::GuardValue::Null,
                     },
                     Guard::HasKey {
-                        path: "global".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("global"),
                         key: "imageRegistry".to_string(),
                     },
                 ]
@@ -348,11 +351,11 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
                     Guard::AnyOf {
                         alternatives: vec![
                             vec![Guard::Eq {
-                                path: "global.imageRegistry".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("global.imageRegistry"),
                                 value: helm_schema_core::GuardValue::Null,
                             }],
                             vec![Guard::NotHasKey {
-                                path: "global".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("global"),
                                 key: "imageRegistry".to_string(),
                             }],
                         ],
@@ -360,11 +363,11 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
                     Guard::AnyOf {
                         alternatives: vec![
                             vec![Guard::Eq {
-                                path: "metrics.global.imageRegistry".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("metrics.global.imageRegistry"),
                                 value: helm_schema_core::GuardValue::Null,
                             }],
                             vec![Guard::NotHasKey {
-                                path: "metrics.global".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("metrics.global"),
                                 key: "imageRegistry".to_string(),
                             }],
                         ],
@@ -375,23 +378,23 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
                 "metrics.global.imageRegistry".to_string(),
                 vec![
                     Guard::NotEq {
-                        path: "metrics.global.imageRegistry".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("metrics.global.imageRegistry"),
                         value: helm_schema_core::GuardValue::Null,
                     },
                     Guard::AnyOf {
                         alternatives: vec![
                             vec![Guard::Eq {
-                                path: "global.imageRegistry".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("global.imageRegistry"),
                                 value: helm_schema_core::GuardValue::Null,
                             }],
                             vec![Guard::NotHasKey {
-                                path: "global".to_string(),
+                                path: helm_schema_core::ValuesPath::parse("global"),
                                 key: "imageRegistry".to_string(),
                             }],
                         ],
                     },
                     Guard::HasKey {
-                        path: "metrics.global".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("metrics.global"),
                         key: "imageRegistry".to_string(),
                     },
                 ]
@@ -467,7 +470,7 @@ fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contr
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Default {
-            path: "feature".to_string(),
+            path: helm_schema_core::ValuesPath::parse("feature"),
         }],
         None,
     ));
@@ -568,7 +571,10 @@ fn with_header_candidates_do_not_inherit_the_body_sink() {
                 YamlPath(Vec::new()),
                 false,
                 vec![Guard::Or {
-                    paths: vec!["fallback".to_string(), "primary".to_string()],
+                    paths: vec![
+                        helm_schema_core::ValuesPath::parse("fallback"),
+                        helm_schema_core::ValuesPath::parse("primary"),
+                    ],
                 }],
             ),
             (
@@ -581,10 +587,10 @@ fn with_header_candidates_do_not_inherit_the_body_sink() {
                 true,
                 vec![
                     Guard::Truthy {
-                        path: "fallback".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("fallback"),
                     },
                     Guard::Not {
-                        path: "primary".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("primary"),
                     },
                 ],
             ),
@@ -612,7 +618,7 @@ fn contract_ir_activation_guards_gate_fail_captures() {
     );
 
     contract.append_guards_to_all_uses(&[Guard::Truthy {
-        path: "redis.enabled".to_string(),
+        path: helm_schema_core::ValuesPath::parse("redis.enabled"),
     }]);
 
     let signals = contract.finalize().into_schema_signals();
@@ -648,7 +654,7 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
         }],
     );
     contract.append_guards_to_all_uses(&[Guard::Truthy {
-        path: "postgresql.enabled".to_string(),
+        path: helm_schema_core::ValuesPath::parse("postgresql.enabled"),
     }]);
 
     let finalized = contract.finalize();
@@ -694,7 +700,7 @@ fn activation_guards_scope_values_default_sources() {
         None,
     ));
     contract.append_guards_to_all_uses(&[Guard::Truthy {
-        path: "child.enabled".to_string(),
+        path: helm_schema_core::ValuesPath::parse("child.enabled"),
     }]);
 
     let signals = contract.finalize().into_schema_signals();
@@ -727,7 +733,7 @@ fn activation_drops_a_default_source_without_same_template_consumers() {
         });
     contract.absorb_observed_facts(&facts);
     contract.append_guards_to_all_uses(&[Guard::Truthy {
-        path: "child.enabled".to_string(),
+        path: helm_schema_core::ValuesPath::parse("child.enabled"),
     }]);
 
     let signals = contract.finalize().into_schema_signals();
@@ -758,10 +764,10 @@ fn nested_activation_conjoins_every_default_source_guard() {
     ));
     contract.append_guards_to_all_uses(&[
         Guard::Truthy {
-            path: "mid.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("mid.enabled"),
         },
         Guard::Truthy {
-            path: "mid.leaf.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("mid.leaf.enabled"),
         },
     ]);
 
@@ -805,7 +811,7 @@ fn activation_guards_scope_dependency_root_overlay_twins() -> eyre::Result<()> {
         });
     contract.absorb_observed_facts(&facts);
     contract.append_guards_to_all_uses(&[Guard::Truthy {
-        path: "child.enabled".to_string(),
+        path: helm_schema_core::ValuesPath::parse("child.enabled"),
     }]);
 
     let signals = contract.finalize().into_schema_signals();
@@ -836,7 +842,7 @@ fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<(
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         vec![Guard::Truthy {
-            path: "config.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("config.enabled"),
         }],
         None,
     ));
@@ -845,10 +851,10 @@ fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<(
         [crate::eval_effect::FailCapture {
             conjunction: vec![
                 helm_schema_core::Predicate::Guard(Guard::Truthy {
-                    path: "config.enabled".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("config.enabled"),
                 }),
                 helm_schema_core::Predicate::Guard(Guard::TypeIs {
-                    path: path.to_string(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     schema_type: "string".to_string(),
                 }),
             ],
@@ -881,7 +887,7 @@ fn scoped_string_requirement_suppresses_only_the_matching_provider_route() {
             YamlPath(vec!["metadata".to_string(), slot.to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
-                path: gate.to_string(),
+                path: helm_schema_core::ValuesPath::parse(gate),
             }],
             Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         );
@@ -927,7 +933,7 @@ fn scoped_string_requirement_matches_a_logically_implied_disjunction() {
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Truthy {
-            path: "selected".to_string(),
+            path: helm_schema_core::ValuesPath::parse("selected"),
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     ));
@@ -1011,7 +1017,7 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
         YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
         ValueKind::YamlSerialized,
         vec![Guard::Truthy {
-            path: "workers.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("workers.enabled"),
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     );
@@ -1068,7 +1074,7 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() {
         YamlPath(vec!["spec".to_string(), "ports".to_string()]),
         ValueKind::YamlSerialized,
         vec![Guard::Truthy {
-            path: "deployment.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("deployment.enabled"),
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     );
@@ -1113,7 +1119,7 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
         YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
         ValueKind::YamlSerialized,
         vec![Guard::Not {
-            path: "workers.enabled".to_string(),
+            path: helm_schema_core::ValuesPath::parse("workers.enabled"),
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     );
@@ -1193,7 +1199,7 @@ fn ranged_wildcard_string_requirement_keeps_its_member_contract() -> eyre::Resul
                 path: "workers.*".to_string(),
                 route: crate::eval_effect::StringRequirementRoute::Selected,
                 selection: vec![helm_schema_core::Predicate::Guard(Guard::Range {
-                    path: "workers".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("workers"),
                 })],
             },
         }],

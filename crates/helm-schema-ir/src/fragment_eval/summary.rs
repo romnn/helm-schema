@@ -1008,24 +1008,24 @@ fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]
     for mut read in reads.drain(..) {
         let conjunctions = read.condition.disjuncts().iter().map(|conjunction| {
             let has_truthy_sibling = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(path, &read.values_path))
+                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read.values_path))
             });
             let defaulted = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Default { path }) if path == &read.values_path)
+                matches!(predicate, Predicate::Guard(crate::Guard::Default { path }) if path == &helm_schema_core::ValuesPath::parse(&read.values_path))
             });
             let has_self_truthy = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path)
+                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if path == &helm_schema_core::ValuesPath::parse(&read.values_path))
             });
             let mut predicates = conjunction
                 .iter()
                 .filter(|predicate| {
-                    !matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(path, &read.values_path))
+                    !matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read.values_path))
                 })
                 .cloned()
                 .collect::<Vec<_>>();
             if defaulted && (has_self_truthy || has_truthy_sibling) {
                 predicates.retain(|predicate| {
-                    !matches!(predicate, Predicate::Not(inner) if matches!(inner.as_ref(), Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path))
+                    !matches!(predicate, Predicate::Not(inner) if matches!(inner.as_ref(), Predicate::Guard(crate::Guard::Truthy { path }) if path == &helm_schema_core::ValuesPath::parse(&read.values_path)))
                 });
             }
             predicates

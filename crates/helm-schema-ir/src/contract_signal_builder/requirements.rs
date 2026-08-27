@@ -130,10 +130,11 @@ pub(super) fn record_fail_conjunction(
                     FailValueRequirement::SchemaType("string".to_string()),
                 );
                 if let Some(collection_path) = member_range_path(path)
+                    && let collection = helm_schema_core::ValuesPath::parse(&collection_path)
                     && requirement_capture.conjunction.iter().all(|predicate| {
                         matches!(
                             predicate,
-                            Predicate::Guard(Guard::Range { path }) if path == &collection_path
+                            Predicate::Guard(Guard::Range { path }) if path == &collection
                         )
                     })
                     && requirement_capture
@@ -170,16 +171,20 @@ pub(super) fn record_fail_conjunction(
                 .iter()
                 .any(|predicate| predicate_is_truthy_disjunction_over(predicate, chain));
             let has_all_markers = chain.iter().all(|candidate| {
+                let candidate = helm_schema_core::ValuesPath::parse(candidate);
                 capture.conjunction.iter().any(|predicate| {
                     matches!(
                         predicate,
                         Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
-                            if path == candidate
+                            if path == &candidate
                     )
                 })
             });
             if has_chain_disjunction && has_all_markers {
-                let mut remaining_markers = chain.iter().cloned().collect::<BTreeSet<_>>();
+                let mut remaining_markers = chain
+                    .iter()
+                    .map(|path| helm_schema_core::ValuesPath::parse(path))
+                    .collect::<BTreeSet<_>>();
                 capture.conjunction.retain(|predicate| {
                     if predicate_is_truthy_disjunction_over(predicate, chain) {
                         return false;
@@ -261,7 +266,7 @@ pub(super) fn record_fail_conjunction(
                         predicate,
                         Predicate::Guard(
                             Guard::Truthy { path: guard } | Guard::With { path: guard }
-                        ) if guard == path
+                        ) if guard == &helm_schema_core::ValuesPath::parse(path)
                     )
                 }) {
                     return;
@@ -385,14 +390,12 @@ pub(super) fn record_fail_conjunction(
     // failure to "every path set" when the disjunction alone is the
     // condition. Drop a marker whenever a disjunction over its path is
     // present.
-    let or_covered: BTreeSet<&str> = capture
+    let or_covered: BTreeSet<&helm_schema_core::ValuesPath> = capture
         .conjunction
         .iter()
         .filter_map(|predicate| match predicate {
             Predicate::Or(items) => Some(items.iter().filter_map(|item| match item {
-                Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) => {
-                    Some(path.as_str())
-                }
+                Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) => Some(path),
                 _ => None,
             })),
             _ => None,
@@ -404,7 +407,7 @@ pub(super) fn record_fail_conjunction(
         .filter(|predicate| {
             !matches!(
                 predicate,
-                Predicate::Guard(Guard::With { path }) if or_covered.contains(path.as_str())
+                Predicate::Guard(Guard::With { path }) if or_covered.contains(path)
             )
         })
         .cloned()
@@ -426,8 +429,10 @@ pub(super) fn record_fail_conjunction(
     // predicates name only the latter.
     let ranged = execution_range_paths
         .filter(|path| {
-            range_modes.mode(path).member_identity || capture.ranged.mode(path).member_identity
+            let path = path.encode();
+            range_modes.mode(&path).member_identity || capture.ranged.mode(&path).member_identity
         })
+        .map(|path| path.encode())
         .chain(
             capture
                 .ranged
@@ -453,7 +458,10 @@ pub(super) fn record_fail_conjunction(
     let mut test_paths: BTreeSet<String> = BTreeSet::new();
     for predicate in conjunction {
         if let Predicate::Guard(Guard::Range { path }) = predicate {
-            if ranged.as_deref() == Some(path.as_str()) {
+            if ranged
+                .as_ref()
+                .is_some_and(|ranged| ranged == &path.encode())
+            {
                 continue;
             }
             // An iteration conjunct outside the member test: the body
@@ -461,8 +469,10 @@ pub(super) fn record_fail_conjunction(
             // (a truthy non-collection aborts the range and never reaches
             // a render-valid document). Indirect ranges lose that
             // implication and abstain.
-            if capture.ranged.mode(path).input_identity {
-                outer_guards.push(ConditionalGuard::Truthy { path: path.clone() });
+            if capture.ranged.mode(&path.encode()).input_identity {
+                outer_guards.push(ConditionalGuard::Truthy {
+                    path: path.encode(),
+                });
                 continue;
             }
             return;
@@ -670,14 +680,15 @@ fn selected_member_requirement_capture(
     if !selection.iter().any(|predicate| {
         matches!(
             predicate,
-            Predicate::Guard(Guard::Range { path }) if path == &collection_path
+            Predicate::Guard(Guard::Range { path })
+                if path == &helm_schema_core::ValuesPath::parse(&collection_path)
         )
     }) {
         return None;
     }
     let mut capture = capture.clone();
     capture.conjunction.push(Predicate::Guard(Guard::Range {
-        path: collection_path,
+        path: helm_schema_core::ValuesPath::parse(&collection_path),
     }));
     capture.conjunction.sort();
     capture.conjunction.dedup();
@@ -710,7 +721,7 @@ fn string_requirement_has_execution_scope(
         capture.ranged.mode(required).member_identity
             || range_modes.mode(required).member_identity
             || capture.conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == required)
+                matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == &helm_schema_core::ValuesPath::parse(required))
             })
     })
 }
@@ -741,7 +752,7 @@ pub(super) fn record_range_key_prefix_requirement(
         .iter()
         .filter_map(|predicate| match predicate {
             Predicate::Guard(Guard::RangeKeyPrefix { path, prefix }) => {
-                Some((path.as_str(), prefix.as_str()))
+                Some((path, prefix.as_str()))
             }
             _ => None,
         })
@@ -749,9 +760,9 @@ pub(super) fn record_range_key_prefix_requirement(
     let [(collection_path, prefix)] = prefixes.as_slice() else {
         return !prefixes.is_empty();
     };
-    let member_scope = helm_schema_core::append_value_path(collection_path, "*");
+    let member_scope = helm_schema_core::append_value_path(&collection_path.encode(), "*");
     let has_matching_range = conjunction.iter().any(|predicate| {
-        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == collection_path)
+        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == *collection_path)
     });
     if !has_matching_range {
         return true;
@@ -764,8 +775,8 @@ pub(super) fn record_range_key_prefix_requirement(
             Predicate::Guard(Guard::RangeKeyPrefix {
                 path,
                 prefix: candidate,
-            }) if path == collection_path && candidate == prefix => {}
-            Predicate::Guard(Guard::Range { path }) if path == collection_path => {}
+            }) if path == *collection_path && candidate == prefix => {}
+            Predicate::Guard(Guard::Range { path }) if path == *collection_path => {}
             _ if {
                 let predicate_paths = predicate.value_paths();
                 !predicate_paths.is_empty()
@@ -810,7 +821,7 @@ pub(super) fn record_range_key_prefix_requirement(
         },
         requirements,
     };
-    let acc = path_accumulator(paths, collection_path);
+    let acc = path_accumulator(paths, &collection_path.encode());
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -828,14 +839,14 @@ pub(super) fn record_range_key_matches_requirement(
     kind: &crate::eval_effect::CaptureKind,
     conjunction: &[Predicate],
 ) -> bool {
-    fn key_match(predicate: &Predicate) -> Option<(bool, &str, &str)> {
+    fn key_match(predicate: &Predicate) -> Option<(bool, &helm_schema_core::ValuesPath, &str)> {
         match predicate {
             Predicate::Guard(Guard::RangeKeyMatches { path, pattern }) => {
-                Some((false, path.as_str(), pattern.as_str()))
+                Some((false, path, pattern.as_str()))
             }
             Predicate::Not(inner) => match inner.as_ref() {
                 Predicate::Guard(Guard::RangeKeyMatches { path, pattern }) => {
-                    Some((true, path.as_str(), pattern.as_str()))
+                    Some((true, path, pattern.as_str()))
                 }
                 _ => None,
             },
@@ -846,24 +857,25 @@ pub(super) fn record_range_key_matches_requirement(
     if !matches!(kind, crate::eval_effect::CaptureKind::Fail) {
         return false;
     }
-    let matches: Vec<(bool, &str, &str)> = conjunction.iter().filter_map(key_match).collect();
+    let matches: Vec<(bool, &helm_schema_core::ValuesPath, &str)> =
+        conjunction.iter().filter_map(key_match).collect();
     let [(negated, collection_path, pattern)] = matches.as_slice() else {
         return !matches.is_empty();
     };
     let has_matching_range = conjunction.iter().any(|predicate| {
-        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == collection_path)
+        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == *collection_path)
     });
     if !has_matching_range {
         return true;
     }
-    let member_scope = helm_schema_core::append_value_path(collection_path, "*");
+    let member_scope = helm_schema_core::append_value_path(&collection_path.encode(), "*");
     let mut outer_guards = Vec::new();
     for predicate in conjunction {
         if key_match(predicate).is_some() {
             continue;
         }
         match predicate {
-            Predicate::Guard(Guard::Range { path }) if path == collection_path => {}
+            Predicate::Guard(Guard::Range { path }) if path == *collection_path => {}
             _ if predicate.value_paths().iter().any(|path| {
                 path == &member_scope
                     || helm_schema_core::values_path_is_descendant(path, &member_scope)
@@ -903,7 +915,7 @@ pub(super) fn record_range_key_matches_requirement(
         target: ContractRequirementTarget::Keys,
         requirements: vec![requirement],
     };
-    let acc = path_accumulator(paths, collection_path);
+    let acc = path_accumulator(paths, &collection_path.encode());
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -917,10 +929,10 @@ pub(super) fn capture_outer_guards(
     let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
     // A key-equality conjunct subsumes its companion iteration conjunct:
     // the has-key lowering already implies the range reaches that member.
-    let key_equals_ranges: BTreeSet<&str> = conjunction
+    let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = conjunction
         .iter()
         .filter_map(|predicate| match predicate {
-            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path),
             _ => None,
         })
         .collect();
@@ -929,7 +941,7 @@ pub(super) fn capture_outer_guards(
         .filter(|predicate| {
             !matches!(
                 predicate,
-                Predicate::Guard(Guard::Range { path }) if key_equals_ranges.contains(path.as_str())
+                Predicate::Guard(Guard::Range { path }) if key_equals_ranges.contains(path)
             )
         })
         .map(|predicate| match predicate {
@@ -937,11 +949,13 @@ pub(super) fn capture_outer_guards(
             // ranged collection is Helm-truthy (a truthy non-collection
             // aborts the range and never renders). Indirect ranges lose
             // that implication and abstain.
-            Predicate::Guard(Guard::Range { path }) => capture
-                .ranged
-                .mode(path)
-                .input_identity
-                .then(|| ConditionalGuard::Truthy { path: path.clone() }),
+            Predicate::Guard(Guard::Range { path }) => {
+                capture.ranged.mode(&path.encode()).input_identity.then(|| {
+                    ConditionalGuard::Truthy {
+                        path: path.encode(),
+                    }
+                })
+            }
             predicate => fail_outer_guard(predicate),
         })
         .collect::<Option<Vec<_>>>()?;
@@ -1046,6 +1060,7 @@ pub(super) fn member_dispatch_escape(
     predicate: &Predicate,
     member_path: &str,
 ) -> Option<FailValueRequirement> {
+    let member_path = helm_schema_core::ValuesPath::parse(member_path);
     let (negated, guard) = match predicate {
         Predicate::Guard(guard) => (false, guard),
         Predicate::Not(inner) => match inner.as_ref() {
@@ -1055,8 +1070,8 @@ pub(super) fn member_dispatch_escape(
         _ => return None,
     };
     let (schema_type, excluded) = match guard {
-        Guard::TypeIs { path, schema_type } if path == member_path => (schema_type, false),
-        Guard::NotTypeIs { path, schema_type } if path == member_path => (schema_type, true),
+        Guard::TypeIs { path, schema_type } if path == &member_path => (schema_type, false),
+        Guard::NotTypeIs { path, schema_type } if path == &member_path => (schema_type, true),
         _ => return None,
     };
     if negated == excluded {
@@ -1131,7 +1146,7 @@ pub(super) fn record_value_requirement_capture(
                 if matches!(
                     predicate,
                     Predicate::Guard(Guard::Range { path })
-                        if ranged_collections.contains(path)
+                        if ranged_collections.contains(&path.encode())
                 ) {
                     continue;
                 }
@@ -1177,10 +1192,12 @@ pub(super) fn record_value_requirement_capture(
     });
     if let Some((collection_path, member_suffix)) = member_field_split {
         let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
-        let key_equals_ranges: BTreeSet<&str> = conjunction
+        let collection = helm_schema_core::ValuesPath::parse(collection_path);
+        let member = helm_schema_core::ValuesPath::parse(path);
+        let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = conjunction
             .iter()
             .filter_map(|predicate| match predicate {
-                Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+                Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path),
                 _ => None,
             })
             .collect();
@@ -1190,13 +1207,13 @@ pub(super) fn record_value_requirement_capture(
         for predicate in &conjunction {
             match predicate {
                 Predicate::Guard(Guard::Range { path })
-                    if path == collection_path || key_equals_ranges.contains(path.as_str()) => {}
+                    if path == &collection || key_equals_ranges.contains(path) => {}
                 // The consumer's own truthiness selection over the ranged
                 // member cannot become an outer guard (its path is
                 // per-member); it scopes the requirement to truthy member
                 // values instead (`.password | default ""` behind
                 // `if $password` reaching `sha256sum`).
-                Predicate::Guard(Guard::Truthy { path: guard_path }) if guard_path == path => {
+                Predicate::Guard(Guard::Truthy { path: guard_path }) if guard_path == &member => {
                     self_truthy_selected = true;
                 }
                 _ => {
@@ -1268,17 +1285,18 @@ pub(super) fn record_value_requirement_capture(
     }
     let (target_path, target, outer_guards) = if let Some(collection_path) = path.strip_suffix(".*")
     {
+        let collection = helm_schema_core::ValuesPath::parse(collection_path);
         let mut outer_guards = Vec::new();
         let mut prefix = None;
         let mut member_selector = None;
         let mut dispatch_escapes = Vec::new();
         for predicate in &capture.conjunction {
             match predicate {
-                Predicate::Guard(Guard::Range { path }) if path == collection_path => {}
+                Predicate::Guard(Guard::Range { path }) if path == &collection => {}
                 Predicate::Guard(Guard::RangeKeyPrefix {
                     path,
                     prefix: candidate,
-                }) if path == collection_path => {
+                }) if path == &collection => {
                     if prefix.replace(candidate.clone()).is_some() {
                         return;
                     }
@@ -1568,24 +1586,32 @@ pub(super) fn record_member_relative_split_requirement(
     };
     let collection_path = helm_schema_core::join_value_path(collection_segments.to_vec());
     let member_scope = helm_schema_core::join_value_path(member_segments.to_vec());
+    let collection = helm_schema_core::ValuesPath::parse(&collection_path);
+    let member = helm_schema_core::ValuesPath::parse(&member_scope);
     let target_path = target_path.to_vec();
-    let mut member_guards = Vec::new();
+    let mut member_guards: Vec<(Vec<String>, GuardValue)> = Vec::new();
     let mut outer_guards = Vec::new();
 
     for predicate in &capture.conjunction {
         if matches!(predicate, Predicate::Guard(Guard::Range { path })
-            if path == &collection_path
-                || helm_schema_core::values_path_is_descendant(&member_scope, path))
+            if path == &collection || member.is_descendant_of(path))
         {
             continue;
         }
         if let Predicate::Guard(Guard::Eq { path, value }) = predicate
-            && let Some(relative) =
-                helm_schema_core::split_value_path(path).strip_prefix(member_segments)
+            && let path_segments = path.segments().collect::<Vec<_>>()
+            && let member_segments = member.segments().collect::<Vec<_>>()
+            && let Some(relative) = path_segments.strip_prefix(member_segments.as_slice())
             && !relative.is_empty()
-            && !relative.iter().any(|segment| segment == "*")
+            && !relative.contains(&"*")
         {
-            member_guards.push((relative.to_vec(), value.clone()));
+            member_guards.push((
+                relative
+                    .iter()
+                    .map(|segment| (*segment).to_string())
+                    .collect(),
+                value.clone(),
+            ));
             continue;
         }
         let Some(guard) = predicate_to_guard(predicate, None) else {
@@ -1709,7 +1735,9 @@ pub(super) fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
         // conjunction of inequalities negates to the op enum). Absolute
         // paths stay out: a scalar-target `ne` rides the terminal-clause
         // lane, like `Eq` below.
-        Predicate::Guard(Guard::NotEq { path, .. } | Guard::Truthy { path }) => path.contains(".*"),
+        Predicate::Guard(Guard::NotEq { path, .. } | Guard::Truthy { path }) => {
+            values_path_has_wildcard(path)
+        }
         // A truthiness test over a ranged MEMBER's field is an exact
         // member decode: the fallback truthy stand-ins for undecodable
         // conditions ride absolute paths, never wildcard member scopes.
@@ -1721,17 +1749,28 @@ pub(super) fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
 /// Requirements implied by the NEGATION of a failing test: the negation
 /// must hold for the value at `scope` (a member scope `p.*` or the path
 /// itself).
-fn relative_value_path(path: &str, scope: &str) -> Option<Vec<String>> {
-    let path = helm_schema_core::split_value_path(path);
-    let scope = helm_schema_core::split_value_path(scope);
-    let relative = path.strip_prefix(scope.as_slice())?;
-    (!relative.is_empty()).then(|| relative.to_vec())
+fn relative_value_path(path: &helm_schema_core::ValuesPath, scope: &str) -> Option<Vec<String>> {
+    let scope = helm_schema_core::ValuesPath::parse(scope);
+    let path_segments: Vec<&str> = path.segments().collect();
+    let scope_segments: Vec<&str> = scope.segments().collect();
+    let relative = path_segments.strip_prefix(scope_segments.as_slice())?;
+    (!relative.is_empty()).then(|| {
+        relative
+            .iter()
+            .map(|segment| (*segment).to_string())
+            .collect()
+    })
+}
+
+fn values_path_has_wildcard(path: &helm_schema_core::ValuesPath) -> bool {
+    path.segments().any(|segment| segment == "*")
 }
 
 pub(super) fn requirements_from_negation(
     predicate: &Predicate,
     scope: &str,
 ) -> Option<Vec<FailValueRequirement>> {
+    let scope_path = helm_schema_core::ValuesPath::parse(scope);
     match predicate {
         Predicate::Not(inner) => requirements_from_holding(inner, scope),
         // Negating a disjunction: every arm's negation must hold.
@@ -1742,7 +1781,7 @@ pub(super) fn requirements_from_negation(
             }
             Some(requirements)
         }
-        Predicate::Guard(Guard::TypeIs { path, schema_type }) if path == scope => {
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) if path == &scope_path => {
             Some(vec![FailValueRequirement::NotSchemaType(
                 schema_type.clone(),
             )])
@@ -1761,7 +1800,7 @@ pub(super) fn requirements_from_negation(
         // member's OWN truthiness (`if $config` around a ranged terminal)
         // negates to Helm-falsiness of the member value itself.
         Predicate::Guard(Guard::Truthy { path }) if path_contains_wildcard(scope) => {
-            if path == scope {
+            if path == &scope_path {
                 return Some(vec![FailValueRequirement::HelmFalsy]);
             }
             let field = relative_value_path(path, scope)?;
@@ -1794,12 +1833,12 @@ pub(super) fn requirements_from_negation(
         // conjunction of negations, which is the safe direction.
         Predicate::Guard(Guard::Eq { path, value }) => match value {
             GuardValue::String(text)
-                if path == scope && path_contains_wildcard(scope) && !text.is_empty() =>
+                if path == &scope_path && path_contains_wildcard(scope) && !text.is_empty() =>
             {
                 Some(vec![FailValueRequirement::NotEquals(value.clone())])
             }
             GuardValue::Int(_) | GuardValue::Bool(_)
-                if path == scope && path_contains_wildcard(scope) =>
+                if path == &scope_path && path_contains_wildcard(scope) =>
             {
                 Some(vec![FailValueRequirement::NotEquals(value.clone())])
             }
@@ -1811,7 +1850,7 @@ pub(super) fn requirements_from_negation(
             // terminal through this arm). Empty-string arms stay dropped:
             // they ride `required` emptiness tests whose absence semantics
             // the tolerant-leaf encoding already covers.
-            GuardValue::String(text) if path_contains_wildcard(scope) && path != scope => {
+            GuardValue::String(text) if path_contains_wildcard(scope) && path != &scope_path => {
                 if text.is_empty() {
                     return Some(Vec::new());
                 }
@@ -1824,7 +1863,7 @@ pub(super) fn requirements_from_negation(
                 })
             }
             GuardValue::Int(_) | GuardValue::Bool(_)
-                if path_contains_wildcard(scope) && path != scope =>
+                if path_contains_wildcard(scope) && path != &scope_path =>
             {
                 let field = relative_value_path(path, scope)?;
                 (!field.iter().any(|segment| segment == "*")).then(|| {
@@ -1845,8 +1884,9 @@ pub(super) fn requirements_from_holding(
     predicate: &Predicate,
     scope: &str,
 ) -> Option<Vec<FailValueRequirement>> {
+    let scope_path = helm_schema_core::ValuesPath::parse(scope);
     match predicate {
-        Predicate::Guard(Guard::TypeIs { path, schema_type }) if path == scope => {
+        Predicate::Guard(Guard::TypeIs { path, schema_type }) if path == &scope_path => {
             Some(vec![FailValueRequirement::SchemaType(schema_type.clone())])
         }
         // `regexMatch` type-asserts a string subject, so the negated fail
@@ -1855,7 +1895,7 @@ pub(super) fn requirements_from_holding(
             path,
             pattern,
             templated,
-        }) if path == scope => Some(vec![FailValueRequirement::MatchesPattern {
+        }) if path == &scope_path => Some(vec![FailValueRequirement::MatchesPattern {
             pattern: pattern.clone(),
             templated: *templated,
         }]),
@@ -1863,7 +1903,7 @@ pub(super) fn requirements_from_holding(
         // the fail path, `¬Absent(scope)` in the conjunction): an arm
         // encoded at the value's position is vacuous when the value is
         // absent, so presence needs no spelled requirement.
-        Predicate::Guard(Guard::Absent { path }) if path == scope => Some(Vec::new()),
+        Predicate::Guard(Guard::Absent { path }) if path == &scope_path => Some(Vec::new()),
         // The tested MEMBER's own truthiness (`and $v (kindIs "string"
         // $v)`): a falsy member — including the empty string — takes the
         // failing arm, so validity requires Helm-truthiness alongside any
@@ -1872,7 +1912,7 @@ pub(super) fn requirements_from_holding(
         // exact per member; a scalar VALUE target instead lowers through
         // the terminal-clause lane, whose guard encoding carries the
         // absence semantics a properties-anchored arm cannot.
-        Predicate::Guard(Guard::Truthy { path }) if path == scope => {
+        Predicate::Guard(Guard::Truthy { path }) if path == &scope_path => {
             if path_contains_wildcard(scope) {
                 Some(vec![FailValueRequirement::HelmTruthy])
             } else {
@@ -1958,20 +1998,21 @@ pub(super) fn record_member_access_capture(
     let Some(target) = target else {
         return;
     };
-    if let Some(parent) = target.strip_suffix(".*")
-        && !path_contains_wildcard(parent)
+    if let Some(parent) = target.item_parent()
+        && !values_path_has_wildcard(&parent)
     {
         if incomplete {
             return;
         }
-        if !capture.ranged.mode(parent).member_identity {
+        let parent_encoded = parent.encode();
+        if !capture.ranged.mode(&parent_encoded).member_identity {
             return;
         }
         let mut outer_guards = Vec::new();
         for predicate in &capture.conjunction {
             if matches!(
                 predicate,
-                Predicate::Guard(Guard::Range { path }) if path == parent
+                Predicate::Guard(Guard::Range { path }) if path == &parent
             ) || matches!(
                 predicate,
                 Predicate::Not(inner)
@@ -2001,8 +2042,8 @@ pub(super) fn record_member_access_capture(
             outer_guards,
             target: ContractRequirementTarget::Members {
                 allow_integer: {
-                    let mode = range_modes.mode(parent);
-                    let capture_mode = capture.ranged.mode(parent);
+                    let mode = range_modes.mode(&parent_encoded);
+                    let capture_mode = capture.ranged.mode(&parent_encoded);
                     !mode.destructured
                         && !capture_mode.destructured
                         && !mode.json_decoded
@@ -2011,14 +2052,14 @@ pub(super) fn record_member_access_capture(
             },
             requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
         };
-        let acc = path_accumulator(paths, parent);
+        let acc = path_accumulator(paths, &parent_encoded);
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
         }
         return;
     }
-    if path_contains_wildcard(&target) {
+    if values_path_has_wildcard(&target) {
         return;
     }
     let mut outer = Vec::new();
@@ -2036,8 +2077,8 @@ pub(super) fn record_member_access_capture(
             }
             // A `with` gate enters only when its path is truthy: the same
             // condition the guard encoding can spell.
-            Predicate::Guard(Guard::With { path }) if !path_contains_wildcard(path) => {
-                outer.push(Predicate::truthy_path(path.clone()));
+            Predicate::Guard(Guard::With { path }) if !values_path_has_wildcard(path) => {
+                outer.push(Predicate::truthy_path(path.encode()));
                 continue;
             }
             _ => {}
@@ -2066,7 +2107,7 @@ pub(super) fn record_member_access_capture(
         }
         outer.push(predicate);
     }
-    let access_conditions = &mut path_accumulator(paths, &target).member_access_conditions;
+    let access_conditions = &mut path_accumulator(paths, &target.encode()).member_access_conditions;
     if condition_lowerable {
         access_conditions.record(
             handled_kinds.iter().cloned().collect(),

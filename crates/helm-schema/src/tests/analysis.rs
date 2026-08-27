@@ -653,7 +653,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
                     matches!(
                         guard,
                         Guard::Truthy { path }
-                        if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                        if path.encode() == "clickhouse.clickhouseOperator.serviceAccount.create"
                     )
                 })
         }),
@@ -669,7 +669,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
                     matches!(
                         guard,
                         Guard::Not { path }
-                        if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                        if path.encode() == "clickhouse.clickhouseOperator.serviceAccount.create"
                     )
                 })
         }),
@@ -816,7 +816,7 @@ fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
         service_account_use
             .single_guard_conjunction()
             .iter()
-            .any(|guard| matches!(guard, Guard::Truthy { path } if path == "signoz.serviceAccount.create")),
+            .any(|guard| matches!(guard, Guard::Truthy { path } if path.encode() == "signoz.serviceAccount.create")),
         "the conditional ServiceAccount resource must retain its create guard; use={service_account_use:#?}"
     );
     let stateful_set_use = uses
@@ -832,7 +832,7 @@ fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
     let stateful_set_guards = stateful_set_use.single_guard_conjunction();
     assert!(
         stateful_set_guards.iter().any(
-            |guard| matches!(guard, Guard::Default { path } if path == "signoz.serviceAccount.name")
+            |guard| matches!(guard, Guard::Default { path } if path.encode() == "signoz.serviceAccount.name")
         ),
         "both helper arms default the service account name; use={stateful_set_use:#?}"
     );
@@ -840,7 +840,7 @@ fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
         stateful_set_guards.iter().all(|guard| !matches!(
             guard,
             Guard::Truthy { path } | Guard::Not { path }
-            if path == "signoz.serviceAccount.create"
+            if path.encode() == "signoz.serviceAccount.create"
         )),
         "the unconditional StatefulSet consumes the same value in both helper arms; use={stateful_set_use:#?}"
     );
@@ -884,7 +884,7 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability() -
                     matches!(
                         guard,
                         Guard::Default { path }
-                        if path == "signoz-otel-gateway.serviceAccount.name"
+                        if path.encode() == "signoz-otel-gateway.serviceAccount.name"
                     )
                 })
         }),
@@ -1244,7 +1244,7 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
             use_.condition.guard_conjunctions().iter().any(|guards| {
                 guards.as_slice()
                     == [Guard::Truthy {
-                        path: "kid.enabled".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("kid.enabled"),
                     }]
                     .as_slice()
             })
@@ -1257,10 +1257,10 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
                 guards.as_slice()
                     == [
                         Guard::Truthy {
-                            path: "global.kidEnabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
                         },
                         Guard::Absent {
-                            path: "kid.enabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
                         },
                     ]
                     .as_slice()
@@ -1274,13 +1274,13 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
                 guards.as_slice()
                     == [
                         Guard::Truthy {
-                            path: "tags.observability".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("tags.observability"),
                         },
                         Guard::Absent {
-                            path: "global.kidEnabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
                         },
                         Guard::Absent {
-                            path: "kid.enabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
                         },
                     ]
                     .as_slice()
@@ -1294,13 +1294,13 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
                 guards.as_slice()
                     == [
                         Guard::Absent {
-                            path: "global.kidEnabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
                         },
                         Guard::Absent {
-                            path: "kid.enabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
                         },
                         Guard::Absent {
-                            path: "tags.observability".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("tags.observability"),
                         },
                     ]
                     .as_slice()
@@ -1394,10 +1394,10 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
                 guards.as_slice()
                     == [
                         Guard::Truthy {
-                            path: "mid.enabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("mid.enabled"),
                         },
                         Guard::Truthy {
-                            path: "mid.leaf.enabled".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("mid.leaf.enabled"),
                         },
                     ]
                     .as_slice()
@@ -1412,7 +1412,7 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
                     matches!(
                         guard,
                         Guard::Truthy { path } | Guard::Absent { path }
-                            if path == "mid.enabled"
+                            if path.encode() == "mid.enabled"
                     )
                 })
             })
