@@ -319,19 +319,16 @@ impl AnalysisSession {
         let uses = finalized_contract.uses();
         let schema_signals = finalized_contract.schema_signals();
         let evidence = schema_signals.evidence_for(&normalized_path);
+        let normalized_values_path = helm_schema_core::ValuesPath::parse(&normalized_path);
 
         let exact_uses = uses
             .iter()
-            .filter(|use_| use_.source_expr == normalized_path)
+            .filter(|use_| use_.source_expr == normalized_values_path)
             .cloned()
             .collect();
         let descendant_uses = uses
             .iter()
-            .filter(|use_| {
-                use_.source_expr
-                    .strip_prefix(&normalized_path)
-                    .is_some_and(|suffix| suffix.starts_with('.'))
-            })
+            .filter(|use_| use_.source_expr.is_descendant_of(&normalized_values_path))
             .cloned()
             .collect();
         let value_path_facts = evidence.map(|evidence| evidence.facts);

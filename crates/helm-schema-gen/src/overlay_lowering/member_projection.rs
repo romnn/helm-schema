@@ -339,18 +339,18 @@ pub(super) fn append_merge_shadow_arms(
                                 helm_schema_core::MergeLayerTransform::ParsedMap => {
                                     ConditionalGuard::AllOf(vec![
                                         ConditionalGuard::TypeIs {
-                                            path: helm_schema_core::ValuesPath::parse(earlier),
+                                            path: earlier.clone(),
                                             schema_type: "object".to_string(),
                                         },
                                         ConditionalGuard::Truthy {
-                                            path: helm_schema_core::ValuesPath::parse(earlier),
+                                            path: earlier.clone(),
                                         },
                                     ])
                                 }
                                 helm_schema_core::MergeLayerTransform::Identity
                                 | helm_schema_core::MergeLayerTransform::NilScrubbed => {
                                     ConditionalGuard::Truthy {
-                                        path: helm_schema_core::ValuesPath::parse(earlier),
+                                        path: earlier.clone(),
                                     }
                                 }
                             };
@@ -405,7 +405,7 @@ pub(super) fn append_merge_shadow_arms(
                     .iter()
                     .map(|earlier| {
                         ConditionalGuard::Not(Box::new(ConditionalGuard::HasKey {
-                            path: helm_schema_core::ValuesPath::parse(earlier),
+                            path: earlier.clone(),
                             key: member.clone(),
                         }))
                     })

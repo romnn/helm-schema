@@ -56,8 +56,9 @@ impl ContractIr {
     /// Pathless claims make a value path visible to downstream schema
     /// generation without asserting any rendered Kubernetes field shape.
     pub fn push_pathless_scalar(&mut self, source_expr: impl Into<String>) {
+        let source_expr = source_expr.into();
         self.push(ContractUse::new(
-            source_expr.into(),
+            helm_schema_core::ValuesPath::parse(&source_expr),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             Vec::new(),
@@ -131,11 +132,12 @@ impl ContractIr {
                     .filter(|source| {
                         self.uses.iter().chain(&self.dependency_uses).any(|use_| {
                             !use_.path.0.is_empty()
-                                && use_.source_expr != source.target_path
-                                && use_.source_expr != source.source_path
-                                && !helm_schema_core::values_path_is_descendant(
-                                    &use_.source_expr,
-                                    &source.source_path,
+                                && use_.source_expr
+                                    != helm_schema_core::ValuesPath::parse(&source.target_path)
+                                && use_.source_expr
+                                    != helm_schema_core::ValuesPath::parse(&source.source_path)
+                                && !use_.source_expr.is_descendant_of(
+                                    &helm_schema_core::ValuesPath::parse(&source.source_path),
                                 )
                         })
                     })
@@ -290,10 +292,8 @@ impl ContractIr {
         if keys.is_empty() {
             return;
         }
-        let touches = |path: &str| {
-            helm_schema_core::split_value_path(path)
-                .iter()
-                .any(|segment| keys.contains(segment))
+        let touches = |path: &helm_schema_core::ValuesPath| {
+            path.segments().any(|segment| keys.contains(segment))
         };
         self.uses
             .retain(|contract_use| !touches(&contract_use.source_expr));
@@ -310,7 +310,9 @@ impl ContractIr {
                 paths.push(path.to_string());
                 path.to_string()
             });
-            !paths.iter().any(|path| touches(path))
+            !paths
+                .iter()
+                .any(|path| touches(&helm_schema_core::ValuesPath::parse(path)))
         });
     }
 
@@ -330,7 +332,7 @@ impl ContractIr {
         } = self;
         for source_expr in &dependency_values_root_fragments {
             dependency_uses.push(ContractUse::new(
-                source_expr.clone(),
+                helm_schema_core::ValuesPath::parse(source_expr),
                 YamlPath(Vec::new()),
                 ValueKind::Fragment,
                 Vec::new(),
@@ -403,14 +405,19 @@ fn lower_string_requirement_merge_sources(
         let Some(merge) = &contract_use.merge_layers else {
             continue;
         };
-        let Some(requirements) = requirements_by_ancestor.get(&contract_use.source_expr) else {
+        let source_expr = contract_use.source_expr.encode();
+        let Some(requirements) = requirements_by_ancestor.get(&source_expr) else {
             continue;
         };
-        let source_segments = helm_schema_core::split_value_path(&contract_use.source_expr);
+        let source_segments = contract_use
+            .source_expr
+            .segments()
+            .map(str::to_string)
+            .collect::<Vec<_>>();
         let specific_layers = merge
             .layers
             .iter()
-            .map(|layer| helm_schema_core::split_value_path(layer))
+            .map(|layer| layer.segments().map(str::to_string).collect::<Vec<_>>())
             .filter(|layer| {
                 layer.len() > source_segments.len() && layer.starts_with(source_segments.as_slice())
             })
@@ -441,7 +448,7 @@ fn lower_string_requirement_merge_sources(
             continue;
         };
         let Some(requirements) =
-            merge_suffix_string_requirements(&contract_use.source_expr, requirements, suffix)
+            merge_suffix_string_requirements(&source_expr, requirements, suffix)
         else {
             continue;
         };
@@ -465,7 +472,7 @@ fn lower_string_requirement_merge_sources(
         if !overlaps_requirement {
             continue;
         }
-        let source = contract_use.source_expr.clone();
+        let source = source_expr;
         let projected = helm_schema_core::join_value_path(
             source_segments
                 .iter()
@@ -526,7 +533,11 @@ fn project_global_uses(uses: &mut Vec<ContractUse>, global_sources: &[String]) {
     let dependency_global_segments = helm_schema_core::split_value_path(dependency_global);
     let mut projected = Vec::with_capacity(uses.len());
     for dependency_use in std::mem::take(uses) {
-        let source_segments = helm_schema_core::split_value_path(&dependency_use.source_expr);
+        let source_segments = dependency_use
+            .source_expr
+            .segments()
+            .map(str::to_string)
+            .collect::<Vec<_>>();
         let Some(relative) = source_segments.strip_prefix(dependency_global_segments.as_slice())
         else {
             projected.push(dependency_use);

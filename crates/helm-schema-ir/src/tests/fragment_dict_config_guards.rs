@@ -168,7 +168,7 @@ fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
     let finalized = ir.finalize();
     assert!(
         finalized.uses().iter().any(|use_| {
-            use_.source_expr == "cfg"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("cfg")
                 && use_.kind == crate::ValueKind::Fragment
                 && use_.path.0 == ["spec".to_string(), "config".to_string()]
         }),
@@ -199,7 +199,10 @@ fn ranged_resource_with_bound_dynamic_entries_attach_below_literal_key() {
     let finalized = ir.finalize();
     assert!(
         finalized.uses().iter().any(|use_| {
-            use_.source_expr == "configuration.backupStorageLocation.*.config"
+            use_.source_expr
+                == helm_schema_core::ValuesPath::parse(
+                    "configuration.backupStorageLocation.*.config",
+                )
                 && use_.kind == crate::ValueKind::Fragment
                 && use_.path.0 == ["spec".to_string(), "config".to_string()]
         }),
@@ -216,7 +219,10 @@ fn velero_backup_location_config_attaches_below_config_key() -> eyre::Result<()>
     let finalized = ir.finalize();
     assert!(
         finalized.uses().iter().any(|use_| {
-            use_.source_expr == "configuration.backupStorageLocation.*.config"
+            use_.source_expr
+                == helm_schema_core::ValuesPath::parse(
+                    "configuration.backupStorageLocation.*.config",
+                )
                 && use_.kind == crate::ValueKind::Fragment
                 && use_.path.0 == ["spec".to_string(), "config".to_string()]
         }),

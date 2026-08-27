@@ -25,7 +25,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             contract_use,
             &observed_facts.range_modes,
             routes,
-            yaml_serialized_paths.contains(contract_use.source_expr.as_str()),
+            yaml_serialized_paths.contains(&contract_use.source_expr),
         );
     }
     for capture in &observed_facts.captures {
@@ -108,7 +108,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     finish_schema_signals(paths, terminal_clauses)
 }
 
-fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&str> {
+fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&helm_schema_core::ValuesPath> {
     uses.iter()
         .filter(|contract_use| {
             matches!(
@@ -116,21 +116,21 @@ fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&str> {
                 crate::ValueKind::YamlSerialized | crate::ValueKind::TemplatedYamlSerialized
             )
         })
-        .map(|contract_use| contract_use.source_expr.as_str())
+        .map(|contract_use| &contract_use.source_expr)
         .collect()
 }
 
 fn string_requirement_routes(
     fail_conditions: &BTreeSet<crate::eval_effect::FailCapture>,
 ) -> BTreeMap<
-    String,
+    helm_schema_core::ValuesPath,
     Vec<(
         crate::eval_effect::StringRequirementRoute,
         Vec<helm_schema_core::Predicate>,
     )>,
 > {
     let mut routes = BTreeMap::<
-        String,
+        helm_schema_core::ValuesPath,
         BTreeSet<(
             crate::eval_effect::StringRequirementRoute,
             Vec<helm_schema_core::Predicate>,
@@ -159,7 +159,7 @@ fn string_requirement_routes(
             continue;
         }
         routes
-            .entry(path.encode())
+            .entry(path.clone())
             .or_default()
             .insert((*route, predicates));
     }

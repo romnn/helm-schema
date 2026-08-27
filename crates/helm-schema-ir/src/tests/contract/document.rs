@@ -7,7 +7,7 @@ use crate::{ContractUse, Guard, ResourceRef, ValueKind, YamlPath};
 #[test]
 fn contract_document_serializes_stable_guard_shape() {
     let value_use = ContractUse {
-        source_expr: "kid.enabled".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("kid.enabled"),
         path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![
@@ -46,7 +46,7 @@ fn contract_document_serializes_stable_guard_shape() {
         merge_operand: false,
     };
     let earlier_use = ContractUse {
-        source_expr: "alpha.enabled".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("alpha.enabled"),
         path: YamlPath(Vec::new()),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),

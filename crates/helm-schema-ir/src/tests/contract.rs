@@ -25,14 +25,14 @@ fn absorb_captures(
 fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicate() {
     let mut contract = ContractIr::default();
     contract.push(ContractUse::new(
-        "serviceAccount.name".to_string(),
+        helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         Vec::new(),
         None,
     ));
     contract.push(ContractUse::new(
-        "serviceAccount.name".to_string(),
+        helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Default {
@@ -57,14 +57,14 @@ fn contract_ir_finalization_keeps_default_guarded_render_site_over_bare_duplicat
 fn contract_ir_finalization_prefers_resource_claim_for_pathless_duplicate() {
     let mut contract = ContractIr::default();
     contract.push(ContractUse::new(
-        "nameOverride".to_string(),
+        helm_schema_core::ValuesPath::parse("nameOverride"),
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         Vec::new(),
         None,
     ));
     contract.push(ContractUse::new(
-        "nameOverride".to_string(),
+        helm_schema_core::ValuesPath::parse("nameOverride"),
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         Vec::new(),
@@ -96,7 +96,7 @@ fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
     }];
     let mut contract = ContractIr::default();
     contract.push_dependency_use(ContractUse::with_provenances(
-        "auth.password".to_string(),
+        helm_schema_core::ValuesPath::parse("auth.password"),
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         guards.clone(),
@@ -108,7 +108,7 @@ fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
         )],
     ));
     contract.push(ContractUse::new(
-        "auth.password".to_string(),
+        helm_schema_core::ValuesPath::parse("auth.password"),
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         guards,
@@ -141,7 +141,7 @@ fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
 fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     let mut contract = ContractIr::default();
     let mut contract_use = ContractUse::new(
-        "serviceAccount.name".to_string(),
+        helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![
@@ -170,8 +170,8 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     );
     contract_use.merge_layers = Some(helm_schema_core::MergeLayersUse {
         layers: vec![
-            "serviceAccount.name".to_string(),
-            "global.serviceAccount.name".to_string(),
+            conditional_path("serviceAccount.name"),
+            conditional_path("global.serviceAccount.name"),
         ],
         position: 0,
         transforms: vec![
@@ -200,7 +200,10 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     let value_uses = value_uses.uses();
     let value_use = value_uses.first().expect("mapped value use");
 
-    sim_assert_eq!(have: value_use.source_expr, want: "subchart.serviceAccount.name");
+    sim_assert_eq!(
+        have: value_use.source_expr,
+        want: conditional_path("subchart.serviceAccount.name")
+    );
     sim_assert_eq!(
         have: value_use.path,
         want: YamlPath(vec!["metadata".to_string(), "name".to_string()])
@@ -237,8 +240,8 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
             .map(|merge| merge.layers.as_slice()),
         want: Some(
             [
-                "subchart.serviceAccount.name".to_string(),
-                "global.serviceAccount.name".to_string(),
+                conditional_path("subchart.serviceAccount.name"),
+                conditional_path("global.serviceAccount.name"),
             ]
             .as_slice()
         )
@@ -260,7 +263,7 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
 #[test]
 fn dependency_global_projection_keeps_parent_override_and_child_fallback_arms() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse::new(
-        "metrics.global.imageRegistry".to_string(),
+        helm_schema_core::ValuesPath::parse("metrics.global.imageRegistry"),
         YamlPath(vec!["data".to_string(), "registry".to_string()]),
         ValueKind::Scalar,
         Vec::new(),
@@ -282,7 +285,7 @@ fn dependency_global_projection_keeps_parent_override_and_child_fallback_arms() 
             .collect::<Vec<_>>(),
         want: vec![
             (
-                "global.imageRegistry".to_string(),
+                conditional_path("global.imageRegistry"),
                 vec![
                     Guard::NotEq {
                         path: helm_schema_core::ValuesPath::parse("global.imageRegistry"),
@@ -295,7 +298,7 @@ fn dependency_global_projection_keeps_parent_override_and_child_fallback_arms() 
                 ]
             ),
             (
-                "metrics.global.imageRegistry".to_string(),
+                conditional_path("metrics.global.imageRegistry"),
                 vec![Guard::AnyOf {
                     alternatives: vec![
                         vec![Guard::Eq {
@@ -316,7 +319,7 @@ fn dependency_global_projection_keeps_parent_override_and_child_fallback_arms() 
 #[test]
 fn nested_dependency_global_projection_partitions_every_ancestor_source() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse::new(
-        "metrics.agent.global.imageRegistry".to_string(),
+        helm_schema_core::ValuesPath::parse("metrics.agent.global.imageRegistry"),
         YamlPath(vec!["data".to_string(), "registry".to_string()]),
         ValueKind::Scalar,
         Vec::new(),
@@ -337,7 +340,7 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
             .collect::<Vec<_>>(),
         want: vec![
             (
-                "global.imageRegistry".to_string(),
+                conditional_path("global.imageRegistry"),
                 vec![
                     Guard::NotEq {
                         path: helm_schema_core::ValuesPath::parse("global.imageRegistry"),
@@ -350,7 +353,7 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
                 ]
             ),
             (
-                "metrics.agent.global.imageRegistry".to_string(),
+                conditional_path("metrics.agent.global.imageRegistry"),
                 vec![
                     Guard::AnyOf {
                         alternatives: vec![
@@ -379,7 +382,7 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
                 ]
             ),
             (
-                "metrics.global.imageRegistry".to_string(),
+                conditional_path("metrics.global.imageRegistry"),
                 vec![
                     Guard::NotEq {
                         path: helm_schema_core::ValuesPath::parse("metrics.global.imageRegistry"),
@@ -416,7 +419,7 @@ fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
     let finalized = contract.finalize();
     let value_uses = finalized.uses();
     sim_assert_eq!(have: value_uses.len(), want: 1);
-    sim_assert_eq!(have: value_uses[0].source_expr, want: "extraConfig");
+    sim_assert_eq!(have: value_uses[0].source_expr, want: conditional_path("extraConfig"));
     sim_assert_eq!(have: value_uses[0].path, want: YamlPath(Vec::new()));
     sim_assert_eq!(have: value_uses[0].kind, want: ValueKind::Scalar);
     assert!(value_uses[0].single_guard_conjunction().is_empty());
@@ -470,7 +473,7 @@ fn contract_ir_declared_type_hints_do_not_project_as_contract_rows() {
 fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contract() {
     let mut contract = ContractIr::default();
     contract.push(ContractUse::new(
-        "feature".to_string(),
+        helm_schema_core::ValuesPath::parse("feature"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Default {
@@ -502,7 +505,7 @@ fn dependency_global_projection_moves_range_members_to_live_sources() {
         have: finalized
             .uses()
             .iter()
-            .map(|contract_use| contract_use.source_expr.clone())
+            .map(|contract_use| contract_use.source_expr.encode())
             .filter(|path| path.contains("imagePullSecrets"))
             .collect::<std::collections::BTreeSet<_>>(),
         want: std::collections::BTreeSet::from([
@@ -559,7 +562,7 @@ fn with_header_candidates_do_not_inherit_the_body_sink() {
     let fallback_uses = finalized
         .uses()
         .iter()
-        .filter(|contract_use| contract_use.source_expr == "fallback")
+        .filter(|contract_use| contract_use.source_expr == conditional_path("fallback"))
         .map(|contract_use| {
             (
                 contract_use.path.clone(),
@@ -697,7 +700,7 @@ fn activation_guards_scope_values_default_sources() {
         });
     contract.absorb_observed_facts(&facts);
     contract.push(ContractUse::new(
-        "child.token.value".to_string(),
+        helm_schema_core::ValuesPath::parse("child.token.value"),
         YamlPath(vec!["data".to_string(), "token".to_string()]),
         ValueKind::Scalar,
         Vec::new(),
@@ -760,7 +763,7 @@ fn nested_activation_conjoins_every_default_source_guard() {
         });
     contract.absorb_observed_facts(&facts);
     contract.push(ContractUse::new(
-        "mid.leaf.token.value".to_string(),
+        helm_schema_core::ValuesPath::parse("mid.leaf.token.value"),
         YamlPath(vec!["data".to_string(), "token".to_string()]),
         ValueKind::Scalar,
         Vec::new(),
@@ -842,7 +845,7 @@ fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<(
     let path = "config.value";
     let mut contract = ContractIr::default();
     contract.push(ContractUse::new(
-        path.to_string(),
+        conditional_path(path),
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         vec![Guard::Truthy {
@@ -887,7 +890,7 @@ fn scoped_string_requirement_suppresses_only_the_matching_provider_route() {
     let mut contract = ContractIr::default();
     for (gate, slot) in [("first.enabled", "first"), ("second.enabled", "second")] {
         let row = ContractUse::new(
-            path.to_string(),
+            conditional_path(path),
             YamlPath(vec!["metadata".to_string(), slot.to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
@@ -933,7 +936,7 @@ fn scoped_string_requirement_matches_a_logically_implied_disjunction() {
     let path = "config.name";
     let mut contract = ContractIr::default();
     contract.push(ContractUse::new(
-        path.to_string(),
+        conditional_path(path),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Truthy {
@@ -971,7 +974,7 @@ fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
     let mut contract = ContractIr::default();
     for (slot, stringified) in [("transformed", true), ("raw", false)] {
         let mut row = ContractUse::new(
-            path.to_string(),
+            conditional_path(path),
             YamlPath(vec!["metadata".to_string(), slot.to_string()]),
             ValueKind::Scalar,
             Vec::new(),
@@ -981,7 +984,7 @@ fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
         contract.push(row);
     }
     contract.push(ContractUse::new(
-        path.to_string(),
+        conditional_path(path),
         YamlPath::default(),
         ValueKind::YamlSerialized,
         Vec::new(),
@@ -1017,7 +1020,7 @@ fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
 fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
     let mut contract = ContractIr::default();
     let mut row = ContractUse::new(
-        "workers".to_string(),
+        helm_schema_core::ValuesPath::parse("workers"),
         YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
         ValueKind::YamlSerialized,
         vec![Guard::Truthy {
@@ -1027,9 +1030,9 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
     );
     row.merge_layers = Some(MergeLayersUse {
         layers: vec![
-            "workers.celery.sets.*.query".to_string(),
-            "workers.celery.query".to_string(),
-            "workers".to_string(),
+            conditional_path("workers.celery.sets.*.query"),
+            conditional_path("workers.celery.query"),
+            conditional_path("workers"),
         ],
         position: 2,
         transforms: vec![MergeLayerTransform::Identity; 3],
@@ -1065,8 +1068,8 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
         have: finalized
             .uses()
             .first()
-            .map(|row| (row.source_expr.as_str(), row.kind)),
-        want: Some(("workers.query", ValueKind::YamlSerialized))
+            .map(|row| (row.source_expr.clone(), row.kind)),
+        want: Some((conditional_path("workers.query"), ValueKind::YamlSerialized))
     );
 }
 
@@ -1074,7 +1077,7 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
 fn unrelated_string_requirement_keeps_recursive_merge_source() {
     let mut contract = ContractIr::default();
     let mut row = ContractUse::new(
-        "ports".to_string(),
+        helm_schema_core::ValuesPath::parse("ports"),
         YamlPath(vec!["spec".to_string(), "ports".to_string()]),
         ValueKind::YamlSerialized,
         vec![Guard::Truthy {
@@ -1084,9 +1087,9 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() {
     );
     row.merge_layers = Some(MergeLayersUse {
         layers: vec![
-            "ports.overrides.*.port".to_string(),
-            "ports.port".to_string(),
-            "ports".to_string(),
+            conditional_path("ports.overrides.*.port"),
+            conditional_path("ports.port"),
+            conditional_path("ports"),
         ],
         position: 2,
         transforms: vec![MergeLayerTransform::Identity; 3],
@@ -1110,8 +1113,8 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() {
 
     let finalized = contract.finalize();
     sim_assert_eq!(
-        have: finalized.uses().first().map(|row| row.source_expr.as_str()),
-        want: Some("ports")
+        have: finalized.uses().first().map(|row| row.source_expr.clone()),
+        want: Some(conditional_path("ports"))
     );
 }
 
@@ -1119,7 +1122,7 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() {
 fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
     let mut contract = ContractIr::default();
     let mut row = ContractUse::new(
-        "workers".to_string(),
+        helm_schema_core::ValuesPath::parse("workers"),
         YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
         ValueKind::YamlSerialized,
         vec![Guard::Not {
@@ -1129,9 +1132,9 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
     );
     row.merge_layers = Some(MergeLayersUse {
         layers: vec![
-            "workers.celery.sets.*.query".to_string(),
-            "workers.celery.query".to_string(),
-            "workers".to_string(),
+            conditional_path("workers.celery.sets.*.query"),
+            conditional_path("workers.celery.query"),
+            conditional_path("workers"),
         ],
         position: 2,
         transforms: vec![MergeLayerTransform::Identity; 3],
@@ -1153,8 +1156,8 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
 
     let finalized = contract.finalize();
     sim_assert_eq!(
-        have: finalized.uses().first().map(|row| row.source_expr.as_str()),
-        want: Some("workers")
+        have: finalized.uses().first().map(|row| row.source_expr.clone()),
+        want: Some(conditional_path("workers"))
     );
 }
 

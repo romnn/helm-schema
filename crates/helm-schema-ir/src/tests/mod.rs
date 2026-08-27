@@ -83,18 +83,26 @@ fn simple_template_ir() {
         .generate_contract_ir(src)
         .finalize();
 
-    assert!(ir.uses().iter().any(|u| u.source_expr == "enabled"
-        && u.single_guard_conjunction()
-            == vec![Guard::Truthy {
-                path: helm_schema_core::ValuesPath::parse("enabled")
-            }]));
-    assert!(ir.uses().iter().any(|u| u.source_expr == "name"
-        && u.path == YamlPath(vec!["foo".to_string()])
-        && u.kind == ValueKind::Scalar
-        && u.single_guard_conjunction()
-            == vec![Guard::Truthy {
-                path: helm_schema_core::ValuesPath::parse("enabled")
-            }]));
+    assert!(
+        ir.uses()
+            .iter()
+            .any(|u| u.source_expr == conditional_path("enabled")
+                && u.single_guard_conjunction()
+                    == vec![Guard::Truthy {
+                        path: helm_schema_core::ValuesPath::parse("enabled")
+                    }])
+    );
+    assert!(
+        ir.uses()
+            .iter()
+            .any(|u| u.source_expr == conditional_path("name")
+                && u.path == YamlPath(vec!["foo".to_string()])
+                && u.kind == ValueKind::Scalar
+                && u.single_guard_conjunction()
+                    == vec![Guard::Truthy {
+                        path: helm_schema_core::ValuesPath::parse("enabled")
+                    }])
+    );
 }
 
 #[test]
@@ -118,7 +126,9 @@ fn direct_tpl_files_get_executes_json_template_source() {
 
     for path in ["users.*.username", "users.*.password"] {
         assert!(
-            ir.uses().iter().any(|use_| use_.source_expr == path),
+            ir.uses()
+                .iter()
+                .any(|use_| use_.source_expr == conditional_path(path)),
             "the tpl-executed file should contribute {path}: {ir:#?}"
         );
     }
@@ -278,7 +288,7 @@ fn base_path_include_executes_implicit_template_source() {
     assert!(
         ir.uses()
             .iter()
-            .any(|use_| use_.source_expr == "buckets.*.name"),
+            .any(|use_| use_.source_expr == conditional_path("buckets.*.name")),
         "the implicit template body should contribute its member access: {ir:#?}"
     );
 }
@@ -299,7 +309,7 @@ fn dynamic_mapping_value_projects_structural_member_path() {
         .finalize();
 
     assert!(ir.uses().iter().any(|use_| {
-        use_.source_expr == "entries.*"
+        use_.source_expr == conditional_path("entries.*")
             && use_.path
                 == YamlPath(vec![
                     "data".to_string(),
@@ -325,7 +335,7 @@ fn document_output_projection_preserves_resource_claim() {
     let name_use = ir
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "serviceName")
+        .find(|use_| use_.source_expr == conditional_path("serviceName"))
         .expect("serviceName use");
 
     sim_assert_eq!(
@@ -359,7 +369,7 @@ fn scalar_helper_document_projection_preserves_resource_claim() {
     let name_use = ir
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "serviceName")
+        .find(|use_| use_.source_expr == conditional_path("serviceName"))
         .expect("serviceName use");
 
     sim_assert_eq!(
@@ -397,7 +407,7 @@ fn document_guard_survives_helper_sibling_claim_scoping() {
     let port = ir
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "port" && !use_.path.0.is_empty())
+        .find(|use_| use_.source_expr == conditional_path("port") && !use_.path.0.is_empty())
         .unwrap_or_else(|| panic!("expected rendered port use: {ir:#?}"));
     assert!(
         port.single_guard_conjunction().contains(&Guard::Truthy {
@@ -436,7 +446,7 @@ fn document_branch_guard_survives_local_helper_reassignment() {
         .uses()
         .iter()
         .find(|use_| {
-            use_.source_expr == "payload"
+            use_.source_expr == conditional_path("payload")
                 && use_.path == YamlPath(vec!["data".to_string(), "value".to_string()])
         })
         .unwrap_or_else(|| panic!("expected rendered payload use: {ir:#?}"));
@@ -465,7 +475,7 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() {
     let primary = ir
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "primary" && !use_.path.0.is_empty())
+        .find(|use_| use_.source_expr == conditional_path("primary") && !use_.path.0.is_empty())
         .unwrap_or_else(|| panic!("expected rendered primary use: {ir:#?}"));
     sim_assert_eq!(
         have: primary.condition.guard_conjunctions(),
@@ -482,7 +492,7 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() {
     let fallback = ir
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "fallback" && !use_.path.0.is_empty())
+        .find(|use_| use_.source_expr == conditional_path("fallback") && !use_.path.0.is_empty())
         .unwrap_or_else(|| panic!("expected rendered fallback use: {ir:#?}"));
     sim_assert_eq!(
         have: fallback.condition.guard_conjunctions(),
@@ -530,7 +540,7 @@ fn helper_type_dispatch_keeps_or_candidate_selection_on_each_row() {
     let primary = ir
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == "primary" && !use_.path.0.is_empty())
+        .filter(|use_| use_.source_expr == conditional_path("primary") && !use_.path.0.is_empty())
         .collect::<Vec<_>>();
     assert!(!primary.is_empty(), "expected primary rows: {ir:#?}");
     assert!(
@@ -546,7 +556,7 @@ fn helper_type_dispatch_keeps_or_candidate_selection_on_each_row() {
     let fallback = ir
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == "fallback" && !use_.path.0.is_empty())
+        .filter(|use_| use_.source_expr == conditional_path("fallback") && !use_.path.0.is_empty())
         .collect::<Vec<_>>();
     assert!(!fallback.is_empty(), "expected fallback rows: {ir:#?}");
     assert!(
@@ -589,7 +599,7 @@ fn opaque_include_guard_abstains_from_provider_schema_evidence() {
         .uses()
         .iter()
         .find(|use_| {
-            use_.source_expr == "payload"
+            use_.source_expr == conditional_path("payload")
                 && use_.path == YamlPath(vec!["data".to_string(), "value".to_string()])
         })
         .unwrap_or_else(|| panic!("expected rendered payload use: {finalized:#?}"));
@@ -635,7 +645,7 @@ fn scalar_helper_document_projection_preserves_scope_guard() {
     let name_use = ir
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "serviceName")
+        .find(|use_| use_.source_expr == conditional_path("serviceName"))
         .expect("serviceName use");
 
     sim_assert_eq!(
@@ -677,7 +687,7 @@ fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() -
     let name_override_uses = ir
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == "nameOverride")
+        .filter(|use_| use_.source_expr == conditional_path("nameOverride"))
         .collect::<Vec<_>>();
 
     let pathless_name_override_uses = name_override_uses
@@ -761,7 +771,7 @@ fn transitive_scalar_helper_default_projects_default_guard() {
 
     assert!(
         ir.uses().iter().any(|use_| {
-            use_.source_expr == "nameOverride"
+            use_.source_expr == conditional_path("nameOverride")
                 && use_.path == YamlPath(vec!["metadata".to_string(), "name".to_string()])
                 && use_.single_guard_conjunction().contains(&Guard::Default {
                     path: helm_schema_core::ValuesPath::parse("nameOverride"),
@@ -797,7 +807,7 @@ fn nonempty_choice_list_range_preserves_computed_mutation() {
     assert!(
         ir.uses()
             .iter()
-            .all(|use_| use_.source_expr != "patch.pathKey"),
+            .all(|use_| use_.source_expr != conditional_path("patch.pathKey")),
         "the guaranteed path iteration sets pathKey before its later read: {ir:#?}"
     );
 }
@@ -848,7 +858,7 @@ fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
         .uses()
         .iter()
         .filter(|contract_use| {
-            contract_use.source_expr == "scanSecrets"
+            contract_use.source_expr == conditional_path("scanSecrets")
                 && contract_use
                     .path
                     .0

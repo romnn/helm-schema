@@ -77,7 +77,7 @@ fn contract_use_derived_deserialize_preserves_legacy_defaults() {
     }))
     .ok();
     let want = ContractUse::new(
-        "name".to_string(),
+        helm_schema_core::ValuesPath::parse("name"),
         YamlPath::default(),
         ValueKind::Scalar,
         vec![Guard::Truthy {

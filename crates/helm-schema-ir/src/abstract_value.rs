@@ -560,7 +560,10 @@ impl AbstractValue {
                     for (position, layer_path) in layer_paths.iter().enumerate() {
                         let entry = out.entry(layer_path.clone()).or_default();
                         entry.merge_layers = Some(helm_schema_core::MergeLayersUse {
-                            layers: layer_paths.clone(),
+                            layers: layer_paths
+                                .iter()
+                                .map(|path| helm_schema_core::ValuesPath::parse(path))
+                                .collect(),
                             position,
                             transforms: transforms.clone(),
                             via_binding: true,

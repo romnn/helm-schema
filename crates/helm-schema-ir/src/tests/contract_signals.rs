@@ -54,7 +54,7 @@ fn signals_for_template_at_kubernetes_version(
 #[test]
 fn checksum_influence_does_not_own_a_dormant_provider_base() -> eyre::Result<()> {
     let mut checksum = ContractUse::new(
-        "secretName".to_string(),
+        helm_schema_core::ValuesPath::parse("secretName"),
         YamlPath(vec![
             "metadata".to_string(),
             "annotations".to_string(),
@@ -66,7 +66,7 @@ fn checksum_influence_does_not_own_a_dormant_provider_base() -> eyre::Result<()>
     );
     checksum.digest = true;
     let sink = ContractUse::new(
-        "secretName".to_string(),
+        helm_schema_core::ValuesPath::parse("secretName"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Truthy {
@@ -146,7 +146,7 @@ fn conditional_overlays_for(signals: &ContractSchemaSignals) -> Vec<FlattenedCon
 #[test]
 fn contract_ir_nullable_paths_include_range_only_collection() {
     let signals = signals_for(vec![ContractUse::new(
-        "snapshot".to_string(),
+        helm_schema_core::ValuesPath::parse("snapshot"),
         YamlPath(vec!["data".to_string(), "command".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Range {
@@ -170,7 +170,7 @@ fn contract_ir_nullable_paths_include_range_only_collection() {
 fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "serviceAccount.name".to_string(),
+            helm_schema_core::ValuesPath::parse("serviceAccount.name"),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Default {
@@ -179,7 +179,7 @@ fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
             None,
         ),
         ContractUse::new(
-            "serviceAccount.name".to_string(),
+            helm_schema_core::ValuesPath::parse("serviceAccount.name"),
             YamlPath(vec!["metadata".to_string(), "namespace".to_string()]),
             ValueKind::Scalar,
             Vec::new(),
@@ -202,7 +202,7 @@ fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
 fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "podLabels".to_string(),
+            helm_schema_core::ValuesPath::parse("podLabels"),
             YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             ValueKind::Fragment,
             vec![
@@ -221,28 +221,28 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
             None,
         ),
         ContractUse::new(
-            "image.tag".to_string(),
+            helm_schema_core::ValuesPath::parse("image.tag"),
             YamlPath(vec!["spec".to_string(), "image".to_string()]),
             ValueKind::PartialScalar,
             Vec::new(),
             None,
         ),
         ContractUse::new(
-            "podName".to_string(),
+            helm_schema_core::ValuesPath::parse("podName"),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             Vec::new(),
             None,
         ),
         ContractUse::new(
-            "podNamespace".to_string(),
+            helm_schema_core::ValuesPath::parse("podNamespace"),
             YamlPath(vec!["metadata".to_string(), "namespace".to_string()]),
             ValueKind::Scalar,
             Vec::new(),
             None,
         ),
         ContractUse::new(
-            String::new(),
+            helm_schema_core::ValuesPath::parse(""),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Eq {
@@ -363,7 +363,7 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
 fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
@@ -372,7 +372,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::With {
@@ -381,7 +381,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Not {
@@ -390,7 +390,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::NotEq {
@@ -400,7 +400,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Absent {
@@ -409,7 +409,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Or {
@@ -421,7 +421,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::AnyOf {
@@ -538,7 +538,7 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
     let resource = ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
     let signals = signals_for(vec![
         ContractUse::new(
-            "containers".to_string(),
+            helm_schema_core::ValuesPath::parse("containers"),
             YamlPath(vec![
                 "spec".to_string(),
                 "template".to_string(),
@@ -550,7 +550,7 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
             Some(resource.clone()),
         ),
         ContractUse::new(
-            "ports".to_string(),
+            helm_schema_core::ValuesPath::parse("ports"),
             YamlPath(vec!["spec".to_string(), "ports".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Range {
@@ -559,28 +559,28 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
             Some(resource.clone()),
         ),
         ContractUse::new(
-            "image.tag".to_string(),
+            helm_schema_core::ValuesPath::parse("image.tag"),
             YamlPath(vec!["spec".to_string(), "image".to_string()]),
             ValueKind::PartialScalar,
             Vec::new(),
             Some(resource.clone()),
         ),
         ContractUse::new(
-            "pathless".to_string(),
+            helm_schema_core::ValuesPath::parse("pathless"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             Vec::new(),
             Some(resource.clone()),
         ),
         ContractUse::new(
-            "noResource".to_string(),
+            helm_schema_core::ValuesPath::parse("noResource"),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             Vec::new(),
             None,
         ),
         ContractUse::new(
-            String::new(),
+            helm_schema_core::ValuesPath::parse(""),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             Vec::new(),
@@ -603,14 +603,14 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
     let resource = ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
     let signals = signals_for(vec![
         ContractUse::new(
-            "podLabels".to_string(),
+            helm_schema_core::ValuesPath::parse("podLabels"),
             YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             ValueKind::Fragment,
             Vec::new(),
             Some(resource.clone()),
         ),
         ContractUse::new(
-            "serviceAccount.name".to_string(),
+            helm_schema_core::ValuesPath::parse("serviceAccount.name"),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Default {
@@ -699,7 +699,7 @@ fn contract_ir_schema_signals_bundle_core_generation_facts() {
 #[test]
 fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
     let signals = signals_for(vec![ContractUse::new(
-        "feature.host".to_string(),
+        helm_schema_core::ValuesPath::parse("feature.host"),
         YamlPath(vec!["spec".to_string(), "host".to_string()]),
         ValueKind::Scalar,
         vec![
@@ -749,7 +749,7 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
 #[test]
 fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boolean_guards() {
     let signals = signals_for(vec![ContractUse::new(
-        "serviceAccount.name".to_string(),
+        helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![
@@ -786,7 +786,7 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
 fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Not {
@@ -795,7 +795,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             None,
         ),
         ContractUse::new(
-            "other.host".to_string(),
+            helm_schema_core::ValuesPath::parse("other.host"),
             YamlPath(vec!["spec".to_string(), "other".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Or {
@@ -807,7 +807,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             None,
         ),
         ContractUse::new(
-            "preset.resources".to_string(),
+            helm_schema_core::ValuesPath::parse("preset.resources"),
             YamlPath(vec!["spec".to_string(), "resources".to_string()]),
             ValueKind::Fragment,
             vec![Guard::NotEq {
@@ -817,7 +817,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             None,
         ),
         ContractUse::new(
-            "image.tag".to_string(),
+            helm_schema_core::ValuesPath::parse("image.tag"),
             YamlPath(vec!["spec".to_string(), "image".to_string()]),
             ValueKind::Scalar,
             vec![Guard::AnyOf {
@@ -909,7 +909,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
 fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_path() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "feature.value".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.value"),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Eq {
@@ -919,7 +919,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
             None,
         ),
         ContractUse::new(
-            "feature.value".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.value"),
             YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             ValueKind::Fragment,
             vec![Guard::Eq {
@@ -967,7 +967,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
 fn contract_ir_unconditional_use_subsumes_matching_guarded_overlay() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
@@ -976,14 +976,14 @@ fn contract_ir_unconditional_use_subsumes_matching_guarded_overlay() {
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             Vec::new(),
             None,
         ),
         ContractUse::new(
-            "other.path".to_string(),
+            helm_schema_core::ValuesPath::parse("other.path"),
             YamlPath(vec!["spec".to_string(), "other".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Range {
@@ -1019,7 +1019,7 @@ fn contract_ir_unconditional_use_subsumes_matching_guarded_overlay() {
 fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_partition() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![
@@ -1033,7 +1033,7 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![
@@ -1073,7 +1073,7 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
 fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_prefix_branch() {
     let signals = signals_for(vec![
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
@@ -1082,7 +1082,7 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![
@@ -1096,7 +1096,7 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
             None,
         ),
         ContractUse::new(
-            "feature.host".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.host"),
             YamlPath(vec!["spec".to_string(), "host".to_string()]),
             ValueKind::Scalar,
             vec![
@@ -1137,14 +1137,14 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
     let resource = ResourceRef::concrete("v1".to_string(), "ServiceAccount".to_string());
     let mut contract = ContractIr::default();
     contract.push(ContractUse::new(
-        "serviceAccount.name".to_string(),
+        helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         Vec::new(),
         Some(resource.clone()),
     ));
     contract.push(ContractUse::new(
-        "serviceAccount.name".to_string(),
+        helm_schema_core::ValuesPath::parse("serviceAccount.name"),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Default {
@@ -1153,7 +1153,7 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
         Some(resource),
     ));
     contract.push(ContractUse::new(
-        "podLabels".to_string(),
+        helm_schema_core::ValuesPath::parse("podLabels"),
         YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
         ValueKind::Fragment,
         Vec::new(),
@@ -1186,7 +1186,7 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
 fn contract_ir_requiredness_evidence_is_path_local() {
     let signals = ContractIr::from_contract_uses(vec![
         ContractUse::new(
-            "feature.enabled".to_string(),
+            helm_schema_core::ValuesPath::parse("feature.enabled"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             vec![Guard::Truthy {
@@ -1195,7 +1195,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
             None,
         ),
         ContractUse::new(
-            "mode".to_string(),
+            helm_schema_core::ValuesPath::parse("mode"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             vec![Guard::Eq {
@@ -1205,7 +1205,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
             None,
         ),
         ContractUse::new(
-            "optional".to_string(),
+            helm_schema_core::ValuesPath::parse("optional"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             vec![Guard::Not {
@@ -1214,7 +1214,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
             None,
         ),
         ContractUse::new(
-            "resourcesPreset".to_string(),
+            helm_schema_core::ValuesPath::parse("resourcesPreset"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             vec![Guard::NotEq {
@@ -1224,7 +1224,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
             None,
         ),
         ContractUse::new(
-            "either.primary".to_string(),
+            helm_schema_core::ValuesPath::parse("either.primary"),
             YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Or {
@@ -1236,7 +1236,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
             None,
         ),
         ContractUse::new(
-            "ranged".to_string(),
+            helm_schema_core::ValuesPath::parse("ranged"),
             YamlPath(vec!["spec".to_string(), "ports".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Range {
@@ -1245,7 +1245,7 @@ fn contract_ir_requiredness_evidence_is_path_local() {
             None,
         ),
         ContractUse::new(
-            "defaulted".to_string(),
+            helm_schema_core::ValuesPath::parse("defaulted"),
             YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Default {
@@ -1305,14 +1305,14 @@ fn contract_ir_requiredness_evidence_is_path_local() {
 fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
     let signals = ContractIr::from_contract_uses(vec![
         ContractUse::new(
-            "rendered.value".to_string(),
+            helm_schema_core::ValuesPath::parse("rendered.value"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             Vec::new(),
             None,
         ),
         ContractUse::new(
-            "helper.dependency".to_string(),
+            helm_schema_core::ValuesPath::parse("helper.dependency"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             vec![Guard::With {
@@ -1351,7 +1351,7 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
 #[test]
 fn widened_dependencies_only_admit_paths_beneath_closed_roots() -> eyre::Result<()> {
     let signals = signals_for(vec![ContractUse::new(
-        "guard.deep.flag".to_string(),
+        helm_schema_core::ValuesPath::parse("guard.deep.flag"),
         YamlPath(Vec::new()),
         ValueKind::WidenedDependency,
         Vec::new(),
@@ -1582,7 +1582,7 @@ fn statically_true_short_circuit_arm_keeps_its_values_execution_guard() -> eyre:
 #[test]
 fn member_row_without_direct_range_identity_does_not_seed_schema_paths() {
     let signals = signals_for(vec![ContractUse::new(
-        "$sentinel.*".to_string(),
+        helm_schema_core::ValuesPath::parse("$sentinel.*"),
         YamlPath(Vec::new()),
         ValueKind::Scalar,
         vec![Guard::Range {

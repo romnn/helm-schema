@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{ContractProvenance, Guard, GuardDnf, ResourceRef, ValueKind, YamlPath};
+use crate::{ContractProvenance, Guard, GuardDnf, ResourceRef, ValueKind, ValuesPath, YamlPath};
 
 /// The rendered text is ONE SEGMENT of the source string split by a literal
 /// separator (`regexSplit ":" . -1 | last` extracting a port suffix): the
@@ -31,7 +31,7 @@ pub enum MergeLayerTransform {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct MergeLayersUse {
     /// Every layer's values path, highest precedence first.
-    pub layers: Vec<String>,
+    pub layers: Vec<ValuesPath>,
     /// This use's own index within `layers`.
     pub position: usize,
     /// Per-layer transforms, parallel to `layers`.
@@ -49,7 +49,7 @@ pub struct MergeLayersUse {
 impl MergeLayersUse {
     /// The higher-precedence layer paths whose keys shadow this layer's.
     #[must_use]
-    pub fn shadowed_by(&self) -> &[String] {
+    pub fn shadowed_by(&self) -> &[ValuesPath] {
         self.layers
             .get(..self.position.min(self.layers.len()))
             .unwrap_or_default()
@@ -69,7 +69,7 @@ impl MergeLayersUse {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ContractUse {
     /// Canonical values path or expression that supplied the rendered value.
-    pub source_expr: String,
+    pub source_expr: ValuesPath,
     /// Structural path of the value in the rendered YAML document.
     pub path: YamlPath,
     /// How the value contributes to the rendered YAML node.
@@ -134,7 +134,7 @@ impl ContractUse {
     /// Creates a contract use from one conjunction of guards.
     #[must_use]
     pub fn new(
-        source_expr: String,
+        source_expr: ValuesPath,
         path: YamlPath,
         kind: ValueKind,
         guards: Vec<Guard>,
@@ -145,7 +145,7 @@ impl ContractUse {
 
     /// Creates a guarded contract use with explicit source provenance.
     pub fn with_provenances(
-        source_expr: String,
+        source_expr: ValuesPath,
         path: YamlPath,
         kind: ValueKind,
         guards: Vec<Guard>,
@@ -165,7 +165,7 @@ impl ContractUse {
 
     /// Creates a contract use from an already-normalized condition.
     pub fn with_condition_and_provenances(
-        source_expr: String,
+        source_expr: ValuesPath,
         path: YamlPath,
         kind: ValueKind,
         condition: GuardDnf,
@@ -227,11 +227,11 @@ impl ContractUse {
             digest: _,
             merge_operand: _,
         } = self;
-        *source_expr = map(source_expr);
+        *source_expr = ValuesPath::parse(&map(&source_expr.encode()));
         condition.map_value_paths(map);
         if let Some(merge) = merge_layers {
             for layer in &mut merge.layers {
-                *layer = map(layer);
+                *layer = ValuesPath::parse(&map(&layer.encode()));
             }
         }
         for retain_guards in omitted_members.values_mut() {

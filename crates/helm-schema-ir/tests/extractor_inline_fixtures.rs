@@ -31,6 +31,11 @@ fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
         .to_vec()
 }
 
+fn has_source(uses: &[ContractUse], path: &str) -> bool {
+    let path = helm_schema_core::ValuesPath::parse(path);
+    uses.iter().any(|use_| use_.source_expr == path)
+}
+
 fn truthy(p: &str) -> Guard {
     Guard::Truthy {
         path: helm_schema_core::ValuesPath::parse(p),
@@ -77,7 +82,10 @@ fn destructuring_range_header_emits_value_use_for_range_expression() {
 
     let ir = generate(template, "");
 
-    let map_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "map").collect();
+    let map_uses: Vec<&ContractUse> = ir
+        .iter()
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("map"))
+        .collect();
     sim_assert_eq!(
         have: map_uses.len(),
         want: 2,
@@ -135,7 +143,7 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
 
     let fallback_map_uses: Vec<&ContractUse> = ir
         .iter()
-        .filter(|u| u.source_expr == "fallbackMap")
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("fallbackMap"))
         .collect();
     sim_assert_eq!(
         have: fallback_map_uses.len(),
@@ -171,10 +179,10 @@ fn destructuring_range_header_with_helper_call_inside_range_expression() {
     );
 
     // No phantom paths from misparsing `default`, `(dict)`, etc.
-    let phantoms: Vec<&str> = ir
+    let phantoms: Vec<String> = ir
         .iter()
-        .map(|u| u.source_expr.as_str())
-        .filter(|s| matches!(*s, "dict" | "default"))
+        .map(|u| u.source_expr.encode())
+        .filter(|s| matches!(s.as_str(), "dict" | "default"))
         .collect();
     assert!(
         phantoms.is_empty(),
@@ -207,7 +215,10 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
     // Truthy(themap) guard. The IR shape for this fixture is precise
     // enough to pin exactly one use; a regression that emitted a
     // second wrongly-guarded duplicate would fail this assertion.
-    let suffix_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "suffix").collect();
+    let suffix_uses: Vec<&ContractUse> = ir
+        .iter()
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("suffix"))
+        .collect();
     sim_assert_eq!(
         have: suffix_uses.len(),
         want: 1,
@@ -222,8 +233,10 @@ fn range_body_uses_inherit_truthy_guard_on_destructured_source() {
     );
 
     // `fallback` is OUTSIDE the range — must NOT carry that guard.
-    let fallback_uses: Vec<&ContractUse> =
-        ir.iter().filter(|u| u.source_expr == "fallback").collect();
+    let fallback_uses: Vec<&ContractUse> = ir
+        .iter()
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("fallback"))
+        .collect();
     assert!(
         !fallback_uses.is_empty(),
         "expected `fallback` use outside range; got: {ir:#?}",
@@ -255,10 +268,10 @@ fn branch_assignment_to_outer_local_survives_as_choice_after_if() {
     "#};
 
     let ir = generate(template, "");
-    let rendered_sources: std::collections::BTreeSet<&str> = ir
+    let rendered_sources: std::collections::BTreeSet<String> = ir
         .iter()
         .filter(|use_| use_.path.0 == ["data".to_string(), "name".to_string()])
-        .map(|use_| use_.source_expr.as_str())
+        .map(|use_| use_.source_expr.encode())
         .collect();
 
     assert!(
@@ -302,10 +315,10 @@ fn scalar_helper_output_assigned_to_local_keeps_value_source() {
     "#};
 
     let ir = generate(template, helpers);
-    let password_sources: std::collections::BTreeSet<&str> = ir
+    let password_sources: std::collections::BTreeSet<String> = ir
         .iter()
         .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
-        .map(|use_| use_.source_expr.as_str())
+        .map(|use_| use_.source_expr.encode())
         .collect();
 
     assert!(
@@ -337,10 +350,10 @@ fn helper_analysis_ignores_nested_define_bodies_but_keeps_outer_output() {
     "#};
 
     let ir = generate(template, helpers);
-    let value_sources: std::collections::BTreeSet<&str> = ir
+    let value_sources: std::collections::BTreeSet<String> = ir
         .iter()
         .filter(|use_| use_.path.0 == ["data".to_string(), "value".to_string()])
-        .map(|use_| use_.source_expr.as_str())
+        .map(|use_| use_.source_expr.encode())
         .collect();
 
     assert!(
@@ -376,10 +389,10 @@ fn split_path_helper_resolves_dynamic_values_indexing() {
     "#};
 
     let ir = generate(template, helpers);
-    let password_sources: std::collections::BTreeSet<&str> = ir
+    let password_sources: std::collections::BTreeSet<String> = ir
         .iter()
         .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
-        .map(|use_| use_.source_expr.as_str())
+        .map(|use_| use_.source_expr.encode())
         .collect();
 
     assert!(
@@ -411,10 +424,10 @@ fn split_path_helper_resolves_multisegment_key_to_leaf_only() {
     "#};
 
     let ir = generate(template, helpers);
-    let password_sources: std::collections::BTreeSet<&str> = ir
+    let password_sources: std::collections::BTreeSet<String> = ir
         .iter()
         .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
-        .map(|use_| use_.source_expr.as_str())
+        .map(|use_| use_.source_expr.encode())
         .collect();
 
     assert!(
@@ -463,15 +476,18 @@ fn split_path_helper_resolves_key_selected_by_helper() {
     "#};
 
     let ir = generate(template, helpers);
-    let password_sources: std::collections::BTreeSet<&str> = ir
+    let password_sources: std::collections::BTreeSet<String> = ir
         .iter()
         .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
-        .map(|use_| use_.source_expr.as_str())
+        .map(|use_| use_.source_expr.encode())
         .collect();
 
     sim_assert_eq!(
         have: password_sources,
-        want: std::collections::BTreeSet::from(["auth.password", "global.auth.password"]),
+        want: std::collections::BTreeSet::from([
+            "auth.password".to_string(),
+            "global.auth.password".to_string(),
+        ]),
         "helper-selected path strings must resolve only to nested Values paths: {ir:#?}"
     );
 }
@@ -496,7 +512,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
 
     let primary_uses: Vec<&ContractUse> = ir
         .iter()
-        .filter(|use_| use_.source_expr == "primary")
+        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("primary"))
         .collect();
     sim_assert_eq!(
         have: primary_uses.len(),
@@ -513,7 +529,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
 
     let fallback_uses: Vec<&ContractUse> = ir
         .iter()
-        .filter(|use_| use_.source_expr == "fallback")
+        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("fallback"))
         .collect();
     sim_assert_eq!(
         have: fallback_uses.len(),
@@ -530,7 +546,7 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
 
     let after_uses: Vec<&ContractUse> = ir
         .iter()
-        .filter(|use_| use_.source_expr == "after")
+        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("after"))
         .collect();
     sim_assert_eq!(
         have: after_uses.len(),
@@ -567,7 +583,9 @@ fn local_storage_class_alias_emits_guarded_leaf_use() {
     let ir = generate(template, "");
     let matching_uses: Vec<&ContractUse> = ir
         .iter()
-        .filter(|use_| use_.source_expr == "global.storageClass")
+        .filter(|use_| {
+            use_.source_expr == helm_schema_core::ValuesPath::parse("global.storageClass")
+        })
         .collect();
     assert!(
         matching_uses.iter().any(|use_| {
@@ -602,7 +620,7 @@ fn scalar_item_range_keeps_parent_collection_path() {
     let parent_use = ir
         .iter()
         .find(|use_| {
-            use_.source_expr == "accessModes"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("accessModes")
                 && use_.path.0 == ["spec".to_string(), "accessModes".to_string()]
                 && use_.kind == helm_schema_ir::ValueKind::Scalar
         })
@@ -616,7 +634,7 @@ fn scalar_item_range_keeps_parent_collection_path() {
     let item_use = ir
         .iter()
         .find(|use_| {
-            use_.source_expr == "accessModes.*"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("accessModes.*")
                 && use_.path.0 == ["spec".to_string(), "accessModes[*]".to_string()]
                 // quoted items are total stringifications, so the row is
                 // serialized: the sink sees text, not the item's shape
@@ -661,7 +679,7 @@ fn scalar_range_wrapped_into_object_item_stays_on_leaf_path() {
 
     assert!(
         ir.iter().all(|use_| {
-            !(use_.source_expr == "hosts.*.paths"
+            !(use_.source_expr == helm_schema_core::ValuesPath::parse("hosts.*.paths")
                 && use_.path.0
                     == [
                         "spec".to_string(),
@@ -676,7 +694,7 @@ fn scalar_range_wrapped_into_object_item_stays_on_leaf_path() {
     let leaf_use = ir
         .iter()
         .find(|use_| {
-            use_.source_expr == "hosts.*.paths.*"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("hosts.*.paths.*")
                 && use_.kind == helm_schema_ir::ValueKind::Serialized
         })
         .expect("scalar path item should still surface as a value use");
@@ -719,7 +737,7 @@ fn helper_context_chain_dot_context_values_path_surfaces_as_use() {
 
     let target_uses: Vec<&ContractUse> = ir
         .iter()
-        .filter(|u| u.source_expr == "deeplyNested.fieldName")
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("deeplyNested.fieldName"))
         .collect();
     sim_assert_eq!(
         have: target_uses.len(),
@@ -730,9 +748,9 @@ fn helper_context_chain_dot_context_values_path_surfaces_as_use() {
     // The loose path search must NOT additionally surface phantom
     // paths from the `.context.*` operand prefix — `context` is a
     // dict key, not a `.Values.*` reference.
-    let phantoms: Vec<&str> = ir
+    let phantoms: Vec<String> = ir
         .iter()
-        .map(|u| u.source_expr.as_str())
+        .map(|u| u.source_expr.encode())
         .filter(|s| matches!(s.split('.').next(), Some("context" | "Values")))
         .collect();
     assert!(
@@ -759,8 +777,10 @@ fn quoted_yaml_key_keeps_concrete_leaf_path() {
 
     let ir = generate(template, "");
 
-    let namespace_uses: Vec<&ContractUse> =
-        ir.iter().filter(|u| u.source_expr == "namespace").collect();
+    let namespace_uses: Vec<&ContractUse> = ir
+        .iter()
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("namespace"))
+        .collect();
     sim_assert_eq!(
         have: namespace_uses.len(),
         want: 1,
@@ -829,42 +849,39 @@ fn exact_helper_dict_dot_arg_uses_current_with_binding() {
     }
 
     assert!(
-        ir.iter()
-            .any(|use_| use_.source_expr == "ingress.className"),
+        has_source(&ir, "ingress.className"),
         "expected helper body to resolve .config.className through current with-bound dot: {ir:#?}",
     );
     assert!(
         ir.iter().any(|use_| {
-            use_.source_expr == "ingress.className"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("ingress.className")
                 && use_.path.0 == ["spec".to_string(), "ingressClassName".to_string()]
                 && use_.kind == helm_schema_ir::ValueKind::Scalar
         }),
         "expected helper body to attach ingress.className to spec.ingressClassName: {ir:#?}",
     );
     assert!(
-        ir.iter()
-            .any(|use_| use_.source_expr == "ingress.annotations"),
+        has_source(&ir, "ingress.annotations"),
         "expected helper body to resolve .config.annotations through current with-bound dot: {ir:#?}",
     );
     assert!(
-        ir.iter().any(|use_| use_.source_expr == "ingress.tls"),
+        has_source(&ir, "ingress.tls"),
         "expected helper body to resolve .config.tls through current with-bound dot: {ir:#?}",
     );
     assert!(
-        ir.iter()
-            .any(|use_| use_.source_expr == "ingress.hosts.*.host"),
+        has_source(&ir, "ingress.hosts.*.host"),
         "expected helper body to resolve .config.hosts[*].host through current with-bound dot: {ir:#?}",
     );
     assert!(
         ir.iter().all(|use_| {
-            !(use_.source_expr == "ingress.hosts"
+            !(use_.source_expr == helm_schema_core::ValuesPath::parse("ingress.hosts")
                 && use_.path.0 == ["spec".to_string(), "rules".to_string()])
         }),
         "the hosts input should not be projected onto the full rendered IngressRule shape: {ir:#?}",
     );
     assert!(
         ir.iter().all(|use_| {
-            !(use_.source_expr == "ingress.hosts.*.paths"
+            !(use_.source_expr == helm_schema_core::ValuesPath::parse("ingress.hosts.*.paths")
                 && use_.path.0
                     == [
                         "spec".to_string(),
@@ -876,7 +893,7 @@ fn exact_helper_dict_dot_arg_uses_current_with_binding() {
         "the nested paths input should not be projected onto the rendered http.paths collection: {ir:#?}",
     );
     assert!(
-        ir.iter().any(|use_| use_.source_expr == "service.port"),
+        has_source(&ir, "service.port"),
         "expected helper body to keep $.ctx.Values.service.port rooted to the caller context: {ir:#?}",
     );
 }
@@ -953,7 +970,7 @@ fn list_bound_helper_fragment_keeps_metadata_map_paths() {
     let annotations_path = ["metadata".to_string(), "annotations".to_string()];
     assert!(
         ir.iter().any(|use_| {
-            use_.source_expr == "admintools.podAnnotations"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("admintools.podAnnotations")
                 && use_.path.0 == annotations_path
                 && use_.kind == helm_schema_ir::ValueKind::Fragment
         }),
@@ -961,7 +978,7 @@ fn list_bound_helper_fragment_keeps_metadata_map_paths() {
     );
     assert!(
         ir.iter().any(|use_| {
-            use_.source_expr == "additionalAnnotations"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("additionalAnnotations")
                 && use_.path.0 == annotations_path
                 && use_.kind == helm_schema_ir::ValueKind::Fragment
         }),
@@ -971,7 +988,7 @@ fn list_bound_helper_fragment_keeps_metadata_map_paths() {
     let labels_path = ["metadata".to_string(), "labels".to_string()];
     assert!(
         ir.iter().any(|use_| {
-            use_.source_expr == "admintools.podLabels"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("admintools.podLabels")
                 && use_.path.0 == labels_path
                 && use_.kind == helm_schema_ir::ValueKind::Fragment
         }),
@@ -979,7 +996,7 @@ fn list_bound_helper_fragment_keeps_metadata_map_paths() {
     );
     assert!(
         ir.iter().any(|use_| {
-            use_.source_expr == "additionalLabels"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("additionalLabels")
                 && use_.path.0 == labels_path
                 && use_.kind == helm_schema_ir::ValueKind::Fragment
         }),
@@ -1039,7 +1056,7 @@ fn bitnami_tplvalues_merge_list_items_stay_on_labels_path() {
         // structural attachment without a structured-input shape claim.
         assert!(
             ir.iter().any(|use_| {
-                use_.source_expr == source_expr
+                use_.source_expr == helm_schema_core::ValuesPath::parse(source_expr)
                     && use_.path.0 == labels_path
                     && use_.kind == helm_schema_ir::ValueKind::YamlSerialized
             }),
@@ -1047,7 +1064,8 @@ fn bitnami_tplvalues_merge_list_items_stay_on_labels_path() {
         );
         assert!(
             ir.iter().all(|use_| {
-                !(use_.source_expr == source_expr && use_.path.0.contains(&"values[*]".to_string()))
+                !(use_.source_expr == helm_schema_core::ValuesPath::parse(source_expr)
+                    && use_.path.0.contains(&"values[*]".to_string()))
             }),
             "{source_expr} must not be projected through the helper argument list envelope: {ir:#?}",
         );
@@ -1083,7 +1101,7 @@ fn conditional_annotations_fragment_stays_under_annotations_path() {
 
     let pod_annotations: Vec<&ContractUse> = ir
         .iter()
-        .filter(|use_| use_.source_expr == "podAnnotations")
+        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("podAnnotations"))
         .collect();
     assert!(
         pod_annotations.iter().any(|use_| {
@@ -1116,12 +1134,13 @@ fn with_rewritten_selector_chain_does_not_emit_parent_suffix_path() {
     let ir = generate(template, "");
 
     assert!(
-        ir.iter()
-            .any(|use_| use_.source_expr == "service.ports.http.port"),
+        ir.iter().any(|use_| use_.source_expr
+            == helm_schema_core::ValuesPath::parse("service.ports.http.port")),
         "expected the full rewritten path to surface; got: {ir:#?}",
     );
     assert!(
-        ir.iter().all(|use_| use_.source_expr != "service.port"),
+        ir.iter()
+            .all(|use_| use_.source_expr != helm_schema_core::ValuesPath::parse("service.port")),
         "rewritten selector chain should not leak a parent-suffix path; got: {ir:#?}",
     );
 }
@@ -1152,7 +1171,7 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
 
     let flag_uses: Vec<&ContractUse> = ir
         .iter()
-        .filter(|u| u.source_expr == "featureFlag")
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("featureFlag"))
         .collect();
     sim_assert_eq!(
         have: flag_uses.len(),
@@ -1173,9 +1192,9 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
 
     // Same absence guarantee as the unconditional helper-context test:
     // the `.context` prefix must not contaminate the IR.
-    let phantoms: Vec<&str> = ir
+    let phantoms: Vec<String> = ir
         .iter()
-        .map(|u| u.source_expr.as_str())
+        .map(|u| u.source_expr.encode())
         .filter(|s| matches!(s.split('.').next(), Some("context" | "Values")))
         .collect();
     assert!(
@@ -1200,13 +1219,16 @@ fn template_action_used_in_mapping_key_does_not_project_to_parent_value_path() {
     let ir = generate(template, "");
 
     assert!(
-        ir.iter()
-            .any(|use_| { use_.source_expr == "account.name" && use_.path.0.is_empty() }),
+        ir.iter().any(|use_| {
+            use_.source_expr == helm_schema_core::ValuesPath::parse("account.name")
+                && use_.path.0.is_empty()
+        }),
         "expected mapping-key interpolation to surface account.name as a pathless scalar use: {ir:#?}",
     );
     assert!(
         ir.iter().all(|use_| {
-            !(use_.source_expr == "account.name" && use_.path.0 == ["data".to_string()])
+            !(use_.source_expr == helm_schema_core::ValuesPath::parse("account.name")
+                && use_.path.0 == ["data".to_string()])
         }),
         "mapping-key interpolation must not project account.name onto ConfigMap.data: {ir:#?}",
     );
@@ -1230,7 +1252,7 @@ fn inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_path() {
     for source_expr in ["image.registry", "image.repository", "image.digest"] {
         assert!(
             ir.iter().any(|use_| {
-                use_.source_expr == source_expr
+                use_.source_expr == helm_schema_core::ValuesPath::parse(source_expr)
                     && use_.path.0
                         == [
                             "spec".to_string(),
@@ -1263,7 +1285,7 @@ fn with_bound_inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_
     for source_expr in ["image.registry", "image.repository", "image.digest"] {
         assert!(
             ir.iter().any(|use_| {
-                use_.source_expr == source_expr
+                use_.source_expr == helm_schema_core::ValuesPath::parse(source_expr)
                     && use_.path.0
                         == [
                             "spec".to_string(),
@@ -1305,7 +1327,10 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
     // No `fake` source_expr should appear anywhere in the IR — it
     // lives inside a string literal, not a real `.Values.fake`
     // reference.
-    let fake_uses: Vec<&ContractUse> = ir.iter().filter(|u| u.source_expr == "fake").collect();
+    let fake_uses: Vec<&ContractUse> = ir
+        .iter()
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("fake"))
+        .collect();
     assert!(
         fake_uses.is_empty(),
         "string-literal payload `.Values.fake` leaked into IR as a use: \
@@ -1317,8 +1342,10 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
     // Tighten beyond "contains the Eq": there must be no `Truthy(mode)`
     // or `Truthy(fake)` either, which is what the OLD regex pipeline
     // would have emitted from the contamination fall-through.
-    let payload_uses: Vec<&ContractUse> =
-        ir.iter().filter(|u| u.source_expr == "payload").collect();
+    let payload_uses: Vec<&ContractUse> = ir
+        .iter()
+        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("payload"))
+        .collect();
     sim_assert_eq!(
         have: payload_uses.len(),
         want: 1,
@@ -1344,7 +1371,8 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
 
     // `mode` must surface as a use (referenced by the condition).
     assert!(
-        ir.iter().any(|u| u.source_expr == "mode"),
+        ir.iter()
+            .any(|u| u.source_expr == helm_schema_core::ValuesPath::parse("mode")),
         "`.Values.mode` did not surface as an IR use; got: {ir:#?}",
     );
 }

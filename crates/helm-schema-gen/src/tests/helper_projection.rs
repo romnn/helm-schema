@@ -882,19 +882,19 @@ fn selector_chain_and_indexed_default_do_not_leak_parent_object_as_scalar_use() 
     let uses = ir
         .uses()
         .iter()
-        .map(|use_| use_.source_expr.as_str())
+        .map(|use_| use_.source_expr.encode())
         .collect::<Vec<_>>();
 
     assert!(
-        uses.contains(&"appVersions.airtype.global"),
+        uses.contains(&"appVersions.airtype.global".to_string()),
         "expected descendant appVersions.airtype.global use, got {uses:?}"
     );
     assert!(
-        uses.contains(&"appVersions.airtype.api"),
+        uses.contains(&"appVersions.airtype.api".to_string()),
         "expected descendant appVersions.airtype.api use, got {uses:?}"
     );
     assert!(
-        !uses.contains(&"appVersions.airtype"),
+        !uses.contains(&"appVersions.airtype".to_string()),
         "parent object should not be collapsed into a scalar render use, got {uses:?}"
     );
 }

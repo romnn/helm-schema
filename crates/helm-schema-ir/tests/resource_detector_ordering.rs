@@ -46,7 +46,7 @@ fn detector_records_both_when_api_version_precedes_kind() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "example")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("example"))
         .expect("expected a use for `example`");
     sim_assert_eq!(
         have: resource_of(u),
@@ -73,7 +73,7 @@ fn detector_records_both_when_kind_precedes_api_version() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "app")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("app"))
         .expect("expected a use for `app`");
     sim_assert_eq!(
         have: resource_of(u),
@@ -107,7 +107,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
     let first = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "first")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("first"))
         .expect("first use missing");
     sim_assert_eq!(
         have: resource_of(first),
@@ -118,7 +118,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
     let second = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "second")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("second"))
         .expect("second use missing");
     sim_assert_eq!(
         have: resource_of(second),
@@ -143,7 +143,7 @@ fn detector_does_not_capture_templated_api_version() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "example")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("example"))
         .expect("expected a use for `example`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.kind, want: "ConfigMap", "kind must still be captured");
@@ -169,7 +169,7 @@ fn detector_does_not_capture_templated_kind() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "example")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("example"))
         .expect("expected a use for `example`");
     // No `resource` is produced when kind is unknown (the use is
     // anchored to the document, which has no resolved type).
@@ -204,7 +204,7 @@ fn detector_collects_api_version_inside_if_after_kind() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "minAvailable")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("minAvailable"))
         .expect("expected a use for `minAvailable`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.kind, want: "PodDisruptionBudget");
@@ -249,7 +249,7 @@ fn detector_collects_kind_inside_if_after_api_version() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "rules")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("rules"))
         .expect("expected a use for `rules`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.api_version, want: "networking.k8s.io/v1");
@@ -284,7 +284,7 @@ fn detector_handles_loop_wrapped_manifest() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "commonLabels")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("commonLabels"))
         .expect("expected a use for `commonLabels` inside the loop body");
     let r = u.resource.as_ref().expect("resource on loop-body use");
     sim_assert_eq!(have: r.kind, want: "Service");
@@ -319,7 +319,7 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
     let first = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "first")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("first"))
         .expect("first use missing");
     sim_assert_eq!(
         have: first
@@ -333,7 +333,7 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
     let app = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "app")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("app"))
         .expect("app use missing");
     let r = app.resource.as_ref().expect("resource");
     sim_assert_eq!(
@@ -382,7 +382,7 @@ fn detector_resolves_helper_returned_api_version() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "replicas")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("replicas"))
         .expect("expected use for `replicas`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.kind, want: "Deployment");
@@ -428,7 +428,7 @@ fn detector_resolves_helper_with_if_else_branches() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "roleName")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("roleName"))
         .expect("expected use for `roleName`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.kind, want: "RoleBinding");
@@ -473,7 +473,7 @@ fn detector_resolves_include_returned_api_version() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "maxReplicas")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("maxReplicas"))
         .expect("expected use for `maxReplicas`");
     let r = u.resource.as_ref().expect("resource on use");
     sim_assert_eq!(have: r.kind, want: "HorizontalPodAutoscaler");
@@ -504,7 +504,7 @@ fn detector_primary_is_source_order_not_stability_rank() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "allowPrivilegeEscalation")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("allowPrivilegeEscalation"))
         .expect("use missing");
     let r = u.resource.as_ref().expect("resource");
     sim_assert_eq!(
@@ -535,7 +535,7 @@ fn detector_multi_branch_primary_is_first_seen_in_source() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "minAvailable")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("minAvailable"))
         .expect("use missing");
     let r = u.resource.as_ref().expect("resource");
     sim_assert_eq!(
@@ -567,7 +567,7 @@ fn detector_handles_yaml_comment_in_header() {
     let u = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == "selector")
+        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("selector"))
         .expect("selector use missing");
     let r = u.resource.as_ref().expect("resource");
     sim_assert_eq!(have: r.api_version, want: "v1");

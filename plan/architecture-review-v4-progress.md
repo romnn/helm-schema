@@ -3355,7 +3355,7 @@
 
 ## B4a.5b — migrate observed-fact path carriers
 
-- Status: ready to land; commit pending.
+- Status: landed in `4e6c495f` (`refactor(ir): type observed fact paths`).
 - Contract: representation-only migration of IR-internal `ObservedFacts` path keys and path sets to
   segmented `ValuesPath`: type-hint map keys, shape-erased paths, and both target/source identities
   on guarded and unguarded values-root overlays. Helper names, schema-type strings, `HintGrade`,
@@ -3466,3 +3466,128 @@
 
 - Measured production LOC delta: +13 (64,285 to 64,298). The two obsolete string helpers were
   deleted; the net increase is explicit encoding at consumers whose carrier round is still due.
+
+## B4a.6 — migrate contract-use path carriers
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of the public phase-crossing `ContractUse.source_expr`
+  identity and every `MergeLayersUse.layers` identity to segmented `ValuesPath`. YAML paths,
+  resource references, literal member keys, split separators, source provenance, transform tags,
+  and Boolean row facts remain unchanged.
+- Acceptance baseline: `4e6c495f` (B4a.5b).
+- Baseline production LOC: 64,298 Rust lines from `task tokei:core` on `4e6c495f`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or serialized-contract byte
+    changes. `ValuesPath` custom serde must preserve the existing JSON string representation.
+  - Construction, canonicalization, normalization, global projection, dependency rebasing,
+    merge-layer shadowing, and every public/session consumer retain exact identities and order.
+  - Part F decision: this deliberately narrows two public Rust field types and
+    `MergeLayersUse::shadowed_by`; it preserves wire bytes and is accepted as the scheduled B4a
+    compiler-enforced path-carrier migration, not an accidental API side effect.
+  - No coercion trait, cross-type comparison, parallel encoded field, or unrelated string newtype
+    is allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - `ContractUse.source_expr` and `MergeLayersUse.layers` now carry segmented `ValuesPath` through
+    fragment projection, normalization, dependency/global remapping, string-requirement routing,
+    ordered merge shadowing, session explanations, and generator overlay lowering.
+  - All three public `ContractUse` constructors take `ValuesPath`; `MergeLayersUse::shadowed_by`
+    returns typed paths. The migration deleted every production `source_expr.as_str`, raw path
+    split, and cross-type comparison instead of retaining an owned-string compatibility facade.
+  - `ValuesPath` custom serde preserves the legacy string wire shape. The authoritative schema and
+    symbolic-IR dumps are recursively byte-identical to `4e6c495f`; the full-depth battery checks
+    121,055 probes across 60 charts with zero acceptance flips, zero mandatory base drops, zero
+    third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - Five lint preflights were rejected in sequence as the public constructor seam was made honest:
+    owned `String` survived unnecessarily first in `with_condition_and_provenances`, then
+    `with_provenances`, then `new`, and finally in IR's `placed_row`. Each signature was narrowed
+    to `ValuesPath`, and producers now parse or clone at their real boundary; no lint suppression
+    or string adapter was added.
+  - The next lint preflight was rejected because explicit path construction pushed one integration
+    test two lines over the configured function limit. A small `has_source` test helper replaces
+    five repeated comparisons; the clean lint rerun passes warning-free.
+  - The compiler-enforced public test migration touched direct contract constructors across core,
+    IR, generator, engine, and integration tests. No archive/dump artifact was produced before that
+    migration and the clean lint state, so only `final1` artifacts are authoritative.
+  - The first final-tree `cargo nextest run --workspace` attempt was externally interrupted at
+    approximately 544/1,308 tests. Its process exited and no result from that incomplete run was
+    adopted; the gate was restarted from scratch and the complete rerun below is authoritative.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Direct and helper contract rows | Same path identity and serialized bytes | IR/public-surface suites and dumps. |
+| Dependency/global rebasing | Same mapped prefixes and guards | Contract projection suites. |
+| Ordered merge layers | Same precedence, transforms, and shadowing | Merge-shadowing suites and corpus. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 1,049/1,049 core/IR/gen tests pass,
+  covering public serde, contract normalization, helper/direct projection, dependency globals,
+  merge-layer precedence, requirement routing, and generator lowering. Whole-workspace Clippy
+  passes warning-free after the five rejected ownership preflights and one test-size preflight.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a6-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a6-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 535 seconds.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a6-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a6-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 185.830 seconds. A recursive byte comparison against the B4a.5b dump
+  exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a6-final1-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a6-final1.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.233 seconds and 18
+  artifacts are written. A recursive byte comparison against the B4a.5b dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a6-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=4e6c495f
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a6-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a6-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a6-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 72.397 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868
+  disclosed bounded reductions remain unchanged.
+- Public/wire decision: `ContractUse.source_expr`, `MergeLayersUse.layers`, all three public
+  `ContractUse` constructors, and `MergeLayersUse::shadowed_by` deliberately narrow from strings to
+  `ValuesPath`. This is the frozen B4a public API migration; serde remains byte-compatible and no
+  wire-format version is required.
+
+### Self-adversarial pass
+
+- Exhaustive `ContractUse::map_value_paths` still names every field and structurally remaps the
+  source identity, every merge layer, condition guards, and omitted-member retain guards.
+- Whole-tree searches find no production `source_expr.as_str`, raw source-expression split/prefix
+  operation, `source_expr: String`, or string-backed `MergeLayersUse.layers`; every remaining
+  encoding is at a string map, public signal, diagnostic, or callback boundary.
+- Split separators, YAML paths, resource names, helper provenance, member keys, and schema types
+  remain in their own domains. Literal `*` keeps its legacy segment spelling until B4b.
+- No `From<String>`, `From<&str>`, deref, display, cross-type equality, cached encoding, or parallel
+  field was added to make old call sites compile.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free in 4 minutes 57 seconds.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,476.10 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 324.675 seconds on the complete
+  authoritative rerun.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 2,231.599 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 2,082.921 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 42.90
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,334 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +36 (64,298 to 64,334), entirely explicit typed construction and
+  still-string phase-boundary encoding; no LOC promise governs B4a.

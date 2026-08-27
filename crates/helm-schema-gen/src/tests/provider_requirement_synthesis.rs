@@ -33,7 +33,10 @@ fn hpa_merge_layer_use(
         split_segment: None,
         merge_layers: Some(MergeLayersUse {
             transforms: vec![MergeLayerTransform::Identity; layers.len()],
-            layers,
+            layers: layers
+                .into_iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(&path))
+                .collect(),
             position: 0,
             via_binding: false,
         }),

@@ -1819,7 +1819,7 @@ fn helper_json_array_range_scopes_body_rows_by_payload_liveness() {
         .uses()
         .iter()
         .find(|use_| {
-            use_.source_expr == "roleName"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("roleName")
                 && use_.path == YamlPath(vec!["roleRef".to_string(), "name".to_string()])
         })
         .expect("roleRef name provider row");

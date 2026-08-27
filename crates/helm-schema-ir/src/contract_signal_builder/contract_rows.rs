@@ -253,7 +253,7 @@ pub(super) fn record_contract_use(
     string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
     has_yaml_serialized_use: bool,
 ) {
-    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+    let source_path = contract_use.source_expr.clone();
     if contract_use.range_key {
         record_range_key_slot_use(paths, contract_use, range_modes);
         return;
@@ -303,7 +303,7 @@ pub(super) fn record_contract_use(
                         predicate,
                         Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
                             if path != &source_path
-                                && merge.layers.contains(&path.encode())
+                                && merge.layers.contains(path)
                     )
                 })
                 .collect()
@@ -385,7 +385,9 @@ pub(super) fn record_range_key_slot_use(
     range_modes: &crate::range_modes::RangeModes,
 ) {
     if contract_use.path.0.is_empty()
-        || !range_modes.mode(&contract_use.source_expr).member_identity
+        || !range_modes
+            .mode(&contract_use.source_expr.encode())
+            .member_identity
     {
         return;
     }
@@ -400,7 +402,7 @@ pub(super) fn record_range_key_slot_use(
         let Some(guards) = lowerable_conditional_guard_set(contract_use, &predicates) else {
             continue;
         };
-        let acc = path_accumulator(paths, &contract_use.source_expr);
+        let acc = path_accumulator(paths, &contract_use.source_expr.encode());
         acc.referenced = true;
         if guards.is_empty() {
             acc.facts.record_provider_schema_use(provider_use.clone());
@@ -473,12 +475,13 @@ pub(super) fn record_contract_use_conjunction(
     string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
     has_yaml_serialized_use: bool,
 ) {
-    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+    let source_path = contract_use.source_expr.clone();
+    let source_expr = source_path.encode();
     let kind_resolved = kind_branch_resolved_use(contract_use, predicates);
     let contract_use = kind_resolved.as_ref().unwrap_or(contract_use);
     if contract_use.kind == ValueKind::WidenedDependency {
-        if !contract_use.source_expr.trim().is_empty() {
-            path_accumulator(paths, &contract_use.source_expr).referenced = true;
+        if source_path.segments().next().is_some() {
+            path_accumulator(paths, &source_expr).referenced = true;
         }
         return;
     }
@@ -490,7 +493,7 @@ pub(super) fn record_contract_use_conjunction(
     // (cluster-autoscaler's `kindIs "string"` expanderPriorities arm under
     // an `include`-bearing condition).
     let has_approximate = predicates.iter().any(Predicate::contains_approximation);
-    if ranged_member_parent(&contract_use.source_expr).is_some_and(|parent| {
+    if ranged_member_parent(&source_expr).is_some_and(|parent| {
         !range_modes.mode(parent).member_identity
             && !predicates.is_empty()
             && predicates.iter().all(|predicate| {
@@ -508,9 +511,8 @@ pub(super) fn record_contract_use_conjunction(
     }
     let lowerable_guards =
         lowerable_conditional_guard_set(contract_use, predicates).or_else(|| {
-            (contract_use.path.0.is_empty()
-                && range_modes.mode(&contract_use.source_expr).member_identity)
-                .then(|| lowerable_range_outer_guards(&contract_use.source_expr, predicates))
+            (contract_use.path.0.is_empty() && range_modes.mode(&source_expr).member_identity)
+                .then(|| lowerable_range_outer_guards(&source_expr, predicates))
                 .flatten()
         });
     // A merge layer's sink typing rides its OWN truthiness: whichever layer
@@ -552,18 +554,17 @@ pub(super) fn record_contract_use_conjunction(
             lowerable_guards.is_some()
                 || predicates.iter().all(|predicate| {
                     let mut guards = Vec::new();
-                    if extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut guards)
-                        .is_some()
-                    {
+                    if extend_lowerable_predicate(predicate, &source_expr, &mut guards).is_some() {
                         return true;
                     }
                     let mut negated_paths = BTreeSet::new();
                     hard_negation_paths(predicate, &mut negated_paths);
                     negated_paths.iter().all(|path| {
+                        let path = helm_schema_core::ValuesPath::parse(path);
                         merge.layers.iter().any(|layer| {
-                            path == layer
-                                || helm_schema_core::values_path_is_descendant(path, layer)
-                                || helm_schema_core::values_path_is_descendant(layer, path)
+                            path == *layer
+                                || path.is_descendant_of(layer)
+                                || layer.is_descendant_of(&path)
                         })
                     })
                 })
@@ -589,17 +590,17 @@ pub(super) fn record_contract_use_conjunction(
     let lowerable_guards = merge_layered.map_or(lowerable_guards, |merge| {
         let guard = match merge.own_transform() {
             helm_schema_core::MergeLayerTransform::ParsedMap => ConditionalGuard::TypeIs {
-                path: helm_schema_core::ValuesPath::parse(&contract_use.source_expr),
+                path: contract_use.source_expr.clone(),
                 schema_type: "object".to_string(),
             },
             helm_schema_core::MergeLayerTransform::Identity
             | helm_schema_core::MergeLayerTransform::NilScrubbed => ConditionalGuard::Truthy {
-                path: helm_schema_core::ValuesPath::parse(&contract_use.source_expr),
+                path: contract_use.source_expr.clone(),
             },
         };
         Some(vec![guard])
     });
-    if ranged_member_parent(&contract_use.source_expr).is_some()
+    if ranged_member_parent(&source_expr).is_some()
         && predicates
             .iter()
             .any(|predicate| !matches!(predicate, Predicate::Guard(Guard::Range { .. })))
@@ -610,7 +611,7 @@ pub(super) fn record_contract_use_conjunction(
         // where the branch never runs. Exact root guards remain overlays.
         return;
     }
-    let has_source = !contract_use.source_expr.trim().is_empty();
+    let has_source = contract_use.source_expr.segments().next().is_some();
     let path_is_empty = contract_use.path.0.is_empty();
     let range_guard_paths = predicates
         .iter()
@@ -647,7 +648,7 @@ pub(super) fn record_contract_use_conjunction(
     let type_dispatched = has_source
         && predicates
             .iter()
-            .any(|predicate| predicate_tests_source_type(predicate, &contract_use.source_expr));
+            .any(|predicate| predicate_tests_source_type(predicate, &source_expr));
     // The catch-all COMPLEMENT arm of a type dispatch (every self-type
     // test negated: a plain `else`) executes for every unmatched type, so
     // its structural placement types that whole domain — scoped to the
@@ -657,11 +658,11 @@ pub(super) fn record_contract_use_conjunction(
     // placement says nothing about the raw value.
     let complement_dispatched = type_dispatched
         && predicates.iter().all(|predicate| {
-            !predicate_tests_source_type(predicate, &contract_use.source_expr)
+            !predicate_tests_source_type(predicate, &source_expr)
                 || matches!(
                     predicate,
                     Predicate::Not(inner)
-                        if predicate_tests_source_type(inner, &contract_use.source_expr)
+                        if predicate_tests_source_type(inner, &source_expr)
                 )
         });
     let total_stringified = contract_use.stringified
@@ -684,7 +685,7 @@ pub(super) fn record_contract_use_conjunction(
             || total_stringified
             || type_dispatched;
         if serialized_tolerant {
-            let acc = path_accumulator(paths, &contract_use.source_expr);
+            let acc = path_accumulator(paths, &source_expr);
             acc.referenced = true;
             acc.facts.facts.used_as_serialized = true;
             acc.facts.facts.has_non_control_use = true;
@@ -761,7 +762,7 @@ pub(super) fn record_contract_use_conjunction(
         // kinds carry actual fragment/text output.
         facts.has_non_control_use = !path_is_empty || contract_use.kind != ValueKind::Scalar;
         facts.has_unlayered_non_control_use = facts.has_non_control_use && merge_layered.is_none();
-        let acc = path_accumulator(paths, &contract_use.source_expr);
+        let acc = path_accumulator(paths, &source_expr);
         acc.requiredness.is_positive_header |= positive_header;
         // A positive dispatch arm normally abstains from provider typing
         // (a transformed scalar arm observes derived text), but an arm that
@@ -978,7 +979,7 @@ pub(super) fn record_contract_use_conjunction(
         }
     }
     for path in predicates.iter().flat_map(Predicate::value_paths) {
-        if has_source && path == contract_use.source_expr {
+        if has_source && path == source_expr {
             continue;
         }
         let acc = path_accumulator(paths, &path);

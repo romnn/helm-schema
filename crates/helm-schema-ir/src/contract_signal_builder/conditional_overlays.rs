@@ -30,7 +30,8 @@ pub(super) fn lowerable_conditional_guard_set(
     // A key-equality conjunct subsumes its companion iteration conjunct:
     // the has-key lowering already implies the range reaches that member
     // (prometheus's serverFiles dispatch around the remoteWrite rows).
-    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+    let source_path = contract_use.source_expr.clone();
+    let source_expr = source_path.encode();
     let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = predicates
         .iter()
         .filter_map(|predicate| match predicate {
@@ -49,12 +50,12 @@ pub(super) fn lowerable_conditional_guard_set(
             predicate,
             Predicate::Guard(Guard::Range { path })
                 if path == &source_path
-                    || range_guard_is_iteration_ancestor(&contract_use.source_expr, path)
+                    || range_guard_is_iteration_ancestor(&source_expr, path)
                     || key_equals_ranges.contains(path)
         ) {
             continue;
         }
-        extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut guards)?;
+        extend_lowerable_predicate(predicate, &source_expr, &mut guards)?;
     }
     guards.sort();
     guards.dedup();
@@ -72,14 +73,14 @@ pub(super) fn lowerable_conditional_guard_set(
 /// member could supply this".
 pub(super) fn collapse_layered_truthy_gates(
     guards: Vec<ConditionalGuard>,
-    layers: &[String],
+    layers: &[helm_schema_core::ValuesPath],
 ) -> Vec<ConditionalGuard> {
     // Layers arrive member-projected (each ends with the row's shared
     // member suffix); the merge ROOTS are the layers with the longest
     // common dot-suffix stripped.
     let split: Vec<Vec<String>> = layers
         .iter()
-        .map(|layer| helm_schema_core::split_value_path(layer))
+        .map(|layer| layer.segments().map(str::to_string).collect())
         .collect();
     let Some(first) = split.first() else {
         return guards;
@@ -105,16 +106,18 @@ pub(super) fn collapse_layered_truthy_gates(
         }
         common += 1;
     }
-    let roots: Vec<String> = split
+    let roots: Vec<helm_schema_core::ValuesPath> = split
         .iter()
         .map(|segments| {
             let keep = segments.len().saturating_sub(common);
-            helm_schema_core::join_value_path(segments.get(..keep).unwrap_or_default())
+            helm_schema_core::ValuesPath::from_segments(
+                segments.get(..keep).unwrap_or_default().iter().cloned(),
+            )
         })
         .collect();
-    let concrete_layers: Vec<&String> = roots
+    let concrete_layers: Vec<&helm_schema_core::ValuesPath> = roots
         .iter()
-        .filter(|layer| !path_contains_wildcard(layer))
+        .filter(|layer| !values_path_contains_wildcard(layer))
         .collect();
     // A wildcard layer has no document-root spelling of its own, but a
     // per-set member can only supply the merged value when the set
@@ -124,13 +127,17 @@ pub(super) fn collapse_layered_truthy_gates(
     //
     // The collection is everything before the layer's first `*`. A layer
     // spelled entirely concretely contributes no wildcard collection.
-    let wildcard_collections: Vec<String> = roots
+    let wildcard_collections: Vec<helm_schema_core::ValuesPath> = roots
         .iter()
         .filter_map(|layer| {
-            let segments = helm_schema_core::split_value_path(layer);
+            let segments = layer.segments().collect::<Vec<_>>();
             let wildcard = segments.iter().position(|segment| *segment == "*")?;
             let prefix = segments.get(..wildcard)?;
-            (!prefix.is_empty()).then(|| helm_schema_core::join_value_path(prefix))
+            (!prefix.is_empty()).then(|| {
+                helm_schema_core::ValuesPath::from_segments(
+                    prefix.iter().map(|segment| (*segment).to_string()),
+                )
+            })
         })
         .collect();
     let mut suffix_members: BTreeMap<String, BTreeSet<usize>> = BTreeMap::new();
@@ -158,9 +165,7 @@ pub(super) fn collapse_layered_truthy_gates(
         arms.extend(
             wildcard_collections
                 .iter()
-                .map(|path| ConditionalGuard::Truthy {
-                    path: helm_schema_core::ValuesPath::parse(path),
-                }),
+                .map(|path| ConditionalGuard::Truthy { path: path.clone() }),
         );
         arms.sort();
         arms.dedup();
@@ -181,9 +186,11 @@ pub(super) fn collapse_layered_truthy_gates(
     out
 }
 
-fn layered_guard_suffix(path: &helm_schema_core::ValuesPath, layer: &str) -> Option<String> {
-    let layer = helm_schema_core::ValuesPath::parse(layer);
-    if !path.is_descendant_of(&layer) {
+fn layered_guard_suffix(
+    path: &helm_schema_core::ValuesPath,
+    layer: &helm_schema_core::ValuesPath,
+) -> Option<String> {
+    if !path.is_descendant_of(layer) {
         return None;
     }
     Some(helm_schema_core::join_value_path(
@@ -202,7 +209,8 @@ pub(super) fn lowerable_conditional_guard_subset(
     contract_use: &ContractUse,
     predicates: &[Predicate],
 ) -> Vec<ConditionalGuard> {
-    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+    let source_path = contract_use.source_expr.clone();
+    let source_expr = source_path.encode();
     let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = predicates
         .iter()
         .filter_map(|predicate| match predicate {
@@ -218,14 +226,13 @@ pub(super) fn lowerable_conditional_guard_subset(
             predicate,
             Predicate::Guard(Guard::Range { path })
                 if path == &source_path
-                    || range_guard_is_iteration_ancestor(&contract_use.source_expr, path)
+                    || range_guard_is_iteration_ancestor(&source_expr, path)
                     || key_equals_ranges.contains(path)
         ) {
             continue;
         }
         let mut lowered = Vec::new();
-        if extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut lowered).is_some()
-        {
+        if extend_lowerable_predicate(predicate, &source_expr, &mut lowered).is_some() {
             guards.extend(lowered);
         }
     }
@@ -247,8 +254,8 @@ pub(super) fn provider_schema_use(
     // (traefik's `mountPath: {{ $plugin.mountPath | quote }}`).
     let nil_omitting_ranged_leaf = contract_use.kind == ValueKind::Serialized
         && contract_use.nil_omitting
-        && path_contains_wildcard(&contract_use.source_expr);
-    if contract_use.source_expr.trim().is_empty()
+        && values_path_contains_wildcard(&contract_use.source_expr);
+    if contract_use.source_expr.segments().next().is_none()
         || (matches!(
             contract_use.kind,
             ValueKind::PartialScalar | ValueKind::Serialized
@@ -266,7 +273,7 @@ pub(super) fn provider_schema_use(
     let resource = contract_use.resource.clone()?;
 
     Some(ProviderSchemaUse {
-        value_path: contract_use.source_expr.clone(),
+        value_path: contract_use.source_expr.encode(),
         path: contract_use.path.clone(),
         kind: contract_use.kind,
         stringified: contract_use.stringified,

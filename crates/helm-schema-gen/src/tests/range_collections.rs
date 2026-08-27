@@ -464,7 +464,7 @@ fn map_entry_range_over_values_path_keeps_object_map_schema() {
 #[test]
 fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
     let uses = vec![ContractUse {
-        source_expr: "image.pullSecrets.*".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("image.pullSecrets.*"),
         path: helm_schema_ir::YamlPath(vec![
             "spec".to_string(),
             "imagePullSecrets[*]".to_string(),

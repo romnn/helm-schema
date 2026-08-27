@@ -41,7 +41,7 @@ fn provider_schema_cache_distinguishes_stringified_scalar_uses() {
     }
 
     let provider_use = |stringified| ContractUse {
-        source_expr: "value".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("value"),
         path: YamlPath(vec!["spec".to_string(), "value".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::default(),
@@ -2478,7 +2478,7 @@ fn compound_sound_subset_scopes_provider_payloads() {
         ]),
     ]);
     let contract = ContractIr::from_contract_uses(vec![ContractUse {
-        source_expr: "annotations".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("annotations"),
         path: YamlPath(vec!["metadata".to_string(), "annotations".to_string()]),
         kind: ValueKind::YamlSerialized,
         condition: helm_schema_core::GuardDnf::from_conjunction([
@@ -2600,7 +2600,7 @@ fn sound_subset_does_not_type_scalar_selection_influence() {
 #[test]
 fn textual_rows_are_not_inherently_falsy_tolerant() -> eyre::Result<()> {
     let signals = ContractIr::from_contract_uses(vec![ContractUse {
-        source_expr: "repository".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("repository"),
         path: YamlPath(vec![
             "spec".to_string(),
             "containers[*]".to_string(),
@@ -2636,7 +2636,7 @@ fn textual_rows_are_not_inherently_falsy_tolerant() -> eyre::Result<()> {
 #[test]
 fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
-        source_expr: "webhook.serviceAccount.name".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("webhook.serviceAccount.name"),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
@@ -2681,7 +2681,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
 #[test]
 fn type_hint_only_descendant_preserves_object_input_branch() {
     let uses = vec![ContractUse {
-        source_expr: "image".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("image"),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
@@ -2971,7 +2971,7 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
         .uses()
         .iter()
         .filter(|use_| {
-            use_.source_expr == "serviceAccount.name"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("serviceAccount.name")
                 && use_.path.0 == ["metadata".to_string(), "name".to_string()]
         })
         .collect();
@@ -3031,7 +3031,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
 
     let uses = vec![
         ContractUse {
-            source_expr: "serviceMonitor.metricRelabelings".to_string(),
+            source_expr: helm_schema_core::ValuesPath::parse("serviceMonitor.metricRelabelings"),
             path: YamlPath(Vec::new()),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
@@ -3053,7 +3053,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             merge_operand: false,
         },
         ContractUse {
-            source_expr: "serviceMonitor.metricRelabelings".to_string(),
+            source_expr: helm_schema_core::ValuesPath::parse("serviceMonitor.metricRelabelings"),
             path: YamlPath(vec![
                 "spec".to_string(),
                 "endpoints[*]".to_string(),
@@ -3134,7 +3134,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
     let resource = ResourceRef::concrete("example.io/v1".to_string(), "Example".to_string());
     let uses = vec![
         ContractUse {
-            source_expr: "first".to_string(),
+            source_expr: helm_schema_core::ValuesPath::parse("first"),
             path: YamlPath(vec!["spec".to_string(), "first".to_string()]),
             kind: ValueKind::Fragment,
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
@@ -3151,7 +3151,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             merge_operand: false,
         },
         ContractUse {
-            source_expr: "second".to_string(),
+            source_expr: helm_schema_core::ValuesPath::parse("second"),
             path: YamlPath(vec!["spec".to_string(), "second".to_string()]),
             kind: ValueKind::Fragment,
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
@@ -3202,7 +3202,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
 #[test]
 fn values_yaml_comments_override_provider_descriptions() {
     let uses = vec![ContractUse {
-        source_expr: "name".to_string(),
+        source_expr: helm_schema_core::ValuesPath::parse("name"),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),

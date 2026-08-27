@@ -37,7 +37,7 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
             continue;
         }
         let row = ContractUse::with_condition_and_provenances(
-            read.values_path.clone(),
+            helm_schema_core::ValuesPath::parse(&read.values_path),
             YamlPath(Vec::new()),
             read.kind,
             read.condition.clone(),
@@ -281,7 +281,7 @@ fn walk_node(
             if !row.condition.is_never() {
                 if row.kind == ValueKind::YamlSerialized
                     && !structural_sibling_conditions.is_empty()
-                    && !row.source_expr.contains('*')
+                    && !row.source_expr.encode().contains('*')
                     && !splice.meta.defaulted
                     && !splice.meta.merge_operand
                     && splice.meta.merge_layers.is_none()
@@ -318,7 +318,7 @@ fn walk_node(
                                 conjunction,
                                 ranged: crate::range_modes::RangeModes::default(),
                                 kind: crate::eval_effect::CaptureKind::AbsenceAborts {
-                                    path: helm_schema_core::ValuesPath::parse(&row.source_expr),
+                                    path: row.source_expr.clone(),
                                 },
                             }
                         }));
@@ -333,7 +333,7 @@ fn walk_node(
                     continue;
                 }
                 contract.push(placed_row(
-                    taint_path.clone(),
+                    helm_schema_core::ValuesPath::parse(taint_path),
                     path,
                     opaque.kind,
                     GuardDnf::from_conjunction(conditions.iter().cloned()),
@@ -373,7 +373,7 @@ fn project_parts(
                         continue;
                     }
                     contract.push(placed_row(
-                        taint_path.clone(),
+                        helm_schema_core::ValuesPath::parse(taint_path),
                         path,
                         if scalar.suppressed {
                             ValueKind::Serialized
@@ -454,7 +454,7 @@ fn splice_row(
         splice.kind
     };
     let mut row = placed_row(
-        splice.values_path.encode(),
+        splice.values_path.clone(),
         path,
         kind,
         condition,
@@ -477,7 +477,7 @@ fn splice_row(
 /// rebasing, partial-scalar normalization at pathless positions, the site's
 /// resource scope, and site-then-helper provenance.
 fn placed_row(
-    values_path: String,
+    values_path: helm_schema_core::ValuesPath,
     path: &YamlPath,
     kind: ValueKind,
     condition: GuardDnf,

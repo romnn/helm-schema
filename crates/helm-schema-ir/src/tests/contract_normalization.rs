@@ -9,7 +9,7 @@ use super::{canonicalize_contract_uses, expand_condition_disjuncts, normalize_co
 #[test]
 fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
     let row = ContractUse::new(
-        "feature.enabled".to_string(),
+        helm_schema_core::ValuesPath::parse("feature.enabled"),
         YamlPath(vec!["spec".to_string(), "enabled".to_string()]),
         ValueKind::Scalar,
         vec![Guard::Truthy {
@@ -28,7 +28,7 @@ fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
 fn canonicalization_merges_provenance_for_semantically_identical_uses() {
     let mut uses = vec![
         ContractUse {
-            source_expr: "image.tag".to_string(),
+            source_expr: helm_schema_core::ValuesPath::parse("image.tag"),
             path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
@@ -49,7 +49,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             merge_operand: false,
         },
         ContractUse {
-            source_expr: "image.tag".to_string(),
+            source_expr: helm_schema_core::ValuesPath::parse("image.tag"),
             path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             kind: ValueKind::Scalar,
             condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
@@ -80,7 +80,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
 #[test]
 fn canonicalization_keeps_range_key_and_value_rows_distinct() {
     let value_row = ContractUse::new(
-        "config.*".to_string(),
+        helm_schema_core::ValuesPath::parse("config.*"),
         YamlPath(vec!["data".to_string()]),
         ValueKind::PartialScalar,
         vec![Guard::Range {
@@ -105,7 +105,7 @@ fn canonicalization_keeps_range_key_and_value_rows_distinct() {
 fn canonicalization_merges_complementary_conditions_across_render_sites() {
     let mut uses = vec![
         ContractUse::with_provenances(
-            "image.tag".to_string(),
+            helm_schema_core::ValuesPath::parse("image.tag"),
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
@@ -119,7 +119,7 @@ fn canonicalization_merges_complementary_conditions_across_render_sites() {
             )],
         ),
         ContractUse::with_provenances(
-            "image.tag".to_string(),
+            helm_schema_core::ValuesPath::parse("image.tag"),
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Not {
@@ -150,7 +150,7 @@ fn canonicalization_collapses_conditions_from_the_same_render_site() {
     );
     let mut uses = vec![
         ContractUse::with_provenances(
-            "image.tag".to_string(),
+            helm_schema_core::ValuesPath::parse("image.tag"),
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Truthy {
@@ -160,7 +160,7 @@ fn canonicalization_collapses_conditions_from_the_same_render_site() {
             vec![provenance.clone()],
         ),
         ContractUse::with_provenances(
-            "image.tag".to_string(),
+            helm_schema_core::ValuesPath::parse("image.tag"),
             YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             ValueKind::Scalar,
             vec![Guard::Not {
@@ -201,7 +201,7 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
     );
     let mut uses = vec![
         ContractUse::with_provenances(
-            "auth.password".to_string(),
+            helm_schema_core::ValuesPath::parse("auth.password"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             base_guards,
@@ -209,7 +209,7 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
             vec![provenance.clone()],
         ),
         ContractUse::with_provenances(
-            "auth.password".to_string(),
+            helm_schema_core::ValuesPath::parse("auth.password"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             self_truthy_guards,
@@ -242,7 +242,7 @@ fn normalization_drops_subsumed_truthy_branch_across_provenance_sites() {
     });
     let mut uses = vec![
         ContractUse::with_provenances(
-            "auth.password".to_string(),
+            helm_schema_core::ValuesPath::parse("auth.password"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             base_guards.clone(),
@@ -254,7 +254,7 @@ fn normalization_drops_subsumed_truthy_branch_across_provenance_sites() {
             )],
         ),
         ContractUse::with_provenances(
-            "auth.password".to_string(),
+            helm_schema_core::ValuesPath::parse("auth.password"),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             self_truthy_guards,

@@ -246,7 +246,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
     let port = contract
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "master.service.ports.redis");
+        .find(|use_| use_.source_expr == conditional_path("master.service.ports.redis"));
 
     let int_gt = Predicate::from(Guard::IntGt {
         path: helm_schema_core::ValuesPath::parse("master.count"),
@@ -485,7 +485,7 @@ fn defaulted_helper_output_keeps_its_stringified_identity() {
         .uses()
         .iter()
         .filter(|contract_use| {
-            contract_use.source_expr == "master.serviceAccount.name"
+            contract_use.source_expr == conditional_path("master.serviceAccount.name")
                 && contract_use.path == crate::YamlPath(vec!["metadata".into(), "name".into()])
         })
         .map(|contract_use| contract_use.stringified)
@@ -535,7 +535,7 @@ fn nested_helper_fallback_does_not_escape_a_contradictory_caller_guard() {
         .uses()
         .iter()
         .filter(|contract_use| {
-            contract_use.source_expr == "fullnameOverride"
+            contract_use.source_expr == conditional_path("fullnameOverride")
                 && contract_use.path
                     == crate::YamlPath(vec![
                         "spec".into(),
@@ -1272,7 +1272,7 @@ fn local_nil_fallback_reassignment_preserves_truthy_union() {
     let replicas = ir
         .uses()
         .iter()
-        .find(|use_| use_.source_expr == "feature.replicas");
+        .find(|use_| use_.source_expr == conditional_path("feature.replicas"));
 
     assert!(
         replicas.is_some_and(|use_| {
@@ -2469,10 +2469,10 @@ fn selected_yaml_serializer_keeps_each_provider_route() {
         "injector.webhookAnnotations",
     ] {
         assert!(
-            finalized
-                .uses()
-                .iter()
-                .any(|row| row.source_expr == path && row.kind == crate::ValueKind::YamlSerialized),
+            finalized.uses().iter().any(|row| {
+                row.source_expr == conditional_path(path)
+                    && row.kind == crate::ValueKind::YamlSerialized
+            }),
             "missing YAML-serialized provider route for {path}: {finalized:#?}"
         );
     }

@@ -532,7 +532,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> eyre::Re
     let uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == path)
+        .filter(|use_| use_.source_expr == conditional_path(path))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -643,7 +643,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
     let uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == path)
+        .filter(|use_| use_.source_expr == conditional_path(path))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -805,7 +805,7 @@ fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
     let uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == path)
+        .filter(|use_| use_.source_expr == conditional_path(path))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -878,7 +878,7 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability() -
     let uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == path)
+        .filter(|use_| use_.source_expr == conditional_path(path))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -933,7 +933,7 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> eyre::Result<()
     let uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == path)
+        .filter(|use_| use_.source_expr == conditional_path(path))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -1049,7 +1049,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
     let name_override_uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == "app.nameOverride")
+        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("app.nameOverride"))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -1088,7 +1088,7 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence() -> eyre
     let uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == path)
+        .filter(|use_| use_.source_expr == conditional_path(path))
         .cloned()
         .collect::<Vec<_>>();
     let schema_signals = contract_schema_signals!(collection);
@@ -1241,7 +1241,7 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
         .uses()
         .iter()
         .filter(|use_| {
-            use_.source_expr == "kid.enabled"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("kid.enabled")
                 && use_.path.0 == ["data".to_string(), "enabled".to_string()]
         })
         .cloned()
@@ -1392,7 +1392,7 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
     let uses = projection
         .uses()
         .iter()
-        .filter(|use_| use_.source_expr == "mid.leaf.enabled")
+        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("mid.leaf.enabled"))
         .cloned()
         .collect::<Vec<_>>();
 
@@ -1704,7 +1704,7 @@ fn nested_dependency_global_defaults_keep_null_fallback_contracts() -> eyre::Res
         .finalize()
         .uses()
         .iter()
-        .map(|contract_use| contract_use.source_expr.clone())
+        .map(|contract_use| contract_use.source_expr.encode())
         .filter(|path| path.contains("imagePullSecrets"))
         .collect::<std::collections::BTreeSet<_>>();
 

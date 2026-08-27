@@ -409,7 +409,10 @@ pub(crate) fn lower_value(
                                 .is_some_and(|path| splice.values_path.encode() == *path)
                         {
                             splice.meta.merge_layers = Some(helm_schema_core::MergeLayersUse {
-                                layers: layer_paths.clone(),
+                                layers: layer_paths
+                                    .iter()
+                                    .map(|path| ValuesPath::parse(path))
+                                    .collect(),
                                 position,
                                 transforms: layers
                                     .iter()

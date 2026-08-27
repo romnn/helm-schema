@@ -418,7 +418,7 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
     // without a structured-input shape claim.
     assert!(
         contract.uses.iter().any(|use_| {
-            use_.source_expr == "web.containerSecurityContext"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("web.containerSecurityContext")
                 && use_.kind == ValueKind::YamlSerialized
                 && use_.path.0
                     == [

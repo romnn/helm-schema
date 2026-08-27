@@ -198,7 +198,10 @@ fn transforms_keep_their_position_specific_facts_and_schemas() -> eyre::Result<(
                 let placed = finalized
                     .uses()
                     .iter()
-                    .find(|use_| use_.source_expr == path && !use_.path.0.is_empty())
+                    .find(|use_| {
+                        use_.source_expr == helm_schema_core::ValuesPath::parse(path)
+                            && !use_.path.0.is_empty()
+                    })
                     .ok_or_eyre("identity case must produce a placed use")?;
                 sim_assert_eq!(have: placed.stringified, want: stringified);
                 let expected_kind = if stringified {
@@ -211,7 +214,7 @@ fn transforms_keep_their_position_specific_facts_and_schemas() -> eyre::Result<(
             BehaviorCase::MemberIdentity { .. } => {
                 assert!(evidence.facts.has_referenced_descendants);
                 assert!(finalized.uses().iter().any(|use_| {
-                    use_.source_expr == format!("{path}.name")
+                    use_.source_expr == helm_schema_core::ValuesPath::parse(&format!("{path}.name"))
                         && use_.path.0 == ["value".to_string()]
                 }));
             }
@@ -238,7 +241,7 @@ fn transforms_keep_their_position_specific_facts_and_schemas() -> eyre::Result<(
                 let placed = finalized
                     .uses()
                     .iter()
-                    .find(|use_| use_.source_expr == path)
+                    .find(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse(path))
                     .ok_or_eyre("splice case must produce a placed use")?;
                 let expected_kind = if yaml_serialized {
                     ValueKind::YamlSerialized

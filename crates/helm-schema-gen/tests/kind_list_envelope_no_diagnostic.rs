@@ -47,7 +47,7 @@ fn kind_list_envelope_descends_into_inner_resource() {
     let projection = ir.clone().finalize();
     assert!(
         projection.uses().iter().any(|use_| {
-            use_.source_expr == "host"
+            use_.source_expr == helm_schema_core::ValuesPath::parse("host")
                 && use_.path.0
                     == [
                         "spec".to_string(),

@@ -101,7 +101,7 @@ fn step2_default_in_string_literal_no_hint() {
 #[test]
 fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
     let guarded = ContractUse {
-        source_expr: "image.tag".into(),
+        source_expr: helm_schema_core::ValuesPath::parse("image.tag"),
         path: YamlPath(vec!["data".into(), "guarded".into()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Default {
@@ -120,7 +120,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         merge_operand: false,
     };
     let bare = ContractUse {
-        source_expr: "image.tag".into(),
+        source_expr: helm_schema_core::ValuesPath::parse("image.tag"),
         path: YamlPath(vec!["data".into(), "bare".into()]),
         kind: ValueKind::Scalar,
         condition: helm_schema_core::GuardDnf::from_guards(vec![]),

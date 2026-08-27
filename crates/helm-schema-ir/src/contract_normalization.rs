@@ -98,8 +98,10 @@ fn canonicalize_contract_use_inputs(uses: &mut [ContractUse]) {
 #[tracing::instrument(skip_all)]
 fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
     let mut merged: Vec<ContractUse> = Vec::with_capacity(uses.len());
-    let mut pathless_index_by_identity: BTreeMap<(String, ValueKind, BTreeSet<Predicate>), usize> =
-        BTreeMap::new();
+    let mut pathless_index_by_identity: BTreeMap<
+        (helm_schema_core::ValuesPath, ValueKind, BTreeSet<Predicate>),
+        usize,
+    > = BTreeMap::new();
 
     for mut contract_use in std::mem::take(uses) {
         if contract_use.path.0.is_empty() {
@@ -152,8 +154,15 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
     // The subsumption scan only ever compares rows sharing one render site
     // (source, path, kind, resource), so group indices once and keep the
     // quadratic candidate scan inside those buckets instead of over all rows.
-    let mut buckets: BTreeMap<(&String, &YamlPath, ValueKind, Option<&ResourceRef>), Vec<usize>> =
-        BTreeMap::new();
+    let mut buckets: BTreeMap<
+        (
+            &helm_schema_core::ValuesPath,
+            &YamlPath,
+            ValueKind,
+            Option<&ResourceRef>,
+        ),
+        Vec<usize>,
+    > = BTreeMap::new();
     for (index, contract_use) in uses.iter().enumerate() {
         buckets
             .entry((
@@ -176,7 +185,7 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
             let Some(contract_use) = uses.get(index) else {
                 continue;
             };
-            let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+            let source_path = contract_use.source_expr.clone();
             let predicates = predicates_by_index.get(index).cloned().unwrap_or_default();
             let has_self_truthy = predicates.iter().any(
                 |predicate| matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &source_path),
@@ -246,7 +255,12 @@ fn extra_predicates_are_truthy_parents(
         })
 }
 
-type RenderSite = (String, YamlPath, ValueKind, Option<ResourceRef>);
+type RenderSite = (
+    helm_schema_core::ValuesPath,
+    YamlPath,
+    ValueKind,
+    Option<ResourceRef>,
+);
 
 fn render_site(contract_use: &ContractUse) -> RenderSite {
     (
@@ -258,7 +272,7 @@ fn render_site(contract_use: &ContractUse) -> RenderSite {
 }
 
 fn has_self_default_guard(contract_use: &ContractUse) -> bool {
-    let source_path = helm_schema_core::ValuesPath::parse(&contract_use.source_expr);
+    let source_path = contract_use.source_expr.clone();
     contract_predicates(contract_use)
         .iter()
         .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &source_path))
