@@ -104,21 +104,27 @@ fn guarded_declared_ancestor_keeps_referenced_siblings_beside_child_overlay() {
     ]);
     let signals = schema_signals_for(parse_ir(src));
     let enabled = signals
-        .evidence_for("alertmanager.ingress.enabled")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "alertmanager.ingress.enabled",
+        ))
         .expect("guard-only enabled evidence");
     assert!(
         enabled.provider_schema_uses.is_empty(),
         "the enabled path must remain guard-only: {enabled:#?}"
     );
     let class_name = signals
-        .evidence_for("alertmanager.ingress.className")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "alertmanager.ingress.className",
+        ))
         .expect("approximate semver-guarded className evidence");
     assert!(
         class_name.provider_schema_uses.is_empty(),
         "the opaque semver branch must abstain from provider typing while preserving the path: {class_name:#?}"
     );
     let annotations = signals
-        .evidence_for("alertmanager.ingress.annotations")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "alertmanager.ingress.annotations",
+        ))
         .expect("conditional child evidence");
     assert!(
         !annotations.conditional_overlays.is_empty(),

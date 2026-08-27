@@ -79,7 +79,7 @@ pub(crate) struct FragmentSummary {
     pub(crate) root_set_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
     /// Strictly string-consumed paths whose consumers ran before the
     /// body's values-root wrapper rewrite (see the interpreter field).
-    pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
+    pub(crate) pre_rewrite_strict_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// The value projection (see module docs), computed once.
     pub(crate) value: Option<AbstractValue>,
     /// Truthiness of a typed value serialized as this helper's JSON output.

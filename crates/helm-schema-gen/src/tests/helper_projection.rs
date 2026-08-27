@@ -46,9 +46,12 @@ fn helper_range_break_scopes_later_provider_candidates() {
             pod: {}
     "};
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
-    let security_contexts = signals
-        .schema_evidence_by_value_path()
-        .get("worker.securityContexts");
+    let security_contexts =
+        signals
+            .schema_evidence_by_value_path()
+            .get(&helm_schema_core::ValuesPath::parse(
+                "worker.securityContexts",
+            ));
     assert!(
         security_contexts.is_some_and(|evidence| {
             evidence.requirement_implications.iter().any(|implication| {

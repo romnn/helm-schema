@@ -318,8 +318,8 @@ impl AnalysisSession {
         let finalized_contract = self.finalized_contract()?;
         let uses = finalized_contract.uses();
         let schema_signals = finalized_contract.schema_signals();
-        let evidence = schema_signals.evidence_for(&normalized_path);
         let normalized_values_path = helm_schema_core::ValuesPath::parse(&normalized_path);
+        let evidence = schema_signals.evidence_for(&normalized_values_path);
 
         let exact_uses = uses
             .iter()
@@ -446,7 +446,7 @@ pub(crate) fn emit_input_channel_diagnostics(
         });
         if base_is_ambiguous || guarded_is_ambiguous {
             diagnostics.push(Diagnostic::InputChannelNumericRangeAmbiguity {
-                value_path: value_path.clone(),
+                value_path: value_path.encode(),
             });
         }
     }

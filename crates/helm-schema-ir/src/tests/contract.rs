@@ -438,19 +438,21 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
     let signals = contract.finalize().into_schema_signals();
     sim_assert_eq!(
         have: signals
-            .evidence_for("subchart.image.tag")
+            .evidence_for(&helm_schema_core::ValuesPath::parse("subchart.image.tag"))
             .map(|evidence| &evidence.type_hints),
         want: Some(&["string".to_string()].into_iter().collect())
     );
     sim_assert_eq!(
         have: signals
-            .evidence_for("subchart.image.pullPolicy")
+            .evidence_for(&helm_schema_core::ValuesPath::parse(
+                "subchart.image.pullPolicy",
+            ))
             .map(|evidence| &evidence.type_hints),
         want: Some(&["string".to_string()].into_iter().collect())
     );
     assert!(
         signals
-            .evidence_for("subchart.image")
+            .evidence_for(&helm_schema_core::ValuesPath::parse("subchart.image"))
             .is_some_and(|evidence| evidence.facts.has_referenced_descendants),
         "declared type hints should still mark ancestor object paths as having referenced descendants"
     );
@@ -534,9 +536,9 @@ fn dependency_global_projection_keeps_whole_global_range_modes() {
     sim_assert_eq!(
         have: signals.direct_ranged_value_paths().clone(),
         want: std::collections::BTreeSet::from([
-            "global".to_string(),
-            "metrics.global".to_string(),
-            "metrics.agent.global".to_string(),
+            helm_schema_core::ValuesPath::parse("global"),
+            helm_schema_core::ValuesPath::parse("metrics.global"),
+            helm_schema_core::ValuesPath::parse("metrics.agent.global"),
         ])
     );
 }
@@ -669,7 +671,7 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
 
     let evidence = finalized
         .schema_signals()
-        .evidence_for("image.repository")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("image.repository"))
         .ok_or_eyre("expected scoped string-contract evidence")?;
     sim_assert_eq!(have: evidence.facts.has_string_contract, want: false);
     sim_assert_eq!(have: evidence.type_hints.contains("string"), want: false);
@@ -823,7 +825,7 @@ fn activation_guards_scope_dependency_root_overlay_twins() -> eyre::Result<()> {
 
     let signals = contract.finalize().into_schema_signals();
     let evidence = signals
-        .evidence_for("child.profile.name")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("child.profile.name"))
         .ok_or_eyre("expected activated root-overlay twin")?;
     sim_assert_eq!(
         have: evidence.requirement_implications.clone(),
@@ -877,7 +879,7 @@ fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<(
     let finalized = contract.finalize();
     let evidence = finalized
         .schema_signals()
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .ok_or_eyre("expected selected string evidence")?;
     sim_assert_eq!(have: evidence.facts.has_string_contract, want: false);
     sim_assert_eq!(have: evidence.type_hints.contains("string"), want: false);
@@ -915,7 +917,7 @@ fn scoped_string_requirement_suppresses_only_the_matching_provider_route() {
 
     let evidence = contract.finalize().into_schema_signals();
     let provider_paths = evidence
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .into_iter()
         .flat_map(|evidence| {
             evidence
@@ -961,7 +963,9 @@ fn scoped_string_requirement_matches_a_logically_implied_disjunction() {
     );
 
     let signals = contract.finalize().into_schema_signals();
-    let evidence = signals.evidence_for(path).expect("config.name evidence");
+    let evidence = signals
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
+        .expect("config.name evidence");
     assert!(
         evidence.provider_schema_uses.is_empty(),
         "the selected disjunction arm proves that the scoped string consumer owns this provider route: {evidence:#?}"
@@ -1005,7 +1009,7 @@ fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
 
     let evidence = contract.finalize().into_schema_signals();
     let provider_paths = evidence
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .into_iter()
         .flat_map(|evidence| evidence.provider_schema_uses.iter())
         .map(|provider_use| provider_use.path.clone())
@@ -1182,14 +1186,16 @@ fn propagated_wildcard_string_requirement_needs_its_range_scope() {
     let finalized = contract.finalize();
     let signals = finalized.schema_signals();
     assert!(
-        signals.evidence_for("workers").is_none_or(|evidence| {
-            evidence.requirement_implications.iter().all(|implication| {
-                !matches!(
-                    implication.target,
-                    helm_schema_core::ContractRequirementTarget::Members { .. }
-                )
-            })
-        }),
+        signals
+            .evidence_for(&helm_schema_core::ValuesPath::parse("workers"))
+            .is_none_or(|evidence| {
+                evidence.requirement_implications.iter().all(|implication| {
+                    !matches!(
+                        implication.target,
+                        helm_schema_core::ContractRequirementTarget::Members { .. }
+                    )
+                })
+            }),
         "a helper-propagated wildcard identity must not classify every member without its range: {signals:#?}"
     );
 }
@@ -1215,7 +1221,7 @@ fn ranged_wildcard_string_requirement_keeps_its_member_contract() -> eyre::Resul
     let finalized = contract.finalize();
     let evidence = finalized
         .schema_signals()
-        .evidence_for("workers")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("workers"))
         .ok_or_eyre("expected ranged worker evidence")?;
     assert!(
         evidence.requirement_implications.iter().any(|implication| {

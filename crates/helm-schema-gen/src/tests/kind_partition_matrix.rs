@@ -19,7 +19,7 @@ fn contract_builder_emits_typed_kind_branch_evidence() -> eyre::Result<()> {
     "#};
     let signals = schema_signals_for(parse_ir(source));
     let evidence = signals
-        .evidence_for("workload.strategy")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("workload.strategy"))
         .ok_or_eyre("workload strategy evidence missing")?;
 
     eyre::ensure!(!evidence.conditional_overlays.is_empty());
@@ -54,7 +54,7 @@ fn contract_builder_retains_literal_control_kind_branches() -> eyre::Result<()> 
     "#};
     let signals = schema_signals_for(parse_ir(source));
     let evidence = signals
-        .evidence_for("local.setting")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("local.setting"))
         .ok_or_eyre("local setting evidence missing")?;
 
     eyre::ensure!(
@@ -438,7 +438,7 @@ fn type_of_dispatch_keeps_serialized_arm_structured() {
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
     assert!(
         signals
-            .evidence_for("affinity")
+            .evidence_for(&helm_schema_core::ValuesPath::parse("affinity"))
             .is_some_and(
                 |evidence| evidence.conditional_overlays.iter().any(|overlay| {
                     overlay.guards.iter().any(|guard| {

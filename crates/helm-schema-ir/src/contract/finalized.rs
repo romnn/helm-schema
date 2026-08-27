@@ -50,7 +50,7 @@ impl FinalizedContract {
         normalized_uses: Vec<ContractUse>,
         observed_facts: &ObservedFacts,
         values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
-        values_program_wrapper_exclusions: BTreeSet<String>,
+        values_program_wrapper_exclusions: BTreeSet<helm_schema_core::ValuesPath>,
         dependency_values_root_fragments: &BTreeSet<String>,
     ) -> Self {
         let mut default_guard_sets = BTreeMap::<_, Vec<Vec<ConditionalGuard>>>::new();
@@ -83,15 +83,15 @@ impl FinalizedContract {
             .map(|((target_path, source_path), guard_sets)| {
                 (
                     activation_guard_disjunction(guard_sets),
-                    target_path.encode(),
-                    source_path.encode(),
+                    target_path,
+                    source_path,
                 )
             })
             .chain(observed_facts.values_root_overlays.iter().map(|fact| {
                 (
                     Vec::new(),
-                    fact.target_path.encode(),
-                    fact.source_path.encode(),
+                    fact.target_path.clone(),
+                    fact.source_path.clone(),
                 )
             }))
             .collect::<Vec<_>>();

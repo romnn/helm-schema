@@ -421,7 +421,7 @@ fn map_entry_range_over_values_path_keeps_object_map_schema() {
     let contract = parse_ir(src);
     let signals = schema_signals_for(&contract);
     let facts = signals
-        .evidence_for("controller.config")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("controller.config"))
         .map(|evidence| evidence.facts)
         .expect("controller.config fact present");
     assert!(

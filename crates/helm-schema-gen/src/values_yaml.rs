@@ -154,15 +154,15 @@ impl ValuesYamlPathInfo {
 #[tracing::instrument(skip_all)]
 pub(crate) fn build_values_yaml_path_info(
     values_yaml_doc: &YamlValue,
-    referenced_value_paths: &BTreeSet<String>,
-    pruned_parent_value_paths: &BTreeSet<String>,
-    unconditionally_omitted_value_paths: &BTreeSet<String>,
-    direct_ranged_value_paths: &BTreeSet<String>,
-) -> BTreeMap<String, ValuesYamlPathInfo> {
+    referenced_value_paths: &BTreeSet<ValuesPath>,
+    pruned_parent_value_paths: &BTreeSet<ValuesPath>,
+    unconditionally_omitted_value_paths: &BTreeSet<ValuesPath>,
+    direct_ranged_value_paths: &BTreeSet<ValuesPath>,
+) -> BTreeMap<ValuesPath, ValuesYamlPathInfo> {
     referenced_value_paths
         .iter()
         .filter_map(|path| {
-            let segments = crate::split_value_path(path);
+            let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
             lookup_values_yaml_path_info(values_yaml_doc, &segments)
                 .map(|mut path_info| {
                     if pruned_parent_value_paths.contains(path) {
@@ -330,13 +330,13 @@ fn lookup_values_yaml_values<'a>(
 
 fn prune_referenced_descendant_schemas(
     schema: &mut Value,
-    value_path: &str,
-    referenced_value_paths: &BTreeSet<String>,
+    value_path: &ValuesPath,
+    referenced_value_paths: &BTreeSet<ValuesPath>,
 ) {
-    let value_path_segments = crate::split_value_path(value_path);
+    let value_path_segments = value_path.segments().collect::<Vec<_>>();
     let mut relative_paths_to_prune = BTreeSet::new();
     for descendant in referenced_value_paths {
-        let descendant_segments = crate::split_value_path(descendant);
+        let descendant_segments = descendant.segments().collect::<Vec<_>>();
         let Some(relative_segments) =
             descendant_segments.strip_prefix(value_path_segments.as_slice())
         else {
@@ -362,21 +362,25 @@ fn prune_referenced_descendant_schemas(
 }
 
 fn shortest_referenced_relative_path(
-    value_path: &str,
-    relative_segments: &[String],
-    referenced_value_paths: &BTreeSet<String>,
+    value_path: &ValuesPath,
+    relative_segments: &[&str],
+    referenced_value_paths: &BTreeSet<ValuesPath>,
 ) -> Vec<String> {
     let mut prefix = Vec::new();
     for segment in relative_segments {
-        prefix.push(segment.clone());
-        let mut candidate_segments = crate::split_value_path(value_path);
-        candidate_segments.extend(prefix.iter().cloned());
-        let candidate_path = helm_schema_core::join_value_path(candidate_segments);
+        prefix.push((*segment).to_owned());
+        let mut candidate_path = value_path.clone();
+        for segment in &prefix {
+            candidate_path.push(segment.clone());
+        }
         if referenced_value_paths.contains(&candidate_path) {
             return prefix;
         }
     }
-    relative_segments.to_vec()
+    relative_segments
+        .iter()
+        .map(|segment| (*segment).to_owned())
+        .collect()
 }
 
 fn prune_schema_at_relative_path(schema: &mut Value, relative_segments: &[&str]) {

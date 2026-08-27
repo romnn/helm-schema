@@ -475,11 +475,10 @@ pub struct ConditionalOverlayEvidence {
 }
 
 impl ConditionalOverlayEvidence {
-    /// Materializes this branch-local evidence as evidence for `value_path`.
+    /// Materializes this branch-local evidence as path-local evidence.
     #[must_use]
-    pub fn as_path_evidence(&self, value_path: &str) -> ContractPathSchemaEvidence {
+    pub fn as_path_evidence(&self) -> ContractPathSchemaEvidence {
         ContractPathSchemaEvidence {
-            value_path: value_path.to_string(),
             is_referenced_value_path: true,
             facts: self.facts,
             guard_predicates: Vec::new(),
@@ -536,8 +535,6 @@ pub enum MetadataFieldKind {
 /// several parallel maps.
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractPathSchemaEvidence {
-    /// Canonical dot-separated values path described by this evidence.
-    pub value_path: String,
     /// Whether template analysis directly referenced this path.
     pub is_referenced_value_path: bool,
     /// Aggregate behavioral facts observed for the path.
@@ -922,18 +919,18 @@ impl ContractPathSchemaEvidence {
 /// re-reading raw contract claims.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractSchemaSignals {
-    schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
-    referenced_value_paths: BTreeSet<String>,
-    pruned_parent_value_paths: BTreeSet<String>,
-    unconditionally_omitted_value_paths: BTreeSet<String>,
-    direct_ranged_value_paths: BTreeSet<String>,
+    schema_evidence_by_value_path: BTreeMap<crate::ValuesPath, ContractPathSchemaEvidence>,
+    referenced_value_paths: BTreeSet<crate::ValuesPath>,
+    pruned_parent_value_paths: BTreeSet<crate::ValuesPath>,
+    unconditionally_omitted_value_paths: BTreeSet<crate::ValuesPath>,
+    direct_ranged_value_paths: BTreeSet<crate::ValuesPath>,
     values_default_sources: BTreeSet<ValuesDefaultSource>,
     guarded_values_default_sources: BTreeSet<GuardedValuesDefaultSource>,
     values_program_wrappers: BTreeSet<ValuesProgramWrapper>,
     /// Values paths whose nodes must not gain a wrapper alternative: a
     /// strict string consumer reads them before the engine's values-root
     /// rewrite, so a wrapper map there aborts rendering.
-    values_program_wrapper_exclusions: BTreeSet<String>,
+    values_program_wrapper_exclusions: BTreeSet<crate::ValuesPath>,
     /// Terminating validator formulas: rendering aborts whenever ALL guards
     /// of one clause hold, so no valid values document may satisfy them
     /// (`fail`/`required` under fully lowerable conditions). An empty clause
@@ -945,10 +942,10 @@ impl ContractSchemaSignals {
     /// Builds a stable signal set from path evidence and terminal clauses.
     #[must_use]
     pub fn new(
-        schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
+        schema_evidence_by_value_path: BTreeMap<crate::ValuesPath, ContractPathSchemaEvidence>,
         terminal_clauses: Vec<Vec<ConditionalGuard>>,
     ) -> Self {
-        let referenced_value_paths: BTreeSet<String> = schema_evidence_by_value_path
+        let referenced_value_paths: BTreeSet<crate::ValuesPath> = schema_evidence_by_value_path
             .iter()
             .filter(|(_, evidence)| evidence.is_referenced_value_path)
             .map(|(path, _)| path.clone())
@@ -989,9 +986,9 @@ impl ContractSchemaSignals {
                 omitted_members
                     .into_iter()
                     .map(|member| {
-                        let mut segments = crate::split_value_path(path);
-                        segments.push(member);
-                        crate::join_value_path(segments)
+                        let mut member_path = path.clone();
+                        member_path.push(member);
+                        member_path
                     })
                     .filter(|member_path| referenced_value_paths.contains(member_path))
                     .collect()
@@ -1061,7 +1058,7 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn with_root_overlay_requirement_implications(
         self,
-        prefixes: impl IntoIterator<Item = String>,
+        prefixes: impl IntoIterator<Item = crate::ValuesPath>,
     ) -> Self {
         self.with_guarded_root_overlay_requirement_implications(
             prefixes
@@ -1074,12 +1071,12 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn with_guarded_root_overlay_requirement_implications(
         self,
-        overlays: impl IntoIterator<Item = (Vec<ConditionalGuard>, String)>,
+        overlays: impl IntoIterator<Item = (Vec<ConditionalGuard>, crate::ValuesPath)>,
     ) -> Self {
         self.with_scoped_guarded_root_overlay_requirement_implications(
             overlays
                 .into_iter()
-                .map(|(guards, source_path)| (guards, String::new(), source_path)),
+                .map(|(guards, source_path)| (guards, crate::ValuesPath::default(), source_path)),
         )
     }
 
@@ -1087,7 +1084,9 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn with_scoped_guarded_root_overlay_requirement_implications(
         mut self,
-        overlays: impl IntoIterator<Item = (Vec<ConditionalGuard>, String, String)>,
+        overlays: impl IntoIterator<
+            Item = (Vec<ConditionalGuard>, crate::ValuesPath, crate::ValuesPath),
+        >,
     ) -> Self {
         for (activation_guards, target_path, source_path) in overlays {
             self.project_root_overlay_requirements(&target_path, &source_path, &activation_guards);
@@ -1097,23 +1096,22 @@ impl ContractSchemaSignals {
 
     fn project_root_overlay_requirements(
         &mut self,
-        target_path: &str,
-        source_path: &str,
+        target_path: &crate::ValuesPath,
+        source_path: &crate::ValuesPath,
         activation_guards: &[ConditionalGuard],
     ) {
-        if source_path.trim().is_empty() {
+        if source_path.segments().next().is_none() {
             return;
         }
-        let twins: Vec<(String, Vec<ContractRequirementImplication>)> = self
+        let twins: Vec<(crate::ValuesPath, Vec<ContractRequirementImplication>)> = self
             .schema_evidence_by_value_path
             .iter()
             .filter(|(path, evidence)| {
                 !evidence.requirement_implications.is_empty()
-                    && (path.as_str() == target_path
-                        || crate::values_path_is_descendant(path, target_path))
-                    && path.as_str() != source_path
-                    && !crate::values_path_is_descendant(path, source_path)
-                    && !crate::values_path_is_descendant(source_path, path)
+                    && (*path == target_path || path.is_descendant_of(target_path))
+                    && *path != source_path
+                    && !path.is_descendant_of(source_path)
+                    && !source_path.is_descendant_of(path)
             })
             .map(|(path, evidence)| {
                 let implications = evidence
@@ -1125,17 +1123,17 @@ impl ContractSchemaSignals {
                             .outer_guards
                             .into_iter()
                             .map(|guard| {
-                                guard.map_value_paths(&mut |guard_path: &str| {
-                                    if guard_path == path
-                                        || crate::values_path_is_descendant(guard_path, path)
-                                    {
+                                guard.map_value_paths(&mut |guard_path| {
+                                    let guard_path = crate::ValuesPath::parse(guard_path);
+                                    if &guard_path == path || guard_path.is_descendant_of(path) {
                                         overlay_source_value_path(
                                             target_path,
                                             source_path,
-                                            guard_path,
+                                            &guard_path,
                                         )
+                                        .encode()
                                     } else {
-                                        guard_path.to_string()
+                                        guard_path.encode()
                                     }
                                 })
                             })
@@ -1155,11 +1153,8 @@ impl ContractSchemaSignals {
         for (twin_path, implications) in twins {
             let entry = self
                 .schema_evidence_by_value_path
-                .entry(twin_path.clone())
-                .or_insert_with(|| ContractPathSchemaEvidence {
-                    value_path: twin_path,
-                    ..ContractPathSchemaEvidence::default()
-                });
+                .entry(twin_path)
+                .or_default();
             for implication in implications {
                 if !entry.requirement_implications.contains(&implication) {
                     entry.requirement_implications.push(implication);
@@ -1189,7 +1184,7 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn with_values_program_wrapper_exclusions(
         mut self,
-        paths: impl IntoIterator<Item = String>,
+        paths: impl IntoIterator<Item = crate::ValuesPath>,
     ) -> Self {
         self.values_program_wrapper_exclusions.extend(paths);
         self
@@ -1197,7 +1192,7 @@ impl ContractSchemaSignals {
 
     /// Values paths whose nodes must not gain a wrapper alternative.
     #[must_use]
-    pub fn values_program_wrapper_exclusions(&self) -> &BTreeSet<String> {
+    pub fn values_program_wrapper_exclusions(&self) -> &BTreeSet<crate::ValuesPath> {
         &self.values_program_wrapper_exclusions
     }
 
@@ -1205,7 +1200,7 @@ impl ContractSchemaSignals {
     /// wider than any declared shape, so ancestor subtree schemas must not
     /// shadow their own resolutions.
     #[must_use]
-    pub fn direct_ranged_value_paths(&self) -> &BTreeSet<String> {
+    pub fn direct_ranged_value_paths(&self) -> &BTreeSet<crate::ValuesPath> {
         &self.direct_ranged_value_paths
     }
 
@@ -1218,45 +1213,52 @@ impl ContractSchemaSignals {
 
     /// Returns schema-lowering evidence indexed by canonical values path.
     #[must_use]
-    pub fn schema_evidence_by_value_path(&self) -> &BTreeMap<String, ContractPathSchemaEvidence> {
+    pub fn schema_evidence_by_value_path(
+        &self,
+    ) -> &BTreeMap<crate::ValuesPath, ContractPathSchemaEvidence> {
         &self.schema_evidence_by_value_path
     }
 
     /// Values paths the contract directly referenced, in stable order.
     #[must_use]
-    pub fn referenced_value_paths(&self) -> &BTreeSet<String> {
+    pub fn referenced_value_paths(&self) -> &BTreeSet<crate::ValuesPath> {
         &self.referenced_value_paths
     }
 
     /// Non-fragment parent paths whose referenced descendants own their own
     /// schema evidence, so parent-level defaults must not restate them.
     #[must_use]
-    pub fn pruned_parent_value_paths(&self) -> &BTreeSet<String> {
+    pub fn pruned_parent_value_paths(&self) -> &BTreeSet<crate::ValuesPath> {
         &self.pruned_parent_value_paths
     }
 
     /// Referenced members removed before every provider sink of their parent.
     #[must_use]
-    pub fn unconditionally_omitted_value_paths(&self) -> &BTreeSet<String> {
+    pub fn unconditionally_omitted_value_paths(&self) -> &BTreeSet<crate::ValuesPath> {
         &self.unconditionally_omitted_value_paths
     }
 
     /// Returns schema evidence for one canonical values path.
     #[must_use]
-    pub fn evidence_for(&self, value_path: &str) -> Option<&ContractPathSchemaEvidence> {
+    pub fn evidence_for(
+        &self,
+        value_path: &crate::ValuesPath,
+    ) -> Option<&ContractPathSchemaEvidence> {
         self.schema_evidence_by_value_path.get(value_path)
     }
 }
 
-fn overlay_source_value_path(target_path: &str, source_path: &str, path: &str) -> String {
-    let target_segments = crate::split_value_path(target_path);
-    let path_segments = crate::split_value_path(path);
+fn overlay_source_value_path(
+    target_path: &crate::ValuesPath,
+    source_path: &crate::ValuesPath,
+    path: &crate::ValuesPath,
+) -> crate::ValuesPath {
+    let target_segments = target_path.segments().collect::<Vec<_>>();
+    let path_segments = path.segments().collect::<Vec<_>>();
     let suffix = path_segments
         .strip_prefix(target_segments.as_slice())
         .unwrap_or(path_segments.as_slice());
-    let mut segments = crate::split_value_path(source_path);
-    segments.extend(suffix.iter().cloned());
-    crate::join_value_path(segments)
+    crate::ValuesPath::from_segments(source_path.segments().chain(suffix.iter().copied()))
 }
 
 /// Universally quantified fact whose empty-set identity is `true`.

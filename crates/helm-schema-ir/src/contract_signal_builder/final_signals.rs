@@ -158,8 +158,9 @@ pub(super) fn finish_schema_signals(
             let has_item_descendants = paths_with_item_descendants.contains(&value_path);
             let has_structured_item_descendants =
                 paths_with_structured_item_descendants.contains(&value_path);
+            let value_path = helm_schema_core::ValuesPath::parse(&value_path);
             let evidence = acc.into_schema_evidence(
-                value_path.clone(),
+                &value_path,
                 has_descendants,
                 has_item_descendants,
                 has_structured_item_descendants,
@@ -255,7 +256,7 @@ impl ContractPathAccumulator {
     )]
     pub(super) fn into_schema_evidence(
         self,
-        value_path: String,
+        value_path: &helm_schema_core::ValuesPath,
         has_referenced_descendants: bool,
         has_item_descendants: bool,
         has_structured_item_descendants: bool,
@@ -323,7 +324,7 @@ impl ContractPathAccumulator {
                         if matches!(
                             inner.as_ref(),
                             ConditionalGuard::Absent { path }
-                                if path == &helm_schema_core::ValuesPath::parse(&value_path)
+                                if path == value_path
                         )
                 ) {
                     // A property schema is consulted only while that property
@@ -415,14 +416,12 @@ impl ContractPathAccumulator {
                 let mut branch_hints = branch_hint_pool.clone();
                 for guard in &guards {
                     match guard {
-                        ConditionalGuard::TypeIs { path, schema_type }
-                            if path == &helm_schema_core::ValuesPath::parse(&value_path) =>
-                        {
+                        ConditionalGuard::TypeIs { path, schema_type } if path == value_path => {
                             branch_hints.retain(|hint| hint == schema_type);
                         }
                         ConditionalGuard::Not(inner) => {
                             if let ConditionalGuard::TypeIs { path, schema_type } = inner.as_ref()
-                                && path == &helm_schema_core::ValuesPath::parse(&value_path)
+                                && path == value_path
                             {
                                 branch_hints.retain(|hint| hint != schema_type);
                             }
@@ -461,7 +460,6 @@ impl ContractPathAccumulator {
         let mut guarded_type_hints = guarded_type_hints;
         guarded_type_hints.extend(guarded_fallback_type_hints);
         ContractPathSchemaEvidence {
-            value_path,
             is_referenced_value_path: referenced,
             facts,
             guard_predicates,

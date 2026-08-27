@@ -25,7 +25,7 @@ use crate::schema_model::{
 use crate::schema_node::SchemaNode;
 use crate::schema_node::is_placeholder_fragment_object_schema;
 use crate::values_yaml::ValuesYamlPathFacts;
-use crate::values_yaml::yaml_value_at_path;
+use crate::values_yaml::yaml_value_at_values_path;
 
 /// Strings spelling an implicit YAML NULL token (including the empty
 /// string) in a bare plain-scalar position.
@@ -824,7 +824,7 @@ pub(crate) use scalar_preimage::{
 };
 
 pub(crate) fn conditional_target_schema(
-    target_value_path: &str,
+    target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
     values_yaml_doc: &YamlValue,
     branch_schema: Value,
@@ -862,7 +862,7 @@ pub(crate) fn conditional_target_schema(
 }
 
 fn conditional_target_schema_inner(
-    target_value_path: &str,
+    target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
     values_yaml_doc: &YamlValue,
     branch_schema: Value,
@@ -870,7 +870,7 @@ fn conditional_target_schema_inner(
     resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
-    let declared_default = yaml_value_at_path(values_yaml_doc, target_value_path)
+    let declared_default = yaml_value_at_values_path(values_yaml_doc, target_value_path)
         .and_then(|value| serde_json::to_value(value).ok());
     let self_guard_excludes_declared_default =
         self_guards_exclude_declared_default(target_value_path, overlay, values_yaml_doc);
@@ -896,7 +896,7 @@ fn conditional_target_schema_inner(
                 if matches!(
                     inner.as_ref(),
                     ConditionalGuard::TypeIs { path, .. }
-                        if path == &ValuesPath::parse(target_value_path)
+                        if path == target_value_path
                 )
         )
     });
@@ -993,19 +993,20 @@ fn conditional_target_schema_inner(
 }
 
 fn self_guards_exclude_declared_default(
-    target_value_path: &str,
+    target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
     values_yaml_doc: &YamlValue,
 ) -> bool {
     // A self-type partition that excludes the declared value never applies
     // to that value, even if foreign guards change. Its branch therefore
     // must not be widened back to the sample shape.
+    let encoded_target = target_value_path.encode();
     let self_guards = overlay
         .guards
         .iter()
         .filter(|guard| {
             let paths = guard.value_paths();
-            !paths.is_empty() && paths.iter().all(|path| path == target_value_path)
+            !paths.is_empty() && paths.iter().all(|path| path == &encoded_target)
         })
         .cloned()
         .collect::<Vec<_>>();
@@ -1014,7 +1015,7 @@ fn self_guards_exclude_declared_default(
 }
 
 fn preserve_positive_self_type_domains(
-    target_value_path: &str,
+    target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
     mut branch_schema: Value,
 ) -> Value {
@@ -1023,9 +1024,8 @@ fn preserve_positive_self_type_domains(
     // that contradicts its partition (an object guess for a `kindIs "slice"`
     // arm) merges with the partition instead.
     let mut positive_self_types = std::collections::BTreeSet::new();
-    let target_value_path = ValuesPath::parse(target_value_path);
     for guard in &overlay.guards {
-        collect_positive_self_types(guard, &target_value_path, false, &mut positive_self_types);
+        collect_positive_self_types(guard, target_value_path, false, &mut positive_self_types);
     }
     for schema_type in positive_self_types {
         // A "number" partition over an integer-allowing branch is not a

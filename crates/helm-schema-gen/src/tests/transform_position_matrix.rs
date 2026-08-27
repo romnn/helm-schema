@@ -190,7 +190,7 @@ fn transforms_keep_their_position_specific_facts_and_schemas() -> eyre::Result<(
         let finalized = parse_ir(&case.source()).finalize();
         let evidence = finalized
             .schema_signals()
-            .evidence_for(path)
+            .evidence_for(&helm_schema_core::ValuesPath::parse(path))
             .ok_or_eyre("generated transform case must produce path evidence")?;
 
         match case {

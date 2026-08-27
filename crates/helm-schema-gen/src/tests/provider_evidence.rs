@@ -1394,7 +1394,7 @@ fn guarded_named_port_sink_does_not_widen_unconditional_numeric_sink() -> eyre::
     "#};
     let signals = parse_ir(source).finalize().into_schema_signals();
     let evidence = signals
-        .evidence_for("port")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("port"))
         .ok_or_eyre("port evidence should be present")?;
     assert!(
         !evidence.provider_schema_uses.is_empty()
@@ -2623,7 +2623,7 @@ fn textual_rows_are_not_inherently_falsy_tolerant() -> eyre::Result<()> {
     .finalize()
     .into_schema_signals();
     let evidence = signals
-        .evidence_for("repository")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("repository"))
         .ok_or_eyre("expected textual repository evidence")?;
 
     sim_assert_eq!(
@@ -2781,11 +2781,16 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
     .resolve_all();
     let resolved_metric_relabelings = resolved
         .iter()
-        .find(|path| path.value_path == "serviceMonitor.metricRelabelings")
+        .find(|path| {
+            path.value_path
+                == helm_schema_core::ValuesPath::parse("serviceMonitor.metricRelabelings")
+        })
         .expect("resolved metricRelabelings");
     assert!(
         schema_signals
-            .evidence_for("serviceMonitor.metricRelabelings")
+            .evidence_for(&helm_schema_core::ValuesPath::parse(
+                "serviceMonitor.metricRelabelings",
+            ))
             .is_some_and(|evidence| evidence.provider_schema_uses.is_empty()),
         "metricRelabelings provider evidence should not escape its render guard"
     );
@@ -2796,7 +2801,9 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
         "metricRelabelings should not have an unconditional provider candidate"
     );
     let overlay = schema_signals
-        .evidence_for("serviceMonitor.metricRelabelings")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "serviceMonitor.metricRelabelings",
+        ))
         .and_then(|evidence| evidence.conditional_overlays.first())
         .expect("metricRelabelings conditional overlay");
     assert!(
@@ -2807,10 +2814,11 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
         !overlay.preserve_base_schema,
         "guarded-only metricRelabelings evidence should not preserve a typed base: {overlay:#?}"
     );
+    let metric_relabelings_path =
+        helm_schema_core::ValuesPath::parse("serviceMonitor.metricRelabelings");
     let resolved_overlay = crate::path_resolver::PathSchemaResolver::resolve_single_path_evidence(
-        &overlay
-            .evidence
-            .as_path_evidence("serviceMonitor.metricRelabelings"),
+        &metric_relabelings_path,
+        &overlay.evidence.as_path_evidence(),
         &provider,
     );
     sim_assert_eq!(
@@ -2899,13 +2907,13 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
     .resolve_all();
     let resolved_extra_envs = resolved
         .iter()
-        .find(|path| path.value_path == "extraEnvs")
+        .find(|path| path.value_path == helm_schema_core::ValuesPath::parse("extraEnvs"))
         .expect("resolved extraEnvs");
     assert!(
         resolved_extra_envs.provider_schema_candidate.is_some(),
         "extraEnvs should preserve provider schema candidate: {}; evidence={:#?}",
         resolved_extra_envs.schema,
-        schema_signals.evidence_for("extraEnvs")
+        schema_signals.evidence_for(&helm_schema_core::ValuesPath::parse("extraEnvs"))
     );
     sim_assert_eq!(
         have: resolved_extra_envs
@@ -4320,7 +4328,7 @@ fn branch_selected_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
     for (label, src) in [("branch-selected", branch_selected), ("plain", plain)] {
         let signals = schema_signals_for(parse_ir(src));
         let evidence = signals
-            .evidence_for("resources")
+            .evidence_for(&helm_schema_core::ValuesPath::parse("resources"))
             .ok_or_eyre("resolved `resources` evidence")?;
         let slots: Vec<Vec<String>> = evidence
             .provider_schema_uses
@@ -4418,7 +4426,7 @@ fn bare_splices_escape_to_the_container_their_column_names() -> eyre::Result<()>
         let signals = schema_signals_for(parse_ir_with_helpers(source, helpers));
         let evidence = signals
             .schema_evidence_by_value_path()
-            .get(value_path)
+            .get(&helm_schema_core::ValuesPath::parse(value_path))
             .ok_or_eyre(format!("{label}: no evidence for {value_path}"))?;
         let slots: BTreeSet<Vec<String>> = evidence
             .provider_schema_uses

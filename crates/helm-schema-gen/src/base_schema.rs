@@ -6,7 +6,6 @@ use crate::overlay_lowering::{ConditionalBaseEffect, LoweredConjunct};
 use crate::path_resolver::ResolvedPathSchema;
 use crate::schema_model::is_fixed_object_schema;
 use crate::schema_node::SchemaNode;
-use crate::split_value_path;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum BaseOwner {
@@ -91,9 +90,7 @@ pub(crate) fn classify_base(
         return BaseOwner::UnknownObject;
     }
 
-    let target = conditional_targets
-        .targets
-        .get(resolved_path.value_path.as_str());
+    let target = conditional_targets.targets.get(&resolved_path.value_path);
     if has_preserving_ancestor {
         if let Some(target) = target {
             return if target.preserve_base_schema {
@@ -174,7 +171,7 @@ struct ConditionalTargetSummary {
 
 #[derive(Clone)]
 pub(crate) struct ConditionalTargetIndex {
-    targets: BTreeMap<String, ConditionalTargetSummary>,
+    targets: BTreeMap<helm_schema_core::ValuesPath, ConditionalTargetSummary>,
     /// Targets whose base is wholly owned by guarded overlays. Declared
     /// defaults must not rebuild these paths or anything beneath them.
     pub(crate) guarded_only_paths: BTreeSet<Vec<String>>,
@@ -208,8 +205,10 @@ impl ConditionalTargetIndex {
         }
         let guarded_only_paths = targets
             .iter()
-            .filter(|(path, target)| !path.is_empty() && !target.preserve_base_schema)
-            .map(|(path, _)| split_value_path(path))
+            .filter(|(path, target)| {
+                path.segments().next().is_some() && !target.preserve_base_schema
+            })
+            .map(|(path, _)| path.segments().map(str::to_owned).collect())
             .collect();
         Self {
             targets,

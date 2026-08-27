@@ -21,7 +21,7 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
-use helm_schema_core::ValuesProgramWrapper;
+use helm_schema_core::{ValuesPath, ValuesProgramWrapper};
 use serde_json::{Map, Value, json};
 
 use crate::resolve_policy::{
@@ -43,7 +43,7 @@ enum WrapperEdge {
 pub(crate) fn apply_program_wrapper_alternatives(
     root: &mut Value,
     wrappers: &BTreeSet<ValuesProgramWrapper>,
-    exclusions: &BTreeSet<String>,
+    exclusions: &BTreeSet<ValuesPath>,
 ) {
     if wrappers.is_empty() {
         return;
@@ -68,7 +68,7 @@ pub(crate) fn apply_program_wrapper_alternatives(
     // stable path and keep their alternatives.
     let excluded: BTreeSet<Vec<String>> = exclusions
         .iter()
-        .map(|path| crate::split_value_path(path))
+        .map(|path| path.segments().map(str::to_owned).collect())
         .collect();
     for (scope, keys) in keys_by_scope {
         let keys: Vec<(&str, bool)> = keys.into_iter().collect();

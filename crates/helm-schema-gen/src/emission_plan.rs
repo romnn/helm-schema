@@ -4,6 +4,7 @@ use helm_schema_core::ContractSchemaSignals;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
+use crate::ValuesSchemaInput;
 use crate::base_schema::{ConditionalTargetIndex, classify_base};
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
@@ -23,7 +24,6 @@ use crate::schema_tree::{
     CanonicalConstraintApplication, CanonicalConstraintOutcome, SchemaDocument,
     draft07_root_document,
 };
-use crate::{ValuesSchemaInput, split_value_path};
 
 pub(crate) struct LoweredEmissionPlan {
     contract_schema_signals: ContractSchemaSignals,
@@ -591,15 +591,15 @@ impl EmissionSupportPlan {
             .collect::<BTreeSet<_>>();
         let accepted_values_root_paths = contract_schema_signals
             .schema_evidence_by_value_path()
-            .values()
-            .filter(|evidence| evidence.facts.accepted_values_root_fragment)
-            .map(|evidence| split_value_path(&evidence.value_path))
+            .iter()
+            .filter(|(_, evidence)| evidence.facts.accepted_values_root_fragment)
+            .map(|(path, _)| path.segments().map(str::to_owned).collect())
             .collect::<Vec<_>>();
         let dependency_roots = contract_schema_signals
             .schema_evidence_by_value_path()
-            .values()
-            .filter(|evidence| evidence.facts.accepted_dependency_values_root_fragment)
-            .map(|evidence| split_value_path(&evidence.value_path))
+            .iter()
+            .filter(|(_, evidence)| evidence.facts.accepted_dependency_values_root_fragment)
+            .map(|(path, _)| path.segments().map(str::to_owned).collect())
             .collect::<BTreeSet<_>>();
         // A serialized path's schema is deliberately unconstrained; the
         // declared-default filler keeps the slot without re-typing it,
@@ -612,19 +612,19 @@ impl EmissionSupportPlan {
         }
         for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
             if evidence.facts.used_as_yaml_serialized {
-                default_fill_skip_paths.insert(split_value_path(value_path));
+                default_fill_skip_paths.insert(value_path.segments().map(str::to_owned).collect());
             }
         }
         // A directly ranged path accepts the runtime iterable domain, which
         // is wider than any declared default; the filler must not re-type it.
         for value_path in contract_schema_signals.direct_ranged_value_paths() {
-            default_fill_skip_paths.insert(split_value_path(value_path));
+            default_fill_skip_paths.insert(value_path.segments().map(str::to_owned).collect());
         }
         // A member omitted before every provider sink is governed by its own
         // evidence. Refilling its default would restore the removed parent
         // contract.
         for value_path in contract_schema_signals.unconditionally_omitted_value_paths() {
-            default_fill_skip_paths.insert(split_value_path(value_path));
+            default_fill_skip_paths.insert(value_path.segments().map(str::to_owned).collect());
         }
         let mut support = Self {
             conditional_targets,

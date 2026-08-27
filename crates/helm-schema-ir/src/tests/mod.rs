@@ -167,7 +167,9 @@ fn ranged_tpl_executes_matching_values_default_programs() {
 
     assert!(
         signals
-            .evidence_for("dagProcessor.dagBundleConfigList")
+            .evidence_for(&helm_schema_core::ValuesPath::parse(
+                "dagProcessor.dagBundleConfigList",
+            ))
             .is_some_and(|evidence| evidence
                 .conditional_overlays
                 .iter()
@@ -615,7 +617,7 @@ fn opaque_include_guard_abstains_from_provider_schema_evidence() {
         finalized
             .schema_signals()
             .schema_evidence_by_value_path()
-            .get("payload")
+            .get(&helm_schema_core::ValuesPath::parse("payload"))
             .is_none_or(|evidence| evidence.provider_schema_uses.is_empty()),
         "an approximate resource guard must not leak provider constraints: {finalized:#?}"
     );

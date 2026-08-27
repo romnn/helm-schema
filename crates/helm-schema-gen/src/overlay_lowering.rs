@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
-    ProviderSchemaFragment, ResourceSchemaOracle,
+    ProviderSchemaFragment, ResourceSchemaOracle, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -19,7 +19,7 @@ use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::conditional_target_schema;
 use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
-use crate::values_yaml::yaml_value_at_path;
+use crate::values_yaml::yaml_value_at_values_path;
 use crate::{common_prefix_len, split_value_path};
 
 #[derive(Debug, Clone, Copy)]
@@ -37,7 +37,7 @@ pub(crate) enum ConditionalBaseEffect {
 
 #[derive(Debug, Clone)]
 pub(crate) struct ConjunctCarrier {
-    pub(crate) target_value_path: String,
+    pub(crate) target_value_path: ValuesPath,
     pub(crate) ancestor_segments: Vec<String>,
     pub(crate) relative_target_segments: Vec<String>,
     pub(crate) base_effect: ConditionalBaseEffect,
@@ -68,7 +68,7 @@ impl LoweredConjunct {
     fn schema(
         origin: EmissionOrigin,
         flavor: ConditionalFlavor,
-        target_value_path: String,
+        target_value_path: ValuesPath,
         ancestor_segments: Vec<String>,
         relative_target_segments: Vec<String>,
         guards: Vec<ConditionalGuard>,
@@ -108,7 +108,7 @@ impl LoweredConjunct {
             class,
             origin: EmissionOrigin::RequirementImplication,
             carrier: ConjunctCarrier {
-                target_value_path: String::new(),
+                target_value_path: ValuesPath::default(),
                 ancestor_segments: Vec::new(),
                 relative_target_segments: Vec::new(),
                 base_effect: ConditionalBaseEffect::None,
@@ -206,7 +206,7 @@ pub(crate) fn collect_conditional_schemas(
     }
     let resolved_by_path = resolved_paths
         .iter()
-        .map(|resolved| (resolved.value_path.as_str(), resolved))
+        .map(|resolved| (&resolved.value_path, resolved))
         .collect::<BTreeMap<_, _>>();
     // Member-arm grafting looks up the resolved descendants under `<target>.*`
     // per Members implication; index them by the segments before the first
@@ -226,10 +226,15 @@ pub(crate) fn collect_conditional_schemas(
     }
     let mut conditionals = Vec::new();
 
-    if let Some(root_implications) = synthesized_implications.get("") {
+    let root_path = ValuesPath::default();
+    if let Some(root_implications) = synthesized_implications.get(&root_path) {
         for implication in root_implications {
             if !implication.outer_guards.is_empty()
-                && !implication_guards_supported(&implication.outer_guards, "", &resolved_by_path)
+                && !implication_guards_supported(
+                    &implication.outer_guards,
+                    &root_path,
+                    &resolved_by_path,
+                )
             {
                 continue;
             }
@@ -242,7 +247,7 @@ pub(crate) fn collect_conditional_schemas(
             conditionals.push(LoweredConjunct::schema(
                 EmissionOrigin::Backprojection,
                 ConditionalFlavor::Ordinary,
-                String::new(),
+                root_path.clone(),
                 Vec::new(),
                 Vec::new(),
                 implication.outer_guards.clone(),
@@ -256,7 +261,7 @@ pub(crate) fn collect_conditional_schemas(
     }
 
     for (target_value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
-        let Some(resolved_target) = resolved_by_path.get(target_value_path.as_str()) else {
+        let Some(resolved_target) = resolved_by_path.get(target_value_path) else {
             continue;
         };
         let has_unconditional_self_presence_contract = evidence
@@ -363,11 +368,14 @@ pub(crate) fn collect_conditional_schemas(
                     &implication.target,
                     helm_schema_core::ContractRequirementTarget::Value
                 )
-                && let Some(default) = yaml_value_at_path(values_yaml_doc, target_value_path)
+                && let Some(default) = yaml_value_at_values_path(values_yaml_doc, target_value_path)
             {
                 relax_required_members_supplied_by_default(&mut target_schema, default);
             }
-            let target_segments = split_value_path(target_value_path);
+            let target_segments = target_value_path
+                .segments()
+                .map(str::to_owned)
+                .collect::<Vec<_>>();
             if matches!(
                 &implication.target,
                 helm_schema_core::ContractRequirementTarget::Members { .. }
@@ -472,7 +480,10 @@ pub(crate) fn collect_conditional_schemas(
                 continue;
             }
 
-            let target_segments = split_value_path(target_value_path);
+            let target_segments = target_value_path
+                .segments()
+                .map(str::to_owned)
+                .collect::<Vec<_>>();
             let Some((outer_guards, nested_guard_scopes)) =
                 partition_guard_scopes(&target_segments, &overlay.guards)
             else {

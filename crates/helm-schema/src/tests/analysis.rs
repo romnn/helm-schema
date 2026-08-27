@@ -82,7 +82,9 @@ fn airflow_break_scopes_the_deprecated_security_context_candidate() -> eyre::Res
     )?;
     let signals = contract_schema_signals!(collection);
     let evidence = signals
-        .evidence_for("scheduler.securityContext")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "scheduler.securityContext",
+        ))
         .expect("scheduler.securityContext evidence");
 
     assert!(
@@ -100,7 +102,9 @@ fn airflow_break_scopes_the_deprecated_security_context_candidate() -> eyre::Res
     // abstains entirely (no path-level or overlay provider claims) instead
     // of binding the provider payload somewhere it may never render.
     let workers = signals
-        .evidence_for("workers.securityContext")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "workers.securityContext",
+        ))
         .expect("workers.securityContext evidence");
     assert!(
         workers.provider_schema_uses.is_empty()
@@ -210,7 +214,7 @@ fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact() -> eyre
     let path = "kid.controller.ingressClassResource.parameters";
 
     let ir_fact = contract_schema_signals!(collection)
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing IR-derived fact for {path}"));
     assert!(
@@ -251,7 +255,7 @@ fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped() -> eyre:
     // which hid these implications from this parent-scoped path entirely.)
     let schema_signals = contract_schema_signals!(collection);
     let evidence = schema_signals
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .unwrap_or_else(|| panic!("missing evidence for {path}"));
     let string_implications: Vec<_> =
         evidence
@@ -302,7 +306,7 @@ fn bitnami_redis_existing_secret_string_contract_stays_branch_scoped() -> eyre::
     )?;
     let path = "auth.existingSecret";
     let signals = contract_schema_signals!(collection);
-    let Some(evidence) = signals.evidence_for(path) else {
+    let Some(evidence) = signals.evidence_for(&helm_schema_core::ValuesPath::parse(path)) else {
         return Err(eyre::eyre!("missing evidence for {path}"));
     };
     let string_implications =
@@ -357,7 +361,9 @@ fn selected_string_contract_preserves_only_live_provider_preimages() -> eyre::Re
             None,
         )?;
         let signals = contract_schema_signals!(collection);
-        let Some(evidence) = signals.evidence_for("nameOverride") else {
+        let Some(evidence) =
+            signals.evidence_for(&helm_schema_core::ValuesPath::parse("nameOverride"))
+        else {
             return Err(eyre::eyre!(
                 "missing nameOverride evidence for {chart_name}"
             ));
@@ -416,7 +422,8 @@ fn harbor_defaulted_secret_string_contract_keeps_its_truthy_tooth() -> eyre::Res
         "jobservice.secret",
         "registry.secret",
     ] {
-        let Some(evidence) = signals.evidence_for(path) else {
+        let Some(evidence) = signals.evidence_for(&helm_schema_core::ValuesPath::parse(path))
+        else {
             return Err(eyre::eyre!("missing evidence for {path}"));
         };
         let keeps_truthy_string_tooth =
@@ -463,7 +470,7 @@ fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract() -> 
     // scoped path but must not carry a string input contract.
     assert!(
         contract_schema_signals!(collection)
-            .evidence_for(path)
+            .evidence_for(&helm_schema_core::ValuesPath::parse(path))
             .is_some_and(|evidence| !evidence.type_hints.contains("string")),
         "printf must not bind a string contract on {path}; contract_hints={:?}",
         contract_schema_signals!(collection).schema_evidence_by_value_path(),
@@ -490,7 +497,7 @@ fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> eyre::Res
     )?;
     let path = "image.tag";
     let signals = contract_schema_signals!(collection);
-    let evidence = signals.evidence_for(path);
+    let evidence = signals.evidence_for(&helm_schema_core::ValuesPath::parse(path));
 
     assert!(
         evidence.is_some_and(|evidence| {
@@ -557,7 +564,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> eyre::Re
     );
     let signals = contract_schema_signals!(collection);
     let evidence = signals
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .unwrap_or_else(|| panic!("missing schema evidence for {path}; uses={uses:#?}"));
     assert!(
         evidence.is_referenced_value_path,
@@ -680,7 +687,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
         "expected a create=false branch for {path}; uses={uses:#?}"
     );
     let overlays = contract_schema_signals!(collection)
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .map(|evidence| evidence.conditional_overlays.clone())
         .unwrap_or_default();
     assert!(
@@ -738,7 +745,7 @@ fn traefik_host_users_keeps_provider_sink_under_invalid_kind_guard() -> eyre::Re
     let path = "deployment.hostUsers";
     let signals = contract_schema_signals!(collection);
     let evidence = signals
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .unwrap_or_else(|| panic!("missing schema evidence for {path}"));
 
     assert!(
@@ -772,7 +779,7 @@ fn prometheus_namespace_helper_keeps_join_conversion_boundary() -> eyre::Result<
     let path = "server.namespaces";
     let signals = contract_schema_signals!(collection);
     let evidence = signals
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .unwrap_or_else(|| panic!("missing schema evidence for {path}"));
 
     assert!(
@@ -900,11 +907,11 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability() -
     );
     assert!(
         contract_schema_signals!(collection)
-            .evidence_for(path)
+            .evidence_for(&helm_schema_core::ValuesPath::parse(path))
             .is_some_and(|evidence| evidence.facts.is_nullable),
         "helper-defaulted subchart path should be globally nullable; facts={:#?}; uses={uses:#?}",
         contract_schema_signals!(collection)
-            .evidence_for(path)
+            .evidence_for(&helm_schema_core::ValuesPath::parse(path))
             .map(|evidence| evidence.facts),
     );
 
@@ -939,11 +946,11 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> eyre::Result<()
 
     assert!(
         contract_schema_signals!(collection)
-            .evidence_for(path)
+            .evidence_for(&helm_schema_core::ValuesPath::parse(path))
             .is_some_and(|evidence| evidence.facts.used_as_fragment),
         "fragment-valued securityContext should not be pruned as a scalar parent; facts={:#?}; uses={uses:#?}",
         contract_schema_signals!(collection)
-            .evidence_for(path)
+            .evidence_for(&helm_schema_core::ValuesPath::parse(path))
             .map(|evidence| evidence.facts),
     );
 
@@ -1055,7 +1062,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 
     let schema_signals = contract_schema_signals!(collection);
     let evidence = schema_signals
-        .evidence_for("app.nameOverride")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("app.nameOverride"))
         .unwrap_or_else(|| {
             panic!("missing schema evidence for app.nameOverride; uses={name_override_uses:#?}")
         });
@@ -1093,7 +1100,7 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence() -> eyre
         .collect::<Vec<_>>();
     let schema_signals = contract_schema_signals!(collection);
     let facts = schema_signals
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .map(|evidence| evidence.facts)
         .unwrap_or_else(|| panic!("missing facts for {path}; uses={uses:#?}"));
 
@@ -1125,7 +1132,7 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment() -> e
     let path = "webhook";
     let signals = contract_schema_signals!(collection);
     let evidence = signals
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .unwrap_or_else(|| panic!("missing values-root evidence for {path}"));
 
     assert!(
@@ -1165,7 +1172,7 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment() -> e
     let session = crate::AnalysisSession::new(opts);
     let session_signals = session.contract_schema_signals()?;
     let session_evidence = session_signals
-        .evidence_for(path)
+        .evidence_for(&helm_schema_core::ValuesPath::parse(path))
         .unwrap_or_else(|| panic!("missing session schema evidence for {path}"));
     assert!(
         session_evidence.is_referenced_value_path
@@ -1524,16 +1531,21 @@ fn activated_rewrite_schema() -> eyre::Result<serde_json::Value> {
         },
     });
     let signals = session.contract_schema_signals()?;
-    let profile_name = signals.evidence_for("child.profile.name").ok_or_else(|| {
-        eyre::eyre!(
-            "expected activated root-overlay name evidence; paths={:?}",
-            signals
-                .schema_evidence_by_value_path()
-                .keys()
-                .filter(|path| path.contains("name") || path.contains("profile"))
-                .collect::<Vec<_>>()
-        )
-    })?;
+    let profile_name = signals
+        .evidence_for(&helm_schema_core::ValuesPath::parse("child.profile.name"))
+        .ok_or_else(|| {
+            eyre::eyre!(
+                "expected activated root-overlay name evidence; paths={:?}",
+                signals
+                    .schema_evidence_by_value_path()
+                    .keys()
+                    .filter(|path| {
+                        let encoded = path.encode();
+                        encoded.contains("name") || encoded.contains("profile")
+                    })
+                    .collect::<Vec<_>>()
+            )
+        })?;
     assert!(
         profile_name
             .requirement_implications

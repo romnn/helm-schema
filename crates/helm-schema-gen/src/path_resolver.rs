@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use helm_schema_core::{
     ConditionalGuard, ProviderSchemaFragment, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle,
-    YamlPath,
+    ValuesPath, YamlPath,
 };
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
@@ -21,7 +21,7 @@ use crate::values_yaml::{ValuesYamlPathFacts, ValuesYamlPathInfo, build_values_y
 
 #[derive(Clone)]
 pub(crate) struct ResolvedPathSchema {
-    pub(crate) value_path: String,
+    pub(crate) value_path: ValuesPath,
     pub(crate) path_segments: Vec<String>,
     pub(crate) schema: Value,
     /// Runtime evidence resolved without the chart's declared default shape.
@@ -85,9 +85,9 @@ impl From<&ProviderSchemaUse> for ProviderSchemaLookupKey {
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
-    schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
-    values_yaml_info: BTreeMap<String, ValuesYamlPathInfo>,
-    dependency_default_paths: BTreeSet<String>,
+    schema_evidence_by_value_path: &'a BTreeMap<ValuesPath, ContractPathSchemaEvidence>,
+    values_yaml_info: BTreeMap<ValuesPath, ValuesYamlPathInfo>,
+    dependency_default_paths: BTreeSet<ValuesPath>,
     provider: &'a dyn ResourceSchemaOracle,
     provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<ProviderSchemaCandidate>>>,
 }
@@ -113,7 +113,7 @@ impl<'a> PathSchemaResolver<'a> {
                 .referenced_value_paths()
                 .iter()
                 .filter(|path| {
-                    crate::values_yaml::yaml_value_at_path(dependency_values_yaml_doc, path)
+                    crate::values_yaml::yaml_value_at_values_path(dependency_values_yaml_doc, path)
                         .is_some()
                 })
                 .cloned()
@@ -126,13 +126,13 @@ impl<'a> PathSchemaResolver<'a> {
     /// Resolve overlay/branch evidence in isolation, without a values.yaml
     /// document or a shared cache.
     pub(crate) fn resolve_single_path_evidence(
+        value_path: &ValuesPath,
         evidence: &ContractPathSchemaEvidence,
         provider: &dyn ResourceSchemaOracle,
     ) -> ResolvedPathSchema {
-        let path_segments = crate::split_value_path(&evidence.value_path);
         resolve_path_evidence(
+            value_path,
             evidence,
-            path_segments,
             None,
             false,
             provider,
@@ -156,14 +156,14 @@ impl<'a> PathSchemaResolver<'a> {
             .collect()
     }
 
-    fn resolve_path(&mut self, value_path: &str) -> Option<ResolvedPathSchema> {
+    fn resolve_path(&mut self, value_path: &ValuesPath) -> Option<ResolvedPathSchema> {
         let evidence = self
             .schema_evidence_by_value_path
             .get(value_path)
             .cloned()?;
         Some(resolve_path_evidence(
+            value_path,
             &evidence,
-            crate::split_value_path(value_path),
             self.values_yaml_info.get(value_path),
             self.dependency_default_paths.contains(value_path),
             self.provider,
@@ -173,8 +173,8 @@ impl<'a> PathSchemaResolver<'a> {
 }
 
 fn resolve_path_evidence(
+    value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
-    path_segments: Vec<String>,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
     has_dependency_default: bool,
     provider: &dyn ResourceSchemaOracle,
@@ -183,20 +183,27 @@ fn resolve_path_evidence(
         Option<Arc<ProviderSchemaCandidate>>,
     >,
 ) -> ResolvedPathSchema {
-    let value_path = evidence.value_path.clone();
+    let path_segments = value_path.segments().map(str::to_owned).collect();
     let used_as_serialized = evidence.facts.used_as_serialized;
     let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
     let accepted_dependency_values_root_fragment =
         evidence.facts.accepted_dependency_values_root_fragment;
     let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
+        value_path,
         evidence,
         values_yaml_info,
         has_dependency_default,
         provider,
         provider_schema_cache,
     );
-    let (structural_policy_inputs, _) =
-        build_path_schema_inputs(evidence, None, false, provider, provider_schema_cache);
+    let (structural_policy_inputs, _) = build_path_schema_inputs(
+        value_path,
+        evidence,
+        None,
+        false,
+        provider,
+        provider_schema_cache,
+    );
     let structural_schema = ResolvePolicy::resolve_schema_for_value_path(structural_policy_inputs);
     let mut schema = ResolvePolicy::resolve_schema_for_value_path(policy_inputs);
     if let Some(values_yaml_info) = values_yaml_info {
@@ -211,7 +218,7 @@ fn resolve_path_evidence(
         provider_schema_candidate.filter(|provider_schema| provider_schema.survives_as(&schema));
 
     ResolvedPathSchema {
-        value_path,
+        value_path: value_path.clone(),
         path_segments,
         schema,
         structural_schema,
@@ -266,6 +273,7 @@ fn provider_schemas_for_path_evidence(
 }
 
 fn build_path_schema_inputs(
+    value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
     has_dependency_default: bool,
@@ -297,7 +305,7 @@ fn build_path_schema_inputs(
             provider_schema,
             values_yaml_schema,
             guard_predicate_schema: guard_predicate_schema(
-                &evidence.value_path,
+                &value_path.encode(),
                 &evidence.guard_predicates,
             ),
             type_hint_schema: type_hint_schema(&evidence.type_hints),

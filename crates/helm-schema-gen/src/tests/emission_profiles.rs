@@ -171,7 +171,7 @@ fn member_projection_reports_ambiguous_descendant_insertion() {
     use crate::path_resolver::ResolvedPathSchema;
 
     let root = ResolvedPathSchema {
-        value_path: "items.*".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("items.*"),
         path_segments: vec!["items".to_string(), "*".to_string()],
         schema: serde_json::json!({}),
         structural_schema: serde_json::json!({
@@ -195,7 +195,7 @@ fn member_projection_reports_ambiguous_descendant_insertion() {
         accepted_dependency_values_root_fragment: false,
     };
     let descendant = ResolvedPathSchema {
-        value_path: "items.*.member".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("items.*.member"),
         path_segments: vec!["items".to_string(), "*".to_string(), "member".to_string()],
         schema: serde_json::json!({ "type": "string" }),
         structural_schema: serde_json::json!({ "type": "string" }),

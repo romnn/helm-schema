@@ -82,7 +82,7 @@ pub(crate) struct EvaluatedDocument {
     /// Strictly string-consumed paths whose consumers execute BEFORE the
     /// values-root wrapper rewrite: their nodes must not gain the wrapper
     /// alternative (see the interpreter field of the same name).
-    pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
+    pub(crate) pre_rewrite_strict_paths: BTreeSet<helm_schema_core::ValuesPath>,
 }
 
 /// One pathless `.Values` read with the guards active at the read site.
@@ -691,7 +691,7 @@ pub(super) struct Interpreter<'a> {
     /// substitutes the tplYaml result), so those nodes must not gain the
     /// wrapper alternative. Tolerant pre-rewrite reads (`default`
     /// selections that only copy the value) stay wrapper-eligible.
-    pub(super) pre_rewrite_strict_paths: BTreeSet<String>,
+    pub(super) pre_rewrite_strict_paths: BTreeSet<helm_schema_core::ValuesPath>,
     pub(super) active_predicates: Vec<Predicate>,
     /// Loop nesting depth of the evaluation point (block and inline range
     /// bodies): first-iteration reasoning is only sound at depth one.
@@ -1379,7 +1379,7 @@ impl<'a> Interpreter<'a> {
     /// pre-rewrite wrapper-exclusion snapshot reads this — conditional
     /// captures count because engines guard their whole body with an
     /// idempotence flag exactly as conditional as the rewrite itself.
-    pub(super) fn strict_string_capture_paths(&self) -> BTreeSet<String> {
+    pub(super) fn strict_string_capture_paths(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
         let mut paths = BTreeSet::new();
         for capture in &self.observed_facts.captures {
             match &capture.kind {
@@ -1398,7 +1398,7 @@ impl<'a> Interpreter<'a> {
         paths.retain(|path| {
             path.segments().next().is_some() && !path.segments().any(|segment| segment == "*")
         });
-        paths.into_iter().map(|path| path.encode()).collect()
+        paths
     }
 
     pub(super) fn absorb_scoped_captures<'capture>(

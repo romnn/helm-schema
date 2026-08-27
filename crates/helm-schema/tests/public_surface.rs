@@ -334,7 +334,9 @@ fn analysis_session_exposes_contract_and_generated_schema() -> eyre::Result<()> 
     );
     let signals = session.contract_schema_signals()?;
     assert!(
-        signals.evidence_for("replicas").is_some(),
+        signals
+            .evidence_for(&helm_schema_core::ValuesPath::parse("replicas"))
+            .is_some(),
         "session schema-signal query should expose path-local evidence"
     );
     let generated = session.generated_schema()?;

@@ -1,7 +1,7 @@
 use super::{
     BTreeSet, ConditionalBaseEffect, ConditionalFlavor, ConditionalGuard, ConditionalPathOverlay,
     ContractSchemaSignals, EmissionOrigin, LoweredConjunct, ProviderSchemaFragment,
-    ResolvedPathSchema, ResourceSchemaOracle, SchemaNode, Value, YamlValue, split_value_path,
+    ResolvedPathSchema, ResourceSchemaOracle, SchemaNode, Value, YamlValue,
 };
 
 pub(crate) fn member_descendant_projection(
@@ -222,7 +222,7 @@ pub(super) fn append_omitted_member_arms(
                 ));
             }
         }
-        let target_segments = split_value_path(value_path);
+        let target_segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
         for (member, guards, member_schema) in arms {
             let Ok(member_schema) = serde_json::from_str::<Value>(&member_schema) else {
                 continue;
@@ -275,7 +275,7 @@ pub(super) fn append_merge_shadow_arms(
                     .iter()
                     .find_map(|key| payload.get(*key).and_then(Value::as_object))
             });
-            let target_segments = split_value_path(value_path);
+            let target_segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
             // The whole payload types this layer exactly where no earlier
             // layer can shadow it: the preferred layer's keys always win
             // (its guard is its own truthiness alone), and a shadowed layer
@@ -313,13 +313,13 @@ pub(super) fn append_merge_shadow_arms(
                 }
                 let own_guard = match merge.own_transform() {
                     helm_schema_core::MergeLayerTransform::ParsedMap => ConditionalGuard::TypeIs {
-                        path: helm_schema_core::ValuesPath::parse(value_path),
+                        path: value_path.clone(),
                         schema_type: "object".to_string(),
                     },
                     helm_schema_core::MergeLayerTransform::Identity
                     | helm_schema_core::MergeLayerTransform::NilScrubbed => {
                         ConditionalGuard::Truthy {
-                            path: helm_schema_core::ValuesPath::parse(value_path),
+                            path: value_path.clone(),
                         }
                     }
                 };
@@ -533,7 +533,7 @@ fn dereferenced_payload_subschema(
 }
 
 pub(super) fn is_unconditional_self_presence_overlay(
-    target_value_path: &str,
+    target_value_path: &helm_schema_core::ValuesPath,
     overlay: &ConditionalPathOverlay,
 ) -> bool {
     matches!(
@@ -542,7 +542,7 @@ pub(super) fn is_unconditional_self_presence_overlay(
             if matches!(
                 inner.as_ref(),
                 ConditionalGuard::Absent { path }
-                    if path == &helm_schema_core::ValuesPath::parse(target_value_path)
+                    if path == target_value_path
             )
     )
 }
@@ -576,13 +576,13 @@ pub(super) fn member_implication_covers_range_domain(
 
 pub(super) fn implication_has_self_truthy_guard(
     implication: &helm_schema_core::ContractRequirementImplication,
-    target_value_path: &str,
+    target_value_path: &helm_schema_core::ValuesPath,
 ) -> bool {
     implication.outer_guards.iter().any(|guard| {
         matches!(
             guard,
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path }
-                if path == &helm_schema_core::ValuesPath::parse(target_value_path)
+                if path == target_value_path
         )
     })
 }
@@ -593,18 +593,18 @@ pub(super) fn implication_has_self_truthy_guard(
 /// base must keep its independent resolution.
 pub(super) fn implication_has_self_presence_guard(
     implication: &helm_schema_core::ContractRequirementImplication,
-    target_value_path: &str,
+    target_value_path: &helm_schema_core::ValuesPath,
 ) -> bool {
     implication.outer_guards.iter().any(|guard| match guard {
         ConditionalGuard::Not(inner) => matches!(
             inner.as_ref(),
             ConditionalGuard::Absent { path }
-                if path == &helm_schema_core::ValuesPath::parse(target_value_path)
+                if path == target_value_path
         ),
         ConditionalGuard::HasKey { path, key } => {
             let mut guarded_path = path.clone();
             guarded_path.push(key.clone());
-            guarded_path == helm_schema_core::ValuesPath::parse(target_value_path)
+            &guarded_path == target_value_path
         }
         _ => false,
     })

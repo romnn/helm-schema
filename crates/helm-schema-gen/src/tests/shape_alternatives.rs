@@ -323,7 +323,7 @@ fn helper_destructured_range_keeps_declared_map_open() {
     "#};
     let ir = parse_ir_with_helpers(src, helpers);
     let facts = schema_signals_for(&ir)
-        .evidence_for("redis.config")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("redis.config"))
         .expect("bound helper range evidence")
         .facts;
     assert!(

@@ -68,7 +68,12 @@ pub(crate) fn extract_provider_definitions(
         let Some(provider_schema_candidate) = conditional.provider_candidate.as_ref() else {
             continue;
         };
-        let target_segments = crate::split_value_path(&conditional.carrier.target_value_path);
+        let target_segments = conditional
+            .carrier
+            .target_value_path
+            .segments()
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
         if description_paths.has_description_at_or_below(&target_segments) {
             continue;
         }
@@ -489,7 +494,12 @@ impl ProviderSchemaDefinitionEntries {
             let Some(provider_schema_candidate) = conditional.provider_candidate.as_ref() else {
                 continue;
             };
-            let target_segments = crate::split_value_path(&conditional.carrier.target_value_path);
+            let target_segments = conditional
+                .carrier
+                .target_value_path
+                .segments()
+                .map(str::to_owned)
+                .collect::<Vec<_>>();
             if description_paths.has_description_at_or_below(&target_segments) {
                 continue;
             }

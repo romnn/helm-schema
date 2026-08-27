@@ -9,12 +9,12 @@ use helm_schema_core::ValuesPath;
 use crate::values_yaml::yaml_value_at_values_path;
 
 pub(super) fn resolve_overlay_target_schema(
-    target_value_path: &str,
+    target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
     provider: &dyn ResourceSchemaOracle,
 ) -> ResolvedPathSchema {
-    let evidence = overlay.evidence.as_path_evidence(target_value_path);
-    PathSchemaResolver::resolve_single_path_evidence(&evidence, provider)
+    let evidence = overlay.evidence.as_path_evidence();
+    PathSchemaResolver::resolve_single_path_evidence(target_value_path, &evidence, provider)
 }
 
 pub(super) fn partition_guard_scopes(
@@ -102,7 +102,7 @@ pub(super) fn conditional_ancestor_segments(
 
 pub(super) fn guards_supported_for_conditional_lowering(
     guards: &[ConditionalGuard],
-    resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
+    resolved_by_path: &BTreeMap<&ValuesPath, &ResolvedPathSchema>,
     values_yaml_doc: &YamlValue,
 ) -> bool {
     guards_supported_with_self_path(guards, None, resolved_by_path, values_yaml_doc)
@@ -121,8 +121,8 @@ pub(super) fn guards_supported_for_conditional_lowering(
 ///   fabricated guard path merely leaves the arm inactive.
 pub(super) fn implication_guards_supported(
     guards: &[ConditionalGuard],
-    target_value_path: &str,
-    resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
+    target_value_path: &ValuesPath,
+    resolved_by_path: &BTreeMap<&ValuesPath, &ResolvedPathSchema>,
 ) -> bool {
     !guards.is_empty()
         && guards.iter().all(|guard| match guard {
@@ -133,10 +133,9 @@ pub(super) fn implication_guards_supported(
             // any-of, which is how a root-scoped `with` cost nats the
             // member-host typing of the five hosts it navigates.
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
-                let encoded = path.encode();
                 path.segments().next().is_none()
-                    || path == &ValuesPath::parse(target_value_path)
-                    || resolved_by_path.contains_key(encoded.as_str())
+                    || path == target_value_path
+                    || resolved_by_path.contains_key(path)
             }
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
@@ -164,8 +163,8 @@ pub(super) fn implication_guards_supported(
 
 fn guards_supported_with_self_path(
     guards: &[ConditionalGuard],
-    self_path: Option<&str>,
-    resolved_by_path: &BTreeMap<&str, &ResolvedPathSchema>,
+    self_path: Option<&ValuesPath>,
+    resolved_by_path: &BTreeMap<&ValuesPath, &ResolvedPathSchema>,
     values_yaml_doc: &YamlValue,
 ) -> bool {
     !guards.is_empty()
@@ -176,10 +175,9 @@ fn guards_supported_with_self_path(
             // guard path here is structural evidence even when values.yaml
             // does not declare the finite member (literal-dict range keys).
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
-                let encoded = path.encode();
-                self_path.is_some_and(|self_path| path == &ValuesPath::parse(self_path))
+                self_path.is_some_and(|self_path| path == self_path)
                     || yaml_value_at_values_path(values_yaml_doc, path).is_some()
-                    || resolved_by_path.contains_key(encoded.as_str())
+                    || resolved_by_path.contains_key(path)
             }
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }

@@ -25,7 +25,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use helm_schema_core::{
     ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
-    FailValueRequirement, ProviderSchemaUse, ResourceSchemaOracle, ValueKind,
+    FailValueRequirement, ProviderSchemaUse, ResourceSchemaOracle, ValueKind, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -39,12 +39,13 @@ pub(crate) fn synthesized_required_source_implications(
     values_yaml_doc: &YamlValue,
     subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
+) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
+        BTreeMap::new();
     let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
-        let segments = crate::split_value_path(value_path);
+        let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
         let Some((leaf_segment, parent_segments)) = segments.split_last() else {
             continue;
         };
@@ -70,7 +71,7 @@ pub(crate) fn synthesized_required_source_implications(
         {
             push_implication(
                 &mut implications,
-                helm_schema_core::join_value_path(parent_segments.iter().cloned()),
+                ValuesPath::from_segments(parent_segments.iter().cloned()),
                 ContractRequirementImplication {
                     outer_guards: Vec::new(),
                     target: ContractRequirementTarget::Value,
@@ -109,7 +110,7 @@ pub(crate) fn synthesized_required_source_implications(
             if overlay
                 .guards
                 .iter()
-                .any(|guard| guard.value_paths().contains(value_path))
+                .any(|guard| guard.value_paths().contains(&value_path.encode()))
             {
                 continue;
             }
@@ -137,7 +138,7 @@ pub(crate) fn synthesized_required_source_implications(
             }
             push_implication(
                 &mut implications,
-                helm_schema_core::join_value_path(parent_segments.iter().cloned()),
+                ValuesPath::from_segments(parent_segments.iter().cloned()),
                 ContractRequirementImplication {
                     outer_guards: overlay.guards.clone(),
                     target: ContractRequirementTarget::Value,
@@ -179,12 +180,13 @@ pub(crate) fn synthesized_ranged_member_required_implications(
     contract_schema_signals: &ContractSchemaSignals,
     subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
+) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
+        BTreeMap::new();
     let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
-        let segments = crate::split_value_path(value_path);
+        let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
         let Some(star) = segments.iter().position(|segment| segment == "*") else {
             continue;
         };
@@ -200,9 +202,9 @@ pub(crate) fn synthesized_ranged_member_required_implications(
         {
             continue;
         }
-        let collection_path =
-            helm_schema_core::join_value_path(collection_segments.iter().cloned());
-        let member_scope = helm_schema_core::append_value_path(&collection_path, "*");
+        let collection_path = ValuesPath::from_segments(collection_segments.iter().cloned());
+        let mut member_scope = collection_path.clone();
+        member_scope.push("*");
 
         let base_uses = std::iter::once((
             &[] as &[helm_schema_core::ConditionalGuard],
@@ -258,7 +260,6 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     continue;
                 }
                 let member_field = |path: &helm_schema_core::ValuesPath| {
-                    let member_scope = helm_schema_core::ValuesPath::parse(&member_scope);
                     if path != &member_scope && !path.is_descendant_of(&member_scope) {
                         return None;
                     }
@@ -290,7 +291,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                         _ => undecodable = true,
                     },
                     helm_schema_core::ConditionalGuard::Truthy { path }
-                        if path == &helm_schema_core::ValuesPath::parse(&member_scope) =>
+                        if path == &member_scope =>
                     {
                         escapes.push(vec![FailValueRequirement::HelmFalsy]);
                     }
@@ -349,13 +350,16 @@ pub(crate) fn synthesized_ranged_member_required_implications(
     implications
 }
 
-fn source_has_non_null_default(values_yaml_doc: &YamlValue, value_path: &str) -> bool {
-    crate::values_yaml::yaml_value_at_path(values_yaml_doc, value_path)
+fn source_has_non_null_default(values_yaml_doc: &YamlValue, value_path: &ValuesPath) -> bool {
+    crate::values_yaml::yaml_value_at_values_path(values_yaml_doc, value_path)
         .is_some_and(|value| !value.is_null())
 }
 
-fn source_has_dependency_default(subchart_defaults_doc: &YamlValue, value_path: &str) -> bool {
-    crate::values_yaml::yaml_value_at_path(subchart_defaults_doc, value_path).is_some()
+fn source_has_dependency_default(
+    subchart_defaults_doc: &YamlValue,
+    value_path: &ValuesPath,
+) -> bool {
+    crate::values_yaml::yaml_value_at_values_path(subchart_defaults_doc, value_path).is_some()
 }
 
 fn dependency_defaulted_member_keys(
@@ -401,8 +405,9 @@ fn provider_use_rejects_null(
 pub(crate) fn synthesized_split_segment_implications(
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
+) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
+        BTreeMap::new();
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         for use_ in &evidence.provider_schema_uses {
             let Some(segment) = &use_.split_segment else {
@@ -421,7 +426,7 @@ pub(crate) fn synthesized_split_segment_implications(
                 value_path.clone(),
                 ContractRequirementImplication {
                     outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                        path: helm_schema_core::ValuesPath::parse(value_path),
+                        path: value_path.clone(),
                     }],
                     target: ContractRequirementTarget::Value,
                     requirements: vec![FailValueRequirement::MatchesPattern {
@@ -444,8 +449,9 @@ pub(crate) fn synthesized_split_segment_implications(
 pub(crate) fn synthesized_range_key_implications(
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
-) -> BTreeMap<String, Vec<ContractRequirementImplication>> {
-    let mut implications: BTreeMap<String, Vec<ContractRequirementImplication>> = BTreeMap::new();
+) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
+    let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
+        BTreeMap::new();
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let overlay_uses = evidence.conditional_overlays.iter().flat_map(|overlay| {
             overlay
@@ -507,8 +513,8 @@ pub(crate) fn synthesized_range_key_implications(
 }
 
 fn push_implication(
-    implications: &mut BTreeMap<String, Vec<ContractRequirementImplication>>,
-    target_value_path: String,
+    implications: &mut BTreeMap<ValuesPath, Vec<ContractRequirementImplication>>,
+    target_value_path: ValuesPath,
     implication: ContractRequirementImplication,
 ) {
     let entries = implications.entry(target_value_path).or_default();

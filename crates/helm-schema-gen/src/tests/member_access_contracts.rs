@@ -1933,7 +1933,6 @@ fn helper_member_access_keeps_the_callers_outer_guard() {
 #[test]
 fn declared_shape_does_not_own_a_guarded_member_host_base() {
     let image_path = helm_schema_core::ContractPathSchemaEvidence {
-        value_path: "spark.image".to_string(),
         is_referenced_value_path: true,
         facts: ContractValuePathFacts {
             has_referenced_descendants: true,
@@ -1952,14 +1951,19 @@ fn declared_shape_does_not_own_a_guarded_member_host_base() {
         ..helm_schema_core::ContractPathSchemaEvidence::default()
     };
     let enabled_path = helm_schema_core::ContractPathSchemaEvidence {
-        value_path: "spark.enabled".to_string(),
         is_referenced_value_path: true,
         ..helm_schema_core::ContractPathSchemaEvidence::default()
     };
     let signals = ContractSchemaSignals::new(
         BTreeMap::from([
-            ("spark.enabled".to_string(), enabled_path),
-            ("spark.image".to_string(), image_path),
+            (
+                helm_schema_core::ValuesPath::parse("spark.enabled"),
+                enabled_path,
+            ),
+            (
+                helm_schema_core::ValuesPath::parse("spark.image"),
+                image_path,
+            ),
         ]),
         Vec::new(),
     );
@@ -2005,7 +2009,6 @@ fn declared_shape_does_not_own_a_guarded_member_host_base() {
 #[test]
 fn partial_member_host_domain_preserves_the_declared_base() {
     let host_path = helm_schema_core::ContractPathSchemaEvidence {
-        value_path: "host".to_string(),
         is_referenced_value_path: true,
         facts: ContractValuePathFacts {
             has_referenced_descendants: true,
@@ -2038,18 +2041,16 @@ fn partial_member_host_domain_preserves_the_declared_base() {
     let signals = ContractSchemaSignals::new(
         BTreeMap::from([
             (
-                "exact".to_string(),
+                helm_schema_core::ValuesPath::parse("exact"),
                 helm_schema_core::ContractPathSchemaEvidence {
-                    value_path: "exact".to_string(),
                     is_referenced_value_path: true,
                     ..helm_schema_core::ContractPathSchemaEvidence::default()
                 },
             ),
-            ("host".to_string(), host_path),
+            (helm_schema_core::ValuesPath::parse("host"), host_path),
             (
-                "partial".to_string(),
+                helm_schema_core::ValuesPath::parse("partial"),
                 helm_schema_core::ContractPathSchemaEvidence {
-                    value_path: "partial".to_string(),
                     is_referenced_value_path: true,
                     ..helm_schema_core::ContractPathSchemaEvidence::default()
                 },

@@ -426,7 +426,7 @@ fn type_hints_for(source: impl SchemaSignalSource) -> BTreeMap<String, BTreeSet<
             for overlay in &evidence.conditional_overlays {
                 hints.extend(overlay.evidence.type_hints.iter().cloned());
             }
-            (path.clone(), hints)
+            (path.encode(), hints)
         })
         .filter(|(_, hints)| !hints.is_empty())
         .collect()

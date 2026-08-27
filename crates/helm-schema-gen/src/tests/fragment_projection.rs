@@ -65,7 +65,9 @@ fn exact_bound_helper_yaml_body_propagates_paths_from_with_bound_dot_arg() {
     let ir = parse_ir_with_helpers(src, helpers);
     let signals = schema_signals_for(&ir);
     let secret_name = signals
-        .evidence_for("ingress.tls.*.secretName")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "ingress.tls.*.secretName",
+        ))
         .expect("with-bound helper preserves ingress.tls member path");
     assert!(
         secret_name
@@ -1039,7 +1041,9 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
     let ir = parse_ir_with_helpers(src, helpers);
     let signals = schema_signals_for(&ir);
     let secret_name = signals
-        .evidence_for("ingress.tls.*.secretName")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "ingress.tls.*.secretName",
+        ))
         .expect("realistic helper preserves ingress.tls member path");
     assert!(
         secret_name
@@ -1057,7 +1061,9 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
         "ingress.hosts.*.paths.*.servicePort",
     ] {
         assert!(
-            signals.evidence_for(path).is_some(),
+            signals
+                .evidence_for(&helm_schema_core::ValuesPath::parse(path))
+                .is_some(),
             "realistic helper preserves nested input path {path}: {signals:#?}"
         );
     }

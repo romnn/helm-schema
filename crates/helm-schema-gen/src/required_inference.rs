@@ -17,7 +17,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_core::ContractPathSchemaEvidence;
+use helm_schema_core::{ContractPathSchemaEvidence, ValuesPath};
 use serde_json::Value;
 
 /// Mutate `schema` in place to add `required: [...]` arrays at the
@@ -37,12 +37,12 @@ use serde_json::Value;
 /// `if .Values.fullnameOverride }}{{ .Values.fullnameOverride }}{{ else }}...`.
 pub fn apply_required_inference(
     schema: &mut Value,
-    schema_evidence_by_value_path: &BTreeMap<String, ContractPathSchemaEvidence>,
+    schema_evidence_by_value_path: &BTreeMap<ValuesPath, ContractPathSchemaEvidence>,
     explicit_default_value_paths: &BTreeSet<String>,
 ) {
     for (path, evidence) in schema_evidence_by_value_path {
         if !evidence.is_required_inference_candidate()
-            || explicit_default_value_paths.contains(path)
+            || explicit_default_value_paths.contains(&path.encode())
         {
             continue;
         }
@@ -55,8 +55,8 @@ pub fn apply_required_inference(
 /// schema doesn't have a property tree at that path — the schema's
 /// inferred shape may not include every path that drives required-
 /// inference (e.g. when the path is referenced only via a guard).
-fn add_path_to_required(schema: &mut Value, vp: &str) {
-    let parts = crate::split_value_path(vp);
+fn add_path_to_required(schema: &mut Value, vp: &ValuesPath) {
+    let parts = vp.segments().map(str::to_owned).collect::<Vec<_>>();
     let Some((leaf, parents)) = parts.split_last() else {
         return;
     };

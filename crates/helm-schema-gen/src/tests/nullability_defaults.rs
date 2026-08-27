@@ -284,7 +284,7 @@ fn nullable_array_preserved_for_range_only_collection_use() {
         .map(|(path, _)| path.clone())
         .collect::<BTreeSet<_>>();
     assert!(
-        nullable_paths.contains("snapshots"),
+        nullable_paths.contains(&helm_schema_core::ValuesPath::parse("snapshots")),
         "range-only collection should be classified nullable; nullable_paths={nullable_paths:?}; ir={ir:#?}"
     );
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));

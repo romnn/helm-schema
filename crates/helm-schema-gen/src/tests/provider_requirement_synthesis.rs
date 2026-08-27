@@ -6,7 +6,7 @@ use color_eyre::eyre;
 use helm_schema_core::{
     ConditionalGuard, ContractPathSchemaEvidence, ContractRequirementImplication,
     ContractSchemaSignals, ContractValuePathFacts, MergeLayerTransform, MergeLayersUse,
-    ProviderSchemaUse, ResourceRef, ValueKind, YamlPath,
+    ProviderSchemaUse, ResourceRef, ValueKind, ValuesPath, YamlPath,
 };
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
@@ -56,9 +56,8 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
     let member_path = "sets.*.maxReplicaCount";
     let evidence = BTreeMap::from([
         (
-            direct_path.to_string(),
+            ValuesPath::parse(direct_path),
             ContractPathSchemaEvidence {
-                value_path: direct_path.to_string(),
                 is_referenced_value_path: true,
                 facts: ContractValuePathFacts {
                     has_unconditional_render_use: true,
@@ -76,9 +75,8 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
             },
         ),
         (
-            member_path.to_string(),
+            ValuesPath::parse(member_path),
             ContractPathSchemaEvidence {
-                value_path: member_path.to_string(),
                 is_referenced_value_path: true,
                 provider_schema_uses: vec![hpa_merge_layer_use(
                     member_path,
@@ -116,11 +114,11 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
 
     sim_assert_eq!(
         have: direct,
-        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
+        want: BTreeMap::<ValuesPath, Vec<ContractRequirementImplication>>::new()
     );
     sim_assert_eq!(
         have: ranged,
-        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
+        want: BTreeMap::<ValuesPath, Vec<ContractRequirementImplication>>::new()
     );
 
     Ok(())
@@ -136,9 +134,8 @@ fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
     use_.merge_layers = None;
     use_.source_null_tolerant = true;
     let evidence = BTreeMap::from([(
-        value_path.to_string(),
+        ValuesPath::parse(value_path),
         ContractPathSchemaEvidence {
-            value_path: value_path.to_string(),
             is_referenced_value_path: true,
             facts: ContractValuePathFacts {
                 has_unconditional_render_use: true,
@@ -166,7 +163,7 @@ fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
 
     sim_assert_eq!(
         have: implications,
-        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
+        want: BTreeMap::<ValuesPath, Vec<ContractRequirementImplication>>::new()
     );
 
     Ok(())
@@ -181,9 +178,8 @@ fn range_key_provider_presence_does_not_require_collection() -> eyre::Result<()>
     use_.merge_layers = None;
     use_.range_key = true;
     let evidence = BTreeMap::from([(
-        value_path.to_string(),
+        ValuesPath::parse(value_path),
         ContractPathSchemaEvidence {
-            value_path: value_path.to_string(),
             is_referenced_value_path: true,
             facts: ContractValuePathFacts {
                 has_unconditional_render_use: true,
@@ -207,7 +203,7 @@ fn range_key_provider_presence_does_not_require_collection() -> eyre::Result<()>
 
     sim_assert_eq!(
         have: implications,
-        want: BTreeMap::<String, Vec<ContractRequirementImplication>>::new()
+        want: BTreeMap::<ValuesPath, Vec<ContractRequirementImplication>>::new()
     );
 
     Ok(())

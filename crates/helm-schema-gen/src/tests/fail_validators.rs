@@ -833,7 +833,7 @@ fn json_decoded_range_excludes_integer_without_changing_raw_range() {
     let decoded_signals = schema_signals_for(&decoded_ir);
     let decoded_facts = &decoded_signals
         .schema_evidence_by_value_path()
-        .get("extraResources")
+        .get(&helm_schema_core::ValuesPath::parse("extraResources"))
         .expect("decoded range source evidence")
         .facts;
     assert!(
@@ -923,7 +923,7 @@ fn complementary_raw_and_decoded_ranges_keep_branch_local_domains() -> eyre::Res
     let signals = schema_signals_for(&ir);
     let evidence = signals
         .schema_evidence_by_value_path()
-        .get("items")
+        .get(&helm_schema_core::ValuesPath::parse("items"))
         .ok_or_eyre("complementary range evidence")?;
     let domains = evidence
         .conditional_overlays

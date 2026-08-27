@@ -269,7 +269,9 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
 
     let evidence = contract
         .schema_signals()
-        .evidence_for("master.service.ports.redis")
+        .evidence_for(&helm_schema_core::ValuesPath::parse(
+            "master.service.ports.redis",
+        ))
         .cloned();
     sim_assert_eq!(
         have: evidence.and_then(|evidence| {
@@ -1800,7 +1802,7 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
                 .into_schema_signals();
             signals
                 .schema_evidence_by_value_path()
-                .get(path)
+                .get(&helm_schema_core::ValuesPath::parse(path))
                 .and_then(|evidence| {
                     evidence
                         .requirement_implications

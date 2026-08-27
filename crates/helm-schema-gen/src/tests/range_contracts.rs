@@ -23,7 +23,7 @@ fn nested_range_over_ranged_local_requires_iterable_items() {
     let ir = parse_ir(src);
     let signals = schema_signals_for(&ir);
     let inner_member = signals
-        .evidence_for("existing.*.*")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("existing.*.*"))
         .expect("nested range preserves the inner member identity");
     assert!(
         !inner_member.provider_schema_uses.is_empty()
@@ -973,7 +973,7 @@ fn yaml_serialization_does_not_erase_unconditional_range_domain() {
     "};
     let ir = parse_ir(src);
     let evidence = schema_signals_for(&ir)
-        .evidence_for("config")
+        .evidence_for(&helm_schema_core::ValuesPath::parse("config"))
         .expect("serialized and ranged config evidence")
         .facts;
     assert!(

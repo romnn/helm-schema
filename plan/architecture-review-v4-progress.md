@@ -904,7 +904,7 @@
 
 ## A6 — branch-local range domain owned by IR
 
-- Status: landed; commit pending.
+- Status: landed in `52166b67`.
 - Contract: behavior-bearing. IR publishes one branch-scoped `RangeDomain` on conditional overlay
   evidence from the guarded range facts it already owns. Overlay finalization must not promote
   decoded/destructured modes from sibling branches into that carrier, and gen must render the
@@ -3591,3 +3591,127 @@
 
 - Measured production LOC delta: +36 (64,298 to 64,334), entirely explicit typed construction and
   still-string phase-boundary encoding; no LOC promise governs B4a.
+
+## B4a.7 — migrate contract-schema signal path indexes
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of `ContractSchemaSignals` path-indexed maps and sets to
+  segmented `ValuesPath`, deleting the duplicate `ContractPathSchemaEvidence.value_path` identity.
+  Schema evidence, path order, provider overlays, requiredness, omission, range, diagnostic, and
+  wire behavior remain unchanged.
+- Acceptance baseline: `52166b67` (B4a.6).
+- Baseline production LOC: 64,334 Rust lines from `task tokei:core` on `52166b67`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+    The map key becomes the sole path identity; every consumer receives that key explicitly where
+    it previously read the duplicated evidence field.
+  - Evidence construction, referenced/pruned/omitted/direct-range derivation, root-overlay twin
+    projection, path resolution, emission planning, provider synthesis, and session explanations
+    retain exact identities and legacy encoded-string order.
+  - Part F decision: public `ContractSchemaSignals` accessors and constructor deliberately narrow
+    from string-keyed collections and string lookup to `ValuesPath`. This is the scheduled B4a API
+    migration; no wire-format field changes.
+  - No coercion trait, cross-type comparison, parallel encoded key, or cached string identity is
+    allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - `ContractSchemaSignals` now owns one `ValuesPath` identity for every evidence entry and every
+    referenced, pruned-parent, unconditionally-omitted, direct-range, and wrapper-exclusion set.
+    `ContractPathSchemaEvidence.value_path` is deleted; consumers receive the enclosing key.
+  - Direct generator consumers retain the typed identity through `ValuesYamlPathInfo`,
+    `ResolvedPathSchema`, synthesized provider implications, conditional conjunct carriers, and
+    conditional-target indexes. Encoding remains explicit only at diagnostics, test presentation,
+    or still-string neighboring carriers scheduled for later B4a rounds.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `52166b67`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The compiler showed that the pre-rewrite program-wrapper exclusion snapshot was another path
+    set feeding `ContractSchemaSignals`; leaving it string-backed would have reintroduced a
+    parallel identity at finalization. It moved into this round together with its interpreter and
+    helper-summary carriers.
+  - The generator could not consume the typed signal key honestly while `ResolvedPathSchema`,
+    synthesized implication maps, and conditional conjunct/target indexes copied it back to
+    strings. Those directly dependent internal carriers moved in the same compiler-driven round;
+    wrapper scopes/default sources and `ProviderSchemaUse.value_path` remain separate scheduled
+    carrier seams rather than being pulled in opportunistically.
+  - The first whole-workspace lint preflight was rejected because
+    `ContractPathAccumulator::into_schema_evidence` still accepted an owned encoded `String` that
+    it only compared. The seam now borrows the canonical `ValuesPath`; the clean lint rerun passes
+    warning-free. No archive or dump was produced from the rejected state.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Builder evidence aggregation | One typed key identity, same merged evidence | Core/IR suites and IR dump. |
+| Overlay twin and omission derivation | Same structural descendants and member paths | Contract suites and corpus. |
+| Resolver/emission consumers | Same ordered resolutions and schema bytes | Generator suites and schema dump. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 1,049/1,049 core/IR/gen tests pass,
+  covering evidence aggregation, root-overlay projection, values-default pruning, required-source
+  synthesis, conditional lowering, wrapper exclusion, provider resolution, and public queries.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a7-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a7-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 362 seconds.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a7-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a7-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 186.019 seconds and 84 artifacts are written. A recursive byte
+  comparison against the B4a.6 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a7-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a7-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.219 seconds and 18 artifacts are
+  written. A recursive byte comparison against the B4a.6 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a7-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=52166b67
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a7-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a7-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a7-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 69.826 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868
+  disclosed bounded reductions remain unchanged.
+- Public/wire decision: `ContractSchemaSignals::new`, its path-set/map accessors, and
+  `evidence_for` deliberately narrow to `ValuesPath`; the duplicate evidence field is deleted.
+  No serialized contract field changes, so no wire-format version is required.
+
+### Self-adversarial pass
+
+- Whole-tree searches find no string-keyed `ContractSchemaSignals` evidence/set carrier, no
+  `ContractPathSchemaEvidence.value_path`, and no string-backed pre-rewrite wrapper-exclusion set.
+- Manual legacy-order `ValuesPath::Ord` governs every migrated map/set and schema/IR byte equality
+  proves stable iteration. Dotted/backslash literal-key identity remains structural; literal `*`
+  keeps its legacy segment spelling until B4b.
+- Provider use paths, wrapper scope strings, default-source paths, YAML paths, resource names,
+  schema type names, and helper identifiers remain in their separate domains. No coercion trait,
+  cross-type comparison, cached encoding, or parallel signal key was introduced.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free in 5 minutes 11 seconds.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,545.48 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 190.086 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,521.942 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,623.850 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 26.93
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,371 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +37 (64,334 to 64,371), from explicit typed lookups and direct
+  structural segment iteration after deleting the duplicate evidence identity; no LOC promise
+  governs B4a.

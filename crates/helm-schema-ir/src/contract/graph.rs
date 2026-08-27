@@ -24,7 +24,7 @@ pub struct ContractIr {
     /// strict string consumer reads them BEFORE the engine's values-root
     /// rewrite, so a wrapper map there aborts rendering (nats'
     /// `nameOverride` through `fullname | trunc`).
-    values_program_wrapper_exclusions: BTreeSet<String>,
+    values_program_wrapper_exclusions: BTreeSet<helm_schema_core::ValuesPath>,
     dependency_values_root_fragments: BTreeSet<String>,
 }
 
@@ -227,7 +227,7 @@ impl ContractIr {
             .collect();
         *values_program_wrapper_exclusions = std::mem::take(values_program_wrapper_exclusions)
             .into_iter()
-            .map(|path| map(&path))
+            .map(|path| helm_schema_core::ValuesPath::parse(&map(&path.encode())))
             .collect();
     }
 
@@ -272,7 +272,7 @@ impl ContractIr {
 
     pub(crate) fn extend_values_program_wrapper_exclusions(
         &mut self,
-        paths: impl IntoIterator<Item = String>,
+        paths: impl IntoIterator<Item = helm_schema_core::ValuesPath>,
     ) {
         self.values_program_wrapper_exclusions.extend(paths);
     }
