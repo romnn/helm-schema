@@ -1247,7 +1247,7 @@ impl<'a> Interpreter<'a> {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
-                    paths: [splice.values_path.encode()].into_iter().collect(),
+                    paths: [splice.values_path.clone()].into_iter().collect(),
                 },
             };
             self.observed_facts.captures.insert(capture);
@@ -1395,8 +1395,10 @@ impl<'a> Interpreter<'a> {
                 _ => {}
             }
         }
-        paths.retain(|path| !path.trim().is_empty() && !path.contains('*'));
-        paths
+        paths.retain(|path| {
+            path.segments().next().is_some() && !path.segments().any(|segment| segment == "*")
+        });
+        paths.into_iter().map(|path| path.encode()).collect()
     }
 
     pub(super) fn absorb_scoped_captures<'capture>(

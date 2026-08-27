@@ -152,7 +152,7 @@ fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
             conjunction: Vec::new(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::RequiredPresence {
-                path: path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(path),
             },
         },
         crate::eval_effect::FailCapture {
@@ -162,7 +162,7 @@ fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
             })],
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::DigSubject {
-                path: path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(path),
             },
         },
     ]
@@ -182,7 +182,7 @@ fn chain_subject_capture(path: &str) -> crate::eval_effect::FailCapture {
         })],
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::DigSubject {
-            path: path.to_string(),
+            path: helm_schema_core::ValuesPath::parse(path),
         },
     }
 }
@@ -268,7 +268,10 @@ pub(super) fn eval_index(
                             conjunction: Vec::new(),
                             ranged: crate::range_modes::RangeModes::default(),
                             kind: crate::eval_effect::CaptureKind::SplitIndexAccess {
-                                paths: source_paths.clone(),
+                                paths: source_paths
+                                    .iter()
+                                    .map(|path| helm_schema_core::ValuesPath::parse(path))
+                                    .collect(),
                                 separator: separator.clone(),
                                 index,
                                 total_text_preimage: *total_text_preimage,
@@ -284,7 +287,7 @@ pub(super) fn eval_index(
                                 conjunction,
                                 ranged: crate::range_modes::RangeModes::default(),
                                 kind: crate::eval_effect::CaptureKind::IndexAccess {
-                                    path: path.clone(),
+                                    path: helm_schema_core::ValuesPath::parse(&path),
                                     index,
                                 },
                             };

@@ -375,14 +375,14 @@ fn string_requirements_by_ancestor(
         predicates.extend(selection.iter().cloned());
         predicates.sort();
         predicates.dedup();
-        let segments = helm_schema_core::split_value_path(path);
+        let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
         for end in 1..segments.len() {
             requirements
                 .entry(helm_schema_core::join_value_path(
                     segments.get(..end).unwrap_or_default().iter().cloned(),
                 ))
                 .or_default()
-                .insert((path.clone(), predicates.clone()));
+                .insert((path.encode(), predicates.clone()));
         }
     }
     requirements
@@ -635,19 +635,24 @@ fn project_global_fail_captures(
     let Some(dependency_global) = global_sources.last() else {
         return;
     };
-    let dependency_global_segments = helm_schema_core::split_value_path(dependency_global);
+    let dependency_global_path = helm_schema_core::ValuesPath::parse(dependency_global);
     let mut projected = BTreeSet::new();
     for dependency_capture in std::mem::take(captures) {
         let Some(source_path) = dependency_capture.kind.sole_value_path() else {
             projected.insert(dependency_capture);
             continue;
         };
-        let source_segments = helm_schema_core::split_value_path(source_path);
-        let Some(relative) = source_segments.strip_prefix(dependency_global_segments.as_slice())
-        else {
+        if source_path != &dependency_global_path
+            && !source_path.is_descendant_of(&dependency_global_path)
+        {
             projected.insert(dependency_capture);
             continue;
-        };
+        }
+        let relative = source_path
+            .segments()
+            .skip(dependency_global_path.segments().len())
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
         if relative.is_empty() {
             if matches!(
                 dependency_capture.kind,
@@ -674,7 +679,7 @@ fn project_global_fail_captures(
             }
             continue;
         }
-        let Some((selection_relative, key)) = global_selection_path(relative) else {
+        let Some((selection_relative, key)) = global_selection_path(&relative) else {
             projected.insert(dependency_capture);
             continue;
         };

@@ -357,7 +357,7 @@ pub(super) fn at_most_one_member_predicate(predicate: &Predicate) -> bool {
 
 pub(super) fn predicate_is_truthy_disjunction_over(
     predicate: &Predicate,
-    paths: &[String],
+    paths: &[helm_schema_core::ValuesPath],
 ) -> bool {
     let Predicate::Or(alternatives) = predicate else {
         return false;
@@ -370,11 +370,7 @@ pub(super) fn predicate_is_truthy_disjunction_over(
         })
         .collect::<BTreeSet<_>>();
     candidates.len() == alternatives.len()
-        && candidates
-            == paths
-                .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path))
-                .collect::<BTreeSet<_>>()
+        && candidates == paths.iter().cloned().collect::<BTreeSet<_>>()
 }
 
 /// A row rendering the collection's RANGE KEY contributes exactly one fact:

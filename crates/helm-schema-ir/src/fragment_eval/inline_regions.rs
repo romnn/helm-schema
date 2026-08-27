@@ -395,7 +395,7 @@ impl Interpreter<'_> {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeInput {
-                    path: identity.path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&identity.path),
                     destructured,
                     json_decoded: identity.json_decoded,
                 },
@@ -427,6 +427,10 @@ impl Interpreter<'_> {
             return;
         };
         let mut prior_falsy = Vec::new();
+        let typed_chain = chain
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path))
+            .collect::<Vec<_>>();
         for path in &chain {
             let mut tail = prior_falsy.clone();
             tail.push(Predicate::truthy_path(path.clone()));
@@ -434,8 +438,8 @@ impl Interpreter<'_> {
                 conjunction: self.fail_capture_conjunction(tail),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeSelection {
-                    path: path.clone(),
-                    chain: chain.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
+                    chain: typed_chain.clone(),
                     allow_integer: !destructured,
                 },
             };

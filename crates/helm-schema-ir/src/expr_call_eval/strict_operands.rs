@@ -303,7 +303,7 @@ fn record_strict_parser_result(
                 .collect();
         let pattern = crate::helper_meta::pattern_with_lexical_escapes(pattern, &escapes);
         for conjunction in parser_operand_selection_conjunctions(operand, &path) {
-            push_value_pattern_capture(conjunction, path.clone(), pattern.clone(), false, effects);
+            push_value_pattern_capture(conjunction, &path, pattern.clone(), false, effects);
         }
     }
 }
@@ -421,7 +421,7 @@ pub(super) fn record_string_consumer_effects(
                 conjunction: Vec::new(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::StringRequirement {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     route,
                     selection: conjunction.clone(),
                 },
@@ -431,7 +431,9 @@ pub(super) fn record_string_consumer_effects(
                 let capture = crate::eval_effect::FailCapture {
                     conjunction,
                     ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
+                    kind: crate::eval_effect::CaptureKind::AbsenceAborts {
+                        path: helm_schema_core::ValuesPath::parse(path),
+                    },
                 };
                 effects.observed_facts.captures.insert(capture);
             }
@@ -532,7 +534,10 @@ pub(super) fn record_raw_range_key_string_consumer_paths(
             conjunction: Vec::new(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::RangeKeyStrings {
-                paths: raw_paths.clone(),
+                paths: raw_paths
+                    .iter()
+                    .map(|path| helm_schema_core::ValuesPath::parse(path))
+                    .collect(),
             },
         };
         effects.observed_facts.captures.insert(capture);
@@ -581,7 +586,7 @@ pub(super) fn record_strict_kind_result(
             conjunction.extend(shadow.iter().cloned());
             push_value_type_capture(
                 conjunction,
-                path.clone(),
+                &path,
                 schema_type.to_string(),
                 nil_aborts,
                 effects,
@@ -617,8 +622,8 @@ pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut
     if path.segments().len() == 0 {
         return;
     }
-    let path = path.encode();
-    for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+    let encoded_path = path.encode();
+    for conjunction in strict_operand_selection_conjunctions(operand, &encoded_path) {
         let capture = crate::eval_effect::FailCapture {
             conjunction,
             ranged: crate::range_modes::RangeModes::default(),
@@ -651,7 +656,7 @@ pub(super) fn record_comparable_kind_result(
                     conjunction,
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::ComparableKind {
-                        path: path.clone(),
+                        path: helm_schema_core::ValuesPath::parse(path),
                         schema_type: schema_type.to_string(),
                     },
                 };
@@ -667,7 +672,7 @@ pub(super) fn record_comparable_kind_result(
                 conjunction,
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::ComparableKind {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     schema_type: schema_type.to_string(),
                 },
             };
@@ -777,7 +782,7 @@ pub(super) fn record_collection_item_kind_result(
                 conjunction,
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::CollectionItems {
-                    paths: BTreeSet::from([path.clone()]),
+                    paths: BTreeSet::from([helm_schema_core::ValuesPath::parse(&path)]),
                     schema_type: schema_type.to_string(),
                     pattern: pattern.map(str::to_string),
                 },
@@ -790,19 +795,13 @@ pub(super) fn record_collection_item_kind_result(
             if let Some(pattern) = pattern {
                 push_value_pattern_capture(
                     conjunction.clone(),
-                    path.clone(),
+                    &path,
                     pattern.to_string(),
                     false,
                     effects,
                 );
             }
-            push_value_type_capture(
-                conjunction,
-                path.clone(),
-                schema_type.to_string(),
-                false,
-                effects,
-            );
+            push_value_type_capture(conjunction, &path, schema_type.to_string(), false, effects);
         }
     }
 }
@@ -831,7 +830,7 @@ pub(super) fn push_fail_capture(conjunction: Vec<Predicate>, effects: &mut Effec
 
 pub(super) fn push_value_type_capture(
     conjunction: Vec<Predicate>,
-    path: String,
+    path: &str,
     schema_type: String,
     null_aborts: bool,
     effects: &mut Effects,
@@ -840,7 +839,7 @@ pub(super) fn push_value_type_capture(
         conjunction,
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::ValueType {
-            path,
+            path: helm_schema_core::ValuesPath::parse(path),
             schema_type,
             null_aborts,
         },
@@ -850,7 +849,7 @@ pub(super) fn push_value_type_capture(
 
 fn push_value_pattern_capture(
     conjunction: Vec<Predicate>,
-    path: String,
+    path: &str,
     pattern: String,
     templated: bool,
     effects: &mut Effects,
@@ -859,7 +858,7 @@ fn push_value_pattern_capture(
         conjunction,
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::ValuePattern {
-            path,
+            path: helm_schema_core::ValuesPath::parse(path),
             pattern,
             templated,
         },

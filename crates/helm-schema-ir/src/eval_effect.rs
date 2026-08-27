@@ -5,6 +5,7 @@ use crate::fragment_eval::ValueRead;
 use crate::helper_meta::{HelperOutputMeta, RenderedRow};
 use crate::observed_facts::{HintGrade, ObservedFacts};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use helm_schema_core::ValuesPath;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
@@ -161,20 +162,20 @@ pub(crate) enum CaptureKind {
     #[default]
     Fail,
     /// Collections whose range key reaches a strict string consumer.
-    RangeKeyStrings { paths: BTreeSet<String> },
+    RangeKeyStrings { paths: BTreeSet<ValuesPath> },
     /// Every member of the named collection paths reaches a strict runtime
     /// consumer with the given JSON kind; a pattern additionally binds each
     /// member to a parser's lexical domain (genSignedCert's ip list).
     CollectionItems {
-        paths: BTreeSet<String>,
+        paths: BTreeSet<ValuesPath>,
         schema_type: String,
         pattern: Option<String>,
     },
     /// A literal zero-based `index` executes on this source path.
-    IndexAccess { path: String, index: usize },
+    IndexAccess { path: ValuesPath, index: usize },
     /// A literal index executes on a list produced by splitting source text.
     SplitIndexAccess {
-        paths: BTreeSet<String>,
+        paths: BTreeSet<ValuesPath>,
         separator: String,
         index: usize,
         total_text_preimage: bool,
@@ -184,7 +185,7 @@ pub(crate) enum CaptureKind {
     /// strict Go parameter from a selected input whose null arm never reaches
     /// that parameter.
     ValueType {
-        path: String,
+        path: ValuesPath,
         schema_type: String,
         null_aborts: bool,
     },
@@ -192,7 +193,7 @@ pub(crate) enum CaptureKind {
     /// `route` distinguishes direct raw consumption, selected raw
     /// consumption, and consumption after a certified serializer.
     StringRequirement {
-        path: String,
+        path: ValuesPath,
         route: StringRequirementRoute,
         selection: Vec<helm_schema_core::Predicate>,
     },
@@ -201,7 +202,7 @@ pub(crate) enum CaptureKind {
     /// derived iterable. The header establishes that input's iterable
     /// domain independently of whether its body renders any rows.
     RangeInput {
-        path: String,
+        path: ValuesPath,
         destructured: bool,
         json_decoded: bool,
     },
@@ -215,8 +216,8 @@ pub(crate) enum CaptureKind {
     /// prior would otherwise contradict its own marker and the claim could
     /// never fire).
     RangeSelection {
-        path: String,
-        chain: Vec<String>,
+        path: ValuesPath,
+        chain: Vec<ValuesPath>,
         allow_integer: bool,
     },
     /// A `dig` SUBJECT step: whenever the capture's execution predicates
@@ -224,13 +225,13 @@ pub(crate) enum CaptureKind {
     /// type-asserts the dict before any nil handling, so a null aborts
     /// while absence stays open (the conjunction carries the strict
     /// presence guard).
-    DigSubject { path: String },
+    DigSubject { path: ValuesPath },
     /// A `dig` SUBJECT must additionally be PRESENT: the type assertion
     /// runs before any missing-key handling, so an absent subject reads as
     /// nil and aborts exactly like an explicit null (loki's null-deleted
     /// `storage_config`). Lowers to a `HasMember` presence requirement on
     /// the parent path.
-    RequiredPresence { path: String },
+    RequiredPresence { path: ValuesPath },
     /// Rendering ABORTS wherever the capture's execution predicates hold and
     /// this path is absent: a nil-strict string consumer reads it (helm
     /// answers `wrong type for value; expected string; got interface {}`
@@ -238,14 +239,17 @@ pub(crate) enum CaptureKind {
     /// Lowers to a document-level terminal clause, which — unlike a parent
     /// member requirement — reaches a top-level path and carries the
     /// `Absent` guard's ownership semantics.
-    AbsenceAborts { path: String },
+    AbsenceAborts { path: ValuesPath },
     /// A comparison operand must have the named JSON Schema type when
     /// PRESENT and non-null; `eq`/`ne` compare `nil` against anything.
-    ComparableKind { path: String, schema_type: String },
+    ComparableKind {
+        path: ValuesPath,
+        schema_type: String,
+    },
     /// A string path must match the pattern whenever the capture's execution
     /// predicates hold.
     ValuePattern {
-        path: String,
+        path: ValuesPath,
         pattern: String,
         templated: bool,
     },
@@ -253,17 +257,17 @@ pub(crate) enum CaptureKind {
     /// execution predicates hold, every string the path's value contributes
     /// to the rendered token must be valid content for the quoting style.
     QuotedSerialization {
-        path: String,
+        path: ValuesPath,
         style: helm_schema_core::QuotedScalarStyle,
         templated: bool,
     },
     /// A `%s` substitution opens a plain token, so the raw operand must
     /// format as either string text or a structurally safe mapping.
-    PrintfStringOperand { path: String },
+    PrintfStringOperand { path: ValuesPath },
     /// A raw splice inside an UNQUOTED scalar: the path's own text must keep
     /// the plain token intact (`: `, ` #`, and line breaks end it).
     PlainSlotText {
-        path: String,
+        path: ValuesPath,
         token_initial: bool,
         templated: bool,
     },
@@ -271,7 +275,7 @@ pub(crate) enum CaptureKind {
     /// mapping key it becomes (`{{ $key }}:`) or a plain value slot it fills
     /// (`name: {{ $key }}`). The claim binds the collection's KEYS, so it
     /// lowers onto `propertyNames` rather than a member.
-    RangeKeyPlainSlot { paths: BTreeSet<String> },
+    RangeKeyPlainSlot { paths: BTreeSet<ValuesPath> },
     /// A member-access capture (`[outer…, ¬object(P)]` from a field access
     /// through `P`): the signal builder folds these per path into one
     /// bypass-proof arm instead of lowering each as its own implication.
@@ -293,7 +297,7 @@ impl FailCapture {
 }
 
 impl CaptureKind {
-    pub(crate) fn sole_value_path(&self) -> Option<&str> {
+    pub(crate) fn sole_value_path(&self) -> Option<&ValuesPath> {
         match self {
             Self::Fail | Self::MemberAccess { .. } => None,
             Self::RangeKeyStrings { paths }
@@ -335,7 +339,10 @@ impl CaptureKind {
             | Self::RangeKeyPlainSlot { paths }
             | Self::CollectionItems { paths, .. }
             | Self::SplitIndexAccess { paths, .. } => {
-                *paths = paths.iter().map(|path| map(path)).collect();
+                *paths = paths
+                    .iter()
+                    .map(|path| ValuesPath::parse(&map(&path.encode())))
+                    .collect();
             }
             Self::IndexAccess { path, .. }
             | Self::ValueType { path, .. }
@@ -348,20 +355,23 @@ impl CaptureKind {
             | Self::QuotedSerialization { path, .. }
             | Self::PrintfStringOperand { path }
             | Self::PlainSlotText { path, .. } => {
-                *path = map(path);
+                *path = ValuesPath::parse(&map(&path.encode()));
             }
             Self::StringRequirement {
                 path, selection, ..
             } => {
-                *path = map(path);
+                *path = ValuesPath::parse(&map(&path.encode()));
                 *selection = selection
                     .drain(..)
                     .map(|predicate| predicate.map_value_paths(map))
                     .collect();
             }
             Self::RangeSelection { path, chain, .. } => {
-                *path = map(path);
-                *chain = chain.iter().map(|path| map(path)).collect();
+                *path = ValuesPath::parse(&map(&path.encode()));
+                *chain = chain
+                    .iter()
+                    .map(|path| ValuesPath::parse(&map(&path.encode())))
+                    .collect();
             }
         }
     }

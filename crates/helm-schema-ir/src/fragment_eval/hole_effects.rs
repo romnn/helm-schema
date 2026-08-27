@@ -664,7 +664,10 @@ fn non_string_runtime_requirement_paths(
         CaptureKind::RangeKeyStrings { paths }
         | CaptureKind::RangeKeyPlainSlot { paths }
         | CaptureKind::CollectionItems { paths, .. }
-        | CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
+        | CaptureKind::SplitIndexAccess { paths, .. } => paths
+            .iter()
+            .map(helm_schema_core::ValuesPath::encode)
+            .collect(),
         CaptureKind::IndexAccess { path, .. }
         | CaptureKind::ValueType { path, .. }
         | CaptureKind::RangeInput { path, .. }
@@ -675,7 +678,7 @@ fn non_string_runtime_requirement_paths(
         | CaptureKind::QuotedSerialization { path, .. }
         | CaptureKind::PrintfStringOperand { path }
         | CaptureKind::PlainSlotText { path, .. }
-        | CaptureKind::RangeSelection { path, .. } => [path.clone()].into_iter().collect(),
+        | CaptureKind::RangeSelection { path, .. } => [path.encode()].into_iter().collect(),
         CaptureKind::StringRequirement { .. } | CaptureKind::AbsenceAborts { .. } => {
             std::collections::BTreeSet::new()
         }

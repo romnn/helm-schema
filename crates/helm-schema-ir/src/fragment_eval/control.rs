@@ -1055,7 +1055,7 @@ impl Interpreter<'_> {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeInput {
-                    path: identity.path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(&identity.path),
                     destructured,
                     json_decoded: identity.json_decoded,
                 },

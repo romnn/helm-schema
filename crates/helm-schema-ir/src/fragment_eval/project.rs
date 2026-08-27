@@ -318,7 +318,7 @@ fn walk_node(
                                 conjunction,
                                 ranged: crate::range_modes::RangeModes::default(),
                                 kind: crate::eval_effect::CaptureKind::AbsenceAborts {
-                                    path: row.source_expr.clone(),
+                                    path: helm_schema_core::ValuesPath::parse(&row.source_expr),
                                 },
                             }
                         }));

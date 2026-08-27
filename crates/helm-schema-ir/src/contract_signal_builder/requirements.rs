@@ -26,10 +26,14 @@ pub(super) fn record_fail_conjunction(
         crate::eval_effect::CaptureKind::RangeKeyStrings {
             paths: range_key_string_paths,
         } => {
+            let range_key_string_paths = range_key_string_paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode)
+                .collect();
             record_range_key_string_requirements(
                 paths,
                 capture,
-                range_key_string_paths,
+                &range_key_string_paths,
                 range_modes,
             );
             return;
@@ -39,17 +43,21 @@ pub(super) fn record_fail_conjunction(
             schema_type,
             pattern,
         } => {
+            let collection_paths = collection_paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode)
+                .collect();
             record_collection_item_requirements(
                 paths,
                 capture,
-                collection_paths,
+                &collection_paths,
                 schema_type,
                 pattern.as_deref(),
             );
             return;
         }
         crate::eval_effect::CaptureKind::IndexAccess { path, index } => {
-            record_index_access_requirement(paths, capture, path, *index);
+            record_index_access_requirement(paths, capture, &path.encode(), *index);
             return;
         }
         crate::eval_effect::CaptureKind::SplitIndexAccess {
@@ -58,10 +66,14 @@ pub(super) fn record_fail_conjunction(
             index,
             total_text_preimage,
         } => {
+            let source_paths = source_paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode)
+                .collect();
             record_split_index_access_requirement(
                 paths,
                 capture,
-                source_paths,
+                &source_paths,
                 separator,
                 *index,
                 *total_text_preimage,
@@ -76,7 +88,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 capture,
-                path,
+                &path.encode(),
                 if *null_aborts {
                     FailValueRequirement::SchemaTypeEvenNull(schema_type.clone())
                 } else {
@@ -94,12 +106,12 @@ pub(super) fn record_fail_conjunction(
                 crate::eval_effect::StringRequirementRoute::Serialized => return,
                 crate::eval_effect::StringRequirementRoute::Selected => {
                     if let Some(requirement_capture) =
-                        selected_member_requirement_capture(capture, path, selection)
+                        selected_member_requirement_capture(capture, &path.encode(), selection)
                     {
                         record_value_requirement_capture(
                             paths,
                             &requirement_capture,
-                            path,
+                            &path.encode(),
                             FailValueRequirement::SchemaType("string".to_string()),
                         );
                         return;
@@ -117,19 +129,19 @@ pub(super) fn record_fail_conjunction(
             if *route == crate::eval_effect::StringRequirementRoute::Direct
                 && requirement_capture.conjunction.is_empty()
             {
-                record_unconditional_string_requirement_facts(paths, path);
+                record_unconditional_string_requirement_facts(paths, &path.encode());
             } else if string_requirement_has_execution_scope(
                 &requirement_capture,
-                path,
+                &path.encode(),
                 range_modes,
             ) {
                 record_value_requirement_capture(
                     paths,
                     &requirement_capture,
-                    path,
+                    &path.encode(),
                     FailValueRequirement::SchemaType("string".to_string()),
                 );
-                if let Some(collection_path) = member_range_path(path)
+                if let Some(collection_path) = member_range_path(&path.encode())
                     && let collection = helm_schema_core::ValuesPath::parse(&collection_path)
                     && requirement_capture.conjunction.iter().all(|predicate| {
                         matches!(
@@ -142,7 +154,7 @@ pub(super) fn record_fail_conjunction(
                         .mode(&collection_path)
                         .member_identity
                 {
-                    record_unconditional_string_requirement_facts(paths, path);
+                    record_unconditional_string_requirement_facts(paths, &path.encode());
                 }
             }
             return;
@@ -152,7 +164,13 @@ pub(super) fn record_fail_conjunction(
             destructured,
             json_decoded,
         } => {
-            record_range_input_capture(paths, capture, path, *destructured, *json_decoded);
+            record_range_input_capture(
+                paths,
+                capture,
+                &path.encode(),
+                *destructured,
+                *json_decoded,
+            );
             return;
         }
         crate::eval_effect::CaptureKind::RangeSelection {
@@ -171,20 +189,16 @@ pub(super) fn record_fail_conjunction(
                 .iter()
                 .any(|predicate| predicate_is_truthy_disjunction_over(predicate, chain));
             let has_all_markers = chain.iter().all(|candidate| {
-                let candidate = helm_schema_core::ValuesPath::parse(candidate);
                 capture.conjunction.iter().any(|predicate| {
                     matches!(
                         predicate,
                         Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
-                            if path == &candidate
+                            if path == candidate
                     )
                 })
             });
             if has_chain_disjunction && has_all_markers {
-                let mut remaining_markers = chain
-                    .iter()
-                    .map(|path| helm_schema_core::ValuesPath::parse(path))
-                    .collect::<BTreeSet<_>>();
+                let mut remaining_markers = chain.iter().cloned().collect::<BTreeSet<_>>();
                 capture.conjunction.retain(|predicate| {
                     if predicate_is_truthy_disjunction_over(predicate, chain) {
                         return false;
@@ -201,7 +215,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 &capture,
-                path,
+                &path.encode(),
                 FailValueRequirement::Iterable {
                     allow_integer: *allow_integer,
                 },
@@ -212,7 +226,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 capture,
-                path,
+                &path.encode(),
                 FailValueRequirement::SchemaTypeEvenNull("object".to_string()),
             );
             return;
@@ -224,12 +238,12 @@ pub(super) fn record_fail_conjunction(
             // document-level absence clause instead — the same vehicle the
             // navigated-host and nil-strict-operand claims use for their own
             // top-level paths (kube-prometheus-stack's `customRules`).
-            let mut segments = helm_schema_core::split_value_path(path);
+            let mut segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
             let Some(member) = segments.pop() else {
                 return;
             };
             if segments.is_empty() {
-                record_absence_abort_clause(terminal_clauses, capture, path);
+                record_absence_abort_clause(terminal_clauses, capture, &path.encode());
                 return;
             }
             let parent = helm_schema_core::join_value_path(segments);
@@ -248,8 +262,8 @@ pub(super) fn record_fail_conjunction(
             // member (the minio chart's `tpl .accessKey $`). The member itself
             // (a bare `A.*`) keeps no claim: a range only visits members that
             // exist.
-            if path_contains_wildcard(path) {
-                let mut segments = helm_schema_core::split_value_path(path);
+            if path.segments().any(|segment| segment == "*") {
+                let mut segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
                 let Some(member) = segments.pop() else {
                     return;
                 };
@@ -266,7 +280,7 @@ pub(super) fn record_fail_conjunction(
                         predicate,
                         Predicate::Guard(
                             Guard::Truthy { path: guard } | Guard::With { path: guard }
-                        ) if guard == &helm_schema_core::ValuesPath::parse(path)
+                        ) if guard == path
                     )
                 }) {
                     return;
@@ -279,14 +293,14 @@ pub(super) fn record_fail_conjunction(
                 );
                 return;
             }
-            record_absence_abort_clause(terminal_clauses, capture, path);
+            record_absence_abort_clause(terminal_clauses, capture, &path.encode());
             return;
         }
         crate::eval_effect::CaptureKind::ComparableKind { path, schema_type } => {
             record_value_requirement_capture(
                 paths,
                 capture,
-                path,
+                &path.encode(),
                 FailValueRequirement::ComparableKind(schema_type.clone()),
             );
             return;
@@ -299,7 +313,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 capture,
-                path,
+                &path.encode(),
                 FailValueRequirement::MatchesPattern {
                     pattern: pattern.clone(),
                     templated: *templated,
@@ -315,7 +329,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 capture,
-                path,
+                &path.encode(),
                 FailValueRequirement::QuotedSerializationSafe {
                     style: *style,
                     templated: *templated,
@@ -327,7 +341,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 capture,
-                path,
+                &path.encode(),
                 FailValueRequirement::PrintfStringOperand,
             );
             return;
@@ -340,7 +354,7 @@ pub(super) fn record_fail_conjunction(
             record_value_requirement_capture(
                 paths,
                 capture,
-                path,
+                &path.encode(),
                 FailValueRequirement::PlainScalarSafe {
                     token_initial: *token_initial,
                     templated: *templated,
@@ -351,7 +365,16 @@ pub(super) fn record_fail_conjunction(
         crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
             paths: collection_paths,
         } => {
-            record_range_key_plain_slot_requirements(paths, capture, collection_paths, range_modes);
+            let collection_paths = collection_paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode)
+                .collect();
+            record_range_key_plain_slot_requirements(
+                paths,
+                capture,
+                &collection_paths,
+                range_modes,
+            );
             return;
         }
         crate::eval_effect::CaptureKind::MemberAccess { handled_kinds } => {

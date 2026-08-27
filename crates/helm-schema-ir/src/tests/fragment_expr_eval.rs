@@ -194,7 +194,7 @@ fn strict_consumer_does_not_retype_derived_helper_output() {
             .any(|capture| matches!(
                 &capture.kind,
                 CaptureKind::StringRequirement { path, .. }
-                    if path == "operator.securityContext"
+                    if path == &conditional_path("operator.securityContext")
             )),
         "the strict consumer sees the helper's rendered string, not its structured input: {document:#?}"
     );
@@ -220,7 +220,7 @@ fn total_conversion_inside_nested_range_precedes_tpl_contract() {
                 &capture.kind,
                 CaptureKind::StringRequirement { path, .. }
                     | CaptureKind::AbsenceAborts { path }
-                    if path == "config.*.*"
+                    if path == &conditional_path("config.*.*")
             )),
         "tpl consumes the text produced by toString, not the ranged input: {document:#?}"
     );
@@ -1343,7 +1343,7 @@ fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
         .iter()
         .filter_map(|capture| match &capture.kind {
             crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
-                if path == "feature.mode" && schema_type == "string" =>
+                if path == &conditional_path("feature.mode") && schema_type == "string" =>
             {
                 Some(capture.conjunction.clone())
             }
@@ -2052,7 +2052,8 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
                 crate::eval_effect::CaptureKind::ValueType {
                     path, schema_type, ..
                 }
-                    if path == "worker.securityContexts" && schema_type == "object"
+                    if path == &conditional_path("worker.securityContexts")
+                        && schema_type == "object"
             )
         })
         .collect::<Vec<_>>();

@@ -159,7 +159,7 @@ fn string_requirement_routes(
             continue;
         }
         routes
-            .entry(path.clone())
+            .entry(path.encode())
             .or_default()
             .insert((*route, predicates));
     }

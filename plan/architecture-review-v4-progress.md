@@ -3002,7 +3002,7 @@
 
 ## B4a.3c — migrate conditional guard paths
 
-- Status: landed; commit pending.
+- Status: landed in `8d75632f` (`refactor(core): type conditional guard paths`).
 - Contract: representation-only migration of every value-path payload in `ConditionalGuard` to
   segmented `ValuesPath`, including recursive `Not`, `AllOf`, and `AnyOf` trees. Literal patterns,
   mapping keys, member names, schema types, and scalar comparisons remain in their own domains.
@@ -3117,3 +3117,112 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +46 (63,929 to 63,975).
+
+## B4a.4 — migrate capture-kind paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of every values-path payload in IR's internal
+  `CaptureKind` vocabulary to segmented `ValuesPath`, including path sets, ordered range-selection
+  chains, and every singular payload. Schema-type names, patterns, separators, member-kind sets,
+  routing, indexes, and quoting styles remain in their own domains.
+- Acceptance baseline: `8d75632f` (B4a.3c).
+- Baseline production LOC: 63,975 Rust lines from `task tokei:core` on `8d75632f`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, or corpus acceptance changes.
+  - Capture producers, `sole_value_path`, dependency rebasing, requirement lowering, and selection
+    chains retain exact identities and order; encoded strings appear only at still-string map,
+    callback, and diagnostic boundaries.
+  - No coercion trait, comparison shim, parallel field, cached encoding, or unrelated string
+    newtype is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - Every path-bearing `CaptureKind` payload now carries `ValuesPath`: four path-set variants, 13
+    singular-path variants, and both the selected path and ordered candidate chain in
+    `RangeSelection`.
+  - Capture producers publish typed identities directly when they already own `ValuesPath`, or
+    parse once where their still-string carrier has not yet migrated. `sole_value_path` returns the
+    typed identity; dependency projection and exact selection compare segments structurally.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `8d75632f`.
+    The full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first lint preflight was rejected because typing the payload made two helper parameters'
+    owned `String` values unnecessary. Both parameters and their callers were narrowed to `&str`;
+    the clean lint rerun passes warning-free.
+  - Requirement accumulators, several expression-effect channels, and diagnostic/public maps are
+    still string-keyed carriers scheduled later in B4a. `CaptureKind` encodes explicitly when
+    crossing those boundaries; it does not retain a parallel encoded field.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Singular captures | Same target requirement and guard scope | IR capture and gen requirement suites. |
+| Path-set captures | Same stable deduplication and iteration | Collection/range/string consumer suites. |
+| Range-selection chains | Same candidate order and exact selection | Range and fallback-selection suites. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 393/393 IR tests pass, covering
+  strict consumers, capture projection, dependency globals, range selection, requirement lowering,
+  string routes, and fragment positions. Whole-workspace Clippy passes warning-free after the
+  rejected ownership preflight was repaired.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a4-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a4-final1.tar.zst`; exit 0,
+  87 binaries and 125 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a4-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a4-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 179.940 seconds. A recursive byte comparison against the B4a.3c dump
+  exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a4-final1-ir SYMBOLIC_DUMP=1
+  IR_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a4-final1.tar.zst --profile
+  integration -E 'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.100 seconds and 18
+  artifacts are written. A recursive byte comparison against the B4a.3c dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a4-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=8d75632f
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a4-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a4-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a4-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 66.150 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868 disclosed
+  bounded reductions remain unchanged.
+- Public/wire decision: `CaptureKind` is crate-private IR state, so the field narrowing creates no
+  public API or wire-format obligation. No coercion or cross-type comparison implementation was
+  added.
+
+### Self-adversarial pass
+
+- Every path-bearing variant is included in the exhaustive `sole_value_path` and
+  `map_value_paths` matches. The latter retains its string callback only at the dependency
+  namespacing boundary and performs explicit encode/parse there.
+- Schema types, patterns, separators, handled-kind sets, indexes, route tags, quote styles, and
+  Boolean flags remain in their distinct domains. Only values identities are newtyped.
+- Whole-tree construction searches find no `CaptureKind` path populated by encoding an already
+  typed path. Existing string producers parse at their boundary; already-typed abstract and splice
+  identities clone directly.
+- Manual encoded-string `ValuesPath::Ord` preserves path-set and range-selection chain order.
+  Literal `*` remains the B4a compatibility spelling until B4b.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free.
+- `task lint:fc`; exit 0, all configured feature combinations warning-free.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0, including the complete corpus fixture lane.
+- `task test:all`; exit 0, including live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,029 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +54 (63,975 to 64,029).

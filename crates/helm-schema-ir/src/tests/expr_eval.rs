@@ -16,6 +16,10 @@ use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;
 
+fn capture_path(value: &str) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::parse(value)
+}
+
 fn expr(text: &str) -> TemplateExpr {
     let exprs = parse_expr_text(text);
     sim_assert_eq!(have: exprs.len(), want: 1, "expected exactly one parsed expression");
@@ -1069,7 +1073,7 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
         have: captures("eq .Values.input 1"),
         want: BTreeSet::from([(
             crate::eval_effect::CaptureKind::ComparableKind {
-                path: "input".to_string(),
+                path: capture_path("input"),
                 schema_type: "integer".to_string(),
             },
             Vec::new(),
@@ -1079,7 +1083,7 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
         have: captures("eq .Values.input 1.5"),
         want: BTreeSet::from([(
             crate::eval_effect::CaptureKind::ComparableKind {
-                path: "input".to_string(),
+                path: capture_path("input"),
                 schema_type: "number".to_string(),
             },
             Vec::new(),
@@ -1221,7 +1225,7 @@ fn generated_default_chain_keeps_truthy_primary_string_consumption() {
                         path,
                         route: crate::eval_effect::StringRequirementRoute::Selected,
                         selection,
-                    } if path == "secret"
+                    } if path == &capture_path("secret")
                         && selection.contains(&Predicate::truthy_path("secret"))
                 )
             }),
@@ -1247,7 +1251,7 @@ fn lexical_transforms_preserve_selected_string_consumption() {
                 path,
                 route,
                 selection,
-            } if path == "image.tag" => Some((*route, selection.clone())),
+            } if path == &capture_path("image.tag") => Some((*route, selection.clone())),
             _ => None,
         })
         .collect::<BTreeSet<_>>();
@@ -1413,7 +1417,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
         want: BTreeSet::from([
             (
                 crate::eval_effect::CaptureKind::StringRequirement {
-                    path: "primary".to_string(),
+                    path: capture_path("primary"),
                     route: crate::eval_effect::StringRequirementRoute::Selected,
                     selection: vec![Predicate::truthy_path("primary")],
                 },
@@ -1421,7 +1425,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
             ),
             (
                 crate::eval_effect::CaptureKind::StringRequirement {
-                    path: "fallback".to_string(),
+                    path: capture_path("fallback"),
                     route: crate::eval_effect::StringRequirementRoute::Selected,
                     selection: vec![
                         Predicate::truthy_path("fallback"),
@@ -1523,7 +1527,7 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
         want: BTreeSet::from([
             (
                 crate::eval_effect::CaptureKind::StringRequirement {
-                    path: "payload".to_string(),
+                    path: capture_path("payload"),
                     route: crate::eval_effect::StringRequirementRoute::Direct,
                     selection: Vec::new(),
                 },
@@ -1531,7 +1535,7 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
             ),
             (
                 crate::eval_effect::CaptureKind::AbsenceAborts {
-                    path: "payload".to_string(),
+                    path: capture_path("payload"),
                 },
                 BTreeSet::from([Predicate::truthy_path("ready").negated()]),
             ),
@@ -1567,7 +1571,7 @@ fn truth_only_locals_drive_short_circuit_execution() {
         want: BTreeSet::from([
             (
                 crate::eval_effect::CaptureKind::ValueType {
-                    path: "cfg".to_string(),
+                    path: capture_path("cfg"),
                     schema_type: "object".to_string(),
                     null_aborts: true,
                 },
@@ -1575,7 +1579,7 @@ fn truth_only_locals_drive_short_circuit_execution() {
             ),
             (
                 crate::eval_effect::CaptureKind::AbsenceAborts {
-                    path: "cfg".to_string(),
+                    path: capture_path("cfg"),
                 },
                 BTreeSet::new(),
             ),
@@ -1600,12 +1604,12 @@ fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
         have: direct_failures,
         want: BTreeSet::from([
             crate::eval_effect::CaptureKind::ValueType {
-                path: "absent".to_string(),
+                path: capture_path("absent"),
                 schema_type: "object".to_string(),
                 null_aborts: true,
             },
             crate::eval_effect::CaptureKind::AbsenceAborts {
-                path: "absent".to_string(),
+                path: capture_path("absent"),
             },
         ]),
     );
@@ -1623,7 +1627,7 @@ fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
     sim_assert_eq!(
         have: local_failures,
         want: BTreeSet::from([crate::eval_effect::CaptureKind::ValueType {
-            path: "absent".to_string(),
+            path: capture_path("absent"),
             schema_type: "object".to_string(),
             null_aborts: false,
         }]),
@@ -1812,7 +1816,7 @@ fn from_json_without_matching_serialization_only_contracts_the_input_string() {
             .any(|capture| matches!(
                 &capture.kind,
                 crate::eval_effect::CaptureKind::StringRequirement { path, .. }
-                    if path == "payload"
+                    if path == &capture_path("payload")
             )),
         "fromJson must publish its raw string input requirement: {result:#?}"
     );
@@ -2054,7 +2058,7 @@ fn ternary_condition_identity_stays_out_of_output_paths() {
                     &capture.kind,
                     crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
                         | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
-                        if path == "internalTLS.enabled" && schema_type == "boolean"
+                        if path == &capture_path("internalTLS.enabled") && schema_type == "boolean"
                 )),
             "the Boolean operand contract must survive: {action}"
         );
@@ -2097,7 +2101,7 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
                 &capture.kind,
                 crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
                     | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
-                    if path == "diagnosticMode.enabled" && schema_type == "boolean"
+                    if path == &capture_path("diagnosticMode.enabled") && schema_type == "boolean"
             )),
         "the Boolean consumption contract must survive without returned metadata: {result:#?}"
     );
@@ -2116,7 +2120,7 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
                 .any(|capture| matches!(
                     &capture.kind,
                     crate::eval_effect::CaptureKind::StringRequirement { path, .. }
-                        if path == "payload"
+                        if path == &capture_path("payload")
                 )),
         "evaluating the predicate still runs its strict nested consumer: {nested_consumer:#?}"
     );

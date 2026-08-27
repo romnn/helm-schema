@@ -439,7 +439,7 @@ impl Interpreter<'_> {
             conjunction: self.fail_capture_conjunction(condition),
             ranged: self.capture_ranged_modes(),
             kind: crate::eval_effect::CaptureKind::ComparableKind {
-                path: path.to_string(),
+                path: helm_schema_core::ValuesPath::parse(path),
                 schema_type: "object".to_string(),
             },
         };
@@ -486,7 +486,12 @@ impl Interpreter<'_> {
         key_paths.extend(effects.plain_text_range_key_paths.iter().cloned());
         key_paths.retain(reaches_slot);
         if !key_paths.is_empty() {
-            captures.push(crate::eval_effect::CaptureKind::RangeKeyPlainSlot { paths: key_paths });
+            captures.push(crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
+                paths: key_paths
+                    .iter()
+                    .map(|path| helm_schema_core::ValuesPath::parse(path))
+                    .collect(),
+            });
         }
         if let Some(AbstractValue::ValuesPath(path)) = value
             && effects
@@ -495,7 +500,7 @@ impl Interpreter<'_> {
             && reaches_slot(&path.encode())
         {
             captures.push(crate::eval_effect::CaptureKind::PlainSlotText {
-                path: path.encode(),
+                path: path.clone(),
                 token_initial: true,
                 templated: true,
             });
@@ -503,7 +508,7 @@ impl Interpreter<'_> {
         for path in &effects.plain_text_preserving_paths {
             if reaches_slot(path) {
                 captures.push(crate::eval_effect::CaptureKind::PlainSlotText {
-                    path: path.clone(),
+                    path: helm_schema_core::ValuesPath::parse(path),
                     token_initial: true,
                     templated: false,
                 });
@@ -564,8 +569,12 @@ impl Interpreter<'_> {
                 );
             for conjunction in branches {
                 for kind in [
-                    crate::eval_effect::CaptureKind::PrintfStringOperand { path: path.clone() },
-                    crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
+                    crate::eval_effect::CaptureKind::PrintfStringOperand {
+                        path: helm_schema_core::ValuesPath::parse(&path),
+                    },
+                    crate::eval_effect::CaptureKind::AbsenceAborts {
+                        path: helm_schema_core::ValuesPath::parse(&path),
+                    },
                 ] {
                     captures.push(crate::eval_effect::FailCapture {
                         conjunction: conjunction.iter().cloned().collect(),
@@ -1071,7 +1080,7 @@ impl Interpreter<'_> {
                     conjunction: Vec::new(),
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::QuotedSerialization {
-                        path,
+                        path: helm_schema_core::ValuesPath::parse(&path),
                         style,
                         templated,
                     },
@@ -1088,7 +1097,7 @@ impl Interpreter<'_> {
                 conjunction: Vec::new(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::PlainSlotText {
-                    path,
+                    path: helm_schema_core::ValuesPath::parse(&path),
                     // Literal text shares the token, so only its interior
                     // characters can end it; a leading indicator cannot.
                     token_initial: false,
