@@ -1471,7 +1471,7 @@ impl<'a> Interpreter<'a> {
                         self.member_host_conversions
                             .iter()
                             .filter(|conversion| {
-                                conversion.path == target.encode()
+                                conversion.path == *target
                                     && conversion
                                         .outer_predicates
                                         .iter()
@@ -1501,7 +1501,7 @@ impl<'a> Interpreter<'a> {
     pub(super) fn absorb_helper_reads_with_suppression(
         &mut self,
         reads: &[ValueRead],
-        suppressed: &BTreeSet<&String>,
+        suppressed: &BTreeSet<String>,
         sibling_claims: &BTreeSet<String>,
     ) {
         let site_provenance: Vec<ContractProvenance> = self

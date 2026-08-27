@@ -41,7 +41,7 @@ use crate::ValueKind;
 use crate::abstract_value::{AbstractValue, path_is_encoded};
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{ScalarRenderPart, ScalarValueDispatch};
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Opaque,
@@ -86,18 +86,18 @@ pub(crate) fn over_cap_scalar_taint(
 /// helper meta of locals the expression read.
 pub(crate) struct LowerScope<'a> {
     pub(crate) defaulted_paths: &'a BTreeSet<String>,
-    pub(crate) encoded_paths: &'a BTreeSet<String>,
-    pub(crate) derived_text_paths: &'a BTreeSet<String>,
-    pub(crate) merge_operand_paths: &'a BTreeSet<String>,
-    pub(crate) yaml_serialized_paths: &'a BTreeSet<String>,
-    pub(crate) templated_yaml_paths: &'a BTreeSet<String>,
+    pub(crate) encoded_paths: &'a BTreeSet<ValuesPath>,
+    pub(crate) derived_text_paths: &'a BTreeSet<ValuesPath>,
+    pub(crate) merge_operand_paths: &'a BTreeSet<ValuesPath>,
+    pub(crate) yaml_serialized_paths: &'a BTreeSet<ValuesPath>,
+    pub(crate) templated_yaml_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) shape_erased_paths: &'a BTreeSet<String>,
-    pub(crate) stringified_paths: &'a BTreeSet<String>,
-    pub(crate) nil_omitting_paths: &'a BTreeSet<String>,
-    pub(crate) plain_slot_string_format_paths: &'a BTreeSet<String>,
-    pub(crate) json_serialized_paths: &'a BTreeSet<String>,
+    pub(crate) stringified_paths: &'a BTreeSet<ValuesPath>,
+    pub(crate) nil_omitting_paths: &'a BTreeSet<ValuesPath>,
+    pub(crate) plain_slot_string_format_paths: &'a BTreeSet<ValuesPath>,
+    pub(crate) json_serialized_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) chart_value_defaults: &'a BTreeSet<String>,
-    pub(crate) local_source_paths: &'a BTreeSet<String>,
+    pub(crate) local_source_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) local_output_meta: &'a std::collections::BTreeMap<String, HelperOutputMeta>,
 }
 
@@ -108,31 +108,32 @@ impl LowerScope<'_> {
         kind: ValueKind,
         helper_meta: Option<&HelperOutputMeta>,
     ) -> Splice {
+        let values_path = ValuesPath::parse(path);
         let defaulted = helper_meta.is_some_and(|meta| meta.defaulted)
             || self.defaulted_paths.contains(path)
             || self.chart_value_defaults.contains(path);
         Splice {
-            values_path: helm_schema_core::ValuesPath::parse(path),
+            values_path: values_path.clone(),
             kind,
             meta: SpliceMeta {
                 input_identity: helper_meta.is_some_and(HelperOutputMeta::is_input_identity),
                 defaulted,
-                encoded: path_is_encoded(path, self.encoded_paths),
+                encoded: values_path_is_encoded(&values_path, self.encoded_paths),
                 shape_erased: helper_meta.is_some_and(|meta| meta.shape_erased)
                     || path_is_encoded(path, self.shape_erased_paths),
                 stringified: helper_meta.is_some_and(|meta| meta.stringified)
-                    || path_is_encoded(path, self.stringified_paths),
+                    || values_path_is_encoded(&values_path, self.stringified_paths),
                 nil_omitted: helper_meta.is_some_and(|meta| meta.nil_omitted)
-                    || path_is_encoded(path, self.nil_omitting_paths),
+                    || values_path_is_encoded(&values_path, self.nil_omitting_paths),
                 yaml_serialized: helper_meta.is_some_and(|meta| meta.yaml_serialized)
-                    || path_is_encoded(path, self.yaml_serialized_paths),
+                    || values_path_is_encoded(&values_path, self.yaml_serialized_paths),
                 templated_yaml: helper_meta.is_some_and(|meta| meta.templated_yaml)
-                    || path_is_encoded(path, self.templated_yaml_paths),
+                    || values_path_is_encoded(&values_path, self.templated_yaml_paths),
                 plain_slot_string_format: helper_meta
                     .is_some_and(|meta| meta.plain_slot_string_format)
-                    || path_is_encoded(path, self.plain_slot_string_format_paths),
+                    || values_path_is_encoded(&values_path, self.plain_slot_string_format_paths),
                 json_serialized: helper_meta.is_some_and(|meta| meta.json_serialized)
-                    || path_is_encoded(path, self.json_serialized_paths),
+                    || values_path_is_encoded(&values_path, self.json_serialized_paths),
                 json_decoded: helper_meta.is_some_and(|meta| meta.json_decoded),
                 lexical_escapes: helper_meta
                     .map(|meta| meta.lexical_escapes.clone())
@@ -141,7 +142,7 @@ impl LowerScope<'_> {
                 merge_layers: helper_meta.and_then(|meta| meta.merge_layers.clone()),
                 range_key: false,
                 digest: false,
-                merge_operand: self.merge_operand_paths.contains(path),
+                merge_operand: self.merge_operand_paths.contains(&values_path),
                 omitted_members: helper_meta
                     .map(|meta| meta.omitted_keys.clone())
                     .unwrap_or_default(),
@@ -174,6 +175,12 @@ impl LowerScope<'_> {
             _ => vec![(Predicate::True, self.splice(path, kind, meta))],
         }
     }
+}
+
+fn values_path_is_encoded(path: &ValuesPath, encoded_paths: &BTreeSet<ValuesPath>) -> bool {
+    encoded_paths
+        .iter()
+        .any(|encoded| path == encoded || path.is_descendant_of(encoded))
 }
 
 /// The helper meta's predicate branches as arm conditions (one unconditional
@@ -259,9 +266,10 @@ pub(crate) fn lower_value(
             }
         }
         AbstractValue::OutputPath(path, meta) => {
+            let values_path = ValuesPath::parse(path);
             let meta = scope
                 .local_source_paths
-                .contains(path)
+                .contains(&values_path)
                 .then(|| scope.local_output_meta.get(path))
                 .flatten()
                 .unwrap_or(meta);
@@ -481,9 +489,15 @@ pub(crate) fn lower_value(
                         // (printf-collapsed) and encoded (`b64enc`) flows.
                         let digest_input =
                             matches!(kind, ValueKind::Scalar | ValueKind::PartialScalar)
-                                && path_is_encoded(path, scope.derived_text_paths)
+                                && values_path_is_encoded(
+                                    &ValuesPath::parse(path),
+                                    scope.derived_text_paths,
+                                )
                                 && !path_is_encoded(path, scope.shape_erased_paths)
-                                && !path_is_encoded(path, scope.encoded_paths);
+                                && !values_path_is_encoded(
+                                    &ValuesPath::parse(path),
+                                    scope.encoded_paths,
+                                );
                         for (condition, mut splice) in scope.path_splice_arms(path, kind) {
                             splice.meta.digest |= digest_input;
                             out.arms.push((condition, AbstractFragment::Splice(splice)));
@@ -502,7 +516,10 @@ pub(crate) fn lower_value(
                 // value; the Serialized kind carries that abstention.
                 let kind = if taint.iter().all(|path| {
                     path_is_encoded(path, scope.shape_erased_paths)
-                        || path_is_encoded(path, scope.derived_text_paths)
+                        || values_path_is_encoded(
+                            &ValuesPath::parse(path),
+                            scope.derived_text_paths,
+                        )
                 }) {
                     ValueKind::Serialized
                 } else {
@@ -617,9 +634,10 @@ pub(crate) fn lower_value_scalar_arms(
             }
         }
         AbstractValue::OutputPath(path, meta) => {
+            let values_path = ValuesPath::parse(path);
             let meta = scope
                 .local_source_paths
-                .contains(path)
+                .contains(&values_path)
                 .then(|| scope.local_output_meta.get(path))
                 .flatten()
                 .unwrap_or(meta);
@@ -794,9 +812,9 @@ fn lower_alternative_scalar_arms<'v>(
 fn json_serialized_taint(value: &AbstractValue, scope: &LowerScope<'_>) -> Option<TaintPart> {
     let paths = value.paths();
     if paths.is_empty()
-        || !paths
-            .iter()
-            .all(|path| path_is_encoded(path, scope.json_serialized_paths))
+        || !paths.iter().all(|path| {
+            values_path_is_encoded(&ValuesPath::parse(path), scope.json_serialized_paths)
+        })
     {
         return None;
     }

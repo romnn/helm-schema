@@ -30,7 +30,11 @@ pub(super) fn record_string_transform_effects(
         // null source renders an explicit YAML null into the sink, unlike
         // `toString`'s always-text image.
         if matches!(function, "quote" | "squote") {
-            effects.nil_omitting_paths.extend(influence_paths);
+            effects.nil_omitting_paths.extend(
+                influence_paths
+                    .iter()
+                    .map(|path| helm_schema_core::ValuesPath::parse(path)),
+            );
         }
         // Only `toString` returns the exact `%v` rendering of its operand
         // (`quote`/`squote`/`urlquery` decorate or rewrite the text), and
@@ -41,34 +45,41 @@ pub(super) fn record_string_transform_effects(
         if function == "toString"
             && let Some(AbstractValue::ValuesPath(path)) = value
         {
-            effects.stringified_paths.insert(path.encode());
+            effects.stringified_paths.insert(path.clone());
         }
-        effects
-            .derived_range_key_paths
-            .extend(identity_range_key_paths(value));
+        effects.derived_range_key_paths.extend(
+            identity_range_key_paths(value)
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
         return;
     }
     record_string_consumer_effects(value, string_paths, effects);
     record_raw_range_key_string_consumer_paths(raw_range_key_paths, effects);
     if matches!(function, "lower" | "upper") {
         for path in string_paths {
-            let selected = effects.defaults.contains(path)
-                || effects.local_default_paths.contains(path)
+            let typed_path = helm_schema_core::ValuesPath::parse(path);
+            let selected = effects.defaults.contains(&typed_path)
+                || effects.local_default_paths.contains(&typed_path)
                 || effects
                     .local_output_meta
                     .get(path)
                     .is_some_and(|meta| meta.defaulted || !meta.predicates.is_empty());
-            if !selected && !effects.derived_text_paths.contains(path) {
-                effects.plain_text_preserving_paths.insert(path.clone());
+            if !selected && !effects.derived_text_paths.contains(&typed_path) {
+                effects.plain_text_preserving_paths.insert(typed_path);
             }
         }
     }
-    effects
-        .derived_text_paths
-        .extend(influence_paths.iter().cloned());
-    effects
-        .derived_range_key_paths
-        .extend(identity_range_key_paths(value));
+    effects.derived_text_paths.extend(
+        influence_paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
+    effects.derived_range_key_paths.extend(
+        identity_range_key_paths(value)
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
     if function == "b64enc" {
         effects.add_encoded_paths(influence_paths);
     }
@@ -90,19 +101,23 @@ pub(super) fn string_invocation_operand_facts(
             if let Some(piped) = piped {
                 paths.extend(identity_value_paths(piped.value.as_ref()));
                 let keys = identity_range_key_paths(piped.value.as_ref());
-                range_key_paths.extend(
-                    keys.difference(&piped.effects.derived_range_key_paths)
-                        .cloned(),
-                );
+                range_key_paths.extend(keys.into_iter().filter(|path| {
+                    !piped
+                        .effects
+                        .derived_range_key_paths
+                        .contains(&helm_schema_core::ValuesPath::parse(path))
+                }));
             }
         } else if let Some(arg) = args.get(index) {
             let result = eval_expr_with_helper_calls(arg, env, resolver);
             paths.extend(identity_value_paths(result.value.as_ref()));
             let keys = identity_range_key_paths(result.value.as_ref());
-            range_key_paths.extend(
-                keys.difference(&result.effects.derived_range_key_paths)
-                    .cloned(),
-            );
+            range_key_paths.extend(keys.into_iter().filter(|path| {
+                !result
+                    .effects
+                    .derived_range_key_paths
+                    .contains(&helm_schema_core::ValuesPath::parse(path))
+            }));
         }
     }
     (paths, range_key_paths)
@@ -124,10 +139,12 @@ pub(super) fn record_string_call_consumers(
         let paths = identity_value_paths(operand.value.as_ref());
         record_string_consumer_effects(operand.value.as_ref(), &paths, effects);
         let keys = identity_range_key_paths(operand.value.as_ref());
-        raw_range_key_paths.extend(
-            keys.difference(&operand.effects.derived_range_key_paths)
-                .cloned(),
-        );
+        raw_range_key_paths.extend(keys.into_iter().filter(|path| {
+            !operand
+                .effects
+                .derived_range_key_paths
+                .contains(&helm_schema_core::ValuesPath::parse(path))
+        }));
     }
     record_raw_range_key_string_consumer_paths(&raw_range_key_paths, effects);
 }
@@ -187,8 +204,9 @@ fn parser_operand_has_partitioned_identity(
     paths.len() == 1
         || (!paths.is_empty()
             && paths.iter().all(|path| {
-                operand.effects.defaults.contains(path)
-                    || operand.effects.local_default_paths.contains(path)
+                let typed_path = helm_schema_core::ValuesPath::parse(path);
+                operand.effects.defaults.contains(&typed_path)
+                    || operand.effects.local_default_paths.contains(&typed_path)
                     || operand
                         .effects
                         .local_output_meta
@@ -216,18 +234,20 @@ fn parser_operand_identity_paths(
     ) {
         match value {
             AbstractValue::ValuesPath(path) => {
-                let path = path.encode();
+                let encoded = path.encode();
                 if total_string_preimage
-                    || (!effects.observed_facts.shape_erased_paths.contains(&path)
-                        && !effects.derived_text_paths.contains(&path))
+                    || (!effects.observed_facts.shape_erased_paths.contains(&encoded)
+                        && !effects.derived_text_paths.contains(path))
                 {
-                    paths.insert(path);
+                    paths.insert(encoded);
                 }
             }
             AbstractValue::JsonDecodedPath(path) => {
                 if total_string_preimage
                     || (!effects.observed_facts.shape_erased_paths.contains(path)
-                        && !effects.derived_text_paths.contains(path))
+                        && !effects
+                            .derived_text_paths
+                            .contains(&helm_schema_core::ValuesPath::parse(path)))
                 {
                     paths.insert(path.clone());
                 }
@@ -447,7 +467,8 @@ fn string_operand_requirements(
     path: &str,
 ) -> Vec<(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)> {
     let output_metas = parser_output_metas(value, path);
-    let path_is_derived = effects.derived_text_paths.contains(path)
+    let typed_path = helm_schema_core::ValuesPath::parse(path);
+    let path_is_derived = effects.derived_text_paths.contains(&typed_path)
         || effects
             .local_output_meta
             .get(path)
@@ -518,11 +539,20 @@ pub(super) fn record_range_key_string_consumer_effects(
 ) {
     let paths = identity_range_key_paths(value);
     let raw_paths = paths
-        .difference(&effects.derived_range_key_paths)
+        .iter()
+        .filter(|path| {
+            !effects
+                .derived_range_key_paths
+                .contains(&helm_schema_core::ValuesPath::parse(path))
+        })
         .cloned()
         .collect::<BTreeSet<_>>();
     record_raw_range_key_string_consumer_paths(&raw_paths, effects);
-    effects.derived_range_key_paths.extend(paths);
+    effects.derived_range_key_paths.extend(
+        paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
 }
 
 pub(super) fn record_raw_range_key_string_consumer_paths(
@@ -542,9 +572,11 @@ pub(super) fn record_raw_range_key_string_consumer_paths(
         };
         effects.observed_facts.captures.insert(capture);
     }
-    effects
-        .derived_range_key_paths
-        .extend(raw_paths.iter().cloned());
+    effects.derived_range_key_paths.extend(
+        raw_paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
 }
 
 /// Records the runtime operand contract of a strict collection function.
@@ -867,8 +899,9 @@ fn push_value_pattern_capture(
 }
 
 fn strict_operand_path_is_clean(path: &str, effects: &Effects) -> bool {
+    let typed_path = helm_schema_core::ValuesPath::parse(path);
     !effects.observed_facts.shape_erased_paths.contains(path)
-        && !effects.derived_text_paths.contains(path)
+        && !effects.derived_text_paths.contains(&typed_path)
         && !effects
             .local_output_meta
             .get(path)
@@ -1038,7 +1071,8 @@ pub(super) fn strict_operand_selection_conjunctions(
 
 pub(super) fn operand_selection_conjunctions(effects: &Effects, path: &str) -> Vec<Vec<Predicate>> {
     let mut shared = BTreeSet::new();
-    if effects.defaults.contains(path) || effects.local_default_paths.contains(path) {
+    let typed_path = helm_schema_core::ValuesPath::parse(path);
+    if effects.defaults.contains(&typed_path) || effects.local_default_paths.contains(&typed_path) {
         shared.insert(Predicate::truthy_path(path));
     }
     let Some(meta) = effects.local_output_meta.get(path) else {

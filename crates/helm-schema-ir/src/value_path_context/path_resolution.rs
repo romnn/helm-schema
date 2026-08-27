@@ -17,8 +17,16 @@ use super::{RangeSubject, RangeSubjectIdentity, ValuePathContext};
 impl ValuePathContext<'_> {
     pub(crate) fn expression_output_effects(&self, exprs: &[TemplateExpr]) -> Effects {
         let effects = self.expression_effects(exprs);
-        let mut values = effects.output_value_paths();
-        let defaults = effects.default_paths_with_local();
+        let mut values = effects
+            .output_value_paths()
+            .into_iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(&path))
+            .collect::<BTreeSet<_>>();
+        let defaults = effects
+            .default_paths_with_local()
+            .into_iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(&path))
+            .collect::<BTreeSet<_>>();
         let mut observed_facts = ObservedFacts::default();
         if let Some(type_hints) = effects.observed_facts.type_hints.get(&HintGrade::DECLARED) {
             observed_facts
@@ -42,6 +50,7 @@ impl ValuePathContext<'_> {
         self.expression_effects(std::slice::from_ref(expr))
             .bound_output_paths
             .into_iter()
+            .map(|path| path.encode())
             .collect()
     }
 
@@ -378,7 +387,9 @@ fn single_member_collection_identity(value: &AbstractValue) -> Option<RangeSubje
 
 fn path_preserves_range_shape(path: &str, effects: &Effects) -> bool {
     !effects.observed_facts.shape_erased_paths.contains(path)
-        && !effects.derived_text_paths.contains(path)
+        && !effects
+            .derived_text_paths
+            .contains(&helm_schema_core::ValuesPath::parse(path))
         && effects
             .local_output_meta
             .get(path)

@@ -190,23 +190,23 @@ pub(super) fn escape_wrapped_identity(
 ) -> Option<AbstractValue> {
     match value {
         AbstractValue::ValuesPath(path) => {
-            let path = path.encode();
-            if effects.observed_facts.shape_erased_paths.contains(&path)
-                || effects.derived_text_paths.contains(&path)
+            let encoded = path.encode();
+            if effects.observed_facts.shape_erased_paths.contains(&encoded)
+                || effects.derived_text_paths.contains(path)
                 || effects
                     .local_output_meta
-                    .get(&path)
+                    .get(&encoded)
                     .is_some_and(|meta| meta.shape_erased || meta.derived_text)
             {
                 return None;
             }
             let mut meta = effects
                 .local_output_meta
-                .get(&path)
+                .get(&encoded)
                 .cloned()
                 .unwrap_or_default();
             meta.lexical_escapes.insert(escape);
-            Some(AbstractValue::OutputPath(path, meta))
+            Some(AbstractValue::OutputPath(path.encode(), meta))
         }
         AbstractValue::OutputPath(path, meta) => {
             if meta.shape_erased

@@ -3120,7 +3120,7 @@
 
 ## B4a.4 — migrate capture-kind paths
 
-- Status: landed; commit pending.
+- Status: landed in `1c118d2e` (`refactor(ir): type capture paths`).
 - Contract: representation-only migration of every values-path payload in IR's internal
   `CaptureKind` vocabulary to segmented `ValuesPath`, including path sets, ordered range-selection
   chains, and every singular payload. Schema-type names, patterns, separators, member-kind sets,
@@ -3226,3 +3226,129 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +54 (63,975 to 64,029).
+
+## B4a.5a — migrate expression-effect path channels
+
+- Status: ready to land; commit pending.
+- Contract: representation-only migration of every value-path set and path-keyed map in IR's
+  internal `Effects` carrier to segmented `ValuesPath`, plus the path on `MemberHostConversion`.
+  Local/root variable names, mutation member keys, schema types, helper identifiers, rendered rows,
+  predicates, captures, and other distinct string domains remain unchanged.
+- Acceptance baseline: `1c118d2e` (B4a.4).
+- Baseline production LOC: 64,029 Rust lines from `task tokei:core` on `1c118d2e`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, or corpus acceptance changes.
+  - Every exhaustive `Effects::merge`, `execution_only`, construction, and projection boundary
+    retains the same channels and stable encoded order.
+  - No coercion trait, cross-type comparison, parallel encoded field, or unrelated string newtype
+    is allowed. Existing string consumers encode explicitly until their carrier round.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - All 22 values-path sets and the one path-keyed map on `Effects` now store `ValuesPath`;
+    `MemberHostConversion.path` is typed as well. The exhaustive `merge` and `execution_only`
+    destructures still name every channel, preserving their previous union/discard decisions.
+  - Producers parse only at still-string expression/summary boundaries. Direct consumers compare
+    typed identities structurally; `LowerScope` borrows typed effect sets and encodes only when it
+    crosses into legacy fragment metadata, rendered rows, diagnostics, or public string results.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `1c118d2e`.
+    The full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first lint preflight was rejected by three mechanical consequences of the explicit
+    boundaries: `eval_printf` and `absorb_hole_effects` exceeded the 100-line lint, and
+    `record_total_conversion_effects` cloned rather than consumed its owned path set. A small
+    structural membership helper, one shared typed-path encoder, and consuming the owned set
+    removed the duplication without a lint suppression.
+  - The second lint preflight was rejected because `eval_printf` remained two lines over the
+    limit. Recording typed formatter paths in its existing metadata loop removed the parallel
+    traversal; the clean rerun is warning-free.
+  - The `final1` archive command was rejected before producing an archive because the new
+    step-local `TMPDIR` did not exist, so clang could not create a temporary object. The isolated
+    build/dump/prober directories were created explicitly; only the successful `final2` archive
+    and artifacts are authoritative.
+  - The first final-tree `task test:integration` process was externally terminated at 122/558 when
+    its tool session was interrupted. It had reported no failure, but an incomplete gate is a
+    failed gate; the exact command was rerun from scratch, and only the completed 558/558 run is
+    authoritative.
+  - `ObservedFacts`, rendered/helper summary rows, output metadata, fragment interpreter state,
+    and contract-signal carriers remain string-keyed until their own B4a rounds. Every crossing is
+    explicit; no parallel encoded field or comparison shim was introduced.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Expression transforms | Same per-path facts and selection | Expr-eval and transform suites. |
+| Helper transfer/merge | Same union, removal, and execution-only behavior | Helper and effects suites. |
+| Fragment consumers | Same slot, range, and capture facts | Fragment/IR corpus and schema dumps. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 393/393 IR tests pass, covering
+  transforms, defaults, helper transfer, selection, serialization, fragment positions, range
+  paths, and capture production. Whole-workspace Clippy passes warning-free after both rejected
+  lint preflights were repaired.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5a-final2-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a5a-final2.tar.zst`; exit 0,
+  87 binaries and 125 files in 330 seconds.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5a-final2-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a5a-final2.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 189.788 seconds. A recursive byte comparison against the B4a.4 dump
+  exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5a-final2-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a5a-final2.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.134 seconds and 18 artifacts are
+  written. A recursive byte comparison against the B4a.4 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5a-final2-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=1c118d2e
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5a-final2-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5a-final2-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a5a-final2.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 66.750 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868
+  disclosed bounded reductions remain unchanged.
+- Public/wire decision: `Effects`, `MemberHostConversion`, and `LowerScope` are crate-private IR
+  state, so the field narrowing creates no public API or wire-format obligation. Explicit encoding
+  preserves every existing public and symbolic-IR byte.
+
+### Self-adversarial pass
+
+- The exhaustive `Effects::merge` and `execution_only` destructures still enumerate all 34 fields;
+  compiler-driven construction sweeps cover every non-default `Effects` literal.
+- Local/root variable names, mutation keys, schema types, helper names, rendered row paths,
+  diagnostics, patterns, and ordinary scalar strings remain in their distinct domains.
+- Searches find no typed effect path encoded and immediately reparsed. String callbacks in
+  `CaptureKind::map_value_paths` and `RangeModes::map_value_paths` remain deliberate dependency
+  rebasing boundaries scheduled outside this carrier.
+- `ValuesPath` still supplies no `Deref`, `AsRef<str>`, `Display`, cross-type comparison, or cached
+  encoding. Manual legacy-order `Ord` therefore remains the sole ordering rule for every migrated
+  set and map.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,265.15 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 2,231.490 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 2,400.176 seconds, including the live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; the release binary is installed at
+  `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,285 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +256 (64,029 to 64,285). The increase is explicit parse/encode
+  boundary code while adjacent carriers remain string-keyed; no LOC promise governs B4a.

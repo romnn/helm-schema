@@ -315,7 +315,7 @@ fn dead_output_selection_retains_eager_effects() {
 
     sim_assert_eq!(
         have: result.effects.defaults,
-        want: BTreeSet::from(["fallback".to_string()])
+        want: BTreeSet::from([helm_schema_core::ValuesPath::parse("fallback")])
     );
     sim_assert_eq!(
         have: result.selection_reachability,

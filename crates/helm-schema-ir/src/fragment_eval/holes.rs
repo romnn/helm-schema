@@ -369,7 +369,7 @@ impl Interpreter<'_> {
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
         for (path, keys) in &hole.effects.omitted_map_keys {
-            let meta = hole_meta.entry(path.clone()).or_default();
+            let meta = hole_meta.entry(path.encode()).or_default();
             for key in keys {
                 meta.omitted_keys.insert(key.clone(), Vec::new());
             }
@@ -469,8 +469,11 @@ impl Interpreter<'_> {
         // A later stage that reshapes the text (`b64enc`, `quote`) is what the
         // slot renders, so the raw value's own characters no longer reach it
         // (external-dns's `{{ tpl $value $ | b64enc | quote }}`).
-        let reaches_slot = |path: &String| {
-            !effects.observed_facts.shape_erased_paths.contains(path)
+        let reaches_slot = |path: &helm_schema_core::ValuesPath| {
+            !effects
+                .observed_facts
+                .shape_erased_paths
+                .contains(&path.encode())
                 && !effects.encoded_paths.contains(path)
                 && !effects.yaml_serialized_paths.contains(path)
         };
@@ -481,23 +484,21 @@ impl Interpreter<'_> {
         // preserving `replace` re-adds its keys through the channel below.
         let mut key_paths = value
             .map(AbstractValue::range_key_paths)
-            .unwrap_or_default();
+            .unwrap_or_default()
+            .into_iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(&path))
+            .collect::<BTreeSet<_>>();
         key_paths.retain(|path| !effects.derived_range_key_paths.contains(path));
         key_paths.extend(effects.plain_text_range_key_paths.iter().cloned());
         key_paths.retain(reaches_slot);
         if !key_paths.is_empty() {
             captures.push(crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
-                paths: key_paths
-                    .iter()
-                    .map(|path| helm_schema_core::ValuesPath::parse(path))
-                    .collect(),
+                paths: key_paths.iter().cloned().collect(),
             });
         }
         if let Some(AbstractValue::ValuesPath(path)) = value
-            && effects
-                .templated_text_identity_paths
-                .contains(&path.encode())
-            && reaches_slot(&path.encode())
+            && effects.templated_text_identity_paths.contains(path)
+            && reaches_slot(path)
         {
             captures.push(crate::eval_effect::CaptureKind::PlainSlotText {
                 path: path.clone(),
@@ -508,7 +509,7 @@ impl Interpreter<'_> {
         for path in &effects.plain_text_preserving_paths {
             if reaches_slot(path) {
                 captures.push(crate::eval_effect::CaptureKind::PlainSlotText {
-                    path: helm_schema_core::ValuesPath::parse(path),
+                    path: path.clone(),
                     token_initial: true,
                     templated: false,
                 });
@@ -533,7 +534,7 @@ impl Interpreter<'_> {
         }
         for (path, meta) in &formatted_meta {
             if meta.plain_slot_string_format && !meta.partial_text {
-                formatted_paths.insert(path.clone());
+                formatted_paths.insert(helm_schema_core::ValuesPath::parse(path));
             }
         }
         // `printf` itself erases the operand's structural shape, but a token-
@@ -545,14 +546,14 @@ impl Interpreter<'_> {
         for path in formatted_paths {
             let mut shared = BTreeSet::new();
             if formatted_meta
-                .get(&path)
+                .get(&path.encode())
                 .is_none_or(|meta| meta.predicates.is_empty())
                 && (effects.defaults.contains(&path) || effects.local_default_paths.contains(&path))
             {
-                shared.insert(Predicate::truthy_path(path.clone()));
+                shared.insert(Predicate::truthy_path(path.encode()));
             }
             let branches = formatted_meta
-                .get(&path)
+                .get(&path.encode())
                 .filter(|meta| !meta.predicates.is_empty())
                 .map_or_else(
                     || vec![shared.clone()],
@@ -569,12 +570,8 @@ impl Interpreter<'_> {
                 );
             for conjunction in branches {
                 for kind in [
-                    crate::eval_effect::CaptureKind::PrintfStringOperand {
-                        path: helm_schema_core::ValuesPath::parse(&path),
-                    },
-                    crate::eval_effect::CaptureKind::AbsenceAborts {
-                        path: helm_schema_core::ValuesPath::parse(&path),
-                    },
+                    crate::eval_effect::CaptureKind::PrintfStringOperand { path: path.clone() },
+                    crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
                 ] {
                     captures.push(crate::eval_effect::FailCapture {
                         conjunction: conjunction.iter().cloned().collect(),
@@ -619,11 +616,11 @@ impl Interpreter<'_> {
         );
         self.absorb_hole_effects(&call.argument_effects, RenderedDemotion::Dependency);
         let summary = &call.summary;
-        let suppressed: std::collections::BTreeSet<&String> = summary
+        let suppressed: std::collections::BTreeSet<String> = summary
             .rendered
             .iter()
-            .flat_map(|row| row.meta.suppress_predicate_paths.iter())
-            .chain(summary.suppress_predicate_paths.iter())
+            .flat_map(|row| row.meta.suppress_predicate_paths.iter().cloned())
+            .chain(summary.suppress_predicate_paths.iter().cloned())
             .collect();
         let mut claims: std::collections::BTreeSet<String> = summary
             .reads
@@ -705,8 +702,12 @@ impl Interpreter<'_> {
         };
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
-        self.run_templated_text_paths
-            .extend(hole.effects.templated_text_identity_paths.iter().cloned());
+        self.run_templated_text_paths.extend(
+            hole.effects
+                .templated_text_identity_paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode),
+        );
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind != ValueKind::Fragment);
         let defaulted = hole.effects.default_paths_with_local();
@@ -716,7 +717,7 @@ impl Interpreter<'_> {
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
         for (path, keys) in &hole.effects.omitted_map_keys {
-            let meta = hole_meta.entry(path.clone()).or_default();
+            let meta = hole_meta.entry(path.encode()).or_default();
             for key in keys {
                 meta.omitted_keys.insert(key.clone(), Vec::new());
             }

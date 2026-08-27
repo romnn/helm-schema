@@ -258,7 +258,10 @@ fn string_transform_pipeline_preserves_all_printf_argument_paths() {
 
     for path in ["primary.name", "suffix"] {
         assert!(
-            result.effects.derived_text_paths.contains(path),
+            result
+                .effects
+                .derived_text_paths
+                .contains(&capture_path(path)),
             "{path} should remain visible through printf as derived text"
         );
         // trunc consumes printf's derived text, so it must not bind a
@@ -321,8 +324,8 @@ fn local_fragment_variable_effects_include_shallow_source_paths() {
     sim_assert_eq!(
         have: result.effects.local_source_paths,
         want: BTreeSet::from([
-            "global.nodeSelector".to_string(),
-            "nodeSelector".to_string(),
+            capture_path("global.nodeSelector"),
+            capture_path("nodeSelector"),
         ]),
     );
 }
@@ -352,12 +355,9 @@ fn integer_index_on_values_path_descends_array_item_wildcard() {
         have: result.value,
         want: Some(values_path!("sentinel.externalAccess.service.loadBalancerIP.*"))
     );
-    assert!(
-        result
-            .effects
-            .output_paths
-            .contains("sentinel.externalAccess.service.loadBalancerIP.*")
-    );
+    assert!(result.effects.output_paths.contains(&capture_path(
+        "sentinel.externalAccess.service.loadBalancerIP.*"
+    )));
 }
 
 #[test]
@@ -552,7 +552,7 @@ fn set_call_preserves_assigned_value_path() {
     let result = eval_expr(&single_expr(r"$config.name"), &env);
     sim_assert_eq!(
         have: result.effects.output_paths,
-        want: BTreeSet::from(["generatedName".to_string()])
+        want: BTreeSet::from([capture_path("generatedName")])
     );
 }
 
@@ -572,7 +572,7 @@ fn selector_on_local_dict_records_only_selected_child_reads() {
 
     sim_assert_eq!(
         have: result.effects.output_paths,
-        want: BTreeSet::from(["serviceAccount.annotations".to_string()])
+        want: BTreeSet::from([capture_path("serviceAccount.annotations")])
     );
 }
 
@@ -592,7 +592,10 @@ fn unsupported_printf_format_types_nothing_without_exact_string() {
         "Go fmt embeds verb mismatches in the output instead of failing, so printf types nothing"
     );
     assert!(
-        result.effects.derived_text_paths.contains("count"),
+        result
+            .effects
+            .derived_text_paths
+            .contains(&capture_path("count")),
         "printf arguments stay visible as derived text"
     );
     assert!(
@@ -1102,7 +1105,10 @@ fn helper_argument_fields_resolve_from_dot_root() {
     let result = eval_expr(&expr, &env);
 
     assert!(
-        result.effects.defaults.contains("serviceAccount.name"),
+        result
+            .effects
+            .defaults
+            .contains(&capture_path("serviceAccount.name")),
         "default should attach to the values path reached through .config.name"
     );
 }
@@ -2045,7 +2051,10 @@ fn ternary_condition_identity_stays_out_of_output_paths() {
         let result = eval_expr(&single_expr(action), &EvalEnv::default());
 
         assert!(
-            !result.effects.output_paths.contains("internalTLS.enabled"),
+            !result
+                .effects
+                .output_paths
+                .contains(&capture_path("internalTLS.enabled")),
             "the condition never renders into the slot: {action}"
         );
         assert!(
@@ -2111,7 +2120,10 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
         &EvalEnv::default(),
     );
     assert!(
-        nested_consumer.effects.encoded_paths.contains("payload")
+        nested_consumer
+            .effects
+            .encoded_paths
+            .contains(&capture_path("payload"))
             && nested_consumer
                 .effects
                 .observed_facts

@@ -1480,8 +1480,14 @@ fn statically_false_inline_branch_contributes_no_helper_effects() {
     );
 
     assert!(
-        !result.effects.output_paths.contains("dead")
-            && !result.effects.json_serialized_paths.contains("dead"),
+        !result
+            .effects
+            .output_paths
+            .contains(&helm_schema_core::ValuesPath::parse("dead"))
+            && !result
+                .effects
+                .json_serialized_paths
+                .contains(&helm_schema_core::ValuesPath::parse("dead")),
         "the unreachable helper body must contribute no effects: {result:#?}"
     );
 }
@@ -2251,7 +2257,7 @@ fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
         result
             .effects
             .helper_observed_shape_erased_paths
-            .contains("server.namespaces"),
+            .contains(&helm_schema_core::ValuesPath::parse("server.namespaces")),
         "join's total conversion must survive the helper summary: {result:#?}",
     );
     assert!(

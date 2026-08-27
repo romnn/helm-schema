@@ -55,7 +55,10 @@ impl<'a> FragmentEvalContext<'a> {
         );
         let mut output_meta = result.effects.local_output_meta.clone();
         for path in &result.effects.yaml_serialized_paths {
-            output_meta.entry(path.clone()).or_default().yaml_serialized = true;
+            output_meta
+                .entry(path.encode())
+                .or_default()
+                .yaml_serialized = true;
         }
         result
             .value

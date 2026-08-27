@@ -72,21 +72,40 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
         let helper_observed_shape_erased_paths =
             std::mem::take(&mut observed_facts.shape_erased_paths);
         let mut effects = Effects {
-            chart_default_paths: summary.chart_defaults.clone(),
+            chart_default_paths: summary
+                .chart_defaults
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path))
+                .collect(),
             root_set_mutations: summary.root_set_mutations.clone(),
             root_set_predicates: summary.root_set_predicates.clone(),
             root_set_value_dispatches: summary.root_set_value_dispatches.clone(),
             observed_facts,
-            parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
-            yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
+            parsed_yaml_input_paths: summary
+                .parsed_yaml_input_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path))
+                .collect(),
+            yaml_serialized_paths: summary
+                .yaml_serialized_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path))
+                .collect(),
             json_serialized_paths: summary
                 .rendered
                 .iter()
                 .filter(|row| row.meta.json_serialized)
-                .map(|row| row.path.clone())
+                .map(|row| helm_schema_core::ValuesPath::parse(&row.path))
                 .collect(),
-            encoded_paths: summary.encoded_paths(),
-            helper_observed_shape_erased_paths,
+            encoded_paths: summary
+                .encoded_paths()
+                .into_iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(&path))
+                .collect(),
+            helper_observed_shape_erased_paths: helper_observed_shape_erased_paths
+                .into_iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(&path))
+                .collect(),
             // An include renders its body to text, so every path the value
             // carries is derived text at the call site: a consuming stage
             // (`include … | trimAll`) must not claim contracts on the
@@ -95,10 +114,17 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 .value
                 .as_ref()
                 .map(AbstractValue::paths)
-                .unwrap_or_default(),
+                .unwrap_or_default()
+                .into_iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(&path))
+                .collect(),
             helper_reads: summary.reads.clone(),
             helper_rendered: summary.rendered.clone(),
-            helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
+            helper_suppressed_paths: summary
+                .suppress_predicate_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path))
+                .collect(),
             helper_text_captures: summary.text_captures.iter().cloned().collect(),
             member_host_conversions: summary.member_host_conversions.clone(),
             ..Effects::default()
@@ -229,10 +255,16 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         effects.merge(input.effects.execution_only());
         effects.merge(overwrite.effects.execution_only());
         let payload_paths = value.paths();
-        effects
-            .yaml_serialized_paths
-            .extend(payload_paths.iter().cloned());
-        effects.derived_text_paths.extend(payload_paths);
+        effects.yaml_serialized_paths.extend(
+            payload_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
+        effects.derived_text_paths.extend(
+            payload_paths
+                .into_iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(&path)),
+        );
         Some(EvalResult::with_effects(Some(value), effects))
     }
 
@@ -299,10 +331,16 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
 
         let value = AbstractValue::MergedLayers(layers);
         let payload_paths = value.paths();
-        effects
-            .yaml_serialized_paths
-            .extend(payload_paths.iter().cloned());
-        effects.derived_text_paths.extend(payload_paths);
+        effects.yaml_serialized_paths.extend(
+            payload_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
+        effects.derived_text_paths.extend(
+            payload_paths
+                .into_iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(&path)),
+        );
         Some(EvalResult::with_effects(Some(value), effects))
     }
 
@@ -343,8 +381,12 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         let value = AbstractValue::OutputPath(path.clone(), meta);
         let mut effects = Effects::default();
         effects.merge(operand.effects.execution_only());
-        effects.yaml_serialized_paths.insert(path.clone());
-        effects.derived_text_paths.insert(path);
+        effects
+            .yaml_serialized_paths
+            .insert(helm_schema_core::ValuesPath::parse(&path));
+        effects
+            .derived_text_paths
+            .insert(helm_schema_core::ValuesPath::parse(&path));
         Some(EvalResult::with_effects(Some(value), effects))
     }
 }

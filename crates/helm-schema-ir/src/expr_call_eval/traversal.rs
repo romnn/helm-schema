@@ -120,6 +120,7 @@ pub(super) fn eval_dig(
     // literal default: an output path (so required-subject walking and
     // read rows see it) marked defaulted, exactly like `default`.
     for path in identity_value_paths(value.as_ref()) {
+        let path = helm_schema_core::ValuesPath::parse(&path);
         effects.output_paths.insert(path.clone());
         effects.defaults.insert(path);
     }

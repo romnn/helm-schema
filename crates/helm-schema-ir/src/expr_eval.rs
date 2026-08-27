@@ -143,7 +143,7 @@ fn record_member_host_capture(
         .member_host_conversions
         .iter()
         .filter(|conversion| {
-            conversion.path == path
+            conversion.path == helm_schema_core::ValuesPath::parse(path)
                 && conversion
                     .outer_predicates
                     .iter()
@@ -365,9 +365,12 @@ pub(crate) fn eval_expr_with_helper_calls(
                 );
             }
             effects.output_paths.clear();
-            effects
-                .bound_output_paths
-                .extend(env.bound_values.selector_paths(expr));
+            effects.bound_output_paths.extend(
+                env.bound_values
+                    .selector_paths(expr)
+                    .into_iter()
+                    .map(|path| helm_schema_core::ValuesPath::parse(&path)),
+            );
             match value {
                 Some(value) => {
                     let mut result = EvalResult::from_value(value);
@@ -507,7 +510,10 @@ pub(crate) fn bindings_for_helper_arg_with(
             output_meta.entry(path).or_default().defaulted = true;
         }
         for path in &result.effects.yaml_serialized_paths {
-            output_meta.entry(path.clone()).or_default().yaml_serialized = true;
+            output_meta
+                .entry(path.encode())
+                .or_default()
+                .yaml_serialized = true;
         }
         result.value = result
             .value
@@ -598,12 +604,16 @@ fn local_value_result(
         result.selection_reachability = None;
         result.scalar_dispatch = None;
     }
-    result.effects.local_source_paths = source_paths;
+    result.effects.local_source_paths = source_paths
+        .into_iter()
+        .map(|path| helm_schema_core::ValuesPath::parse(&path))
+        .collect();
     if let Some(default_paths) = env.local_default_paths.get(var) {
-        result
-            .effects
-            .local_default_paths
-            .extend(default_paths.iter().cloned());
+        result.effects.local_default_paths.extend(
+            default_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
         result.effects.add_default_paths(default_paths.clone());
     }
     if let Some(meta_by_path) = env.local_output_meta.get(var) {
@@ -702,10 +712,12 @@ fn with_bound_selector_paths(
     expr: &TemplateExpr,
     env: &EvalEnv,
 ) -> EvalResult {
-    result
-        .effects
-        .bound_output_paths
-        .extend(env.bound_values.selector_paths(expr));
+    result.effects.bound_output_paths.extend(
+        env.bound_values
+            .selector_paths(expr)
+            .into_iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(&path)),
+    );
     result
 }
 

@@ -453,7 +453,13 @@ pub(super) fn merge_operand_results(operands: Vec<EvalResult>, mut effects: Effe
         effects.merge(operand.effects);
     }
     EvalResult::with_effects(
-        Some(AbstractValue::DerivedBoolean(effects.output_paths.clone())),
+        Some(AbstractValue::DerivedBoolean(
+            effects
+                .output_paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode)
+                .collect(),
+        )),
         effects,
     )
 }

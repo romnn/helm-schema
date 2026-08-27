@@ -87,6 +87,7 @@ pub(super) fn eval_set_call(
     for target_path in &target_paths {
         for key in &keys {
             let defaulted_path = helm_schema_core::append_value_path(target_path, key);
+            let defaulted_path = helm_schema_core::ValuesPath::parse(&defaulted_path);
             if effects.defaults.contains(&defaulted_path) {
                 effects.chart_default_paths.insert(defaulted_path);
             }

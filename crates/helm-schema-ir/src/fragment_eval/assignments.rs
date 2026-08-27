@@ -324,7 +324,7 @@ impl Interpreter<'_> {
                     outer_predicates.sort();
                     outer_predicates.dedup();
                     self.member_host_conversions.insert(MemberHostConversion {
-                        path: path.clone(),
+                        path: helm_schema_core::ValuesPath::parse(&path),
                         input_kind: schema_type.clone(),
                         outer_predicates,
                     });
@@ -377,9 +377,17 @@ impl Interpreter<'_> {
             &self.root_bindings,
             self.current_value_dot().as_ref(),
         );
-        self.chart_defaults_observed
-            .extend(effects.chart_default_paths.iter().cloned());
-        let mut chart_defaults = effects.chart_default_paths;
+        self.chart_defaults_observed.extend(
+            effects
+                .chart_default_paths
+                .iter()
+                .map(helm_schema_core::ValuesPath::encode),
+        );
+        let mut chart_defaults = effects
+            .chart_default_paths
+            .into_iter()
+            .map(|path| path.encode())
+            .collect();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
         true
     }
@@ -682,19 +690,22 @@ impl Interpreter<'_> {
                 output_meta.entry(path.clone()).or_default().shape_erased = true;
             }
             for path in &hole.effects.stringified_paths {
-                output_meta.entry(path.clone()).or_default().stringified = true;
+                output_meta.entry(path.encode()).or_default().stringified = true;
             }
             for path in &hole.effects.yaml_serialized_paths {
-                output_meta.entry(path.clone()).or_default().yaml_serialized = true;
+                output_meta
+                    .entry(path.encode())
+                    .or_default()
+                    .yaml_serialized = true;
             }
             for path in &hole.effects.templated_yaml_paths {
-                output_meta.entry(path.clone()).or_default().templated_yaml = true;
+                output_meta.entry(path.encode()).or_default().templated_yaml = true;
             }
             // Likewise a derived-text RHS (`$port := include … .`): a later
             // consuming transform on the local operates on rendered text and
             // claims nothing about the underlying paths.
             for path in &hole.effects.derived_text_paths {
-                output_meta.entry(path.clone()).or_default().derived_text = true;
+                output_meta.entry(path.encode()).or_default().derived_text = true;
             }
             // An omitting RHS (`$ctx = omit $ctx "runAsUser"`) rides the
             // binding: wherever the local renders the map, the removed
@@ -702,13 +713,16 @@ impl Interpreter<'_> {
             // the branch join fills them where the omit provably did not
             // run.
             for (path, keys) in &hole.effects.omitted_map_keys {
-                let meta = output_meta.entry(path.clone()).or_default();
+                let meta = output_meta.entry(path.encode()).or_default();
                 for key in keys {
                     meta.omitted_keys.insert(key.clone(), Vec::new());
                 }
             }
             for path in &hole.effects.json_serialized_paths {
-                output_meta.entry(path.clone()).or_default().json_serialized = true;
+                output_meta
+                    .entry(path.encode())
+                    .or_default()
+                    .json_serialized = true;
             }
             // Eager helper arguments execute, but their rendered values are dependencies rather
             // than part of the assignment's value. Keep their runtime effects while preventing

@@ -404,7 +404,13 @@ fn eval_direct_invocation(
             let operand = eval_expr_with_helper_calls(arg, env, resolver);
             let truth = operand.truth.negated();
             let effects = operand.effects;
-            let value = Some(AbstractValue::DerivedBoolean(effects.output_paths.clone()));
+            let value = Some(AbstractValue::DerivedBoolean(
+                effects
+                    .output_paths
+                    .iter()
+                    .map(helm_schema_core::ValuesPath::encode)
+                    .collect(),
+            ));
             let mut result = EvalResult::with_effects(value, effects);
             result.set_truth_condition(truth, SelectionTruthSource::RawInput);
             result
@@ -666,7 +672,13 @@ fn eval_direct_invocation(
             let mut effects = subject.effects.clone();
             effects.merge(key.effects);
             let mut result = EvalResult::with_effects(
-                AbstractValue::widened(effects.output_paths.clone()),
+                AbstractValue::widened(
+                    effects
+                        .output_paths
+                        .iter()
+                        .map(helm_schema_core::ValuesPath::encode)
+                        .collect(),
+                ),
                 effects,
             );
             record_strict_kind_result(
@@ -1755,6 +1767,12 @@ fn eval_unknown_call(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     merge_arg_effects(args, env, resolver, &mut effects);
-    let value = AbstractValue::widened(effects.output_paths.clone());
+    let value = AbstractValue::widened(
+        effects
+            .output_paths
+            .iter()
+            .map(helm_schema_core::ValuesPath::encode)
+            .collect(),
+    );
     EvalResult::with_effects(value, effects)
 }

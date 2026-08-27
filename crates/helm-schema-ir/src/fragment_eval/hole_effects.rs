@@ -18,10 +18,16 @@ use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
 use crate::observed_facts::{HintGrade, HintIntent, HintScope, ObservedFacts};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::{Guard, ValueKind};
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 use super::eval::Interpreter;
 use super::holes::HoleEval;
+
+fn encoded_paths(
+    paths: &std::collections::BTreeSet<ValuesPath>,
+) -> impl Iterator<Item = String> + '_ {
+    paths.iter().map(ValuesPath::encode)
+}
 
 /// How a no-render site demotes a called helper's rendered rows.
 #[derive(Clone, Copy)]
@@ -500,20 +506,20 @@ impl Interpreter<'_> {
         );
         self.absorb_scoped_observed_facts(&effects.observed_facts);
         self.chart_defaults_observed
-            .extend(effects.chart_default_paths.iter().cloned());
-        let mut chart_defaults = effects.chart_default_paths.clone();
+            .extend(encoded_paths(&effects.chart_default_paths));
+        let mut chart_defaults = encoded_paths(&effects.chart_default_paths).collect();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
 
         self.parsed_yaml_input_paths
-            .extend(effects.parsed_yaml_input_paths.iter().cloned());
+            .extend(encoded_paths(&effects.parsed_yaml_input_paths));
         if !matches!(demotion, RenderedDemotion::Serialized) {
             self.yaml_serialized_paths
-                .extend(effects.yaml_serialized_paths.iter().cloned());
+                .extend(encoded_paths(&effects.yaml_serialized_paths));
         }
         self.observed_facts
             .shape_erased_paths
-            .extend(effects.helper_observed_shape_erased_paths.iter().cloned());
-        let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
+            .extend(encoded_paths(&effects.helper_observed_shape_erased_paths));
+        let bound_reads: Vec<String> = encoded_paths(&effects.bound_output_paths).collect();
         for path in bound_reads {
             self.push_read(&path, &[]);
         }
@@ -527,18 +533,18 @@ impl Interpreter<'_> {
                 .extend(meta.suppress_predicate_paths.iter().cloned());
         }
         self.suppress_predicate_paths
-            .extend(effects.helper_suppressed_paths.iter().cloned());
-        let suppressed: std::collections::BTreeSet<&String> = effects
+            .extend(encoded_paths(&effects.helper_suppressed_paths));
+        let suppressed: std::collections::BTreeSet<String> = effects
             .helper_rendered
             .iter()
-            .flat_map(|row| row.meta.suppress_predicate_paths.iter())
+            .flat_map(|row| row.meta.suppress_predicate_paths.iter().cloned())
             .chain(
                 effects
                     .helper_dependency_rendered
                     .iter()
-                    .flat_map(|row| row.meta.suppress_predicate_paths.iter()),
+                    .flat_map(|row| row.meta.suppress_predicate_paths.iter().cloned()),
             )
-            .chain(effects.helper_suppressed_paths.iter())
+            .chain(encoded_paths(&effects.helper_suppressed_paths))
             .collect();
         let claims = helper_claim_paths(effects);
         self.absorb_helper_reads_with_suppression(&effects.helper_reads, &suppressed, &claims);

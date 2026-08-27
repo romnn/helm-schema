@@ -1,8 +1,9 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_core::ValuesPath;
 
-use crate::abstract_value::{AbstractValue, path_is_encoded};
+use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
@@ -19,6 +20,17 @@ use helm_schema_ast::{
     literal_printf_format, render_printf_scalar_values, render_printf_string_sets,
     token_initial_printf_string_argument,
 };
+
+fn effect_path_is_encoded(path: &str, encoded_paths: &BTreeSet<ValuesPath>) -> bool {
+    let path = ValuesPath::parse(path);
+    encoded_paths
+        .iter()
+        .any(|encoded| path == *encoded || path.is_descendant_of(encoded))
+}
+
+fn effect_paths_contain(paths: &BTreeSet<ValuesPath>, path: &str) -> bool {
+    paths.contains(&ValuesPath::parse(path))
+}
 
 pub(super) fn eval_printf(
     args: &[TemplateExpr],
@@ -47,7 +59,7 @@ pub(super) fn eval_printf(
             identity_paths
                 .iter()
                 .filter(|path| {
-                    !result.effects.derived_text_paths.contains(*path)
+                    !effect_paths_contain(&result.effects.derived_text_paths, path)
                         && !result
                             .effects
                             .local_output_meta
@@ -78,10 +90,10 @@ pub(super) fn eval_printf(
                 .entry(path.clone())
                 .or_default()
                 .plain_slot_string_format = true;
+            effects
+                .plain_slot_string_format_paths
+                .insert(ValuesPath::parse(path));
         }
-        effects
-            .plain_slot_string_format_paths
-            .extend(plain_slot_format_paths);
         record_printf_argument_effects(
             index == 0,
             result.value.as_ref(),
@@ -196,8 +208,12 @@ pub(super) fn conjoin_formatter_operand_selection(
 /// on the raw path.
 pub(super) fn record_total_conversion_effects(paths: BTreeSet<String>, effects: &mut Effects) {
     effects.clear_plain_slot_string_format_paths(&paths);
-    effects.add_shape_erased_paths(paths.clone());
-    effects.derived_text_paths.extend(paths);
+    effects.derived_text_paths.extend(
+        paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
+    effects.add_shape_erased_paths(paths);
 }
 
 /// printf's parameters have different input contracts: the format parameter
@@ -215,16 +231,22 @@ pub(super) fn record_printf_argument_effects(
     if is_format {
         let raw: BTreeSet<String> = identity_paths
             .iter()
-            .filter(|path| !effects.derived_text_paths.contains(*path))
+            .filter(|path| {
+                !effects
+                    .derived_text_paths
+                    .contains(&helm_schema_core::ValuesPath::parse(path))
+            })
             .cloned()
             .collect();
         record_string_consumer_effects(value, &raw, effects);
     } else {
         effects.add_shape_erased_paths(identity_paths.clone());
     }
-    effects
-        .derived_text_paths
-        .extend(identity_paths.iter().cloned());
+    effects.derived_text_paths.extend(
+        identity_paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
 }
 
 pub(super) fn eval_print(
@@ -337,9 +359,11 @@ pub(super) fn eval_replace(
     // when neither token can introduce or remove a token-ending character
     // (crossplane's `replace "." "_"` over ranged env var keys).
     if replace_preserves_plain_token_language(&old_values, &new_values) {
-        effects
-            .plain_text_range_key_paths
-            .extend(raw_range_key_paths.iter().cloned());
+        effects.plain_text_range_key_paths.extend(
+            raw_range_key_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
     }
     super::strict_operands::record_string_transform_effects(
         "replace",
@@ -463,9 +487,11 @@ pub(super) fn eval_tpl(
         // instead of degrading to opaque text (cloudnative-pg's
         // `tpl (.Values.additionalEnv | toYaml) .` env fragment and
         // airflow's `tpl (toYaml .Values.scheduler.command) .`).
-        effects
-            .templated_yaml_paths
-            .extend(serialization_payload_paths(template.value.as_ref()));
+        effects.templated_yaml_paths.extend(
+            serialization_payload_paths(template.value.as_ref())
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
         template.value
     } else {
         // `tpl` type-asserts its template to a Go string: a raw values
@@ -475,8 +501,10 @@ pub(super) fn eval_tpl(
         let subject_paths = identity_value_paths(template.value.as_ref());
         record_string_consumer_effects(template.value.as_ref(), &subject_paths, &mut effects);
         if let Some(path) = template.value.as_ref().and_then(|value| match value {
-            AbstractValue::ValuesPath(path) => Some(path.encode()),
-            AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path.clone()),
+            AbstractValue::ValuesPath(path) => Some(path.clone()),
+            AbstractValue::OutputPath(path, meta) if meta.stringified => {
+                Some(helm_schema_core::ValuesPath::parse(path))
+            }
             _ => None,
         }) {
             effects.templated_text_identity_paths.insert(path);
@@ -488,7 +516,11 @@ pub(super) fn eval_tpl(
         // to the program source. redis-ha's `masterGroupName` is matched
         // against a regex only after `tpl`, so its raw value stays a
         // free template string.
-        effects.derived_text_paths.extend(subject_paths);
+        effects.derived_text_paths.extend(
+            subject_paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
         template.value
     }
     .and_then(rendered_content_value);
@@ -541,12 +573,20 @@ pub(super) fn eval_to_yaml_result(result: EvalResult) -> EvalResult {
         .is_some_and(is_structurally_rendered_yaml_value);
     let mut effects = result.effects;
     if !structurally_rendered {
-        effects.yaml_serialized_paths.extend(paths.iter().cloned());
+        effects.yaml_serialized_paths.extend(
+            paths
+                .iter()
+                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+        );
     }
     // The output is rendered YAML text: a later consuming transform
     // (`toYaml x | trim`) operates on that text and claims nothing about
     // the raw value, which serializes at any type.
-    effects.derived_text_paths.extend(paths);
+    effects.derived_text_paths.extend(
+        paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
     EvalResult::with_effects(result.value, effects)
 }
 
@@ -582,8 +622,16 @@ pub(super) fn eval_to_json_result(result: EvalResult) -> EvalResult {
     let payload_truth = result.truth.clone();
     let paths = serialization_payload_paths(result.value.as_ref());
     let mut effects = result.effects;
-    effects.json_serialized_paths.extend(paths.iter().cloned());
-    effects.derived_text_paths.extend(paths);
+    effects.json_serialized_paths.extend(
+        paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
+    effects.derived_text_paths.extend(
+        paths
+            .iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(path)),
+    );
     let mut serialized = EvalResult::with_effects(result.value, effects);
     serialized.json_payload_truth = payload_truth;
     serialized
@@ -602,7 +650,7 @@ pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
         || !paths.is_empty()
             && paths
                 .iter()
-                .all(|path| path_is_encoded(path, &result.effects.json_serialized_paths));
+                .all(|path| effect_path_is_encoded(path, &result.effects.json_serialized_paths));
     let mut effects = result.effects;
     let value = if round_trips_json {
         result
@@ -717,9 +765,12 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
         .as_ref()
         .is_some_and(is_structurally_rendered_yaml_value)
         && !paths.is_empty()
-        && paths
-            .iter()
-            .all(|path| result.effects.derived_text_paths.contains(path));
+        && paths.iter().all(|path| {
+            result
+                .effects
+                .derived_text_paths
+                .contains(&ValuesPath::parse(path))
+        });
     let output_meta = result
         .value
         .as_ref()
@@ -735,19 +786,23 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
         || !paths.is_empty()
             && paths
                 .iter()
-                .all(|path| path_is_encoded(path, &result.effects.yaml_serialized_paths));
+                .all(|path| effect_path_is_encoded(path, &result.effects.yaml_serialized_paths));
     let mut effects = result.effects;
     let string_input_paths = if round_trips_yaml {
         BTreeSet::new()
     } else {
         paths
             .iter()
-            .filter(|path| !path_is_encoded(path, &effects.yaml_serialized_paths))
+            .filter(|path| !effect_path_is_encoded(path, &effects.yaml_serialized_paths))
             .cloned()
             .collect::<BTreeSet<_>>()
     };
     record_string_consumer_effects(result.value.as_ref(), &string_input_paths, &mut effects);
-    effects.parsed_yaml_input_paths.extend(string_input_paths);
+    effects.parsed_yaml_input_paths.extend(
+        string_input_paths
+            .iter()
+            .map(|path| ValuesPath::parse(path)),
+    );
     let value = if round_trips_yaml {
         result.value
     } else if rendered_yaml_output {
@@ -799,7 +854,10 @@ pub(super) fn eval_join(
 pub(super) fn erase_join_input_shape(result: &mut EvalResult) {
     let paths = identity_value_paths(result.value.as_ref());
     result.effects.add_shape_erased_paths(paths.clone());
-    result.effects.derived_text_paths.extend(paths);
+    result
+        .effects
+        .derived_text_paths
+        .extend(paths.iter().map(|path| ValuesPath::parse(path)));
 }
 
 /// `cat` joins its arguments into one string, so the output content is the

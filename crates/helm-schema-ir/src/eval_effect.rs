@@ -9,80 +9,80 @@ use helm_schema_core::ValuesPath;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
-    pub(crate) output_paths: BTreeSet<String>,
-    pub(crate) bound_output_paths: BTreeSet<String>,
-    pub(crate) defaults: BTreeSet<String>,
+    pub(crate) output_paths: BTreeSet<ValuesPath>,
+    pub(crate) bound_output_paths: BTreeSet<ValuesPath>,
+    pub(crate) defaults: BTreeSet<ValuesPath>,
     pub(crate) observed_facts: ObservedFacts,
-    pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
-    pub(crate) yaml_serialized_paths: BTreeSet<String>,
+    pub(crate) parsed_yaml_input_paths: BTreeSet<ValuesPath>,
+    pub(crate) yaml_serialized_paths: BTreeSet<ValuesPath>,
     /// Paths serialized to YAML and then evaluated by `tpl`. Their
     /// collection shape survives, but template-bearing string leaves are
     /// programs whose rendered values reach the sink.
-    pub(crate) templated_yaml_paths: BTreeSet<String>,
-    pub(crate) json_serialized_paths: BTreeSet<String>,
-    pub(crate) encoded_paths: BTreeSet<String>,
+    pub(crate) templated_yaml_paths: BTreeSet<ValuesPath>,
+    pub(crate) json_serialized_paths: BTreeSet<ValuesPath>,
+    pub(crate) encoded_paths: BTreeSet<ValuesPath>,
     /// Total stringifications observed somewhere inside called helper
     /// bodies. They are execution facts for the caller's aggregate contract,
     /// not transformations of every returned occurrence of the same path.
-    pub(crate) helper_observed_shape_erased_paths: BTreeSet<String>,
+    pub(crate) helper_observed_shape_erased_paths: BTreeSet<ValuesPath>,
     /// Paths rendered through Sprig `quote`/`squote` in this expression:
     /// unlike every other total stringification, those SKIP nil operands
     /// entirely, so a missing or null source renders an explicit YAML
     /// null into the sink (traefik's `mountPath: {{ … | quote }}`).
-    pub(crate) nil_omitting_paths: BTreeSet<String>,
+    pub(crate) nil_omitting_paths: BTreeSet<ValuesPath>,
     /// Paths whose value in this expression IS the exact Go `%v` rendering
     /// of the path (`toString .Values.x` over a single identity operand).
     /// Unlike `shape_erased_paths` — which also covers `quote`, `join`,
     /// `len`, and the numeric casts, whose output is NOT that text — an
     /// equality on such a value projects its literal back through the
     /// `toString` preimage.
-    pub(crate) stringified_paths: BTreeSet<String>,
+    pub(crate) stringified_paths: BTreeSet<ValuesPath>,
     /// Paths whose value was replaced by derived text in this expression
     /// (`printf`, `quote`, `trunc`, `b64enc`, …): later transform stages
     /// operate on that text, so they claim nothing about the raw path.
-    pub(crate) derived_text_paths: BTreeSet<String>,
+    pub(crate) derived_text_paths: BTreeSet<ValuesPath>,
     /// Paths consumed as a DIRECT operand of a Sprig `merge` family call in
     /// this expression. The operand's strict map contract rides its own fail
     /// implication (keyed on the call's live gate), so the operand's splice
     /// row cannot itself reject a Helm-falsy value and the base falsy escape
     /// survives it. Only operands that ARE a path identity are recorded;
     /// constructed containers referencing a path abstain.
-    pub(crate) merge_operand_paths: BTreeSet<String>,
+    pub(crate) merge_operand_paths: BTreeSet<ValuesPath>,
     /// Literal keys an `omit` in this expression removed from the map at
     /// each path: whole-map sink typing must not bind those members
     /// (external-secrets' `OpenShift` `adaptSecurityContext` omit).
-    pub(crate) omitted_map_keys: BTreeMap<String, BTreeSet<String>>,
+    pub(crate) omitted_map_keys: BTreeMap<ValuesPath, BTreeSet<String>>,
     /// Range keys converted to text by an earlier pipeline stage.
-    pub(crate) derived_range_key_paths: BTreeSet<String>,
+    pub(crate) derived_range_key_paths: BTreeSet<ValuesPath>,
     /// Paths whose rendered text in THIS expression is `tpl`'s render of the
     /// raw value. `tpl` is the identity on template-ACTION-free input, so the
     /// sink's LEXICAL language still projects back onto the raw value (modulo
     /// values carrying `{{`) even though the semantic constraints observed on
     /// the render do not — those belong to the program's output, which is why
     /// the same paths are `derived_text_paths`.
-    pub(crate) templated_text_identity_paths: BTreeSet<String>,
+    pub(crate) templated_text_identity_paths: BTreeSet<ValuesPath>,
     /// Paths transformed only by ASCII case mapping in THIS expression.
     /// Case mapping preserves every character that can structurally end a
     /// plain YAML token, so a plain-slot sink still projects that lexical
     /// language even though the transform independently requires a string.
-    pub(crate) plain_text_preserving_paths: BTreeSet<String>,
+    pub(crate) plain_text_preserving_paths: BTreeSet<ValuesPath>,
     /// Paths substituted by a `%s` that opens a complete literal `printf`
     /// result. A plain-slot sink requires the selected raw arm to be a
     /// present, structurally safe string; other placements remain total.
-    pub(crate) plain_slot_string_format_paths: BTreeSet<String>,
+    pub(crate) plain_slot_string_format_paths: BTreeSet<ValuesPath>,
     /// Range-key paths whose rendered text in THIS expression still carries
     /// the raw key's token-ending characters: a `replace` whose token and
     /// replacement cannot introduce or remove one leaves the unquoted-slot
     /// language projectable back onto the collection's keys (crossplane's
     /// `replace "." "_"` over ranged env var keys).
-    pub(crate) plain_text_range_key_paths: BTreeSet<String>,
-    pub(crate) chart_default_paths: BTreeSet<String>,
-    pub(crate) local_default_paths: BTreeSet<String>,
+    pub(crate) plain_text_range_key_paths: BTreeSet<ValuesPath>,
+    pub(crate) chart_default_paths: BTreeSet<ValuesPath>,
+    pub(crate) local_default_paths: BTreeSet<ValuesPath>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
     /// Shallow (non-descending) `.Values` source paths of locals that were
     /// read by the expression. Guard-path seeding and expression path
     /// resolution consume this; output rows ride the value itself.
-    pub(crate) local_source_paths: BTreeSet<String>,
+    pub(crate) local_source_paths: BTreeSet<ValuesPath>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
     /// Literal root-context fields replaced by structural `set` calls.
     pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
@@ -103,7 +103,7 @@ pub(crate) struct Effects {
     pub(crate) helper_dependency_rendered: Vec<RenderedRow>,
     /// Predicate paths severed by index-call narrowing inside called
     /// helpers; ancestor guard reads absorb against them.
-    pub(crate) helper_suppressed_paths: BTreeSet<String>,
+    pub(crate) helper_suppressed_paths: BTreeSet<ValuesPath>,
     /// Captures of called helpers that hold only where the called body's
     /// rendered TEXT is consumed as YAML. Ordinary absorption ignores them:
     /// only a site that certified its own sink records them.
@@ -116,7 +116,7 @@ pub(crate) struct Effects {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct MemberHostConversion {
-    pub(crate) path: String,
+    pub(crate) path: ValuesPath,
     pub(crate) input_kind: String,
     pub(crate) outer_predicates: Vec<helm_schema_core::Predicate>,
 }
@@ -380,7 +380,11 @@ impl CaptureKind {
 impl Effects {
     pub(crate) fn from_value(value: &AbstractValue) -> Self {
         Self {
-            output_paths: value.paths(),
+            output_paths: value
+                .paths()
+                .into_iter()
+                .map(|path| ValuesPath::parse(&path))
+                .collect(),
             ..Self::default()
         }
     }
@@ -594,8 +598,12 @@ impl Effects {
     }
 
     pub(crate) fn add_default_paths(&mut self, paths: BTreeSet<String>) {
-        self.defaults
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+        self.defaults.extend(
+            paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty())
+                .map(|path| ValuesPath::parse(&path)),
+        );
     }
 
     pub(crate) fn add_fallback_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
@@ -622,13 +630,17 @@ impl Effects {
 
     pub(crate) fn add_encoded_paths(&mut self, paths: BTreeSet<String>) {
         self.clear_plain_slot_string_format_paths(&paths);
-        self.encoded_paths
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+        self.encoded_paths.extend(
+            paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty())
+                .map(|path| ValuesPath::parse(&path)),
+        );
     }
 
     pub(crate) fn clear_plain_slot_string_format_paths(&mut self, paths: &BTreeSet<String>) {
         self.plain_slot_string_format_paths
-            .retain(|path| !paths.contains(path));
+            .retain(|path| !paths.contains(&path.encode()));
         for path in paths {
             if let Some(meta) = self.local_output_meta.get_mut(path) {
                 meta.plain_slot_string_format = false;
@@ -648,18 +660,23 @@ impl Effects {
     }
 
     pub(crate) fn output_value_paths(&self) -> BTreeSet<String> {
-        let mut paths = self.output_paths.clone();
-        paths.extend(self.local_source_paths.iter().cloned());
+        let mut paths = self
+            .output_paths
+            .iter()
+            .map(ValuesPath::encode)
+            .collect::<BTreeSet<_>>();
+        paths.extend(self.local_source_paths.iter().map(ValuesPath::encode));
         paths.extend(self.local_output_meta.keys().cloned());
         paths.retain(|path| !path.trim().is_empty());
         paths
     }
 
     pub(crate) fn default_paths_with_local(&self) -> BTreeSet<String> {
-        let mut paths = self.defaults.clone();
-        paths.extend(self.local_default_paths.iter().cloned());
-        paths.retain(|path| !path.trim().is_empty());
-        paths
+        self.defaults
+            .iter()
+            .chain(&self.local_default_paths)
+            .map(ValuesPath::encode)
+            .collect()
     }
 
     pub(crate) fn merge_local_output_meta<'a>(
@@ -1105,7 +1122,12 @@ impl EvalResult {
 
     pub(crate) fn with_effects(value: Option<AbstractValue>, mut effects: Effects) -> Self {
         if let Some(value) = &value {
-            effects.output_paths.extend(value.paths());
+            effects.output_paths.extend(
+                value
+                    .paths()
+                    .into_iter()
+                    .map(|path| ValuesPath::parse(&path)),
+            );
         }
         Self {
             value,
@@ -1174,9 +1196,10 @@ impl EvalResult {
             }
             _ => return None,
         };
-        (!self.effects.defaults.contains(&path)
-            && !self.effects.local_default_paths.contains(&path)
-            && !self.effects.derived_text_paths.contains(&path)
+        let typed_path = ValuesPath::parse(&path);
+        (!self.effects.defaults.contains(&typed_path)
+            && !self.effects.local_default_paths.contains(&typed_path)
+            && !self.effects.derived_text_paths.contains(&typed_path)
             && self
                 .effects
                 .local_output_meta

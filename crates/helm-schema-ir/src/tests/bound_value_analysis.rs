@@ -35,6 +35,7 @@ fn extract_bound_values(
     eval_exprs_effects(&parse_expr_text(text), &env)
         .bound_output_paths
         .into_iter()
+        .map(|path| path.encode())
         .collect()
 }
 

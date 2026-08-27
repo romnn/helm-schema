@@ -212,9 +212,12 @@ pub(crate) fn default_primary_selection(result: &EvalResult) -> SelectionReachab
     if let Some(dispatch) = result.scalar_dispatch.as_ref()
         && (dispatch.has_printf_string_identity()
             || result.value.as_ref().is_some_and(|value| {
-                !value
-                    .paths()
-                    .is_disjoint(&result.effects.derived_text_paths)
+                value.paths().iter().any(|path| {
+                    result
+                        .effects
+                        .derived_text_paths
+                        .contains(&helm_schema_core::ValuesPath::parse(path))
+                })
             }))
     {
         return SelectionReachability::from((dispatch, SelectionPolarity::Falsy));
@@ -438,7 +441,9 @@ fn empty_rescue_paths(
     let is_empty_literal = |arm: &AbstractValue| matches!(arm, AbstractValue::StringSet(set) if set.len() == 1 && set.contains(""));
     let has_empty_literal_arm = arms.iter().any(|arm| is_empty_literal(arm));
     let stringified_in_effects = |path: &str| {
-        effects.stringified_paths.contains(path)
+        effects
+            .stringified_paths
+            .contains(&helm_schema_core::ValuesPath::parse(path))
             || effects
                 .local_output_meta
                 .get(path)
@@ -981,7 +986,7 @@ pub(super) fn eval_omit(
             .input_identity = true;
         base.effects
             .omitted_map_keys
-            .entry(path)
+            .entry(helm_schema_core::ValuesPath::parse(&path))
             .or_default()
             .extend(keys.iter().cloned());
     }
@@ -1057,11 +1062,15 @@ pub(super) fn eval_merge(
     // contract (airflow's per-set labels under the merged worker context).
     for value in &values {
         if let Some(path) = value.merge_layer_identity().filter(|path| !path.is_empty()) {
-            effects.merge_operand_paths.insert(path);
+            effects
+                .merge_operand_paths
+                .insert(helm_schema_core::ValuesPath::parse(&path));
         } else if let AbstractValue::MergedLayers(layers) = value {
             for layer in layers {
                 if let Some(path) = layer.merge_layer_identity().filter(|path| !path.is_empty()) {
-                    effects.merge_operand_paths.insert(path);
+                    effects
+                        .merge_operand_paths
+                        .insert(helm_schema_core::ValuesPath::parse(&path));
                 }
             }
         }
