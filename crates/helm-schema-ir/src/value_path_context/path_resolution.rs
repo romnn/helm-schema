@@ -386,7 +386,10 @@ fn single_member_collection_identity(value: &AbstractValue) -> Option<RangeSubje
 }
 
 fn path_preserves_range_shape(path: &str, effects: &Effects) -> bool {
-    !effects.observed_facts.shape_erased_paths.contains(path)
+    !effects
+        .observed_facts
+        .shape_erased_paths
+        .contains(&helm_schema_core::ValuesPath::parse(path))
         && !effects
             .derived_text_paths
             .contains(&helm_schema_core::ValuesPath::parse(path))

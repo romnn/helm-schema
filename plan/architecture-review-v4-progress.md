@@ -3229,7 +3229,7 @@
 
 ## B4a.5a — migrate expression-effect path channels
 
-- Status: ready to land; commit pending.
+- Status: landed in `c285745d` (`refactor(ir): type expression effect paths`).
 - Contract: representation-only migration of every value-path set and path-keyed map in IR's
   internal `Effects` carrier to segmented `ValuesPath`, plus the path on `MemberHostConversion`.
   Local/root variable names, mutation member keys, schema types, helper identifiers, rendered rows,
@@ -3352,3 +3352,117 @@
 
 - Measured production LOC delta: +256 (64,029 to 64,285). The increase is explicit parse/encode
   boundary code while adjacent carriers remain string-keyed; no LOC promise governs B4a.
+
+## B4a.5b — migrate observed-fact path carriers
+
+- Status: ready to land; commit pending.
+- Contract: representation-only migration of IR-internal `ObservedFacts` path keys and path sets to
+  segmented `ValuesPath`: type-hint map keys, shape-erased paths, and both target/source identities
+  on guarded and unguarded values-root overlays. Helper names, schema-type strings, `HintGrade`,
+  captures, `RangeModes`, and the public `ValuesDefaultSource` wire carrier remain unchanged.
+- Acceptance baseline: `c285745d` (B4a.5a).
+- Baseline production LOC: 64,285 Rust lines from `task tokei:core` on `c285745d`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, or corpus acceptance changes.
+  - `ObservedFacts::absorb`, `execution_only`, `promote_tested_type_hints`, and `map_value_paths`
+    retain every field and the same encoded ordering at string consumers.
+  - The public `ValuesDefaultSource` target/source strings are not silently narrowed in this IR
+    round; they will migrate with the phase-crossing contract-signal carrier and its Part-F record.
+  - No coercion trait, cross-type comparison, parallel encoded field, or unrelated string newtype
+    is allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - `ObservedFacts::type_hints` now maps segmented `ValuesPath` keys, and
+    `shape_erased_paths` is a typed set. Both guarded and unguarded values-root overlay facts carry
+    typed target/source identities through absorption, activation, remapping, and finalization.
+  - Producers publish typed identities at the observed-fact boundary; fragment and contract-signal
+    consumers encode only where their still-string carrier or public API requires it. The last
+    callers of the legacy `path_is_encoded` and string-keyed `insert_type_hint` helpers disappeared,
+    so both helpers were deleted.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `c285745d`.
+    The full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The public `ValuesDefaultSource` and its activated wrapper remain string-backed exactly as
+    pre-registered. They cross crate and wire boundaries and are scheduled with the remaining
+    contract-signal carrier round; no duplicate typed mirror was introduced here.
+  - Helper identifiers in `values_root_helper_includes`, schema-type values, grades, capture
+    payloads, and range modes remain in their already-correct domains. No rejected code preflight
+    or rejected artifact occurred in this round.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Hint producers and promotions | Same grades, types, and path keys | Expr-eval and observed-facts suites. |
+| Shape-erasure consumers | Same transform and lowering abstention | Transform, fragment, and schema suites. |
+| Values-root overlays | Same guarded target/source projection | Dependency/global and contract suites. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 393/393 IR tests pass, covering
+  hint grades and promotion, total conversions, helper transfer, values-root overlays, dependency
+  activation, fragment lowering, and contract-signal derivation. Whole-workspace Clippy passes
+  warning-free on the first lint preflight.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5b-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a5b-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 374 seconds.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5b-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a5b-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 261.585 seconds. A recursive byte comparison against the B4a.5a dump
+  exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5b-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a5b-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 4.586 seconds and 18 artifacts are
+  written. A recursive byte comparison against the B4a.5a dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5b-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=c285745d
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5b-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a5b-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a5b-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 106.604 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868
+  disclosed bounded reductions remain unchanged.
+- Public/wire decision: all narrowed fields are crate-private IR state. The public
+  `ValuesDefaultSource` representation is deliberately unchanged, so this round creates no public
+  API or wire-format obligation.
+
+### Self-adversarial pass
+
+- The exhaustive nine-field `ObservedFacts::absorb` and `map_value_paths` destructures retain every
+  channel. `execution_only` still clears only type hints, exactly as before.
+- Type-hint values remain schema-type strings, and values-root helper includes remain helper names;
+  neither domain was accidentally newtyped as a values path.
+- Root-overlay activation moves typed identities without an encode/parse cycle. Encoding occurs
+  only at final public contract-signal projection; dependency rebasing retains the explicit string
+  callback required by the existing phase boundary.
+- `ValuesPath` still supplies no coercion or cross-type comparison. Its manual legacy-order `Ord`
+  governs every migrated observed-fact set/map, and the byte-exact dumps prove stable ordering.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,003.70 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 192.921 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,649.437 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,654.107 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 24.47
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,298 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +13 (64,285 to 64,298). The two obsolete string helpers were
+  deleted; the net increase is explicit encoding at consumers whose carrier round is still due.

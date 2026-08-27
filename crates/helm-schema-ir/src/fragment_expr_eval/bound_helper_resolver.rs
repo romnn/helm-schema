@@ -102,10 +102,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 .into_iter()
                 .map(|path| helm_schema_core::ValuesPath::parse(&path))
                 .collect(),
-            helper_observed_shape_erased_paths: helper_observed_shape_erased_paths
-                .into_iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(&path))
-                .collect(),
+            helper_observed_shape_erased_paths,
             // An include renders its body to text, so every path the value
             // carries is derived text at the call site: a consuming stage
             // (`include … | trimAll`) must not claim contracts on the

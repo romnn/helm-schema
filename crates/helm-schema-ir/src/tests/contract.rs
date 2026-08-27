@@ -810,8 +810,8 @@ fn activation_guards_scope_dependency_root_overlay_twins() -> eyre::Result<()> {
     facts
         .values_root_overlays
         .insert(crate::observed_facts::ValuesRootOverlay {
-            target_path: "child".to_string(),
-            source_path: "child.profile".to_string(),
+            target_path: helm_schema_core::ValuesPath::parse("child"),
+            source_path: helm_schema_core::ValuesPath::parse("child.profile"),
         });
     contract.absorb_observed_facts(&facts);
     contract.append_guards_to_all_uses(&[Guard::Truthy {

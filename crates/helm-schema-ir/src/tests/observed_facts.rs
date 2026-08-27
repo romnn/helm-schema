@@ -16,11 +16,12 @@ fn hint_grades_absorb_without_parallel_lanes() {
     let mut observed = ObservedFacts::default();
     for (index, grade) in grades.into_iter().enumerate() {
         let path = format!("path{index}");
+        let typed_path = helm_schema_core::ValuesPath::parse(&path);
         let hints = BTreeSet::from(["string".to_owned()]);
-        observed.extend_type_hints(grade, &path, &hints);
+        observed.extend_type_hints(grade, &typed_path, &hints);
         sim_assert_eq!(
             have: observed.type_hints.get(&grade),
-            want: Some(&BTreeMap::from([(path, hints)]))
+            want: Some(&BTreeMap::from([(typed_path, hints)]))
         );
     }
 
@@ -29,13 +30,17 @@ fn hint_grades_absorb_without_parallel_lanes() {
         intent: HintIntent::Tested,
     };
     let mut other = ObservedFacts::default();
-    other.insert_type_hint(guarded_tested, "predicate".to_owned(), "boolean");
+    other.insert_type_hint(
+        guarded_tested,
+        helm_schema_core::ValuesPath::parse("predicate"),
+        "boolean",
+    );
     observed.absorb(&other);
 
     sim_assert_eq!(
         have: observed.type_hints.get(&guarded_tested),
         want: Some(&BTreeMap::from([(
-            "predicate".to_owned(),
+            helm_schema_core::ValuesPath::parse("predicate"),
             BTreeSet::from(["boolean".to_owned()]),
         )]))
     );

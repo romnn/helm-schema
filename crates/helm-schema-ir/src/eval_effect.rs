@@ -609,8 +609,11 @@ impl Effects {
     pub(crate) fn add_fallback_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
         for path in paths {
             if !path.trim().is_empty() {
-                self.observed_facts
-                    .insert_type_hint(HintGrade::FALLBACK, path, schema_type);
+                self.observed_facts.insert_type_hint(
+                    HintGrade::FALLBACK,
+                    ValuesPath::parse(&path),
+                    schema_type,
+                );
             }
         }
     }
@@ -618,8 +621,11 @@ impl Effects {
     pub(crate) fn add_tested_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
         for path in paths {
             if !path.trim().is_empty() {
-                self.observed_facts
-                    .insert_type_hint(HintGrade::TESTED, path, schema_type);
+                self.observed_facts.insert_type_hint(
+                    HintGrade::TESTED,
+                    ValuesPath::parse(&path),
+                    schema_type,
+                );
             }
         }
     }
@@ -654,9 +660,12 @@ impl Effects {
     }
 
     pub(crate) fn add_shape_erased_paths(&mut self, paths: BTreeSet<String>) {
-        self.observed_facts
-            .shape_erased_paths
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+        self.observed_facts.shape_erased_paths.extend(
+            paths
+                .into_iter()
+                .filter(|path| !path.trim().is_empty())
+                .map(|path| ValuesPath::parse(&path)),
+        );
     }
 
     pub(crate) fn output_value_paths(&self) -> BTreeSet<String> {

@@ -1778,12 +1778,6 @@ pub(crate) fn resolve_root_values_methods(tail: &[String]) -> Option<&[String]> 
     }
 }
 
-pub(crate) fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {
-    encoded_paths.iter().any(|encoded_path| {
-        path == encoded_path || helm_schema_core::values_path_is_descendant(path, encoded_path)
-    })
-}
-
 #[cfg(test)]
 #[path = "tests/abstract_value.rs"]
 mod tests;

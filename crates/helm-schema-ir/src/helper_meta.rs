@@ -398,20 +398,6 @@ pub(crate) fn values_paths_are_related(left: &str, right: &str) -> bool {
         || helm_schema_core::values_path_is_descendant(right, left)
 }
 
-pub(crate) fn insert_type_hint(
-    hints: &mut BTreeMap<String, BTreeSet<String>>,
-    path: String,
-    schema_type: &str,
-) {
-    if path.trim().is_empty() {
-        return;
-    }
-    hints
-        .entry(path)
-        .or_default()
-        .insert(schema_type.to_string());
-}
-
 /// Projects a lexical capture pattern through its escapes.
 ///
 /// Edge escapes compose: each wraps its own side of an anchored pattern

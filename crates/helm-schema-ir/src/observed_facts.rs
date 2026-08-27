@@ -1,8 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use helm_schema_core::ValuesPath;
+
 use crate::eval_effect::FailCapture;
 
-pub(crate) type TypeHints = BTreeMap<String, BTreeSet<String>>;
+pub(crate) type TypeHints = BTreeMap<ValuesPath, BTreeSet<String>>;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ActivatedValuesDefaultSource {
@@ -13,14 +15,14 @@ pub(crate) struct ActivatedValuesDefaultSource {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ActivatedValuesRootOverlay {
     pub(crate) guards: Vec<crate::Guard>,
-    pub(crate) target_path: String,
-    pub(crate) source_path: String,
+    pub(crate) target_path: ValuesPath,
+    pub(crate) source_path: ValuesPath,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ValuesRootOverlay {
-    pub(crate) target_path: String,
-    pub(crate) source_path: String,
+    pub(crate) target_path: ValuesPath,
+    pub(crate) source_path: ValuesPath,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -57,7 +59,7 @@ impl HintGrade {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct ObservedFacts {
     pub(crate) type_hints: BTreeMap<HintGrade, TypeHints>,
-    pub(crate) shape_erased_paths: BTreeSet<String>,
+    pub(crate) shape_erased_paths: BTreeSet<ValuesPath>,
     pub(crate) range_modes: crate::range_modes::RangeModes,
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     pub(crate) activated_values_default_sources: BTreeSet<ActivatedValuesDefaultSource>,
@@ -68,24 +70,33 @@ pub(crate) struct ObservedFacts {
 }
 
 impl ObservedFacts {
-    pub(crate) fn insert_type_hint(&mut self, grade: HintGrade, path: String, schema_type: &str) {
-        crate::helper_meta::insert_type_hint(
-            self.type_hints.entry(grade).or_default(),
-            path,
-            schema_type,
-        );
+    pub(crate) fn insert_type_hint(
+        &mut self,
+        grade: HintGrade,
+        path: ValuesPath,
+        schema_type: &str,
+    ) {
+        if path.segments().next().is_none() {
+            return;
+        }
+        self.type_hints
+            .entry(grade)
+            .or_default()
+            .entry(path)
+            .or_default()
+            .insert(schema_type.to_string());
     }
 
     pub(crate) fn extend_type_hints(
         &mut self,
         grade: HintGrade,
-        path: &str,
+        path: &ValuesPath,
         hints: &BTreeSet<String>,
     ) {
         self.type_hints
             .entry(grade)
             .or_default()
-            .entry(path.to_owned())
+            .entry(path.clone())
             .or_default()
             .extend(hints.iter().cloned());
     }
@@ -123,13 +134,16 @@ impl ObservedFacts {
         for paths in type_hints.values_mut() {
             let mut mapped = TypeHints::new();
             for (path, hints) in std::mem::take(paths) {
-                mapped.entry(map(&path)).or_default().extend(hints);
+                mapped
+                    .entry(ValuesPath::parse(&map(&path.encode())))
+                    .or_default()
+                    .extend(hints);
             }
             *paths = mapped;
         }
         *shape_erased_paths = std::mem::take(shape_erased_paths)
             .into_iter()
-            .map(|path| map(&path))
+            .map(|path| ValuesPath::parse(&map(&path.encode())))
             .collect();
         range_modes.map_value_paths(map);
         *values_default_sources = std::mem::take(values_default_sources)
@@ -156,8 +170,8 @@ impl ObservedFacts {
         *values_root_overlays = std::mem::take(values_root_overlays)
             .into_iter()
             .map(|fact| ValuesRootOverlay {
-                target_path: map(&fact.target_path),
-                source_path: map(&fact.source_path),
+                target_path: ValuesPath::parse(&map(&fact.target_path.encode())),
+                source_path: ValuesPath::parse(&map(&fact.source_path.encode())),
             })
             .collect();
         *activated_values_root_overlays = std::mem::take(activated_values_root_overlays)
@@ -168,8 +182,8 @@ impl ObservedFacts {
                     .into_iter()
                     .map(|guard| guard.map_value_paths(map))
                     .collect(),
-                target_path: map(&fact.target_path),
-                source_path: map(&fact.source_path),
+                target_path: ValuesPath::parse(&map(&fact.target_path.encode())),
+                source_path: ValuesPath::parse(&map(&fact.source_path.encode())),
             })
             .collect();
         *captures = std::mem::take(captures)

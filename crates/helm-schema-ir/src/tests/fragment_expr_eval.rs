@@ -2265,7 +2265,7 @@ fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains("server.namespaces"),
+            .contains(&helm_schema_core::ValuesPath::parse("server.namespaces")),
         "a body-wide observation must not transform every returned occurrence: {result:#?}",
     );
 

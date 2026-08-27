@@ -191,7 +191,7 @@ pub(super) fn escape_wrapped_identity(
     match value {
         AbstractValue::ValuesPath(path) => {
             let encoded = path.encode();
-            if effects.observed_facts.shape_erased_paths.contains(&encoded)
+            if effects.observed_facts.shape_erased_paths.contains(path)
                 || effects.derived_text_paths.contains(path)
                 || effects
                     .local_output_meta

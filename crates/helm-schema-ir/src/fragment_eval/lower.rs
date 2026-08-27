@@ -38,7 +38,7 @@
 use std::collections::BTreeSet;
 
 use crate::ValueKind;
-use crate::abstract_value::{AbstractValue, path_is_encoded};
+use crate::abstract_value::AbstractValue;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{ScalarRenderPart, ScalarValueDispatch};
 use helm_schema_core::{Predicate, ValuesPath};
@@ -91,7 +91,7 @@ pub(crate) struct LowerScope<'a> {
     pub(crate) merge_operand_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) yaml_serialized_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) templated_yaml_paths: &'a BTreeSet<ValuesPath>,
-    pub(crate) shape_erased_paths: &'a BTreeSet<String>,
+    pub(crate) shape_erased_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) stringified_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) nil_omitting_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) plain_slot_string_format_paths: &'a BTreeSet<ValuesPath>,
@@ -120,7 +120,7 @@ impl LowerScope<'_> {
                 defaulted,
                 encoded: values_path_is_encoded(&values_path, self.encoded_paths),
                 shape_erased: helper_meta.is_some_and(|meta| meta.shape_erased)
-                    || path_is_encoded(path, self.shape_erased_paths),
+                    || values_path_is_encoded(&values_path, self.shape_erased_paths),
                 stringified: helper_meta.is_some_and(|meta| meta.stringified)
                     || values_path_is_encoded(&values_path, self.stringified_paths),
                 nil_omitted: helper_meta.is_some_and(|meta| meta.nil_omitted)
@@ -493,7 +493,10 @@ pub(crate) fn lower_value(
                                     &ValuesPath::parse(path),
                                     scope.derived_text_paths,
                                 )
-                                && !path_is_encoded(path, scope.shape_erased_paths)
+                                && !values_path_is_encoded(
+                                    &ValuesPath::parse(path),
+                                    scope.shape_erased_paths,
+                                )
                                 && !values_path_is_encoded(
                                     &ValuesPath::parse(path),
                                     scope.encoded_paths,
@@ -515,7 +518,7 @@ pub(crate) fn lower_value(
                 // slot's provider schema constrains nothing about the raw
                 // value; the Serialized kind carries that abstention.
                 let kind = if taint.iter().all(|path| {
-                    path_is_encoded(path, scope.shape_erased_paths)
+                    values_path_is_encoded(&ValuesPath::parse(path), scope.shape_erased_paths)
                         || values_path_is_encoded(
                             &ValuesPath::parse(path),
                             scope.derived_text_paths,

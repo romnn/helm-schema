@@ -236,7 +236,7 @@ fn parser_operand_identity_paths(
             AbstractValue::ValuesPath(path) => {
                 let encoded = path.encode();
                 if total_string_preimage
-                    || (!effects.observed_facts.shape_erased_paths.contains(&encoded)
+                    || (!effects.observed_facts.shape_erased_paths.contains(path)
                         && !effects.derived_text_paths.contains(path))
                 {
                     paths.insert(encoded);
@@ -244,7 +244,10 @@ fn parser_operand_identity_paths(
             }
             AbstractValue::JsonDecodedPath(path) => {
                 if total_string_preimage
-                    || (!effects.observed_facts.shape_erased_paths.contains(path)
+                    || (!effects
+                        .observed_facts
+                        .shape_erased_paths
+                        .contains(&helm_schema_core::ValuesPath::parse(path))
                         && !effects
                             .derived_text_paths
                             .contains(&helm_schema_core::ValuesPath::parse(path)))
@@ -900,7 +903,10 @@ fn push_value_pattern_capture(
 
 fn strict_operand_path_is_clean(path: &str, effects: &Effects) -> bool {
     let typed_path = helm_schema_core::ValuesPath::parse(path);
-    !effects.observed_facts.shape_erased_paths.contains(path)
+    !effects
+        .observed_facts
+        .shape_erased_paths
+        .contains(&typed_path)
         && !effects.derived_text_paths.contains(&typed_path)
         && !effects
             .local_output_meta

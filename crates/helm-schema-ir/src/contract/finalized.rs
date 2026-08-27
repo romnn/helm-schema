@@ -83,15 +83,15 @@ impl FinalizedContract {
             .map(|((target_path, source_path), guard_sets)| {
                 (
                     activation_guard_disjunction(guard_sets),
-                    target_path,
-                    source_path,
+                    target_path.encode(),
+                    source_path.encode(),
                 )
             })
             .chain(observed_facts.values_root_overlays.iter().map(|fact| {
                 (
                     Vec::new(),
-                    fact.target_path.clone(),
-                    fact.source_path.clone(),
+                    fact.target_path.encode(),
+                    fact.source_path.encode(),
                 )
             }))
             .collect::<Vec<_>>();

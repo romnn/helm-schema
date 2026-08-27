@@ -275,7 +275,7 @@ impl Interpreter<'_> {
         effects
             .observed_facts
             .shape_erased_paths
-            .retain(|path| !strict_paths.contains(path));
+            .retain(|path| !strict_paths.contains(&path.encode()));
 
         let has_helper_claims = !effects.helper_reads.is_empty()
             || !effects.helper_rendered.is_empty()
@@ -292,7 +292,7 @@ impl Interpreter<'_> {
                     .type_hints
                     .iter()
                     .filter(|(grade, _)| grade.intent != HintIntent::Tested)
-                    .flat_map(|(_, hints)| hints.keys().cloned()),
+                    .flat_map(|(_, hints)| hints.keys().map(helm_schema_core::ValuesPath::encode)),
             );
         }
         self.absorb_hole_effects(&effects, RenderedDemotion::None);
@@ -448,11 +448,11 @@ impl Interpreter<'_> {
                 continue;
             }
             for (path, hints) in paths {
-                if path.trim().is_empty() {
+                if path.segments().next().is_none() {
                     continue;
                 }
                 let scope = if grade.scope == HintScope::Guarded
-                    || !self.hint_scope_is_unconditional(path)
+                    || !self.hint_scope_is_unconditional(&path.encode())
                 {
                     HintScope::Guarded
                 } else {
@@ -518,7 +518,7 @@ impl Interpreter<'_> {
         }
         self.observed_facts
             .shape_erased_paths
-            .extend(encoded_paths(&effects.helper_observed_shape_erased_paths));
+            .extend(effects.helper_observed_shape_erased_paths.iter().cloned());
         let bound_reads: Vec<String> = encoded_paths(&effects.bound_output_paths).collect();
         for path in bound_reads {
             self.push_read(&path, &[]);

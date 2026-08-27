@@ -712,7 +712,7 @@ pub(super) fn eval_split_list(
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains(path)
+            .contains(&helm_schema_core::ValuesPath::parse(path))
             || result
                 .effects
                 .local_output_meta
@@ -769,7 +769,7 @@ pub(super) fn eval_regex_split(
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains(path)
+            .contains(&helm_schema_core::ValuesPath::parse(path))
             || subject
                 .effects
                 .local_output_meta
@@ -1034,8 +1034,8 @@ pub(super) fn eval_merge(
             if let Some(path) = source.unique_path().filter(|path| !path.is_empty()) {
                 effects.observed_facts.values_root_overlays.insert(
                     crate::observed_facts::ValuesRootOverlay {
-                        target_path: String::new(),
-                        source_path: path,
+                        target_path: helm_schema_core::ValuesPath::parse(""),
+                        source_path: helm_schema_core::ValuesPath::parse(&path),
                     },
                 );
             }

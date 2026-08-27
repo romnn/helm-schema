@@ -250,8 +250,11 @@ impl ContractIr {
         if path.trim().is_empty() || schema_type.trim().is_empty() {
             return;
         }
-        self.observed_facts
-            .insert_type_hint(HintGrade::DECLARED, path, &schema_type);
+        self.observed_facts.insert_type_hint(
+            HintGrade::DECLARED,
+            helm_schema_core::ValuesPath::parse(&path),
+            &schema_type,
+        );
     }
 
     pub(crate) fn absorb_observed_facts(&mut self, facts: &ObservedFacts) {

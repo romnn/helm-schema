@@ -69,10 +69,10 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     // "true")`); the fact carries the same serialized dominance a
     // stringified render does.
     for value_path in &observed_facts.shape_erased_paths {
-        if value_path.trim().is_empty() {
+        if value_path.segments().next().is_none() {
             continue;
         }
-        let acc = path_accumulator(&mut paths, value_path);
+        let acc = path_accumulator(&mut paths, &value_path.encode());
         acc.referenced = true;
         acc.facts.facts.used_as_serialized = true;
     }
@@ -83,10 +83,10 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
                 .filter(|schema_type| !schema_type.trim().is_empty())
                 .cloned()
                 .collect::<BTreeSet<_>>();
-            if value_path.trim().is_empty() || schema_types.is_empty() {
+            if value_path.segments().next().is_none() || schema_types.is_empty() {
                 continue;
             }
-            let acc = path_accumulator(&mut paths, value_path);
+            let acc = path_accumulator(&mut paths, &value_path.encode());
             acc.referenced = true;
             match (grade.scope, grade.intent) {
                 (HintScope::Unconditional, HintIntent::Declared) => {

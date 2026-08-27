@@ -273,7 +273,7 @@ fn string_transform_pipeline_preserves_all_printf_argument_paths() {
                 .observed_facts
                 .type_hints
                 .get(&HintGrade::DECLARED)
-                .and_then(|hints| hints.get(path)),
+                .and_then(|hints| hints.get(&capture_path(path))),
             want: None,
             "{path} must not inherit trunc's contract through printf"
         );
@@ -290,7 +290,7 @@ fn quote_pipeline_erases_input_shape_without_typing() {
             .observed_facts
             .type_hints
             .get(&HintGrade::DECLARED)
-            .and_then(|hints| hints.get("flag")),
+            .and_then(|hints| hints.get(&capture_path("flag"))),
         want: None,
         "quote renders any input through strval, so it types nothing"
     );
@@ -299,7 +299,7 @@ fn quote_pipeline_erases_input_shape_without_typing() {
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains("flag"),
+            .contains(&capture_path("flag")),
         "the sink observes quote's rendered text, never the input shape"
     );
 }
@@ -587,7 +587,7 @@ fn unsupported_printf_format_types_nothing_without_exact_string() {
             .observed_facts
             .type_hints
             .get(&HintGrade::DECLARED)
-            .and_then(|hints| hints.get("count")),
+            .and_then(|hints| hints.get(&capture_path("count"))),
         want: None,
         "Go fmt embeds verb mismatches in the output instead of failing, so printf types nothing"
     );
@@ -625,7 +625,7 @@ fn pipeline_ternary_collapses_value_but_keeps_branch_facts() {
             .observed_facts
             .type_hints
             .get(&HintGrade::DECLARED)
-            .and_then(|hints| hints.get("config")),
+            .and_then(|hints| hints.get(&capture_path("config"))),
         want: None,
         "a type test selects an output arm; it does not restrict the input domain"
     );
@@ -635,7 +635,7 @@ fn pipeline_ternary_collapses_value_but_keeps_branch_facts() {
             .observed_facts
             .type_hints
             .get(&HintGrade::GUARDED_DECLARED)
-            .and_then(|hints| hints.get("config")),
+            .and_then(|hints| hints.get(&capture_path("config"))),
         want: Some(&BTreeSet::from(["string".to_string()])),
         "the tested arm remains an accepted output alternative"
     );
@@ -1981,7 +1981,7 @@ fn coercing_arithmetic_erases_raw_operand_shape() {
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains("pct"),
+            .contains(&capture_path("pct")),
         "arithmetic operand shape is coerced, not constrained: {:?}",
         result.effects.observed_facts.shape_erased_paths
     );
@@ -1991,7 +1991,7 @@ fn coercing_arithmetic_erases_raw_operand_shape() {
             .observed_facts
             .type_hints
             .get(&HintGrade::DECLARED)
-            .and_then(|hints| hints.get("pct")),
+            .and_then(|hints| hints.get(&capture_path("pct"))),
         want: None,
         "arithmetic must not type its raw operand"
     );
@@ -2007,7 +2007,7 @@ fn division_operand_is_not_arithmetic_erased() {
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains("count"),
+            .contains(&capture_path("count")),
         "div is not part of the coercing-arithmetic catalog"
     );
 }

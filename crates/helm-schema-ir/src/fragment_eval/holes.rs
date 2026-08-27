@@ -470,10 +470,7 @@ impl Interpreter<'_> {
         // slot renders, so the raw value's own characters no longer reach it
         // (external-dns's `{{ tpl $value $ | b64enc | quote }}`).
         let reaches_slot = |path: &helm_schema_core::ValuesPath| {
-            !effects
-                .observed_facts
-                .shape_erased_paths
-                .contains(&path.encode())
+            !effects.observed_facts.shape_erased_paths.contains(path)
                 && !effects.encoded_paths.contains(path)
                 && !effects.yaml_serialized_paths.contains(path)
         };
