@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use crate::{Guard, GuardValue};
+use crate::{Guard, GuardValue, ValuesPath};
 
 /// How an inexact predicate participates in later semantic projection.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -28,7 +28,7 @@ pub enum Predicate {
         /// Stable description of the expression shape that could not be lowered.
         marker: String,
         /// Values paths mentioned by the unlowerable expression.
-        paths: BTreeSet<String>,
+        paths: BTreeSet<ValuesPath>,
         /// Whether the subset describes ordinary execution or returned-value
         /// selection.
         role: ApproximationRole,
@@ -89,7 +89,10 @@ impl Predicate {
     pub fn approximate(marker: impl Into<String>, paths: BTreeSet<String>) -> Self {
         Self::Approximate {
             marker: marker.into(),
-            paths,
+            paths: paths
+                .into_iter()
+                .map(|path| ValuesPath::parse(&path))
+                .collect(),
             role: ApproximationRole::Control,
             sound_subset: None,
         }
@@ -111,7 +114,10 @@ impl Predicate {
         };
         Self::Approximate {
             marker: marker.into(),
-            paths,
+            paths: paths
+                .into_iter()
+                .map(|path| ValuesPath::parse(&path))
+                .collect(),
             role: ApproximationRole::Control,
             sound_subset,
         }
@@ -129,7 +135,10 @@ impl Predicate {
         .then(|| Box::new(sound_subset.normalize_boolean()));
         Self::Approximate {
             marker: marker.into(),
-            paths,
+            paths: paths
+                .into_iter()
+                .map(|path| ValuesPath::parse(&path))
+                .collect(),
             role: ApproximationRole::Control,
             sound_subset,
         }
@@ -148,7 +157,10 @@ impl Predicate {
         .then(|| Box::new(sound_subset.normalize_boolean()));
         Self::Approximate {
             marker: marker.into(),
-            paths,
+            paths: paths
+                .into_iter()
+                .map(|path| ValuesPath::parse(&path))
+                .collect(),
             role: ApproximationRole::OutputSelection,
             sound_subset,
         }
@@ -325,7 +337,7 @@ impl Predicate {
     fn collect_value_paths(&self, out: &mut BTreeSet<String>) {
         match self {
             Self::True | Self::False => {}
-            Self::Approximate { paths, .. } => out.extend(paths.iter().cloned()),
+            Self::Approximate { paths, .. } => out.extend(paths.iter().map(ValuesPath::encode)),
             Self::Guard(guard) => {
                 for path in guard.value_paths() {
                     out.insert(path.to_string());
@@ -425,7 +437,10 @@ impl Predicate {
                 sound_subset,
             } => Self::Approximate {
                 marker,
-                paths: paths.into_iter().map(|path| map(&path)).collect(),
+                paths: paths
+                    .into_iter()
+                    .map(|path| ValuesPath::parse(&map(&path.encode())))
+                    .collect(),
                 role,
                 sound_subset: sound_subset
                     .map(|predicate| Box::new(predicate.map_value_paths(map))),

@@ -253,7 +253,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
         want: Some(GuardDnf::from_conjunction([
             Predicate::Approximate {
                 marker: "0:0:0:1".to_string(),
-                paths: BTreeSet::from(["master.count".to_string()]),
+                paths: BTreeSet::from([helm_schema_core::ValuesPath::parse("master.count")]),
                 role: ApproximationRole::Control,
                 sound_subset: Some(Box::new(int_gt)),
             },

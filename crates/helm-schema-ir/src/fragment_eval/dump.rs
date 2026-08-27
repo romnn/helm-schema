@@ -137,7 +137,11 @@ fn fmt_condition(condition: &Predicate) -> String {
         Predicate::Approximate { paths, .. } => {
             format!(
                 "approximate({})",
-                paths.iter().cloned().collect::<Vec<_>>().join(", ")
+                paths
+                    .iter()
+                    .map(helm_schema_core::ValuesPath::encode)
+                    .collect::<Vec<_>>()
+                    .join(", ")
             )
         }
         Predicate::Guard(guard) => fmt_guard(guard),

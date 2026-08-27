@@ -2709,7 +2709,7 @@
 
 ## B4a.2c — migrate fragment splice paths
 
-- Status: complete; commit pending.
+- Status: landed in `19f74410`.
 - Contract: representation-only migration of fragment `Splice.values_path` to segmented
   `ValuesPath`. Fragment construction, placement, metadata lookup, rendered-row projection, and
   capture boundaries must preserve exact encoded output.
@@ -2771,3 +2771,106 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +2 (63,682 to 63,684).
+
+## B4a.3a — migrate predicate approximation paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of `Predicate::Approximate.paths` to a segmented
+  `BTreeSet<ValuesPath>`, the first compiler-bounded core guard subround. Atomic `Guard` and
+  `ConditionalGuard` payloads follow separately. Approximation markers remain strings.
+- Acceptance baseline: `19f74410` (B4a.2c).
+- Baseline production LOC: 63,684 Rust lines from `task tokei:core` on `19f74410`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, JSON wire, ordering, or corpus acceptance changes.
+  - Predicate ordering and diagnostic path bytes stay exact. Public approximation constructors
+    accept explicit `ValuesPath` sets; downstream callers parse only at genuine AST/text boundaries.
+    No coercion traits or string comparison shims are added.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results: `Predicate::Approximate.paths` now stores segmented `ValuesPath` values.
+  Approximation construction parses transient source strings exactly once, collection encodes only
+  at the existing public string boundary, remapping performs the existing string callback before
+  rebuilding typed identities, and the fragment dump encodes explicitly. All 30 focused core
+  predicate/guard tests pass. Schema and symbolic-IR dumps are recursively byte-exact; 60 charts
+  and 121,055 probes report zero flips, zero mandatory drops, and zero candidate-accepts/Helm-aborts
+  cells.
+- Deviations:
+  - The pre-registration named atomic `Guard`, `ConditionalGuard`, and approximation carriers as
+    one core guard round. The compile surface proved each domain independently large enough to
+    audit, so the round was split at compiler-enforced carrier boundaries: B4a.3a types only
+    approximation storage; atomic and conditional guards follow in separate byte-exact rounds. No
+    archive, dump, or fixture from the combined preflight is adopted.
+  - The pre-registration expected the four public approximation constructors to accept
+    `BTreeSet<ValuesPath>`. Their callers are parser/text boundaries that produce transient paths,
+    and narrowing them would export conversion work without removing another persistent string
+    carrier. The constructors therefore retain their existing `BTreeSet<String>` API and parse
+    once into typed enum storage. Direct enum construction now uses the typed field. This preserves
+    the public insertion boundary while eliminating the stored JSON-shape protocol.
+- Adjudication evidence: zero flips require no Helm cell adjudication; adjudication ran enabled with
+  zero unallowed accepted-abort cells.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Approximation constructors | Same markers, roles, and subsets | Predicate truth-table suites. |
+| Path mapping/collection | Same rewritten encoded paths and order | Exhaustive mapping tests. |
+| IR/gen consumers | Same behavior and output | Full workspace, dumps, and prober. |
+
+### Review dossier
+
+- Focused proof: 30/30 core predicate and `GuardDnf` tests pass. Workspace all-target compilation
+  and the 393-test focused IR suite pass during the compiler-guided migration.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3a-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a3a-final1.tar.zst`; exit 0, 87
+  binaries and 125 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3a-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a3a-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass. A recursive byte comparison against the B4a.2c dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3a-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a3a-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes and 18 artifacts are written. A
+  recursive byte comparison against the B4a.2c dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3a-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=19f74410
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3a-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3a-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a3a-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0, 60 charts, 121,055 probes, zero flips, and zero unallowed accepted-abort
+  cells. Mandatory base and third-level categories have zero drops; 28,868 disclosed bounded
+  reductions remain unchanged.
+- Public/wire decision: the public `Predicate::Approximate` variant's stored `paths` field narrows
+  from `BTreeSet<String>` to `BTreeSet<ValuesPath>` for direct enum construction. The four public
+  constructors deliberately retain their string insertion API, and all diagnostic/dump bytes and
+  ordering remain exact. `Predicate` has no serialized wire format.
+
+### Self-adversarial pass
+
+- Approximation markers remain strings because they describe source-expression shapes, not values
+  identities. Persistent path storage is typed; only public source insertion, collection, remap,
+  and dump boundaries encode or parse.
+- `ValuesPath` still has no `Deref`, `AsRef<str>`, or `Display`; the dump must name the explicit
+  encoding boundary. Manual ordering therefore continues to prove legacy encoded-string order
+  rather than relying on a string compatibility escape hatch.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free.
+- `task lint:fc`; exit 0, 48 combinations, 13 packages, three targets; 1,678.38 seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass; 111.710 seconds.
+- `task test:integration`; exit 0, 558 pass, 24 skipped; 926.950 seconds.
+- `task test:all`; exit 0, 1,870 pass, 24 skipped including live-network tests; 981.896 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 63,703 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +19 (63,684 to 63,703).
