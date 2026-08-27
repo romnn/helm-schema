@@ -9,6 +9,10 @@ use vfs::VfsPath;
 use crate::analysis::analyze_charts;
 use test_util::prelude::sim_assert_eq;
 
+fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::parse(value)
+}
+
 use crate::chart;
 
 macro_rules! contract_schema_signals {
@@ -269,7 +273,7 @@ fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped() -> eyre:
                 matches!(
                     guard,
                     helm_schema_core::ConditionalGuard::Truthy { path: guard_path }
-                        if guard_path == path
+                        if guard_path == &conditional_path(path)
                 )
             })
         }),
@@ -319,7 +323,7 @@ fn bitnami_redis_existing_secret_string_contract_stays_branch_scoped() -> eyre::
                     matches!(
                         guard,
                         helm_schema_core::ConditionalGuard::Truthy { path: guard_path }
-                            if guard_path == path
+                            if guard_path == &conditional_path(path)
                     )
                 })
             }),
@@ -370,7 +374,7 @@ fn selected_string_contract_preserves_only_live_provider_preimages() -> eyre::Re
                     matches!(
                         guard,
                         helm_schema_core::ConditionalGuard::Truthy { path }
-                            if path == "nameOverride"
+                            if path == &conditional_path("nameOverride")
                     )
                 })
             }),
@@ -423,7 +427,7 @@ fn harbor_defaulted_secret_string_contract_keeps_its_truthy_tooth() -> eyre::Res
                     matches!(
                         guard,
                         helm_schema_core::ConditionalGuard::Truthy { path: guard_path }
-                            if guard_path == path
+                            if guard_path == &conditional_path(path)
                     )
                 })
             });
@@ -570,23 +574,23 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> eyre::Re
         have: &overlay.guards,
         want: &vec![
             helm_schema_ir::ConditionalGuard::Truthy {
-                path: "signoz.smtpVars.enabled".to_string(),
+                path: conditional_path("signoz.smtpVars.enabled"),
             },
             helm_schema_ir::ConditionalGuard::AnyOf(vec![
                 helm_schema_ir::ConditionalGuard::Truthy {
-                    path: "signoz.smtpVars.existingSecret.fromKey".to_string(),
+                    path: conditional_path("signoz.smtpVars.existingSecret.fromKey"),
                 },
                 helm_schema_ir::ConditionalGuard::Truthy {
-                    path: "signoz.smtpVars.existingSecret.hostKey".to_string(),
+                    path: conditional_path("signoz.smtpVars.existingSecret.hostKey"),
                 },
                 helm_schema_ir::ConditionalGuard::Truthy {
-                    path: "signoz.smtpVars.existingSecret.passwordKey".to_string(),
+                    path: conditional_path("signoz.smtpVars.existingSecret.passwordKey"),
                 },
                 helm_schema_ir::ConditionalGuard::Truthy {
-                    path: "signoz.smtpVars.existingSecret.portKey".to_string(),
+                    path: conditional_path("signoz.smtpVars.existingSecret.portKey"),
                 },
                 helm_schema_ir::ConditionalGuard::Truthy {
-                    path: "signoz.smtpVars.existingSecret.usernameKey".to_string(),
+                    path: conditional_path("signoz.smtpVars.existingSecret.usernameKey"),
                 },
             ]),
         ]
@@ -685,7 +689,9 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
                 matches!(
                     guard,
                     helm_schema_ir::ConditionalGuard::Truthy { path }
-                    if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                    if path == &conditional_path(
+                        "clickhouse.clickhouseOperator.serviceAccount.create"
+                    )
                 )
             })
         }),
@@ -700,7 +706,9 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
                     if matches!(
                         inner.as_ref(),
                         helm_schema_ir::ConditionalGuard::Truthy { path }
-                        if path == "clickhouse.clickhouseOperator.serviceAccount.create"
+                        if path == &conditional_path(
+                            "clickhouse.clickhouseOperator.serviceAccount.create"
+                        )
                     )
                 )
             })

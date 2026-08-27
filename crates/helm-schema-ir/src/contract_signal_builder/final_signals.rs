@@ -63,8 +63,15 @@ fn provider_use_depends_on_kind_selector(use_: &ProviderSchemaUse) -> bool {
     !use_.resource.kind_candidates.is_empty() || !use_.resource.kind_branches.is_empty()
 }
 
-fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> Option<String> {
-    fn collect(guard: &ConditionalGuard, kinds: &BTreeSet<String>, out: &mut BTreeSet<String>) {
+fn kind_selector_path(
+    guards: &[ConditionalGuard],
+    kinds: &BTreeSet<String>,
+) -> Option<helm_schema_core::ValuesPath> {
+    fn collect(
+        guard: &ConditionalGuard,
+        kinds: &BTreeSet<String>,
+        out: &mut BTreeSet<helm_schema_core::ValuesPath>,
+    ) {
         match guard {
             ConditionalGuard::Eq {
                 path,
@@ -315,7 +322,8 @@ impl ContractPathAccumulator {
                     [ConditionalGuard::Not(inner)]
                         if matches!(
                             inner.as_ref(),
-                            ConditionalGuard::Absent { path } if path == &value_path
+                            ConditionalGuard::Absent { path }
+                                if path == &helm_schema_core::ValuesPath::parse(&value_path)
                         )
                 ) {
                     // A property schema is consulted only while that property
@@ -408,13 +416,13 @@ impl ContractPathAccumulator {
                 for guard in &guards {
                     match guard {
                         ConditionalGuard::TypeIs { path, schema_type }
-                            if path == value_path.as_str() =>
+                            if path == &helm_schema_core::ValuesPath::parse(&value_path) =>
                         {
                             branch_hints.retain(|hint| hint == schema_type);
                         }
                         ConditionalGuard::Not(inner) => {
                             if let ConditionalGuard::TypeIs { path, schema_type } = inner.as_ref()
-                                && path == value_path.as_str()
+                                && path == &helm_schema_core::ValuesPath::parse(&value_path)
                             {
                                 branch_hints.retain(|hint| hint != schema_type);
                             }

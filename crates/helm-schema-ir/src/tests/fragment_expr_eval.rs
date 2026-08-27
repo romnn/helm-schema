@@ -17,6 +17,10 @@ use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition};
 use test_util::prelude::sim_assert_eq;
 
+fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::parse(value)
+}
+
 fn helper_result_from_expr_with_fragment_locals(
     expr: &TemplateExpr,
     fragment_locals: &HashMap<String, AbstractValue>,
@@ -99,13 +103,13 @@ fn yaml_serialization_requires_presence_only_with_coexecuting_mapping_members() 
         have: clauses,
         want: vec![vec![
             ConditionalGuard::Truthy {
-                path: "config.create".to_string(),
+                path: conditional_path("config.create"),
             },
             ConditionalGuard::Absent {
-                path: "config.data".to_string(),
+                path: conditional_path("config.data"),
             },
             ConditionalGuard::Not(ConditionalGuard::Truthy {
-                path: "config.clusterWide".to_string(),
+                path: conditional_path("config.clusterWide"),
             }
             .into()),
         ]]
@@ -151,11 +155,11 @@ fn helper_yaml_serialization_keeps_its_fixed_sequence_sibling() {
         have: clauses,
         want: vec![vec![
             ConditionalGuard::Eq {
-                path: "kind".to_string(),
+                path: conditional_path("kind"),
                 value: GuardValue::string("DaemonSet"),
             },
             ConditionalGuard::Absent {
-                path: "daemonSetVolumeMounts".to_string(),
+                path: conditional_path("daemonSetVolumeMounts"),
             },
         ]]
     );
@@ -276,11 +280,11 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
                     overlay.guards
                         == [
                             ConditionalGuard::IntGt {
-                                path: "master.count".to_string(),
+                                path: conditional_path("master.count"),
                                 bound: 0,
                             },
                             ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                                path: "sentinel.enabled".to_string(),
+                                path: conditional_path("sentinel.enabled"),
                             })),
                         ]
                 })
@@ -346,25 +350,25 @@ fn yaml_serialization_scopes_presence_to_conditional_mapping_members() {
         want: vec![
             vec![
                 ConditionalGuard::Truthy {
-                    path: "enabled".to_string(),
+                    path: conditional_path("enabled"),
                 },
                 ConditionalGuard::Truthy {
-                    path: "internalTls".to_string(),
+                    path: conditional_path("internalTls"),
                 },
                 ConditionalGuard::Absent {
-                    path: "annotations".to_string(),
+                    path: conditional_path("annotations"),
                 },
             ],
             vec![
                 ConditionalGuard::Truthy {
-                    path: "enabled".to_string(),
+                    path: conditional_path("enabled"),
                 },
                 ConditionalGuard::Eq {
-                    path: "controller".to_string(),
+                    path: conditional_path("controller"),
                     value: helm_schema_core::GuardValue::string("ncp"),
                 },
                 ConditionalGuard::Absent {
-                    path: "annotations".to_string(),
+                    path: conditional_path("annotations"),
                 },
             ],
         ]
@@ -658,7 +662,7 @@ fn constructed_selector_tpl_program_drives_a_caller_fail() {
             .iter()
             .any(|clause| clause.iter().any(|guard| matches!(guard,
                 helm_schema_core::ConditionalGuard::NotEq { path, value }
-                    if path == "telemetry.v2.stackdriver.disableOutbound"
+                    if path == &conditional_path("telemetry.v2.stackdriver.disableOutbound")
                         && value == &helm_schema_core::GuardValue::string("")))),
         "the constructed selector program must reach the caller comparison and fail: {signals:#?}"
     );
@@ -991,10 +995,10 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
 
     let impossible_fail = [
         ConditionalGuard::Truthy {
-            path: "provider.gdc".to_string(),
+            path: conditional_path("provider.gdc"),
         },
         ConditionalGuard::Truthy {
-            path: "runtime.enabled".to_string(),
+            path: conditional_path("runtime.enabled"),
         },
     ];
     assert!(
@@ -1816,7 +1820,7 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
                 path,
                 helm_schema_core::ContractRequirementImplication {
                     outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                        path: "feature.explicit".to_string(),
+                        path: conditional_path("feature.explicit"),
                     }],
                     target: helm_schema_core::ContractRequirementTarget::Value,
                     requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {

@@ -8,6 +8,10 @@ use helm_schema_core::{MergeLayerTransform, MergeLayersUse};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
+fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::parse(value)
+}
+
 fn absorb_captures(
     contract: &mut ContractIr,
     captures: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
@@ -626,13 +630,13 @@ fn contract_ir_activation_guards_gate_fail_captures() {
         have: signals.terminal_clauses(),
         want: &[vec![
             helm_schema_core::ConditionalGuard::Truthy {
-                path: "auth.enabled".to_string(),
+                path: conditional_path("auth.enabled"),
             },
             helm_schema_core::ConditionalGuard::Truthy {
-                path: "auth.usePassword".to_string(),
+                path: conditional_path("auth.usePassword"),
             },
             helm_schema_core::ConditionalGuard::Truthy {
-                path: "redis.enabled".to_string(),
+                path: conditional_path("redis.enabled"),
             },
         ]]
     );
@@ -670,7 +674,7 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
         have: evidence.requirement_implications.clone(),
         want: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                path: "postgresql.enabled".to_string(),
+                path: conditional_path("postgresql.enabled"),
             }],
             target: helm_schema_core::ContractRequirementTarget::Value,
             requirements: vec![helm_schema_core::FailValueRequirement::SchemaType(
@@ -710,7 +714,7 @@ fn activation_guards_scope_values_default_sources() {
         want: &std::collections::BTreeSet::from([
             helm_schema_core::GuardedValuesDefaultSource {
                 outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                    path: "child.enabled".to_string(),
+                    path: conditional_path("child.enabled"),
                 }],
                 source: crate::ValuesDefaultSource {
                     target_path: "child".to_string(),
@@ -822,7 +826,7 @@ fn activation_guards_scope_dependency_root_overlay_twins() -> eyre::Result<()> {
         have: evidence.requirement_implications.clone(),
         want: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                path: "child.enabled".to_string(),
+                path: conditional_path("child.enabled"),
             }],
             target: helm_schema_core::ContractRequirementTarget::Value,
             requirements: vec![helm_schema_core::FailValueRequirement::SchemaType(

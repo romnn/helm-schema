@@ -313,13 +313,13 @@ pub(super) fn append_merge_shadow_arms(
                 }
                 let own_guard = match merge.own_transform() {
                     helm_schema_core::MergeLayerTransform::ParsedMap => ConditionalGuard::TypeIs {
-                        path: value_path.clone(),
+                        path: helm_schema_core::ValuesPath::parse(value_path),
                         schema_type: "object".to_string(),
                     },
                     helm_schema_core::MergeLayerTransform::Identity
                     | helm_schema_core::MergeLayerTransform::NilScrubbed => {
                         ConditionalGuard::Truthy {
-                            path: value_path.clone(),
+                            path: helm_schema_core::ValuesPath::parse(value_path),
                         }
                     }
                 };
@@ -339,18 +339,18 @@ pub(super) fn append_merge_shadow_arms(
                                 helm_schema_core::MergeLayerTransform::ParsedMap => {
                                     ConditionalGuard::AllOf(vec![
                                         ConditionalGuard::TypeIs {
-                                            path: earlier.clone(),
+                                            path: helm_schema_core::ValuesPath::parse(earlier),
                                             schema_type: "object".to_string(),
                                         },
                                         ConditionalGuard::Truthy {
-                                            path: earlier.clone(),
+                                            path: helm_schema_core::ValuesPath::parse(earlier),
                                         },
                                     ])
                                 }
                                 helm_schema_core::MergeLayerTransform::Identity
                                 | helm_schema_core::MergeLayerTransform::NilScrubbed => {
                                     ConditionalGuard::Truthy {
-                                        path: earlier.clone(),
+                                        path: helm_schema_core::ValuesPath::parse(earlier),
                                     }
                                 }
                             };
@@ -405,7 +405,7 @@ pub(super) fn append_merge_shadow_arms(
                     .iter()
                     .map(|earlier| {
                         ConditionalGuard::Not(Box::new(ConditionalGuard::HasKey {
-                            path: earlier.clone(),
+                            path: helm_schema_core::ValuesPath::parse(earlier),
                             key: member.clone(),
                         }))
                     })
@@ -541,7 +541,8 @@ pub(super) fn is_unconditional_self_presence_overlay(
         [ConditionalGuard::Not(inner)]
             if matches!(
                 inner.as_ref(),
-                ConditionalGuard::Absent { path } if path == target_value_path
+                ConditionalGuard::Absent { path }
+                    if path == &helm_schema_core::ValuesPath::parse(target_value_path)
             )
     )
 }
@@ -581,7 +582,7 @@ pub(super) fn implication_has_self_truthy_guard(
         matches!(
             guard,
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path }
-                if path == target_value_path
+                if path == &helm_schema_core::ValuesPath::parse(target_value_path)
         )
     })
 }
@@ -597,12 +598,13 @@ pub(super) fn implication_has_self_presence_guard(
     implication.outer_guards.iter().any(|guard| match guard {
         ConditionalGuard::Not(inner) => matches!(
             inner.as_ref(),
-            ConditionalGuard::Absent { path } if path == target_value_path
+            ConditionalGuard::Absent { path }
+                if path == &helm_schema_core::ValuesPath::parse(target_value_path)
         ),
         ConditionalGuard::HasKey { path, key } => {
-            let mut segments = split_value_path(path);
-            segments.push(key.clone());
-            segments == split_value_path(target_value_path)
+            let mut guarded_path = path.clone();
+            guarded_path.push(key.clone());
+            guarded_path == helm_schema_core::ValuesPath::parse(target_value_path)
         }
         _ => false,
     })

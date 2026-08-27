@@ -3,6 +3,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
+use helm_schema_core::ValuesPath;
+
 use crate::merge::merge_schema_list;
 use crate::schema_model::{empty_schema, is_empty_schema};
 use crate::schema_node::SchemaNode;
@@ -254,6 +256,20 @@ pub(crate) fn yaml_value_at_path<'a>(
     value_path: &str,
 ) -> Option<&'a YamlValue> {
     yaml_value_at_segments(doc, &crate::split_value_path(value_path))
+}
+
+pub(crate) fn yaml_value_at_values_path<'a>(
+    doc: &'a YamlValue,
+    value_path: &ValuesPath,
+) -> Option<&'a YamlValue> {
+    let mut current = doc;
+    for segment in value_path.segments() {
+        let YamlValue::Mapping(mapping) = current else {
+            return None;
+        };
+        current = mapping.get(YamlValue::String(segment.to_owned()))?;
+    }
+    Some(current)
 }
 
 pub(crate) fn remove_values_paths(doc: &mut YamlValue, paths: &BTreeSet<String>) {

@@ -9,43 +9,43 @@ pub enum ConditionalGuard {
     /// The value at `path` is Helm-truthy.
     Truthy {
         /// Values path tested for truthiness.
-        path: String,
+        path: ValuesPath,
     },
     /// A `with` action selected the non-empty value at `path`.
     With {
         /// Values path selected by the action.
-        path: String,
+        path: ValuesPath,
     },
     /// The value at `path` equals a literal.
     Eq {
         /// Values path compared with the literal.
-        path: String,
+        path: ValuesPath,
         /// Literal required at the path.
         value: GuardValue,
     },
     /// The value at `path` differs from a literal.
     NotEq {
         /// Values path compared with the literal.
-        path: String,
+        path: ValuesPath,
         /// Literal excluded at the path.
         value: GuardValue,
     },
     /// The value at `path` is absent.
     Absent {
         /// Values path whose absence selects the branch.
-        path: String,
+        path: ValuesPath,
     },
     /// The value at `path` has a specific JSON Schema type.
     TypeIs {
         /// Values path subjected to the type test.
-        path: String,
+        path: ValuesPath,
         /// JSON Schema type name accepted by the branch.
         schema_type: String,
     },
     /// The string at `path` matches a regular expression.
     MatchesPattern {
         /// Values path subjected to the pattern test.
-        path: String,
+        path: ValuesPath,
         /// ECMA-compatible regular expression required by the branch.
         pattern: String,
     },
@@ -54,7 +54,7 @@ pub enum ConditionalGuard {
     /// stands in for, valid only where firing less often is safe.
     IntGt {
         /// Values path subjected to the integer comparison.
-        path: String,
+        path: ValuesPath,
         /// Exclusive lower bound.
         bound: i64,
     },
@@ -63,7 +63,7 @@ pub enum ConditionalGuard {
     /// contract.
     IntLt {
         /// Values path subjected to the integer comparison.
-        path: String,
+        path: ValuesPath,
         /// Exclusive upper bound.
         bound: i64,
     },
@@ -72,7 +72,7 @@ pub enum ConditionalGuard {
     /// the segmented path instead of being appended to it.
     HasKey {
         /// Values path expected to hold a mapping.
-        path: String,
+        path: ValuesPath,
         /// Literal mapping key whose presence selects the branch.
         key: String,
     },
@@ -83,7 +83,7 @@ pub enum ConditionalGuard {
     /// the object lane.
     ContainsMemberEquals {
         /// Values path expected to hold the iterated collection.
-        path: String,
+        path: ValuesPath,
         /// Member name compared within each collection item.
         member: String,
         /// Literal that at least one member must equal.
@@ -94,7 +94,7 @@ pub enum ConditionalGuard {
     /// (`Range(path) ∧ Truthy(path.*.member)`).
     ContainsTruthyMember {
         /// Values path expected to hold the iterated collection.
-        path: String,
+        path: ValuesPath,
         /// Member whose truthiness selects the sentinel state.
         member: String,
     },
@@ -105,7 +105,7 @@ pub enum ConditionalGuard {
     /// item.
     ContainsEquals {
         /// Values path expected to hold the list.
-        path: String,
+        path: ValuesPath,
         /// Literal that at least one list item must equal.
         value: GuardValue,
     },
@@ -115,13 +115,13 @@ pub enum ConditionalGuard {
     /// A sound subset: it may only scope positive-polarity evidence.
     AtMostOneMember {
         /// Values path expected to hold the bounded collection.
-        path: String,
+        path: ValuesPath,
     },
     /// The value at `path` is a mapping with at least `bound` members
     /// (`gt (keys X | len) N`). Exact: both polarities encode.
     MinMembers {
         /// Values path expected to hold the mapping.
-        path: String,
+        path: ValuesPath,
         /// Inclusive minimum number of members.
         bound: i64,
     },
@@ -138,40 +138,36 @@ impl ConditionalGuard {
     #[must_use]
     pub fn predicate(&self) -> Predicate {
         match self {
-            Self::Truthy { path } => Predicate::truthy_path(path.clone()),
-            Self::With { path } => Predicate::from(Guard::With {
-                path: ValuesPath::parse(path),
-            }),
+            Self::Truthy { path } => Predicate::from(Guard::Truthy { path: path.clone() }),
+            Self::With { path } => Predicate::from(Guard::With { path: path.clone() }),
             Self::Eq { path, value } => Predicate::from(Guard::Eq {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 value: value.clone(),
             }),
             Self::NotEq { path, value } => Predicate::from(Guard::NotEq {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 value: value.clone(),
             }),
-            Self::Absent { path } => Predicate::from(Guard::Absent {
-                path: ValuesPath::parse(path),
-            }),
+            Self::Absent { path } => Predicate::from(Guard::Absent { path: path.clone() }),
             Self::TypeIs { path, schema_type } => Predicate::from(Guard::TypeIs {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 schema_type: schema_type.clone(),
             }),
             Self::MatchesPattern { path, pattern } => Predicate::from(Guard::MatchesPattern {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 pattern: pattern.clone(),
                 templated: false,
             }),
             Self::IntGt { path, bound } => Predicate::from(Guard::IntGt {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 bound: *bound,
             }),
             Self::IntLt { path, bound } => Predicate::from(Guard::IntLt {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 bound: *bound,
             }),
             Self::HasKey { path, key } => Predicate::from(Guard::HasKey {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 key: key.clone(),
             }),
             Self::ContainsMemberEquals {
@@ -179,25 +175,25 @@ impl ConditionalGuard {
                 member,
                 value,
             } => Predicate::from(Guard::ContainsMemberEquals {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 member: member.clone(),
                 value: value.clone(),
             }),
             Self::ContainsTruthyMember { path, member } => {
                 Predicate::from(Guard::ContainsTruthyMember {
-                    path: ValuesPath::parse(path),
+                    path: path.clone(),
                     member: member.clone(),
                 })
             }
             Self::ContainsEquals { path, value } => Predicate::from(Guard::ContainsEquals {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 value: value.clone(),
             }),
-            Self::AtMostOneMember { path } => Predicate::from(Guard::AtMostOneMember {
-                path: ValuesPath::parse(path),
-            }),
+            Self::AtMostOneMember { path } => {
+                Predicate::from(Guard::AtMostOneMember { path: path.clone() })
+            }
             Self::MinMembers { path, bound } => Predicate::from(Guard::MinMembers {
-                path: ValuesPath::parse(path),
+                path: path.clone(),
                 bound: *bound,
             }),
             Self::Not(inner) => inner.predicate().negated(),
@@ -210,43 +206,31 @@ impl ConditionalGuard {
 impl TryFrom<&Guard> for ConditionalGuard {
     type Error = ();
 
-    #[expect(
-        clippy::too_many_lines,
-        reason = "keeping the exhaustive guard conversion in one match makes variant coverage auditable"
-    )]
     fn try_from(guard: &Guard) -> Result<Self, Self::Error> {
         Ok(match guard {
-            Guard::Truthy { path } => Self::Truthy {
-                path: path.encode(),
-            },
-            Guard::Not { path } => Self::Not(Box::new(Self::Truthy {
-                path: path.encode(),
-            })),
+            Guard::Truthy { path } => Self::Truthy { path: path.clone() },
+            Guard::Not { path } => Self::Not(Box::new(Self::Truthy { path: path.clone() })),
             Guard::Eq { path, value } => Self::Eq {
-                path: path.encode(),
+                path: path.clone(),
                 value: value.clone(),
             },
             Guard::NotEq { path, value } => Self::NotEq {
-                path: path.encode(),
+                path: path.clone(),
                 value: value.clone(),
             },
-            Guard::Absent { path } => Self::Absent {
-                path: path.encode(),
-            },
+            Guard::Absent { path } => Self::Absent { path: path.clone() },
             Guard::MatchesPattern {
                 path,
                 pattern,
                 templated: false,
             } => Self::MatchesPattern {
-                path: path.encode(),
+                path: path.clone(),
                 pattern: pattern.clone(),
             },
             Guard::Or { paths } => Self::AnyOf(
                 paths
                     .iter()
-                    .map(|path| Self::Truthy {
-                        path: path.encode(),
-                    })
+                    .map(|path| Self::Truthy { path: path.clone() })
                     .collect(),
             ),
             Guard::AnyOf { alternatives } => Self::AnyOf(
@@ -261,42 +245,38 @@ impl TryFrom<&Guard> for ConditionalGuard {
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             ),
-            Guard::With { path } => Self::With {
-                path: path.encode(),
-            },
+            Guard::With { path } => Self::With { path: path.clone() },
             Guard::TypeIs { path, schema_type } => Self::TypeIs {
-                path: path.encode(),
+                path: path.clone(),
                 schema_type: schema_type.clone(),
             },
             Guard::NotTypeIs { path, schema_type } => Self::Not(Box::new(Self::TypeIs {
-                path: path.encode(),
+                path: path.clone(),
                 schema_type: schema_type.clone(),
             })),
             Guard::IntGt { path, bound } => Self::IntGt {
-                path: path.encode(),
+                path: path.clone(),
                 bound: *bound,
             },
             Guard::IntLt { path, bound } => Self::IntLt {
-                path: path.encode(),
+                path: path.clone(),
                 bound: *bound,
             },
-            Guard::AtMostOneMember { path } => Self::AtMostOneMember {
-                path: path.encode(),
-            },
+            Guard::AtMostOneMember { path } => Self::AtMostOneMember { path: path.clone() },
             Guard::MinMembers { path, bound } => Self::MinMembers {
-                path: path.encode(),
+                path: path.clone(),
                 bound: *bound,
             },
             Guard::HasKey { path, key } => Self::HasKey {
-                path: path.encode(),
+                path: path.clone(),
                 key: key.clone(),
             },
             Guard::NotHasKey { path, key } => Self::Not(Box::new(Self::HasKey {
-                path: path.encode(),
+                path: path.clone(),
                 key: key.clone(),
             })),
             Guard::ContainsEquals { path, value } => Self::ContainsEquals {
-                path: path.encode(),
+                path: path.clone(),
                 value: value.clone(),
             },
             Guard::ContainsMemberEquals {
@@ -304,12 +284,12 @@ impl TryFrom<&Guard> for ConditionalGuard {
                 member,
                 value,
             } => Self::ContainsMemberEquals {
-                path: path.encode(),
+                path: path.clone(),
                 member: member.clone(),
                 value: value.clone(),
             },
             Guard::ContainsTruthyMember { path, member } => Self::ContainsTruthyMember {
-                path: path.encode(),
+                path: path.clone(),
                 member: member.clone(),
             },
             Guard::MatchesPattern {
@@ -341,36 +321,43 @@ impl ConditionalGuard {
     where
         F: FnMut(&str) -> String,
     {
+        let mut map_path = |path: ValuesPath| ValuesPath::parse(&map(&path.encode()));
         match self {
-            Self::Truthy { path } => Self::Truthy { path: map(&path) },
-            Self::With { path } => Self::With { path: map(&path) },
+            Self::Truthy { path } => Self::Truthy {
+                path: map_path(path),
+            },
+            Self::With { path } => Self::With {
+                path: map_path(path),
+            },
             Self::Eq { path, value } => Self::Eq {
-                path: map(&path),
+                path: map_path(path),
                 value,
             },
             Self::NotEq { path, value } => Self::NotEq {
-                path: map(&path),
+                path: map_path(path),
                 value,
             },
-            Self::Absent { path } => Self::Absent { path: map(&path) },
+            Self::Absent { path } => Self::Absent {
+                path: map_path(path),
+            },
             Self::TypeIs { path, schema_type } => Self::TypeIs {
-                path: map(&path),
+                path: map_path(path),
                 schema_type,
             },
             Self::MatchesPattern { path, pattern } => Self::MatchesPattern {
-                path: map(&path),
+                path: map_path(path),
                 pattern,
             },
             Self::IntGt { path, bound } => Self::IntGt {
-                path: map(&path),
+                path: map_path(path),
                 bound,
             },
             Self::IntLt { path, bound } => Self::IntLt {
-                path: map(&path),
+                path: map_path(path),
                 bound,
             },
             Self::HasKey { path, key } => Self::HasKey {
-                path: map(&path),
+                path: map_path(path),
                 key,
             },
             Self::ContainsMemberEquals {
@@ -378,21 +365,23 @@ impl ConditionalGuard {
                 member,
                 value,
             } => Self::ContainsMemberEquals {
-                path: map(&path),
+                path: map_path(path),
                 member,
                 value,
             },
             Self::ContainsTruthyMember { path, member } => Self::ContainsTruthyMember {
-                path: map(&path),
+                path: map_path(path),
                 member,
             },
             Self::ContainsEquals { path, value } => Self::ContainsEquals {
-                path: map(&path),
+                path: map_path(path),
                 value,
             },
-            Self::AtMostOneMember { path } => Self::AtMostOneMember { path: map(&path) },
+            Self::AtMostOneMember { path } => Self::AtMostOneMember {
+                path: map_path(path),
+            },
             Self::MinMembers { path, bound } => Self::MinMembers {
-                path: map(&path),
+                path: map_path(path),
                 bound,
             },
             Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),
@@ -428,7 +417,7 @@ impl ConditionalGuard {
             | Self::ContainsEquals { path, .. }
             | Self::AtMostOneMember { path }
             | Self::MinMembers { path, .. } => {
-                paths.insert(path.clone());
+                paths.insert(path.encode());
             }
             Self::Not(inner) => inner.collect_value_paths(paths),
             Self::AllOf(guards) | Self::AnyOf(guards) => {

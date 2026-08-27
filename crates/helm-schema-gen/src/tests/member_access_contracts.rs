@@ -1941,7 +1941,7 @@ fn declared_shape_does_not_own_a_guarded_member_host_base() {
         },
         requirement_implications: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                path: "spark.enabled".to_string(),
+                path: helm_schema_core::ValuesPath::parse("spark.enabled"),
             }],
             target: helm_schema_core::ContractRequirementTarget::Value,
             requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
@@ -2014,7 +2014,7 @@ fn partial_member_host_domain_preserves_the_declared_base() {
         requirement_implications: vec![
             helm_schema_core::ContractRequirementImplication {
                 outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                    path: "exact".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("exact"),
                 }],
                 target: helm_schema_core::ContractRequirementTarget::Value,
                 requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
@@ -2024,7 +2024,7 @@ fn partial_member_host_domain_preserves_the_declared_base() {
             },
             helm_schema_core::ContractRequirementImplication {
                 outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                    path: "partial".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("partial"),
                 }],
                 target: helm_schema_core::ContractRequirementTarget::Value,
                 requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {

@@ -6,6 +6,10 @@ macro_rules! values_path {
     };
 }
 
+fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::parse(value)
+}
+
 mod contract;
 mod contract_signals;
 mod expr_eval;
@@ -212,15 +216,15 @@ fn ranged_tpl_executes_a_selected_nested_default_program() {
         .finalize()
         .into_schema_signals();
     let selected_program = helm_schema_core::ConditionalGuard::Eq {
-        path: r"grafana\.ini.server.domain".to_string(),
+        path: conditional_path(r"grafana\.ini.server.domain"),
         value: helm_schema_core::GuardValue::string(program),
     };
     let ingress_branch = helm_schema_core::ConditionalGuard::AllOf(vec![
         helm_schema_core::ConditionalGuard::Truthy {
-            path: "ingress.enabled".to_string(),
+            path: conditional_path("ingress.enabled"),
         },
         helm_schema_core::ConditionalGuard::Truthy {
-            path: "ingress.hosts".to_string(),
+            path: conditional_path("ingress.hosts"),
         },
     ]);
 
@@ -230,20 +234,20 @@ fn ranged_tpl_executes_a_selected_nested_default_program() {
             vec![
                 selected_program.clone(),
                 helm_schema_core::ConditionalGuard::Absent {
-                    path: "ingress".to_string(),
+                    path: conditional_path("ingress"),
                 },
             ],
             vec![
                 selected_program.clone(),
                 helm_schema_core::ConditionalGuard::Absent {
-                    path: "route".to_string(),
+                    path: conditional_path("route"),
                 },
                 helm_schema_core::ConditionalGuard::Not(Box::new(ingress_branch.clone())),
             ],
             vec![
                 selected_program,
                 helm_schema_core::ConditionalGuard::Absent {
-                    path: "route.main".to_string(),
+                    path: conditional_path("route.main"),
                 },
                 helm_schema_core::ConditionalGuard::Not(Box::new(ingress_branch)),
             ],

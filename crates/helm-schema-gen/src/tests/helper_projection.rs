@@ -55,7 +55,7 @@ fn helper_range_break_scopes_later_provider_candidates() {
                 implication.outer_guards
                     == [helm_schema_core::ConditionalGuard::Not(Box::new(
                         helm_schema_core::ConditionalGuard::Absent {
-                            path: "worker.securityContexts".to_string(),
+                            path: helm_schema_core::ValuesPath::parse("worker.securityContexts"),
                         },
                     ))]
                     && matches!(

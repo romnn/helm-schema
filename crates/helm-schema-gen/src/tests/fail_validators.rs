@@ -680,12 +680,12 @@ fn localized_terminal_clauses_preserve_negated_presence_semantics() -> eyre::Res
         vec![vec![
             helm_schema_core::ConditionalGuard::Not(Box::new(
                 helm_schema_core::ConditionalGuard::Truthy {
-                    path: "tags.feature".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("tags.feature"),
                 },
             )),
             helm_schema_core::ConditionalGuard::Not(Box::new(
                 helm_schema_core::ConditionalGuard::Absent {
-                    path: "tags.feature".to_string(),
+                    path: helm_schema_core::ValuesPath::parse("tags.feature"),
                 },
             )),
         ]],
@@ -1055,7 +1055,7 @@ fn root_values_merge_keeps_the_pre_rewrite_source_presence_alternative() -> eyre
     sim_assert_eq!(
         have: clauses,
         want: vec![vec![helm_schema_core::ConditionalGuard::Absent {
-            path: "global".to_string(),
+            path: helm_schema_core::ValuesPath::parse("global"),
         }]]
     );
 

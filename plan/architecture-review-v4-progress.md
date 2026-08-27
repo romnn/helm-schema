@@ -761,7 +761,7 @@
 
 ## A5 — refuse unfaithful composite truthiness under negation
 
-- Status: landed; commit pending.
+- Status: landed in `c7a5eb3a`.
 - Contract: behavior-bearing. Make the existing faithfulness oracle reject the generic all-paths
   truthiness fallback for both `MergedLayers` and `FirstTruthy` whenever their exact decoders
   abstain. Cover field/selector projections as well as locals; do not begin B3's decoder/oracle
@@ -2999,3 +2999,121 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: +226 (63,703 to 63,929).
+
+## B4a.3c — migrate conditional guard paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of every value-path payload in `ConditionalGuard` to
+  segmented `ValuesPath`, including recursive `Not`, `AllOf`, and `AnyOf` trees. Literal patterns,
+  mapping keys, member names, schema types, and scalar comparisons remain in their own domains.
+- Acceptance baseline: `c7a5eb3a` (B4a.3b).
+- Baseline production LOC: 63,929 Rust lines from `task tokei:core` on `c7a5eb3a`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, or corpus acceptance changes.
+  - Guard→conditional conversion stays typed; conversion back to predicates and still-string
+    overlay/schema boundaries encode explicitly. Recursive path collection and remapping remain
+    exhaustive.
+  - No coercion trait, parallel path field, comparison shim, cached encoding, or unrelated string
+    newtype is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/Helm-aborts
+    allowance remains zero; mandatory base and third-level categories permit zero drops.
+
+- Measured results:
+  - Every one of the 15 atomic `ConditionalGuard` path fields now carries `ValuesPath`; recursive
+    `Not`, `AllOf`, and `AnyOf` nodes retain the same typed leaves and structural ordering.
+  - Guard conversion, predicate reconstruction, layered-merge guard collapse, default-source
+    projection, presence reasoning, and schema condition encoding now pass typed paths directly.
+    Encoding remains explicit only at still-string map, callback, diagnostic, and fixture-prober
+    boundaries.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `c7a5eb3a`.
+    The full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed bounded
+    reductions.
+- Deviations:
+  - The first lint preflight was rejected: deletion shortened `TryFrom<&Guard>` below its
+    `too_many_lines` threshold, making the existing self-validating expectation unfulfilled, while
+    typed layered-suffix handling moved `collapse_layered_truthy_gates` five lines above the
+    threshold. The stale expectation was deleted and the structural suffix calculation moved to a
+    small domain helper; the clean lint rerun passes warning-free.
+  - The first immutable-archive command was rejected before producing an archive because its new
+    step-local `TMPDIR` did not exist and clang could not create a temporary file. The directory was
+    created under `target/` and the unchanged final code state produced the sole authoritative
+    archive. No artifact from the failed invocation was used.
+  - The existing public `map_value_paths` callback remains string-shaped so callers may perform
+    legacy encoded rewrites; the exhaustive walk now performs its encode/parse exactly at that API
+    boundary. Changing the callback is deferred until its callers' carriers are typed.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Guard↔conditional conversion | Same exact lowerable guard tree | Core conversion and gen lowering suites. |
+| Nested Boolean guards | Same canonical order and recursive paths | Conditional overlay and requirement suites. |
+| Schema consumers | Same conditional schemas and diagnostics | Full workspace, dumps, and prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 1,157/1,157 tests across the four
+  affected crates pass; the Airflow stress case passes in 174.344 seconds. Whole-workspace Clippy
+  then passes warning-free after the rejected lint preflight was repaired.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3c-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a3c-final1.tar.zst`; exit 0,
+  87 binaries and 125 files.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3c-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a3c-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 181.431 seconds. A recursive byte comparison against the B4a.3b dump
+  exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3c-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a3c-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.165 seconds and 18 artifacts are
+  written. A recursive byte comparison against the B4a.3b dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3c-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=c7a5eb3a
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3c-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a3c-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a3c-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 67.300 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868 disclosed
+  bounded reductions remain unchanged.
+- Public/wire decision: the public `ConditionalGuard` variant fields narrow from `String` to
+  `ValuesPath`. No serialization implementation exists for this carrier, so there is no wire-format
+  change; schema, IR, diagnostics, canonical ordering, and fixture bytes remain exact. No `Deref`,
+  `AsRef<str>`, `Display`, `From<&str>`, or cross-type comparison implementation was added.
+
+### Self-adversarial pass
+
+- All 15 path-bearing variants were enumerated directly; literal patterns, mapping keys, member
+  names, schema-type names, and comparison values remain string/scalar domains.
+- Guard→conditional and conditional→predicate conversion now clone typed paths directly. A
+  whole-tree search finds no constructor that encodes a `ValuesPath` merely to populate a
+  `ConditionalGuard`, and no typed→encode→parse cycle outside the deliberately string-callback
+  `map_value_paths` API.
+- Default lookup, ancestor stripping, presence inference, member-key append, merge-layer suffix,
+  and schema lowering inspect segments structurally. Encoding is used only where a still-string
+  carrier or stable textual key requires it.
+- Manual encoded-string `ValuesPath::Ord` remains the only ordering rule. Conditional DNF,
+  complementary-guard normalization, nested Boolean sets, and kind partitions therefore retain
+  byte-exact legacy order. Literal `*` remains the B4a compatibility spelling until B4b.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free.
+- `task lint:fc`; exit 0, all configured feature combinations warning-free.
+- `cargo nextest run --workspace`; exit 0.
+- `task test:integration`; exit 0, including the complete corpus fixture lane.
+- `task test:all`; exit 0, including live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 63,975 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +46 (63,929 to 63,975).

@@ -181,18 +181,18 @@ fn conditional_guard_disjunction_uses_the_same_normalization() {
     let condition = GuardDnf::normalize_conditional_guard_disjunction([
         vec![
             ConditionalGuard::Truthy {
-                path: "enabled".to_string(),
+                path: path("enabled"),
             },
             ConditionalGuard::Truthy {
-                path: "shared".to_string(),
+                path: path("shared"),
             },
         ],
         vec![
             ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                path: "enabled".to_string(),
+                path: path("enabled"),
             })),
             ConditionalGuard::Truthy {
-                path: "shared".to_string(),
+                path: path("shared"),
             },
         ],
     ]);
@@ -200,7 +200,7 @@ fn conditional_guard_disjunction_uses_the_same_normalization() {
     sim_assert_eq!(
         have: condition,
         want: vec![vec![ConditionalGuard::Truthy {
-            path: "shared".to_string(),
+            path: path("shared"),
         }]]
     );
 }

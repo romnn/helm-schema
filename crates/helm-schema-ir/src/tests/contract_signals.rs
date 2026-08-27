@@ -8,6 +8,10 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_core::{ConditionalGuard, ContractSchemaSignals, MetadataFieldKind};
 use test_util::prelude::sim_assert_eq;
 
+fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::parse(value)
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct FlattenedConditionalOverlay {
     target_value_path: String,
@@ -94,7 +98,7 @@ fn checksum_influence_does_not_own_a_dormant_provider_base() -> eyre::Result<()>
             false,
             vec![(
                 vec![ConditionalGuard::Truthy {
-                    path: "enabled".to_string(),
+                    path: conditional_path("enabled"),
                 }],
                 false,
             )],
@@ -326,7 +330,7 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
             .get("mode")
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![ConditionalGuard::Eq {
-            path: "mode".to_string(),
+            path: conditional_path("mode"),
             value: GuardValue::string("prod"),
         }]),
     );
@@ -335,7 +339,7 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
             .get("extraConfig")
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![ConditionalGuard::TypeIs {
-            path: "extraConfig".to_string(),
+            path: conditional_path("extraConfig"),
             schema_type: "string".to_string(),
         }]),
     );
@@ -446,7 +450,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             .get("feature.enabled")
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![ConditionalGuard::Truthy {
-            path: "feature.enabled".to_string(),
+            path: conditional_path("feature.enabled"),
         }]),
     );
     sim_assert_eq!(
@@ -454,7 +458,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             .get("feature.config")
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![ConditionalGuard::With {
-            path: "feature.config".to_string(),
+            path: conditional_path("feature.config"),
         }]),
     );
     sim_assert_eq!(
@@ -463,7 +467,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![ConditionalGuard::Not(Box::new(
             ConditionalGuard::Truthy {
-                path: "feature.disabled".to_string(),
+                path: conditional_path("feature.disabled"),
             },
         ))]),
     );
@@ -472,7 +476,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             .get("feature.mode")
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![ConditionalGuard::NotEq {
-            path: "feature.mode".to_string(),
+            path: conditional_path("feature.mode"),
             value: GuardValue::string("off"),
         }]),
     );
@@ -481,15 +485,15 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             .get("feature.name")
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![ConditionalGuard::Absent {
-            path: "feature.name".to_string(),
+            path: conditional_path("feature.name"),
         }]),
     );
     let disjunction = ConditionalGuard::AnyOf(vec![
         ConditionalGuard::Truthy {
-            path: "feature.primary".to_string(),
+            path: conditional_path("feature.primary"),
         },
         ConditionalGuard::Truthy {
-            path: "feature.secondary".to_string(),
+            path: conditional_path("feature.secondary"),
         },
     ]);
     sim_assert_eq!(
@@ -506,14 +510,14 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
     );
     let nested_disjunction = ConditionalGuard::AnyOf(vec![
         ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-            path: "feature.skip".to_string(),
+            path: conditional_path("feature.skip"),
         })),
         ConditionalGuard::AllOf(vec![
             ConditionalGuard::Truthy {
-                path: "feature.managed".to_string(),
+                path: conditional_path("feature.managed"),
             },
             ConditionalGuard::Eq {
-                path: "feature.tier".to_string(),
+                path: conditional_path("feature.tier"),
                 value: GuardValue::string("prod"),
             },
         ]),
@@ -720,10 +724,10 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
         have: overlay.guards,
         want: vec![
             ConditionalGuard::Truthy {
-                path: "feature.enabled".to_string(),
+                path: conditional_path("feature.enabled"),
             },
             ConditionalGuard::With {
-                path: "feature".to_string(),
+                path: conditional_path("feature"),
             },
         ],
     );
@@ -764,7 +768,7 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
     sim_assert_eq!(
         have: overlay.guards,
         want: vec![ConditionalGuard::Truthy {
-            path: "serviceAccount.create".to_string(),
+            path: conditional_path("serviceAccount.create"),
         }],
         "self-default guards should not suppress an otherwise lowerable boolean branch",
     );
@@ -857,24 +861,24 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
     sim_assert_eq!(
         have: feature_overlay.guards,
         want: vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-            path: "feature.enabled".to_string(),
+            path: conditional_path("feature.enabled"),
         }))],
     );
     sim_assert_eq!(
         have: other_overlay.guards,
         want: vec![ConditionalGuard::AnyOf(vec![
             ConditionalGuard::Truthy {
-                path: "first.enabled".to_string(),
+                path: conditional_path("first.enabled"),
             },
             ConditionalGuard::Truthy {
-                path: "second.enabled".to_string(),
+                path: conditional_path("second.enabled"),
             },
         ])],
     );
     sim_assert_eq!(
         have: preset_overlay.guards,
         want: vec![ConditionalGuard::NotEq {
-            path: "resourcesPreset".to_string(),
+            path: conditional_path("resourcesPreset"),
             value: GuardValue::string("none"),
         }],
     );
@@ -882,14 +886,14 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         have: image_overlay.guards,
         want: vec![ConditionalGuard::AnyOf(vec![
             ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                path: "global.imageDisabled".to_string(),
+                path: conditional_path("global.imageDisabled"),
             })),
             ConditionalGuard::AllOf(vec![
                 ConditionalGuard::Truthy {
-                    path: "image.enabled".to_string(),
+                    path: conditional_path("image.enabled"),
                 },
                 ConditionalGuard::Eq {
-                    path: "image.mode".to_string(),
+                    path: conditional_path("image.mode"),
                     value: GuardValue::string("managed"),
                 },
             ]),
@@ -936,7 +940,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
         overlays.iter().any(|overlay| {
             overlay.guards
                 == vec![ConditionalGuard::Eq {
-                    path: "mode".to_string(),
+                    path: conditional_path("mode"),
                     value: GuardValue::string("name"),
                 }]
                 && overlay.evidence.metadata_field_kinds
@@ -948,7 +952,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
         overlays.iter().any(|overlay| {
             overlay.guards
                 == vec![ConditionalGuard::Eq {
-                    path: "mode".to_string(),
+                    path: conditional_path("mode"),
                     value: GuardValue::string("labels"),
                 }]
                 && overlay.evidence.metadata_field_kinds
@@ -1056,7 +1060,7 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
     sim_assert_eq!(
         have: overlays[0].guards,
         want: vec![ConditionalGuard::Truthy {
-            path: "feature.enabled".to_string(),
+            path: conditional_path("feature.enabled"),
         }],
     );
     assert!(
@@ -1119,7 +1123,7 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
     sim_assert_eq!(
         have: overlays[0].guards,
         want: vec![ConditionalGuard::Truthy {
-            path: "feature.enabled".to_string(),
+            path: conditional_path("feature.enabled"),
         }],
     );
     assert!(
@@ -1446,7 +1450,8 @@ fn foreign_range_does_not_globalize_strict_consumer() {
                 implication.outer_guards.iter().any(|guard| {
                     matches!(
                         guard,
-                        helm_schema_core::ConditionalGuard::Truthy { path } if path == "items"
+                        helm_schema_core::ConditionalGuard::Truthy { path }
+                            if path == &conditional_path("items")
                     )
                 })
             }),

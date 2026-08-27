@@ -139,16 +139,8 @@ pub(super) fn collapse_layered_truthy_gates(
             continue;
         };
         for layer in &concrete_layers {
-            let path_segments = helm_schema_core::split_value_path(path);
-            let layer_segments = helm_schema_core::split_value_path(layer);
-            let Some(suffix) = path_segments.strip_prefix(layer_segments.as_slice()) else {
-                continue;
-            };
-            if !suffix.is_empty() {
-                suffix_members
-                    .entry(helm_schema_core::join_value_path(suffix))
-                    .or_default()
-                    .insert(index);
+            if let Some(suffix) = layered_guard_suffix(path, layer) {
+                suffix_members.entry(suffix).or_default().insert(index);
             }
         }
     }
@@ -166,7 +158,9 @@ pub(super) fn collapse_layered_truthy_gates(
         arms.extend(
             wildcard_collections
                 .iter()
-                .map(|path| ConditionalGuard::Truthy { path: path.clone() }),
+                .map(|path| ConditionalGuard::Truthy {
+                    path: helm_schema_core::ValuesPath::parse(path),
+                }),
         );
         arms.sort();
         arms.dedup();
@@ -185,6 +179,16 @@ pub(super) fn collapse_layered_truthy_gates(
     out.sort();
     out.dedup();
     out
+}
+
+fn layered_guard_suffix(path: &helm_schema_core::ValuesPath, layer: &str) -> Option<String> {
+    let layer = helm_schema_core::ValuesPath::parse(layer);
+    if !path.is_descendant_of(&layer) {
+        return None;
+    }
+    Some(helm_schema_core::join_value_path(
+        path.segments().skip(layer.segments().len()),
+    ))
 }
 
 /// The maximal lowerable SUBSET of the row conditions, at whole-conjunct
@@ -434,9 +438,7 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
     // range itself. Both readings of a truthy subject therefore terminate,
     // which is what this clause claims.
     if let Predicate::Guard(Guard::Range { path }) = predicate {
-        return Some(ConditionalGuard::Truthy {
-            path: path.encode(),
-        });
+        return Some(ConditionalGuard::Truthy { path: path.clone() });
     }
     if let Predicate::Approximate {
         sound_subset: Some(sound_subset),
@@ -495,7 +497,7 @@ pub(super) fn guard_to_conditional_guard(
 ) -> Option<ConditionalGuard> {
     let path = |path: &helm_schema_core::ValuesPath| match target_value_path {
         Some(target_value_path) => lowerable_guard_path(path, target_value_path),
-        None => Some(path.encode()),
+        None => Some(path.clone()),
     };
 
     match guard {
@@ -604,7 +606,7 @@ pub(super) fn guard_to_conditional_guard(
             let path = if target_value_path
                 .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
             {
-                (!values_path_contains_wildcard(value_path)).then(|| value_path.encode())?
+                (!values_path_contains_wildcard(value_path)).then(|| value_path.clone())?
             } else {
                 path(value_path)?
             };
@@ -624,7 +626,7 @@ pub(super) fn guard_to_conditional_guard(
             let path = if target_value_path
                 .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
             {
-                (!values_path_contains_wildcard(value_path)).then(|| value_path.encode())?
+                (!values_path_contains_wildcard(value_path)).then(|| value_path.clone())?
             } else {
                 path(value_path)?
             };
@@ -642,7 +644,7 @@ pub(super) fn guard_to_conditional_guard(
             let path = if target_value_path
                 .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
             {
-                (!values_path_contains_wildcard(value_path)).then(|| value_path.encode())?
+                (!values_path_contains_wildcard(value_path)).then(|| value_path.clone())?
             } else {
                 path(value_path)?
             };
@@ -817,13 +819,13 @@ pub(super) fn predicate_is_self_type_partition(
 pub(super) fn lowerable_guard_path(
     path: &helm_schema_core::ValuesPath,
     target_value_path: &str,
-) -> Option<String> {
+) -> Option<helm_schema_core::ValuesPath> {
     let target = helm_schema_core::ValuesPath::parse(target_value_path);
     if path == &target {
         return None;
     }
     if !values_path_contains_wildcard(path) {
-        return Some(path.encode());
+        return Some(path.clone());
     }
 
     let path_segments: Vec<&str> = path.segments().collect();
@@ -842,7 +844,7 @@ pub(super) fn lowerable_guard_path(
                 .map(String::as_str)
                 .eq(member_prefix.iter().copied())
         })
-        .then(|| path.encode())
+        .then(|| path.clone())
 }
 
 pub(super) fn path_contains_wildcard(path: &str) -> bool {

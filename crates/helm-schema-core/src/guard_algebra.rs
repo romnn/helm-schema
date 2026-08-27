@@ -1,9 +1,9 @@
-use crate::ConditionalGuard;
+use crate::{ConditionalGuard, ValuesPath};
 
 /// Reports whether two conditional guards are exact logical complements.
 #[must_use]
 pub(crate) fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuard) -> bool {
-    fn negated_truthy_path(guard: &ConditionalGuard) -> Option<&str> {
+    fn negated_truthy_path(guard: &ConditionalGuard) -> Option<&ValuesPath> {
         let ConditionalGuard::Not(inner) = guard else {
             return None;
         };

@@ -2,6 +2,7 @@ use serde_json::Value;
 
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractValuePathFacts, GuardValue, ValueKind,
+    ValuesPath,
 };
 use serde_yaml::Value as YamlValue;
 
@@ -267,8 +268,9 @@ impl ResolvePolicy {
         value_path: &str,
         predicate: &ConditionalGuard,
     ) -> Option<Value> {
+        let value_path = ValuesPath::parse(value_path);
         match predicate {
-            ConditionalGuard::Eq { path, value } if path == value_path => {
+            ConditionalGuard::Eq { path, value } if path == &value_path => {
                 if matches!(value, GuardValue::Null) {
                     return Some(empty_schema());
                 }
@@ -283,7 +285,7 @@ impl ResolvePolicy {
                     .into_value(),
                 )
             }
-            ConditionalGuard::TypeIs { path, schema_type } if path == value_path => {
+            ConditionalGuard::TypeIs { path, schema_type } if path == &value_path => {
                 match schema_type.as_str() {
                     "array" | "boolean" | "integer" | "number" | "object" | "string" => {
                         Some(type_schema(schema_type))
@@ -893,7 +895,8 @@ fn conditional_target_schema_inner(
             ConditionalGuard::Not(inner)
                 if matches!(
                     inner.as_ref(),
-                    ConditionalGuard::TypeIs { path, .. } if path == target_value_path
+                    ConditionalGuard::TypeIs { path, .. }
+                        if path == &ValuesPath::parse(target_value_path)
                 )
         )
     });
@@ -1020,8 +1023,9 @@ fn preserve_positive_self_type_domains(
     // that contradicts its partition (an object guess for a `kindIs "slice"`
     // arm) merges with the partition instead.
     let mut positive_self_types = std::collections::BTreeSet::new();
+    let target_value_path = ValuesPath::parse(target_value_path);
     for guard in &overlay.guards {
-        collect_positive_self_types(guard, target_value_path, false, &mut positive_self_types);
+        collect_positive_self_types(guard, &target_value_path, false, &mut positive_self_types);
     }
     for schema_type in positive_self_types {
         // A "number" partition over an integer-allowing branch is not a
@@ -1042,7 +1046,7 @@ fn preserve_positive_self_type_domains(
 
 fn collect_positive_self_types(
     guard: &helm_schema_core::ConditionalGuard,
-    target_value_path: &str,
+    target_value_path: &ValuesPath,
     negated: bool,
     out: &mut std::collections::BTreeSet<String>,
 ) {

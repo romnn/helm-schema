@@ -593,12 +593,12 @@ pub(super) fn record_contract_use_conjunction(
     let lowerable_guards = merge_layered.map_or(lowerable_guards, |merge| {
         let guard = match merge.own_transform() {
             helm_schema_core::MergeLayerTransform::ParsedMap => ConditionalGuard::TypeIs {
-                path: contract_use.source_expr.clone(),
+                path: helm_schema_core::ValuesPath::parse(&contract_use.source_expr),
                 schema_type: "object".to_string(),
             },
             helm_schema_core::MergeLayerTransform::Identity
             | helm_schema_core::MergeLayerTransform::NilScrubbed => ConditionalGuard::Truthy {
-                path: contract_use.source_expr.clone(),
+                path: helm_schema_core::ValuesPath::parse(&contract_use.source_expr),
             },
         };
         Some(vec![guard])

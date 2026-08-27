@@ -3,8 +3,10 @@ use super::{
     GuardValue, LoweredConjunct, NestedGuardScope, PathSchemaResolver, ResolvedPathSchema,
     ResourceSchemaOracle, SchemaDocument, SchemaNode, Value, YamlValue, build_condition_clauses,
     common_prefix_len, evaluate_guard_set_on_values, guard_encodes_fully, split_value_path,
-    yaml_value_at_path,
 };
+use helm_schema_core::ValuesPath;
+
+use crate::values_yaml::yaml_value_at_values_path;
 
 pub(super) fn resolve_overlay_target_schema(
     target_value_path: &str,
@@ -131,9 +133,10 @@ pub(super) fn implication_guards_supported(
             // any-of, which is how a root-scoped `with` cost nats the
             // member-host typing of the five hosts it navigates.
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
-                path.is_empty()
-                    || path == target_value_path
-                    || resolved_by_path.contains_key(path.as_str())
+                let encoded = path.encode();
+                path.segments().next().is_none()
+                    || path == &ValuesPath::parse(target_value_path)
+                    || resolved_by_path.contains_key(encoded.as_str())
             }
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
@@ -173,9 +176,10 @@ fn guards_supported_with_self_path(
             // guard path here is structural evidence even when values.yaml
             // does not declare the finite member (literal-dict range keys).
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
-                self_path == Some(path.as_str())
-                    || yaml_value_at_path(values_yaml_doc, path).is_some()
-                    || resolved_by_path.contains_key(path.as_str())
+                let encoded = path.encode();
+                self_path.is_some_and(|self_path| path == &ValuesPath::parse(self_path))
+                    || yaml_value_at_values_path(values_yaml_doc, path).is_some()
+                    || resolved_by_path.contains_key(encoded.as_str())
             }
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
@@ -292,7 +296,7 @@ pub(crate) fn append_terminal_clauses(
         if split_vacuous_ancestor
             && evaluate_guard_set_on_values(guards, absence.deeper_stage) != Some(false)
         {
-            let path = helm_schema_core::join_value_path(&ancestor_segments);
+            let path = ValuesPath::from_segments(ancestor_segments.clone());
             let absent = ConditionalGuard::Absent { path };
             let root = Vec::new();
             let mut missing_ancestor_guards = guards.clone();
@@ -405,30 +409,42 @@ fn append_values_default_source_absence_clauses(
 }
 
 fn source_path_for_effective(
-    effective_path: &str,
+    effective_path: &ValuesPath,
     source: &helm_schema_core::ValuesDefaultSource,
-) -> Option<String> {
-    let effective_segments = split_value_path(effective_path);
-    let target_segments = split_value_path(&source.target_path);
-    let suffix = effective_segments.strip_prefix(target_segments.as_slice())?;
+) -> Option<ValuesPath> {
+    let target_path = ValuesPath::parse(&source.target_path);
+    if effective_path != &target_path && !effective_path.is_descendant_of(&target_path) {
+        return None;
+    }
     let mut source_segments = split_value_path(&source.source_path);
-    source_segments.extend(suffix.iter().cloned());
-    Some(helm_schema_core::join_value_path(source_segments))
+    source_segments.extend(
+        effective_path
+            .segments()
+            .skip(target_path.segments().len())
+            .map(str::to_owned),
+    );
+    Some(ValuesPath::from_segments(source_segments))
 }
 
 fn unique_values_default_source_path(
-    effective_path: &str,
+    effective_path: &ValuesPath,
     sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
-) -> Option<String> {
-    let effective_segments = split_value_path(effective_path);
+) -> Option<ValuesPath> {
     let mut source_paths = sources
         .iter()
         .filter_map(|source| {
-            let target_segments = split_value_path(&source.target_path);
-            let suffix = effective_segments.strip_prefix(target_segments.as_slice())?;
+            let target_path = ValuesPath::parse(&source.target_path);
+            if effective_path != &target_path && !effective_path.is_descendant_of(&target_path) {
+                return None;
+            }
             let mut source_segments = split_value_path(&source.source_path);
-            source_segments.extend(suffix.iter().cloned());
-            Some(helm_schema_core::join_value_path(&source_segments))
+            source_segments.extend(
+                effective_path
+                    .segments()
+                    .skip(target_path.segments().len())
+                    .map(str::to_owned),
+            );
+            Some(ValuesPath::from_segments(source_segments))
         })
         .collect::<BTreeSet<_>>();
     if source_paths.len() == 1 {

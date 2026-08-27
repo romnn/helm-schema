@@ -470,9 +470,7 @@ pub(super) fn record_fail_conjunction(
             // a render-valid document). Indirect ranges lose that
             // implication and abstain.
             if capture.ranged.mode(&path.encode()).input_identity {
-                outer_guards.push(ConditionalGuard::Truthy {
-                    path: path.encode(),
-                });
+                outer_guards.push(ConditionalGuard::Truthy { path: path.clone() });
                 continue;
             }
             return;
@@ -949,13 +947,11 @@ pub(super) fn capture_outer_guards(
             // ranged collection is Helm-truthy (a truthy non-collection
             // aborts the range and never renders). Indirect ranges lose
             // that implication and abstain.
-            Predicate::Guard(Guard::Range { path }) => {
-                capture.ranged.mode(&path.encode()).input_identity.then(|| {
-                    ConditionalGuard::Truthy {
-                        path: path.encode(),
-                    }
-                })
-            }
+            Predicate::Guard(Guard::Range { path }) => capture
+                .ranged
+                .mode(&path.encode())
+                .input_identity
+                .then(|| ConditionalGuard::Truthy { path: path.clone() }),
             predicate => fail_outer_guard(predicate),
         })
         .collect::<Option<Vec<_>>>()?;
@@ -1480,7 +1476,7 @@ pub(super) fn record_absence_abort_clause(
         clause.push(guard);
     }
     clause.push(ConditionalGuard::Absent {
-        path: path.to_string(),
+        path: helm_schema_core::ValuesPath::parse(path),
     });
     clause.sort();
     clause.dedup();
@@ -2256,6 +2252,10 @@ pub(super) fn fold_activation_pair(
 /// so a navigation scoped by it never runs on a nil receiver. `Absent`
 /// deliberately counts null as absent, matching the guard encoding.
 pub(super) fn guard_implies_present(guard: &ConditionalGuard, path: &str) -> bool {
+    guard_implies_present_at(guard, &helm_schema_core::ValuesPath::parse(path))
+}
+
+fn guard_implies_present_at(guard: &ConditionalGuard, path: &helm_schema_core::ValuesPath) -> bool {
     match guard {
         ConditionalGuard::Truthy { path: guarded } | ConditionalGuard::With { path: guarded } => {
             guarded == path
@@ -2267,13 +2267,19 @@ pub(super) fn guard_implies_present(guard: &ConditionalGuard, path: &str) -> boo
         ConditionalGuard::HasKey { path: host, key } => {
             // The key is an OPAQUE property name (it may contain dots), so
             // it must be appended as one escaped segment, not concatenated.
-            helm_schema_core::append_value_path(host, key) == path
+            let mut guarded = host.clone();
+            guarded.push(key.clone());
+            &guarded == path
         }
         ConditionalGuard::Not(inner) => {
             matches!(inner.as_ref(), ConditionalGuard::Absent { path: guarded } if guarded == path)
         }
-        ConditionalGuard::AllOf(set) => set.iter().any(|guard| guard_implies_present(guard, path)),
-        ConditionalGuard::AnyOf(set) => set.iter().all(|guard| guard_implies_present(guard, path)),
+        ConditionalGuard::AllOf(set) => set
+            .iter()
+            .any(|guard| guard_implies_present_at(guard, path)),
+        ConditionalGuard::AnyOf(set) => set
+            .iter()
+            .all(|guard| guard_implies_present_at(guard, path)),
         _ => false,
     }
 }
@@ -2373,7 +2379,9 @@ pub(super) fn record_member_access_implications(
         // TOP-LEVEL hosts, which have no parent slot to carry a member
         // requirement.
         let mut clause = fold_member_access_arms(absent_abort_sets);
-        clause.push(ConditionalGuard::Absent { path });
+        clause.push(ConditionalGuard::Absent {
+            path: helm_schema_core::ValuesPath::parse(&path),
+        });
         clause.sort();
         clause.dedup();
         if !terminal_clauses.contains(&clause) {

@@ -84,7 +84,7 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
                         "fallback.maxReplicaCount".to_string(),
                     ],
                     vec![ConditionalGuard::Truthy {
-                        path: "sets.*.enabled".to_string(),
+                        path: helm_schema_core::ValuesPath::parse("sets.*.enabled"),
                     }],
                 )],
                 ..ContractPathSchemaEvidence::default()

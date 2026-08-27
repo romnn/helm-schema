@@ -1,13 +1,13 @@
 use std::collections::BTreeSet;
 
-use helm_schema_core::{ConditionalGuard, GuardValue};
+use helm_schema_core::{ConditionalGuard, GuardValue, ValuesPath};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::schema_model::guard_value_to_json;
 use crate::schema_node::{JsonSchemaType, SchemaNode};
 use crate::split_value_path;
-use crate::values_yaml::yaml_value_at_path;
+use crate::values_yaml::yaml_value_at_values_path as yaml_value_at_path;
 
 /// Which way a condition fragment may err where the encoding cannot be
 /// exact.
@@ -220,7 +220,7 @@ fn build_single_condition_fragment(
             absent_coerced_int(subchart_defaults_doc, path) < *bound,
         ),
         ConditionalGuard::Absent { path } => {
-            let segments = split_value_path(path);
+            let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
             let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
             if relative_segments.is_empty() {
                 return None;
@@ -839,7 +839,7 @@ fn decimal_default_int_value(value: Option<&YamlValue>) -> Option<i64> {
 /// missing from the validated document: the subchart default for
 /// dependency-owned paths, nil (0) otherwise. Non-decimal defaults
 /// coerce to 0 like every unparsable spelling.
-fn absent_coerced_int(subchart_defaults_doc: &YamlValue, path: &str) -> i64 {
+fn absent_coerced_int(subchart_defaults_doc: &YamlValue, path: &ValuesPath) -> i64 {
     decimal_default_int_value(yaml_value_at_path(subchart_defaults_doc, path)).unwrap_or(0)
 }
 
@@ -851,12 +851,12 @@ fn absent_coerced_int(subchart_defaults_doc: &YamlValue, path: &str) -> i64 {
 /// means for it — Helm-falsy for truthiness, 0 for the int-cast regions,
 /// equal only to the null literal for equalities.
 fn build_default_aware_leaf_condition_fragment(
-    value_path: &str,
+    value_path: &ValuesPath,
     ancestor_segments: &[String],
     leaf_schema: SchemaNode,
     absent_holds: bool,
 ) -> Option<SchemaNode> {
-    let segments = split_value_path(value_path);
+    let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
     let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
     if relative_segments.is_empty() {
         return Some(leaf_schema);
@@ -915,7 +915,7 @@ fn negated_member_guard_fragment(guard: &ConditionalGuard) -> Option<SchemaNode>
         ConditionalGuard::HasKey { path, key } => (path, SchemaNode::object().require(key.clone())),
         _ => return None,
     };
-    let segments = split_value_path(path);
+    let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
     let star = segments.iter().position(|segment| segment == "*")?;
     let suffix = segments.get(star + 1..)?;
     let member_positive = if suffix.is_empty() {
@@ -965,8 +965,8 @@ fn build_required_condition_fragment(
 
 /// The raw input path is missing or null before any chart-authored values
 /// reconstruction supplies a fallback.
-pub(crate) fn input_path_absent_condition(value_path: &str) -> Option<SchemaNode> {
-    let segments = split_value_path(value_path);
+pub(crate) fn input_path_absent_condition(value_path: &ValuesPath) -> Option<SchemaNode> {
+    let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
     let present_non_null = build_required_condition_fragment(
         &segments,
         SchemaNode::not(SchemaNode::enum_values(vec![Value::Null])),

@@ -257,12 +257,18 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     outer_guards.push(guard.clone());
                     continue;
                 }
-                let member_field = |path: &str| {
-                    let path = helm_schema_core::split_value_path(path);
-                    let member_scope = helm_schema_core::split_value_path(&member_scope);
-                    let field = path.strip_prefix(member_scope.as_slice())?;
+                let member_field = |path: &helm_schema_core::ValuesPath| {
+                    let member_scope = helm_schema_core::ValuesPath::parse(&member_scope);
+                    if path != &member_scope && !path.is_descendant_of(&member_scope) {
+                        return None;
+                    }
+                    let field = path
+                        .segments()
+                        .skip(member_scope.segments().len())
+                        .map(str::to_owned)
+                        .collect::<Vec<_>>();
                     (!field.is_empty() && !field.iter().any(|segment| segment == "*"))
-                        .then(|| field.to_vec())
+                        .then_some(field)
                 };
                 // A member guard becomes the exact dormant alternative:
                 // an else-arm escapes when its field is truthy, while a
@@ -284,7 +290,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                         _ => undecodable = true,
                     },
                     helm_schema_core::ConditionalGuard::Truthy { path }
-                        if path == &member_scope =>
+                        if path == &helm_schema_core::ValuesPath::parse(&member_scope) =>
                     {
                         escapes.push(vec![FailValueRequirement::HelmFalsy]);
                     }
@@ -415,7 +421,7 @@ pub(crate) fn synthesized_split_segment_implications(
                 value_path.clone(),
                 ContractRequirementImplication {
                     outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
-                        path: value_path.clone(),
+                        path: helm_schema_core::ValuesPath::parse(value_path),
                     }],
                     target: ContractRequirementTarget::Value,
                     requirements: vec![FailValueRequirement::MatchesPattern {

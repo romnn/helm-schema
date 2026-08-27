@@ -450,7 +450,8 @@ fn type_of_dispatch_keeps_serialized_arm_structured() {
                                     helm_schema_core::ConditionalGuard::TypeIs {
                                         path,
                                         schema_type,
-                                    } if path == "affinity" && schema_type == "string"
+                                    } if path == &helm_schema_core::ValuesPath::parse("affinity")
+                                        && schema_type == "string"
                                 )
                         )
                     }) && !overlay.evidence.facts.used_as_serialized
