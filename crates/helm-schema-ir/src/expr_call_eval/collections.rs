@@ -9,7 +9,7 @@ use crate::eval_effect::{
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
-use helm_schema_core::{GuardValue, Predicate};
+use helm_schema_core::{GuardValue, Predicate, ValuesPath};
 
 use super::strict_operands::{
     record_range_key_string_consumer_effects, record_raw_range_key_string_consumer_paths,
@@ -196,8 +196,10 @@ fn apply_default_primary_formatter_reachability(
     if formatter_meta.is_empty() {
         return;
     }
-    let predicates = reachability
-        .output_selection_conjunction("default primary after formatter output", value.paths());
+    let predicates = reachability.output_selection_conjunction(
+        "default primary after formatter output",
+        value.paths().iter().map(ValuesPath::encode).collect(),
+    );
     for (path, meta) in &mut formatter_meta {
         meta.conjoin_branches(&predicates);
         effects
@@ -212,12 +214,10 @@ pub(crate) fn default_primary_selection(result: &EvalResult) -> SelectionReachab
     if let Some(dispatch) = result.scalar_dispatch.as_ref()
         && (dispatch.has_printf_string_identity()
             || result.value.as_ref().is_some_and(|value| {
-                value.paths().iter().any(|path| {
-                    result
-                        .effects
-                        .derived_text_paths
-                        .contains(&helm_schema_core::ValuesPath::parse(path))
-                })
+                value
+                    .paths()
+                    .iter()
+                    .any(|path| result.effects.derived_text_paths.contains(path))
             }))
     {
         return SelectionReachability::from((dispatch, SelectionPolarity::Falsy));
@@ -264,7 +264,7 @@ pub(crate) fn default_primary_selection(result: &EvalResult) -> SelectionReachab
                     Predicate::all(
                         paths
                             .into_iter()
-                            .map(Predicate::truthy_path)
+                            .map(|path| Predicate::truthy_path(path.encode()))
                             .map(|predicate| predicate.negated())
                             .collect(),
                     ),
@@ -442,9 +442,8 @@ fn empty_rescue_paths(
     let is_empty_literal = |arm: &AbstractValue| matches!(arm, AbstractValue::StringSet(set) if set.len() == 1 && set.contains(""));
     let has_empty_literal_arm = arms.iter().any(|arm| is_empty_literal(arm));
     let stringified_in_effects = |path: &str| {
-        effects
-            .stringified_paths
-            .contains(&helm_schema_core::ValuesPath::parse(path))
+        let typed_path = ValuesPath::parse(path);
+        effects.stringified_paths.contains(&typed_path)
             || effects
                 .local_output_meta
                 .get(path)
@@ -713,11 +712,11 @@ pub(super) fn eval_split_list(
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains(&helm_schema_core::ValuesPath::parse(path))
+            .contains(path)
             || result
                 .effects
                 .local_output_meta
-                .get(path)
+                .get(&path.encode())
                 .is_some_and(|meta| meta.shape_erased || meta.derived_text)
     });
     // The subject must be a Go string at runtime whatever the split
@@ -770,11 +769,11 @@ pub(super) fn eval_regex_split(
             .effects
             .observed_facts
             .shape_erased_paths
-            .contains(&helm_schema_core::ValuesPath::parse(path))
+            .contains(path)
             || subject
                 .effects
                 .local_output_meta
-                .get(path)
+                .get(&path.encode())
                 .is_some_and(|meta| meta.shape_erased || meta.derived_text)
     });
     for arg in [pattern, limit] {
@@ -982,12 +981,12 @@ pub(super) fn eval_omit(
     {
         base.effects
             .local_output_meta
-            .entry(path.clone())
+            .entry(path.encode())
             .or_default()
             .input_identity = true;
         base.effects
             .omitted_map_keys
-            .entry(helm_schema_core::ValuesPath::parse(&path))
+            .entry(path)
             .or_default()
             .extend(keys.iter().cloned());
     }
@@ -1032,11 +1031,14 @@ pub(super) fn eval_merge(
         && args.first().is_some_and(expr_is_direct_values_root)
     {
         for source in values.iter().skip(1) {
-            if let Some(path) = source.unique_path().filter(|path| !path.is_empty()) {
+            if let Some(path) = source
+                .unique_path()
+                .filter(|path| path.segments().next().is_some())
+            {
                 effects.observed_facts.values_root_overlays.insert(
                     crate::observed_facts::ValuesRootOverlay {
                         target_path: helm_schema_core::ValuesPath::parse(""),
-                        source_path: helm_schema_core::ValuesPath::parse(&path),
+                        source_path: path,
                     },
                 );
             }
@@ -1110,9 +1112,13 @@ fn merge_layer_order(
     }
     let identities = values
         .iter()
-        .map(|value| value.unique_path().filter(|path| !path.is_empty()))
+        .map(|value| {
+            value
+                .unique_path()
+                .filter(|path| path.segments().next().is_some())
+        })
         .collect::<Option<Vec<_>>>()?;
-    let distinct: BTreeSet<&String> = identities.iter().collect();
+    let distinct: BTreeSet<&ValuesPath> = identities.iter().collect();
     if distinct.len() != identities.len() {
         return None;
     }

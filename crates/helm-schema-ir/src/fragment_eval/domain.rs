@@ -11,7 +11,7 @@ use std::collections::BTreeSet;
 use std::rc::Rc;
 
 use crate::{ContractProvenance, ResourceRef, ValueKind};
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 /// Render-site facts resolved at evaluation time: the manifest resource
 /// whose span contains the site, that resource span's path prefix (List
@@ -223,7 +223,7 @@ pub(crate) enum StringPart {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct TaintPart {
     /// The `.Values` paths that flowed into the unknown text.
-    pub paths: BTreeSet<String>,
+    pub paths: BTreeSet<ValuesPath>,
     /// Exact structure serialized into this text, retained so a later
     /// `fromJson` can recover the value shape across a helper boundary.
     pub(crate) structured_value: Option<crate::abstract_value::AbstractValue>,
@@ -247,7 +247,7 @@ impl Default for TaintPart {
 impl TaintPart {
     /// Taint with no resolved site (stamped later by the interpreter).
     #[must_use]
-    pub fn new(paths: BTreeSet<String>) -> Self {
+    pub fn new(paths: BTreeSet<ValuesPath>) -> Self {
         Self {
             paths,
             structured_value: None,
@@ -260,7 +260,7 @@ impl TaintPart {
 
     /// Provenance-only taint used when bounded fanout must abstain.
     #[must_use]
-    pub(crate) fn abstaining(paths: BTreeSet<String>) -> Self {
+    pub(crate) fn abstaining(paths: BTreeSet<ValuesPath>) -> Self {
         Self {
             claims_value_kind: false,
             ..Self::new(paths)
@@ -416,7 +416,7 @@ impl SpliceMeta {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Opaque {
     /// The `.Values` paths that flowed into the unknown content.
-    pub taint: BTreeSet<String>,
+    pub taint: BTreeSet<ValuesPath>,
     /// The hole kind the opaque content renders as (scalar holes taint as
     /// scalars, fragment holes as fragments).
     pub kind: ValueKind,

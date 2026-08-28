@@ -78,7 +78,11 @@ fn dump_node(node: &AbstractFragment, depth: usize, out: &mut String) {
             if opaque.taint.is_empty() {
                 let _ = writeln!(out, "{pad}opaque");
             } else {
-                let taint: Vec<&str> = opaque.taint.iter().map(String::as_str).collect();
+                let taint: Vec<String> = opaque
+                    .taint
+                    .iter()
+                    .map(helm_schema_core::ValuesPath::encode)
+                    .collect();
                 let _ = writeln!(out, "{pad}opaque taint={{{}}}", taint.join(", "));
             }
         }
@@ -99,7 +103,11 @@ fn fmt_string(string: &AbstractString) -> String {
             }
             StringPart::Splice(splice) => fmt_splice(splice),
             StringPart::Taint(taint) => {
-                let rendered: Vec<&str> = taint.paths.iter().map(String::as_str).collect();
+                let rendered: Vec<String> = taint
+                    .paths
+                    .iter()
+                    .map(helm_schema_core::ValuesPath::encode)
+                    .collect();
                 format!("taint{{{}}}", rendered.join(", "))
             }
         })

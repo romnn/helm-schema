@@ -3469,7 +3469,7 @@
 
 ## B4a.6 — migrate contract-use path carriers
 
-- Status: landed; commit pending.
+- Status: landed in `4c9e321c` (`refactor(ir): type abstract value paths`).
 - Contract: representation-only migration of the public phase-crossing `ContractUse.source_expr`
   identity and every `MergeLayersUse.layers` identity to segmented `ValuesPath`. YAML paths,
   resource references, literal member keys, split separators, source provenance, transform tags,
@@ -4287,3 +4287,106 @@
 
 - Measured production LOC delta: -66 (64,403 to 64,337), from merged structural path operations
   and deletion of repeated encode/parse branches.
+
+## B4a.14 — migrate abstract-value influence paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of `AbstractValue` influence-path sets
+  (`DerivedBoolean`, `SplitList`, `SplitSegment`, and `Widened`) and its identity/influence path
+  accessors to segmented `ValuesPath`. Literal string sets, dictionary keys, separators, helper
+  identifiers, and still-string phase boundaries remain separate domains.
+- Acceptance baseline: `4c9e321c` (B4a.13).
+- Baseline production LOC: 64,337 Rust lines from `task tokei:core` on `4c9e321c`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Derived Boolean, split source, widened, direct identity, ranged-key, and collected influence
+    paths retain the same membership and legacy encoded ordering, including dot/backslash cases.
+  - All affected carriers are crate-private, so this round changes no public API or wire format.
+    Existing string consumers must encode explicitly at their boundary; no coercion trait,
+    cross-type comparison, or cached encoded twin is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - `DerivedBoolean`, `SplitList`, `SplitSegment`, and `Widened` now retain segmented influence
+    paths. `TaintPart` and `Opaque`, the fragment carriers fed directly by those variants, use the
+    same representation instead of immediately restoring string-shaped twins.
+  - Direct/input identity, unique, collected, ranged-key, shallow fragment-source, and full
+    fragment-rendered accessors return `ValuesPath`. Descendant, item-parent, root, membership,
+    and stable-order operations stay structural; encoding is explicit only at remaining metadata,
+    diagnostic, predicate-constructor, or dump boundaries.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `4c9e321c`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The initial compiler-only carrier change was rejected with 101 production and 107 all-target
+    mismatches. After the production migration compiled, the first all-target preflight exposed 14
+    test/dump construction mismatches. Both inventories were resolved explicitly; no archive or
+    dump was produced from either state.
+  - The first whole-workspace lint preflight was rejected on two mechanical findings: a root-path
+    emptiness guard eligible for `?`, and `eval_printf` crossing the 100-line limit because two
+    identical string-to-path boundary decodes were expanded inline. The guard now uses `?`, and a
+    narrowly named consuming decoder removes the duplication without a suppression.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Derived Boolean influences | Same guard and comparison attribution | IR/unit suite. |
+| Split list/segment sources | Same cardinality and segment constraints | Serialization/split suites. |
+| Widened call influences | Same output projection and fallback behavior | Helper/fragment suites. |
+| Direct/range/collected identities | Same descent, range, and selection behavior | Abstract-value/IR suites. |
+| String-facing phase boundaries | Same encoded paths and stable order | Fixture dumps and prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds in 5 minutes 2 seconds, and 393/393 IR
+  tests pass, covering influence algebra, split provenance, widened helpers, fragment fanout,
+  projection, summaries, predicates, traversal, and stable dump rendering. The corrected
+  whole-workspace lint preflight passes warning-free in 5 minutes 7 seconds.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a14-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a14-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 7 minutes 32 seconds.
+- Clean schema dump: the B4a.14 `final1` archive under the step-local schema `TMPDIR`; exit 0, 62
+  tests pass in 184.594 seconds and 84 artifacts are byte-identical to B4a.13.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one test passes in
+  3.960 seconds and 18 artifacts are byte-identical to B4a.13.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `4c9e321c`,
+  Helm adjudication enabled; exit 0 in 68.890 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: none. All migrated variants, accessors, and fragment carriers are
+  crate-private; encoded dump and contract bytes remain identical.
+
+### Self-adversarial pass
+
+- Whole-tree carrier searches find no string-backed influence set on the four variants, and no
+  string-backed `TaintPart`/`Opaque` path set. All named `AbstractValue` identity/influence
+  accessors return `ValuesPath`; literal string sets, dictionary keys, separators, helper names,
+  and file paths remain strings in their distinct domains.
+- Dot/backslash path identity never routes through a new textual split or concatenation. The only
+  new decoder consumes a still-string boundary set, and there is no `Deref`, `AsRef<str>`,
+  `Display`, cross-type comparison, or parallel encoded field.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, complete workspace Clippy pass in 6 minutes 17 seconds.
+- `task lint:fc`; exit 0, 48 combinations across 13 packages and 3 targets in 1,278.62
+  seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 184.922 seconds after the
+  final build.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,523.107 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,607.205 seconds, including all
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; the final release binary replaces
+  `/Users/roman/.cargo/bin/helm-schema` after a 22.22-second build.
+- Downstream luup2 gate with the documented macOS `xargs`/`flock` shims and installed binary;
+  exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,301 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: -36 (64,337 to 64,301), from collapsing repeated typed
+  set conversions and descendant/root checks onto the carrier.

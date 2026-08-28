@@ -129,12 +129,12 @@ pub(super) fn eval_printf(
     if let Some(rendered) = rendered {
         values.push(AbstractValue::StringSet(rendered));
     }
-    if let Some(paths) = AbstractValue::path_choices(provenance_paths) {
+    if let Some(paths) = AbstractValue::path_choices(parse_values_paths(provenance_paths)) {
         values.push(paths);
     }
     // Non-identity influence stays widened because formatted output is not
     // structurally identical to a nested value that contributed text.
-    if let Some(widened) = AbstractValue::widened(widened_paths) {
+    if let Some(widened) = AbstractValue::widened(parse_values_paths(widened_paths)) {
         values.push(widened);
     }
     let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
@@ -142,6 +142,13 @@ pub(super) fn eval_printf(
         Some(dispatch) => result.with_scalar_dispatch(dispatch),
         None => result,
     }
+}
+
+fn parse_values_paths(paths: BTreeSet<String>) -> BTreeSet<ValuesPath> {
+    paths
+        .into_iter()
+        .map(|path| ValuesPath::parse(&path))
+        .collect()
 }
 
 fn printf_scalar_dispatch(
@@ -806,7 +813,7 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
     } else if rendered_yaml_output {
         Some(AbstractValue::Unknown)
     } else {
-        AbstractValue::widened(paths)
+        AbstractValue::widened(paths.iter().map(|path| ValuesPath::parse(path)).collect())
     };
     EvalResult::with_effects(value, effects)
 }

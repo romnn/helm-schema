@@ -738,7 +738,12 @@ impl Interpreter<'_> {
         }
         vec![(
             Predicate::True,
-            vec![StringPart::Taint(TaintPart::new(taint))],
+            vec![StringPart::Taint(TaintPart::new(
+                taint
+                    .iter()
+                    .map(|path| helm_schema_core::ValuesPath::parse(path))
+                    .collect(),
+            ))],
         )]
     }
 

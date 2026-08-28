@@ -113,7 +113,7 @@ pub(crate) fn collect_template_requests_from_exprs(
                     for path_pattern in value.fragment_source_paths() {
                         for (path, program) in context
                             .analysis_db
-                            .chart_default_programs_matching(&path_pattern)
+                            .chart_default_programs_matching(&path_pattern.encode())
                         {
                             requests.insert(StaticTemplateProgram {
                                 source: StaticTemplateSource::ValuesDefault {

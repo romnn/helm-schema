@@ -573,19 +573,21 @@ impl ValuePathContext<'_> {
                 .with_body_fragment_value_expr(map)?
                 .direct_values_identity()?;
             let (leaf_key, parent_keys) = keys.split_last()?;
-            let parent = parent_keys.iter().fold(base, |path, key| {
-                helm_schema_core::append_value_path(&path, key)
-            });
-            let path = helm_schema_core::append_value_path(&parent, leaf_key);
+            let mut parent = base;
+            for key in parent_keys {
+                parent.push(*key);
+            }
+            let mut path = parent.clone();
+            path.push(*leaf_key);
             // `HasKey` (not `¬Absent`): dig OBSERVES a present nil member,
             // which renders as truthy "<nil>".
             return Some(Predicate::all(vec![
                 Predicate::from(Guard::HasKey {
-                    path: helm_schema_core::ValuesPath::parse(&parent),
+                    path: parent,
                     key: (*leaf_key).to_string(),
                 }),
                 Predicate::from(Guard::NotEq {
-                    path: helm_schema_core::ValuesPath::parse(&path),
+                    path,
                     value: GuardValue::string(""),
                 }),
             ]));
@@ -644,10 +646,11 @@ impl ValuePathContext<'_> {
         let base = self
             .with_body_fragment_value_expr(subject)?
             .direct_values_identity()?;
-        let path = keys.iter().fold(base, |path, key| {
-            helm_schema_core::append_value_path(&path, key)
-        });
-        Some(Predicate::truthy_path(path))
+        let mut path = base;
+        for key in keys {
+            path.push(key);
+        }
+        Some(Predicate::truthy_path(path.encode()))
     }
 
     /// `eq $key "literal"` (either operand order) where `$key` is a
@@ -1129,16 +1132,16 @@ impl ValuePathContext<'_> {
             }
             value => value
                 .input_identity_path()
-                .filter(|path| !path.is_empty())?,
+                .filter(|path| path.segments().next().is_some())?,
         };
         // A subject that reached this consumer through `tpl` carries its
         // rendered OUTPUT here, not the raw program: the pattern then
         // constrains the render, and a raw value carrying a template action
         // is admitted (redis-ha `masterGroupName: "{{ .Release.Name }}"`).
         // The string contract from `tpl`'s input assertion still stands.
-        let templated = self.subject_is_derived_text(subject, &path);
+        let templated = self.subject_is_derived_text(subject, &path.encode());
         Some(Predicate::from(Guard::MatchesPattern {
-            path: helm_schema_core::ValuesPath::parse(&path),
+            path,
             pattern: pattern.to_string(),
             templated,
         }))
@@ -1159,15 +1162,15 @@ impl ValuePathContext<'_> {
         let path = self
             .with_body_fragment_value_expr(subject)?
             .input_identity_path()
-            .filter(|path| !path.is_empty())?;
-        let templated = self.subject_is_derived_text(subject, &path);
+            .filter(|path| path.segments().next().is_some())?;
+        let templated = self.subject_is_derived_text(subject, &path.encode());
         let pattern = if suffix {
             format!("{}$", crate::escape_regex_literal(affix))
         } else {
             format!("^{}", crate::escape_regex_literal(affix))
         };
         Some(Predicate::from(Guard::MatchesPattern {
-            path: helm_schema_core::ValuesPath::parse(&path),
+            path,
             pattern,
             templated,
         }))
@@ -1184,9 +1187,9 @@ impl ValuePathContext<'_> {
         let path = self
             .with_body_fragment_value_expr(subject)?
             .input_identity_path()
-            .filter(|path| !path.is_empty())?;
+            .filter(|path| path.segments().next().is_some())?;
         Some(Predicate::from(Guard::MatchesPattern {
-            path: helm_schema_core::ValuesPath::parse(&path),
+            path,
             pattern: crate::escape_regex_literal(needle),
             templated: false,
         }))

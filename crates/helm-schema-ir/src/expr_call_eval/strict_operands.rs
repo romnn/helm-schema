@@ -7,7 +7,7 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::scalar_value::ScalarValue;
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 use super::serialization::record_total_conversion_effects;
 use super::value_facts::{identity_range_key_paths, identity_value_paths};
@@ -25,16 +25,15 @@ pub(super) fn record_string_transform_effects(
         // Sprig's `strval` fallback renders ANY input (maps, lists, nil), so
         // a total stringification constrains nothing about its input and the
         // sink observes only the rendered text, never the input shape.
-        record_total_conversion_effects(influence_paths.clone(), effects);
+        record_total_conversion_effects(
+            influence_paths.iter().map(ValuesPath::encode).collect(),
+            effects,
+        );
         // Sprig `quote`/`squote` SKIP nil operands entirely: a missing or
         // null source renders an explicit YAML null into the sink, unlike
         // `toString`'s always-text image.
         if matches!(function, "quote" | "squote") {
-            effects.nil_omitting_paths.extend(
-                influence_paths
-                    .iter()
-                    .map(|path| helm_schema_core::ValuesPath::parse(path)),
-            );
+            effects.nil_omitting_paths.extend(influence_paths.clone());
         }
         // Only `toString` returns the exact `%v` rendering of its operand
         // (`quote`/`squote`/`urlquery` decorate or rewrite the text), and
@@ -70,18 +69,14 @@ pub(super) fn record_string_transform_effects(
             }
         }
     }
-    effects.derived_text_paths.extend(
-        influence_paths
-            .iter()
-            .map(|path| helm_schema_core::ValuesPath::parse(path)),
-    );
+    effects.derived_text_paths.extend(influence_paths.clone());
     effects.derived_range_key_paths.extend(
         identity_range_key_paths(value)
             .iter()
             .map(|path| helm_schema_core::ValuesPath::parse(path)),
     );
     if function == "b64enc" {
-        effects.add_encoded_paths(influence_paths);
+        effects.add_encoded_paths(influence_paths.iter().map(ValuesPath::encode).collect());
     }
 }
 

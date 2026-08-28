@@ -9,6 +9,7 @@
 //! re-parse structurally and become guarded scalar arms.
 
 use helm_schema_ast::{TemplateExpr, parse_expr_text};
+use helm_schema_core::ValuesPath;
 use helm_schema_syntax::Span;
 
 use crate::abstract_value::AbstractValue;
@@ -257,7 +258,7 @@ impl Interpreter<'_> {
         else {
             return;
         };
-        if target_path.is_empty() {
+        if target_path.segments().next().is_none() {
             return;
         }
 
@@ -301,7 +302,8 @@ impl Interpreter<'_> {
                 continue;
             }
             for key in keys {
-                let path = helm_schema_core::append_value_path(&target_path, &key);
+                let mut path = target_path.clone();
+                path.push(&key);
                 for predicate in &self.active_predicates {
                     let Predicate::Guard(Guard::TypeIs {
                         path: tested_path,
@@ -310,9 +312,7 @@ impl Interpreter<'_> {
                     else {
                         continue;
                     };
-                    if tested_path != &helm_schema_core::ValuesPath::parse(&path)
-                        || schema_type == "object"
-                    {
+                    if tested_path != &path || schema_type == "object" {
                         continue;
                     }
                     let mut outer_predicates = self
@@ -324,7 +324,7 @@ impl Interpreter<'_> {
                     outer_predicates.sort();
                     outer_predicates.dedup();
                     self.member_host_conversions.insert(MemberHostConversion {
-                        path: helm_schema_core::ValuesPath::parse(&path),
+                        path: path.clone(),
                         input_kind: schema_type.clone(),
                         outer_predicates,
                     });
@@ -736,7 +736,7 @@ impl Interpreter<'_> {
                 .helper_dependency_rendered
                 .iter()
                 .map(|row| &row.path)
-                .filter(|path| !fragment_paths.contains(*path))
+                .filter(|path| !fragment_paths.contains(&ValuesPath::parse(path)))
                 .collect();
             output_meta.retain(|path, _| !dependency_only_paths.contains(path));
             // A reassignment evaluated under branch predicates keeps them on
@@ -756,7 +756,7 @@ impl Interpreter<'_> {
             {
                 if let Some(binding) = &fragment_value {
                     for path in binding.fragment_rendered_paths() {
-                        output_meta.entry(path).or_default();
+                        output_meta.entry(path.encode()).or_default();
                     }
                 }
                 let flowing: std::collections::BTreeSet<String> =

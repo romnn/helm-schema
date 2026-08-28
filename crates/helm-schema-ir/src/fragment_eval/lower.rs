@@ -68,7 +68,7 @@ pub(crate) fn over_cap_scalar_taint(
             match part {
                 StringPart::Text(_) => {}
                 StringPart::Splice(splice) => {
-                    paths.insert(splice.values_path.encode());
+                    paths.insert(splice.values_path.clone());
                 }
                 StringPart::Taint(taint) => paths.extend(taint.paths),
             }
@@ -441,14 +441,18 @@ pub(crate) fn lower_value(
             // False only when the split SUBJECT was the raw string itself
             // (a pre-transformed subject severs segment-to-source identity).
             total_text_preimage: false,
-        } if source_paths.len() == 1 && source_paths.iter().all(|path| !path.is_empty()) => {
+        } if source_paths.len() == 1
+            && source_paths
+                .iter()
+                .all(|path| path.segments().next().is_some()) =>
+        {
             // A single-source segment of the RAW string keeps a splice with
             // segment provenance: the sink schema constrains that segment
             // of the value (tempo's `regexSplit ":" . -1 | last` port
             // suffix), never the whole raw text.
             let mut out = Guarded::empty();
             for path in source_paths {
-                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
+                for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind) {
                     splice.meta.split_segment = Some(helm_schema_core::SplitSegmentUse {
                         separator: separator.clone(),
                         last: *last,
@@ -474,7 +478,7 @@ pub(crate) fn lower_value(
             let mut out = Guarded::empty();
             let mut taint = BTreeSet::new();
             for path in paths {
-                match scope.local_output_meta.get(path) {
+                match scope.local_output_meta.get(&path.encode()) {
                     Some(meta) if !meta.predicates.is_empty() || meta.defaulted => {
                         // A derived-text path whose identity the transform
                         // lost renders FRESH text into a scalar slot
@@ -491,19 +495,11 @@ pub(crate) fn lower_value(
                         // (printf-collapsed) and encoded (`b64enc`) flows.
                         let digest_input =
                             matches!(kind, ValueKind::Scalar | ValueKind::PartialScalar)
-                                && values_path_is_encoded(
-                                    &ValuesPath::parse(path),
-                                    scope.derived_text_paths,
-                                )
-                                && !values_path_is_encoded(
-                                    &ValuesPath::parse(path),
-                                    scope.shape_erased_paths,
-                                )
-                                && !values_path_is_encoded(
-                                    &ValuesPath::parse(path),
-                                    scope.encoded_paths,
-                                );
-                        for (condition, mut splice) in scope.path_splice_arms(path, kind) {
+                                && values_path_is_encoded(path, scope.derived_text_paths)
+                                && !values_path_is_encoded(path, scope.shape_erased_paths)
+                                && !values_path_is_encoded(path, scope.encoded_paths);
+                        for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind)
+                        {
                             splice.meta.digest |= digest_input;
                             out.arms.push((condition, AbstractFragment::Splice(splice)));
                         }
@@ -520,11 +516,8 @@ pub(crate) fn lower_value(
                 // slot's provider schema constrains nothing about the raw
                 // value; the Serialized kind carries that abstention.
                 let kind = if taint.iter().all(|path| {
-                    values_path_is_encoded(&ValuesPath::parse(path), scope.shape_erased_paths)
-                        || values_path_is_encoded(
-                            &ValuesPath::parse(path),
-                            scope.derived_text_paths,
-                        )
+                    values_path_is_encoded(path, scope.shape_erased_paths)
+                        || values_path_is_encoded(path, scope.derived_text_paths)
                 }) {
                     ValueKind::Serialized
                 } else {
@@ -690,9 +683,9 @@ pub(crate) fn lower_value_scalar_arms(
             let mut arms = Vec::new();
             let mut taint = BTreeSet::new();
             for path in paths {
-                match scope.local_output_meta.get(path) {
+                match scope.local_output_meta.get(&path.encode()) {
                     Some(meta) if !meta.predicates.is_empty() || meta.defaulted => {
-                        for (condition, splice) in scope.path_splice_arms(path, kind) {
+                        for (condition, splice) in scope.path_splice_arms(&path.encode(), kind) {
                             arms.push((condition, vec![StringPart::Splice(splice)]));
                         }
                     }
@@ -816,9 +809,9 @@ fn lower_alternative_scalar_arms<'v>(
 fn json_serialized_taint(value: &AbstractValue, scope: &LowerScope<'_>) -> Option<TaintPart> {
     let paths = value.paths();
     if paths.is_empty()
-        || !paths.iter().all(|path| {
-            values_path_is_encoded(&ValuesPath::parse(path), scope.json_serialized_paths)
-        })
+        || !paths
+            .iter()
+            .all(|path| values_path_is_encoded(path, scope.json_serialized_paths))
     {
         return None;
     }

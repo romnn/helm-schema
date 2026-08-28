@@ -313,15 +313,13 @@ pub(super) fn root_values_default_source(
         _ => return None,
     };
     let effective_path = eval_expr(effective, env).value?.unique_path()?;
-    if !effective_path.is_empty() {
+    if effective_path.segments().next().is_some() {
         return None;
     }
     let source_path = eval_expr(source, env).value?.unique_path()?;
-    if source_path.is_empty() {
-        return None;
-    }
+    source_path.segments().next()?;
     Some(crate::ValuesDefaultSource {
         target_path: helm_schema_core::ValuesPath::default(),
-        source_path: helm_schema_core::ValuesPath::parse(&source_path),
+        source_path,
     })
 }

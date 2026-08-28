@@ -269,10 +269,7 @@ pub(super) fn eval_index(
                             conjunction: Vec::new(),
                             ranged: crate::range_modes::RangeModes::default(),
                             kind: crate::eval_effect::CaptureKind::SplitIndexAccess {
-                                paths: source_paths
-                                    .iter()
-                                    .map(|path| helm_schema_core::ValuesPath::parse(path))
-                                    .collect(),
+                                paths: source_paths.clone(),
                                 separator: separator.clone(),
                                 index,
                                 total_text_preimage: *total_text_preimage,
@@ -299,16 +296,14 @@ pub(super) fn eval_index(
                 if let Some(next) = apply_index_segment(value, option) {
                     for next_path in next.paths() {
                         for base_path in &base_paths {
-                            if !base_path.is_empty()
-                                && helm_schema_core::values_path_is_descendant(
-                                    &next_path, base_path,
-                                )
+                            if base_path.segments().next().is_some()
+                                && next_path.is_descendant_of(base_path)
                             {
                                 effects
                                     .local_output_meta
-                                    .entry(next_path.clone())
+                                    .entry(next_path.encode())
                                     .or_insert_with(HelperOutputMeta::default)
-                                    .suppress_predicate_path(base_path.clone());
+                                    .suppress_predicate_path(base_path.encode());
                             }
                         }
                     }

@@ -17,7 +17,7 @@ use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 use super::domain::{
     AbstractFragment, AbstractString, Guarded, PathCondition, StringPart, and_conditions,
@@ -76,21 +76,25 @@ fn prepare_hole_value(
     scalar_site: bool,
 ) -> (Option<AbstractValue>, Vec<String>) {
     let value_paths = value.as_ref().map(AbstractValue::paths).unwrap_or_default();
-    let effect_paths = effects.output_value_paths();
-    let all: std::collections::BTreeSet<String> = value_paths
+    let effect_paths: BTreeSet<ValuesPath> = effects
+        .output_value_paths()
+        .iter()
+        .map(|path| ValuesPath::parse(path))
+        .collect();
+    let all: BTreeSet<ValuesPath> = value_paths
         .iter()
         .chain(effect_paths.iter())
-        .filter(|path| !path.is_empty())
+        .filter(|path| path.segments().next().is_some())
         .cloned()
         .collect();
-    let drop: std::collections::BTreeSet<String> = all
+    let drop: BTreeSet<ValuesPath> = all
         .iter()
         .filter(|path| {
-            helm_schema_core::values_path_has_descendant(path, &all)
+            all.iter().any(|candidate| candidate.is_descendant_of(path))
                 && (scalar_site
                     || effects.helper_rendered.iter().any(|row| {
-                        value_paths.contains(&row.path)
-                            && helm_schema_core::values_path_is_descendant(&row.path, path)
+                        let row_path = ValuesPath::parse(&row.path);
+                        value_paths.contains(&row_path) && row_path.is_descendant_of(path)
                     }))
         })
         .cloned()
@@ -98,7 +102,10 @@ fn prepare_hole_value(
     let value = value.and_then(|value| value.remove_fragment_paths(&drop));
     let extras = effect_paths
         .into_iter()
-        .filter(|path| !path.is_empty() && !value_paths.contains(path) && !drop.contains(path))
+        .filter(|path| {
+            path.segments().next().is_some() && !value_paths.contains(path) && !drop.contains(path)
+        })
+        .map(|path| path.encode())
         .collect();
     (value, extras)
 }
@@ -350,9 +357,9 @@ impl Interpreter<'_> {
             && let Some(path) = value
                 .as_ref()
                 .and_then(AbstractValue::direct_values_identity)
-            && path.ends_with(".*")
+            && path.item_parent().is_some()
         {
-            self.record_document_root_mapping(&path, Vec::new());
+            self.record_document_root_mapping(&path.encode(), Vec::new());
         }
         // The hole IS the whole scalar of a VALUE slot here (a partial scalar
         // routes through `eval_hole_parts`), so it renders an unquoted plain
@@ -483,7 +490,6 @@ impl Interpreter<'_> {
             .map(AbstractValue::range_key_paths)
             .unwrap_or_default()
             .into_iter()
-            .map(|path| helm_schema_core::ValuesPath::parse(&path))
             .collect::<BTreeSet<_>>();
         key_paths.retain(|path| !effects.derived_range_key_paths.contains(path));
         key_paths.extend(effects.plain_text_range_key_paths.iter().cloned());

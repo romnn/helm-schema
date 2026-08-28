@@ -861,8 +861,8 @@ fn project_node(
     }
 }
 
-fn output_path(path: &str, meta: HelperOutputMeta) -> AbstractValue {
-    AbstractValue::OutputPath(helm_schema_core::ValuesPath::parse(path), meta)
+fn output_path(path: &helm_schema_core::ValuesPath, meta: HelperOutputMeta) -> AbstractValue {
+    AbstractValue::OutputPath(path.clone(), meta)
 }
 
 /// Flatten the tree's rendered splice/taint rows into per-path claims.
@@ -959,7 +959,7 @@ fn collect_rendered_node(
                         for path in &taint.paths {
                             push_rendered_row(
                                 rows,
-                                path,
+                                &path.encode(),
                                 ValueKind::PartialScalar,
                                 false,
                                 meta.clone(),
@@ -986,7 +986,7 @@ fn collect_rendered_node(
             }
             let meta = taint_row_meta(opaque.site.as_deref(), &opaque.provenance, conditions);
             for path in &opaque.taint {
-                push_rendered_row(rows, path, opaque.kind, false, meta.clone());
+                push_rendered_row(rows, &path.encode(), opaque.kind, false, meta.clone());
             }
         }
     }
@@ -1100,7 +1100,11 @@ fn append_suppressed_node_reads(
                             continue;
                         }
                         (
-                            taint.paths.iter().cloned().collect(),
+                            taint
+                                .paths
+                                .iter()
+                                .map(helm_schema_core::ValuesPath::encode)
+                                .collect(),
                             taint.site.as_deref(),
                             &taint.provenance,
                         )

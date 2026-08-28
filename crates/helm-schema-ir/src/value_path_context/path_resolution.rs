@@ -141,12 +141,7 @@ impl ValuePathContext<'_> {
             .or(evaluated.value)
             .and_then(AbstractValue::without_widened);
         if let Some(value) = &value {
-            influence_paths.extend(
-                value
-                    .paths()
-                    .into_iter()
-                    .map(|path| helm_schema_core::ValuesPath::parse(&path)),
-            );
+            influence_paths.extend(value.paths());
         }
         let truth_source = evaluated_truth_reachability.truth_source();
         let truth_reachability = match (

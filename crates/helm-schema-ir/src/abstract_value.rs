@@ -25,7 +25,7 @@ pub(crate) enum AbstractValue {
     StringSet(BTreeSet<String>),
     /// Boolean result computed from other values. Its influences are not
     /// the Boolean's raw runtime identity.
-    DerivedBoolean(BTreeSet<String>),
+    DerivedBoolean(BTreeSet<ValuesPath>),
     Dict(BTreeMap<String, AbstractValue>),
     List(Vec<AbstractValue>),
     Overlay {
@@ -53,7 +53,7 @@ pub(crate) enum AbstractValue {
     /// influences rather than list identities; literal indexing uses the
     /// separator to recover a bounded source-cardinality precondition.
     SplitList {
-        source_paths: BTreeSet<String>,
+        source_paths: BTreeSet<ValuesPath>,
         separator: String,
         total_text_preimage: bool,
     },
@@ -61,7 +61,7 @@ pub(crate) enum AbstractValue {
     /// ":" . -1 | last`). Like [`Self::SplitList`], the source paths are
     /// influences, but a typed sink can constrain the named segment.
     SplitSegment {
-        source_paths: BTreeSet<String>,
+        source_paths: BTreeSet<ValuesPath>,
         separator: String,
         /// The LAST segment when true, the first otherwise.
         last: bool,
@@ -72,7 +72,7 @@ pub(crate) enum AbstractValue {
     /// `.Values` paths that flowed into the call are kept so output
     /// projection can still attribute the rendered text to its sources.
     /// Declared last so projected rows sort after structured alternatives.
-    Widened(BTreeSet<String>),
+    Widened(BTreeSet<ValuesPath>),
 }
 
 fn flattened_merge_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
@@ -142,11 +142,11 @@ impl AbstractValue {
     /// Guarded raw input and matching JSON decodes preserve identity. Other
     /// output metadata records influence or transformed text, neither of
     /// which permits structural projection.
-    pub(crate) fn direct_values_identity(&self) -> Option<String> {
+    pub(crate) fn direct_values_identity(&self) -> Option<ValuesPath> {
         match self {
-            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.encode()),
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.clone()),
             Self::OutputPath(path, meta) if meta.is_input_identity() || meta.json_decoded => {
-                Some(path.encode())
+                Some(path.clone())
             }
             _ => None,
         }
@@ -157,15 +157,15 @@ impl AbstractValue {
     ///
     /// Consumers use this only when they explicitly backproject through the
     /// recorded transform, such as a pattern tested after `tpl`.
-    pub(crate) fn input_identity_path(&self) -> Option<String> {
+    pub(crate) fn input_identity_path(&self) -> Option<ValuesPath> {
         match self {
-            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.encode()),
-            Self::OutputPath(path, meta) if meta.input_identity => Some(path.encode()),
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.clone()),
+            Self::OutputPath(path, meta) if meta.input_identity => Some(path.clone()),
             _ => None,
         }
     }
 
-    pub(crate) fn paths(&self) -> BTreeSet<String> {
+    pub(crate) fn paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
         self.collect_paths(&mut paths, true, false);
         paths
@@ -178,16 +178,16 @@ impl AbstractValue {
     pub(crate) fn conjoin_output_path_branches(
         &mut self,
         predicates: &BTreeSet<Predicate>,
-    ) -> BTreeSet<String> {
+    ) -> BTreeSet<ValuesPath> {
         fn conjoin(
             value: &mut AbstractValue,
             predicates: &BTreeSet<Predicate>,
-            paths: &mut BTreeSet<String>,
+            paths: &mut BTreeSet<ValuesPath>,
         ) {
             match value {
                 AbstractValue::OutputPath(path, meta) => {
                     meta.conjoin_branches(predicates);
-                    paths.insert(path.encode());
+                    paths.insert(path.clone());
                 }
                 AbstractValue::Choice(choices) => {
                     *choices = std::mem::take(choices)
@@ -213,16 +213,16 @@ impl AbstractValue {
         paths
     }
 
-    pub(crate) fn range_key_paths(&self) -> BTreeSet<String> {
+    pub(crate) fn range_key_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
         self.collect_range_key_paths(&mut paths);
         paths
     }
 
-    fn collect_range_key_paths(&self, out: &mut BTreeSet<String>) {
+    fn collect_range_key_paths(&self, out: &mut BTreeSet<ValuesPath>) {
         match self {
             Self::RangeKey(path) => {
-                out.insert(path.encode());
+                out.insert(path.clone());
             }
             Self::Dict(map) => {
                 for value in map.values() {
@@ -270,23 +270,23 @@ impl AbstractValue {
 
     fn collect_paths(
         &self,
-        out: &mut BTreeSet<String>,
+        out: &mut BTreeSet<ValuesPath>,
         descend_structures: bool,
         suppress_values_root: bool,
     ) {
         match self {
             Self::ValuesPath(path) => {
                 if !suppress_values_root || path.segments().len() != 0 {
-                    out.insert(path.encode());
+                    out.insert(path.clone());
                 }
             }
             Self::JsonDecodedPath(path) => {
                 if !suppress_values_root || path.segments().next().is_some() {
-                    out.insert(path.encode());
+                    out.insert(path.clone());
                 }
             }
             Self::OutputPath(path, _) => {
-                out.insert(path.encode());
+                out.insert(path.clone());
             }
             Self::Dict(map) if descend_structures => {
                 for value in map.values() {
@@ -323,7 +323,7 @@ impl AbstractValue {
             // collection's member values.
             Self::KeysList(path) => {
                 if !suppress_values_root {
-                    out.insert(path.encode());
+                    out.insert(path.clone());
                 }
             }
             // Influence paths surface in full path collection (output
@@ -849,16 +849,11 @@ impl AbstractValue {
         Self::join_all(values)
     }
 
-    pub(crate) fn path_choices(paths: BTreeSet<String>) -> Option<Self> {
-        Self::choice(
-            paths
-                .into_iter()
-                .map(|path| Self::ValuesPath(ValuesPath::parse(&path)))
-                .collect(),
-        )
+    pub(crate) fn path_choices(paths: BTreeSet<ValuesPath>) -> Option<Self> {
+        Self::choice(paths.into_iter().map(Self::ValuesPath).collect())
     }
 
-    pub(crate) fn widened(paths: BTreeSet<String>) -> Option<Self> {
+    pub(crate) fn widened(paths: BTreeSet<ValuesPath>) -> Option<Self> {
         if paths.is_empty() {
             None
         } else {
@@ -930,13 +925,10 @@ impl AbstractValue {
             Self::MergedLayers(layers) => {
                 Self::MergedLayers(layers.into_iter().map(Self::mark_json_decoded).collect())
             }
-            Self::Widened(paths) => Self::choice(
-                paths
-                    .into_iter()
-                    .map(|path| Self::JsonDecodedPath(ValuesPath::parse(&path)))
-                    .collect(),
-            )
-            .unwrap_or(Self::Unknown),
+            Self::Widened(paths) => {
+                Self::choice(paths.into_iter().map(Self::JsonDecodedPath).collect())
+                    .unwrap_or(Self::Unknown)
+            }
             Self::JsonDecodedPath(_)
             | Self::Top
             | Self::Unknown
@@ -1463,7 +1455,7 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn unique_path(&self) -> Option<String> {
+    pub(crate) fn unique_path(&self) -> Option<ValuesPath> {
         let mut paths = self.paths().into_iter();
         let first = paths.next()?;
         if paths.next().is_none() {
@@ -1504,7 +1496,9 @@ impl AbstractValue {
                 other => other.paths().is_empty(),
             }
         }
-        arms_are_identity_or_literal(self).then(|| self.unique_path())?
+        arms_are_identity_or_literal(self)
+            .then(|| self.unique_path())?
+            .map(|path| path.encode())
     }
 
     pub(crate) fn with_overlay_entries(self, new_entries: BTreeMap<String, AbstractValue>) -> Self {
@@ -1565,15 +1559,15 @@ impl AbstractValue {
         clippy::too_many_lines,
         reason = "keeping this semantic operation together makes its state transitions easier to audit"
     )]
-    pub(crate) fn remove_fragment_paths(self, remove: &BTreeSet<String>) -> Option<Self> {
+    pub(crate) fn remove_fragment_paths(self, remove: &BTreeSet<ValuesPath>) -> Option<Self> {
         if remove.is_empty() {
             return Some(self);
         }
 
         match self {
-            Self::ValuesPath(path) if remove.contains(&path.encode()) => None,
-            Self::JsonDecodedPath(path) if remove.contains(&path.encode()) => None,
-            Self::OutputPath(path, _) if remove.contains(&path.encode()) => None,
+            Self::ValuesPath(path) if remove.contains(&path) => None,
+            Self::JsonDecodedPath(path) if remove.contains(&path) => None,
+            Self::OutputPath(path, _) if remove.contains(&path) => None,
             Self::ValuesPath(_)
             | Self::JsonDecodedPath(_)
             | Self::RangeKey(_)
@@ -1592,7 +1586,7 @@ impl AbstractValue {
                 separator,
                 total_text_preimage,
             } => {
-                let source_paths: BTreeSet<String> =
+                let source_paths: BTreeSet<ValuesPath> =
                     source_paths.difference(remove).cloned().collect();
                 (!source_paths.is_empty()).then_some(Self::SplitList {
                     source_paths,
@@ -1606,7 +1600,7 @@ impl AbstractValue {
                 last,
                 total_text_preimage,
             } => {
-                let source_paths: BTreeSet<String> =
+                let source_paths: BTreeSet<ValuesPath> =
                     source_paths.difference(remove).cloned().collect();
                 (!source_paths.is_empty()).then_some(Self::SplitSegment {
                     source_paths,
@@ -1677,7 +1671,7 @@ impl AbstractValue {
 
     fn remove_fragment_paths_from_entries(
         entries: BTreeMap<String, Self>,
-        remove: &BTreeSet<String>,
+        remove: &BTreeSet<ValuesPath>,
     ) -> BTreeMap<String, Self> {
         entries
             .into_iter()
@@ -1720,13 +1714,13 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn fragment_source_paths(&self) -> BTreeSet<String> {
+    pub(crate) fn fragment_source_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
         self.collect_paths(&mut paths, false, true);
         paths
     }
 
-    pub(crate) fn fragment_rendered_paths(&self) -> BTreeSet<String> {
+    pub(crate) fn fragment_rendered_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
         self.collect_paths(&mut paths, true, true);
         paths

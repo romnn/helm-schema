@@ -380,11 +380,7 @@ impl CaptureKind {
 impl Effects {
     pub(crate) fn from_value(value: &AbstractValue) -> Self {
         Self {
-            output_paths: value
-                .paths()
-                .into_iter()
-                .map(|path| ValuesPath::parse(&path))
-                .collect(),
+            output_paths: value.paths(),
             ..Self::default()
         }
     }
@@ -1131,12 +1127,7 @@ impl EvalResult {
 
     pub(crate) fn with_effects(value: Option<AbstractValue>, mut effects: Effects) -> Self {
         if let Some(value) = &value {
-            effects.output_paths.extend(
-                value
-                    .paths()
-                    .into_iter()
-                    .map(|path| ValuesPath::parse(&path)),
-            );
+            effects.output_paths.extend(value.paths());
         }
         Self {
             value,

@@ -111,10 +111,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 .value
                 .as_ref()
                 .map(AbstractValue::paths)
-                .unwrap_or_default()
-                .into_iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(&path))
-                .collect(),
+                .unwrap_or_default(),
             helper_reads: summary.reads.clone(),
             helper_rendered: summary.rendered.clone(),
             helper_suppressed_paths: summary
@@ -231,11 +228,10 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         // round (the reroot chain reads the merged value back through
         // `.Values.workers`).
         let has_wildcard_path = |layer: &AbstractValue| {
-            layer.paths().iter().any(|path| {
-                helm_schema_core::split_value_path(path)
-                    .iter()
-                    .any(|segment| segment == "*")
-            })
+            layer
+                .paths()
+                .iter()
+                .any(|path| path.segments().any(|segment| segment == "*"))
         };
         let input_layer = if has_wildcard_path(&input_layer) {
             input_layer.without_nil_scrub_markers()
@@ -252,16 +248,8 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         effects.merge(input.effects.execution_only());
         effects.merge(overwrite.effects.execution_only());
         let payload_paths = value.paths();
-        effects.yaml_serialized_paths.extend(
-            payload_paths
-                .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path)),
-        );
-        effects.derived_text_paths.extend(
-            payload_paths
-                .into_iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(&path)),
-        );
+        effects.yaml_serialized_paths.extend(payload_paths.clone());
+        effects.derived_text_paths.extend(payload_paths);
         Some(EvalResult::with_effects(Some(value), effects))
     }
 
@@ -331,16 +319,8 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
 
         let value = AbstractValue::MergedLayers(layers);
         let payload_paths = value.paths();
-        effects.yaml_serialized_paths.extend(
-            payload_paths
-                .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path)),
-        );
-        effects.derived_text_paths.extend(
-            payload_paths
-                .into_iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(&path)),
-        );
+        effects.yaml_serialized_paths.extend(payload_paths.clone());
+        effects.derived_text_paths.extend(payload_paths);
         Some(EvalResult::with_effects(Some(value), effects))
     }
 

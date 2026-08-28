@@ -1292,7 +1292,7 @@ impl<'a> Interpreter<'a> {
                         continue;
                     }
                     for path in &taint.paths {
-                        self.push_read(path, &[]);
+                        self.push_read(&path.encode(), &[]);
                     }
                 }
             }

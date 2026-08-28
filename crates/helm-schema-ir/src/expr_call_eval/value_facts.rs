@@ -3,7 +3,12 @@ use std::collections::BTreeSet;
 use crate::abstract_value::AbstractValue;
 
 pub(super) fn value_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
-    value.map(AbstractValue::paths).unwrap_or_default()
+    value
+        .map(AbstractValue::paths)
+        .unwrap_or_default()
+        .iter()
+        .map(helm_schema_core::ValuesPath::encode)
+        .collect()
 }
 
 pub(super) fn value_strings(value: Option<&AbstractValue>) -> BTreeSet<String> {
@@ -151,6 +156,9 @@ pub(super) fn identity_range_key_paths(value: Option<&AbstractValue>) -> BTreeSe
     value
         .map(AbstractValue::range_key_paths)
         .unwrap_or_default()
+        .iter()
+        .map(helm_schema_core::ValuesPath::encode)
+        .collect()
 }
 
 /// The exact element count of a statically known collection value.

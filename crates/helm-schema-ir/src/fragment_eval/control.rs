@@ -1641,7 +1641,7 @@ impl Interpreter<'_> {
         header_exprs: &[Option<TemplateExpr>],
         region_start: usize,
     ) {
-        let mut entry_identities: Vec<(&String, BTreeSet<String>)> = entry
+        let mut entry_identities: Vec<(&String, BTreeSet<helm_schema_core::ValuesPath>)> = entry
             .fragment_values
             .iter()
             .filter_map(|(name, value)| {
@@ -1669,11 +1669,9 @@ impl Interpreter<'_> {
                 // reaches downstream consumers on that arm. A guarded
                 // traversal advance INTO a member keeps its own machinery.
                 let paths = value.paths();
-                let advanced_into_member = paths.iter().any(|path| {
-                    entry_paths
-                        .iter()
-                        .any(|entry| helm_schema_core::values_path_is_descendant(path, entry))
-                });
+                let advanced_into_member = paths
+                    .iter()
+                    .any(|path| entry_paths.iter().any(|entry| path.is_descendant_of(entry)));
                 if paths.is_empty() || (paths.is_disjoint(&entry_paths) && !advanced_into_member) {
                     let marker = format!("reassign:{}:{region_start}:{index}", self.source_offset);
                     let header = header_exprs.get(index).and_then(Option::as_ref);
@@ -1723,7 +1721,7 @@ impl Interpreter<'_> {
         header: Option<&TemplateExpr>,
         name: &str,
         value: &AbstractValue,
-        entry_paths: &BTreeSet<String>,
+        entry_paths: &BTreeSet<helm_schema_core::ValuesPath>,
     ) -> Option<BTreeSet<GuardValue>> {
         if !matches!(
             value,
@@ -1776,7 +1774,7 @@ impl Interpreter<'_> {
             else {
                 return None;
             };
-            if guard_path.encode() != *path {
+            if guard_path != *path {
                 return None;
             }
             spellings.insert(value);

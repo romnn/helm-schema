@@ -202,7 +202,10 @@ fn bound_path_resolution_uses_shared_expression_eval() {
         .as_ref()
         .and_then(AbstractValue::unique_path);
 
-    sim_assert_eq!(have: path, want: Some("serviceAccount.name".to_string()));
+    sim_assert_eq!(
+        have: path,
+        want: Some(helm_schema_core::ValuesPath::parse("serviceAccount.name"))
+    );
 }
 
 #[test]
@@ -2165,7 +2168,10 @@ fn merge_of_values_paths_forms_ordered_layers() {
             .iter()
             .map(|layer| layer.paths().into_iter().collect::<Vec<_>>())
             .collect::<Vec<_>>(),
-        want: vec![vec!["preferred".to_string()], vec!["legacy".to_string()]]
+        want: vec![
+            vec![helm_schema_core::ValuesPath::parse("preferred")],
+            vec![helm_schema_core::ValuesPath::parse("legacy")]
+        ]
     );
 
     let overwritten = eval_expr(
@@ -2185,7 +2191,10 @@ fn merge_of_values_paths_forms_ordered_layers() {
             .iter()
             .map(|layer| layer.paths().into_iter().collect::<Vec<_>>())
             .collect::<Vec<_>>(),
-        want: vec![vec!["preferred".to_string()], vec!["legacy".to_string()]]
+        want: vec![
+            vec![helm_schema_core::ValuesPath::parse("preferred")],
+            vec![helm_schema_core::ValuesPath::parse("legacy")]
+        ]
     );
 
     let literal_operand = eval_expr(

@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
 use helm_schema_ast::{DefineIndex, TemplateExpr};
+use helm_schema_core::ValuesPath;
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
@@ -1166,7 +1167,7 @@ pub(crate) fn widen_large_bound_value_ref(
         structural_width_limit = BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT,
         "widening bound helper value"
     );
-    widened_paths.extend(binding.paths());
+    widened_paths.extend(binding.paths().iter().map(ValuesPath::encode));
     Some(AbstractValue::Top)
 }
 

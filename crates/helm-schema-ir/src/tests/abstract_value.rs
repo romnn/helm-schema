@@ -20,10 +20,10 @@ fn string(value: &str) -> AbstractValue {
     AbstractValue::StringSet(BTreeSet::from([value.to_string()]))
 }
 
-fn paths(values: &[&str]) -> BTreeSet<String> {
+fn paths(values: &[&str]) -> BTreeSet<helm_schema_core::ValuesPath> {
     values
         .iter()
-        .map(std::string::ToString::to_string)
+        .map(|value| helm_schema_core::ValuesPath::parse(value))
         .collect()
 }
 
@@ -319,7 +319,7 @@ fn fragment_paths_stay_shallow_while_rendered_paths_descend_structures() {
     sim_assert_eq!(have: value.fragment_source_paths(), want: BTreeSet::new());
     sim_assert_eq!(
         have: value.fragment_rendered_paths(),
-        want: BTreeSet::from(["podLabels".to_string()])
+        want: BTreeSet::from([helm_schema_core::ValuesPath::parse("podLabels")])
     );
 }
 

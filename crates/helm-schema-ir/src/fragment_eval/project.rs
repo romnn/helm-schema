@@ -329,11 +329,11 @@ fn walk_node(
         }
         AbstractFragment::Opaque(opaque) => {
             for taint_path in &opaque.taint {
-                if taint_path.is_empty() {
+                if taint_path.segments().next().is_none() {
                     continue;
                 }
                 contract.push(placed_row(
-                    helm_schema_core::ValuesPath::parse(taint_path),
+                    taint_path.clone(),
                     path,
                     opaque.kind,
                     GuardDnf::from_conjunction(conditions.iter().cloned()),
@@ -369,11 +369,11 @@ fn project_parts(
                     continue;
                 }
                 for taint_path in &taint.paths {
-                    if taint_path.is_empty() {
+                    if taint_path.segments().next().is_none() {
                         continue;
                     }
                     contract.push(placed_row(
-                        helm_schema_core::ValuesPath::parse(taint_path),
+                        taint_path.clone(),
                         path,
                         if scalar.suppressed {
                             ValueKind::Serialized

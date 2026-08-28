@@ -52,6 +52,7 @@ pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
         .value
         .as_ref()
         .and_then(AbstractValue::unique_path)
+        .map(|path| path.encode())
 }
 
 /// The values identity a helper's CALL DICT binds to the first segment of a
@@ -64,7 +65,10 @@ pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
 /// navigation aborts exactly like the direct spelling. Only a member bound
 /// to a raw values path qualifies, and only where the body navigates PAST
 /// it: `.config` alone reads nil without aborting.
-fn call_dict_member_identity(path: &[String], env: &EvalEnv) -> Option<(String, Vec<String>)> {
+fn call_dict_member_identity(
+    path: &[String],
+    env: &EvalEnv,
+) -> Option<(helm_schema_core::ValuesPath, Vec<String>)> {
     let (head, tail) = path.split_first()?;
     if tail.is_empty() {
         return None;
@@ -226,7 +230,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                 None => call_dict_member_identity(path, env),
             };
             if let Some((base, navigated)) = access {
-                let mut segments = helm_schema_core::split_value_path(&base);
+                let mut segments: Vec<String> = base.segments().map(str::to_owned).collect();
                 let accessed_from = segments.len();
                 segments.extend(navigated);
                 record_member_access_captures(&segments, accessed_from, env, &mut result.effects);
@@ -290,14 +294,15 @@ pub(crate) fn eval_expr_with_helper_calls(
                     // direct chain's abort on every nil member.
                     if env.pipeline_bound_locals.contains(var) {
                         record_grouped_member_access_captures(
-                            &base,
+                            &base.encode(),
                             path,
                             false,
                             env,
                             &mut result.effects,
                         );
                     } else {
-                        let mut segments = helm_schema_core::split_value_path(&base);
+                        let mut segments: Vec<String> =
+                            base.segments().map(str::to_owned).collect();
                         let accessed_from = segments.len();
                         segments.extend(path.iter().cloned());
                         record_member_access_captures(
@@ -357,7 +362,7 @@ pub(crate) fn eval_expr_with_helper_calls(
             let mut effects = base.effects;
             if let Some(receiver_path) = grouped_receiver {
                 record_grouped_member_access_captures(
-                    &receiver_path,
+                    &receiver_path.encode(),
                     path,
                     missing_grouped_receiver_aborts,
                     env,
@@ -589,7 +594,7 @@ pub(crate) fn is_helper_call_function(function: &str) -> bool {
 fn local_value_result(
     var: &str,
     value: AbstractValue,
-    selected_paths: Option<&BTreeSet<String>>,
+    selected_paths: Option<&BTreeSet<helm_schema_core::ValuesPath>>,
     env: &EvalEnv,
 ) -> EvalResult {
     let source_paths = value.fragment_source_paths();
@@ -604,10 +609,7 @@ fn local_value_result(
         result.selection_reachability = None;
         result.scalar_dispatch = None;
     }
-    result.effects.local_source_paths = source_paths
-        .into_iter()
-        .map(|path| helm_schema_core::ValuesPath::parse(&path))
-        .collect();
+    result.effects.local_source_paths = source_paths;
     if let Some(default_paths) = env.local_default_paths.get(var) {
         result.effects.local_default_paths.extend(
             default_paths
@@ -618,11 +620,11 @@ fn local_value_result(
     }
     if let Some(meta_by_path) = env.local_output_meta.get(var) {
         match selected_paths {
-            Some(paths) => result.effects.merge_local_output_meta(
-                meta_by_path
-                    .iter()
-                    .filter(|(path, _meta)| paths.contains(*path)),
-            ),
+            Some(paths) => result
+                .effects
+                .merge_local_output_meta(meta_by_path.iter().filter(|(path, _meta)| {
+                    paths.contains(&helm_schema_core::ValuesPath::parse(path))
+                })),
             None => result.effects.merge_local_output_meta(meta_by_path.iter()),
         }
     }
