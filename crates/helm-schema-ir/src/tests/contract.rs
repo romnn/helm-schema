@@ -697,8 +697,8 @@ fn activation_guards_scope_values_default_sources() {
     facts
         .values_default_sources
         .insert(crate::ValuesDefaultSource {
-            target_path: "child".to_string(),
-            source_path: "child.defaults".to_string(),
+            target_path: conditional_path("child"),
+            source_path: conditional_path("child.defaults"),
         });
     contract.absorb_observed_facts(&facts);
     contract.push(ContractUse::new(
@@ -722,8 +722,8 @@ fn activation_guards_scope_values_default_sources() {
                     path: conditional_path("child.enabled"),
                 }],
                 source: crate::ValuesDefaultSource {
-                    target_path: "child".to_string(),
-                    source_path: "child.defaults".to_string(),
+                    target_path: conditional_path("child"),
+                    source_path: conditional_path("child.defaults"),
                 },
             },
         ])
@@ -737,8 +737,8 @@ fn activation_drops_a_default_source_without_same_template_consumers() {
     facts
         .values_default_sources
         .insert(crate::ValuesDefaultSource {
-            target_path: "child".to_string(),
-            source_path: "child.defaults".to_string(),
+            target_path: conditional_path("child"),
+            source_path: conditional_path("child.defaults"),
         });
     contract.absorb_observed_facts(&facts);
     contract.append_guards_to_all_uses(&[Guard::Truthy {
@@ -760,8 +760,8 @@ fn nested_activation_conjoins_every_default_source_guard() {
     facts
         .values_default_sources
         .insert(crate::ValuesDefaultSource {
-            target_path: "mid.leaf".to_string(),
-            source_path: "mid.leaf.defaults".to_string(),
+            target_path: conditional_path("mid.leaf"),
+            source_path: conditional_path("mid.leaf.defaults"),
         });
     contract.absorb_observed_facts(&facts);
     contract.push(ContractUse::new(

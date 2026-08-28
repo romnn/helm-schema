@@ -593,9 +593,9 @@ pub struct ValuesProgramWrapper {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ValuesDefaultSource {
     /// Effective values subtree receiving defaults, with an empty path denoting `.Values`.
-    pub target_path: String,
+    pub target_path: crate::ValuesPath,
     /// Chart values subtree supplying defaults.
-    pub source_path: String,
+    pub source_path: crate::ValuesPath,
 }
 
 /// A chart-wide default source that executes only in one activation branch.

@@ -1566,7 +1566,7 @@ fn activated_rewrite_schema() -> eyre::Result<serde_json::Value> {
     let guarded_source = signals
         .guarded_values_default_sources()
         .iter()
-        .find(|fact| fact.source.target_path == "child")
+        .find(|fact| fact.source.target_path == helm_schema_core::ValuesPath::parse("child"))
         .ok_or_else(|| eyre::eyre!("expected activated child default source"))?;
     assert!(
         helm_schema_core::Predicate::all(

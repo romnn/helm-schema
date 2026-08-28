@@ -13,7 +13,7 @@ pub(crate) fn apply_values_default_sources(
     doc: &mut YamlValue,
     sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
 ) {
-    let mut by_target: BTreeMap<&str, Vec<&helm_schema_core::ValuesDefaultSource>> =
+    let mut by_target: BTreeMap<&ValuesPath, Vec<&helm_schema_core::ValuesDefaultSource>> =
         BTreeMap::new();
     for source in sources {
         by_target
@@ -28,10 +28,14 @@ pub(crate) fn apply_values_default_sources(
         let [source] = sources.as_slice() else {
             continue;
         };
-        let Some(defaults) = yaml_value_at_path(doc, &source.source_path).cloned() else {
+        let Some(defaults) = yaml_value_at_values_path(doc, &source.source_path).cloned() else {
             continue;
         };
-        let target_segments = crate::split_value_path(&source.target_path);
+        let target_segments = source
+            .target_path
+            .segments()
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
         let Some(target) = yaml_value_at_segments_mut(doc, &target_segments) else {
             continue;
         };
@@ -48,7 +52,7 @@ pub(crate) fn copy_values_default_sources(
     source_doc: &YamlValue,
     sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
 ) {
-    let mut by_target: BTreeMap<&str, Vec<&helm_schema_core::ValuesDefaultSource>> =
+    let mut by_target: BTreeMap<&ValuesPath, Vec<&helm_schema_core::ValuesDefaultSource>> =
         BTreeMap::new();
     for source in sources {
         by_target
@@ -62,13 +66,18 @@ pub(crate) fn copy_values_default_sources(
         let [source] = sources.as_slice() else {
             continue;
         };
-        let Some(defaults) = yaml_value_at_path(source_doc, &source.source_path).cloned() else {
+        let Some(defaults) = yaml_value_at_values_path(source_doc, &source.source_path).cloned()
+        else {
             continue;
         };
         if !matches!(target_doc, YamlValue::Mapping(_)) {
             *target_doc = YamlValue::Mapping(serde_yaml::Mapping::default());
         }
-        let target_segments = crate::split_value_path(&source.target_path);
+        let target_segments = source
+            .target_path
+            .segments()
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
         let mut current = &mut *target_doc;
         for segment in &target_segments {
             let YamlValue::Mapping(mapping) = current else {
@@ -249,13 +258,6 @@ pub(crate) fn yaml_value_at_segments<'a>(
         current = mapping.get(YamlValue::String(segment.clone()))?;
     }
     Some(current)
-}
-
-pub(crate) fn yaml_value_at_path<'a>(
-    doc: &'a YamlValue,
-    value_path: &str,
-) -> Option<&'a YamlValue> {
-    yaml_value_at_segments(doc, &crate::split_value_path(value_path))
 }
 
 pub(crate) fn yaml_value_at_values_path<'a>(

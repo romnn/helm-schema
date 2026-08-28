@@ -149,8 +149,8 @@ impl ObservedFacts {
         *values_default_sources = std::mem::take(values_default_sources)
             .into_iter()
             .map(|source| crate::ValuesDefaultSource {
-                target_path: map(&source.target_path),
-                source_path: map(&source.source_path),
+                target_path: ValuesPath::parse(&map(&source.target_path.encode())),
+                source_path: ValuesPath::parse(&map(&source.source_path.encode())),
             })
             .collect();
         *activated_values_default_sources = std::mem::take(activated_values_default_sources)
@@ -162,8 +162,8 @@ impl ObservedFacts {
                     .map(|guard| guard.map_value_paths(map))
                     .collect(),
                 source: crate::ValuesDefaultSource {
-                    target_path: map(&fact.source.target_path),
-                    source_path: map(&fact.source.source_path),
+                    target_path: ValuesPath::parse(&map(&fact.source.target_path.encode())),
+                    source_path: ValuesPath::parse(&map(&fact.source.source_path.encode())),
                 },
             })
             .collect();

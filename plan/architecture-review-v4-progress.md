@@ -2774,7 +2774,7 @@
 
 ## B4a.3a — migrate predicate approximation paths
 
-- Status: landed; commit pending.
+- Status: landed in `6509de14`.
 - Contract: representation-only migration of `Predicate::Approximate.paths` to a segmented
   `BTreeSet<ValuesPath>`, the first compiler-bounded core guard subround. Atomic `Guard` and
   `ConditionalGuard` payloads follow separately. Approximation markers remain strings.
@@ -3821,3 +3821,105 @@
 
 - Measured production LOC delta: 0 (64,371 to 64,371); the typed field and producer clone replace
   the string field and encode one-for-one.
+
+## B4a.9 — migrate values-default source paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of both public `ValuesDefaultSource` path fields to
+  segmented `ValuesPath`, including guarded sources and their IR-to-generator route. Default merge
+  direction, activation guards, null deletion, source grouping, and schema composition remain
+  unchanged.
+- Acceptance baseline: `6509de14` (B4a.8).
+- Baseline production LOC: 64,371 Rust lines from `task tokei:core` on `6509de14`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+    Target/source identities retain legacy ordering through observed facts, finalization, values
+    composition, conditional lowering, and terminal-clause evaluation.
+  - Custom `ValuesPath` serde preserves serialized source objects exactly. Empty target paths keep
+    denoting the values root; no merge precedence or activation behavior changes.
+  - Part F decision: the two public Rust fields deliberately narrow from `String` to `ValuesPath`
+    as the scheduled B4a carrier migration. Wire bytes remain unchanged.
+  - No coercion trait, cross-type comparison, parallel encoded field, or unrelated string newtype
+    is allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - Both `ValuesDefaultSource` identities now remain typed from root-mutation discovery through
+    observed-fact remapping, activation finalization, generator composition, and conditional
+    source-path projection. The last string-only YAML values lookup helper is deleted.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `6509de14`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations: none. Compilation and lint passed on the first completed preflight; the
+  compiler-driven test migration touched only direct source fixtures and no rejected artifact was
+  produced.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Root and nested default sources | Same target/source direction | IR and values-yaml suites. |
+| Activation-guarded sources | Same guard grouping and branch scope | Contract/conditional suites. |
+| Generator composition | Same merged defaults and schema bytes | Generator/corpus suites and dump. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 1,049/1,049 core/IR/gen tests pass,
+  covering root mutation, path remapping, guarded source finalization, YAML composition, and
+  conditional source projection. Whole-workspace Clippy passes warning-free on the first
+  completed lint preflight.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a9-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a9-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 302 seconds.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a9-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a9-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 186.005 seconds and 84 artifacts are written. A recursive byte
+  comparison against the B4a.8 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a9-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a9-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.227 seconds and 18 artifacts are
+  written. A recursive byte comparison against the B4a.8 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a9-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=6509de14
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a9-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a9-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a9-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 68.604 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868
+  disclosed bounded reductions remain unchanged.
+- Public/wire decision: `ValuesDefaultSource.target_path` and `source_path` deliberately narrow to
+  `ValuesPath`; custom serde preserves their string wire fields, so no wire version is required.
+
+### Self-adversarial pass
+
+- Whole-tree construction and access searches find no string-backed default-source path field or
+  raw split/parse at generator consumers. Empty `ValuesPath` retains the values-root identity.
+- Merge direction, activation guards, YAML member keys, and source grouping remain distinct and
+  unchanged. No coercion trait, cached encoding, or parallel source-path field was added.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free in 6 minutes 25 seconds.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,524.39 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 186.191 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,534.620 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,634.630 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 25.74
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,378 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +7 (64,371 to 64,378), from explicit structural segment
+  iteration after deleting the last string-only YAML lookup helper.

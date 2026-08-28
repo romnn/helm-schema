@@ -1961,8 +1961,8 @@ fn root_values_merge_records_the_fallback_values_subtree() {
     sim_assert_eq!(
         have: result.effects.observed_facts.values_default_sources,
         want: BTreeSet::from([crate::ValuesDefaultSource {
-            target_path: String::new(),
-            source_path: "_internal_defaults".to_string(),
+            target_path: helm_schema_core::ValuesPath::default(),
+            source_path: helm_schema_core::ValuesPath::parse("_internal_defaults"),
         }])
     );
 }

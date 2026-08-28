@@ -321,7 +321,7 @@ pub(super) fn root_values_default_source(
         return None;
     }
     Some(crate::ValuesDefaultSource {
-        target_path: String::new(),
-        source_path,
+        target_path: helm_schema_core::ValuesPath::default(),
+        source_path: helm_schema_core::ValuesPath::parse(&source_path),
     })
 }

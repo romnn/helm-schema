@@ -410,11 +410,15 @@ fn source_path_for_effective(
     effective_path: &ValuesPath,
     source: &helm_schema_core::ValuesDefaultSource,
 ) -> Option<ValuesPath> {
-    let target_path = ValuesPath::parse(&source.target_path);
+    let target_path = source.target_path.clone();
     if effective_path != &target_path && !effective_path.is_descendant_of(&target_path) {
         return None;
     }
-    let mut source_segments = split_value_path(&source.source_path);
+    let mut source_segments = source
+        .source_path
+        .segments()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
     source_segments.extend(
         effective_path
             .segments()
@@ -431,11 +435,15 @@ fn unique_values_default_source_path(
     let mut source_paths = sources
         .iter()
         .filter_map(|source| {
-            let target_path = ValuesPath::parse(&source.target_path);
+            let target_path = source.target_path.clone();
             if effective_path != &target_path && !effective_path.is_descendant_of(&target_path) {
                 return None;
             }
-            let mut source_segments = split_value_path(&source.source_path);
+            let mut source_segments = source
+                .source_path
+                .segments()
+                .map(str::to_owned)
+                .collect::<Vec<_>>();
             source_segments.extend(
                 effective_path
                     .segments()

@@ -132,13 +132,9 @@ impl ContractIr {
                     .filter(|source| {
                         self.uses.iter().chain(&self.dependency_uses).any(|use_| {
                             !use_.path.0.is_empty()
-                                && use_.source_expr
-                                    != helm_schema_core::ValuesPath::parse(&source.target_path)
-                                && use_.source_expr
-                                    != helm_schema_core::ValuesPath::parse(&source.source_path)
-                                && !use_.source_expr.is_descendant_of(
-                                    &helm_schema_core::ValuesPath::parse(&source.source_path),
-                                )
+                                && use_.source_expr != source.target_path
+                                && use_.source_expr != source.source_path
+                                && !use_.source_expr.is_descendant_of(&source.source_path)
                         })
                     })
                     .collect::<Vec<_>>();
