@@ -37,7 +37,7 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
             continue;
         }
         let row = ContractUse::with_condition_and_provenances(
-            helm_schema_core::ValuesPath::parse(&read.values_path),
+            read.values_path.clone(),
             YamlPath(Vec::new()),
             read.kind,
             read.condition.clone(),

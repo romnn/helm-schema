@@ -201,7 +201,7 @@ pub(super) fn helper_claim_paths(effects: &Effects) -> std::collections::BTreeSe
     let mut claims: std::collections::BTreeSet<String> = effects
         .helper_reads
         .iter()
-        .map(|read| read.values_path.clone())
+        .map(|read| read.values_path.encode())
         .collect();
     claims.extend(effects.helper_rendered.iter().map(|row| row.path.clone()));
     claims.extend(

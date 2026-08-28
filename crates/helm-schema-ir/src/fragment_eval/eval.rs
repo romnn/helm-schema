@@ -89,7 +89,7 @@ pub(crate) struct EvaluatedDocument {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct ValueRead {
     /// The dotted `.Values` path that was read.
-    pub values_path: String,
+    pub values_path: helm_schema_core::ValuesPath,
     /// The value shape observed at the read (helper rows demoted at capture
     /// sites keep their fragment/scalar kind).
     pub kind: crate::ValueKind,
@@ -1184,7 +1184,7 @@ impl<'a> Interpreter<'a> {
             .ambient_condition()
             .conjoined_with_guards(extra_guards.iter().cloned());
         self.push_read_row_with_condition(
-            values_path,
+            helm_schema_core::ValuesPath::parse(values_path),
             kind,
             condition,
             resource,
@@ -1195,18 +1195,18 @@ impl<'a> Interpreter<'a> {
 
     fn push_read_row_with_condition(
         &mut self,
-        values_path: &str,
+        values_path: helm_schema_core::ValuesPath,
         kind: crate::ValueKind,
         condition: GuardDnf,
         resource: Option<ResourceRef>,
         provenance: Vec<ContractProvenance>,
         dependency: bool,
     ) {
-        if values_path.trim().is_empty() {
+        if values_path.segments().next().is_none() {
             return;
         }
         let read = ValueRead {
-            values_path: values_path.to_string(),
+            values_path,
             kind,
             condition,
             resource,
@@ -1330,7 +1330,7 @@ impl<'a> Interpreter<'a> {
             }]);
         }
         self.push_read_row_with_condition(
-            values_path,
+            helm_schema_core::ValuesPath::parse(values_path),
             kind,
             condition,
             None,
@@ -1515,9 +1515,10 @@ impl<'a> Interpreter<'a> {
             // the helper explicitly severed (index-call narrowing) are
             // dropped, the same way the summary lane always skipped them.
             if !read.dependency
-                && !suppressed.contains(&read.values_path)
+                && !suppressed.contains(&read.values_path.encode())
                 && suppressed.iter().any(|narrowed| {
-                    helm_schema_core::values_path_is_descendant(narrowed, &read.values_path)
+                    helm_schema_core::ValuesPath::parse(narrowed)
+                        .is_descendant_of(&read.values_path)
                 })
             {
                 continue;
@@ -1525,10 +1526,10 @@ impl<'a> Interpreter<'a> {
             let mut provenance = site_provenance.clone();
             merge_provenance_sites(&mut provenance, &read.provenance);
             let condition = self
-                .claim_scoped_ambient_condition(&read.values_path, sibling_claims)
+                .claim_scoped_ambient_condition(&read.values_path.encode(), sibling_claims)
                 .conjoined(&read.condition);
             self.push_read_row_with_condition(
-                &read.values_path,
+                read.values_path.clone(),
                 read.kind,
                 condition,
                 read.resource.clone(),

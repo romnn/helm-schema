@@ -1089,7 +1089,7 @@ fn resolve_bound_helper_call(
     argument_effects
         .helper_reads
         .extend(widened_paths.into_iter().map(|values_path| ValueRead {
-            values_path,
+            values_path: helm_schema_core::ValuesPath::parse(&values_path),
             kind: crate::ValueKind::WidenedDependency,
             condition: helm_schema_core::GuardDnf::default(),
             resource: None,

@@ -172,9 +172,10 @@ pub(crate) fn eval_bound_helper_fragment(
         .into_iter()
         .filter(|read| {
             read.dependency
-                || suppress.contains(&read.values_path)
+                || suppress.contains(&read.values_path.encode())
                 || !suppress.iter().any(|narrowed| {
-                    helm_schema_core::values_path_is_descendant(narrowed, &read.values_path)
+                    helm_schema_core::ValuesPath::parse(narrowed)
+                        .is_descendant_of(&read.values_path)
                 })
         })
         .collect();
@@ -994,7 +995,8 @@ fn collect_rendered_node(
 /// negation when a positive condition remains (the default supplies the
 /// value on the negative side).
 fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]) {
-    let mut sources: BTreeSet<String> = reads.iter().map(|read| read.values_path.clone()).collect();
+    let mut sources: BTreeSet<String> =
+        reads.iter().map(|read| read.values_path.encode()).collect();
     sources.extend(rendered.iter().map(|row| row.path.clone()));
     if sources.len() < 2 {
         return;
@@ -1006,26 +1008,27 @@ fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]
     };
     let mut pruned: Vec<ValueRead> = Vec::new();
     for mut read in reads.drain(..) {
+        let read_path = read.values_path.encode();
         let conjunctions = read.condition.disjuncts().iter().map(|conjunction| {
             let has_truthy_sibling = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read.values_path))
+                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read_path))
             });
             let defaulted = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Default { path }) if path == &helm_schema_core::ValuesPath::parse(&read.values_path))
+                matches!(predicate, Predicate::Guard(crate::Guard::Default { path }) if path == &read.values_path)
             });
             let has_self_truthy = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if path == &helm_schema_core::ValuesPath::parse(&read.values_path))
+                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path)
             });
             let mut predicates = conjunction
                 .iter()
                 .filter(|predicate| {
-                    !matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read.values_path))
+                    !matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read_path))
                 })
                 .cloned()
                 .collect::<Vec<_>>();
             if defaulted && (has_self_truthy || has_truthy_sibling) {
                 predicates.retain(|predicate| {
-                    !matches!(predicate, Predicate::Not(inner) if matches!(inner.as_ref(), Predicate::Guard(crate::Guard::Truthy { path }) if path == &helm_schema_core::ValuesPath::parse(&read.values_path)))
+                    !matches!(predicate, Predicate::Not(inner) if matches!(inner.as_ref(), Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path))
                 });
             }
             predicates
@@ -1105,7 +1108,7 @@ fn append_suppressed_node_reads(
                         continue;
                     }
                     let read = ValueRead {
-                        values_path: path,
+                        values_path: helm_schema_core::ValuesPath::parse(&path),
                         kind: ValueKind::Scalar,
                         condition: GuardDnf::from_conjunction(conditions.iter().cloned()),
                         resource: None,

@@ -622,7 +622,7 @@ impl Interpreter<'_> {
         let mut claims: std::collections::BTreeSet<String> = summary
             .reads
             .iter()
-            .map(|read| read.values_path.clone())
+            .map(|read| read.values_path.encode())
             .collect();
         claims.extend(summary.rendered.iter().map(|row| row.path.clone()));
         self.absorb_helper_reads_with_suppression(&summary.reads, &suppressed, &claims);

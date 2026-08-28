@@ -21,7 +21,7 @@ pub(crate) fn dump_document(document: &EvaluatedDocument) -> String {
             let _ = writeln!(
                 out,
                 "  {} [{}]",
-                read.values_path,
+                read.values_path.encode(),
                 read.condition
                     .guard_conjunctions()
                     .iter()

@@ -3926,7 +3926,7 @@
 
 ## B4a.10 — migrate values-program wrapper scopes
 
-- Status: ready to land; commit pending.
+- Status: landed in `70cf0fed`.
 - Contract: representation-only migration of public `ValuesProgramWrapper.scope_path` to
   segmented `ValuesPath`, preserving sentinel keys, spread/replace policy, scope ordering, wrapper
   exclusions, and schema alternatives exactly.
@@ -4001,3 +4001,92 @@
 - `git diff --check`; exit 0.
 
 - Measured production LOC delta: 0 (64,378 to 64,378).
+
+## B4a.11 — migrate pathless-read identities
+
+- Status: in progress; commit pending.
+- Contract: representation-only migration of `ValueRead.values_path` to segmented `ValuesPath`,
+  including direct reads, helper-demoted reads, sibling-condition pruning, nested-read absorption,
+  graph remapping, and contract-row lowering. Read kind, condition, resource scope, dependency
+  lane, provenance, ordering, and emitted wire strings remain unchanged.
+- Acceptance baseline: `70cf0fed` (B4a.10).
+- Baseline production LOC: 64,378 Rust lines from `task tokei:core` on `70cf0fed`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Direct and helper reads retain identical path identity and guards through deduplication,
+    pruning, remapping, and final contract-row absorption.
+  - `ValueRead` is crate-private, so this round changes no public API or wire format. Explicit
+    encoding is permitted only where an existing diagnostic or serialized row requires text.
+  - No coercion trait, cross-type comparison, cached encoded twin, or unrelated string carrier is
+    allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - `ValueRead.values_path` now remains typed from direct and widened-read construction through
+    helper absorption, deduplication, sibling-condition pruning, document projection, graph
+    remapping, and contract-row lowering.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `70cf0fed`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations: none. Compiler-driven construction and comparison updates compiled on the first
+  completed implementation preflight; no rejected code state produced an artifact. Existing
+  string sibling-claim sets remain scheduled B4a carriers, so this round encodes a typed read only
+  at those existing boundaries instead of widening its scope into their producer graph.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Direct/control pathless reads | Same path, kind, site, and guards | IR focused suite and dumps. |
+| Helper-demoted/nested reads | Same dependency lane and provenance | Helper/fragment suites. |
+| Pruning and contract projection | Same sibling scope and final rows | IR/schema dumps and prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 393/393 IR tests pass, covering
+  direct reads, helper summaries, sibling pruning, fragment projection, graph remapping, and
+  contract lowering. Whole-workspace Clippy passes warning-free on the first completed lint
+  preflight in 5 minutes 18 seconds.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a11-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a11-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 362 seconds.
+- Clean schema dump: the B4a.11 `final1` archive under the step-local schema `TMPDIR`; exit 0, 62
+  tests pass in 183.524 seconds and 84 artifacts are byte-identical to B4a.10.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one test passes in
+  3.186 seconds and 18 artifacts are byte-identical to B4a.10.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `70cf0fed`,
+  Helm adjudication enabled; exit 0 in 69.114 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: none. `ValueRead` is crate-private and its dump boundary explicitly emits
+  the unchanged escaped-dot spelling.
+
+### Self-adversarial pass
+
+- Whole-tree construction and use searches find no string-backed `ValueRead` identity or
+  parse-on-contract-projection cycle. Typed equality now handles self-guard pruning directly, and
+  strict-descendant suppression uses segmented path comparison.
+- Read kind, resource scope, dependency lane, provenance, guard DNF, rendered-row paths, and
+  sibling-claim sets remain separate domains. No coercion trait or parallel encoded read field was
+  added.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free in 5 minutes 2 seconds.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,137.86 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 185.932 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,523.473 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,622.656 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 22.46
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,382 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +4 (64,378 to 64,382), from explicit typed-path construction and
+  structural descendant checks replacing encoded-string comparisons.
