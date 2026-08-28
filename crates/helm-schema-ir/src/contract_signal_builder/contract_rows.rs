@@ -385,9 +385,7 @@ pub(super) fn record_range_key_slot_use(
     range_modes: &crate::range_modes::RangeModes,
 ) {
     if contract_use.path.0.is_empty()
-        || !range_modes
-            .mode(&contract_use.source_expr.encode())
-            .member_identity
+        || !range_modes.mode(&contract_use.source_expr).member_identity
     {
         return;
     }
@@ -494,13 +492,15 @@ pub(super) fn record_contract_use_conjunction(
     // an `include`-bearing condition).
     let has_approximate = predicates.iter().any(Predicate::contains_approximation);
     if ranged_member_parent(&source_expr).is_some_and(|parent| {
-        !range_modes.mode(parent).member_identity
+        !range_modes
+            .mode(&helm_schema_core::ValuesPath::parse(parent))
+            .member_identity
             && !predicates.is_empty()
             && predicates.iter().all(|predicate| {
                 matches!(
                     predicate,
                     Predicate::Guard(Guard::Range { path })
-                        if !range_modes.mode(&path.encode()).member_identity
+                        if !range_modes.mode(path).member_identity
                 )
             })
     }) {
@@ -511,7 +511,7 @@ pub(super) fn record_contract_use_conjunction(
     }
     let lowerable_guards =
         lowerable_conditional_guard_set(contract_use, predicates).or_else(|| {
-            (contract_use.path.0.is_empty() && range_modes.mode(&source_expr).member_identity)
+            (contract_use.path.0.is_empty() && range_modes.mode(&source_path).member_identity)
                 .then(|| lowerable_range_outer_guards(&source_expr, predicates))
                 .flatten()
         });
@@ -1066,7 +1066,9 @@ pub(super) fn record_range_input_capture(
     if let Some(parent) = path.strip_suffix(".*")
         && !path_contains_wildcard(parent)
     {
-        let parent_mode = capture.ranged.mode(parent);
+        let parent_mode = capture
+            .ranged
+            .mode(&helm_schema_core::ValuesPath::parse(parent));
         if !parent_mode.member_identity {
             return;
         }

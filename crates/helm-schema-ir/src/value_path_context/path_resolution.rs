@@ -130,13 +130,23 @@ impl ValuePathContext<'_> {
             &mut seen,
         );
         let evaluated_truth_reachability = evaluated.output_reachability(SelectionPolarity::Truthy);
-        let mut influence_paths = evaluated.effects.output_value_paths();
+        let mut influence_paths = evaluated
+            .effects
+            .output_value_paths()
+            .into_iter()
+            .map(|path| helm_schema_core::ValuesPath::parse(&path))
+            .collect::<BTreeSet<_>>();
         let value = self
             .with_body_fragment_value_expr(expr)
             .or(evaluated.value)
             .and_then(AbstractValue::without_widened);
         if let Some(value) = &value {
-            influence_paths.extend(value.paths());
+            influence_paths.extend(
+                value
+                    .paths()
+                    .into_iter()
+                    .map(|path| helm_schema_core::ValuesPath::parse(&path)),
+            );
         }
         let truth_source = evaluated_truth_reachability.truth_source();
         let truth_reachability = match (
@@ -178,17 +188,17 @@ impl ValuePathContext<'_> {
 
 fn range_input_identity(value: &AbstractValue, effects: &Effects) -> Option<RangeSubjectIdentity> {
     let (path, json_decoded) = match value {
-        AbstractValue::ValuesPath(path) => (path.encode(), false),
-        AbstractValue::JsonDecodedPath(path) => (path.clone(), true),
+        AbstractValue::ValuesPath(path) => (path.clone(), false),
+        AbstractValue::JsonDecodedPath(path) => (helm_schema_core::ValuesPath::parse(path), true),
         AbstractValue::OutputPath(path, meta) => {
             if !meta.json_decoded && !output_meta_preserves_range_shape(meta) {
                 return None;
             }
-            (path.clone(), meta.json_decoded)
+            (helm_schema_core::ValuesPath::parse(path), meta.json_decoded)
         }
         _ => return None,
     };
-    if !json_decoded && !path_preserves_range_shape(&path, effects) {
+    if !json_decoded && !path_preserves_range_shape(&path.encode(), effects) {
         return None;
     }
     Some(RangeSubjectIdentity { path, json_decoded })
@@ -303,27 +313,30 @@ fn range_layer_member_value(value: &AbstractValue, effects: &Effects) -> Option<
 fn single_member_collection_identity(value: &AbstractValue) -> Option<RangeSubjectIdentity> {
     fn collect(
         value: &AbstractValue,
-        identities: &mut BTreeSet<(String, bool)>,
+        identities: &mut BTreeSet<(helm_schema_core::ValuesPath, bool)>,
         has_other_path: &mut bool,
     ) {
         match value {
             AbstractValue::ValuesPath(path) => {
                 if let Some(parent) = path.item_parent() {
-                    identities.insert((parent.encode(), false));
+                    identities.insert((parent, false));
                 } else {
                     *has_other_path = true;
                 }
             }
             AbstractValue::JsonDecodedPath(path) => {
                 if let Some(parent) = path.strip_suffix(".*") {
-                    identities.insert((parent.to_string(), true));
+                    identities.insert((helm_schema_core::ValuesPath::parse(parent), true));
                 } else {
                     *has_other_path = true;
                 }
             }
             AbstractValue::OutputPath(path, meta) => {
                 if let Some(parent) = path.strip_suffix(".*") {
-                    identities.insert((parent.to_string(), meta.json_decoded));
+                    identities.insert((
+                        helm_schema_core::ValuesPath::parse(parent),
+                        meta.json_decoded,
+                    ));
                 } else {
                     *has_other_path = true;
                 }

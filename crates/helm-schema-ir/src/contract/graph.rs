@@ -747,7 +747,7 @@ fn project_global_range_modes(
         .filter_map(|(path, mode)| {
             let segments = path.segments().map(str::to_string).collect::<Vec<_>>();
             let relative = segments.strip_prefix(dependency_segments.as_slice())?;
-            Some((path.encode(), relative.to_vec(), mode))
+            Some((path.clone(), relative.to_vec(), mode))
         })
         .collect::<Vec<_>>();
 
@@ -755,7 +755,7 @@ fn project_global_range_modes(
         range_modes.remove(&path);
         if relative.is_empty() {
             for global_source in global_sources {
-                range_modes.merge_mode(global_source, mode);
+                range_modes.merge_mode(&helm_schema_core::ValuesPath::parse(global_source), mode);
             }
             continue;
         }
@@ -768,7 +768,7 @@ fn project_global_range_modes(
                     .into_iter()
                     .chain(relative.iter().cloned()),
             );
-            range_modes.merge_mode(&projected, mode);
+            range_modes.merge_mode(&helm_schema_core::ValuesPath::parse(&projected), mode);
         }
     }
 }

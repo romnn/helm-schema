@@ -36,26 +36,23 @@ pub(crate) struct RangeModes {
 
 impl RangeModes {
     /// The mode recorded for a path; all-false when nothing was recorded.
-    pub(crate) fn mode(&self, path: &str) -> RangeMode {
-        self.modes
-            .get(&ValuesPath::parse(path))
-            .copied()
-            .unwrap_or_default()
+    pub(crate) fn mode(&self, path: &ValuesPath) -> RangeMode {
+        self.modes.get(path).copied().unwrap_or_default()
     }
 
-    pub(crate) fn mark_input_identity(&mut self, path: &str) {
+    pub(crate) fn mark_input_identity(&mut self, path: &ValuesPath) {
         self.entry(path, |mode| mode.input_identity = true);
     }
 
-    pub(crate) fn mark_member_identity(&mut self, path: &str) {
+    pub(crate) fn mark_member_identity(&mut self, path: &ValuesPath) {
         self.entry(path, |mode| mode.member_identity = true);
     }
 
-    pub(crate) fn mark_json_decoded(&mut self, path: &str) {
+    pub(crate) fn mark_json_decoded(&mut self, path: &ValuesPath) {
         self.entry(path, |mode| mode.json_decoded = true);
     }
 
-    pub(crate) fn mark_destructured(&mut self, path: &str) {
+    pub(crate) fn mark_destructured(&mut self, path: &ValuesPath) {
         self.entry(path, |mode| mode.destructured = true);
     }
 
@@ -74,12 +71,12 @@ impl RangeModes {
         self.modes.iter().map(|(path, mode)| (path, *mode))
     }
 
-    pub(crate) fn remove(&mut self, path: &str) -> Option<RangeMode> {
-        self.modes.remove(&ValuesPath::parse(path))
+    pub(crate) fn remove(&mut self, path: &ValuesPath) -> Option<RangeMode> {
+        self.modes.remove(path)
     }
 
-    pub(crate) fn merge_mode(&mut self, path: &str, mode: RangeMode) {
-        let merged = self.modes.entry(ValuesPath::parse(path)).or_default();
+    pub(crate) fn merge_mode(&mut self, path: &ValuesPath, mode: RangeMode) {
+        let merged = self.modes.entry(path.clone()).or_default();
         merged.input_identity |= mode.input_identity;
         merged.member_identity |= mode.member_identity;
         merged.json_decoded |= mode.json_decoded;
@@ -103,10 +100,10 @@ impl RangeModes {
         *self = mapped;
     }
 
-    fn entry(&mut self, path: &str, set: impl FnOnce(&mut RangeMode)) {
-        if path.trim().is_empty() {
+    fn entry(&mut self, path: &ValuesPath, set: impl FnOnce(&mut RangeMode)) {
+        if path.segments().next().is_none() {
             return;
         }
-        set(self.modes.entry(ValuesPath::parse(path)).or_default());
+        set(self.modes.entry(path.clone()).or_default());
     }
 }

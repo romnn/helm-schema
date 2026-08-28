@@ -4004,7 +4004,7 @@
 
 ## B4a.11 — migrate pathless-read identities
 
-- Status: in progress; commit pending.
+- Status: landed in `7953733d`.
 - Contract: representation-only migration of `ValueRead.values_path` to segmented `ValuesPath`,
   including direct reads, helper-demoted reads, sibling-condition pruning, nested-read absorption,
   graph remapping, and contract-row lowering. Read kind, condition, resource scope, dependency
@@ -4090,3 +4090,101 @@
 
 - Measured production LOC delta: +4 (64,378 to 64,382), from explicit typed-path construction and
   structural descendant checks replacing encoded-string comparisons.
+
+## B4a.12 — migrate range-subject paths
+
+- Status: in progress; commit pending.
+- Contract: representation-only migration of `RangeSubjectIdentity.path`,
+  `RangeSubject.influence_paths`, and the already-typed `RangeModes` map's string-only query/update
+  interface to segmented `ValuesPath`, preserving range input/member identity, JSON-decoded
+  provenance, truth reachability, member-value projection, and every published `RangeMode` exactly.
+- Acceptance baseline: `7953733d` (B4a.11).
+- Baseline production LOC: 64,382 Rust lines from `task tokei:core` on `7953733d`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Direct, JSON-decoded, helper-output, merged-layer, and collection-member range identities
+    retain identical paths and mode flags; callers no longer parse keys already stored in the
+    typed `RangeModes` map.
+  - Both types are crate-private, so this round changes no public API or wire format. Encoded text
+    remains confined to existing string-backed producers or diagnostics.
+  - No coercion trait, cross-type comparison, parallel encoded field, or unrelated string carrier
+    is allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - Range subject influence and input/member identities now remain segmented through expression
+    evaluation, document and inline range lowering, active capture state, `RangeModes` publication,
+    global dependency projection, and contract requirement queries. The typed `RangeModes` map no
+    longer reparses keys in its query/update interface.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `7953733d`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first compiler-only preflight typed the two range-subject fields alone and was rejected
+    after 35 expected mismatches showed that the adjacent `RangeModes` interface and active-range
+    state still forced encoded strings. No archive or dump was produced from that state.
+  - The second compiler-only preflight typed that interface and was rejected with 26 production
+    and seven test callsites still passing encoded paths. The third preflight was production-clean
+    but rejected until the seven private range-mode tests used typed constructors. Neither state
+    produced an artifact. These failures refined the pre-registered round boundary; they did not
+    expose behavioral drift.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Direct/decoded/helper-output range subjects | Same identity and reachability | IR focused suite. |
+| Document and inline range lowering | Same reads, guards, member/key bindings | Fragment suites/dump. |
+| Range-mode capture and global projection | Same per-path flags and remapping | Range/contract suites. |
+| Requirement synthesis queries | Same member/key obligations | Schema dump and prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 393/393 IR tests pass, covering
+  range subject evaluation, direct and derived iteration, decoded members, active captures,
+  global projection, and range-conditioned requirement synthesis. Whole-workspace Clippy passes
+  warning-free on the first completed lint preflight in 6 minutes 14 seconds.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a12-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a12-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 447 seconds.
+- Clean schema dump: the B4a.12 `final1` archive under the step-local schema `TMPDIR`; exit 0, 62
+  tests pass in 184.284 seconds and 84 artifacts are byte-identical to B4a.11.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one test passes in
+  3.184 seconds and 18 artifacts are byte-identical to B4a.11.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `7953733d`,
+  Helm adjudication enabled; exit 0 in 68.928 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: none. All migrated fields and the `RangeModes` interface are crate-private;
+  existing dump and contract boundaries retain the unchanged escaped-dot spelling.
+
+### Self-adversarial pass
+
+- Whole-tree API searches find `RangeModes` accepts only `ValuesPath`; its map keys, active range
+  state, range-subject identities, and influence set now share one path currency. Exact encoded
+  ordering remains governed by `ValuesPath::Ord`.
+- `AbstractValue::RangeKey` and helper/contract-builder path sets remain explicitly scheduled B4a
+  carriers, so their current encodes are visible boundaries rather than a hidden parallel field.
+  JSON-decoded identity, member-vs-input mode, truth reachability, and wildcard semantics remain
+  distinct domains. No coercion trait was added.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free in 4 minutes 59 seconds.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,132.24 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 194.085 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,544.638 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,650.956 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 23.65
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,403 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +21 (64,382 to 64,403), from explicit conversions at remaining
+  string-backed producer/contract-builder boundaries and direct typed map access elsewhere.

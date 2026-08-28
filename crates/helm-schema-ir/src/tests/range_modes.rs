@@ -5,9 +5,11 @@ use crate::range_modes::RangeModes;
 #[test]
 fn range_modes_keep_escaped_path_identity_and_legacy_order() {
     let mut modes = RangeModes::default();
-    modes.mark_input_identity(r"service.prometheus\.io");
-    modes.mark_json_decoded(r"service.prometheus\.io");
-    modes.mark_member_identity(r"service.a\\b");
+    let prometheus = helm_schema_core::ValuesPath::parse(r"service.prometheus\.io");
+    let backslash = helm_schema_core::ValuesPath::parse(r"service.a\\b");
+    modes.mark_input_identity(&prometheus);
+    modes.mark_json_decoded(&prometheus);
+    modes.mark_member_identity(&backslash);
 
     let encoded = modes
         .iter()
@@ -20,18 +22,18 @@ fn range_modes_keep_escaped_path_identity_and_legacy_order() {
     expected.sort();
     sim_assert_eq!(have: encoded, want: expected);
 
-    let mode = modes.mode(r"service.prometheus\.io");
+    let mode = modes.mode(&prometheus);
     assert!(mode.input_identity && mode.json_decoded && !mode.member_identity);
 }
 
 #[test]
 fn range_mode_remapping_unions_collapsed_structural_paths() {
     let mut modes = RangeModes::default();
-    modes.mark_input_identity("first.items");
-    modes.mark_member_identity("second.items");
+    modes.mark_input_identity(&helm_schema_core::ValuesPath::parse("first.items"));
+    modes.mark_member_identity(&helm_schema_core::ValuesPath::parse("second.items"));
     modes.map_value_paths(&mut |_| "selected.items".to_string());
 
-    let selected = modes.mode("selected.items");
+    let selected = modes.mode(&helm_schema_core::ValuesPath::parse("selected.items"));
     assert!(selected.input_identity && selected.member_identity);
     sim_assert_eq!(have: modes.iter().count(), want: 1);
 }

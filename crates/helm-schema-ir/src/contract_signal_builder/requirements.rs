@@ -151,7 +151,7 @@ pub(super) fn record_fail_conjunction(
                     })
                     && requirement_capture
                         .ranged
-                        .mode(&collection_path)
+                        .mode(&helm_schema_core::ValuesPath::parse(&collection_path))
                         .member_identity
                 {
                     record_unconditional_string_requirement_facts(paths, &path.encode());
@@ -452,8 +452,7 @@ pub(super) fn record_fail_conjunction(
     // predicates name only the latter.
     let ranged = execution_range_paths
         .filter(|path| {
-            let path = path.encode();
-            range_modes.mode(&path).member_identity || capture.ranged.mode(&path).member_identity
+            range_modes.mode(path).member_identity || capture.ranged.mode(path).member_identity
         })
         .map(|path| path.encode())
         .chain(
@@ -492,7 +491,7 @@ pub(super) fn record_fail_conjunction(
             // (a truthy non-collection aborts the range and never reaches
             // a render-valid document). Indirect ranges lose that
             // implication and abstain.
-            if capture.ranged.mode(&path.encode()).input_identity {
+            if capture.ranged.mode(path).input_identity {
                 outer_guards.push(ConditionalGuard::Truthy { path: path.clone() });
                 continue;
             }
@@ -670,7 +669,7 @@ pub(super) fn record_fail_conjunction(
         target: ranged
             .as_deref()
             .map_or(ContractRequirementTarget::Value, |path| {
-                let mode = range_modes.mode(path);
+                let mode = range_modes.mode(&helm_schema_core::ValuesPath::parse(path));
                 let allow_integer = !mode.destructured && !mode.json_decoded;
                 match member_field {
                     Some(target_path) => ContractRequirementTarget::MembersAt {
@@ -739,10 +738,11 @@ fn string_requirement_has_execution_scope(
         }
     }
     required_ranges.iter().all(|required| {
-        capture.ranged.mode(required).member_identity
-            || range_modes.mode(required).member_identity
+        let required = helm_schema_core::ValuesPath::parse(required);
+        capture.ranged.mode(&required).member_identity
+            || range_modes.mode(&required).member_identity
             || capture.conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == &helm_schema_core::ValuesPath::parse(required))
+                matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == &required)
             })
     })
 }
@@ -972,7 +972,7 @@ pub(super) fn capture_outer_guards(
             // that implication and abstain.
             Predicate::Guard(Guard::Range { path }) => capture
                 .ranged
-                .mode(&path.encode())
+                .mode(path)
                 .input_identity
                 .then(|| ConditionalGuard::Truthy { path: path.clone() }),
             predicate => fail_outer_guard(predicate),
@@ -1153,7 +1153,9 @@ pub(super) fn record_value_requirement_capture(
                 })
                 .collect::<BTreeSet<_>>();
             if ranged_collections.iter().any(|path| {
-                let mode = capture.ranged.mode(path);
+                let mode = capture
+                    .ranged
+                    .mode(&helm_schema_core::ValuesPath::parse(path));
                 !mode.member_identity || (!mode.destructured && !mode.json_decoded)
             }) {
                 return;
@@ -1277,7 +1279,9 @@ pub(super) fn record_value_requirement_capture(
         outer_guards.sort();
         outer_guards.dedup();
         let allow_integer = {
-            let mode = capture.ranged.mode(collection_path);
+            let mode = capture
+                .ranged
+                .mode(&helm_schema_core::ValuesPath::parse(collection_path));
             mode.member_identity && !mode.destructured && !mode.json_decoded
         };
         let target_path = helm_schema_core::split_value_path(member_suffix);
@@ -1375,7 +1379,9 @@ pub(super) fn record_value_requirement_capture(
         outer_guards.sort();
         outer_guards.dedup();
         let allow_integer = {
-            let mode = capture.ranged.mode(collection_path);
+            let mode = capture
+                .ranged
+                .mode(&helm_schema_core::ValuesPath::parse(collection_path));
             mode.member_identity && !mode.destructured && !mode.json_decoded
         };
         let target = match (prefix, member_selector) {
@@ -1681,8 +1687,13 @@ pub(super) fn record_range_key_string_requirements(
     }
     for path in range_key_string_paths {
         if path_contains_wildcard(path)
-            || (!range_modes.mode(path).member_identity
-                && !capture.ranged.mode(path).member_identity)
+            || (!range_modes
+                .mode(&helm_schema_core::ValuesPath::parse(path))
+                .member_identity
+                && !capture
+                    .ranged
+                    .mode(&helm_schema_core::ValuesPath::parse(path))
+                    .member_identity)
         {
             continue;
         }
@@ -1717,8 +1728,13 @@ pub(super) fn record_range_key_plain_slot_requirements(
     }
     for path in collection_paths {
         if path_contains_wildcard(path)
-            || (!range_modes.mode(path).member_identity
-                && !capture.ranged.mode(path).member_identity)
+            || (!range_modes
+                .mode(&helm_schema_core::ValuesPath::parse(path))
+                .member_identity
+                && !capture
+                    .ranged
+                    .mode(&helm_schema_core::ValuesPath::parse(path))
+                    .member_identity)
         {
             continue;
         }
@@ -2024,7 +2040,7 @@ pub(super) fn record_member_access_capture(
             return;
         }
         let parent_encoded = parent.encode();
-        if !capture.ranged.mode(&parent_encoded).member_identity {
+        if !capture.ranged.mode(&parent).member_identity {
             return;
         }
         let mut outer_guards = Vec::new();
@@ -2061,8 +2077,8 @@ pub(super) fn record_member_access_capture(
             outer_guards,
             target: ContractRequirementTarget::Members {
                 allow_integer: {
-                    let mode = range_modes.mode(&parent_encoded);
-                    let capture_mode = capture.ranged.mode(&parent_encoded);
+                    let mode = range_modes.mode(&parent);
+                    let capture_mode = capture.ranged.mode(&parent);
                     !mode.destructured
                         && !capture_mode.destructured
                         && !mode.json_decoded

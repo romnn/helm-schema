@@ -269,10 +269,8 @@ impl Interpreter<'_> {
         self.record_selection_range_captures(range_subject.value.as_ref(), destructured);
         let mut own = Vec::new();
         for path in source_paths {
-            let guard = Guard::Range {
-                path: helm_schema_core::ValuesPath::parse(path),
-            };
-            self.push_control_read(path, std::slice::from_ref(&guard));
+            let guard = Guard::Range { path: path.clone() };
+            self.push_control_read(&path.encode(), std::slice::from_ref(&guard));
             own.push(Predicate::from(guard.clone()));
             self.push_predicate(Predicate::from(guard));
         }
@@ -303,7 +301,7 @@ impl Interpreter<'_> {
         {
             self.locals
                 .range_member_values
-                .insert(variable, AbstractValue::RangeKey(path));
+                .insert(variable, AbstractValue::RangeKey(path.encode()));
         }
         self.dot_stack.push(dot);
         self.loop_depth += 1;
@@ -380,11 +378,8 @@ impl Interpreter<'_> {
             }
         }
         let input_contract_identity = input_identity.or_else(|| {
-            member_identity.filter(|identity| {
-                helm_schema_core::split_value_path(&identity.path)
-                    .iter()
-                    .any(|segment| segment == "*")
-            })
+            member_identity
+                .filter(|identity| identity.path.segments().any(|segment| segment == "*"))
         });
         if iterable_value
             .and_then(crate::abstract_value::AbstractValue::selection_chain_identity_paths)
@@ -395,7 +390,7 @@ impl Interpreter<'_> {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeInput {
-                    path: helm_schema_core::ValuesPath::parse(&identity.path),
+                    path: identity.path.clone(),
                     destructured,
                     json_decoded: identity.json_decoded,
                 },

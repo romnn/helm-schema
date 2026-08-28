@@ -1039,11 +1039,9 @@ impl Interpreter<'_> {
             }
         }
         let input_contract_identity = input_identity.as_ref().or_else(|| {
-            member_identity.as_ref().filter(|identity| {
-                helm_schema_core::split_value_path(&identity.path)
-                    .iter()
-                    .any(|segment| segment == "*")
-            })
+            member_identity
+                .as_ref()
+                .filter(|identity| identity.path.segments().any(|segment| segment == "*"))
         });
         if iterable_value
             .as_ref()
@@ -1055,7 +1053,7 @@ impl Interpreter<'_> {
                 conjunction: self.fail_capture_conjunction(Vec::new()),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeInput {
-                    path: helm_schema_core::ValuesPath::parse(&identity.path),
+                    path: identity.path.clone(),
                     destructured,
                     json_decoded: identity.json_decoded,
                 },
@@ -1072,9 +1070,7 @@ impl Interpreter<'_> {
         let mut own = Vec::new();
         let mut extra = Contributions::default();
         for path in &source_paths {
-            let predicate = Predicate::from(Guard::Range {
-                path: helm_schema_core::ValuesPath::parse(path),
-            });
+            let predicate = Predicate::from(Guard::Range { path: path.clone() });
             if emit_header_read && !renders_scalar_items {
                 // A helper-scope read carries the range guard only when the
                 // range iterates the path ITSELF (or the destructured form):
@@ -1088,14 +1084,12 @@ impl Interpreter<'_> {
                 // them would recondition strict captures riding the same
                 // read identity on rangeability the source never has.
                 let direct_range_of_path =
-                    destructured || input_identity_path.as_deref() == Some(path.as_str());
+                    destructured || input_identity_path.as_ref() == Some(path);
                 if !self.helper_scope || direct_range_of_path {
-                    let guard = Guard::Range {
-                        path: helm_schema_core::ValuesPath::parse(path),
-                    };
-                    self.push_control_read(path, std::slice::from_ref(&guard));
+                    let guard = Guard::Range { path: path.clone() };
+                    self.push_control_read(&path.encode(), std::slice::from_ref(&guard));
                 } else {
-                    self.push_control_read(path, &[]);
+                    self.push_control_read(&path.encode(), &[]);
                 }
             }
             if derived_range_condition.is_none() {
@@ -1118,7 +1112,7 @@ impl Interpreter<'_> {
         if renders_scalar_items {
             for path in &source_paths {
                 extra.push_value_arm(splice_arm(
-                    path,
+                    &path.encode(),
                     ValueKind::Scalar,
                     self.current_site.as_ref(),
                 ));
@@ -1130,8 +1124,11 @@ impl Interpreter<'_> {
             // CST can nest a shallow-marker region under a preceding open
             // entry), the same float rule as explicitly-indented output.
             for path in &source_paths {
-                let (condition, node) =
-                    splice_arm(path, ValueKind::Fragment, self.current_site.as_ref());
+                let (condition, node) = splice_arm(
+                    &path.encode(),
+                    ValueKind::Fragment,
+                    self.current_site.as_ref(),
+                );
                 let mut value = super::domain::Guarded::empty();
                 value.arms.push((condition, node));
                 match shape.dynamic_entry_indent {
@@ -1223,7 +1220,7 @@ impl Interpreter<'_> {
         if let Some((variable, path)) = key_variable.zip(range_binding_path) {
             self.locals
                 .range_member_values
-                .insert(variable.to_string(), AbstractValue::RangeKey(path));
+                .insert(variable.to_string(), AbstractValue::RangeKey(path.encode()));
         }
         self.dot_stack.push(dot);
         (Some(own_condition), extra, None, truth)

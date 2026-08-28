@@ -730,7 +730,8 @@ pub(super) struct Interpreter<'a> {
     /// Range identities active on the walk. Input and member identity remain
     /// separate because a derived iterable may visit values-backed members
     /// without iterating that values path itself.
-    pub(super) active_range_modes: Vec<(String, crate::range_modes::RangeMode)>,
+    pub(super) active_range_modes:
+        Vec<(helm_schema_core::ValuesPath, crate::range_modes::RangeMode)>,
     /// Approximate conjuncts for exact-range items that not every iterable
     /// alternative executes (nats' jsonpatch conditionally appends "from"
     /// to `$opPathKeys`). They condition CAPTURE conjunctions only — rows

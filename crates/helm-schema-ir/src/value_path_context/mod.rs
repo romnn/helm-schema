@@ -7,7 +7,7 @@ use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::ScalarValueDispatch;
 use crate::symbolic_local_state::IntCastSource;
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 mod condition_predicate;
 mod path_resolution;
@@ -18,7 +18,7 @@ pub(crate) use condition_predicate::{
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct RangeSubjectIdentity {
-    pub(crate) path: String,
+    pub(crate) path: ValuesPath,
     pub(crate) json_decoded: bool,
 }
 
@@ -32,7 +32,7 @@ pub(crate) struct RangeSubjectIdentity {
 /// `splitList` from turning its string input into a collection contract.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct RangeSubject {
-    pub(crate) influence_paths: BTreeSet<String>,
+    pub(crate) influence_paths: BTreeSet<ValuesPath>,
     pub(crate) value: Option<AbstractValue>,
     pub(crate) truth_reachability: SelectionReachability,
     pub(crate) input_identity: Option<RangeSubjectIdentity>,
