@@ -77,16 +77,8 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             root_set_predicates: summary.root_set_predicates.clone(),
             root_set_value_dispatches: summary.root_set_value_dispatches.clone(),
             observed_facts,
-            parsed_yaml_input_paths: summary
-                .parsed_yaml_input_paths
-                .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path))
-                .collect(),
-            yaml_serialized_paths: summary
-                .yaml_serialized_paths
-                .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path))
-                .collect(),
+            parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
+            yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
             json_serialized_paths: summary
                 .rendered
                 .iter()

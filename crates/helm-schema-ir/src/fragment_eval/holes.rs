@@ -715,12 +715,8 @@ impl Interpreter<'_> {
         };
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
-        self.run_templated_text_paths.extend(
-            hole.effects
-                .templated_text_identity_paths
-                .iter()
-                .map(helm_schema_core::ValuesPath::encode),
-        );
+        self.run_templated_text_paths
+            .extend(hole.effects.templated_text_identity_paths.iter().cloned());
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind != ValueKind::Fragment);
         let defaulted = hole.effects.default_paths_with_local();
@@ -920,17 +916,17 @@ impl Interpreter<'_> {
 
         #[derive(Default)]
         struct ArmClaims {
-            token_initial: std::collections::BTreeSet<String>,
-            double_quoted: std::collections::BTreeSet<String>,
-            single_quoted: std::collections::BTreeSet<String>,
-            double_quoted_templated: std::collections::BTreeSet<String>,
-            single_quoted_templated: std::collections::BTreeSet<String>,
-            plain_templated: std::collections::BTreeSet<String>,
+            token_initial: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+            double_quoted: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+            single_quoted: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+            double_quoted_templated: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+            single_quoted_templated: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+            plain_templated: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
         }
 
         fn arm_claims(
             parts: &[StringPart],
-            templated: &std::collections::BTreeSet<String>,
+            templated: &std::collections::BTreeSet<helm_schema_core::ValuesPath>,
             value_slot: bool,
         ) -> ArmClaims {
             let mut claims = ArmClaims::default();
@@ -955,7 +951,7 @@ impl Interpreter<'_> {
                         };
                     }
                     StringPart::Splice(splice) => {
-                        let path = splice.values_path.encode();
+                        let path = &splice.values_path;
                         let raw = splice.kind == ValueKind::PartialScalar
                             && !splice.meta.encoded
                             && !splice.meta.shape_erased
@@ -964,7 +960,7 @@ impl Interpreter<'_> {
                             && splice.meta.split_segment.is_none()
                             && !splice.meta.range_key
                             && splice.values_path.segments().len() != 0
-                            && !templated.contains(&path);
+                            && !templated.contains(path);
                         // A `tpl` render is the raw value's own text whenever
                         // that value carries no template action, so an
                         // UNQUOTED position still binds the plain token's
@@ -974,7 +970,7 @@ impl Interpreter<'_> {
                         // where a `: ` turns the command item into a mapping).
                         if state == QuoteContext::None
                             && value_slot
-                            && templated.contains(&path)
+                            && templated.contains(path)
                             && !splice.meta.encoded
                             && (!splice.meta.shape_erased || splice.meta.stringified)
                             && !splice.meta.yaml_serialized
@@ -983,7 +979,7 @@ impl Interpreter<'_> {
                         {
                             claims.plain_templated.insert(path.clone());
                         }
-                        if templated.contains(&path)
+                        if templated.contains(path)
                             && !splice.meta.encoded
                             && (!splice.meta.shape_erased || splice.meta.stringified)
                             && !splice.meta.yaml_serialized
@@ -1060,7 +1056,7 @@ impl Interpreter<'_> {
         for path in agreed.token_initial {
             captures.push(crate::eval_effect::FailCapture {
                 conjunction: vec![Predicate::from(crate::Guard::TypeIs {
-                    path: helm_schema_core::ValuesPath::parse(&path),
+                    path,
                     schema_type: "array".to_string(),
                 })],
                 ranged: crate::range_modes::RangeModes::default(),
@@ -1094,7 +1090,7 @@ impl Interpreter<'_> {
                     conjunction: Vec::new(),
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::QuotedSerialization {
-                        path: helm_schema_core::ValuesPath::parse(&path),
+                        path,
                         style,
                         templated,
                     },
@@ -1111,7 +1107,7 @@ impl Interpreter<'_> {
                 conjunction: Vec::new(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::PlainSlotText {
-                    path: helm_schema_core::ValuesPath::parse(&path),
+                    path,
                     // Literal text shares the token, so only its interior
                     // characters can end it; a leading indicator cannot.
                     token_initial: false,

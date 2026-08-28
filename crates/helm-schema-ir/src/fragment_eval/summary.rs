@@ -58,9 +58,9 @@ pub(crate) struct FragmentSummary {
     pub(crate) reads: Vec<ValueRead>,
     pub(crate) observed_facts: ObservedFacts,
     /// Paths consumed as serialized YAML by `fromYaml` in the body.
-    pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
+    pub(crate) parsed_yaml_input_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// Paths serialized with `toYaml` in the helper's projected output.
-    pub(crate) yaml_serialized_paths: BTreeSet<String>,
+    pub(crate) yaml_serialized_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// Captures that hold only where the body's rendered TEXT is consumed as
     /// YAML: the plain-slot lexical language of the body's own slots. The
     /// body renders at its caller's position, so the caller certifies the

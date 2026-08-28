@@ -4587,7 +4587,7 @@
 
 ## B4a.17 — migrate scalar-dispatch identity paths
 
-- Status: landed; commit pending.
+- Status: landed in `84caca86` (`refactor(ir): type scalar identity paths`).
 - Contract: representation-only migration of exact scalar dispatch identities and rendered scalar
   identity parts from encoded `String` paths to segmented `ValuesPath`. Literal scalar text,
   formatter tokens, and lexical escapes remain their existing domains.
@@ -4676,3 +4676,96 @@
 
 - Measured production LOC delta: -1 (64,322 to 64,321); the typed payload removes repeated parsing
   while explicit encoding at two still-string consumer boundaries keeps this round attributable.
+
+## B4a.18 — migrate fragment serialization path state
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of fragment-interpreter YAML parse/serialization state,
+  current-run templated-text identities, and scalar-arm position claims from encoded strings to
+  segmented `ValuesPath`. Text alternatives, quote state, and helper names remain strings.
+- Acceptance baseline: `84caca86` (B4a.17).
+- Baseline production LOC: 64,321 Rust lines from `task tokei:core` on `84caca86`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Helper-summary propagation, YAML round-trip recognition, templated quote/plain-slot claims,
+    and fragment lowering retain identical path membership and legacy encoded ordering.
+  - All affected carriers are crate-private, so this round changes no public API or wire format.
+    No coercion trait, cross-type comparison, or cached encoded twin is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - Fragment summaries and interpreter state now keep parsed-YAML inputs and YAML-serialized paths
+    as `ValuesPath`; the helper-call boundary clones those sets directly instead of encoding and
+    reparsing every member.
+  - Current-run `tpl` identities and the per-arm token/quote/plain-slot claim sets use the same
+    typed carrier. Capture construction now consumes those paths directly.
+  - Schema and symbolic-IR dumps are recursively byte-identical to `84caca86`. The full-depth
+    battery checks 121,055 probes across 60 charts with zero flips, zero mandatory base/third-level
+    drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - A pre-archive `cargo fmt --check` identified one formatting-only line wrap. `cargo fmt` applied
+    it before the immutable archive and every final gate.
+  - The first downstream invocation exited 201 before executing a chart because overnight cleanup
+    left the documented shim directory empty and macOS `xargs` rejected `-a`. The `xargs` and
+    atomic-mkdir `flock` shims were recreated under `/private/tmp` with exit-code propagation; the
+    unchanged repository tree then passed 32/32 charts. Neither repository was edited for host
+    compatibility.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Expression YAML serialization | Same effect-path membership | Eval/serialization suite. |
+| Helper summary propagation | Same parsed/serialized identities | Fragment/IR dump. |
+| Current-run `tpl` text | Same raw-versus-templated classification | Templated-slot re-audits. |
+| Quote/plain-slot claims | Same capture paths and styles | IR/schema suites and prober. |
+| Fragment lowering | Same splice metadata and output | Schema dump/full corpus. |
+
+### Review dossier
+
+- Focused proof: all-target IR compilation succeeds in 44.70 seconds; 393/393 IR tests pass after
+  the host's 80-second build. Whole-workspace lint passes warning-free in 7 minutes 07 seconds.
+- Immutable build: B4a.18 `final1`; exit 0, 87 binaries and 125 files after an 8-minute-19-second
+  build and 1.36-second archive write.
+- Clean schema dump: exit 0, 62/62 pass in 188.343 seconds; all 84 artifacts are recursively
+  byte-identical to B4a.17.
+- Clean IR dump: exit 0, one test passes in 3.271 seconds; all 18 artifacts are recursively
+  byte-identical to B4a.17.
+- Full-depth proof: baseline `84caca86`, Helm adjudication enabled; exit 0 in 68.951 seconds, 60
+  charts, 121,055 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+  and 28,868 disclosed reductions.
+- Public/wire decision: none. All migrated state is crate-private and serialized bytes remain
+  unchanged.
+
+### Self-adversarial pass
+
+- Whole-tree searches find the fragment interpreter and summary parsed/serialized path sets, the
+  current-run templated set, and all six arm-claim sets use `ValuesPath`; their producers and
+  consumers no longer encode or parse at those boundaries.
+- Text alternatives, quote state, helper identifiers, and format tokens remain strings in their
+  distinct domains. No coercion trait, display implementation, cross-type comparison, cached
+  encoding, public API, or wire-format change was introduced.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0 in 7 minutes 07 seconds.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 1,534.84
+  seconds, followed by the ast-grep policy checks.
+- `cargo nextest run --workspace`: exit 0; 1,308/1,308 pass in 188.413 seconds after the native
+  final-tree build.
+- `task test:integration`: exit 0; 558/558 pass, 24 skipped, in 1,526.546 seconds.
+- `task test:all`: exit 0; 1,870/1,870 pass, 24 skipped, in 1,614.761 seconds, including the
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 23.00 seconds.
+- downstream luup2 `check:local` with the recreated documented macOS shims and explicit installed
+  binary: exit 0; 32/32 charts pass. The rejected missing-shim preflight is recorded above.
+- `task tokei:core`: exit 0; 64,309 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: -12 (64,321 to 64,309), from removing encoded-path set maps and
+  repeated encode/parse conversions across fragment interpretation and summary propagation.

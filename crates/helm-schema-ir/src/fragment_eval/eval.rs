@@ -702,10 +702,10 @@ pub(super) struct Interpreter<'a> {
     /// Paths consumed as serialized YAML by `fromYaml`; document-scope
     /// helper conditions import this narrow input contract without importing
     /// unrelated helper-body output transformations.
-    pub(super) parsed_yaml_input_paths: BTreeSet<String>,
+    pub(super) parsed_yaml_input_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// Paths whose helper output was serialized with `toYaml`; callers use
     /// this to recognize a matching `fromYaml` as a structural round trip.
-    pub(super) yaml_serialized_paths: BTreeSet<String>,
+    pub(super) yaml_serialized_paths: BTreeSet<helm_schema_core::ValuesPath>,
     pub(super) observed_facts: ObservedFacts,
     /// Captures that hold only where this source's rendered TEXT is consumed
     /// as YAML. A helper body renders at its caller's position, so its plain
@@ -715,7 +715,7 @@ pub(super) struct Interpreter<'a> {
     /// Paths whose text the CURRENT scalar run renders through `tpl`. Reset
     /// per run: the completed-token pass reads it to tell an identity-carrying
     /// taint from a genuinely transformed one.
-    pub(super) run_templated_text_paths: BTreeSet<String>,
+    pub(super) run_templated_text_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// Whether the walk is inside a mapping-entry or sequence-item VALUE
     /// slot. Document-level content is not a slot: it renders whole manifests,
     /// where a `: ` is structure rather than a broken plain token.

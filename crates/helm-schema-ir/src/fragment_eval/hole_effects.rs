@@ -511,10 +511,10 @@ impl Interpreter<'_> {
         self.locals.append_chart_value_defaults(&mut chart_defaults);
 
         self.parsed_yaml_input_paths
-            .extend(encoded_paths(&effects.parsed_yaml_input_paths));
+            .extend(effects.parsed_yaml_input_paths.iter().cloned());
         if !matches!(demotion, RenderedDemotion::Serialized) {
             self.yaml_serialized_paths
-                .extend(encoded_paths(&effects.yaml_serialized_paths));
+                .extend(effects.yaml_serialized_paths.iter().cloned());
         }
         self.observed_facts
             .shape_erased_paths
