@@ -506,8 +506,8 @@ impl Interpreter<'_> {
         );
         self.absorb_scoped_observed_facts(&effects.observed_facts);
         self.chart_defaults_observed
-            .extend(encoded_paths(&effects.chart_default_paths));
-        let mut chart_defaults = encoded_paths(&effects.chart_default_paths).collect();
+            .extend(effects.chart_default_paths.iter().cloned());
+        let mut chart_defaults = effects.chart_default_paths.clone();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
 
         self.parsed_yaml_input_paths
@@ -655,7 +655,7 @@ impl Interpreter<'_> {
                 continue;
             }
             let mut extra = Vec::new();
-            if defaulted.contains(path) {
+            if defaulted.contains(&helm_schema_core::ValuesPath::parse(path)) {
                 extra.push(Guard::Default {
                     path: helm_schema_core::ValuesPath::parse(path),
                 });

@@ -377,17 +377,9 @@ impl Interpreter<'_> {
             &self.root_bindings,
             self.current_value_dot().as_ref(),
         );
-        self.chart_defaults_observed.extend(
-            effects
-                .chart_default_paths
-                .iter()
-                .map(helm_schema_core::ValuesPath::encode),
-        );
-        let mut chart_defaults = effects
-            .chart_default_paths
-            .into_iter()
-            .map(|path| path.encode())
-            .collect();
+        self.chart_defaults_observed
+            .extend(effects.chart_default_paths.iter().cloned());
+        let mut chart_defaults = effects.chart_default_paths;
         self.locals.append_chart_value_defaults(&mut chart_defaults);
         true
     }

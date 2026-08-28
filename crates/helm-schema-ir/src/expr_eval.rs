@@ -512,10 +512,7 @@ pub(crate) fn bindings_for_helper_arg_with(
         let mut result = eval_binding(expr);
         let mut output_meta = result.effects.local_output_meta.clone();
         for path in result.effects.default_paths_with_local() {
-            output_meta
-                .entry(helm_schema_core::ValuesPath::parse(&path))
-                .or_default()
-                .defaulted = true;
+            output_meta.entry(path).or_default().defaulted = true;
         }
         for path in &result.effects.yaml_serialized_paths {
             output_meta.entry(path.clone()).or_default().yaml_serialized = true;
@@ -611,12 +608,16 @@ fn local_value_result(
     }
     result.effects.local_source_paths = source_paths;
     if let Some(default_paths) = env.local_default_paths.get(var) {
-        result.effects.local_default_paths.extend(
+        result
+            .effects
+            .local_default_paths
+            .extend(default_paths.clone());
+        result.effects.add_default_paths(
             default_paths
                 .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path)),
+                .map(helm_schema_core::ValuesPath::encode)
+                .collect(),
         );
-        result.effects.add_default_paths(default_paths.clone());
     }
     if let Some(meta_by_path) = env.local_output_meta.get(var) {
         match selected_paths {

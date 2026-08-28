@@ -727,7 +727,7 @@ fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
         locals: HashMap::from([("selected".to_string(), values_path!("value"))]),
         local_default_paths: HashMap::from([(
             "selected".to_string(),
-            BTreeSet::from(["value".to_string()]),
+            BTreeSet::from([ValuesPath::parse("value")]),
         )]),
         ..EvalEnv::default()
     };

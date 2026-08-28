@@ -31,7 +31,7 @@ pub(crate) struct EvalEnv {
     /// is nil-safe for its own hop, while a range member variable (set
     /// straight from `MapIndex`) keeps the abort.
     pub(crate) pipeline_bound_locals: std::collections::HashSet<String>,
-    pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
+    pub(crate) local_default_paths: HashMap<String, BTreeSet<helm_schema_core::ValuesPath>>,
     pub(crate) local_output_meta:
         HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     /// Structural conditions under which a local is truthy, as the fragment

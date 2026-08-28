@@ -22,11 +22,7 @@ impl ValuePathContext<'_> {
             .into_iter()
             .map(|path| helm_schema_core::ValuesPath::parse(&path))
             .collect::<BTreeSet<_>>();
-        let defaults = effects
-            .default_paths_with_local()
-            .into_iter()
-            .map(|path| helm_schema_core::ValuesPath::parse(&path))
-            .collect::<BTreeSet<_>>();
+        let defaults = effects.default_paths_with_local();
         let mut observed_facts = ObservedFacts::default();
         if let Some(type_hints) = effects.observed_facts.type_hints.get(&HintGrade::DECLARED) {
             observed_facts

@@ -748,7 +748,7 @@ pub(super) struct Interpreter<'a> {
     /// branch-intersected "definitely ran in source order" view for render
     /// sites; helper summaries export this accumulator instead (a summary's
     /// defaults are declarations for the caller, like they always were).
-    pub(super) chart_defaults_observed: BTreeSet<String>,
+    pub(super) chart_defaults_observed: BTreeSet<helm_schema_core::ValuesPath>,
     /// The site facts of the hole or control region currently being
     /// evaluated; reads recorded during that evaluation carry them.
     pub(super) current_site: Option<Rc<SiteFacts>>,

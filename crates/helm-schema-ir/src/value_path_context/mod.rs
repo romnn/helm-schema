@@ -58,7 +58,7 @@ pub(crate) struct ValuePathContext<'a> {
     pub(crate) pipeline_bound_bindings: std::collections::HashSet<String>,
     pub(crate) range_domains: &'a HashMap<String, Vec<String>>,
     pub(crate) get_bindings: &'a HashMap<String, GetBinding>,
-    pub(crate) template_default_paths: &'a HashMap<String, BTreeSet<String>>,
+    pub(crate) template_default_paths: &'a HashMap<String, BTreeSet<ValuesPath>>,
     pub(crate) template_output_meta: &'a HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>>,
     pub(crate) template_truthy_reductions: &'a HashMap<String, Predicate>,
     pub(crate) template_truthiness_abstentions: &'a BTreeSet<String>,

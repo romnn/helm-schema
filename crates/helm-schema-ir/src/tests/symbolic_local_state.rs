@@ -19,7 +19,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     );
     state
         .chart_value_defaults
-        .insert("serviceAccount.name".to_string());
+        .insert(ValuesPath::parse("serviceAccount.name"));
     let snapshot = state.clone();
     state.enter_local_scope();
 
@@ -31,7 +31,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state.insert_range_domain("key".to_string(), vec!["a".to_string()]);
     state
         .chart_value_defaults
-        .insert("serviceAccount.labels".to_string());
+        .insert(ValuesPath::parse("serviceAccount.labels"));
     state.exit_local_scope();
 
     state = snapshot;
@@ -43,7 +43,9 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     assert!(state.range_domains.is_empty());
     sim_assert_eq!(
         have: state.chart_value_defaults,
-        want: ["serviceAccount.name".to_string()].into_iter().collect()
+        want: [ValuesPath::parse("serviceAccount.name")]
+            .into_iter()
+            .collect()
     );
 }
 
@@ -198,7 +200,7 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
     );
     state.default_paths.insert(
         "name".to_string(),
-        BTreeSet::from(["outer.default".to_string()]),
+        BTreeSet::from([ValuesPath::parse("outer.default")]),
     );
 
     state.enter_local_scope();
@@ -209,13 +211,13 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
     );
     state.default_paths.insert(
         "name".to_string(),
-        BTreeSet::from(["inner.default".to_string()]),
+        BTreeSet::from([ValuesPath::parse("inner.default")]),
     );
     state.exit_local_scope();
 
     sim_assert_eq!(
         have: state.default_paths.get("name"),
-        want: Some(&BTreeSet::from(["outer.default".to_string()]))
+        want: Some(&BTreeSet::from([ValuesPath::parse("outer.default")]))
     );
 }
 
@@ -229,7 +231,7 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
     );
     state.default_paths.insert(
         "name".to_string(),
-        BTreeSet::from(["outer.default".to_string()]),
+        BTreeSet::from([ValuesPath::parse("outer.default")]),
     );
 
     state.enter_local_scope();
@@ -240,13 +242,13 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
     );
     state.default_paths.insert(
         "name".to_string(),
-        BTreeSet::from(["assigned.default".to_string()]),
+        BTreeSet::from([ValuesPath::parse("assigned.default")]),
     );
     state.exit_local_scope();
 
     sim_assert_eq!(
         have: state.default_paths.get("name"),
-        want: Some(&BTreeSet::from(["assigned.default".to_string()]))
+        want: Some(&BTreeSet::from([ValuesPath::parse("assigned.default")]))
     );
 }
 
@@ -459,11 +461,13 @@ fn branch_join_intersects_chart_value_defaults() {
     let mut entry = SymbolicLocalState::default();
     entry
         .chart_value_defaults
-        .insert("already.defaulted".to_string());
+        .insert(ValuesPath::parse("already.defaulted"));
     let entry_snapshot = entry.clone();
 
     let mut first = entry.clone();
-    first.chart_value_defaults.insert("branch.only".to_string());
+    first
+        .chart_value_defaults
+        .insert(ValuesPath::parse("branch.only"));
     let second = entry.clone();
 
     let mut joined = entry;
@@ -471,7 +475,9 @@ fn branch_join_intersects_chart_value_defaults() {
 
     sim_assert_eq!(
         have: joined.chart_value_defaults,
-        want: ["already.defaulted".to_string()].into_iter().collect()
+        want: [ValuesPath::parse("already.defaulted")]
+            .into_iter()
+            .collect()
     );
 }
 

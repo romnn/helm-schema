@@ -18,7 +18,7 @@ pub(crate) struct SymbolicLocalState {
     pub(crate) range_domains: HashMap<String, Vec<String>>,
     pub(crate) get_bindings: HashMap<String, GetBinding>,
     pub(crate) fragment_values: HashMap<String, AbstractValue>,
-    pub(crate) default_paths: HashMap<String, BTreeSet<String>>,
+    pub(crate) default_paths: HashMap<String, BTreeSet<helm_schema_core::ValuesPath>>,
     pub(crate) output_meta:
         HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     /// Runtime scalar values retained independently of fragment provenance.
@@ -43,7 +43,7 @@ pub(crate) struct SymbolicLocalState {
     pub(crate) truthiness_clears: BTreeSet<String>,
     /// Values paths defaulted by structural `set X "K" (X.K | default V)`
     /// helper mutations that have already run in source order.
-    pub(crate) chart_value_defaults: BTreeSet<String>,
+    pub(crate) chart_value_defaults: BTreeSet<helm_schema_core::ValuesPath>,
     /// Locals bound to a type descriptor. Each described path retains the
     /// predicates under which that path supplied the selected value.
     pub(crate) typeof_sources:
@@ -95,7 +95,7 @@ struct VariableLocalState {
     get_binding: Option<GetBinding>,
     fragment_value: Option<AbstractValue>,
     traversal_advanced: bool,
-    default_paths: Option<BTreeSet<String>>,
+    default_paths: Option<BTreeSet<helm_schema_core::ValuesPath>>,
     output_meta: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     scalar_dispatch: Option<ScalarValueDispatch>,
     truthy_reduction: Option<Predicate>,
@@ -261,11 +261,17 @@ impl SymbolicLocalState {
         self.range_domains.insert(variable, literals);
     }
 
-    pub(crate) fn set_chart_value_defaults(&mut self, defaults: BTreeSet<String>) {
+    pub(crate) fn set_chart_value_defaults(
+        &mut self,
+        defaults: BTreeSet<helm_schema_core::ValuesPath>,
+    ) {
         self.chart_value_defaults = defaults;
     }
 
-    pub(crate) fn append_chart_value_defaults(&mut self, defaults: &mut BTreeSet<String>) {
+    pub(crate) fn append_chart_value_defaults(
+        &mut self,
+        defaults: &mut BTreeSet<helm_schema_core::ValuesPath>,
+    ) {
         self.chart_value_defaults.append(defaults);
     }
 

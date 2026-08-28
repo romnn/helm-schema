@@ -72,11 +72,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
         let helper_observed_shape_erased_paths =
             std::mem::take(&mut observed_facts.shape_erased_paths);
         let mut effects = Effects {
-            chart_default_paths: summary
-                .chart_defaults
-                .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path))
-                .collect(),
+            chart_default_paths: summary.chart_defaults.clone(),
             root_set_mutations: summary.root_set_mutations.clone(),
             root_set_predicates: summary.root_set_predicates.clone(),
             root_set_value_dispatches: summary.root_set_value_dispatches.clone(),

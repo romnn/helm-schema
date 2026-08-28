@@ -3718,7 +3718,7 @@
 
 ## B4a.8 — migrate provider-use source paths
 
-- Status: landed; commit pending.
+- Status: landed in `debd89e8` (`refactor(ir): type helper metadata paths`).
 - Contract: representation-only migration of the public phase-crossing
   `ProviderSchemaUse.value_path` carrier to segmented `ValuesPath`. Provider resource identity,
   YAML slot path, transforms, omission guards, merge layering, lookup policy, and diagnostics
@@ -4496,3 +4496,91 @@
 
 - Measured production LOC delta: +27 (64,301 to 64,328), from explicit typed test/boundary
   construction and direct carrier-aware lowering signatures.
+
+## B4a.16 — migrate default-source path state
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of IR local and chart-default path sets to segmented
+  `ValuesPath`, including evaluation environments, symbolic local state and branch joins,
+  `ValuePathContext`, fragment summaries, and lowering. Local/helper names, literal default values,
+  and static template programs remain separate string domains.
+- Acceptance baseline: `debd89e8` (B4a.15).
+- Baseline production LOC: 64,328 Rust lines from `task tokei:core` on `debd89e8`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Defaultedness keeps identical local scope, branch-join intersection, helper propagation,
+    selection, and lowering behavior with legacy encoded ordering preserved.
+  - All affected carriers are crate-private, so this round changes no public API or wire format.
+    No coercion trait, cross-type comparison, or cached encoded twin is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - Local default-path maps and chart-default sets now use `ValuesPath` across evaluation
+    environments, symbolic state/snapshots/branch joins, helper contexts, fragment summaries, and
+    lowering. Default-path collection now returns the typed set directly.
+  - Defaultedness no longer round-trips through encoded strings between expression effects,
+    assignment binding, helper-summary propagation, or splice construction. Static template
+    program text and literal default values remain strings in their distinct domains.
+  - Schema and symbolic-IR dumps are byte-identical to `debd89e8`; the full-depth battery checks
+    121,055 probes across 60 charts with zero flips, zero mandatory base/third-level drops, and
+    28,868 unchanged disclosed reductions.
+- Deviations:
+  - The initial compiler-only carrier change was rejected with 15 production mismatches. After
+    production compiled, the first all-target pass exposed 13 test construction mismatches. Every
+    boundary was migrated explicitly; no archive or dump was produced from either state.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Expression/evaluation defaults | Same fallback and selected-path facts | IR/unit suite. |
+| Symbolic scopes and joins | Same per-local union and chart intersection | Symbolic-state suite. |
+| Helper contexts and summaries | Same propagated defaultedness | Helper/fragment suites. |
+| Lowering and emission | Same splice flags and schema bytes | Dumps and prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds in 4 minutes 26 seconds and 393/393 IR
+  tests pass. Whole-workspace lint passes warning-free in 5 minutes 40 seconds.
+- Immutable build: B4a.16 `final1`; exit 0, 87 binaries and 125 files after an 8-minute-1-second
+  build and 1.58-second archive write.
+- Clean schema dump: exit 0, 62 tests pass in 188.237 seconds and 84 artifacts are byte-identical
+  to B4a.15.
+- Clean IR dump: exit 0, one test passes in 4.068 seconds and 18 artifacts are byte-identical to
+  B4a.15.
+- Full-depth proof: baseline `debd89e8`, Helm adjudication enabled; exit 0 in 73.926 seconds, 60
+  charts, 121,055 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+  and 28,868 disclosed reductions.
+- Public/wire decision: none; every migrated carrier is crate-private and serialized bytes remain
+  unchanged.
+
+### Self-adversarial pass
+
+- Whole-tree searches find local and chart-default state typed across the named owners. Helper and
+  local names, literal values, and static program paths remain strings in distinct domains.
+- No coercion trait, cross-type equality, display implementation, cached encoded twin, or public/
+  wire change was introduced.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0 in 6 minutes 24 seconds.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 1,312.24
+  seconds, followed by the ast-grep policy checks.
+- `cargo nextest run --workspace`: exit 0; 1,308/1,308 pass in 188.712 seconds after the
+  macOS final-tree build.
+- `task test:integration`: exit 0; 558/558 pass, 24 skipped, in 1,534.263 seconds.
+- `task test:all`: exit 0; 1,870/1,870 pass, 24 skipped, in 1,615.370 seconds, including the
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 23.25 seconds.
+- downstream luup2 `check:local` with the documented macOS shims and explicit installed binary:
+  exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,322 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: -6 (64,328 to 64,322), from eliminating repeated default-path
+  encoding and parsing.

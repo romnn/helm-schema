@@ -320,7 +320,9 @@ fn join_literal_union(domains: Vec<&Vec<String>>) -> Vec<String> {
     literals.into_iter().cloned().collect()
 }
 
-fn join_path_union(sets: Vec<&BTreeSet<String>>) -> BTreeSet<String> {
+fn join_path_union(
+    sets: Vec<&BTreeSet<helm_schema_core::ValuesPath>>,
+) -> BTreeSet<helm_schema_core::ValuesPath> {
     sets.into_iter().flatten().cloned().collect()
 }
 
@@ -355,7 +357,9 @@ fn join_predicate_union(predicates: Vec<&Predicate>) -> Predicate {
     }
 }
 
-fn intersect_chart_defaults(outcomes: &[SymbolicLocalState]) -> BTreeSet<String> {
+fn intersect_chart_defaults(
+    outcomes: &[SymbolicLocalState],
+) -> BTreeSet<helm_schema_core::ValuesPath> {
     let Some((first, rest)) = outcomes.split_first() else {
         return BTreeSet::new();
     };

@@ -69,7 +69,7 @@ pub(crate) struct FragmentSummary {
     /// Object-producing value mutations observed in source order.
     pub(crate) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Chart-level `set … default` normalizations the body applies.
-    pub(crate) chart_defaults: BTreeSet<String>,
+    pub(crate) chart_defaults: BTreeSet<helm_schema_core::ValuesPath>,
     /// Root-context fields replaced while the helper executes.
     pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
     /// Truth predicates for root-context fields replaced by the helper.

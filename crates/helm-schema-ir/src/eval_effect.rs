@@ -676,11 +676,11 @@ impl Effects {
         paths
     }
 
-    pub(crate) fn default_paths_with_local(&self) -> BTreeSet<String> {
+    pub(crate) fn default_paths_with_local(&self) -> BTreeSet<ValuesPath> {
         self.defaults
             .iter()
             .chain(&self.local_default_paths)
-            .map(ValuesPath::encode)
+            .cloned()
             .collect()
     }
 

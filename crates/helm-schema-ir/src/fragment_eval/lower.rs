@@ -85,7 +85,7 @@ pub(crate) fn over_cap_scalar_taint(
 /// chart-level `set … default` normalization, and the per-path binding-time
 /// helper meta of locals the expression read.
 pub(crate) struct LowerScope<'a> {
-    pub(crate) defaulted_paths: &'a BTreeSet<String>,
+    pub(crate) defaulted_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) encoded_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) derived_text_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) merge_operand_paths: &'a BTreeSet<ValuesPath>,
@@ -96,7 +96,7 @@ pub(crate) struct LowerScope<'a> {
     pub(crate) nil_omitting_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) plain_slot_string_format_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) json_serialized_paths: &'a BTreeSet<ValuesPath>,
-    pub(crate) chart_value_defaults: &'a BTreeSet<String>,
+    pub(crate) chart_value_defaults: &'a BTreeSet<ValuesPath>,
     pub(crate) local_source_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) local_output_meta: &'a std::collections::BTreeMap<ValuesPath, HelperOutputMeta>,
 }
@@ -108,10 +108,9 @@ impl LowerScope<'_> {
         kind: ValueKind,
         helper_meta: Option<&HelperOutputMeta>,
     ) -> Splice {
-        let encoded_path = path.encode();
         let defaulted = helper_meta.is_some_and(|meta| meta.defaulted)
-            || self.defaulted_paths.contains(&encoded_path)
-            || self.chart_value_defaults.contains(&encoded_path);
+            || self.defaulted_paths.contains(path)
+            || self.chart_value_defaults.contains(path);
         Splice {
             values_path: path.clone(),
             kind,
