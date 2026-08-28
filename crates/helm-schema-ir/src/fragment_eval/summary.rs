@@ -371,7 +371,7 @@ fn scalar_render_contribution(parts: &[StringPart]) -> Option<Vec<ScalarRenderPa
                     return None;
                 }
                 rendered.push(ScalarRenderPart::Identity {
-                    path: splice.values_path.encode(),
+                    path: splice.values_path.clone(),
                     stringified: true,
                     lexical_escapes: splice.meta.lexical_escapes.clone(),
                 });

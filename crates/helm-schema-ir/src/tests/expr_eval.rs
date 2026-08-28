@@ -187,7 +187,7 @@ fn grouped_selector_preserves_scalar_identity() {
     sim_assert_eq!(
         have: result.scalar_dispatch,
         want: Some(ScalarValueDispatch::identity(
-            "feature.mode"
+            helm_schema_core::ValuesPath::parse("feature.mode")
         )),
     );
 }

@@ -1087,9 +1087,9 @@ impl EvalResult {
 
     pub(crate) fn from_value(value: AbstractValue) -> Self {
         let scalar_dispatch = match &value {
-            AbstractValue::ValuesPath(path) => Some(ScalarValueDispatch::identity(path.encode())),
+            AbstractValue::ValuesPath(path) => Some(ScalarValueDispatch::identity(path.clone())),
             AbstractValue::JsonDecodedPath(path) => {
-                Some(ScalarValueDispatch::identity(path.encode()))
+                Some(ScalarValueDispatch::identity(path.clone()))
             }
             AbstractValue::StringSet(values) if values.len() == 1 => values.first().map(|value| {
                 ScalarValueDispatch::constant(helm_schema_core::GuardValue::string(value))

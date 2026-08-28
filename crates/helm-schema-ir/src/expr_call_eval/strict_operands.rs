@@ -675,7 +675,7 @@ pub(super) fn record_comparable_kind_result(
             let ScalarValue::Identity(path) = value else {
                 continue;
             };
-            for mut conjunction in strict_operand_selection_conjunctions(operand, path) {
+            for mut conjunction in strict_operand_selection_conjunctions(operand, &path.encode()) {
                 if condition != &Predicate::True {
                     conjunction.push(condition.clone());
                 }
@@ -683,7 +683,7 @@ pub(super) fn record_comparable_kind_result(
                     conjunction,
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::ComparableKind {
-                        path: helm_schema_core::ValuesPath::parse(path),
+                        path: path.clone(),
                         schema_type: schema_type.to_string(),
                     },
                 };

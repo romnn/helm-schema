@@ -180,7 +180,8 @@ pub(super) fn conjoin_formatter_operand_selection(
         return;
     };
     for path in paths {
-        let Some(conditions) = dispatch.identity_selection_conditions(path) else {
+        let path = ValuesPath::parse(path);
+        let Some(conditions) = dispatch.identity_selection_conditions(&path) else {
             continue;
         };
         if conditions
@@ -189,10 +190,7 @@ pub(super) fn conjoin_formatter_operand_selection(
         {
             continue;
         }
-        let meta = effects
-            .local_output_meta
-            .entry(ValuesPath::parse(path))
-            .or_default();
+        let meta = effects.local_output_meta.entry(path).or_default();
         let existing = if meta.predicates.is_empty() {
             BTreeSet::from([BTreeSet::new()])
         } else {

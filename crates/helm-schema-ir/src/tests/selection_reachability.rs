@@ -38,7 +38,7 @@ fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
     );
 
     let rendered = SelectionReachability::from((
-        &ScalarValueDispatch::identity("alpha"),
+        &ScalarValueDispatch::identity(helm_schema_core::ValuesPath::parse("alpha")),
         SelectionPolarity::Truthy,
     ));
     sim_assert_eq!(
@@ -67,7 +67,7 @@ fn condition_reachability_distinguishes_raw_identities_from_rendered_scalars() {
     let dispatch = ScalarValueDispatch {
         arms: vec![(
             Predicate::True,
-            ScalarValue::PrintfStringIdentity("alpha".to_string()),
+            ScalarValue::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
         )],
         complete: true,
     };
@@ -278,7 +278,7 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
     let dispatch = ScalarValueDispatch {
         arms: vec![(
             Predicate::True,
-            ScalarValue::PrintfStringIdentity("alpha".to_string()),
+            ScalarValue::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
         )],
         complete: true,
     };

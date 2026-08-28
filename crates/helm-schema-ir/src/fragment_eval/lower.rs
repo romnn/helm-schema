@@ -753,8 +753,7 @@ fn lower_rendered_parts(
                 stringified,
                 lexical_escapes,
             } => {
-                let path = ValuesPath::parse(path);
-                let mut splice = scope.splice(&path, kind, scope.local_output_meta.get(&path));
+                let mut splice = scope.splice(path, kind, scope.local_output_meta.get(path));
                 splice.meta.input_identity = true;
                 splice.meta.stringified |= *stringified;
                 splice

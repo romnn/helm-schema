@@ -4191,7 +4191,7 @@
 
 ## B4a.13 — migrate abstract-value path identities
 
-- Status: landed; commit pending.
+- Status: landed in `4c9e321c` (`refactor(ir): type abstract value paths`).
 - Contract: representation-only migration of the identity-bearing `AbstractValue` variants
   `JsonDecodedPath`, `RangeKey`, `KeysList`, and `OutputPath` to segmented `ValuesPath`, including
   selection, descent, join, helper-output metadata, range/member recovery, serialization preimage,
@@ -4290,7 +4290,7 @@
 
 ## B4a.14 — migrate abstract-value influence paths
 
-- Status: landed; commit pending.
+- Status: landed in `a65493bb` (`refactor(ir): type abstract influence paths`).
 - Contract: representation-only migration of `AbstractValue` influence-path sets
   (`DerivedBoolean`, `SplitList`, `SplitSegment`, and `Widened`) and its identity/influence path
   accessors to segmented `ValuesPath`. Literal string sets, dictionary keys, separators, helper
@@ -4393,7 +4393,7 @@
 
 ## B4a.15 — migrate helper-output metadata path indexes
 
-- Status: landed; commit pending.
+- Status: landed in `debd89e8` (`refactor(ir): type helper metadata paths`).
 - Contract: representation-only migration of every IR per-value-path `HelperOutputMeta` map key and
   `suppress_predicate_paths` set to segmented `ValuesPath`, including effects, evaluation
   environments, abstract-value metadata projections, symbolic local state, fragment summaries,
@@ -4499,7 +4499,7 @@
 
 ## B4a.16 — migrate default-source path state
 
-- Status: landed; commit pending.
+- Status: landed in `378efab8` (`refactor(ir): type default source paths`).
 - Contract: representation-only migration of IR local and chart-default path sets to segmented
   `ValuesPath`, including evaluation environments, symbolic local state and branch joins,
   `ValuePathContext`, fragment summaries, and lowering. Local/helper names, literal default values,
@@ -4584,3 +4584,95 @@
 
 - Measured production LOC delta: -6 (64,328 to 64,322), from eliminating repeated default-path
   encoding and parsing.
+
+## B4a.17 — migrate scalar-dispatch identity paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of exact scalar dispatch identities and rendered scalar
+  identity parts from encoded `String` paths to segmented `ValuesPath`. Literal scalar text,
+  formatter tokens, and lexical escapes remain their existing domains.
+- Acceptance baseline: `378efab8` (B4a.16).
+- Baseline production LOC: 64,322 Rust lines from `task tokei:core` on `378efab8`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Equality dispatch, formatter selection, serialized-route qualification, strict operands, and
+    helper-render lowering retain the same identities and conditions in legacy encoded order.
+  - The scalar domain is crate-private, so this round changes no public API or wire format. No
+    string coercion trait, cross-type comparison, or cached encoded twin is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - `ScalarValue::{Identity, PrintfStringIdentity}` and `ScalarRenderPart::Identity.path` now carry
+    `ValuesPath`; construction from abstract values, helper-render summaries, and test fixtures no
+    longer encode the path before storing it.
+  - Equality, truthiness, pattern, lexical-escape, strict-comparison, formatter-selection, and
+    fragment-lowering consumers use the segmented path directly. Encoding remains only at two
+    still-string strict/serialization helper boundaries scheduled for later B4a rounds.
+  - Schema and symbolic-IR dumps are recursively byte-identical to `378efab8`. The full-depth
+    battery checks 121,055 probes across 60 charts with zero flips, zero mandatory base/third-level
+    drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first immutable-archive command was rejected before compilation because its absolute
+    step-local `TMPDIR` had not been created; clang reported `unable to make temporary file: No
+    such file or directory`. No archive or dump was produced. After creating that directory, the
+    same final tree built the authoritative `final1` archive.
+  - A pre-archive `cargo fmt --check` identified two formatting-only line wraps after the semantic
+    preflight. `cargo fmt` applied them before the immutable archive and every final gate.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Abstract-value scalar dispatch | Same raw identity and branch arms | Eval/IR suites. |
+| Helper-render summaries | Same rendered identity parts and escapes | Fragment/IR dump. |
+| Equality, truthiness, and patterns | Same typed guards and preimages | Scalar/condition suites. |
+| Formatter and strict consumers | Same selection conditions and captures | Chart re-audits/prober. |
+| Fragment lowering | Same splice metadata and schema bytes | Schema dump/full corpus. |
+
+### Review dossier
+
+- Focused proof: all-target IR compilation succeeds in 42.07 seconds; 393/393 IR tests pass after
+  the host's 78-second build. The first whole-workspace lint preflight also passes warning-free.
+- Immutable build: B4a.17 `final1`; exit 0, 87 binaries and 125 files after a 9-minute-24-second
+  build and 1.49-second archive write.
+- Clean schema dump: exit 0, 62/62 pass in 186.666 seconds; all 84 artifacts are recursively
+  byte-identical to B4a.16.
+- Clean IR dump: exit 0, one test passes in 3.266 seconds; all 18 artifacts are recursively
+  byte-identical to B4a.16.
+- Full-depth proof: baseline `378efab8`, Helm adjudication enabled; exit 0 in 69.841 seconds, 60
+  charts, 121,055 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+  and 28,868 disclosed reductions.
+- Public/wire decision: none. The scalar domain is crate-private and every serialized artifact is
+  byte-identical.
+
+### Self-adversarial pass
+
+- Whole-tree variant searches find every scalar identity payload typed as `ValuesPath`; the
+  formatter, condition, strict-operand, summary, and lowering consumers no longer parse those
+  payloads. Literal text, format strings, and lexical tokens remain separate string domains.
+- No coercion trait, display implementation, cross-type comparison, cached encoding, public API,
+  or wire-format change was introduced.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0 in 6 minutes 07 seconds.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 1,364.40
+  seconds, followed by the ast-grep policy checks.
+- `cargo nextest run --workspace`: exit 0; 1,308/1,308 pass in 185.991 seconds after the native
+  final-tree build.
+- `task test:integration`: exit 0; 558/558 pass, 24 skipped, in 1,545.567 seconds.
+- `task test:all`: exit 0; 1,870/1,870 pass, 24 skipped, in 1,633.825 seconds, including the
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 27.77 seconds.
+- downstream luup2 `check:local` with the documented macOS shims and explicit installed binary:
+  exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,321 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: -1 (64,322 to 64,321); the typed payload removes repeated parsing
+  while explicit encoding at two still-string consumer boundaries keeps this round attributable.

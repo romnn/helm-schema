@@ -2164,7 +2164,7 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
     let present = |path: &str| Predicate::Not(Box::new(invalid(path))).normalize_boolean();
     let rendered_identity = |path: &str| {
         ScalarValue::Rendered(vec![ScalarRenderPart::Identity {
-            path: path.to_string(),
+            path: helm_schema_core::ValuesPath::parse(path),
             stringified: true,
             lexical_escapes: BTreeSet::new(),
         }])
