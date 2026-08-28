@@ -189,12 +189,12 @@ impl ValuePathContext<'_> {
 fn range_input_identity(value: &AbstractValue, effects: &Effects) -> Option<RangeSubjectIdentity> {
     let (path, json_decoded) = match value {
         AbstractValue::ValuesPath(path) => (path.clone(), false),
-        AbstractValue::JsonDecodedPath(path) => (helm_schema_core::ValuesPath::parse(path), true),
+        AbstractValue::JsonDecodedPath(path) => (path.clone(), true),
         AbstractValue::OutputPath(path, meta) => {
             if !meta.json_decoded && !output_meta_preserves_range_shape(meta) {
                 return None;
             }
-            (helm_schema_core::ValuesPath::parse(path), meta.json_decoded)
+            (path.clone(), meta.json_decoded)
         }
         _ => return None,
     };
@@ -211,9 +211,11 @@ fn range_member_value(value: &AbstractValue, effects: &Effects) -> Option<Abstra
             path.push("*");
             Some(AbstractValue::ValuesPath(path))
         }
-        AbstractValue::JsonDecodedPath(path) => Some(AbstractValue::JsonDecodedPath(
-            helm_schema_core::append_value_path(path, "*"),
-        )),
+        AbstractValue::JsonDecodedPath(path) => {
+            let mut path = path.clone();
+            path.push("*");
+            Some(AbstractValue::JsonDecodedPath(path))
+        }
         AbstractValue::OutputPath(path, meta)
             if meta.json_decoded
                 || meta.nil_scrubbed
@@ -224,10 +226,9 @@ fn range_member_value(value: &AbstractValue, effects: &Effects) -> Option<Abstra
             // Defaulting the collection supplies an empty iterable, not
             // defaults for fields of members that are actually present.
             meta.defaulted = false;
-            Some(AbstractValue::OutputPath(
-                helm_schema_core::append_value_path(path, "*"),
-                meta,
-            ))
+            let mut path = path.clone();
+            path.push("*");
+            Some(AbstractValue::OutputPath(path, meta))
         }
         AbstractValue::KeysList(path) => Some(AbstractValue::RangeKey(path.clone())),
         AbstractValue::List(items) => AbstractValue::choice(items.clone()),
@@ -277,16 +278,17 @@ fn range_layer_member_value(value: &AbstractValue, effects: &Effects) -> Option<
             path.push("*");
             Some(AbstractValue::ValuesPath(path))
         }
-        AbstractValue::JsonDecodedPath(path) => Some(AbstractValue::JsonDecodedPath(
-            helm_schema_core::append_value_path(path, "*"),
-        )),
+        AbstractValue::JsonDecodedPath(path) => {
+            let mut path = path.clone();
+            path.push("*");
+            Some(AbstractValue::JsonDecodedPath(path))
+        }
         AbstractValue::OutputPath(path, meta) => {
             let mut meta = meta.clone();
             meta.defaulted = false;
-            Some(AbstractValue::OutputPath(
-                helm_schema_core::append_value_path(path, "*"),
-                meta,
-            ))
+            let mut path = path.clone();
+            path.push("*");
+            Some(AbstractValue::OutputPath(path, meta))
         }
         AbstractValue::Choice(choices) => AbstractValue::choice(
             choices
@@ -325,18 +327,15 @@ fn single_member_collection_identity(value: &AbstractValue) -> Option<RangeSubje
                 }
             }
             AbstractValue::JsonDecodedPath(path) => {
-                if let Some(parent) = path.strip_suffix(".*") {
-                    identities.insert((helm_schema_core::ValuesPath::parse(parent), true));
+                if let Some(parent) = path.item_parent() {
+                    identities.insert((parent, true));
                 } else {
                     *has_other_path = true;
                 }
             }
             AbstractValue::OutputPath(path, meta) => {
-                if let Some(parent) = path.strip_suffix(".*") {
-                    identities.insert((
-                        helm_schema_core::ValuesPath::parse(parent),
-                        meta.json_decoded,
-                    ));
+                if let Some(parent) = path.item_parent() {
+                    identities.insert((parent, meta.json_decoded));
                 } else {
                     *has_other_path = true;
                 }

@@ -38,11 +38,10 @@ pub(super) fn complete_string_set(value: Option<&AbstractValue>) -> Option<BTree
 pub(super) fn identity_value_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
     fn collect(value: &AbstractValue, paths: &mut BTreeSet<String>) {
         match value {
-            AbstractValue::ValuesPath(path) => {
+            AbstractValue::ValuesPath(path)
+            | AbstractValue::JsonDecodedPath(path)
+            | AbstractValue::OutputPath(path, _) => {
                 paths.insert(path.encode());
-            }
-            AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
-                paths.insert(path.clone());
             }
             AbstractValue::Choice(choices) => {
                 for choice in choices {
@@ -92,11 +91,10 @@ pub(super) fn identity_value_paths(value: Option<&AbstractValue>) -> BTreeSet<St
 pub(super) fn serialization_payload_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
     fn collect(value: &AbstractValue, paths: &mut BTreeSet<String>) {
         match value {
-            AbstractValue::ValuesPath(path) => {
+            AbstractValue::ValuesPath(path)
+            | AbstractValue::JsonDecodedPath(path)
+            | AbstractValue::OutputPath(path, _) => {
                 paths.insert(path.encode());
-            }
-            AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
-                paths.insert(path.clone());
             }
             AbstractValue::Dict(entries) => {
                 for value in entries.values() {
@@ -206,7 +204,7 @@ pub(super) fn escape_wrapped_identity(
                 .cloned()
                 .unwrap_or_default();
             meta.lexical_escapes.insert(escape);
-            Some(AbstractValue::OutputPath(path.encode(), meta))
+            Some(AbstractValue::OutputPath(path.clone(), meta))
         }
         AbstractValue::OutputPath(path, meta) => {
             if meta.shape_erased

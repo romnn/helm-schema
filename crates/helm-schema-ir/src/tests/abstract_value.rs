@@ -202,7 +202,7 @@ fn guard_metadata_preserves_raw_identity_through_member_selection() {
             "workers.celery.enableDefault",
         )]));
     let expected = AbstractValue::OutputPath(
-        "workers.celery.sets.*.securityContexts.pod".to_string(),
+        helm_schema_core::ValuesPath::parse("workers.celery.sets.*.securityContexts.pod"),
         expected_meta,
     );
 
@@ -225,11 +225,17 @@ fn transformed_metadata_cannot_promote_a_guarded_path_to_input_identity() {
         derived_text: true,
         ..HelperOutputMeta::default()
     };
-    let value = AbstractValue::OutputPath("source".to_string(), metadata.clone());
+    let value = AbstractValue::OutputPath(
+        helm_schema_core::ValuesPath::parse("source"),
+        metadata.clone(),
+    );
 
     sim_assert_eq!(
         have: value.apply_to_path(&["member".to_string()]),
-        want: Some(AbstractValue::OutputPath("source".to_string(), metadata))
+        want: Some(AbstractValue::OutputPath(
+            helm_schema_core::ValuesPath::parse("source"),
+            metadata
+        ))
     );
 }
 
@@ -240,20 +246,26 @@ fn omit_metadata_is_consumed_by_member_selection() {
         omitted_keys: BTreeMap::from([("secret".to_string(), Vec::new())]),
         ..HelperOutputMeta::default()
     };
-    let value = AbstractValue::OutputPath("service".to_string(), metadata.clone());
+    let value = AbstractValue::OutputPath(
+        helm_schema_core::ValuesPath::parse("service"),
+        metadata.clone(),
+    );
     let mut selected_metadata = metadata.clone();
     selected_metadata.omitted_keys.clear();
 
     sim_assert_eq!(
         have: value.apply_to_path(&["enabled".to_string()]),
         want: Some(AbstractValue::OutputPath(
-            "service.enabled".to_string(),
+            helm_schema_core::ValuesPath::parse("service.enabled"),
             selected_metadata
         ))
     );
     sim_assert_eq!(
         have: value.apply_to_path(&["secret".to_string()]),
-        want: Some(AbstractValue::OutputPath("service".to_string(), metadata))
+        want: Some(AbstractValue::OutputPath(
+            helm_schema_core::ValuesPath::parse("service"),
+            metadata
+        ))
     );
 }
 

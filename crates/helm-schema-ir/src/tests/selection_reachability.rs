@@ -291,7 +291,7 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
 
     let chain = EvalResult::from_value(AbstractValue::FirstTruthy(vec![
         values_path!("alpha"),
-        AbstractValue::JsonDecodedPath("beta".to_string()),
+        AbstractValue::JsonDecodedPath(helm_schema_core::ValuesPath::parse("beta")),
     ]));
     sim_assert_eq!(
         have: default_primary_selection(&chain).truth_source(),

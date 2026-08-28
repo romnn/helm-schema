@@ -1220,7 +1220,7 @@ impl Interpreter<'_> {
         if let Some((variable, path)) = key_variable.zip(range_binding_path) {
             self.locals
                 .range_member_values
-                .insert(variable.to_string(), AbstractValue::RangeKey(path.encode()));
+                .insert(variable.to_string(), AbstractValue::RangeKey(path));
         }
         self.dot_stack.push(dot);
         (Some(own_condition), extra, None, truth)
@@ -1991,7 +1991,7 @@ fn attach_reassignment_exclusion(
         AbstractValue::ValuesPath(path) => {
             let mut meta = crate::helper_meta::HelperOutputMeta::default();
             meta.capture_exclusions.extend(exclusion.iter().cloned());
-            AbstractValue::OutputPath(path.encode(), meta)
+            AbstractValue::OutputPath(path.clone(), meta)
         }
         AbstractValue::JsonDecodedPath(path) => {
             let mut meta = crate::helper_meta::HelperOutputMeta {

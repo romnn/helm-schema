@@ -201,19 +201,19 @@ fn abstract_value_type_is(
         }
         AbstractValue::OutputPath(path, meta) if meta.is_input_identity() => {
             if matches!(type_name, "int64" | "float64") {
-                values_numeric_type_truth(path, type_name)
+                values_numeric_type_truth(&path.encode(), type_name)
             } else {
                 TruthCondition::exact(Predicate::from(Guard::TypeIs {
-                    path: helm_schema_core::ValuesPath::parse(path),
+                    path: path.clone(),
                     schema_type: schema_type.to_string(),
                 }))
             }
         }
         AbstractValue::JsonDecodedPath(path) => {
-            json_decoded_numeric_type_truth(path, schema_type, type_name)
+            json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name)
         }
         AbstractValue::OutputPath(path, meta) if meta.json_decoded => {
-            json_decoded_numeric_type_truth(path, schema_type, type_name)
+            json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name)
         }
         AbstractValue::Dict(_)
         | AbstractValue::Overlay { .. }

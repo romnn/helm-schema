@@ -171,7 +171,7 @@ fn defaulted_helper_root_descends_to_raw_member_paths() {
     sim_assert_eq!(
         have: selected,
         want: Some(AbstractValue::OutputPath(
-            "dependency.nameOverride".to_string(),
+            helm_schema_core::ValuesPath::parse("dependency.nameOverride"),
             expected_meta,
         )),
     );
@@ -378,7 +378,7 @@ fn get_requires_its_values_backed_host_to_be_an_object() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "context".to_string(),
-        AbstractValue::JsonDecodedPath("contexts.*".to_string()),
+        AbstractValue::JsonDecodedPath(helm_schema_core::ValuesPath::parse("contexts.*")),
     );
     let result = eval_expr(&single_expr(r#"get $context "creds""#), &env);
 
@@ -1775,7 +1775,9 @@ fn json_roundtrip_preserves_input_identity_with_decoded_representation() {
 
     sim_assert_eq!(
         have: result.value,
-        want: Some(AbstractValue::JsonDecodedPath("extraResources".to_string()))
+        want: Some(AbstractValue::JsonDecodedPath(
+            helm_schema_core::ValuesPath::parse("extraResources")
+        ))
     );
 }
 
@@ -1788,7 +1790,9 @@ fn json_roundtrip_preserves_values_root_inside_constructed_container() {
 
     sim_assert_eq!(
         have: result.value,
-        want: Some(AbstractValue::JsonDecodedPath(String::new())),
+        want: Some(AbstractValue::JsonDecodedPath(
+            helm_schema_core::ValuesPath::default()
+        )),
     );
 }
 
@@ -1842,7 +1846,9 @@ fn root_values_replacement_is_exported_and_used_by_later_values_reads() {
 
     sim_assert_eq!(
         have: eval_expr(&single_expr(".Values.extraResources"), &env).value,
-        want: Some(AbstractValue::JsonDecodedPath("extraResources".to_string()))
+        want: Some(AbstractValue::JsonDecodedPath(
+            helm_schema_core::ValuesPath::parse("extraResources")
+        ))
     );
 }
 

@@ -4093,7 +4093,7 @@
 
 ## B4a.12 — migrate range-subject paths
 
-- Status: in progress; commit pending.
+- Status: landed in `826b7334`.
 - Contract: representation-only migration of `RangeSubjectIdentity.path`,
   `RangeSubject.influence_paths`, and the already-typed `RangeModes` map's string-only query/update
   interface to segmented `ValuesPath`, preserving range input/member identity, JSON-decoded
@@ -4188,3 +4188,102 @@
 
 - Measured production LOC delta: +21 (64,382 to 64,403), from explicit conversions at remaining
   string-backed producer/contract-builder boundaries and direct typed map access elsewhere.
+
+## B4a.13 — migrate abstract-value path identities
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of the identity-bearing `AbstractValue` variants
+  `JsonDecodedPath`, `RangeKey`, `KeysList`, and `OutputPath` to segmented `ValuesPath`, including
+  selection, descent, join, helper-output metadata, range/member recovery, serialization preimage,
+  and fragment projection routes. Literal string sets and dictionary keys remain unrelated domains.
+- Acceptance baseline: `826b7334` (B4a.12).
+- Baseline production LOC: 64,403 Rust lines from `task tokei:core` on `826b7334`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Raw, JSON-decoded, ranged-key, keys-list, and helper-output identities retain identical
+    selection and projection behavior, including escaped dot/backslash ordering.
+  - All variants are crate-private, so this round changes no public API or wire format. Explicit
+    encoding remains confined to still-string-backed metadata, diagnostics, or string producers.
+  - No coercion trait, cross-type comparison, cached encoded twin, or unrelated string newtype is
+    allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - JSON-decoded, range-key, keys-list, and helper-output identities now remain segmented through
+    abstract-value selection/descent, helper metadata, range projection, serialization preimages,
+    fragment lowering, predicate decoding, and exact input-identity recovery.
+  - Identical raw/decoded/output path operations collapse onto shared match arms, removing 66
+    production LOC while keeping transform metadata and decoded-vs-raw semantics distinct.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `826b7334`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first compiler-only preflight changed the four enum payloads and was rejected with 134
+    production and 151 all-target mismatches. The second was rejected with 93 production and 110
+    all-target mismatches after the enum-owned operations were made structural. No archive or dump
+    was produced from either state.
+  - The first whole-workspace lint preflight was rejected on 14 mechanical findings: 13 newly
+    identical match arms and one `too_many_lines` threshold crossed by explicit path construction.
+    The arms were merged and a direct `output_path` constructor extracted; no suppression or
+    artifact from the rejected state was retained.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Raw/decoded identity and member descent | Same path selection and joins | Abstract-value/IR suites. |
+| Range keys and `keys` lists | Same key-domain/member projection | Range/collection suites. |
+| Helper output metadata | Same predicates, transforms, provenance | Helper/fragment suites. |
+| Serialization and parser preimages | Same decoded identity | Eval/serialization suites. |
+| Fragment/predicate lowering | Same reads, guards, and rows | IR/schema dumps and prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 393/393 IR tests pass, covering
+  abstract-value algebra, JSON/YAML roundtrips, range keys, helper output metadata, fragment
+  projection, condition decoding, and strict operands. Whole-workspace Clippy passes warning-free
+  on the first completed lint preflight in 4 minutes 10 seconds.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a13-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a13-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 455 seconds.
+- Clean schema dump: the B4a.13 `final1` archive under the step-local schema `TMPDIR`; exit 0, 62
+  tests pass in 184.994 seconds and 84 artifacts are byte-identical to B4a.12.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one test passes in
+  3.268 seconds and 18 artifacts are byte-identical to B4a.12.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `826b7334`,
+  Helm adjudication enabled; exit 0 in 68.513 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: none. All migrated enum variants are crate-private; encoded strings remain
+  explicit at existing metadata, diagnostic, and dump boundaries.
+
+### Self-adversarial pass
+
+- Whole-tree variant searches find all four identity-bearing payloads use `ValuesPath`; structural
+  descendant/member operations no longer split their strings. `StringSet`, dictionary/member keys,
+  separators, and literal values remain untyped strings in their separate domains.
+- Raw versus JSON-decoded identity still uses distinct variants, and helper output transforms stay
+  in `HelperOutputMeta`; the shared carrier removes only path representation duplication. No
+  coercion trait, display implementation, or encoded twin was added.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, complete workspace Clippy pass in 5 minutes 43 seconds.
+- `task lint:fc`; exit 0, 48 combinations across 13 packages and 3 targets in 1,415.17
+  seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 196.272 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,820.833 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,805.769 seconds, including
+  all live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; the final release binary replaces
+  `/Users/roman/.cargo/bin/helm-schema` after a 23.63-second build.
+- Downstream luup2 gate with the documented macOS `xargs`/`flock` shims and installed binary;
+  exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,337 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: -66 (64,403 to 64,337), from merged structural path operations
+  and deletion of repeated encode/parse branches.

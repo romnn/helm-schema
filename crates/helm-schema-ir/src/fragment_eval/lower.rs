@@ -232,10 +232,10 @@ pub(crate) fn lower_value(
         // excludes a non-empty list's integer keys), never the
         // collection's value.
         AbstractValue::RangeKey(path) => {
-            if path.is_empty() {
+            if path.segments().next().is_none() {
                 Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
             } else {
-                let mut splice = scope.splice(path, kind, None);
+                let mut splice = scope.splice(&path.encode(), kind, None);
                 splice.meta.range_key = true;
                 Guarded::unconditional(AbstractFragment::Splice(splice))
             }
@@ -253,11 +253,11 @@ pub(crate) fn lower_value(
             }
         }
         AbstractValue::JsonDecodedPath(path) => {
-            if path.is_empty() {
+            if path.segments().next().is_none() {
                 Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
             } else {
                 let mut out = Guarded::empty();
-                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
+                for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind) {
                     splice.meta.input_identity = true;
                     splice.meta.json_decoded = true;
                     out.arms.push((condition, AbstractFragment::Splice(splice)));
@@ -266,11 +266,10 @@ pub(crate) fn lower_value(
             }
         }
         AbstractValue::OutputPath(path, meta) => {
-            let values_path = ValuesPath::parse(path);
             let meta = scope
                 .local_source_paths
-                .contains(&values_path)
-                .then(|| scope.local_output_meta.get(path))
+                .contains(path)
+                .then(|| scope.local_output_meta.get(&path.encode()))
                 .flatten()
                 .unwrap_or(meta);
             // A composed-text value renders the path INSIDE literal text
@@ -291,7 +290,7 @@ pub(crate) fn lower_value(
             for condition in helper_meta_conditions(meta) {
                 out.arms.push((
                     condition,
-                    AbstractFragment::Splice(scope.splice(path, kind, Some(meta))),
+                    AbstractFragment::Splice(scope.splice(&path.encode(), kind, Some(meta))),
                 ));
             }
             out
@@ -603,10 +602,10 @@ pub(crate) fn lower_value_scalar_arms(
         // excludes a non-empty list's integer keys), never the collection's
         // value.
         AbstractValue::RangeKey(path) => {
-            if path.is_empty() {
+            if path.segments().next().is_none() {
                 return Vec::new();
             }
-            let mut splice = scope.splice(path, kind, None);
+            let mut splice = scope.splice(&path.encode(), kind, None);
             splice.meta.range_key = true;
             vec![(Predicate::True, vec![StringPart::Splice(splice)])]
         }
@@ -625,11 +624,11 @@ pub(crate) fn lower_value_scalar_arms(
             }
         }
         AbstractValue::JsonDecodedPath(path) => {
-            if path.is_empty() {
+            if path.segments().next().is_none() {
                 Vec::new()
             } else {
                 scope
-                    .path_splice_arms(path, kind)
+                    .path_splice_arms(&path.encode(), kind)
                     .into_iter()
                     .map(|(condition, mut splice)| {
                         splice.meta.input_identity = true;
@@ -640,11 +639,10 @@ pub(crate) fn lower_value_scalar_arms(
             }
         }
         AbstractValue::OutputPath(path, meta) => {
-            let values_path = ValuesPath::parse(path);
             let meta = scope
                 .local_source_paths
-                .contains(&values_path)
-                .then(|| scope.local_output_meta.get(path))
+                .contains(path)
+                .then(|| scope.local_output_meta.get(&path.encode()))
                 .flatten()
                 .unwrap_or(meta);
             helper_meta_conditions(meta)
@@ -652,7 +650,7 @@ pub(crate) fn lower_value_scalar_arms(
                 .map(|condition| {
                     (
                         condition,
-                        vec![StringPart::Splice(scope.splice(path, kind, Some(meta)))],
+                        vec![StringPart::Splice(scope.splice(&path.encode(), kind, Some(meta)))],
                     )
                 })
                 .collect()

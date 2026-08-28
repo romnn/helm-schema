@@ -244,15 +244,10 @@ fn parser_operand_identity_paths(
             }
             AbstractValue::JsonDecodedPath(path) => {
                 if total_string_preimage
-                    || (!effects
-                        .observed_facts
-                        .shape_erased_paths
-                        .contains(&helm_schema_core::ValuesPath::parse(path))
-                        && !effects
-                            .derived_text_paths
-                            .contains(&helm_schema_core::ValuesPath::parse(path)))
+                    || (!effects.observed_facts.shape_erased_paths.contains(path)
+                        && !effects.derived_text_paths.contains(path))
                 {
-                    paths.insert(path.clone());
+                    paths.insert(path.encode());
                 }
             }
             AbstractValue::OutputPath(path, meta) => {
@@ -269,7 +264,7 @@ fn parser_operand_identity_paths(
                         && !meta.yaml_serialized
                         && !meta.json_serialized)
                 {
-                    paths.insert(path.clone());
+                    paths.insert(path.encode());
                 }
             }
             AbstractValue::Choice(choices) => {
@@ -377,7 +372,7 @@ fn parser_output_metas(
         metas: &mut Vec<crate::helper_meta::HelperOutputMeta>,
     ) {
         match value {
-            AbstractValue::OutputPath(candidate, meta) if candidate == path => {
+            AbstractValue::OutputPath(candidate, meta) if candidate.encode() == path => {
                 if !metas.contains(meta) {
                     metas.push(meta.clone());
                 }
@@ -482,8 +477,10 @@ fn string_operand_requirements(
         } else {
             let conjunctions = operand_selection_conjunctions(effects, path);
             let exact_identity = match value {
-                Some(AbstractValue::ValuesPath(candidate)) => candidate.encode() == path,
-                Some(AbstractValue::JsonDecodedPath(candidate)) => candidate == path,
+                Some(
+                    AbstractValue::ValuesPath(candidate)
+                    | AbstractValue::JsonDecodedPath(candidate),
+                ) => candidate.encode() == path,
                 _ => false,
             };
             if !exact_identity && conjunctions.iter().all(Vec::is_empty) {
@@ -733,22 +730,15 @@ pub(super) fn record_collection_item_kind_result(
         direct_collection: bool,
     ) {
         match value {
-            AbstractValue::ValuesPath(path) => {
+            AbstractValue::ValuesPath(path)
+            | AbstractValue::JsonDecodedPath(path)
+            | AbstractValue::OutputPath(path, _) => {
                 if direct_collection {
                     collection_paths.insert(path.encode());
                 } else if let Some(parent) = path.item_parent() {
                     collection_paths.insert(parent.encode());
                 } else {
                     individual_paths.insert(path.encode());
-                }
-            }
-            AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
-                if direct_collection {
-                    collection_paths.insert(path.clone());
-                } else if let Some(parent) = path.strip_suffix(".*") {
-                    collection_paths.insert(parent.to_string());
-                } else {
-                    individual_paths.insert(path.clone());
                 }
             }
             AbstractValue::List(items) => {
@@ -977,7 +967,8 @@ pub(super) fn layered_strict_operand_identity_paths(
                 }
             }
             AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _) => {
-                if emit && strict_operand_path_is_clean(path, effects) {
+                let path = path.encode();
+                if emit && strict_operand_path_is_clean(&path, effects) {
                     let mut conditions = shadow.to_vec();
                     if layered {
                         conditions.push(Predicate::truthy_path(path.clone()));

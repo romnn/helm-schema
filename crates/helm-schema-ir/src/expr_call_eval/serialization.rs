@@ -502,9 +502,7 @@ pub(super) fn eval_tpl(
         record_string_consumer_effects(template.value.as_ref(), &subject_paths, &mut effects);
         if let Some(path) = template.value.as_ref().and_then(|value| match value {
             AbstractValue::ValuesPath(path) => Some(path.clone()),
-            AbstractValue::OutputPath(path, meta) if meta.stringified => {
-                Some(helm_schema_core::ValuesPath::parse(path))
-            }
+            AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path.clone()),
             _ => None,
         }) {
             effects.templated_text_identity_paths.insert(path);

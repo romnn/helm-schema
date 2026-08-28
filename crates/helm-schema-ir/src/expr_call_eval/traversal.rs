@@ -366,7 +366,7 @@ fn without_values_root_identity(value: &AbstractValue) -> AbstractValue {
     match value {
         AbstractValue::ValuesPath(path) if path.segments().len() == 0 => AbstractValue::Unknown,
         AbstractValue::JsonDecodedPath(path) | AbstractValue::OutputPath(path, _)
-            if path.is_empty() =>
+            if path.segments().next().is_none() =>
         {
             AbstractValue::Unknown
         }

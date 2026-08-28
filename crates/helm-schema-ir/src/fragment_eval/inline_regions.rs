@@ -301,7 +301,7 @@ impl Interpreter<'_> {
         {
             self.locals
                 .range_member_values
-                .insert(variable, AbstractValue::RangeKey(path.encode()));
+                .insert(variable, AbstractValue::RangeKey(path));
         }
         self.dot_stack.push(dot);
         self.loop_depth += 1;

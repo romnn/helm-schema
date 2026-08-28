@@ -323,7 +323,10 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
                     schema_type: "object".to_string(),
                 }),
             ]));
-            layers.push(AbstractValue::OutputPath(path, meta));
+            layers.push(AbstractValue::OutputPath(
+                helm_schema_core::ValuesPath::parse(&path),
+                meta,
+            ));
         }
 
         let value = AbstractValue::MergedLayers(layers);
@@ -361,14 +364,15 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
             &mut seen,
         );
         let (path, mut meta) = match operand.value.as_ref()?.clone().without_widened()? {
-            AbstractValue::ValuesPath(path) if path.segments().len() != 0 => (
-                path.encode(),
-                crate::helper_meta::HelperOutputMeta::default(),
-            ),
-            AbstractValue::JsonDecodedPath(path) if !path.is_empty() => {
+            AbstractValue::ValuesPath(path) if path.segments().len() != 0 => {
                 (path, crate::helper_meta::HelperOutputMeta::default())
             }
-            AbstractValue::OutputPath(path, meta) if meta.json_decoded && !path.is_empty() => {
+            AbstractValue::JsonDecodedPath(path) if path.segments().next().is_some() => {
+                (path, crate::helper_meta::HelperOutputMeta::default())
+            }
+            AbstractValue::OutputPath(path, meta)
+                if meta.json_decoded && path.segments().next().is_some() =>
+            {
                 (path, meta)
             }
             _ => return None,
@@ -378,12 +382,8 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         let value = AbstractValue::OutputPath(path.clone(), meta);
         let mut effects = Effects::default();
         effects.merge(operand.effects.execution_only());
-        effects
-            .yaml_serialized_paths
-            .insert(helm_schema_core::ValuesPath::parse(&path));
-        effects
-            .derived_text_paths
-            .insert(helm_schema_core::ValuesPath::parse(&path));
+        effects.yaml_serialized_paths.insert(path.clone());
+        effects.derived_text_paths.insert(path);
         Some(EvalResult::with_effects(Some(value), effects))
     }
 }

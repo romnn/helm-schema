@@ -610,7 +610,7 @@ fn project_structured_taint_value(
 ) -> AbstractValue {
     match value {
         AbstractValue::ValuesPath(path) => {
-            AbstractValue::OutputPath(path.encode(), outer_meta.clone())
+            AbstractValue::OutputPath(path.clone(), outer_meta.clone())
         }
         AbstractValue::JsonDecodedPath(path) => {
             let mut meta = outer_meta.clone();
@@ -816,7 +816,7 @@ fn project_node(
                         has_non_text = true;
                         let mut meta = splice_row_meta(splice, conditions);
                         meta.partial_text |= partial;
-                        values.push(AbstractValue::OutputPath(splice.values_path.encode(), meta));
+                        values.push(AbstractValue::OutputPath(splice.values_path.clone(), meta));
                     }
                     StringPart::Taint(taint) => {
                         has_non_text = true;
@@ -830,7 +830,7 @@ fn project_node(
                             values.push(project_structured_taint_value(value, &meta));
                         } else {
                             for path in &taint.paths {
-                                values.push(AbstractValue::OutputPath(path.clone(), meta.clone()));
+                                values.push(output_path(path, meta.clone()));
                             }
                         }
                     }
@@ -846,7 +846,7 @@ fn project_node(
         }
         AbstractFragment::Splice(splice) => {
             vec![AbstractValue::OutputPath(
-                splice.values_path.encode(),
+                splice.values_path.clone(),
                 splice_row_meta(splice, conditions),
             )]
         }
@@ -855,10 +855,14 @@ fn project_node(
             opaque
                 .taint
                 .iter()
-                .map(|path| AbstractValue::OutputPath(path.clone(), meta.clone()))
+                .map(|path| output_path(path, meta.clone()))
                 .collect()
         }
     }
+}
+
+fn output_path(path: &str, meta: HelperOutputMeta) -> AbstractValue {
+    AbstractValue::OutputPath(helm_schema_core::ValuesPath::parse(path), meta)
 }
 
 /// Flatten the tree's rendered splice/taint rows into per-path claims.

@@ -675,7 +675,7 @@ impl ValuePathContext<'_> {
             return None;
         };
         let predicate = Predicate::from(Guard::RangeKeyEquals {
-            path: helm_schema_core::ValuesPath::parse(path),
+            path: path.clone(),
             key: literal.to_string(),
         });
         Some(if negated {
@@ -701,7 +701,7 @@ impl ValuePathContext<'_> {
             return None;
         };
         Some(Predicate::from(Guard::RangeKeyPrefix {
-            path: helm_schema_core::ValuesPath::parse(path),
+            path: path.clone(),
             prefix: prefix.to_string(),
         }))
     }
@@ -1121,9 +1121,9 @@ impl ValuePathContext<'_> {
             // The subject is a destructured range KEY: the pattern applies
             // per key of the ranged collection (traefik's uppercase
             // `ingressRoute` gate).
-            AbstractValue::RangeKey(collection) if !collection.is_empty() => {
+            AbstractValue::RangeKey(collection) if collection.segments().next().is_some() => {
                 return Some(Predicate::from(Guard::RangeKeyMatches {
-                    path: helm_schema_core::ValuesPath::parse(&collection),
+                    path: collection,
                     pattern: pattern.to_string(),
                 }));
             }
@@ -3126,26 +3126,22 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
                 arms.push(Predicate::truthy_path(path.encode()));
             }
             AbstractValue::JsonDecodedPath(path) => {
-                if helm_schema_core::split_value_path(path)
-                    .iter()
-                    .any(|segment| segment == "*")
-                {
+                if path.segments().any(|segment| segment == "*") {
                     return None;
                 }
-                arms.push(Predicate::truthy_path(path));
+                arms.push(Predicate::truthy_path(path.encode()));
             }
             // A nil-scrubbed identity over-approximates: an all-nil map is
             // input-truthy but scrubs to empty. The wider condition only
             // fires arms whose member typing is null-relaxed, so the delta
             // stays in the accept direction.
-            AbstractValue::OutputPath(path, meta) if meta.nil_scrubbed && !path.is_empty() => {
-                if helm_schema_core::split_value_path(path)
-                    .iter()
-                    .any(|segment| segment == "*")
-                {
+            AbstractValue::OutputPath(path, meta)
+                if meta.nil_scrubbed && path.segments().next().is_some() =>
+            {
+                if path.segments().any(|segment| segment == "*") {
                     return None;
                 }
-                arms.push(Predicate::truthy_path(path));
+                arms.push(Predicate::truthy_path(path.encode()));
             }
             AbstractValue::MergedLayers(nested) => {
                 arms.push(merged_layers_truthy_predicate(nested)?);
@@ -3171,13 +3167,10 @@ fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predica
                 arms.push(Predicate::truthy_path(path.encode()));
             }
             AbstractValue::JsonDecodedPath(path) => {
-                if helm_schema_core::split_value_path(path)
-                    .iter()
-                    .any(|segment| segment == "*")
-                {
+                if path.segments().any(|segment| segment == "*") {
                     return None;
                 }
-                arms.push(Predicate::truthy_path(path.clone()));
+                arms.push(Predicate::truthy_path(path.encode()));
             }
             other => arms.push(bool_predicate(other.static_truthiness()?)),
         }
@@ -3322,42 +3315,34 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
             })
             .negated(),
         ),
-        AbstractValue::JsonDecodedPath(path) => Some(
-            Predicate::from(Guard::Absent {
-                path: helm_schema_core::ValuesPath::parse(&helm_schema_core::append_value_path(
-                    path, key,
-                )),
-            })
-            .negated(),
-        ),
+        AbstractValue::JsonDecodedPath(path) => {
+            let mut path = path.clone();
+            path.push(key);
+            Some(Predicate::from(Guard::Absent { path }).negated())
+        }
         // Guard metadata can wrap a raw path identity in `OutputPath`
         // without transforming its runtime value. Its map keys remain the
         // raw path's keys; the metadata's predicates already scope the
         // selected output arm.
         AbstractValue::OutputPath(path, meta)
-            if (meta.is_input_identity() || meta.json_decoded) && !path.is_empty() =>
+            if (meta.is_input_identity() || meta.json_decoded)
+                && path.segments().next().is_some() =>
         {
-            Some(
-                Predicate::from(Guard::Absent {
-                    path: helm_schema_core::ValuesPath::parse(
-                        &helm_schema_core::append_value_path(path, key),
-                    ),
-                })
-                .negated(),
-            )
+            let mut path = path.clone();
+            path.push(key);
+            Some(Predicate::from(Guard::Absent { path }).negated())
         }
         // A nil-scrubbed identity over-approximates presence by the input
         // key's presence: the delta is exactly the nil-ish states, whose
         // member typing the scrubbed layer's arms null-relax, so candidate
         // misselection there only widens.
-        AbstractValue::OutputPath(path, meta) if meta.nil_scrubbed && !path.is_empty() => Some(
-            Predicate::from(Guard::Absent {
-                path: helm_schema_core::ValuesPath::parse(&helm_schema_core::append_value_path(
-                    path, key,
-                )),
-            })
-            .negated(),
-        ),
+        AbstractValue::OutputPath(path, meta)
+            if meta.nil_scrubbed && path.segments().next().is_some() =>
+        {
+            let mut path = path.clone();
+            path.push(key);
+            Some(Predicate::from(Guard::Absent { path }).negated())
+        }
         // A JSON-roundtripped identity keeps map keys exactly, so key
         // presence reads from the raw path (nats' jsonpatch members reach
         // their `hasKey` gates as `service.patch.*` through the
@@ -3365,7 +3350,7 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
         // already implies truthiness of its collection ancestors; other
         // branch conditions and value transforms still force abstention.
         AbstractValue::OutputPath(path, meta)
-            if !path.is_empty()
+            if path.segments().next().is_some()
                 && !meta.shape_erased
                 && !meta.nil_omitted
                 && !meta.stringified
@@ -3378,9 +3363,7 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                         matches!(
                             predicate,
                             Predicate::Guard(Guard::Truthy { path: guarded })
-                                if guarded.encode() != *path
-                                    && helm_schema_core::ValuesPath::parse(path)
-                                        .is_descendant_of(guarded)
+                                if guarded != path && path.is_descendant_of(guarded)
                         )
                     })
                 })
@@ -3390,14 +3373,9 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                 && meta.empty_rescue.is_none()
                 && meta.default_fallback.is_none() =>
         {
-            Some(
-                Predicate::from(Guard::Absent {
-                    path: helm_schema_core::ValuesPath::parse(
-                        &helm_schema_core::append_value_path(path, key),
-                    ),
-                })
-                .negated(),
-            )
+            let mut path = path.clone();
+            path.push(key);
+            Some(Predicate::from(Guard::Absent { path }).negated())
         }
         AbstractValue::Top
         | AbstractValue::Unknown

@@ -300,8 +300,9 @@ fn known_literal_truthiness(value: &AbstractValue) -> Option<bool> {
 
 pub(super) fn direct_raw_identity_path(value: Option<&AbstractValue>) -> Option<String> {
     match value? {
-        AbstractValue::ValuesPath(path) => Some(path.encode()),
-        AbstractValue::JsonDecodedPath(path) => Some(path.clone()),
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            Some(path.encode())
+        }
         _ => None,
     }
 }
@@ -453,7 +454,7 @@ fn empty_rescue_paths(
     for arm in arms {
         let (path, meta) = match arm {
             arm if is_empty_literal(arm) => continue,
-            AbstractValue::OutputPath(path, meta) => (path.clone(), Some(meta)),
+            AbstractValue::OutputPath(path, meta) => (path.encode(), Some(meta)),
             AbstractValue::ValuesPath(path) => (path.encode(), None),
             _ => return None,
         };
@@ -621,7 +622,7 @@ pub(super) fn eval_pluck(
         if let Some(AbstractValue::RangeKey(key_source)) = &key.value {
             let map = eval_expr_with_helper_calls(map_expr, env, resolver);
             let member = match &map.value {
-                Some(value @ AbstractValue::ValuesPath(path)) if &path.encode() == key_source => {
+                Some(value @ AbstractValue::ValuesPath(path)) if path == key_source => {
                     value.fragment_range_item()
                 }
                 Some(value @ AbstractValue::JsonDecodedPath(path)) if path == key_source => {

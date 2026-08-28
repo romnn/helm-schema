@@ -1937,7 +1937,7 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
     sim_assert_eq!(
         have: result.value,
         want: Some(AbstractValue::OutputPath(
-            "nameOverride".to_string(),
+            helm_schema_core::ValuesPath::parse("nameOverride"),
             HelperOutputMeta {
                 predicates: BTreeSet::new(),
                 input_identity: true,
@@ -2313,7 +2313,7 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     sim_assert_eq!(
         have: context.fragment_value_from_expr(&expr, &HashMap::new(), None, &mut seen),
         want: Some(AbstractValue::OutputPath(
-            "nameOverride".to_string(),
+            helm_schema_core::ValuesPath::parse("nameOverride"),
             HelperOutputMeta {
                 predicates: BTreeSet::new(),
                 input_identity: true,
@@ -2397,7 +2397,7 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
         AbstractValue::OutputPath(path, meta) => (path, meta.json_decoded),
         other => panic!("decoded helper output lost its path identity: {other:#?}"),
     };
-    sim_assert_eq!(have: path, want: String::new());
+    sim_assert_eq!(have: path, want: helm_schema_core::ValuesPath::default());
     assert!(json_decoded, "helper output path must remain JSON-decoded");
 }
 
@@ -2432,7 +2432,7 @@ fn yaml_helper_output_preserves_structured_value_for_decoding() {
     sim_assert_eq!(
         have: value.apply_to_path(&["spec".to_string(), "hostUsers".to_string()]),
         want: Some(AbstractValue::OutputPath(
-            "hostUsers".to_string(),
+            helm_schema_core::ValuesPath::parse("hostUsers"),
             HelperOutputMeta {
                 input_identity: true,
                 stringified: true,

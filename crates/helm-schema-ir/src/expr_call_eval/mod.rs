@@ -747,16 +747,11 @@ fn eval_direct_invocation(
             // identity: ranging the result binds the key domain, and
             // plucking a ranged key back out of the same map is a member
             // projection.
-            if function == "keys" {
-                match &operand.value {
-                    Some(AbstractValue::ValuesPath(path)) => {
-                        result.value = Some(AbstractValue::KeysList(path.encode()));
-                    }
-                    Some(AbstractValue::JsonDecodedPath(path)) => {
-                        result.value = Some(AbstractValue::KeysList(path.clone()));
-                    }
-                    _ => {}
-                }
+            if function == "keys"
+                && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
+                    &operand.value
+            {
+                result.value = Some(AbstractValue::KeysList(path.clone()));
             }
             result
         }
@@ -1241,16 +1236,11 @@ fn eval_piped_invocation(
                 identity_value_paths(operand.value.as_ref()),
                 &mut result.effects,
             );
-            if function == "keys" {
-                match &operand.value {
-                    Some(AbstractValue::ValuesPath(path)) => {
-                        result.value = Some(AbstractValue::KeysList(path.encode()));
-                    }
-                    Some(AbstractValue::JsonDecodedPath(path)) => {
-                        result.value = Some(AbstractValue::KeysList(path.clone()));
-                    }
-                    _ => {}
-                }
+            if function == "keys"
+                && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
+                    &operand.value
+            {
+                result.value = Some(AbstractValue::KeysList(path.clone()));
             }
             result
         }

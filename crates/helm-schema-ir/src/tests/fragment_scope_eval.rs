@@ -169,7 +169,7 @@ fn local_set_mutation_resolves_computed_key_from_literal_local() {
     let mut locals = HashMap::from([
         (
             "patch".to_string(),
-            AbstractValue::JsonDecodedPath("patch.*".to_string()),
+            AbstractValue::JsonDecodedPath(helm_schema_core::ValuesPath::parse("patch.*")),
         ),
         (
             "opPathKey".to_string(),

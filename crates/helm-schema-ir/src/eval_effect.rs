@@ -1093,7 +1093,7 @@ impl EvalResult {
         let scalar_dispatch = match &value {
             AbstractValue::ValuesPath(path) => Some(ScalarValueDispatch::identity(path.encode())),
             AbstractValue::JsonDecodedPath(path) => {
-                Some(ScalarValueDispatch::identity(path.clone()))
+                Some(ScalarValueDispatch::identity(path.encode()))
             }
             AbstractValue::StringSet(values) if values.len() == 1 => values.first().map(|value| {
                 ScalarValueDispatch::constant(helm_schema_core::GuardValue::string(value))
@@ -1196,12 +1196,11 @@ impl EvalResult {
 
     pub(crate) fn exact_input_identity(&self) -> Option<String> {
         let path = match self.value.as_ref()? {
-            AbstractValue::ValuesPath(path) => path.encode(),
-            AbstractValue::JsonDecodedPath(path) => path.clone(),
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => path.encode(),
             AbstractValue::OutputPath(path, meta)
                 if meta.is_input_identity() && meta.predicates.is_empty() =>
             {
-                path.clone()
+                path.encode()
             }
             _ => return None,
         };
@@ -1220,11 +1219,8 @@ impl EvalResult {
 
 fn truth_for_value(value: Option<&AbstractValue>) -> TruthCondition {
     match value {
-        Some(AbstractValue::ValuesPath(path)) => {
+        Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) => {
             TruthCondition::exact(helm_schema_core::Predicate::truthy_path(path.encode()))
-        }
-        Some(AbstractValue::JsonDecodedPath(path)) => {
-            TruthCondition::exact(helm_schema_core::Predicate::truthy_path(path.clone()))
         }
         _ => TruthCondition::Unknown,
     }
