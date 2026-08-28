@@ -91,7 +91,7 @@ pub(super) fn eval_default(
         if !overlaps_fallback {
             let meta = effects
                 .local_output_meta
-                .entry(primary_path.clone())
+                .entry(ValuesPath::parse(&primary_path))
                 .or_default();
             meta.input_identity = true;
             // Only an exact raw identity selects by its own truthiness. A
@@ -130,7 +130,10 @@ pub(super) fn eval_default(
     }
     if fallback_reachability.has_proven_selection_condition() {
         for path in fallback_paths {
-            let meta = effects.local_output_meta.entry(path).or_default();
+            let meta = effects
+                .local_output_meta
+                .entry(ValuesPath::parse(&path))
+                .or_default();
             meta.input_identity = true;
         }
     }
@@ -369,7 +372,7 @@ pub(super) fn eval_coalesce(
         for path in rescues {
             effects
                 .local_output_meta
-                .entry(path.0)
+                .entry(ValuesPath::parse(&path.0))
                 .or_default()
                 .empty_rescue = Some(crate::helper_meta::EmptyRescue {
                 fallback: literal.clone(),
@@ -446,7 +449,7 @@ fn empty_rescue_paths(
         effects.stringified_paths.contains(&typed_path)
             || effects
                 .local_output_meta
-                .get(path)
+                .get(&typed_path)
                 .is_some_and(|meta| meta.stringified)
     };
     let mut rescues = Vec::new();
@@ -716,7 +719,7 @@ pub(super) fn eval_split_list(
             || result
                 .effects
                 .local_output_meta
-                .get(&path.encode())
+                .get(path)
                 .is_some_and(|meta| meta.shape_erased || meta.derived_text)
     });
     // The subject must be a Go string at runtime whatever the split
@@ -773,7 +776,7 @@ pub(super) fn eval_regex_split(
             || subject
                 .effects
                 .local_output_meta
-                .get(&path.encode())
+                .get(path)
                 .is_some_and(|meta| meta.shape_erased || meta.derived_text)
     });
     for arg in [pattern, limit] {
@@ -981,7 +984,7 @@ pub(super) fn eval_omit(
     {
         base.effects
             .local_output_meta
-            .entry(path.encode())
+            .entry(path.clone())
             .or_default()
             .input_identity = true;
         base.effects
@@ -1064,16 +1067,18 @@ pub(super) fn eval_merge(
     // same way, and collapsing to one path would drop the member-level
     // contract (airflow's per-set labels under the merged worker context).
     for value in &values {
-        if let Some(path) = value.merge_layer_identity().filter(|path| !path.is_empty()) {
-            effects
-                .merge_operand_paths
-                .insert(helm_schema_core::ValuesPath::parse(&path));
+        if let Some(path) = value
+            .merge_layer_identity()
+            .filter(|path| path.segments().next().is_some())
+        {
+            effects.merge_operand_paths.insert(path);
         } else if let AbstractValue::MergedLayers(layers) = value {
             for layer in layers {
-                if let Some(path) = layer.merge_layer_identity().filter(|path| !path.is_empty()) {
-                    effects
-                        .merge_operand_paths
-                        .insert(helm_schema_core::ValuesPath::parse(&path));
+                if let Some(path) = layer
+                    .merge_layer_identity()
+                    .filter(|path| path.segments().next().is_some())
+                {
+                    effects.merge_operand_paths.insert(path);
                 }
             }
         }

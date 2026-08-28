@@ -11,7 +11,7 @@ use crate::scalar_value::ScalarValueDispatch;
 use helm_schema_ast::parse_expr_text;
 use helm_schema_ast::render_printf_string_sets;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
-use helm_schema_core::{Guard, GuardValue, Predicate};
+use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;
@@ -711,7 +711,7 @@ fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
         locals: HashMap::from([("selected".to_string(), values_path!("value"))]),
         local_output_meta: HashMap::from([(
             "selected".to_string(),
-            BTreeMap::from([("value".to_string(), metadata)]),
+            BTreeMap::from([(ValuesPath::parse("value"), metadata)]),
         )]),
         ..EvalEnv::default()
     };
@@ -1127,7 +1127,7 @@ fn default_choice_records_primary_and_fallback_selection_conditions() {
         have: result
             .effects
             .local_output_meta
-            .get("global.storageClass")
+            .get(&ValuesPath::parse("global.storageClass"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("global.storageClass"),
@@ -1137,7 +1137,7 @@ fn default_choice_records_primary_and_fallback_selection_conditions() {
         have: result
             .effects
             .local_output_meta
-            .get("persistence.storageClass")
+            .get(&ValuesPath::parse("persistence.storageClass"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("global.storageClass").negated(),
@@ -1156,7 +1156,7 @@ fn chained_default_records_the_composed_primary_selection_on_the_final_fallback(
         have: result
             .effects
             .local_output_meta
-            .get("z")
+            .get(&ValuesPath::parse("z"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("x").negated(),
@@ -1176,7 +1176,7 @@ fn opaque_default_primary_records_an_unlowerable_fallback_selection() {
         have: result
             .effects
             .local_output_meta
-            .get("omega")
+            .get(&ValuesPath::parse("omega"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::approximate_output_selection(
@@ -1199,7 +1199,7 @@ fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
         have: result
             .effects
             .local_output_meta
-            .get("omega")
+            .get(&ValuesPath::parse("omega"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::from(Guard::MatchesPattern {
@@ -1356,7 +1356,7 @@ fn literal_and_string_set_default_primaries_record_exact_fallback_reachability()
             have: result
                 .effects
                 .local_output_meta
-                .get("omega")
+                .get(&ValuesPath::parse("omega"))
                 .map(|meta| &meta.predicates),
             want: predicates.as_ref(),
             "literal primary selection mismatch for {expression}"
@@ -1375,7 +1375,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
         have: result
             .effects
             .local_output_meta
-            .get("primary")
+            .get(&ValuesPath::parse("primary"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("primary"),
@@ -1385,7 +1385,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
         have: result
             .effects
             .local_output_meta
-            .get("fallback")
+            .get(&ValuesPath::parse("fallback"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("primary").negated(),
@@ -1396,7 +1396,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
         have: result
             .effects
             .local_output_meta
-            .get("last")
+            .get(&ValuesPath::parse("last"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("primary").negated(),
@@ -1465,7 +1465,7 @@ fn short_circuit_calls_return_guarded_operand_values() {
         have: or_result
             .effects
             .local_output_meta
-            .get("fallback")
+            .get(&ValuesPath::parse("fallback"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("primary").negated(),
@@ -1476,7 +1476,7 @@ fn short_circuit_calls_return_guarded_operand_values() {
         have: or_result
             .effects
             .local_output_meta
-            .get("last")
+            .get(&ValuesPath::parse("last"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("primary").negated(),
@@ -1492,7 +1492,7 @@ fn short_circuit_calls_return_guarded_operand_values() {
         have: and_result
             .effects
             .local_output_meta
-            .get("fallback")
+            .get(&ValuesPath::parse("fallback"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("primary"),
@@ -1503,7 +1503,7 @@ fn short_circuit_calls_return_guarded_operand_values() {
         have: and_result
             .effects
             .local_output_meta
-            .get("last")
+            .get(&ValuesPath::parse("last"))
             .map(|meta| &meta.predicates),
         want: Some(&BTreeSet::from([BTreeSet::from([
             Predicate::truthy_path("primary"),
@@ -2096,7 +2096,7 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
         locals: HashMap::from([("flag".to_string(), values_path!("diagnosticMode.enabled"))]),
         local_output_meta: HashMap::from([(
             "flag".to_string(),
-            BTreeMap::from([("diagnosticMode.enabled".to_string(), metadata)]),
+            BTreeMap::from([(ValuesPath::parse("diagnosticMode.enabled"), metadata)]),
         )]),
         ..EvalEnv::default()
     };

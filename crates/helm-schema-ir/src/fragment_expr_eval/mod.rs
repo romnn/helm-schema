@@ -17,7 +17,9 @@ use bound_helper_resolver::{BoundHelperValueResolverParams, eval_expr_result_wit
 pub(crate) fn context_value_from_outer_expr(
     expr: &TemplateExpr,
     outer_locals: Option<&HashMap<String, AbstractValue>>,
-    outer_output_meta: Option<&HashMap<String, BTreeMap<String, HelperOutputMeta>>>,
+    outer_output_meta: Option<
+        &HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
+    >,
     outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
 ) -> Option<AbstractValue> {
@@ -59,10 +61,7 @@ pub(crate) fn context_value_from_outer_expr(
     let result = eval_expr(expr, &env);
     let mut output_meta = result.effects.local_output_meta.clone();
     for path in &result.effects.yaml_serialized_paths {
-        output_meta
-            .entry(path.encode())
-            .or_default()
-            .yaml_serialized = true;
+        output_meta.entry(path.clone()).or_default().yaml_serialized = true;
     }
     result
         .value
@@ -81,7 +80,10 @@ pub(crate) fn fragment_context_value(
     expr: &TemplateExpr,
     root_bindings: &HashMap<String, AbstractValue>,
     template_bindings: &HashMap<String, AbstractValue>,
-    template_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    template_output_meta: &HashMap<
+        String,
+        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
+    >,
     fragment_context: FragmentEvalContext<'_>,
     current_dot_fragment: Option<&AbstractValue>,
 ) -> Option<AbstractValue> {

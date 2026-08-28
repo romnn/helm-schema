@@ -93,7 +93,7 @@ fn prepare_hole_value(
             all.iter().any(|candidate| candidate.is_descendant_of(path))
                 && (scalar_site
                     || effects.helper_rendered.iter().any(|row| {
-                        let row_path = ValuesPath::parse(&row.path);
+                        let row_path = row.path.clone();
                         value_paths.contains(&row_path) && row_path.is_descendant_of(path)
                     }))
         })
@@ -376,7 +376,7 @@ impl Interpreter<'_> {
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
         for (path, keys) in &hole.effects.omitted_map_keys {
-            let meta = hole_meta.entry(path.encode()).or_default();
+            let meta = hole_meta.entry(path.clone()).or_default();
             for key in keys {
                 meta.omitted_keys.insert(key.clone(), Vec::new());
             }
@@ -410,7 +410,7 @@ impl Interpreter<'_> {
                 None => Guarded::empty(),
             });
         for path in extra_paths {
-            for (condition, splice) in scope.path_splice_arms(&path, kind) {
+            for (condition, splice) in scope.path_splice_arms(&ValuesPath::parse(&path), kind) {
                 out.arms.push((condition, AbstractFragment::Splice(splice)));
             }
         }
@@ -537,7 +537,7 @@ impl Interpreter<'_> {
         }
         for (path, meta) in &formatted_meta {
             if meta.plain_slot_string_format && !meta.partial_text {
-                formatted_paths.insert(helm_schema_core::ValuesPath::parse(path));
+                formatted_paths.insert(path.clone());
             }
         }
         // `printf` itself erases the operand's structural shape, but a token-
@@ -549,14 +549,14 @@ impl Interpreter<'_> {
         for path in formatted_paths {
             let mut shared = BTreeSet::new();
             if formatted_meta
-                .get(&path.encode())
+                .get(&path)
                 .is_none_or(|meta| meta.predicates.is_empty())
                 && (effects.defaults.contains(&path) || effects.local_default_paths.contains(&path))
             {
                 shared.insert(Predicate::truthy_path(path.encode()));
             }
             let branches = formatted_meta
-                .get(&path.encode())
+                .get(&path)
                 .filter(|meta| !meta.predicates.is_empty())
                 .map_or_else(
                     || vec![shared.clone()],
@@ -622,15 +622,25 @@ impl Interpreter<'_> {
         let suppressed: std::collections::BTreeSet<String> = summary
             .rendered
             .iter()
-            .flat_map(|row| row.meta.suppress_predicate_paths.iter().cloned())
-            .chain(summary.suppress_predicate_paths.iter().cloned())
+            .flat_map(|row| {
+                row.meta
+                    .suppress_predicate_paths
+                    .iter()
+                    .map(ValuesPath::encode)
+            })
+            .chain(
+                summary
+                    .suppress_predicate_paths
+                    .iter()
+                    .map(ValuesPath::encode),
+            )
             .collect();
         let mut claims: std::collections::BTreeSet<String> = summary
             .reads
             .iter()
             .map(|read| read.values_path.encode())
             .collect();
-        claims.extend(summary.rendered.iter().map(|row| row.path.clone()));
+        claims.extend(summary.rendered.iter().map(|row| row.path.encode()));
         self.absorb_helper_reads_with_suppression(&summary.reads, &suppressed, &claims);
         self.absorb_scoped_observed_facts(&summary.observed_facts);
         if self.in_value_slot {
@@ -720,7 +730,7 @@ impl Interpreter<'_> {
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
         for (path, keys) in &hole.effects.omitted_map_keys {
-            let meta = hole_meta.entry(path.encode()).or_default();
+            let meta = hole_meta.entry(path.clone()).or_default();
             for key in keys {
                 meta.omitted_keys.insert(key.clone(), Vec::new());
             }
@@ -751,7 +761,7 @@ impl Interpreter<'_> {
             });
         let mut plain_parts: Vec<StringPart> = Vec::new();
         for path in extra_paths {
-            for (condition, splice) in scope.path_splice_arms(&path, kind) {
+            for (condition, splice) in scope.path_splice_arms(&ValuesPath::parse(&path), kind) {
                 if condition == Predicate::True {
                     plain_parts.push(StringPart::Splice(splice));
                 } else {

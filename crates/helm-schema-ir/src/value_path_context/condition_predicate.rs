@@ -200,7 +200,7 @@ impl ValuePathContext<'_> {
                     .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
                 !paths.iter().any(|path| {
                     metas
-                        .and_then(|metas| metas.get(path))
+                        .and_then(|metas| metas.get(&helm_schema_core::ValuesPath::parse(path)))
                         .is_some_and(|meta| meta.derived_text || meta.shape_erased)
                 })
             }
@@ -1205,7 +1205,7 @@ impl ValuePathContext<'_> {
         let name = name.trim_start_matches('$');
         self.template_output_meta
             .get(name)
-            .and_then(|by_path| by_path.get(path))
+            .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
             .is_some_and(|meta| meta.derived_text || meta.shape_erased)
     }
 
@@ -1866,7 +1866,7 @@ impl ValuePathContext<'_> {
                         return false;
                     }
                 } else if let Some(path) = layer.merge_layer_identity() {
-                    paths.push(path);
+                    paths.push(path.encode());
                 } else {
                     return false;
                 }
@@ -2670,7 +2670,7 @@ impl ValuePathContext<'_> {
             self.template_output_meta
                 .get(name)
                 .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')))
-                .and_then(|by_path| by_path.get(path))
+                .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
         };
         let comparison_for = |path: String| {
             // Equality over a total stringification compares the DERIVED
@@ -2752,7 +2752,7 @@ impl ValuePathContext<'_> {
                 let mut alternatives = Vec::new();
                 for path in &paths {
                     let comparison = comparison_for(path.clone());
-                    match meta.get(path) {
+                    match meta.get(&helm_schema_core::ValuesPath::parse(path)) {
                         Some(candidate) if !candidate.predicates.is_empty() => {
                             for branch in &candidate.predicates {
                                 let mut conjuncts = branch.iter().cloned().collect::<Vec<_>>();
@@ -2806,7 +2806,12 @@ impl ValuePathContext<'_> {
     fn type_descriptor_sources(
         &self,
         expr: &TemplateExpr,
-    ) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
+    ) -> Option<
+        std::collections::BTreeMap<
+            helm_schema_core::ValuesPath,
+            crate::helper_meta::HelperOutputMeta,
+        >,
+    > {
         match expr.deparen() {
             TemplateExpr::Call { function, args }
                 if type_descriptor_call_subject(function, args).is_some() =>
@@ -2825,7 +2830,12 @@ impl ValuePathContext<'_> {
     pub(crate) fn type_descriptor_subject_sources(
         &self,
         subject: &TemplateExpr,
-    ) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
+    ) -> Option<
+        std::collections::BTreeMap<
+            helm_schema_core::ValuesPath,
+            crate::helper_meta::HelperOutputMeta,
+        >,
+    > {
         if matches!(
             subject,
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_)
@@ -2844,6 +2854,7 @@ impl ValuePathContext<'_> {
                 paths
                     .into_iter()
                     .map(|path| {
+                        let path = helm_schema_core::ValuesPath::parse(&path);
                         let meta = local_meta
                             .and_then(|meta| meta.get(&path))
                             .cloned()
@@ -2863,19 +2874,22 @@ impl ValuePathContext<'_> {
             // supplies that type descriptor.
             let paths = args
                 .iter()
-                .map(|arg| self.single_resolved_values_path_expr(arg))
+                .map(|arg| {
+                    self.single_resolved_values_path_expr(arg)
+                        .map(|path| helm_schema_core::ValuesPath::parse(&path))
+                })
                 .collect::<Option<Vec<_>>>()?;
             let mut sources = std::collections::BTreeMap::new();
             let mut prior_falsy = Vec::new();
             for (index, path) in paths.iter().enumerate() {
                 let mut selected = prior_falsy.clone();
                 if index + 1 < paths.len() {
-                    selected.push(Predicate::truthy_path(path.clone()));
+                    selected.push(Predicate::truthy_path(path.encode()));
                 }
                 let mut meta = crate::helper_meta::HelperOutputMeta::default();
                 meta.predicates.insert(selected.into_iter().collect());
                 sources.insert(path.clone(), meta);
-                prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
+                prior_falsy.push(Predicate::truthy_path(path.encode()).negated());
             }
             return Some(sources);
         }
@@ -2891,12 +2905,12 @@ impl ValuePathContext<'_> {
         for (index, path) in paths.iter().enumerate() {
             let mut selected = prior_falsy.clone();
             if index + 1 < paths.len() {
-                selected.push(Predicate::truthy_path(path.clone()));
+                selected.push(Predicate::truthy_path(path.encode()));
             }
             let mut meta = value_meta.get(path).cloned().unwrap_or_default();
             meta.predicates.insert(selected.into_iter().collect());
             sources.insert(path.clone(), meta);
-            prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
+            prior_falsy.push(Predicate::truthy_path(path.encode()).negated());
         }
         Some(sources)
     }
@@ -2946,13 +2960,13 @@ impl ValuePathContext<'_> {
                 .iter()
                 .map(|schema_type| {
                     Predicate::from(Guard::TypeIs {
-                        path: helm_schema_core::ValuesPath::parse(&path),
+                        path: path.clone(),
                         schema_type: (*schema_type).to_string(),
                     })
                 })
                 .collect();
             if null_matches != 0 {
-                kind_alternatives.push(Predicate::invalid_kind_path(path.clone()));
+                kind_alternatives.push(Predicate::invalid_kind_path(path.encode()));
             }
             let type_predicate = predicate_any(kind_alternatives);
             if meta.predicates.is_empty() {
@@ -3006,10 +3020,10 @@ impl ValuePathContext<'_> {
         for (path, meta) in sources {
             let type_predicate = match schema_type {
                 Some(schema_type) => Predicate::from(Guard::TypeIs {
-                    path: helm_schema_core::ValuesPath::parse(&path),
+                    path: path.clone(),
                     schema_type: schema_type.to_string(),
                 }),
-                None => Predicate::invalid_kind_path(path),
+                None => Predicate::invalid_kind_path(path.encode()),
             };
             let type_predicate = if negated {
                 type_predicate.negated()

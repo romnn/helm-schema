@@ -422,19 +422,15 @@ impl Interpreter<'_> {
             return;
         };
         let mut prior_falsy = Vec::new();
-        let typed_chain = chain
-            .iter()
-            .map(|path| helm_schema_core::ValuesPath::parse(path))
-            .collect::<Vec<_>>();
         for path in &chain {
             let mut tail = prior_falsy.clone();
-            tail.push(Predicate::truthy_path(path.clone()));
+            tail.push(Predicate::truthy_path(path.encode()));
             let capture = crate::eval_effect::FailCapture {
                 conjunction: self.fail_capture_conjunction(tail),
                 ranged: self.capture_ranged_modes(),
                 kind: crate::eval_effect::CaptureKind::RangeSelection {
-                    path: helm_schema_core::ValuesPath::parse(path),
-                    chain: typed_chain.clone(),
+                    path: path.clone(),
+                    chain: chain.clone(),
                     allow_integer: !destructured,
                 },
             };
@@ -445,7 +441,7 @@ impl Interpreter<'_> {
             {
                 self.observed_facts.captures.insert(capture);
             }
-            prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
+            prior_falsy.push(Predicate::truthy_path(path.encode()).negated());
         }
     }
 
@@ -675,7 +671,7 @@ impl Interpreter<'_> {
                 let mut hole_meta = hole.effects.local_output_meta.clone();
                 merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
                 for (path, keys) in &hole.effects.omitted_map_keys {
-                    let meta = hole_meta.entry(path.encode()).or_default();
+                    let meta = hole_meta.entry(path.clone()).or_default();
                     for key in keys {
                         meta.omitted_keys.insert(key.clone(), Vec::new());
                     }

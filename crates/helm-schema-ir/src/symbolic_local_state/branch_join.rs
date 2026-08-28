@@ -325,9 +325,9 @@ fn join_path_union(sets: Vec<&BTreeSet<String>>) -> BTreeSet<String> {
 }
 
 fn join_meta_by_path(
-    metas: Vec<&BTreeMap<String, HelperOutputMeta>>,
-) -> BTreeMap<String, HelperOutputMeta> {
-    let mut merged: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
+    metas: Vec<&BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
+) -> BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta> {
+    let mut merged: BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta> = BTreeMap::new();
     for meta_by_path in metas {
         for (path, meta) in meta_by_path {
             merged.entry(path.clone()).or_default().merge(meta);

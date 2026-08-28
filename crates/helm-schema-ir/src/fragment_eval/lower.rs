@@ -98,42 +98,42 @@ pub(crate) struct LowerScope<'a> {
     pub(crate) json_serialized_paths: &'a BTreeSet<ValuesPath>,
     pub(crate) chart_value_defaults: &'a BTreeSet<String>,
     pub(crate) local_source_paths: &'a BTreeSet<ValuesPath>,
-    pub(crate) local_output_meta: &'a std::collections::BTreeMap<String, HelperOutputMeta>,
+    pub(crate) local_output_meta: &'a std::collections::BTreeMap<ValuesPath, HelperOutputMeta>,
 }
 
 impl LowerScope<'_> {
     pub(super) fn splice(
         &self,
-        path: &str,
+        path: &ValuesPath,
         kind: ValueKind,
         helper_meta: Option<&HelperOutputMeta>,
     ) -> Splice {
-        let values_path = ValuesPath::parse(path);
+        let encoded_path = path.encode();
         let defaulted = helper_meta.is_some_and(|meta| meta.defaulted)
-            || self.defaulted_paths.contains(path)
-            || self.chart_value_defaults.contains(path);
+            || self.defaulted_paths.contains(&encoded_path)
+            || self.chart_value_defaults.contains(&encoded_path);
         Splice {
-            values_path: values_path.clone(),
+            values_path: path.clone(),
             kind,
             meta: SpliceMeta {
                 input_identity: helper_meta.is_some_and(HelperOutputMeta::is_input_identity),
                 defaulted,
-                encoded: values_path_is_encoded(&values_path, self.encoded_paths),
+                encoded: values_path_is_encoded(path, self.encoded_paths),
                 shape_erased: helper_meta.is_some_and(|meta| meta.shape_erased)
-                    || values_path_is_encoded(&values_path, self.shape_erased_paths),
+                    || values_path_is_encoded(path, self.shape_erased_paths),
                 stringified: helper_meta.is_some_and(|meta| meta.stringified)
-                    || values_path_is_encoded(&values_path, self.stringified_paths),
+                    || values_path_is_encoded(path, self.stringified_paths),
                 nil_omitted: helper_meta.is_some_and(|meta| meta.nil_omitted)
-                    || values_path_is_encoded(&values_path, self.nil_omitting_paths),
+                    || values_path_is_encoded(path, self.nil_omitting_paths),
                 yaml_serialized: helper_meta.is_some_and(|meta| meta.yaml_serialized)
-                    || values_path_is_encoded(&values_path, self.yaml_serialized_paths),
+                    || values_path_is_encoded(path, self.yaml_serialized_paths),
                 templated_yaml: helper_meta.is_some_and(|meta| meta.templated_yaml)
-                    || values_path_is_encoded(&values_path, self.templated_yaml_paths),
+                    || values_path_is_encoded(path, self.templated_yaml_paths),
                 plain_slot_string_format: helper_meta
                     .is_some_and(|meta| meta.plain_slot_string_format)
-                    || values_path_is_encoded(&values_path, self.plain_slot_string_format_paths),
+                    || values_path_is_encoded(path, self.plain_slot_string_format_paths),
                 json_serialized: helper_meta.is_some_and(|meta| meta.json_serialized)
-                    || values_path_is_encoded(&values_path, self.json_serialized_paths),
+                    || values_path_is_encoded(path, self.json_serialized_paths),
                 json_decoded: helper_meta.is_some_and(|meta| meta.json_decoded),
                 lexical_escapes: helper_meta
                     .map(|meta| meta.lexical_escapes.clone())
@@ -142,7 +142,7 @@ impl LowerScope<'_> {
                 merge_layers: helper_meta.and_then(|meta| meta.merge_layers.clone()),
                 range_key: false,
                 digest: false,
-                merge_operand: self.merge_operand_paths.contains(&values_path),
+                merge_operand: self.merge_operand_paths.contains(path),
                 omitted_members: helper_meta
                     .map(|meta| meta.omitted_keys.clone())
                     .unwrap_or_default(),
@@ -163,7 +163,7 @@ impl LowerScope<'_> {
     /// unconditional arm.
     pub(super) fn path_splice_arms(
         &self,
-        path: &str,
+        path: &ValuesPath,
         kind: ValueKind,
     ) -> Vec<(PathCondition, Splice)> {
         let meta = self.local_output_meta.get(path);
@@ -235,7 +235,7 @@ pub(crate) fn lower_value(
             if path.segments().next().is_none() {
                 Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
             } else {
-                let mut splice = scope.splice(&path.encode(), kind, None);
+                let mut splice = scope.splice(path, kind, None);
                 splice.meta.range_key = true;
                 Guarded::unconditional(AbstractFragment::Splice(splice))
             }
@@ -245,7 +245,7 @@ pub(crate) fn lower_value(
                 Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
             } else {
                 let mut out = Guarded::empty();
-                for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind) {
+                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
                     splice.meta.input_identity = true;
                     out.arms.push((condition, AbstractFragment::Splice(splice)));
                 }
@@ -257,7 +257,7 @@ pub(crate) fn lower_value(
                 Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
             } else {
                 let mut out = Guarded::empty();
-                for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind) {
+                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
                     splice.meta.input_identity = true;
                     splice.meta.json_decoded = true;
                     out.arms.push((condition, AbstractFragment::Splice(splice)));
@@ -269,7 +269,7 @@ pub(crate) fn lower_value(
             let meta = scope
                 .local_source_paths
                 .contains(path)
-                .then(|| scope.local_output_meta.get(&path.encode()))
+                .then(|| scope.local_output_meta.get(path))
                 .flatten()
                 .unwrap_or(meta);
             // A composed-text value renders the path INSIDE literal text
@@ -290,7 +290,7 @@ pub(crate) fn lower_value(
             for condition in helper_meta_conditions(meta) {
                 out.arms.push((
                     condition,
-                    AbstractFragment::Splice(scope.splice(&path.encode(), kind, Some(meta))),
+                    AbstractFragment::Splice(scope.splice(path, kind, Some(meta))),
                 ));
             }
             out
@@ -393,7 +393,7 @@ pub(crate) fn lower_value(
             // celery-merged workers base) — so identity extraction and
             // shadow positions read the flat list.
             let layers = flattened_merge_layers(layers);
-            let identities: Option<Vec<String>> = layers
+            let identities: Option<Vec<ValuesPath>> = layers
                 .iter()
                 .map(|layer| layer.merge_layer_identity())
                 .collect();
@@ -405,13 +405,10 @@ pub(crate) fn lower_value(
                         if let AbstractFragment::Splice(splice) = fragment
                             && layer_paths
                                 .get(position)
-                                .is_some_and(|path| splice.values_path.encode() == *path)
+                                .is_some_and(|path| splice.values_path == *path)
                         {
                             splice.meta.merge_layers = Some(helm_schema_core::MergeLayersUse {
-                                layers: layer_paths
-                                    .iter()
-                                    .map(|path| ValuesPath::parse(path))
-                                    .collect(),
+                                layers: layer_paths.clone(),
                                 position,
                                 transforms: layers
                                     .iter()
@@ -452,7 +449,7 @@ pub(crate) fn lower_value(
             // suffix), never the whole raw text.
             let mut out = Guarded::empty();
             for path in source_paths {
-                for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind) {
+                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
                     splice.meta.split_segment = Some(helm_schema_core::SplitSegmentUse {
                         separator: separator.clone(),
                         last: *last,
@@ -478,7 +475,7 @@ pub(crate) fn lower_value(
             let mut out = Guarded::empty();
             let mut taint = BTreeSet::new();
             for path in paths {
-                match scope.local_output_meta.get(&path.encode()) {
+                match scope.local_output_meta.get(path) {
                     Some(meta) if !meta.predicates.is_empty() || meta.defaulted => {
                         // A derived-text path whose identity the transform
                         // lost renders FRESH text into a scalar slot
@@ -498,8 +495,7 @@ pub(crate) fn lower_value(
                                 && values_path_is_encoded(path, scope.derived_text_paths)
                                 && !values_path_is_encoded(path, scope.shape_erased_paths)
                                 && !values_path_is_encoded(path, scope.encoded_paths);
-                        for (condition, mut splice) in scope.path_splice_arms(&path.encode(), kind)
-                        {
+                        for (condition, mut splice) in scope.path_splice_arms(path, kind) {
                             splice.meta.digest |= digest_input;
                             out.arms.push((condition, AbstractFragment::Splice(splice)));
                         }
@@ -598,7 +594,7 @@ pub(crate) fn lower_value_scalar_arms(
             if path.segments().next().is_none() {
                 return Vec::new();
             }
-            let mut splice = scope.splice(&path.encode(), kind, None);
+            let mut splice = scope.splice(path, kind, None);
             splice.meta.range_key = true;
             vec![(Predicate::True, vec![StringPart::Splice(splice)])]
         }
@@ -607,7 +603,7 @@ pub(crate) fn lower_value_scalar_arms(
                 Vec::new()
             } else {
                 scope
-                    .path_splice_arms(&path.encode(), kind)
+                    .path_splice_arms(path, kind)
                     .into_iter()
                     .map(|(condition, mut splice)| {
                         splice.meta.input_identity = true;
@@ -621,7 +617,7 @@ pub(crate) fn lower_value_scalar_arms(
                 Vec::new()
             } else {
                 scope
-                    .path_splice_arms(&path.encode(), kind)
+                    .path_splice_arms(path, kind)
                     .into_iter()
                     .map(|(condition, mut splice)| {
                         splice.meta.input_identity = true;
@@ -635,7 +631,7 @@ pub(crate) fn lower_value_scalar_arms(
             let meta = scope
                 .local_source_paths
                 .contains(path)
-                .then(|| scope.local_output_meta.get(&path.encode()))
+                .then(|| scope.local_output_meta.get(path))
                 .flatten()
                 .unwrap_or(meta);
             helper_meta_conditions(meta)
@@ -643,7 +639,7 @@ pub(crate) fn lower_value_scalar_arms(
                 .map(|condition| {
                     (
                         condition,
-                        vec![StringPart::Splice(scope.splice(&path.encode(), kind, Some(meta)))],
+                        vec![StringPart::Splice(scope.splice(path, kind, Some(meta)))],
                     )
                 })
                 .collect()
@@ -683,9 +679,9 @@ pub(crate) fn lower_value_scalar_arms(
             let mut arms = Vec::new();
             let mut taint = BTreeSet::new();
             for path in paths {
-                match scope.local_output_meta.get(&path.encode()) {
+                match scope.local_output_meta.get(path) {
                     Some(meta) if !meta.predicates.is_empty() || meta.defaulted => {
-                        for (condition, splice) in scope.path_splice_arms(&path.encode(), kind) {
+                        for (condition, splice) in scope.path_splice_arms(path, kind) {
                             arms.push((condition, vec![StringPart::Splice(splice)]));
                         }
                     }
@@ -758,7 +754,8 @@ fn lower_rendered_parts(
                 stringified,
                 lexical_escapes,
             } => {
-                let mut splice = scope.splice(path, kind, scope.local_output_meta.get(path));
+                let path = ValuesPath::parse(path);
+                let mut splice = scope.splice(&path, kind, scope.local_output_meta.get(&path));
                 splice.meta.input_identity = true;
                 splice.meta.stringified |= *stringified;
                 splice

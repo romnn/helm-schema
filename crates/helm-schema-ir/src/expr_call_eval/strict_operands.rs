@@ -62,7 +62,7 @@ pub(super) fn record_string_transform_effects(
                 || effects.local_default_paths.contains(&typed_path)
                 || effects
                     .local_output_meta
-                    .get(path)
+                    .get(&typed_path)
                     .is_some_and(|meta| meta.defaulted || !meta.predicates.is_empty());
             if !selected && !effects.derived_text_paths.contains(&typed_path) {
                 effects.plain_text_preserving_paths.insert(typed_path);
@@ -205,7 +205,7 @@ fn parser_operand_has_partitioned_identity(
                     || operand
                         .effects
                         .local_output_meta
-                        .get(path)
+                        .get(&typed_path)
                         .is_some_and(|meta| !meta.predicates.is_empty())
                     || parser_output_metas(operand.value.as_ref(), path)
                         .iter()
@@ -464,7 +464,7 @@ fn string_operand_requirements(
     let path_is_derived = effects.derived_text_paths.contains(&typed_path)
         || effects
             .local_output_meta
-            .get(path)
+            .get(&typed_path)
             .is_some_and(|meta| meta.shape_erased || meta.derived_text);
     let mut requirements = if output_metas.is_empty() {
         if path_is_derived {
@@ -895,7 +895,7 @@ fn strict_operand_path_is_clean(path: &str, effects: &Effects) -> bool {
         && !effects.derived_text_paths.contains(&typed_path)
         && !effects
             .local_output_meta
-            .get(path)
+            .get(&typed_path)
             .is_some_and(|meta| meta.shape_erased || meta.derived_text)
 }
 
@@ -1067,7 +1067,7 @@ pub(super) fn operand_selection_conjunctions(effects: &Effects, path: &str) -> V
     if effects.defaults.contains(&typed_path) || effects.local_default_paths.contains(&typed_path) {
         shared.insert(Predicate::truthy_path(path));
     }
-    let Some(meta) = effects.local_output_meta.get(path) else {
+    let Some(meta) = effects.local_output_meta.get(&typed_path) else {
         return vec![shared.into_iter().collect()];
     };
     if meta.predicates.is_empty() {

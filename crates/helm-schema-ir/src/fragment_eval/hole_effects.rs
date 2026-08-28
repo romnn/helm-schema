@@ -203,12 +203,12 @@ pub(super) fn helper_claim_paths(effects: &Effects) -> std::collections::BTreeSe
         .iter()
         .map(|read| read.values_path.encode())
         .collect();
-    claims.extend(effects.helper_rendered.iter().map(|row| row.path.clone()));
+    claims.extend(effects.helper_rendered.iter().map(|row| row.path.encode()));
     claims.extend(
         effects
             .helper_dependency_rendered
             .iter()
-            .map(|row| row.path.clone()),
+            .map(|row| row.path.encode()),
     );
     claims
 }
@@ -533,17 +533,22 @@ impl Interpreter<'_> {
                 .extend(meta.suppress_predicate_paths.iter().cloned());
         }
         self.suppress_predicate_paths
-            .extend(encoded_paths(&effects.helper_suppressed_paths));
+            .extend(effects.helper_suppressed_paths.iter().cloned());
         let suppressed: std::collections::BTreeSet<String> = effects
             .helper_rendered
             .iter()
-            .flat_map(|row| row.meta.suppress_predicate_paths.iter().cloned())
-            .chain(
-                effects
-                    .helper_dependency_rendered
+            .flat_map(|row| {
+                row.meta
+                    .suppress_predicate_paths
                     .iter()
-                    .flat_map(|row| row.meta.suppress_predicate_paths.iter().cloned()),
-            )
+                    .map(helm_schema_core::ValuesPath::encode)
+            })
+            .chain(effects.helper_dependency_rendered.iter().flat_map(|row| {
+                row.meta
+                    .suppress_predicate_paths
+                    .iter()
+                    .map(helm_schema_core::ValuesPath::encode)
+            }))
             .chain(encoded_paths(&effects.helper_suppressed_paths))
             .collect();
         let claims = helper_claim_paths(effects);
@@ -554,7 +559,7 @@ impl Interpreter<'_> {
             } else {
                 row.kind
             };
-            self.push_meta_reads(&row.path, kind, &row.meta, &claims, true);
+            self.push_meta_reads(&row.path.encode(), kind, &row.meta, &claims, true);
         }
         match demotion {
             RenderedDemotion::None => {}
@@ -568,18 +573,24 @@ impl Interpreter<'_> {
                     } else {
                         row.kind
                     };
-                    self.push_meta_reads(&row.path, kind, &row.meta, &claims, false);
+                    self.push_meta_reads(&row.path.encode(), kind, &row.meta, &claims, false);
                 }
             }
             RenderedDemotion::Dependency => {
                 for row in &effects.helper_rendered {
-                    self.push_meta_reads(&row.path, ValueKind::Scalar, &row.meta, &claims, true);
+                    self.push_meta_reads(
+                        &row.path.encode(),
+                        ValueKind::Scalar,
+                        &row.meta,
+                        &claims,
+                        true,
+                    );
                 }
             }
             RenderedDemotion::Serialized => {
                 for row in &effects.helper_rendered {
                     self.push_meta_reads(
-                        &row.path,
+                        &row.path.encode(),
                         ValueKind::Serialized,
                         &row.meta,
                         &claims,
@@ -629,11 +640,11 @@ impl Interpreter<'_> {
     /// (the most-specific-path rule for scalar sites), and paths already
     /// covered by rendered helper rows read through those rows instead.
     pub(super) fn push_effects_reads(&mut self, hole: &HoleEval, kind: ValueKind) {
-        let row_sources: std::collections::BTreeSet<&String> = hole
+        let row_sources: std::collections::BTreeSet<String> = hole
             .effects
             .helper_rendered
             .iter()
-            .map(|row| &row.path)
+            .map(|row| row.path.encode())
             .collect();
         let defaulted = hole.effects.default_paths_with_local();
         let all = hole.effects.output_value_paths();

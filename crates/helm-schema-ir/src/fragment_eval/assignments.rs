@@ -30,8 +30,8 @@ use super::hole_effects::{RenderedDemotion, predicate_applies_to_flowing_path};
 pub(super) fn type_descriptor_sources(
     expr: &TemplateExpr,
     interpreter: &Interpreter<'_>,
-    output_meta: &std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>,
-) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
+    output_meta: &std::collections::BTreeMap<ValuesPath, crate::helper_meta::HelperOutputMeta>,
+) -> Option<std::collections::BTreeMap<ValuesPath, crate::helper_meta::HelperOutputMeta>> {
     let TemplateExpr::Call { function, args } = expr.deparen() else {
         return None;
     };
@@ -687,25 +687,22 @@ impl Interpreter<'_> {
             // A shape-erasing RHS (`$tag := … | toString`) rides the binding:
             // wherever the local renders, the splice exposes no input shape.
             for path in &hole.effects.observed_facts.shape_erased_paths {
-                output_meta.entry(path.encode()).or_default().shape_erased = true;
+                output_meta.entry(path.clone()).or_default().shape_erased = true;
             }
             for path in &hole.effects.stringified_paths {
-                output_meta.entry(path.encode()).or_default().stringified = true;
+                output_meta.entry(path.clone()).or_default().stringified = true;
             }
             for path in &hole.effects.yaml_serialized_paths {
-                output_meta
-                    .entry(path.encode())
-                    .or_default()
-                    .yaml_serialized = true;
+                output_meta.entry(path.clone()).or_default().yaml_serialized = true;
             }
             for path in &hole.effects.templated_yaml_paths {
-                output_meta.entry(path.encode()).or_default().templated_yaml = true;
+                output_meta.entry(path.clone()).or_default().templated_yaml = true;
             }
             // Likewise a derived-text RHS (`$port := include … .`): a later
             // consuming transform on the local operates on rendered text and
             // claims nothing about the underlying paths.
             for path in &hole.effects.derived_text_paths {
-                output_meta.entry(path.encode()).or_default().derived_text = true;
+                output_meta.entry(path.clone()).or_default().derived_text = true;
             }
             // An omitting RHS (`$ctx = omit $ctx "runAsUser"`) rides the
             // binding: wherever the local renders the map, the removed
@@ -713,16 +710,13 @@ impl Interpreter<'_> {
             // the branch join fills them where the omit provably did not
             // run.
             for (path, keys) in &hole.effects.omitted_map_keys {
-                let meta = output_meta.entry(path.encode()).or_default();
+                let meta = output_meta.entry(path.clone()).or_default();
                 for key in keys {
                     meta.omitted_keys.insert(key.clone(), Vec::new());
                 }
             }
             for path in &hole.effects.json_serialized_paths {
-                output_meta
-                    .entry(path.encode())
-                    .or_default()
-                    .json_serialized = true;
+                output_meta.entry(path.clone()).or_default().json_serialized = true;
             }
             // Eager helper arguments execute, but their rendered values are dependencies rather
             // than part of the assignment's value. Keep their runtime effects while preventing
@@ -731,12 +725,12 @@ impl Interpreter<'_> {
                 .as_ref()
                 .map(AbstractValue::fragment_rendered_paths)
                 .unwrap_or_default();
-            let dependency_only_paths: std::collections::BTreeSet<&String> = hole
+            let dependency_only_paths: std::collections::BTreeSet<&ValuesPath> = hole
                 .effects
                 .helper_dependency_rendered
                 .iter()
                 .map(|row| &row.path)
-                .filter(|path| !fragment_paths.contains(&ValuesPath::parse(path)))
+                .filter(|path| !fragment_paths.contains(*path))
                 .collect();
             output_meta.retain(|path, _| !dependency_only_paths.contains(path));
             // A reassignment evaluated under branch predicates keeps them on
@@ -756,17 +750,17 @@ impl Interpreter<'_> {
             {
                 if let Some(binding) = &fragment_value {
                     for path in binding.fragment_rendered_paths() {
-                        output_meta.entry(path.encode()).or_default();
+                        output_meta.entry(path).or_default();
                     }
                 }
                 let flowing: std::collections::BTreeSet<String> =
-                    output_meta.keys().cloned().collect();
+                    output_meta.keys().map(ValuesPath::encode).collect();
                 for (path, meta) in &mut output_meta {
                     let site: std::collections::BTreeSet<Predicate> = self
                         .active_predicates
                         .iter()
                         .filter(|predicate| {
-                            predicate_applies_to_flowing_path(predicate, path, &flowing)
+                            predicate_applies_to_flowing_path(predicate, &path.encode(), &flowing)
                         })
                         .cloned()
                         .collect();

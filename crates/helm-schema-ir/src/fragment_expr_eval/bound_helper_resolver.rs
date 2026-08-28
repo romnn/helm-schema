@@ -95,7 +95,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 .rendered
                 .iter()
                 .filter(|row| row.meta.json_serialized)
-                .map(|row| helm_schema_core::ValuesPath::parse(&row.path))
+                .map(|row| row.path.clone())
                 .collect(),
             encoded_paths: summary
                 .encoded_paths()
@@ -114,11 +114,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 .unwrap_or_default(),
             helper_reads: summary.reads.clone(),
             helper_rendered: summary.rendered.clone(),
-            helper_suppressed_paths: summary
-                .suppress_predicate_paths
-                .iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(path))
-                .collect(),
+            helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
             helper_text_captures: summary.text_captures.iter().cloned().collect(),
             member_host_conversions: summary.member_host_conversions.clone(),
             ..Effects::default()
@@ -299,22 +295,17 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
             effects.merge(result.effects.execution_only());
             let layer = result.value?.without_widened()?;
             let path = layer.merge_layer_identity()?;
-            if path.is_empty() {
-                return None;
-            }
+            path.segments().next()?;
             let mut meta = layer.output_meta().remove(&path).unwrap_or_default();
             meta.json_decoded = true;
             meta.parsed_map = true;
             meta.conjoin_branches(&std::collections::BTreeSet::from([
                 helm_schema_core::Predicate::from(helm_schema_core::Guard::TypeIs {
-                    path: helm_schema_core::ValuesPath::parse(&path),
+                    path: path.clone(),
                     schema_type: "object".to_string(),
                 }),
             ]));
-            layers.push(AbstractValue::OutputPath(
-                helm_schema_core::ValuesPath::parse(&path),
-                meta,
-            ));
+            layers.push(AbstractValue::OutputPath(path, meta));
         }
 
         let value = AbstractValue::MergedLayers(layers);

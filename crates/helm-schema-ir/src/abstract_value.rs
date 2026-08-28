@@ -362,7 +362,7 @@ impl AbstractValue {
         }
     }
 
-    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+    pub(crate) fn output_meta(&self) -> BTreeMap<ValuesPath, HelperOutputMeta> {
         let mut out = BTreeMap::new();
         self.collect_output_meta(&mut out);
         out
@@ -374,7 +374,7 @@ impl AbstractValue {
     /// A path may occur in both arms of a helper while opening the token in
     /// only one. Filtering before the per-path merge keeps the formatter
     /// fact paired with that arm's predicates.
-    pub(crate) fn plain_slot_string_format_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+    pub(crate) fn plain_slot_string_format_meta(&self) -> BTreeMap<ValuesPath, HelperOutputMeta> {
         let mut out = BTreeMap::new();
         self.collect_plain_slot_string_format_meta(&mut out);
         out
@@ -382,10 +382,10 @@ impl AbstractValue {
 
     pub(crate) fn with_output_meta(
         self,
-        meta_by_path: &BTreeMap<String, HelperOutputMeta>,
+        meta_by_path: &BTreeMap<ValuesPath, HelperOutputMeta>,
     ) -> Self {
         match self {
-            Self::ValuesPath(path) => match meta_by_path.get(&path.encode()) {
+            Self::ValuesPath(path) => match meta_by_path.get(&path) {
                 Some(meta) => {
                     let mut meta = meta.clone();
                     meta.input_identity = true;
@@ -393,7 +393,7 @@ impl AbstractValue {
                 }
                 None => Self::ValuesPath(path),
             },
-            Self::JsonDecodedPath(path) => match meta_by_path.get(&path.encode()) {
+            Self::JsonDecodedPath(path) => match meta_by_path.get(&path) {
                 Some(meta) => {
                     let mut meta = meta.clone();
                     meta.json_decoded = true;
@@ -402,7 +402,7 @@ impl AbstractValue {
                 None => Self::JsonDecodedPath(path),
             },
             Self::OutputPath(path, mut meta) => {
-                if let Some(extra) = meta_by_path.get(&path.encode()) {
+                if let Some(extra) = meta_by_path.get(&path) {
                     meta.merge(extra);
                 }
                 Self::OutputPath(path, meta)
@@ -491,9 +491,9 @@ impl AbstractValue {
         }
     }
 
-    fn collect_output_meta(&self, out: &mut BTreeMap<String, HelperOutputMeta>) {
+    fn collect_output_meta(&self, out: &mut BTreeMap<ValuesPath, HelperOutputMeta>) {
         match self {
-            Self::OutputPath(path, meta) => out.entry(path.encode()).or_default().merge(meta),
+            Self::OutputPath(path, meta) => out.entry(path.clone()).or_default().merge(meta),
             Self::Dict(entries) => {
                 for value in entries.values() {
                     value.collect_output_meta(out);
@@ -535,13 +535,15 @@ impl AbstractValue {
                 // outer order where the inner merge stood (airflow's
                 // per-set merge over the celery-merged workers base).
                 let layers = flattened_merge_layers(layers);
-                let identities: Option<Vec<String>> = layers
+                let identities: Option<Vec<ValuesPath>> = layers
                     .iter()
                     .map(|layer| layer.merge_layer_identity())
                     .collect();
                 if let Some(layer_paths) = identities
                     && layer_paths.len() > 1
-                    && layer_paths.iter().all(|path| !path.is_empty())
+                    && layer_paths
+                        .iter()
+                        .all(|path| path.segments().next().is_some())
                 {
                     let transforms = layers
                         .iter()
@@ -558,10 +560,7 @@ impl AbstractValue {
                     for (position, layer_path) in layer_paths.iter().enumerate() {
                         let entry = out.entry(layer_path.clone()).or_default();
                         entry.merge_layers = Some(helm_schema_core::MergeLayersUse {
-                            layers: layer_paths
-                                .iter()
-                                .map(|path| helm_schema_core::ValuesPath::parse(path))
-                                .collect(),
+                            layers: layer_paths.clone(),
                             position,
                             transforms: transforms.clone(),
                             via_binding: true,
@@ -584,10 +583,13 @@ impl AbstractValue {
         }
     }
 
-    fn collect_plain_slot_string_format_meta(&self, out: &mut BTreeMap<String, HelperOutputMeta>) {
+    fn collect_plain_slot_string_format_meta(
+        &self,
+        out: &mut BTreeMap<ValuesPath, HelperOutputMeta>,
+    ) {
         match self {
             Self::OutputPath(path, meta) if meta.plain_slot_string_format => {
-                out.entry(path.encode()).or_default().merge(meta);
+                out.entry(path.clone()).or_default().merge(meta);
             }
             Self::Dict(entries) => {
                 for value in entries.values() {
@@ -1183,7 +1185,7 @@ impl AbstractValue {
     /// have different truthiness and cannot be named by the raw path. A
     /// non-identity candidate therefore stops the decode, while a literal
     /// tail is tolerated because no later candidate needs its negation.
-    pub(crate) fn selection_chain_identity_paths(&self) -> Option<Vec<String>> {
+    pub(crate) fn selection_chain_identity_paths(&self) -> Option<Vec<ValuesPath>> {
         let Self::FirstTruthy(candidates) = self else {
             return None;
         };
@@ -1191,10 +1193,10 @@ impl AbstractValue {
         for candidate in candidates {
             match candidate {
                 Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
-                    paths.push(path.encode());
+                    paths.push(path.clone());
                 }
                 Self::OutputPath(path, meta) if meta.is_input_identity() => {
-                    paths.push(path.encode());
+                    paths.push(path.clone());
                 }
                 _ => break,
             }
@@ -1476,7 +1478,7 @@ impl AbstractValue {
     /// .podAffinityTerm` selector built from `nameOverride`), so keying the
     /// merge shadow on the referenced path would scope sibling-layer members
     /// by the wrong value.
-    pub(crate) fn merge_layer_identity(&self) -> Option<String> {
+    pub(crate) fn merge_layer_identity(&self) -> Option<ValuesPath> {
         fn arms_are_identity_or_literal(value: &AbstractValue) -> bool {
             match value {
                 AbstractValue::ValuesPath(_)
@@ -1496,9 +1498,7 @@ impl AbstractValue {
                 other => other.paths().is_empty(),
             }
         }
-        arms_are_identity_or_literal(self)
-            .then(|| self.unique_path())?
-            .map(|path| path.encode())
+        arms_are_identity_or_literal(self).then(|| self.unique_path())?
     }
 
     pub(crate) fn with_overlay_entries(self, new_entries: BTreeMap<String, AbstractValue>) -> Self {

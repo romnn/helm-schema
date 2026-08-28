@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use crate::{ContractProvenance, ValueKind};
-use helm_schema_core::{GuardValue, Predicate};
+use helm_schema_core::{GuardValue, Predicate, ValuesPath};
 
 /// A `coalesce` substituted a constant string fallback for a stringified
 /// binding's Helm-empty rendering.
@@ -114,7 +114,7 @@ pub(crate) struct HelperOutputMeta {
     pub(crate) provenance: Vec<ContractProvenance>,
     /// Predicate paths this row's derivation explicitly severed (index-call
     /// narrowing): guard reads of their strict ancestors are dropped.
-    pub(crate) suppress_predicate_paths: BTreeSet<String>,
+    pub(crate) suppress_predicate_paths: BTreeSet<ValuesPath>,
     /// Conditions under which this path's RAW value is the consumed operand:
     /// a sibling `if` arm reassigned the binding away (datadog's `latest` →
     /// `1.20.0` sentinel), so strict-operand captures conjoin these
@@ -310,9 +310,8 @@ impl HelperOutputMeta {
             merge_exact_fact(self.default_fallback.take(), other.default_fallback.clone());
     }
 
-    pub(crate) fn suppress_predicate_path(&mut self, path: impl Into<String>) {
-        let path = path.into();
-        if !path.is_empty() {
+    pub(crate) fn suppress_predicate_path(&mut self, path: ValuesPath) {
+        if path.segments().next().is_some() {
             self.suppress_predicate_paths.insert(path);
         }
     }
@@ -353,7 +352,7 @@ fn merge_exact_fact<T: PartialEq>(left: Option<T>, right: Option<T>) -> Option<T
 /// transfer functions collapse the value shape.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct RenderedRow {
-    pub(crate) path: String,
+    pub(crate) path: ValuesPath,
     pub(crate) kind: ValueKind,
     pub(crate) encoded: bool,
     pub(crate) meta: HelperOutputMeta,
@@ -362,7 +361,7 @@ pub(crate) struct RenderedRow {
 /// Merges the meta of every rendered row into a per-source meta map (the
 /// shape local bindings carry).
 pub(crate) fn merge_rendered_row_meta(
-    output_meta: &mut BTreeMap<String, HelperOutputMeta>,
+    output_meta: &mut BTreeMap<ValuesPath, HelperOutputMeta>,
     rows: &[RenderedRow],
 ) {
     for row in rows {

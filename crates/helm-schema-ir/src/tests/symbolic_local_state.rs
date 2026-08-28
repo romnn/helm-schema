@@ -6,7 +6,7 @@ use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::TruthCondition;
 use crate::symbolic_local_state::SymbolicLocalState;
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -495,6 +495,6 @@ fn get_binding(base: &str, key_var: &str) -> GetBinding {
     }
 }
 
-fn output_meta(path: &str) -> BTreeMap<String, HelperOutputMeta> {
-    BTreeMap::from([(path.to_string(), HelperOutputMeta::default())])
+fn output_meta(path: &str) -> BTreeMap<ValuesPath, HelperOutputMeta> {
+    BTreeMap::from([(ValuesPath::parse(path), HelperOutputMeta::default())])
 }

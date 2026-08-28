@@ -78,7 +78,7 @@ fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
     )]));
     let template_output_meta = HashMap::from([(
         "selected".to_string(),
-        BTreeMap::from([("value".to_string(), metadata)]),
+        BTreeMap::from([(helm_schema_core::ValuesPath::parse("value"), metadata)]),
     )]);
 
     sim_assert_eq!(
@@ -96,7 +96,7 @@ fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
 fn parse_condition_with_template_facts(
     text: &str,
     template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
 ) -> Vec<Guard> {
     let wrapped = format!("{{{{ {text} }}}}");
     let Some(top) = parse_action_expressions(&wrapped).into_iter().next() else {
@@ -116,22 +116,24 @@ fn condition_context(
 
 fn condition_context_with_output_meta(
     template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
 ) -> ValuePathContext<'static> {
     condition_context_with_defines(template_bindings, template_output_meta, DefineIndex::new())
 }
 
 fn condition_context_with_defines(
     template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     defines: DefineIndex,
 ) -> ValuePathContext<'static> {
     let root_bindings = Box::leak(Box::new(HashMap::new()));
     let range_domains = Box::leak(Box::new(HashMap::new()));
     let get_bindings = Box::leak(Box::new(HashMap::new()));
     let template_default_paths = Box::leak(Box::new(HashMap::new()));
-    let template_output_meta: &'static HashMap<String, BTreeMap<String, HelperOutputMeta>> =
-        Box::leak(Box::new(template_output_meta));
+    let template_output_meta: &'static HashMap<
+        String,
+        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
+    > = Box::leak(Box::new(template_output_meta));
     let template_scalar_dispatches = Box::leak(Box::new(HashMap::new()));
     let template_truthy_reductions = Box::leak(Box::new(HashMap::new()));
     let template_truthiness_abstentions = Box::leak(Box::new(BTreeSet::new()));
@@ -643,9 +645,12 @@ fn output_meta_comparison_preserves_typed_predicates() {
     let template_output_meta = HashMap::from([(
         "customUser".to_string(),
         BTreeMap::from([
-            ("auth.username".to_string(), HelperOutputMeta::default()),
             (
-                "global.postgresql.auth.username".to_string(),
+                helm_schema_core::ValuesPath::parse("auth.username"),
+                HelperOutputMeta::default(),
+            ),
+            (
+                helm_schema_core::ValuesPath::parse("global.postgresql.auth.username"),
                 HelperOutputMeta::default(),
             ),
         ]),
@@ -690,7 +695,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
             HashMap::from([("mode".to_string(), values_path!(path))]),
             HashMap::from([(
                 "mode".to_string(),
-                BTreeMap::from([(path.to_string(), meta)]),
+                BTreeMap::from([(helm_schema_core::ValuesPath::parse(path), meta)]),
             )]),
         )
     };

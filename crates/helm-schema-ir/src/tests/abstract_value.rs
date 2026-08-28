@@ -188,7 +188,7 @@ fn guard_metadata_preserves_raw_identity_through_member_selection() {
             "workers.celery.enableDefault",
         )]));
     let value = path("workers.celery.sets.*").with_output_meta(&BTreeMap::from([(
-        "workers.celery.sets.*".to_string(),
+        helm_schema_core::ValuesPath::parse("workers.celery.sets.*"),
         metadata,
     )]));
     let selected = value.apply_to_path(&["securityContexts".to_string(), "pod".to_string()]);

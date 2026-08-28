@@ -32,7 +32,8 @@ pub(crate) struct EvalEnv {
     /// straight from `MapIndex`) keeps the abort.
     pub(crate) pipeline_bound_locals: std::collections::HashSet<String>,
     pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
-    pub(crate) local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    pub(crate) local_output_meta:
+        HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     /// Structural conditions under which a local is truthy, as the fragment
     /// interpreter reduced them. A boolean flag carries no values-path
     /// identity, so short-circuit operand truthiness has no other way to

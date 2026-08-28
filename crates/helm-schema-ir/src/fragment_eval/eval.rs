@@ -742,7 +742,7 @@ pub(super) struct Interpreter<'a> {
     /// source: guard reads of their strict ancestors are dropped from the
     /// summary (the narrowing proves the ancestor probe was a traversal
     /// step, not a condition on the ancestor itself).
-    pub(super) suppress_predicate_paths: BTreeSet<String>,
+    pub(super) suppress_predicate_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// Every chart-level `set … default` normalization observed anywhere in
     /// this source, unconditionally. `locals.chart_value_defaults` keeps the
     /// branch-intersected "definitely ran in source order" view for render

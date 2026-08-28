@@ -19,7 +19,8 @@ pub(crate) struct SymbolicLocalState {
     pub(crate) get_bindings: HashMap<String, GetBinding>,
     pub(crate) fragment_values: HashMap<String, AbstractValue>,
     pub(crate) default_paths: HashMap<String, BTreeSet<String>>,
-    pub(crate) output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    pub(crate) output_meta:
+        HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     /// Runtime scalar values retained independently of fragment provenance.
     /// Branch joins guard each alternative by the branch that assigned it,
     /// so later helper conditions consume the same value semantics Helm does.
@@ -45,7 +46,8 @@ pub(crate) struct SymbolicLocalState {
     pub(crate) chart_value_defaults: BTreeSet<String>,
     /// Locals bound to a type descriptor. Each described path retains the
     /// predicates under which that path supplied the selected value.
-    pub(crate) typeof_sources: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    pub(crate) typeof_sources:
+        HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     /// Locals bound to a total integer cast of one values path
     /// (`$replicas := int (default 1 .Values.controller.replicas)`):
     /// comparisons on the local may strengthen through the raw-integer
@@ -94,12 +96,12 @@ struct VariableLocalState {
     fragment_value: Option<AbstractValue>,
     traversal_advanced: bool,
     default_paths: Option<BTreeSet<String>>,
-    output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
+    output_meta: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     scalar_dispatch: Option<ScalarValueDispatch>,
     truthy_reduction: Option<Predicate>,
     truthiness_abstained: bool,
     truthiness_cleared: bool,
-    typeof_source: Option<BTreeMap<String, HelperOutputMeta>>,
+    typeof_source: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     int_cast_source: Option<IntCastSource>,
     range_member_value: Option<AbstractValue>,
     definite_range_member_value: Option<AbstractValue>,

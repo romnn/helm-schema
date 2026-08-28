@@ -301,9 +301,9 @@ pub(super) fn eval_index(
                             {
                                 effects
                                     .local_output_meta
-                                    .entry(next_path.encode())
+                                    .entry(next_path.clone())
                                     .or_insert_with(HelperOutputMeta::default)
-                                    .suppress_predicate_path(base_path.encode());
+                                    .suppress_predicate_path(base_path.clone());
                             }
                         }
                     }

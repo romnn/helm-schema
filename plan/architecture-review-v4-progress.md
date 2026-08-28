@@ -3594,7 +3594,7 @@
 
 ## B4a.7 — migrate contract-schema signal path indexes
 
-- Status: landed; commit pending.
+- Status: landed in `a65493bb` (`refactor(ir): type abstract influence paths`).
 - Contract: representation-only migration of `ContractSchemaSignals` path-indexed maps and sets to
   segmented `ValuesPath`, deleting the duplicate `ContractPathSchemaEvidence.value_path` identity.
   Schema evidence, path order, provider overlays, requiredness, omission, range, diagnostic, and
@@ -4390,3 +4390,109 @@
 
 - Measured production LOC delta: -36 (64,337 to 64,301), from collapsing repeated typed
   set conversions and descendant/root checks onto the carrier.
+
+## B4a.15 — migrate helper-output metadata path indexes
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of every IR per-value-path `HelperOutputMeta` map key and
+  `suppress_predicate_paths` set to segmented `ValuesPath`, including effects, evaluation
+  environments, abstract-value metadata projections, symbolic local state, fragment summaries,
+  helper contexts, and condition decoding. Helper/local names and literal member keys remain
+  separate string domains.
+- Acceptance baseline: `a65493bb` (B4a.14).
+- Baseline production LOC: 64,301 Rust lines from `task tokei:core` on `a65493bb`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Helper metadata keeps identical branch predicates, transforms, suppressions, defaults,
+    serialization flags, merge layers, and stable legacy encoded ordering at every join.
+  - All affected carriers are crate-private, so this round changes no public API or wire format.
+    Encoding remains explicit only at string-facing diagnostics/dumps or unrelated map domains;
+    no coercion trait, cross-type comparison, or cached encoded twin is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - Every IR per-value-path `HelperOutputMeta` index now uses `ValuesPath`: expression effects,
+    evaluation environments, abstract-value projections, symbolic local state and branch joins,
+    helper contexts, type-descriptor sources, fragment summaries, rendered rows, and lowering.
+    Predicate-suppression paths use the same carrier.
+  - `RenderedRow.path`, selection-chain identities, merge-layer identities, and lowering's splice
+    lookup accept structural paths directly, eliminating the encode/decode joins that existed only
+    to address string-keyed metadata maps. Helper names and literal member keys remain strings.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `a65493bb`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The initial compiler-only carrier change was rejected with 99 production mismatches. Once
+    production compiled, the first all-target pass exposed 29 test construction mismatches and the
+    second exposed four. Every boundary was migrated explicitly; no archive or dump was produced
+    from those states.
+  - The first whole-workspace lint preflight was rejected on one `?`-eligible empty-path guard in
+    parsed-map merge lowering. It now uses direct `?` propagation; no lint suppression was added.
+  - The first immutable-archive write was rejected after its 7-minute-30-second build because
+    `/private/tmp` had only 270 MiB free and returned `ENOSPC`. No partial archive survived. The
+    completed B4a.13 archive was moved, not deleted, to the T7-backed
+    `target/campaign-archives/`; the unchanged final code state then archived successfully.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Expression effects and abstract values | Same metadata attachment/merge | IR/unit suite. |
+| Symbolic local state and branch joins | Same per-local path facts | Symbolic-state suite. |
+| Helper contexts and condition decoding | Same selected identities and predicates | Condition/helper suites. |
+| Fragment summaries and lowering | Same splices, taint, suppression, and rows | IR/schema dumps. |
+| String-facing boundaries | Same encoded bytes and stable order | Fixture dumps and prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds in 5 minutes 24 seconds, and 393/393 IR
+  tests pass, covering metadata attachment, selection chains, merge layers, branch joins, helper
+  contexts, fragment rows, suppression, and type-descriptor decoding. The corrected whole-workspace
+  lint preflight passes warning-free in 6 minutes 20 seconds.
+- Immutable build: after the recorded storage-only rejection, the unchanged final tree produces
+  `/private/tmp/arch-v4-b4a15-final1.tar.zst`; exit 0, 87 binaries and 125 files. The successful
+  retry reused the completed build and archived in 1.19 seconds.
+- Clean schema dump: the B4a.15 `final1` archive under the step-local schema `TMPDIR`; exit 0, 62
+  tests pass in 184.452 seconds and 84 artifacts are byte-identical to B4a.14.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one test passes in
+  3.840 seconds and 18 artifacts are byte-identical to B4a.14.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `a65493bb`,
+  Helm adjudication enabled; exit 0 in 69.159 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: none. Every migrated map, set, accessor, and rendered row is crate-private;
+  encoded IR and schema bytes remain identical.
+
+### Self-adversarial pass
+
+- Whole-tree searches find no string-keyed `HelperOutputMeta` map and no string-backed
+  `suppress_predicate_paths` set in production IR. Map keys are structural through construction,
+  merge, selection, lowering, and branch joins; encoding occurs only where an existing string
+  predicate, diagnostic, or dump API requires it.
+- Literal helper/local names, dictionary keys, omitted member names, schema types, and file paths
+  remain strings in their separate domains. No `Deref`, `AsRef<str>`, `Display`, cross-type
+  equality, cached encoded twin, or public/wire change was introduced.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, complete workspace Clippy pass in 6 minutes 7 seconds.
+- `task lint:fc`; exit 0, 48 combinations across 13 packages and 3 targets in 1,216.29
+  seconds.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 232.724 seconds after the
+  final build.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,804.955 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,893.657 seconds, including all
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; the final release binary replaces
+  `/Users/roman/.cargo/bin/helm-schema` after a 30.61-second build.
+- Downstream luup2 gate with the documented macOS `xargs`/`flock` shims and installed binary;
+  exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,328 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: +27 (64,301 to 64,328), from explicit typed test/boundary
+  construction and direct carrier-aware lowering signatures.

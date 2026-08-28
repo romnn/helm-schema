@@ -78,7 +78,7 @@ pub(crate) struct Effects {
     pub(crate) plain_text_range_key_paths: BTreeSet<ValuesPath>,
     pub(crate) chart_default_paths: BTreeSet<ValuesPath>,
     pub(crate) local_default_paths: BTreeSet<ValuesPath>,
-    pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
+    pub(crate) local_output_meta: BTreeMap<ValuesPath, HelperOutputMeta>,
     /// Shallow (non-descending) `.Values` source paths of locals that were
     /// read by the expression. Guard-path seeding and expression path
     /// resolution consume this; output rows ride the value itself.
@@ -644,12 +644,12 @@ impl Effects {
         self.plain_slot_string_format_paths
             .retain(|path| !paths.contains(&path.encode()));
         for path in paths {
-            if let Some(meta) = self.local_output_meta.get_mut(path) {
+            if let Some(meta) = self.local_output_meta.get_mut(&ValuesPath::parse(path)) {
                 meta.plain_slot_string_format = false;
             }
         }
         for row in &mut self.helper_rendered {
-            if paths.contains(&row.path) {
+            if paths.contains(&row.path.encode()) {
                 row.meta.plain_slot_string_format = false;
             }
         }
@@ -671,7 +671,7 @@ impl Effects {
             .map(ValuesPath::encode)
             .collect::<BTreeSet<_>>();
         paths.extend(self.local_source_paths.iter().map(ValuesPath::encode));
-        paths.extend(self.local_output_meta.keys().cloned());
+        paths.extend(self.local_output_meta.keys().map(ValuesPath::encode));
         paths.retain(|path| !path.trim().is_empty());
         paths
     }
@@ -686,7 +686,7 @@ impl Effects {
 
     pub(crate) fn merge_local_output_meta<'a>(
         &mut self,
-        meta: impl IntoIterator<Item = (&'a String, &'a HelperOutputMeta)>,
+        meta: impl IntoIterator<Item = (&'a ValuesPath, &'a HelperOutputMeta)>,
     ) {
         for (path, meta) in meta {
             self.local_output_meta
@@ -1202,7 +1202,7 @@ impl EvalResult {
             && self
                 .effects
                 .local_output_meta
-                .get(&path)
+                .get(&typed_path)
                 .is_none_or(|meta| meta.predicates.is_empty()))
         .then_some(path)
     }

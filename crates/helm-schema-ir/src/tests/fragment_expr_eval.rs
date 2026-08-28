@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
 use helm_schema_core::{
-    ApproximationRole, ConditionalGuard, Guard, GuardDnf, GuardValue, Predicate,
+    ApproximationRole, ConditionalGuard, Guard, GuardDnf, GuardValue, Predicate, ValuesPath,
 };
 
 use crate::abstract_value::AbstractValue;
@@ -412,7 +412,7 @@ fn defaulted_helper_merge_does_not_require_the_raw_source() {
         .summary
         .rendered
         .iter()
-        .filter(|row| row.path == "configMap.merge")
+        .filter(|row| row.path == ValuesPath::parse("configMap.merge"))
         .map(|row| row.meta.defaulted)
         .collect::<Vec<_>>();
     sim_assert_eq!(have: rendered, want: vec![true]);
@@ -1246,9 +1246,9 @@ fn helper_range_fallback_retains_the_root_provider_candidate() {
     sim_assert_eq!(
         have: rendered_paths,
         want: BTreeSet::from([
-            "securityContexts.container".to_string(),
-            "securityContexts.containers".to_string(),
-            "worker.securityContexts.container".to_string(),
+            ValuesPath::parse("securityContexts.container"),
+            ValuesPath::parse("securityContexts.containers"),
+            ValuesPath::parse("worker.securityContexts.container"),
         ]),
         "every reachable provider candidate must survive the helper boundary: {result:#?}"
     );
@@ -1956,7 +1956,7 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
         .effects
         .helper_rendered
         .iter()
-        .find(|row| row.path == "nameOverride")
+        .find(|row| row.path == ValuesPath::parse("nameOverride"))
         .expect("nameOverride rendered row should be present");
     let meta = &output.meta;
     sim_assert_eq!(
@@ -2012,7 +2012,7 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
         .effects
         .helper_rendered
         .iter()
-        .find(|row| row.path == "worker.securityContext")
+        .find(|row| row.path == ValuesPath::parse("worker.securityContext"))
         .expect("worker legacy candidate");
     let earlier_candidate_skipped = Predicate::all(vec![
         Predicate::from(Guard::Absent {
@@ -2107,7 +2107,7 @@ fn bound_helper_continue_suppresses_the_rest_of_only_that_iteration() {
             .effects
             .helper_rendered
             .iter()
-            .find(|row| row.path == path)
+            .find(|row| row.path == ValuesPath::parse(path))
             .unwrap_or_else(|| panic!("missing {path} row: {result:#?}"));
         assert!(
             row.meta
@@ -2217,10 +2217,16 @@ fn inner_range_break_does_not_exit_the_outer_range() {
         .effects
         .helper_rendered
         .iter()
-        .map(|row| row.path.as_str())
+        .map(|row| row.path.clone())
         .collect::<BTreeSet<_>>();
 
-    sim_assert_eq!(have: paths, want: BTreeSet::from(["first.payload", "second.payload"]));
+    sim_assert_eq!(
+        have: paths,
+        want: BTreeSet::from([
+            ValuesPath::parse("first.payload"),
+            ValuesPath::parse("second.payload")
+        ])
+    );
 }
 
 #[test]

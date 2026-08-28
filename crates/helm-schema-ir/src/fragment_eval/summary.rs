@@ -48,7 +48,7 @@ use super::eval::{Interpreter, NodeView, ValueRead};
 pub(crate) struct FragmentSummary {
     /// Predicate paths severed by index-call narrowing inside the body;
     /// callers absorb their own reads against them.
-    pub(crate) suppress_predicate_paths: BTreeSet<String>,
+    pub(crate) suppress_predicate_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// The body's abstract fragment (sites carry helper-body facts).
     pub(crate) root: Guarded<AbstractFragment>,
     /// Minimum indentation of rendered helper content before a caller applies
@@ -172,11 +172,10 @@ pub(crate) fn eval_bound_helper_fragment(
         .into_iter()
         .filter(|read| {
             read.dependency
-                || suppress.contains(&read.values_path.encode())
-                || !suppress.iter().any(|narrowed| {
-                    helm_schema_core::ValuesPath::parse(narrowed)
-                        .is_descendant_of(&read.values_path)
-                })
+                || suppress.contains(&read.values_path)
+                || !suppress
+                    .iter()
+                    .any(|narrowed| narrowed.is_descendant_of(&read.values_path))
         })
         .collect();
     let rendered = rendered_rows(&root);
@@ -403,7 +402,7 @@ impl FragmentSummary {
         self.rendered
             .iter()
             .filter(|row| row.encoded)
-            .map(|row| row.path.clone())
+            .map(|row| row.path.encode())
             .collect()
     }
 }
@@ -901,7 +900,8 @@ fn push_rendered_row(
     encoded: bool,
     meta: HelperOutputMeta,
 ) {
-    if path.trim().is_empty() {
+    let path = helm_schema_core::ValuesPath::parse(path);
+    if path.segments().next().is_none() {
         return;
     }
     if let Some(existing) = rows
@@ -912,7 +912,7 @@ fn push_rendered_row(
         return;
     }
     rows.push(RenderedRow {
-        path: path.to_string(),
+        path,
         kind,
         encoded,
         meta,
@@ -1001,7 +1001,7 @@ fn collect_rendered_node(
 fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]) {
     let mut sources: BTreeSet<String> =
         reads.iter().map(|read| read.values_path.encode()).collect();
-    sources.extend(rendered.iter().map(|row| row.path.clone()));
+    sources.extend(rendered.iter().map(|row| row.path.encode()));
     if sources.len() < 2 {
         return;
     }

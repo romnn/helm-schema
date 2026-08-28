@@ -80,7 +80,7 @@ pub(crate) fn collect_template_requests_from_exprs(
     exprs: &[TemplateExpr],
     current_dot: Option<&AbstractValue>,
     locals: &HashMap<String, AbstractValue>,
-    local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    local_output_meta: &HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     context: FragmentEvalContext<'_>,
 ) -> BTreeSet<StaticTemplateProgram> {
     let mut requests = BTreeSet::new();

@@ -63,7 +63,7 @@ pub(super) fn eval_printf(
                         && !result
                             .effects
                             .local_output_meta
-                            .get(*path)
+                            .get(&ValuesPath::parse(path))
                             .is_some_and(|meta| {
                                 meta.shape_erased || meta.derived_text || meta.partial_text
                             })
@@ -87,7 +87,7 @@ pub(super) fn eval_printf(
         for path in &plain_slot_format_paths {
             effects
                 .local_output_meta
-                .entry(path.clone())
+                .entry(ValuesPath::parse(path))
                 .or_default()
                 .plain_slot_string_format = true;
             effects
@@ -189,7 +189,10 @@ pub(super) fn conjoin_formatter_operand_selection(
         {
             continue;
         }
-        let meta = effects.local_output_meta.entry(path.clone()).or_default();
+        let meta = effects
+            .local_output_meta
+            .entry(ValuesPath::parse(path))
+            .or_default();
         let existing = if meta.predicates.is_empty() {
             BTreeSet::from([BTreeSet::new()])
         } else {
@@ -784,7 +787,7 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
     let rendered_yaml_output = !paths.is_empty()
         && paths.iter().all(|path| {
             output_meta
-                .get(path)
+                .get(&ValuesPath::parse(path))
                 .is_some_and(|meta| meta.yaml_serialized)
         });
     let round_trips_yaml = structurally_rendered_yaml

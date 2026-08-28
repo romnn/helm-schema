@@ -1937,7 +1937,7 @@ impl Interpreter<'_> {
 /// The omitted-key map recorded for one binding, unioned over its per-path
 /// metas; disagreeing retain guards degrade to the empty (abstaining) list.
 fn binding_omitted_keys(
-    metas: Option<&BTreeMap<String, crate::helper_meta::HelperOutputMeta>>,
+    metas: Option<&BTreeMap<helm_schema_core::ValuesPath, crate::helper_meta::HelperOutputMeta>>,
 ) -> BTreeMap<String, Vec<Guard>> {
     let mut out: BTreeMap<String, Vec<Guard>> = BTreeMap::new();
     for meta in metas.into_iter().flatten().map(|(_, meta)| meta) {

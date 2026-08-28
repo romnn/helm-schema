@@ -402,7 +402,7 @@ fn path_preserves_range_shape(path: &str, effects: &Effects) -> bool {
             .contains(&helm_schema_core::ValuesPath::parse(path))
         && effects
             .local_output_meta
-            .get(path)
+            .get(&helm_schema_core::ValuesPath::parse(path))
             .is_none_or(output_meta_preserves_range_shape)
 }
 

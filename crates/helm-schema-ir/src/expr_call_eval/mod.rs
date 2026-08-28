@@ -1553,7 +1553,10 @@ pub(super) fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTr
         if !embedded_paths.contains(&helm_schema_core::ValuesPath::parse(&path)) {
             let mut meta = crate::helper_meta::HelperOutputMeta::default();
             meta.conjoin_branches(predicates);
-            result.effects.local_output_meta.insert(path, meta);
+            result
+                .effects
+                .local_output_meta
+                .insert(helm_schema_core::ValuesPath::parse(&path), meta);
         }
     }
     for row in &mut result.effects.helper_rendered {
