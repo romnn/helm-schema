@@ -111,7 +111,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
     let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
 
     let use_ = ProviderSchemaUse {
-        value_path: "networkPolicy.ingressNSMatchLabels".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("networkPolicy.ingressNSMatchLabels"),
         path: YamlPath(vec![
             "spec".to_string(),
             "ingress[*]".to_string(),

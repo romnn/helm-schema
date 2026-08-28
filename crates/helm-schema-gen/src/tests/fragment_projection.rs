@@ -1153,7 +1153,7 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
 fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
     let provider = production_chain_provider();
     let use_ = ProviderSchemaUse {
-        value_path: "resources".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("resources"),
         path: YamlPath(vec![
             "spec".to_string(),
             "template".to_string(),

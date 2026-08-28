@@ -31,7 +31,7 @@ fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
 
 fn use_with_kind(kind: &str) -> ProviderSchemaUse {
     ProviderSchemaUse {
-        value_path: "x".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("x"),
         path: YamlPath(vec!["spec".to_string()]),
         kind: ValueKind::Scalar,
         stringified: false,
@@ -540,7 +540,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() -> eyre::Result<()> {
     // ConfigMap with NO apiVersion → inference runs → shortlist
     // resolves to `v1` (core group, built-in).
     let use_ = ProviderSchemaUse {
-        value_path: "x".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("x"),
         path: YamlPath(vec!["data".to_string()]),
         kind: ValueKind::Scalar,
         stringified: false,
@@ -585,7 +585,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() -> eyre::Result<()> {
     // ServiceMonitor with NO apiVersion → shortlist resolves to
     // monitoring.coreos.com/v1 (CRD group, NOT built-in).
     let use_ = ProviderSchemaUse {
-        value_path: "x".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("x"),
         path: YamlPath(vec!["spec".to_string()]),
         kind: ValueKind::Scalar,
         stringified: false,

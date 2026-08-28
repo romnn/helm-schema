@@ -19,7 +19,7 @@ fn hpa_merge_layer_use(
     outer_guards: Vec<ConditionalGuard>,
 ) -> ProviderSchemaUse {
     ProviderSchemaUse {
-        value_path: value_path.to_string(),
+        value_path: ValuesPath::parse(value_path),
         path: YamlPath(vec!["spec".to_string(), "maxReplicas".to_string()]),
         kind: ValueKind::Scalar,
         stringified: false,

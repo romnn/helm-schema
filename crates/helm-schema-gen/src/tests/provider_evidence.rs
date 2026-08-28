@@ -3014,7 +3014,8 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             &self,
             use_: &ProviderSchemaUse,
         ) -> Option<ProviderSchemaFragment> {
-            (use_.value_path == "serviceMonitor.metricRelabelings"
+            (use_.value_path
+                == helm_schema_core::ValuesPath::parse("serviceMonitor.metricRelabelings")
                 && use_.path.0
                     == [
                         "spec".to_string(),
@@ -3665,7 +3666,7 @@ fn template_supplied_sibling_keys_relax_provider_requiredness() {
             &self,
             use_: &ProviderSchemaUse,
         ) -> Option<ProviderSchemaFragment> {
-            (use_.value_path == "tmpVolume").then(|| {
+            (use_.value_path == helm_schema_core::ValuesPath::parse("tmpVolume")).then(|| {
                 ProviderSchemaFragment::new(serde_json::json!({
                     "type": "object",
                     "additionalProperties": false,
@@ -3757,7 +3758,7 @@ fn tpl_rendered_slots_keep_the_raw_program_open() {
             &self,
             use_: &ProviderSchemaUse,
         ) -> Option<ProviderSchemaFragment> {
-            (use_.value_path == "objectName").then(|| {
+            (use_.value_path == helm_schema_core::ValuesPath::parse("objectName")).then(|| {
                 ProviderSchemaFragment::new(serde_json::json!({
                     "type": "string",
                     "pattern": "^[a-z0-9.-]+$"

@@ -592,10 +592,10 @@ fn contract_ir_provider_schema_uses_are_rendered_resource_claims_only() {
     let requests = provider_schema_uses_for(&signals);
 
     sim_assert_eq!(have: requests.len(), want: 2, "{requests:#?}");
-    sim_assert_eq!(have: requests[0].value_path, want: "containers");
+    sim_assert_eq!(have: requests[0].value_path, want: conditional_path("containers"));
     sim_assert_eq!(have: requests[0].kind, want: ValueKind::Fragment);
     assert!(!requests[0].is_self_range_collection);
-    sim_assert_eq!(have: requests[1].value_path, want: "ports");
+    sim_assert_eq!(have: requests[1].value_path, want: conditional_path("ports"));
     sim_assert_eq!(have: requests[1].kind, want: ValueKind::Scalar);
     assert!(requests[1].is_self_range_collection);
 }

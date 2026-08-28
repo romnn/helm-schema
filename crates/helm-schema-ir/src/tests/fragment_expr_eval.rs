@@ -293,7 +293,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
                 .map(|overlay| overlay.evidence.provider_schema_uses)
         }),
         want: Some(vec![crate::ProviderSchemaUse {
-            value_path: "master.service.ports.redis".to_string(),
+            value_path: helm_schema_core::ValuesPath::parse("master.service.ports.redis"),
             path: crate::YamlPath(vec![
                 "spec".to_string(),
                 "ports[*]".to_string(),

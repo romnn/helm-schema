@@ -1074,7 +1074,7 @@
 
 ## A7 — activation-scoped overlay projection and default sources
 
-- Status: landed; commit pending.
+- Status: landed in `54a261a9`.
 - Contract: behavior-bearing. Preserve the two distinct fact channels across conditional chart
   activation without pretending they share one consumption model. Root-overlay projection clones
   abort-grade implications and conjoins the chart activation predicate. Default sources stay out
@@ -3715,3 +3715,109 @@
 - Measured production LOC delta: +37 (64,334 to 64,371), from explicit typed lookups and direct
   structural segment iteration after deleting the duplicate evidence identity; no LOC promise
   governs B4a.
+
+## B4a.8 — migrate provider-use source paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of the public phase-crossing
+  `ProviderSchemaUse.value_path` carrier to segmented `ValuesPath`. Provider resource identity,
+  YAML slot path, transforms, omission guards, merge layering, lookup policy, and diagnostics
+  remain unchanged.
+- Acceptance baseline: `54a261a9` (B4a.7).
+- Baseline production LOC: 64,371 Rust lines from `task tokei:core` on `54a261a9`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+    The existing provider-use source identity and ordering survive through builder aggregation,
+    provider lookup cache keys, conditional overlays, and generator synthesis.
+  - Custom `ValuesPath` serde preserves any serialized string field exactly; no provider-schema
+    query, path descent, or use-dedup behavior changes.
+  - Part F decision: the public Rust field deliberately narrows from `String` to `ValuesPath` as
+    the scheduled B4a carrier migration. Wire bytes remain unchanged.
+  - No coercion trait, cross-type comparison, parallel encoded field, or unrelated string newtype
+    is allowed. Any fixture or acceptance flip stops the round before adoption; candidate-accepts/
+    Helm-aborts allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - `ProviderSchemaUse.value_path` now carries `ValuesPath` from the contract-use producer through
+    conditional overlays, provider lookup/dedup, requirement synthesis, and K8s provider calls.
+    The old producer-side encode is deleted.
+  - The authoritative schema and symbolic-IR dumps are recursively byte-identical to `54a261a9`;
+    the full-depth battery checks 121,055 probes across 60 charts with zero acceptance flips, zero
+    mandatory base drops, zero third-level drops, and 28,868 unchanged disclosed reductions.
+- Deviations: none. Whole-workspace compilation and lint passed on the first completed preflight;
+  only direct struct fixtures required explicit typed construction, and no rejected artifact was
+  produced.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Direct/helper provider rows | Same source and slot identity | IR suites and dump. |
+| Conditional/provider overlays | Same guarded provider uses | Contract/generator suites. |
+| Lookup and requirement synthesis | Same cache keys and schema bytes | Provider suites and schema dump. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 1,122/1,122 core/IR/gen/K8s tests
+  pass, covering the producer, conditional overlays, provider lookup plans/cache keys, API-version
+  inference, required-source synthesis, and K8s chain behavior. Whole-workspace Clippy passes
+  warning-free on the first completed lint preflight.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a8-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a8-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 426 seconds.
+- Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a8-final1-schema
+  SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-b4a8-final1.tar.zst --profile
+  integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+  exit 0, 62 tests pass in 184.115 seconds and 84 artifacts are written. A recursive byte
+  comparison against the B4a.7 dump exits 0.
+- Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a8-final1-ir
+  SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a8-final1.tar.zst --profile integration -E
+  'test(ir_corpus_fixtures_match)'`; exit 0, one test passes in 3.178 seconds and 18 artifacts are
+  written. A recursive byte comparison against the B4a.7 dump exits 0.
+- Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a8-final1-prober
+  SCHEMA_ACCEPTANCE_BASELINE_REF=54a261a9
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a8-final1-schema
+  SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a8-final1-coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+  /private/tmp/arch-v4-b4a8-final1.tar.zst --profile integration -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only`; exit 0 in 68.755 seconds, 60 charts, 121,055 probes, zero flips, and zero unallowed
+  accepted-abort cells. Mandatory base and third-level categories have zero drops; 28,868
+  disclosed bounded reductions remain unchanged.
+- Public/wire decision: `ProviderSchemaUse.value_path` deliberately narrows to `ValuesPath`.
+  Custom serde preserves the string wire, so no wire-format version is required.
+
+### Self-adversarial pass
+
+- Whole-tree construction search finds one production owner: the conditional-overlay builder now
+  clones the typed `ContractUse.source_expr`; no production encode/parse cycle remains for this
+  field.
+- Provider slot `YamlPath`, resource identity, schema types, literal member keys, split separators,
+  and transforms remain in their separate domains. No coercion trait, cross-type comparison,
+  cached encoding, or parallel provider-use source field was added.
+- Manual `ValuesPath::Ord` and serde govern the field's ordering/wire representation; byte-exact
+  schema and IR dumps prove both remain stable.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free in 5 minutes 14 seconds.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,522.02 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 185.713 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,519.951 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,606.047 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 25.83
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,371 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: 0 (64,371 to 64,371); the typed field and producer clone replace
+  the string field and encode one-for-one.

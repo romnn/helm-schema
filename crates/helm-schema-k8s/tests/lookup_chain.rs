@@ -30,7 +30,7 @@ enum FakeBehaviour {
 
 fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
     ProviderSchemaUse {
-        value_path: "x".to_string(),
+        value_path: helm_schema_core::ValuesPath::parse("x"),
         path,
         kind: ValueKind::Scalar,
         stringified: false,

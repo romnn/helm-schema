@@ -1,10 +1,10 @@
-use crate::{MergeLayersUse, ResourceRef, SplitSegmentUse, ValueKind, YamlPath};
+use crate::{MergeLayersUse, ResourceRef, SplitSegmentUse, ValueKind, ValuesPath, YamlPath};
 
 /// Contract fact that needs a Kubernetes resource schema lookup.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ProviderSchemaUse {
     /// Canonical values path whose runtime value reaches the provider slot.
-    pub value_path: String,
+    pub value_path: ValuesPath,
     /// Structural path of the slot in the rendered Kubernetes resource.
     pub path: YamlPath,
     /// How the value contributes to rendered YAML at the slot.

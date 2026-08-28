@@ -273,7 +273,7 @@ pub(super) fn provider_schema_use(
     let resource = contract_use.resource.clone()?;
 
     Some(ProviderSchemaUse {
-        value_path: contract_use.source_expr.encode(),
+        value_path: contract_use.source_expr.clone(),
         path: contract_use.path.clone(),
         kind: contract_use.kind,
         stringified: contract_use.stringified,
