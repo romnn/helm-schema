@@ -216,7 +216,7 @@ impl ContractIr {
         *values_program_wrappers = std::mem::take(values_program_wrappers)
             .into_iter()
             .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
-                scope_path: map(&wrapper.scope_path),
+                scope_path: helm_schema_core::ValuesPath::parse(&map(&wrapper.scope_path.encode())),
                 key: wrapper.key,
                 spread: wrapper.spread,
             })

@@ -107,7 +107,7 @@ impl SymbolicIrContext {
                     .program_wrapper_sentinels(name)
                     .into_iter()
                     .map(|(key, spread)| helm_schema_core::ValuesProgramWrapper {
-                        scope_path: String::new(),
+                        scope_path: helm_schema_core::ValuesPath::default(),
                         key,
                         spread,
                     }),

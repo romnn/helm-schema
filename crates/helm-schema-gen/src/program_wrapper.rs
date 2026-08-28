@@ -48,13 +48,13 @@ pub(crate) fn apply_program_wrapper_alternatives(
     if wrappers.is_empty() {
         return;
     }
-    let mut keys_by_scope: BTreeMap<&str, BTreeMap<&str, bool>> = BTreeMap::new();
+    let mut keys_by_scope: BTreeMap<&ValuesPath, BTreeMap<&str, bool>> = BTreeMap::new();
     for wrapper in wrappers {
         // A key claimed as both replace and spread (two engines sharing a
         // sentinel) degrades to replace: spread adds rejections, and an
         // uncertain classification must not reject what one engine accepts.
         keys_by_scope
-            .entry(wrapper.scope_path.as_str())
+            .entry(&wrapper.scope_path)
             .or_default()
             .entry(wrapper.key.as_str())
             .and_modify(|spread| *spread &= wrapper.spread)
@@ -72,13 +72,13 @@ pub(crate) fn apply_program_wrapper_alternatives(
         .collect();
     for (scope, keys) in keys_by_scope {
         let keys: Vec<(&str, bool)> = keys.into_iter().collect();
-        if scope.is_empty() {
+        if scope.segments().next().is_none() {
             rewrite_document(root, &keys, &excluded);
             scope_conditional_arms_to_non_wrappers(root, &keys);
             wrap_document_root(root, &keys);
             reject_root_spread_wrappers(root, &keys);
         } else if let Some(node) = properties_node_mut(root, scope) {
-            let scope_path = crate::split_value_path(scope);
+            let scope_path = scope.segments().map(str::to_owned).collect::<Vec<_>>();
             rewrite_value_edges(node, &keys, Some(&scope_path), &excluded);
             reject_root_spread_wrappers(node, &keys);
         }
@@ -134,10 +134,10 @@ fn wrap_document_root(root: &mut Value, keys: &[(&str, bool)]) {
 
 /// The schema node declared for `scope` under the document's base
 /// properties tree, when every segment resolves.
-fn properties_node_mut<'a>(root: &'a mut Value, scope: &str) -> Option<&'a mut Value> {
+fn properties_node_mut<'a>(root: &'a mut Value, scope: &ValuesPath) -> Option<&'a mut Value> {
     let mut node = root;
-    for segment in crate::split_value_path(scope) {
-        node = node.get_mut("properties")?.get_mut(&segment)?;
+    for segment in scope.segments() {
+        node = node.get_mut("properties")?.get_mut(segment)?;
     }
     Some(node)
 }

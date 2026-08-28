@@ -575,7 +575,7 @@ pub struct ContractPathSchemaEvidence {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ValuesProgramWrapper {
     /// Values subtree the engine rewrites; empty means the whole tree.
-    pub scope_path: String,
+    pub scope_path: crate::ValuesPath,
     /// The wrapper's sentinel member key (`$tplYaml`).
     pub key: String,
     /// Whether the engine SPREADS the program result into the parent

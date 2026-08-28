@@ -2877,7 +2877,7 @@
 
 ## B4a.3b — migrate atomic guard paths
 
-- Status: landed; commit pending.
+- Status: landed in `3538aa36`.
 - Contract: representation-only migration of all value-path payloads in the public `Guard` enum to
   segmented `ValuesPath`, including the `Or.paths` collection and recursively nested `AnyOf`
   alternatives. Literal patterns, keys, members, schema types, and comparison values remain in
@@ -3824,7 +3824,7 @@
 
 ## B4a.9 — migrate values-default source paths
 
-- Status: landed; commit pending.
+- Status: landed in `3538aa36`.
 - Contract: representation-only migration of both public `ValuesDefaultSource` path fields to
   segmented `ValuesPath`, including guarded sources and their IR-to-generator route. Default merge
   direction, activation guards, null deletion, source grouping, and schema composition remain
@@ -3923,3 +3923,81 @@
 
 - Measured production LOC delta: +7 (64,371 to 64,378), from explicit structural segment
   iteration after deleting the last string-only YAML lookup helper.
+
+## B4a.10 — migrate values-program wrapper scopes
+
+- Status: ready to land; commit pending.
+- Contract: representation-only migration of public `ValuesProgramWrapper.scope_path` to
+  segmented `ValuesPath`, preserving sentinel keys, spread/replace policy, scope ordering, wrapper
+  exclusions, and schema alternatives exactly.
+- Acceptance baseline: `3538aa36` (B4a.9).
+- Baseline production LOC: 64,378 Rust lines from `task tokei:core` on `3538aa36`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Empty scope remains the values root; nested scope descent and wrapper exclusion identity stay
+    structural and preserve legacy ordering/wire strings.
+  - Part F decision: the public Rust field deliberately narrows to `ValuesPath`; wire bytes remain
+    unchanged. No coercion, cross-type comparison, or parallel encoded field is allowed.
+  - Any fixture or acceptance flip stops the round before adoption; candidate-accepts/Helm-aborts
+    allowance and mandatory coverage drops remain zero.
+
+- Measured results:
+  - `ValuesProgramWrapper.scope_path` now remains typed through helper discovery, contract
+    remapping, finalization, generator scope grouping, and structural property descent.
+  - Schema and IR dumps are recursively byte-identical to `3538aa36`; 121,055 probes across 60
+    charts report zero flips, zero mandatory drops, and 28,868 unchanged disclosed reductions.
+- Deviations: none. Compilation and lint passed on the first completed preflight; no rejected
+  artifact was produced.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 reports zero
+  candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Helper-discovered root wrappers | Same sentinel and spread policy | IR suites and dump. |
+| Scoped wrapper remapping | Same structural scope | Contract suites. |
+| Generator alternatives/exclusions | Same schema bytes | Generator/corpus suites and dump. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds and 1,049/1,049 core/IR/gen tests pass.
+  Whole-workspace Clippy passes warning-free on the first completed lint preflight.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a10-final1-build cargo
+  nextest archive --workspace --archive-file /private/tmp/arch-v4-b4a10-final1.tar.zst`; exit 0,
+  87 binaries and 125 files in 404 seconds.
+- Clean schema dump: the B4a.10 `final1` archive under the step-local schema `TMPDIR`; exit 0, 62
+  tests pass in 183.912 seconds and 84 artifacts are byte-identical to B4a.9.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one test passes in
+  3.174 seconds and 18 artifacts are byte-identical to B4a.9.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `3538aa36`,
+  Helm adjudication enabled; exit 0 in 68.417 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: `ValuesProgramWrapper.scope_path` deliberately narrows to `ValuesPath`;
+  custom serde preserves its string wire field, so no wire version is required.
+
+### Self-adversarial pass
+
+- Root scope is the empty typed path; nested scope descent iterates literal segments directly.
+  Sentinel keys and spread/replace policy remain separate domains.
+- No string-backed wrapper scope, raw split, coercion trait, cached encoding, or parallel scope
+  field remains.
+
+### Gates
+
+- `cargo fmt --check`; exit 0.
+- `task lint`; exit 0, whole workspace warning-free in 5 minutes 31 seconds.
+- `task lint:fc`; exit 0, 48 feature combinations for 13 packages across three targets in
+  1,550.18 seconds, with zero warnings and zero errors.
+- `cargo nextest run --workspace`; exit 0, 1,308 tests pass in 185.827 seconds.
+- `task test:integration`; exit 0, 558 tests pass and 24 skip in 1,519.600 seconds.
+- `task test:all`; exit 0, 1,870 tests pass and 24 skip in 1,608.415 seconds, including live
+  network tests.
+- `cargo install --path ./crates/helm-schema-cli/`; exit 0; release build completes in 26.52
+  seconds and installs `/Users/roman/.cargo/bin/helm-schema`.
+- Downstream luup2 gate with the recorded shim and binary override; exit 0, 32/32 charts pass.
+- `task tokei:core`; exit 0, 64,378 production Rust LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`; exit 0.
+- `git diff --check`; exit 0.
+
+- Measured production LOC delta: 0 (64,378 to 64,378).
