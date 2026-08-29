@@ -87,7 +87,7 @@ fn call_dict_member_identity(
 /// builder folds them into one bypass-proof arm per path instead of one per
 /// read.
 fn record_member_access_captures(
-    segments: &[String],
+    segments: &[helm_schema_core::Segment],
     accessed_from: usize,
     env: &EvalEnv,
     effects: &mut Effects,
@@ -99,10 +99,13 @@ fn record_member_access_captures(
         let Some(prefix) = segments.get(..len) else {
             continue;
         };
-        if prefix.iter().any(String::is_empty) {
+        if prefix
+            .iter()
+            .any(|segment| segment.literal().is_some_and(str::is_empty))
+        {
             continue;
         }
-        let path = helm_schema_core::join_value_path(prefix.iter().cloned());
+        let path = helm_schema_core::ValuesPath::from_segments(prefix.iter().cloned()).encode();
         record_member_host_capture(&path, &[], env, effects);
     }
 }
@@ -114,9 +117,17 @@ fn record_grouped_member_access_captures(
     env: &EvalEnv,
     effects: &mut Effects,
 ) {
-    let mut segments = helm_schema_core::split_value_path(receiver_path);
+    let mut segments = helm_schema_core::ValuesPath::parse(receiver_path)
+        .segments()
+        .cloned()
+        .collect::<Vec<_>>();
     let receiver_len = segments.len();
-    segments.extend(selected_path.iter().cloned());
+    segments.extend(
+        selected_path
+            .iter()
+            .cloned()
+            .map(helm_schema_core::Segment::from),
+    );
     let receiver_guard = (!receiver_path.is_empty() && !missing_receiver_aborts).then(|| {
         Predicate::from(crate::Guard::Absent {
             path: helm_schema_core::ValuesPath::parse(receiver_path),
@@ -128,7 +139,7 @@ fn record_grouped_member_access_captures(
         let Some(prefix) = segments.get(..len) else {
             continue;
         };
-        let target = helm_schema_core::join_value_path(prefix.iter().cloned());
+        let target = helm_schema_core::ValuesPath::from_segments(prefix.iter().cloned()).encode();
         if target.is_empty() {
             continue;
         }
@@ -230,9 +241,9 @@ pub(crate) fn eval_expr_with_helper_calls(
                 None => call_dict_member_identity(path, env),
             };
             if let Some((base, navigated)) = access {
-                let mut segments: Vec<String> = base.segments().map(str::to_owned).collect();
+                let mut segments = base.segments().cloned().collect::<Vec<_>>();
                 let accessed_from = segments.len();
-                segments.extend(navigated);
+                segments.extend(navigated.into_iter().map(helm_schema_core::Segment::from));
                 record_member_access_captures(&segments, accessed_from, env, &mut result.effects);
             }
             attach_root_field_semantics(&mut result, path, env);
@@ -301,10 +312,9 @@ pub(crate) fn eval_expr_with_helper_calls(
                             &mut result.effects,
                         );
                     } else {
-                        let mut segments: Vec<String> =
-                            base.segments().map(str::to_owned).collect();
+                        let mut segments = base.segments().cloned().collect::<Vec<_>>();
                         let accessed_from = segments.len();
-                        segments.extend(path.iter().cloned());
+                        segments.extend(path.iter().cloned().map(helm_schema_core::Segment::from));
                         record_member_access_captures(
                             &segments,
                             accessed_from,
@@ -444,7 +454,12 @@ fn root_values_selector_result(segments: &[String], env: &EvalEnv) -> EvalResult
         return EvalResult::none();
     };
     let mut result = EvalResult::from_value(values_path_value(tail, env));
-    record_member_access_captures(tail, 0, env, &mut result.effects);
+    let tail = tail
+        .iter()
+        .cloned()
+        .map(helm_schema_core::Segment::from)
+        .collect::<Vec<_>>();
+    record_member_access_captures(&tail, 0, env, &mut result.effects);
     result
 }
 

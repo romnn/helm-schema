@@ -1044,9 +1044,12 @@ impl Interpreter<'_> {
             }
         }
         let input_contract_identity = input_identity.as_ref().or_else(|| {
-            member_identity
-                .as_ref()
-                .filter(|identity| identity.path.segments().any(|segment| segment == "*"))
+            member_identity.as_ref().filter(|identity| {
+                identity
+                    .path
+                    .segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+            })
         });
         if iterable_value
             .as_ref()
@@ -1845,7 +1848,9 @@ impl Interpreter<'_> {
             for conjunct in conjuncts {
                 if let Predicate::Guard(Guard::Eq { path, value }) = &conjunct
                     && !path.encode().starts_with('$')
-                    && !path.segments().any(|part| part == "*")
+                    && !path
+                        .segments()
+                        .any(helm_schema_core::Segment::is_each_member)
                 {
                     return vec![Guard::NotEq {
                         path: path.clone(),
@@ -1860,7 +1865,9 @@ impl Interpreter<'_> {
                 if let Predicate::Not(inner) = &conjunct
                     && let Predicate::Guard(Guard::Truthy { path }) = inner.as_ref()
                     && !path.encode().starts_with('$')
-                    && !path.segments().any(|part| part == "*")
+                    && !path
+                        .segments()
+                        .any(helm_schema_core::Segment::is_each_member)
                 {
                     return vec![Guard::Truthy { path: path.clone() }];
                 }
@@ -2194,8 +2201,8 @@ fn root_dispatch_literal(value: &AbstractValue) -> Option<GuardValue> {
 /// Whether a decoded condition reads a WILDCARD member path (`x.*.y`): the
 /// shape a ranged member's own condition takes.
 fn predicate_reads_member_wildcard(predicate: &Predicate) -> bool {
-    predicate
-        .value_paths()
-        .iter()
-        .any(|path| path.segments().any(|segment| segment == "*"))
+    predicate.value_paths().iter().any(|path| {
+        path.segments()
+            .any(helm_schema_core::Segment::is_each_member)
+    })
 }

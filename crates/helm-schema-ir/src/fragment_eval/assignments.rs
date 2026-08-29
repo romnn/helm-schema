@@ -144,7 +144,7 @@ impl RangeKeyConcretization {
             .iter()
             .map(|(path, key)| {
                 let mut member = path.clone();
-                member.push("*");
+                member.push_each_member();
                 let mut concrete = path.clone();
                 concrete.push(key);
                 (member, concrete)
@@ -529,8 +529,11 @@ impl Interpreter<'_> {
                                 !path
                                     .segments()
                                     .next()
+                                    .and_then(helm_schema_core::Segment::literal)
                                     .is_some_and(|segment| segment.starts_with('$'))
-                                    && !path.segments().any(|segment| segment == "*")
+                                    && !path
+                                        .segments()
+                                        .any(helm_schema_core::Segment::is_each_member)
                             });
                         if exact {
                             or_predicates(previous, condition)

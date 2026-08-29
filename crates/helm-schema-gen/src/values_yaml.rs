@@ -34,7 +34,7 @@ pub(crate) fn apply_values_default_sources(
         let target_segments = source
             .target_path
             .segments()
-            .map(str::to_owned)
+            .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         let Some(target) = yaml_value_at_segments_mut(doc, &target_segments) else {
             continue;
@@ -76,7 +76,7 @@ pub(crate) fn copy_values_default_sources(
         let target_segments = source
             .target_path
             .segments()
-            .map(str::to_owned)
+            .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         let mut current = &mut *target_doc;
         for segment in &target_segments {
@@ -171,7 +171,10 @@ pub(crate) fn build_values_yaml_path_info(
     referenced_value_paths
         .iter()
         .filter_map(|path| {
-            let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
+            let segments = path
+                .segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect::<Vec<_>>();
             lookup_values_yaml_path_info(values_yaml_doc, &segments)
                 .map(|mut path_info| {
                     if pruned_parent_value_paths.contains(path) {
@@ -266,6 +269,7 @@ pub(crate) fn yaml_value_at_values_path<'a>(
 ) -> Option<&'a YamlValue> {
     let mut current = doc;
     for segment in value_path.segments() {
+        let segment = segment.literal().unwrap_or("*");
         let YamlValue::Mapping(mapping) = current else {
             return None;
         };
@@ -365,23 +369,24 @@ fn prune_referenced_descendant_schemas(
 
 fn shortest_referenced_relative_path(
     value_path: &ValuesPath,
-    relative_segments: &[&str],
+    relative_segments: &[&helm_schema_core::Segment],
     referenced_value_paths: &BTreeSet<ValuesPath>,
 ) -> Vec<String> {
     let mut prefix = Vec::new();
     for segment in relative_segments {
-        prefix.push((*segment).to_owned());
-        let mut candidate_path = value_path.clone();
-        for segment in &prefix {
-            candidate_path.push(segment.clone());
-        }
+        prefix.push((*segment).clone());
+        let candidate_path = ValuesPath::from_segments(value_path.segments().chain(&prefix));
         if referenced_value_paths.contains(&candidate_path) {
-            return prefix;
+            return prefix
+                .iter()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect();
         }
     }
     relative_segments
         .iter()
-        .map(|segment| (*segment).to_owned())
+        .copied()
+        .map(helm_schema_core::Segment::encode_component)
         .collect()
 }
 

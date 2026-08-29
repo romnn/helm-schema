@@ -212,10 +212,10 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         // round (the reroot chain reads the merged value back through
         // `.Values.workers`).
         let has_wildcard_path = |layer: &AbstractValue| {
-            layer
-                .paths()
-                .iter()
-                .any(|path| path.segments().any(|segment| segment == "*"))
+            layer.paths().iter().any(|path| {
+                path.segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+            })
         };
         let input_layer = if has_wildcard_path(&input_layer) {
             input_layer.without_nil_scrub_markers()

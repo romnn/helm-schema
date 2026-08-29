@@ -28,7 +28,10 @@ pub(super) fn partition_guard_scopes(
         let mut member_anchor = None;
         let mut saw_document_path = false;
         for path in guard.value_paths() {
-            let segments = path.segments().map(str::to_string).collect::<Vec<_>>();
+            let segments = path
+                .segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect::<Vec<_>>();
             let Some(last_wildcard) = segments.iter().rposition(|segment| segment == "*") else {
                 saw_document_path = true;
                 continue;
@@ -95,7 +98,7 @@ pub(super) fn conditional_ancestor_segments(
         for guard_path in guard.value_paths() {
             let guard_path = guard_path
                 .segments()
-                .map(str::to_string)
+                .map(helm_schema_core::Segment::encode_component)
                 .collect::<Vec<_>>();
             shared_prefix.truncate(common_prefix_len(&shared_prefix, &guard_path));
         }
@@ -297,7 +300,11 @@ pub(crate) fn append_terminal_clauses(
         if split_vacuous_ancestor
             && evaluate_guard_set_on_values(guards, absence.deeper_stage) != Some(false)
         {
-            let path = ValuesPath::from_segments(ancestor_segments.clone());
+            let path = ValuesPath::from_segments(
+                ancestor_segments
+                    .iter()
+                    .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+            );
             let absent = ConditionalGuard::Absent { path };
             let root = Vec::new();
             let mut missing_ancestor_guards = guards.clone();
@@ -417,16 +424,12 @@ fn source_path_for_effective(
     if effective_path != &target_path && !effective_path.is_descendant_of(&target_path) {
         return None;
     }
-    let mut source_segments = source
-        .source_path
-        .segments()
-        .map(str::to_owned)
-        .collect::<Vec<_>>();
+    let mut source_segments = source.source_path.segments().cloned().collect::<Vec<_>>();
     source_segments.extend(
         effective_path
             .segments()
             .skip(target_path.segments().len())
-            .map(str::to_owned),
+            .cloned(),
     );
     Some(ValuesPath::from_segments(source_segments))
 }
@@ -442,16 +445,12 @@ fn unique_values_default_source_path(
             if effective_path != &target_path && !effective_path.is_descendant_of(&target_path) {
                 return None;
             }
-            let mut source_segments = source
-                .source_path
-                .segments()
-                .map(str::to_owned)
-                .collect::<Vec<_>>();
+            let mut source_segments = source.source_path.segments().cloned().collect::<Vec<_>>();
             source_segments.extend(
                 effective_path
                     .segments()
                     .skip(target_path.segments().len())
-                    .map(str::to_owned),
+                    .cloned(),
             );
             Some(ValuesPath::from_segments(source_segments))
         })
@@ -498,7 +497,7 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
         for guard_path in guard.value_paths() {
             let mut segments = guard_path
                 .segments()
-                .map(str::to_string)
+                .map(helm_schema_core::Segment::encode_component)
                 .collect::<Vec<_>>();
             segments.pop();
             shared = Some(match shared {
@@ -835,16 +834,19 @@ fn build_target_fragment(path_segments: &[String], leaf_schema: SchemaNode) -> S
     } else {
         build_target_fragment(tail, leaf_schema)
     };
-    if head == "*" {
-        return SchemaNode::foreign(serde_json::json!({
-            "additionalProperties": child.clone().into_value(),
-            "items": child.into_value(),
-        }));
-    }
+    let head = match helm_schema_core::Segment::from_encoded_component(head) {
+        helm_schema_core::Segment::EachMember => {
+            return SchemaNode::foreign(serde_json::json!({
+                "additionalProperties": child.clone().into_value(),
+                "items": child.into_value(),
+            }));
+        }
+        helm_schema_core::Segment::Literal(head) => head,
+    };
     // The carrier must claim nothing about the ancestor values themselves: a
     // `with`-chain skips falsy ancestors entirely, so the arm has to hold
     // vacuously there. `properties` descent alone already encodes "when this
     // member exists on an object, the leaf requirement applies"; asserting
     // `type: object` on the carrier would reject the skipped falsy states.
-    SchemaNode::untyped_member_host().property(head.clone(), child)
+    SchemaNode::untyped_member_host().property(head, child)
 }

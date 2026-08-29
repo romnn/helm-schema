@@ -289,7 +289,9 @@ impl ContractIr {
             return;
         }
         let touches = |path: &helm_schema_core::ValuesPath| {
-            path.segments().any(|segment| keys.contains(segment))
+            path.segments()
+                .filter_map(helm_schema_core::Segment::literal)
+                .any(|segment| keys.contains(segment))
         };
         self.uses
             .retain(|contract_use| !touches(&contract_use.source_expr));
@@ -374,10 +376,13 @@ fn string_requirements_by_ancestor(
         predicates.extend(selection.iter().cloned());
         predicates.sort();
         predicates.dedup();
-        let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
+        let segments = path
+            .segments()
+            .map(helm_schema_core::Segment::encode_component)
+            .collect::<Vec<_>>();
         for end in 1..segments.len() {
             requirements
-                .entry(helm_schema_core::join_value_path(
+                .entry(helm_schema_core::join_encoded_value_path(
                     segments.get(..end).unwrap_or_default().iter().cloned(),
                 ))
                 .or_default()
@@ -406,12 +411,17 @@ fn lower_string_requirement_merge_sources(
         let source_segments = contract_use
             .source_expr
             .segments()
-            .map(str::to_string)
+            .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         let specific_layers = merge
             .layers
             .iter()
-            .map(|layer| layer.segments().map(str::to_string).collect::<Vec<_>>())
+            .map(|layer| {
+                layer
+                    .segments()
+                    .map(helm_schema_core::Segment::encode_component)
+                    .collect::<Vec<_>>()
+            })
             .filter(|layer| {
                 layer.len() > source_segments.len() && layer.starts_with(source_segments.as_slice())
             })
@@ -467,12 +477,13 @@ fn lower_string_requirement_merge_sources(
             continue;
         }
         let source = helm_schema_core::ValuesPath::parse(&source_expr);
-        let projected = helm_schema_core::ValuesPath::parse(&helm_schema_core::join_value_path(
-            source_segments
-                .iter()
-                .cloned()
-                .chain(suffix.iter().cloned()),
-        ));
+        let projected =
+            helm_schema_core::ValuesPath::parse(&helm_schema_core::join_encoded_value_path(
+                source_segments
+                    .iter()
+                    .cloned()
+                    .chain(suffix.iter().cloned()),
+            ));
         contract_use.map_value_paths(&mut |path| {
             if path == source {
                 projected.clone()
@@ -530,7 +541,7 @@ fn project_global_uses(uses: &mut Vec<ContractUse>, global_sources: &[String]) {
         let source_segments = dependency_use
             .source_expr
             .segments()
-            .map(str::to_string)
+            .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         let Some(relative) = source_segments.strip_prefix(dependency_global_segments.as_slice())
         else {
@@ -543,7 +554,7 @@ fn project_global_uses(uses: &mut Vec<ContractUse>, global_sources: &[String]) {
         };
 
         for (source_index, global_source) in global_sources.iter().enumerate() {
-            let selection_source = helm_schema_core::join_value_path(
+            let selection_source = helm_schema_core::join_encoded_value_path(
                 helm_schema_core::split_value_path(global_source)
                     .into_iter()
                     .chain(selection_relative.iter().cloned()),
@@ -586,7 +597,7 @@ fn global_source_selection_guards(
 ) -> Vec<Guard> {
     let mut guards = Vec::new();
     for higher_priority in global_sources.iter().take(source_index) {
-        let higher_source = helm_schema_core::join_value_path(
+        let higher_source = helm_schema_core::join_encoded_value_path(
             helm_schema_core::split_value_path(higher_priority)
                 .into_iter()
                 .chain(relative.iter().cloned()),
@@ -596,7 +607,9 @@ fn global_source_selection_guards(
         guards.push(Guard::AnyOf {
             alternatives: vec![
                 vec![Guard::NotHasKey {
-                    path: helm_schema_core::ValuesPath::from_segments(container_segments),
+                    path: helm_schema_core::ValuesPath::parse(
+                        &helm_schema_core::join_encoded_value_path(container_segments),
+                    ),
                     key: key.to_string(),
                 }],
                 vec![Guard::Eq {
@@ -610,7 +623,7 @@ fn global_source_selection_guards(
         let mut container_segments = helm_schema_core::split_value_path(source);
         container_segments.pop();
         guards.push(Guard::HasKey {
-            path: helm_schema_core::ValuesPath::parse(&helm_schema_core::join_value_path(
+            path: helm_schema_core::ValuesPath::parse(&helm_schema_core::join_encoded_value_path(
                 container_segments,
             )),
             key: key.to_string(),
@@ -635,13 +648,10 @@ fn replace_value_path_prefix(
     let relative = path
         .segments()
         .skip(from.segments().len())
-        .map(str::to_string)
+        .cloned()
         .collect::<Vec<_>>();
-    let mut target = helm_schema_core::ValuesPath::parse(to);
-    for segment in relative {
-        target.push(segment);
-    }
-    target
+    let target = helm_schema_core::ValuesPath::parse(to);
+    helm_schema_core::ValuesPath::from_segments(target.segments().chain(&relative))
 }
 
 fn project_global_fail_captures(
@@ -667,7 +677,7 @@ fn project_global_fail_captures(
         let relative = source_path
             .segments()
             .skip(dependency_global_path.segments().len())
-            .map(str::to_owned)
+            .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         if relative.is_empty() {
             if matches!(
@@ -701,7 +711,7 @@ fn project_global_fail_captures(
         };
 
         for (source_index, global_source) in global_sources.iter().enumerate() {
-            let selection_source = helm_schema_core::join_value_path(
+            let selection_source = helm_schema_core::join_encoded_value_path(
                 helm_schema_core::split_value_path(global_source)
                     .into_iter()
                     .chain(selection_relative.iter().cloned()),
@@ -746,12 +756,15 @@ fn project_global_range_modes(
     let dependency_path = helm_schema_core::ValuesPath::parse(dependency_global);
     let dependency_segments = dependency_path
         .segments()
-        .map(str::to_string)
+        .map(helm_schema_core::Segment::encode_component)
         .collect::<Vec<_>>();
     let projected_paths = range_modes
         .iter()
         .filter_map(|(path, mode)| {
-            let segments = path.segments().map(str::to_string).collect::<Vec<_>>();
+            let segments = path
+                .segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect::<Vec<_>>();
             let relative = segments.strip_prefix(dependency_segments.as_slice())?;
             Some((path.clone(), relative.to_vec(), mode))
         })
@@ -769,7 +782,7 @@ fn project_global_range_modes(
             continue;
         }
         for global_source in global_sources {
-            let projected = helm_schema_core::join_value_path(
+            let projected = helm_schema_core::join_encoded_value_path(
                 helm_schema_core::split_value_path(global_source)
                     .into_iter()
                     .chain(relative.iter().cloned()),

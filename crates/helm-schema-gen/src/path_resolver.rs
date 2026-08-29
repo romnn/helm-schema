@@ -183,7 +183,10 @@ fn resolve_path_evidence(
         Option<Arc<ProviderSchemaCandidate>>,
     >,
 ) -> ResolvedPathSchema {
-    let path_segments = value_path.segments().map(str::to_owned).collect();
+    let path_segments = value_path
+        .segments()
+        .map(helm_schema_core::Segment::encode_component)
+        .collect();
     let used_as_serialized = evidence.facts.used_as_serialized;
     let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
     let accepted_dependency_values_root_fragment =

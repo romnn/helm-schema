@@ -222,7 +222,10 @@ pub(super) fn append_omitted_member_arms(
                 ));
             }
         }
-        let target_segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
+        let target_segments = value_path
+            .segments()
+            .map(helm_schema_core::Segment::encode_component)
+            .collect::<Vec<_>>();
         for (member, guards, member_schema) in arms {
             let Ok(member_schema) = serde_json::from_str::<Value>(&member_schema) else {
                 continue;
@@ -275,7 +278,10 @@ pub(super) fn append_merge_shadow_arms(
                     .iter()
                     .find_map(|key| payload.get(*key).and_then(Value::as_object))
             });
-            let target_segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
+            let target_segments = value_path
+                .segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect::<Vec<_>>();
             // The whole payload types this layer exactly where no earlier
             // layer can shadow it: the preferred layer's keys always win
             // (its guard is its own truthiness alone), and a shadowed layer

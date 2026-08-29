@@ -68,7 +68,11 @@ pub(crate) fn apply_program_wrapper_alternatives(
     // stable path and keep their alternatives.
     let excluded: BTreeSet<Vec<String>> = exclusions
         .iter()
-        .map(|path| path.segments().map(str::to_owned).collect())
+        .map(|path| {
+            path.segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect()
+        })
         .collect();
     for (scope, keys) in keys_by_scope {
         let keys: Vec<(&str, bool)> = keys.into_iter().collect();
@@ -78,7 +82,10 @@ pub(crate) fn apply_program_wrapper_alternatives(
             wrap_document_root(root, &keys);
             reject_root_spread_wrappers(root, &keys);
         } else if let Some(node) = properties_node_mut(root, scope) {
-            let scope_path = scope.segments().map(str::to_owned).collect::<Vec<_>>();
+            let scope_path = scope
+                .segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect::<Vec<_>>();
             rewrite_value_edges(node, &keys, Some(&scope_path), &excluded);
             reject_root_spread_wrappers(node, &keys);
         }
@@ -137,7 +144,7 @@ fn wrap_document_root(root: &mut Value, keys: &[(&str, bool)]) {
 fn properties_node_mut<'a>(root: &'a mut Value, scope: &ValuesPath) -> Option<&'a mut Value> {
     let mut node = root;
     for segment in scope.segments() {
-        node = node.get_mut("properties")?.get_mut(segment)?;
+        node = node.get_mut("properties")?.get_mut(segment.literal()?)?;
     }
     Some(node)
 }

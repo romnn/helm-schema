@@ -56,7 +56,10 @@ pub fn apply_required_inference(
 /// inferred shape may not include every path that drives required-
 /// inference (e.g. when the path is referenced only via a guard).
 fn add_path_to_required(schema: &mut Value, vp: &ValuesPath) {
-    let parts = vp.segments().map(str::to_owned).collect::<Vec<_>>();
+    let parts = vp
+        .segments()
+        .map(helm_schema_core::Segment::encode_component)
+        .collect::<Vec<_>>();
     let Some((leaf, parents)) = parts.split_last() else {
         return;
     };

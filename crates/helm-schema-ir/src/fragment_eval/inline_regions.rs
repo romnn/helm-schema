@@ -375,8 +375,12 @@ impl Interpreter<'_> {
             }
         }
         let input_contract_identity = input_identity.or_else(|| {
-            member_identity
-                .filter(|identity| identity.path.segments().any(|segment| segment == "*"))
+            member_identity.filter(|identity| {
+                identity
+                    .path
+                    .segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+            })
         });
         if iterable_value
             .and_then(crate::abstract_value::AbstractValue::selection_chain_identity_paths)

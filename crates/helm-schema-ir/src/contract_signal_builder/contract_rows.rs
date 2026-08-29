@@ -1063,7 +1063,9 @@ pub(super) fn record_range_input_capture(
     path_accumulator(paths, &path).facts.record_facts(facts);
 
     if let Some(parent) = path.item_parent()
-        && !parent.segments().any(|segment| segment == "*")
+        && !parent
+            .segments()
+            .any(helm_schema_core::Segment::is_each_member)
     {
         let parent_mode = capture.ranged.mode(&parent);
         if !parent_mode.member_identity {

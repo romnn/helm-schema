@@ -593,13 +593,13 @@ impl EmissionSupportPlan {
             .schema_evidence_by_value_path()
             .iter()
             .filter(|(_, evidence)| evidence.facts.accepted_values_root_fragment)
-            .map(|(path, _)| path.segments().map(str::to_owned).collect())
+            .map(|(path, _)| path.segments().map(tree_segment_spelling).collect())
             .collect::<Vec<_>>();
         let dependency_roots = contract_schema_signals
             .schema_evidence_by_value_path()
             .iter()
             .filter(|(_, evidence)| evidence.facts.accepted_dependency_values_root_fragment)
-            .map(|(path, _)| path.segments().map(str::to_owned).collect())
+            .map(|(path, _)| path.segments().map(tree_segment_spelling).collect())
             .collect::<BTreeSet<_>>();
         // A serialized path's schema is deliberately unconstrained; the
         // declared-default filler keeps the slot without re-typing it,
@@ -612,19 +612,22 @@ impl EmissionSupportPlan {
         }
         for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
             if evidence.facts.used_as_yaml_serialized {
-                default_fill_skip_paths.insert(value_path.segments().map(str::to_owned).collect());
+                default_fill_skip_paths
+                    .insert(value_path.segments().map(tree_segment_spelling).collect());
             }
         }
         // A directly ranged path accepts the runtime iterable domain, which
         // is wider than any declared default; the filler must not re-type it.
         for value_path in contract_schema_signals.direct_ranged_value_paths() {
-            default_fill_skip_paths.insert(value_path.segments().map(str::to_owned).collect());
+            default_fill_skip_paths
+                .insert(value_path.segments().map(tree_segment_spelling).collect());
         }
         // A member omitted before every provider sink is governed by its own
         // evidence. Refilling its default would restore the removed parent
         // contract.
         for value_path in contract_schema_signals.unconditionally_omitted_value_paths() {
-            default_fill_skip_paths.insert(value_path.segments().map(str::to_owned).collect());
+            default_fill_skip_paths
+                .insert(value_path.segments().map(tree_segment_spelling).collect());
         }
         let mut support = Self {
             conditional_targets,
@@ -662,10 +665,10 @@ fn materialize_base_document(
         let materialized_member_schema = schema.clone().into_value();
         if owner.replaces() {
             insertion_abstentions +=
-                document.replace_path_schema(&resolved_path.path_segments, schema);
+                document.replace_values_path_schema(&resolved_path.value_path, schema);
         } else {
             insertion_abstentions +=
-                document.insert_path_schema(&resolved_path.path_segments, schema);
+                document.insert_values_path_schema(&resolved_path.value_path, schema);
         }
         let Some((last, parent_segments)) = resolved_path.path_segments.split_last() else {
             continue;
@@ -691,6 +694,10 @@ fn materialize_base_document(
     }
     drop(base_span);
     (document, insertion_abstentions)
+}
+
+fn tree_segment_spelling(segment: &helm_schema_core::Segment) -> String {
+    segment.literal().unwrap_or("*").to_owned()
 }
 
 fn finish_generated(

@@ -374,7 +374,7 @@ pub(crate) fn collect_conditional_schemas(
             }
             let target_segments = target_value_path
                 .segments()
-                .map(str::to_owned)
+                .map(helm_schema_core::Segment::encode_component)
                 .collect::<Vec<_>>();
             if matches!(
                 &implication.target,
@@ -482,7 +482,7 @@ pub(crate) fn collect_conditional_schemas(
 
             let target_segments = target_value_path
                 .segments()
-                .map(str::to_owned)
+                .map(helm_schema_core::Segment::encode_component)
                 .collect::<Vec<_>>();
             let Some((outer_guards, nested_guard_scopes)) =
                 partition_guard_scopes(&target_segments, &overlay.guards)

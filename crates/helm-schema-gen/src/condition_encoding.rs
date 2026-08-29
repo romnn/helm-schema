@@ -219,7 +219,10 @@ fn build_single_condition_fragment(
             absent_coerced_int(subchart_defaults_doc, path) < *bound,
         ),
         ConditionalGuard::Absent { path } => {
-            let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
+            let segments = path
+                .segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect::<Vec<_>>();
             let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
             if relative_segments.is_empty() {
                 return None;
@@ -526,7 +529,11 @@ pub(crate) fn deleted_dependency_root_terminates<'a>(
     let paths = guards
         .iter()
         .flat_map(ConditionalGuard::value_paths)
-        .map(|path| path.segments().map(str::to_string).collect::<Vec<_>>())
+        .map(|path| {
+            path.segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect::<Vec<_>>()
+        })
         .collect::<Vec<_>>();
     if paths.is_empty()
         || paths.iter().any(|path| {
@@ -855,7 +862,10 @@ fn build_default_aware_leaf_condition_fragment(
     leaf_schema: SchemaNode,
     absent_holds: bool,
 ) -> Option<SchemaNode> {
-    let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
+    let segments = value_path
+        .segments()
+        .map(helm_schema_core::Segment::encode_component)
+        .collect::<Vec<_>>();
     let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
     if relative_segments.is_empty() {
         return Some(leaf_schema);
@@ -914,7 +924,10 @@ fn negated_member_guard_fragment(guard: &ConditionalGuard) -> Option<SchemaNode>
         ConditionalGuard::HasKey { path, key } => (path, SchemaNode::object().require(key.clone())),
         _ => return None,
     };
-    let segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
+    let segments = path
+        .segments()
+        .map(helm_schema_core::Segment::encode_component)
+        .collect::<Vec<_>>();
     let star = segments.iter().position(|segment| segment == "*")?;
     let suffix = segments.get(star + 1..)?;
     let member_positive = if suffix.is_empty() {
@@ -965,7 +978,10 @@ fn build_required_condition_fragment(
 /// The raw input path is missing or null before any chart-authored values
 /// reconstruction supplies a fallback.
 pub(crate) fn input_path_absent_condition(value_path: &ValuesPath) -> Option<SchemaNode> {
-    let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
+    let segments = value_path
+        .segments()
+        .map(helm_schema_core::Segment::encode_component)
+        .collect::<Vec<_>>();
     let present_non_null = build_required_condition_fragment(
         &segments,
         SchemaNode::not(SchemaNode::enum_values(vec![Value::Null])),

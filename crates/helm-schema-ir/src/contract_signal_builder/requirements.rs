@@ -238,15 +238,19 @@ pub(super) fn record_fail_conjunction(
             // document-level absence clause instead — the same vehicle the
             // navigated-host and nil-strict-operand claims use for their own
             // top-level paths (kube-prometheus-stack's `customRules`).
-            let mut segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
+            let mut segments = path.segments().cloned().collect::<Vec<_>>();
             let Some(member) = segments.pop() else {
                 return;
+            };
+            let member = match member {
+                helm_schema_core::Segment::Literal(member) => member,
+                helm_schema_core::Segment::EachMember => "*".to_string(),
             };
             if segments.is_empty() {
                 record_absence_abort_clause(terminal_clauses, capture, &path.encode());
                 return;
             }
-            let parent = helm_schema_core::join_value_path(segments);
+            let parent = helm_schema_core::ValuesPath::from_segments(segments).encode();
             record_value_requirement_capture(
                 paths,
                 capture,
@@ -262,12 +266,18 @@ pub(super) fn record_fail_conjunction(
             // member (the minio chart's `tpl .accessKey $`). The member itself
             // (a bare `A.*`) keeps no claim: a range only visits members that
             // exist.
-            if path.segments().any(|segment| segment == "*") {
-                let mut segments = path.segments().map(str::to_owned).collect::<Vec<_>>();
+            if path
+                .segments()
+                .any(helm_schema_core::Segment::is_each_member)
+            {
+                let mut segments = path.segments().cloned().collect::<Vec<_>>();
                 let Some(member) = segments.pop() else {
                     return;
                 };
-                if member == "*" || segments.is_empty() {
+                let Some(member) = member.literal().map(str::to_string) else {
+                    return;
+                };
+                if segments.is_empty() {
                     return;
                 }
                 // A gate on the operand's OWN truthiness excludes absence
@@ -288,7 +298,7 @@ pub(super) fn record_fail_conjunction(
                 record_value_requirement_capture(
                     paths,
                     capture,
-                    &helm_schema_core::join_value_path(segments),
+                    &helm_schema_core::ValuesPath::from_segments(segments).encode(),
                     FailValueRequirement::HasMemberEvenDefaulted(member),
                 );
                 return;
@@ -400,6 +410,7 @@ pub(super) fn record_fail_conjunction(
         .any(|path| {
             path.segments()
                 .next()
+                .and_then(helm_schema_core::Segment::literal)
                 .is_some_and(|segment| segment.starts_with('$'))
         })
     {
@@ -467,7 +478,7 @@ pub(super) fn record_fail_conjunction(
                 .map(|(path, _)| path.encode()),
         )
         .filter(|path| {
-            let member = helm_schema_core::append_value_path(path, "*");
+            let member = helm_schema_core::append_each_member_value_path(path);
             test_candidate_paths.iter().any(|candidate| {
                 let candidate = candidate.encode();
                 candidate == member
@@ -477,7 +488,7 @@ pub(super) fn record_fail_conjunction(
         .max_by_key(|path| helm_schema_core::split_value_path(path).len());
     let member_scope = ranged
         .as_deref()
-        .map(|path| helm_schema_core::append_value_path(path, "*"));
+        .map(helm_schema_core::append_each_member_value_path);
 
     let mut outer_guards = Vec::new();
     let mut member_tests: Vec<&Predicate> = Vec::new();
@@ -727,11 +738,15 @@ fn selected_member_requirement_capture(
 }
 
 fn member_range_path(path: &str) -> Option<String> {
-    let segments = helm_schema_core::split_value_path(path);
-    let wildcard = segments.iter().position(|segment| segment == "*")?;
-    Some(helm_schema_core::join_value_path(
-        segments.get(..wildcard)?.iter().cloned(),
-    ))
+    let path = helm_schema_core::ValuesPath::parse(path);
+    let segments = path.segments().collect::<Vec<_>>();
+    let wildcard = segments
+        .iter()
+        .position(|segment| segment.is_each_member())?;
+    Some(
+        helm_schema_core::ValuesPath::from_segments(segments.get(..wildcard)?.iter().copied())
+            .encode(),
+    )
 }
 
 fn string_requirement_has_execution_scope(
@@ -739,13 +754,17 @@ fn string_requirement_has_execution_scope(
     path: &str,
     range_modes: &crate::range_modes::RangeModes,
 ) -> bool {
-    let segments = helm_schema_core::split_value_path(path);
+    let path = helm_schema_core::ValuesPath::parse(path);
+    let segments = path.segments().collect::<Vec<_>>();
     let mut required_ranges = BTreeSet::new();
     for (index, segment) in segments.iter().enumerate() {
-        if segment == "*" {
-            required_ranges.insert(helm_schema_core::join_value_path(
-                segments.get(..index).unwrap_or_default().iter().cloned(),
-            ));
+        if segment.is_each_member() {
+            required_ranges.insert(
+                helm_schema_core::ValuesPath::from_segments(
+                    segments.get(..index).unwrap_or_default().iter().copied(),
+                )
+                .encode(),
+            );
         }
     }
     required_ranges.iter().all(|required| {
@@ -792,7 +811,7 @@ pub(super) fn record_range_key_prefix_requirement(
     let [(collection_path, prefix)] = prefixes.as_slice() else {
         return !prefixes.is_empty();
     };
-    let member_scope = helm_schema_core::append_value_path(&collection_path.encode(), "*");
+    let member_scope = helm_schema_core::append_each_member_value_path(&collection_path.encode());
     let has_matching_range = conjunction.iter().any(|predicate| {
         matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == *collection_path)
     });
@@ -901,7 +920,7 @@ pub(super) fn record_range_key_matches_requirement(
     if !has_matching_range {
         return true;
     }
-    let member_scope = helm_schema_core::append_value_path(&collection_path.encode(), "*");
+    let member_scope = helm_schema_core::append_each_member_value_path(&collection_path.encode());
     let mut outer_guards = Vec::new();
     for predicate in conjunction {
         if key_match(predicate).is_some() {
@@ -1145,24 +1164,31 @@ pub(super) fn record_value_requirement_capture(
     if path.trim().is_empty() {
         return;
     }
-    let path_segments = helm_schema_core::split_value_path(path);
-    if let Some(first_wildcard) = path_segments.iter().position(|segment| segment == "*") {
+    let value_path = helm_schema_core::ValuesPath::parse(path);
+    let path_segments = value_path.segments().collect::<Vec<_>>();
+    if let Some(first_wildcard) = path_segments
+        .iter()
+        .position(|segment| segment.is_each_member())
+    {
         let (collection_segments, wildcard_tail) = path_segments.split_at(first_wildcard);
         let wildcard_count = wildcard_tail
             .iter()
-            .take_while(|segment| segment.as_str() == "*")
+            .take_while(|segment| segment.is_each_member())
             .count();
         let suffix = wildcard_tail.get(wildcard_count..).unwrap_or_default();
-        if wildcard_count >= 2 && !suffix.iter().any(|segment| segment == "*") {
-            let collection_path = helm_schema_core::join_value_path(collection_segments);
-            if collection_path.is_empty() {
+        if wildcard_count >= 2 && !suffix.iter().any(|segment| segment.is_each_member()) {
+            let collection_path =
+                helm_schema_core::ValuesPath::from_segments(collection_segments.iter().copied());
+            if collection_path.segments().next().is_none() {
                 return;
             }
             let ranged_collections = (0..wildcard_count)
                 .map(|depth| {
-                    let mut segments = collection_segments.to_vec();
-                    segments.extend(std::iter::repeat_n("*".to_string(), depth));
-                    helm_schema_core::join_value_path(segments)
+                    let mut path = collection_path.clone();
+                    for _ in 0..depth {
+                        path.push_each_member();
+                    }
+                    path.encode()
                 })
                 .collect::<BTreeSet<_>>();
             if ranged_collections.iter().any(|path| {
@@ -1201,7 +1227,11 @@ pub(super) fn record_value_requirement_capture(
 
             let mut target_path =
                 std::iter::repeat_n("*".to_string(), wildcard_count - 1).collect::<Vec<_>>();
-            target_path.extend(suffix.iter().cloned());
+            target_path.extend(
+                suffix
+                    .iter()
+                    .filter_map(|segment| segment.literal().map(str::to_owned)),
+            );
             let implication = ContractRequirementImplication {
                 outer_guards,
                 target: ContractRequirementTarget::MembersAt {
@@ -1210,7 +1240,7 @@ pub(super) fn record_value_requirement_capture(
                 },
                 requirements: vec![requirement],
             };
-            let acc = path_accumulator(paths, &ValuesPath::parse(&collection_path));
+            let acc = path_accumulator(paths, &collection_path);
             acc.referenced = true;
             if !acc.requirement_implications.contains(&implication) {
                 acc.requirement_implications.push(implication);
@@ -1609,8 +1639,12 @@ pub(super) fn record_member_relative_split_requirement(
     index: usize,
     allow_non_string: bool,
 ) {
-    let segments = helm_schema_core::split_value_path(source_path);
-    let Some(member_index) = segments.iter().rposition(|segment| segment == "*") else {
+    let source_path = helm_schema_core::ValuesPath::parse(source_path);
+    let segments = source_path.segments().collect::<Vec<_>>();
+    let Some(member_index) = segments
+        .iter()
+        .rposition(|segment| segment.is_each_member())
+    else {
         return;
     };
     if member_index == 0 || member_index + 1 >= segments.len() {
@@ -1625,11 +1659,13 @@ pub(super) fn record_member_relative_split_requirement(
     let Some(target_path) = segments.get(member_index + 1..) else {
         return;
     };
-    let collection_path = helm_schema_core::join_value_path(collection_segments.to_vec());
-    let member_scope = helm_schema_core::join_value_path(member_segments.to_vec());
-    let collection = helm_schema_core::ValuesPath::parse(&collection_path);
-    let member = helm_schema_core::ValuesPath::parse(&member_scope);
-    let target_path = target_path.to_vec();
+    let collection =
+        helm_schema_core::ValuesPath::from_segments(collection_segments.iter().copied());
+    let member = helm_schema_core::ValuesPath::from_segments(member_segments.iter().copied());
+    let target_path = target_path
+        .iter()
+        .filter_map(|segment| segment.literal().map(str::to_owned))
+        .collect::<Vec<_>>();
     let mut member_guards: Vec<(Vec<String>, GuardValue)> = Vec::new();
     let mut outer_guards = Vec::new();
 
@@ -1644,12 +1680,12 @@ pub(super) fn record_member_relative_split_requirement(
             && let member_segments = member.segments().collect::<Vec<_>>()
             && let Some(relative) = path_segments.strip_prefix(member_segments.as_slice())
             && !relative.is_empty()
-            && !relative.contains(&"*")
+            && !relative.iter().any(|segment| segment.is_each_member())
         {
             member_guards.push((
                 relative
                     .iter()
-                    .map(|segment| (*segment).to_string())
+                    .filter_map(|segment| segment.literal().map(str::to_string))
                     .collect(),
                 value.clone(),
             ));
@@ -1685,7 +1721,7 @@ pub(super) fn record_member_relative_split_requirement(
             allow_non_string,
         }],
     };
-    let acc = path_accumulator(paths, &ValuesPath::parse(&collection_path));
+    let acc = path_accumulator(paths, &collection);
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -1802,19 +1838,20 @@ pub(super) fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
 /// itself).
 fn relative_value_path(path: &helm_schema_core::ValuesPath, scope: &str) -> Option<Vec<String>> {
     let scope = helm_schema_core::ValuesPath::parse(scope);
-    let path_segments: Vec<&str> = path.segments().collect();
-    let scope_segments: Vec<&str> = scope.segments().collect();
+    let path_segments = path.segments().collect::<Vec<_>>();
+    let scope_segments = scope.segments().collect::<Vec<_>>();
     let relative = path_segments.strip_prefix(scope_segments.as_slice())?;
     (!relative.is_empty()).then(|| {
         relative
             .iter()
-            .map(|segment| (*segment).to_string())
-            .collect()
-    })
+            .map(|segment| segment.literal().map(str::to_string))
+            .collect::<Option<Vec<_>>>()
+    })?
 }
 
 fn values_path_has_wildcard(path: &helm_schema_core::ValuesPath) -> bool {
-    path.segments().any(|segment| segment == "*")
+    path.segments()
+        .any(helm_schema_core::Segment::is_each_member)
 }
 
 pub(super) fn requirements_from_negation(

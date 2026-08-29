@@ -208,7 +208,11 @@ impl ConditionalTargetIndex {
             .filter(|(path, target)| {
                 path.segments().next().is_some() && !target.preserve_base_schema
             })
-            .map(|(path, _)| path.segments().map(str::to_owned).collect())
+            .map(|(path, _)| {
+                path.segments()
+                    .map(helm_schema_core::Segment::encode_component)
+                    .collect()
+            })
             .collect();
         Self {
             targets,

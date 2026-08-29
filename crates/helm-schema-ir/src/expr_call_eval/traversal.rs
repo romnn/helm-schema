@@ -141,7 +141,7 @@ fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
             .split_last()
             .map(|(leaf, parents)| {
                 (
-                    helm_schema_core::join_value_path(parents.iter()),
+                    helm_schema_core::join_encoded_value_path(parents.iter()),
                     leaf.clone(),
                 )
             })
@@ -409,7 +409,7 @@ pub(super) fn apply_index_segment(
                 .filter_map(|candidate| apply_index_segment(candidate, option))
                 .collect(),
         ),
-        _ => value.apply_to_path(&["*".to_string()]),
+        _ => value.indexed_item(),
     }
 }
 

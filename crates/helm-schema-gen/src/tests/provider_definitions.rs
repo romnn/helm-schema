@@ -4,13 +4,14 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+fn path_segments(path: &str) -> Vec<String> {
+    path.split('.').map(str::to_owned).collect()
+}
+
 fn resolved_path(path: &str, schema: Value) -> ResolvedPathSchema {
     ResolvedPathSchema {
         value_path: helm_schema_core::ValuesPath::parse(path),
-        path_segments: path
-            .split('.')
-            .map(std::string::ToString::to_string)
-            .collect(),
+        path_segments: path_segments(path),
         provider_schema_candidate: Some(ProviderSchemaCandidate::from_provider_fragment(
             ProviderSchemaFragment::new(schema.clone()),
         )),
@@ -70,10 +71,7 @@ fn sourced_provider_schema_candidate_with_definition_schema(
 fn resolved_sourced_path(path: &str, schema: Value, pointer: &str) -> ResolvedPathSchema {
     ResolvedPathSchema {
         value_path: helm_schema_core::ValuesPath::parse(path),
-        path_segments: path
-            .split('.')
-            .map(std::string::ToString::to_string)
-            .collect(),
+        path_segments: path_segments(path),
         provider_schema_candidate: Some(sourced_provider_schema_candidate(schema.clone(), pointer)),
         values_yaml_schema: crate::schema_model::empty_schema(),
         structural_schema: schema.clone(),
@@ -196,7 +194,7 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
     let mut paths = vec![
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("first"),
-            path_segments: vec!["first".to_string()],
+            path_segments: path_segments("first"),
             provider_schema_candidate: Some(sourced_provider_schema_candidate_with_source_schema(
                 provider_schema.clone(),
                 source.pointer(),
@@ -211,7 +209,7 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
         },
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("second"),
-            path_segments: vec!["second".to_string()],
+            path_segments: path_segments("second"),
             provider_schema_candidate: Some(sourced_provider_schema_candidate_with_source_schema(
                 provider_schema.clone(),
                 source.pointer(),
@@ -281,7 +279,7 @@ fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema(
     let mut paths = vec![
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("first"),
-            path_segments: vec!["first".to_string()],
+            path_segments: path_segments("first"),
             provider_schema_candidate: Some(
                 sourced_provider_schema_candidate_with_definition_schema(
                     provider_schema.clone(),
@@ -299,7 +297,7 @@ fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema(
         },
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("second"),
-            path_segments: vec!["second".to_string()],
+            path_segments: path_segments("second"),
             provider_schema_candidate: Some(
                 sourced_provider_schema_candidate_with_definition_schema(
                     provider_schema.clone(),
@@ -356,7 +354,7 @@ fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
     let mut paths = vec![
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("first"),
-            path_segments: vec!["first".to_string()],
+            path_segments: path_segments("first"),
             provider_schema_candidate: Some(
                 sourced_provider_schema_candidate_with_definition_schema(
                     provider_schema.clone(),
@@ -374,7 +372,7 @@ fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
         },
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("second"),
-            path_segments: vec!["second".to_string()],
+            path_segments: path_segments("second"),
             provider_schema_candidate: Some(sourced_provider_schema_candidate_with_source_schema(
                 provider_schema.clone(),
                 source.pointer(),
@@ -412,7 +410,7 @@ fn structurally_equal_provider_schemas_share_even_with_different_sources() {
     let mut paths = vec![
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("first"),
-            path_segments: vec!["first".to_string()],
+            path_segments: path_segments("first"),
             provider_schema_candidate: Some(sourced_provider_schema_candidate(
                 provider_schema.clone(),
                 "/definitions/First",
@@ -426,7 +424,7 @@ fn structurally_equal_provider_schemas_share_even_with_different_sources() {
         },
         ResolvedPathSchema {
             value_path: helm_schema_core::ValuesPath::parse("second"),
-            path_segments: vec!["second".to_string()],
+            path_segments: path_segments("second"),
             provider_schema_candidate: Some(sourced_provider_schema_candidate(
                 provider_schema.clone(),
                 "/definitions/Second",

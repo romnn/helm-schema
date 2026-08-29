@@ -19,7 +19,8 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
     "#});
     contract.map_value_paths(|path| {
         helm_schema_core::ValuesPath::from_segments(
-            std::iter::once("metrics").chain(path.segments()),
+            std::iter::once(helm_schema_core::Segment::from("metrics"))
+                .chain(path.segments().cloned()),
         )
     });
     contract.project_dependency_global_contracts(&["metrics".to_string()]);

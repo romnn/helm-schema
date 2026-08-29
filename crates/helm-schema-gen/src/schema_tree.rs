@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use helm_schema_core::{Segment, ValuesPath};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
@@ -42,7 +43,17 @@ impl SchemaDocument {
         path_segments: &[String],
         schema: SchemaNode,
     ) -> usize {
-        insert_schema_at_parts(&mut self.root, path_segments, schema)
+        let path_segments = legacy_path_segments(path_segments);
+        insert_schema_at_parts(&mut self.root, &path_segments, schema)
+    }
+
+    pub(crate) fn insert_values_path_schema(
+        &mut self,
+        value_path: &ValuesPath,
+        schema: SchemaNode,
+    ) -> usize {
+        let path_segments = value_path.segments().cloned().collect::<Vec<_>>();
+        insert_schema_at_parts(&mut self.root, &path_segments, schema)
     }
 
     /// Opens the root `global` property. Helm shares `global` values across
@@ -63,12 +74,13 @@ impl SchemaDocument {
         }
     }
 
-    pub(crate) fn replace_path_schema(
+    pub(crate) fn replace_values_path_schema(
         &mut self,
-        path_segments: &[String],
+        value_path: &ValuesPath,
         schema: SchemaNode,
     ) -> usize {
-        replace_schema_at_parts(&mut self.root, path_segments, schema)
+        let path_segments = value_path.segments().cloned().collect::<Vec<_>>();
+        replace_schema_at_parts(&mut self.root, &path_segments, schema)
     }
 
     /// Conjoins an unconditional generator constraint at an existing values
@@ -403,8 +415,17 @@ pub(crate) fn insert_path_schema_value(
     schema: Value,
 ) -> (Value, usize) {
     let mut root = SchemaNode::foreign(root_schema);
-    let abstentions = insert_schema_at_parts(&mut root, path_segments, SchemaNode::foreign(schema));
+    let path_segments = legacy_path_segments(path_segments);
+    let abstentions =
+        insert_schema_at_parts(&mut root, &path_segments, SchemaNode::foreign(schema));
     (root.into_value(), abstentions)
+}
+
+fn legacy_path_segments(path_segments: &[String]) -> Vec<Segment> {
+    path_segments
+        .iter()
+        .map(|segment| Segment::from_encoded_component(segment))
+        .collect()
 }
 
 /// Conjoins one member schema with every array-item and map-value lane.
@@ -1068,7 +1089,7 @@ fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
 
 fn replace_schema_at_parts(
     node: &mut SchemaNode,
-    path_segments: &[String],
+    path_segments: &[Segment],
     leaf: SchemaNode,
 ) -> usize {
     if replace_existing_schema_at_parts(node, path_segments, &leaf) {
@@ -1079,7 +1100,7 @@ fn replace_schema_at_parts(
 
 fn replace_existing_schema_at_parts(
     node: &mut SchemaNode,
-    path_segments: &[String],
+    path_segments: &[Segment],
     leaf: &SchemaNode,
 ) -> bool {
     let Some((head, tail)) = path_segments.split_first() else {
@@ -1088,9 +1109,9 @@ fn replace_existing_schema_at_parts(
     };
     match node {
         SchemaNode::Object { properties, .. } => properties
-            .get_mut(head)
+            .get_mut(head.literal().unwrap_or("*"))
             .is_some_and(|child| replace_existing_schema_at_parts(child, tail, leaf)),
-        SchemaNode::Array { items, .. } if head == "*" => items
+        SchemaNode::Array { items, .. } if head.is_each_member() => items
             .as_deref_mut()
             .is_some_and(|child| replace_existing_schema_at_parts(child, tail, leaf)),
         SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
@@ -1113,13 +1134,13 @@ fn replace_existing_schema_at_parts(
             {
                 replaced |= replace_existing_schema_at_parts(schema, path_segments, leaf);
             }
-            let child = if head == "*" {
+            let child = if head.is_each_member() {
                 keywords.items.as_deref_mut()
             } else {
                 keywords
                     .properties
                     .as_mut()
-                    .and_then(|properties| properties.get_mut(head))
+                    .and_then(|properties| head.literal().and_then(|head| properties.get_mut(head)))
             };
             replaced
                 | child.is_some_and(|child| replace_existing_schema_at_parts(child, tail, leaf))
@@ -1134,7 +1155,7 @@ fn replace_existing_schema_at_parts(
 /// handling to the caller.
 fn insert_map_member_row(
     node: &mut SchemaNode,
-    path_segments: &[String],
+    path_segments: &[Segment],
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) -> bool {
@@ -1199,7 +1220,7 @@ fn insert_map_member_row(
 
 fn insert_map_member_schema(
     member: &mut SchemaNode,
-    tail: &[String],
+    tail: &[Segment],
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) {
@@ -1212,7 +1233,7 @@ fn insert_map_member_schema(
 
 fn insert_schema_at_parts(
     node: &mut SchemaNode,
-    path_segments: &[String],
+    path_segments: &[Segment],
     leaf: SchemaNode,
 ) -> usize {
     let mut ambiguous_union_abstentions = 0;
@@ -1222,7 +1243,7 @@ fn insert_schema_at_parts(
 
 fn insert_schema_at_parts_tracking(
     node: &mut SchemaNode,
-    path_segments: &[String],
+    path_segments: &[Segment],
     leaf: SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) {
@@ -1234,7 +1255,8 @@ fn insert_schema_at_parts_tracking(
     // means "each member value" of whatever container the node already is:
     // an object-shaped node hosts it under `additionalProperties` instead
     // of growing an array alternative.
-    if head == "*" && insert_map_member_row(node, path_segments, &leaf, ambiguous_union_abstentions)
+    if head.is_each_member()
+        && insert_map_member_row(node, path_segments, &leaf, ambiguous_union_abstentions)
     {
         return;
     }
@@ -1250,7 +1272,7 @@ fn insert_schema_at_parts_tracking(
         return;
     }
 
-    if head == "*" {
+    if head.is_each_member() {
         if node.is_empty_slot() {
             // A bare `*` member row proves members exist, not which
             // collection lane hosts them: `range` iterates arrays and maps
@@ -1291,19 +1313,22 @@ fn insert_schema_at_parts_tracking(
     if !tail.is_empty() {
         node.clear_exact_empty_constraint_for_descendant();
     }
+    let Some(head) = head.literal() else {
+        return;
+    };
     if tail.is_empty() {
         let properties = ensure_object_properties(node);
         merge_into_schema_slot(
             properties
-                .entry(head.clone())
+                .entry(head.to_owned())
                 .or_insert_with(SchemaNode::empty),
             leaf,
         );
         return;
     }
 
-    let key = head.clone();
-    let next_is_array = tail.first().is_some_and(|segment| segment == "*");
+    let key = head.to_owned();
+    let next_is_array = tail.first().is_some_and(Segment::is_each_member);
     let properties = ensure_object_properties(node);
     let child = properties.entry(key).or_insert_with(|| {
         if next_is_array {
@@ -1326,9 +1351,9 @@ fn insert_schema_at_parts_tracking(
 
 fn insert_into_nonempty_schema_slot(
     node: &mut SchemaNode,
-    path_segments: &[String],
-    head: &str,
-    tail: &[String],
+    path_segments: &[Segment],
+    head: &Segment,
+    tail: &[Segment],
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) -> bool {
@@ -1341,7 +1366,7 @@ fn insert_into_nonempty_schema_slot(
     // carrier would let the carrier's materialized closure shut an open
     // map one level down).
     if !tail.is_empty()
-        && head != "*"
+        && let Some(head) = head.literal()
         && let SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) = node
         && let Some(child) = keywords
             .properties
@@ -1362,7 +1387,7 @@ fn insert_into_nonempty_schema_slot(
     // declared-empty serialized map) hosts descendants in its open arm:
     // merging a carrier at the union level would replace the open arm
     // with the carrier's materialized closure.
-    if head != "*"
+    if !head.is_each_member()
         && let SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) = node
         && let Some(arms) = keywords.any_of.as_mut()
     {
@@ -1392,8 +1417,8 @@ fn insert_into_nonempty_schema_slot(
 
 fn insert_into_canonical_object_conjunct(
     node: &mut SchemaNode,
-    head: &str,
-    tail: &[String],
+    head: &Segment,
+    tail: &[Segment],
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) -> bool {
@@ -1406,8 +1431,8 @@ fn insert_into_canonical_object_conjunct(
 
 fn insert_into_typed_canonical_object_conjunct(
     node: &mut SchemaNode,
-    head: &str,
-    tail: &[String],
+    head: &Segment,
+    tail: &[Segment],
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) -> bool {
@@ -1420,9 +1445,10 @@ fn insert_into_typed_canonical_object_conjunct(
     ) {
         return true;
     }
+    let head_literal = head.literal().unwrap_or("*");
     let value = node.clone().into_value();
     let mut path_segments = Vec::with_capacity(tail.len() + 1);
-    path_segments.push(head.to_string());
+    path_segments.push(head.clone());
     path_segments.extend_from_slice(tail);
     if multi_arm_object_union_has_equivalent_descendant(&value, &path_segments) == Some(false) {
         *ambiguous_union_abstentions += 1;
@@ -1435,14 +1461,16 @@ fn insert_into_typed_canonical_object_conjunct(
         return false;
     };
     let properties = keywords.properties.get_or_insert_with(BTreeMap::new);
-    let next_is_array = tail.first().is_some_and(|segment| segment == "*");
-    let child = properties.entry(head.to_string()).or_insert_with(|| {
-        if tail.is_empty() || next_is_array {
-            SchemaNode::empty()
-        } else {
-            SchemaNode::unknown_object()
-        }
-    });
+    let next_is_array = tail.first().is_some_and(Segment::is_each_member);
+    let child = properties
+        .entry(head_literal.to_owned())
+        .or_insert_with(|| {
+            if tail.is_empty() || next_is_array {
+                SchemaNode::empty()
+            } else {
+                SchemaNode::unknown_object()
+            }
+        });
     if tail.is_empty() {
         merge_into_schema_slot(child, leaf.clone());
     } else {
@@ -1454,8 +1482,8 @@ fn insert_into_typed_canonical_object_conjunct(
 
 fn insert_into_typed_canonical_mixed_object_lane(
     node: &mut SchemaNode,
-    head: &str,
-    tail: &[String],
+    head: &Segment,
+    tail: &[Segment],
     leaf: &SchemaNode,
     ambiguous_union_abstentions: &mut usize,
 ) -> bool {
@@ -1492,7 +1520,7 @@ fn insert_into_typed_canonical_mixed_object_lane(
     let mut base_keywords = (**base).clone();
     base_keywords.schema_type = None;
     let mut path_segments = Vec::with_capacity(tail.len() + 1);
-    path_segments.push(head.to_string());
+    path_segments.push(head.clone());
     path_segments.extend_from_slice(tail);
     let mut arms = Vec::with_capacity(types.len());
     for schema_type in types {
@@ -1525,7 +1553,7 @@ fn schema_only_allows_object(schema: &Value) -> bool {
 
 fn multi_arm_object_union_has_equivalent_descendant(
     schema: &Value,
-    path_segments: &[String],
+    path_segments: &[Segment],
 ) -> Option<bool> {
     let object = schema.as_object()?;
     for keyword in ["anyOf", "oneOf"] {
@@ -1556,13 +1584,10 @@ fn multi_arm_object_union_has_equivalent_descendant(
 
 fn schema_descendant_at_path<'a>(
     mut schema: &'a Value,
-    path_segments: &[String],
+    path_segments: &[Segment],
 ) -> Option<&'a Value> {
     for segment in path_segments {
-        if segment == "*" {
-            return None;
-        }
-        schema = schema.get("properties")?.get(segment)?;
+        schema = schema.get("properties")?.get(segment.literal()?)?;
     }
     Some(schema)
 }

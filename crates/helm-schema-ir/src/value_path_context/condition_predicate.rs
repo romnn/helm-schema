@@ -3139,14 +3139,11 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
                     return Some(Predicate::True);
                 }
             }
-            AbstractValue::ValuesPath(path) => {
-                if path.segments().any(|segment| segment == "*") {
-                    return None;
-                }
-                arms.push(Predicate::truthy_path(path.encode()));
-            }
-            AbstractValue::JsonDecodedPath(path) => {
-                if path.segments().any(|segment| segment == "*") {
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+                if path
+                    .segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+                {
                     return None;
                 }
                 arms.push(Predicate::truthy_path(path.encode()));
@@ -3158,7 +3155,10 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
             AbstractValue::OutputPath(path, meta)
                 if meta.nil_scrubbed && path.segments().next().is_some() =>
             {
-                if path.segments().any(|segment| segment == "*") {
+                if path
+                    .segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+                {
                     return None;
                 }
                 arms.push(Predicate::truthy_path(path.encode()));
@@ -3180,14 +3180,11 @@ fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predica
     let mut arms = Vec::new();
     for candidate in candidates {
         match candidate {
-            AbstractValue::ValuesPath(path) => {
-                if path.segments().any(|segment| segment == "*") {
-                    return None;
-                }
-                arms.push(Predicate::truthy_path(path.encode()));
-            }
-            AbstractValue::JsonDecodedPath(path) => {
-                if path.segments().any(|segment| segment == "*") {
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+                if path
+                    .segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+                {
                     return None;
                 }
                 arms.push(Predicate::truthy_path(path.encode()));

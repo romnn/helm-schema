@@ -72,7 +72,7 @@ pub(crate) fn extract_provider_definitions(
             .carrier
             .target_value_path
             .segments()
-            .map(str::to_owned)
+            .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         if description_paths.has_description_at_or_below(&target_segments) {
             continue;
@@ -498,7 +498,7 @@ impl ProviderSchemaDefinitionEntries {
                 .carrier
                 .target_value_path
                 .segments()
-                .map(str::to_owned)
+                .map(helm_schema_core::Segment::encode_component)
                 .collect::<Vec<_>>();
             if description_paths.has_description_at_or_below(&target_segments) {
                 continue;

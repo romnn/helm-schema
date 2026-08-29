@@ -1397,7 +1397,10 @@ impl<'a> Interpreter<'a> {
             }
         }
         paths.retain(|path| {
-            path.segments().next().is_some() && !path.segments().any(|segment| segment == "*")
+            path.segments().next().is_some()
+                && !path
+                    .segments()
+                    .any(helm_schema_core::Segment::is_each_member)
         });
         paths
     }

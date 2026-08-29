@@ -692,7 +692,7 @@ impl AbstractValue {
         match self {
             Self::ValuesPath(path) => {
                 let mut path = path.clone();
-                path.push("*");
+                path.push_each_member();
                 Some(Self::ValuesPath(path))
             }
             Self::KeysList(path) => Some(Self::RangeKey(path.clone())),
@@ -746,6 +746,64 @@ impl AbstractValue {
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
             | Self::Dict(_)
+            | Self::Widened(_) => None,
+        }
+    }
+
+    /// Projects an integer-indexed member without turning the member marker
+    /// into a chart-authored literal `*` key.
+    #[must_use]
+    pub(crate) fn indexed_item(&self) -> Option<Self> {
+        match self {
+            Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
+            Self::JsonDecodedPath(path) => Some(Self::JsonDecodedPath(item_path(path))),
+            Self::OutputPath(path, meta)
+                if meta.json_decoded
+                    || meta.parsed_map
+                    || meta.is_identity_preserving_default()
+                    || meta.is_input_member_identity() && !meta.omitted_keys.contains_key("*") =>
+            {
+                let mut meta = meta.clone();
+                meta.defaulted = false;
+                if meta.is_input_member_identity() {
+                    meta.omitted_keys.clear();
+                }
+                Some(Self::OutputPath(item_path(path), meta))
+            }
+            Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
+            Self::Top => Some(Self::Top),
+            Self::Choice(choices) => {
+                Self::choice(choices.iter().filter_map(Self::indexed_item).collect())
+            }
+            Self::FirstTruthy(candidates) => {
+                Self::choice(candidates.iter().filter_map(Self::indexed_item).collect())
+            }
+            Self::MergedLayers(layers) => {
+                let mut out = Vec::new();
+                for value in layers {
+                    match value.indexed_item() {
+                        Some(bound) => out.push(bound),
+                        None if value.member_projection_is_exhaustive() => {}
+                        None => out.push(Self::Unknown),
+                    }
+                }
+                match out.len() {
+                    0 => None,
+                    1 => out.pop(),
+                    _ => Some(Self::MergedLayers(out)),
+                }
+            }
+            Self::Overlay { fallback, .. } => fallback.indexed_item(),
+            Self::Unknown
+            | Self::RootContext
+            | Self::RangeKey(_)
+            | Self::KeysList(_)
+            | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
+            | Self::Dict(_)
+            | Self::List(_)
             | Self::Widened(_) => None,
         }
     }
@@ -1729,7 +1787,7 @@ impl AbstractValue {
 
 fn item_path(path: &ValuesPath) -> ValuesPath {
     let mut path = path.clone();
-    path.push("*");
+    path.push_each_member();
     path
 }
 

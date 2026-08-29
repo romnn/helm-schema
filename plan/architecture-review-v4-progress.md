@@ -5221,3 +5221,129 @@
 
 - Measured production LOC delta: 0 adopted; attempt 1 measured +134 and attempt 2 +67 before full
   reversion.
+
+## B4b — distinguish literal `*` keys from ranged members
+
+- Status: in progress; commit pending.
+- Contract: behavior-bearing typed `Segment::{Literal(String), EachMember}` inside `ValuesPath`.
+  Literal `*` keys encode distinctly and remain object members; only `EachMember` selects array/map
+  member semantics. Existing wildcard paths and their serialized order remain stable.
+- Acceptance baseline: `3de22377` (recorded B2/E1 abandonment; production equals `41036f3f`).
+- Baseline production LOC: 64,352 Rust lines.
+- Pre-registered acceptance expectations:
+  - One expected behavior family: a chart that structurally reads a literal values key named `*`
+    now emits a literal `"*"` object property instead of routing that path through member/items
+    lowering. The microchart uses quoted YAML and `index .Values "*"`; Helm 4.2.3 must render it.
+  - Existing ranged-member paths retain the legacy `*` wire spelling, ordering, requirements, and
+    schema bytes. Quoted-key and dotted/backslash literal behavior remain unchanged.
+  - The audited corpus contains no chart-authored literal-`*` values read, so tracked corpus and
+    luup2 fixture flips are expected to be zero. Any unrelated cell stops the round for individual
+    Helm adjudication before fixture adoption.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero; bounded disclosed reductions are reported.
+  - Public/wire decision: `Segment` becomes part of the public core path API and `segments()` yields
+    typed segments. This is the scheduled B4b narrowing. Previously serialized wildcard paths keep
+    decoding; the new escaped literal-star spelling is additive.
+
+- Measured results:
+  - `ValuesPath` now stores `Segment::{Literal, EachMember}`. Parsing the legacy unescaped `*`
+    spelling yields `EachMember`; a chart-authored literal star serializes as `\*`; dots,
+    backslashes, existing wildcard spellings, serde, and `ValuesPath` ordering retain their prior
+    bytes.
+  - Range, integer-index, dependency-global, capture, guard, and schema-tree producers append or
+    preserve `EachMember` explicitly. Literal selectors (`index .Values "*"`) use `Literal("*")`.
+  - The synthetic literal-star chart changes from a root object/array collection union to the
+    exact closed root object with a named `"*": {}` property. Both direct and guarded full-schema
+    equality controls pass.
+  - The authoritative full and lean schema dumps are byte-identical to `3de22377`: 56 chart-corpus
+    schemas plus four lean schemas. All 18 symbolic-IR dumps are byte-identical too.
+  - The full-depth battery checks 121,055 probes across 60 charts with zero flips, zero mandatory
+    base/third-level drops, 28,868 disclosed reductions, and zero candidate-accepts/Helm-aborts.
+- Deviations:
+  - The first compiler sweep exposed 60 IR and nine test consumers of the formerly stringly
+    segment iterator. Each consumer was classified as a literal-key, encoded-boundary, or
+    ranged-member route before compilation was allowed to proceed.
+  - A seven-test generator preflight exposed wildcard prefixes reassembled through the new literal
+    constructor. The rejected schemas widened range-member contracts. Typed capture construction
+    and typed consecutive-wildcard reconstruction restored all seven tests before any final
+    artifact was accepted.
+  - The `final1` immutable archive is rejected. Its clean dump exposed `$defs` ordering drift and
+    spurious `"\\*"` properties. No dump or acceptance result from that archive is adopted.
+  - Focused Airflow, Prometheus/KPS, External DNS, and Falco preflights isolated three remaining
+    compatibility teeth: encoded dependency-global joins, the measured ranged-presence
+    `HasMemberEvenDefaulted("*")` lowering, and integer indexing that had called the now-literal
+    `apply_to_path("*")`. The final design gives integer indexing its own `indexed_item` producer,
+    preserves the measured presence tooth explicitly, and keeps generator-local ordering strings
+    while the semantic carrier remains typed.
+  - The first final2 IR-dump command used a non-matching nextest binary filter and exited 94 before
+    running a test. The corrected package-and-binary filter ran the one corpus test and produced
+    the adopted 18-file dump.
+- Adjudication evidence:
+  - Helm `v4.2.3+g43e8b7f` renders the quoted literal-star microchart with `selected: "value"` and
+    also renders `--set-string '*=override'` with `selected: "override"`.
+  - The candidate schema names the literal `"*"` property and accepts the chart default. The
+    baseline's fabricated array lane is removed; a Helm values document is a mapping, so this is
+    not a false rejection.
+  - The tracked 60-chart battery has zero flips, so no tracked fixture cell needs individual Helm
+    adjudication; live adjudication was enabled and the zero candidate-accepts/Helm-aborts allowance
+    is satisfied.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Literal selector/index key | `Literal("*")`, named object property | Core codec and two full-schema generator tests; Helm microchart. |
+| `range`/integer-index member | `EachMember`, legacy `*` bytes | Range/member suites and Falco byte preflight. |
+| Nested/consecutive wildcards | Typed prefixes survive capture lowering | Nested `hasKey`, fail, and range-domain suites. |
+| Dependency/global projection | Encoded joins preserve member identity | Contract/global suites and Prometheus/KPS dumps. |
+| Conditional/schema-tree lowering | Existing wildcard bytes; literal star stays named | Full and lean dump identity plus literal-star schema equality. |
+| Public serde and ordering | Legacy wildcard wire/order; additive `\*` literal wire | Core serde, ordering, and component-codec tests. |
+
+### Review dossier
+
+- Focused proof: 619/619 generator tests pass; literal-star core and generator controls pass; the
+  complete 56-chart and four-chart lean preflights are byte-identical before the final archive.
+- Immutable build: B4b `final2`; exit 0, 87 binaries and 125 files after a 9-minute-24-second build
+  and 2.84-second archive write.
+- Clean schema dump: the final2 archive under the step-local schema `TMPDIR`; 56/56 chart tests
+  pass in 236.490 seconds and the lean fixture test passes in 75.321 seconds; all 60 artifacts are
+  byte-identical to the committed fixtures.
+- Clean IR dump: the final2 archive under the step-local IR `TMPDIR`; one corpus test passes in
+  3.660 seconds and the 18 dump hashes are byte-identical to the committed IR fixtures.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `3de22377`,
+  Helm adjudication enabled; exit 0 in 73.388 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: `Segment` is a public core enum and `segments()` now yields typed segments.
+  Existing wildcard serde bytes remain stable; `\*` is the additive literal-star spelling. No
+  `Deref`, `AsRef<str>`, `Display`, or cross-type equality compatibility surface was added.
+
+### Self-adversarial pass
+
+- Whole-tree searches find no wildcard-producing `push("*")` or `append_value_path(..., "*")`.
+  Every semantic member producer uses `push_each_member`, `append_each_member_value_path`, typed
+  prefix reconstruction, or `indexed_item`.
+- `from_segments` and `push` remain literal-only by construction. Encoded component reassembly is
+  named explicitly, and the component codec round-trips a literal star separately from both
+  `EachMember` and a literal backslash-star key.
+- The rejected final1 dump and three subsequent byte preflights demonstrate that ordering,
+  ranged-presence compatibility, nested member captures, and generator-local wildcard behavior
+  were checked against real corpus output rather than inferred from unit green alone.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0.
+- `task lint:fc`: exit 0.
+- `cargo nextest run --workspace`: exit 0.
+- `task test:integration`: exit 0.
+- `task test:all`: exit 0.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+- downstream luup2 `check:local` with the documented macOS shims and explicit installed binary:
+  exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,721 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +369 (64,352 to 64,721). The typed producer/consumer migration,
+  explicit integer-index projection, reversible component codec, and schema-tree distinction add
+  code; no live semantics or audit coverage was deleted to force a negative number.

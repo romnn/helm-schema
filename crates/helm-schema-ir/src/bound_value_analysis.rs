@@ -57,10 +57,8 @@ impl BoundValueContext {
             .map(|value| {
                 let mut path = binding.base.clone();
                 path.push(value.clone());
-                for segment in helm_schema_core::ValuesPath::parse(&rest).segments() {
-                    path.push(segment);
-                }
-                path
+                let rest = helm_schema_core::ValuesPath::parse(&rest);
+                helm_schema_core::ValuesPath::from_segments(path.segments().chain(rest.segments()))
             })
             .collect()
     }

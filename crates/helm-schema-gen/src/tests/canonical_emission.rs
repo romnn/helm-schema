@@ -398,8 +398,8 @@ fn multi_arm_object_union_abstains_from_ambiguous_default_backfill() -> eyre::Re
         &["value".to_string()],
         SchemaNode::foreign(json!({ "type": "string" })),
     );
-    schema.replace_path_schema(
-        &["value".to_string()],
+    schema.replace_values_path_schema(
+        &helm_schema_core::ValuesPath::from_segments(["value"]),
         SchemaNode::foreign(provider_payload),
     );
     sim_assert_eq!(

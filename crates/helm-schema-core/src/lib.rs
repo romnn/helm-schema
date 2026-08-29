@@ -46,4 +46,7 @@ pub use provider_schema_fragment::{
 pub use provider_schema_use::ProviderSchemaUse;
 pub use schema_provider::ResourceSchemaOracle;
 pub use types::{KindBranch, ResourceRef, ValueKind, YamlPath};
-pub use value_path::{ValuesPath, append_value_path, join_value_path, split_value_path};
+pub use value_path::{
+    Segment, ValuesPath, append_each_member_value_path, append_value_path, join_encoded_value_path,
+    join_value_path, split_value_path,
+};

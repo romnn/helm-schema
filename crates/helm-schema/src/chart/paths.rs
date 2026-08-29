@@ -12,10 +12,13 @@ pub(crate) fn scope_values_path(path: &str, prefix: &[String]) -> String {
         return path.to_string();
     }
 
-    helm_schema_core::join_value_path(
+    let path = helm_schema_core::ValuesPath::parse(path);
+    helm_schema_core::ValuesPath::from_segments(
         prefix
             .iter()
             .cloned()
-            .chain(helm_schema_core::split_value_path(path)),
+            .map(helm_schema_core::Segment::from)
+            .chain(path.segments().cloned()),
     )
+    .encode()
 }

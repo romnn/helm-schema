@@ -45,7 +45,10 @@ pub(crate) fn synthesized_required_source_implications(
     let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
-        let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
+        let segments = value_path
+            .segments()
+            .map(helm_schema_core::Segment::encode_component)
+            .collect::<Vec<_>>();
         let Some((leaf_segment, parent_segments)) = segments.split_last() else {
             continue;
         };
@@ -71,7 +74,11 @@ pub(crate) fn synthesized_required_source_implications(
         {
             push_implication(
                 &mut implications,
-                ValuesPath::from_segments(parent_segments.iter().cloned()),
+                ValuesPath::from_segments(
+                    parent_segments
+                        .iter()
+                        .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+                ),
                 ContractRequirementImplication {
                     outer_guards: Vec::new(),
                     target: ContractRequirementTarget::Value,
@@ -138,7 +145,11 @@ pub(crate) fn synthesized_required_source_implications(
             }
             push_implication(
                 &mut implications,
-                ValuesPath::from_segments(parent_segments.iter().cloned()),
+                ValuesPath::from_segments(
+                    parent_segments
+                        .iter()
+                        .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+                ),
                 ContractRequirementImplication {
                     outer_guards: overlay.guards.clone(),
                     target: ContractRequirementTarget::Value,
@@ -186,7 +197,10 @@ pub(crate) fn synthesized_ranged_member_required_implications(
     let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
-        let segments = value_path.segments().map(str::to_owned).collect::<Vec<_>>();
+        let segments = value_path
+            .segments()
+            .map(helm_schema_core::Segment::encode_component)
+            .collect::<Vec<_>>();
         let Some(star) = segments.iter().position(|segment| segment == "*") else {
             continue;
         };
@@ -202,9 +216,13 @@ pub(crate) fn synthesized_ranged_member_required_implications(
         {
             continue;
         }
-        let collection_path = ValuesPath::from_segments(collection_segments.iter().cloned());
+        let collection_path = ValuesPath::from_segments(
+            collection_segments
+                .iter()
+                .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+        );
         let mut member_scope = collection_path.clone();
-        member_scope.push("*");
+        member_scope.push_each_member();
 
         let base_uses = std::iter::once((
             &[] as &[helm_schema_core::ConditionalGuard],
@@ -257,7 +275,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                 let paths = guard.value_paths();
                 if paths
                     .iter()
-                    .all(|path| path.segments().all(|segment| segment != "*"))
+                    .all(|path| path.segments().all(|segment| !segment.is_each_member()))
                 {
                     outer_guards.push(guard.clone());
                     continue;
@@ -269,7 +287,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     let field = path
                         .segments()
                         .skip(member_scope.segments().len())
-                        .map(str::to_owned)
+                        .map(helm_schema_core::Segment::encode_component)
                         .collect::<Vec<_>>();
                     (!field.is_empty() && !field.iter().any(|segment| segment == "*"))
                         .then_some(field)

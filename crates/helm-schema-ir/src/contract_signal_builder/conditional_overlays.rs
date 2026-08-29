@@ -78,9 +78,9 @@ pub(super) fn collapse_layered_truthy_gates(
     // Layers arrive member-projected (each ends with the row's shared
     // member suffix); the merge ROOTS are the layers with the longest
     // common dot-suffix stripped.
-    let split: Vec<Vec<String>> = layers
+    let split: Vec<Vec<helm_schema_core::Segment>> = layers
         .iter()
-        .map(|layer| layer.segments().map(str::to_string).collect())
+        .map(|layer| layer.segments().cloned().collect())
         .collect();
     let Some(first) = split.first() else {
         return guards;
@@ -131,13 +131,12 @@ pub(super) fn collapse_layered_truthy_gates(
         .iter()
         .filter_map(|layer| {
             let segments = layer.segments().collect::<Vec<_>>();
-            let wildcard = segments.iter().position(|segment| *segment == "*")?;
+            let wildcard = segments
+                .iter()
+                .position(|segment| segment.is_each_member())?;
             let prefix = segments.get(..wildcard)?;
-            (!prefix.is_empty()).then(|| {
-                helm_schema_core::ValuesPath::from_segments(
-                    prefix.iter().map(|segment| (*segment).to_string()),
-                )
-            })
+            (!prefix.is_empty())
+                .then(|| helm_schema_core::ValuesPath::from_segments(prefix.iter().copied()))
         })
         .collect();
     let mut suffix_members: BTreeMap<String, BTreeSet<usize>> = BTreeMap::new();
@@ -193,9 +192,10 @@ fn layered_guard_suffix(
     if !path.is_descendant_of(layer) {
         return None;
     }
-    Some(helm_schema_core::join_value_path(
-        path.segments().skip(layer.segments().len()),
-    ))
+    Some(
+        helm_schema_core::ValuesPath::from_segments(path.segments().skip(layer.segments().len()))
+            .encode(),
+    )
 }
 
 /// The maximal lowerable SUBSET of the row conditions, at whole-conjunct
@@ -741,7 +741,7 @@ pub(super) fn record_member_range_requirement(
     inner_allows_integer: bool,
 ) {
     let mut member_path = parent.clone();
-    member_path.push("*");
+    member_path.push_each_member();
     let mut outer_guards = Vec::new();
     for predicate in predicates {
         if matches!(
@@ -834,9 +834,12 @@ pub(super) fn lowerable_guard_path(
         return Some(path.clone());
     }
 
-    let path_segments: Vec<&str> = path.segments().collect();
-    let target_segments = helm_schema_core::split_value_path(target_value_path);
-    let last_wildcard = path_segments.iter().rposition(|segment| *segment == "*")?;
+    let path_segments = path.segments().collect::<Vec<_>>();
+    let target = helm_schema_core::ValuesPath::parse(target_value_path);
+    let target_segments = target.segments().collect::<Vec<_>>();
+    let last_wildcard = path_segments
+        .iter()
+        .rposition(|segment| segment.is_each_member())?;
     let member_prefix = path_segments.get(..=last_wildcard)?;
     // A wildcard guard is exact when every wildcard it contains identifies
     // the same ranged member as the target. Conditional lowering then
@@ -844,23 +847,19 @@ pub(super) fn lowerable_guard_path(
     // suffixes are ordinary relative paths.
     target_segments
         .get(..=last_wildcard)
-        .is_some_and(|segments| {
-            segments
-                .iter()
-                .map(String::as_str)
-                .eq(member_prefix.iter().copied())
-        })
+        .is_some_and(|segments| segments == member_prefix)
         .then(|| path.clone())
 }
 
 pub(super) fn path_contains_wildcard(path: &str) -> bool {
-    helm_schema_core::split_value_path(path)
-        .iter()
-        .any(|segment| segment == "*")
+    helm_schema_core::ValuesPath::parse(path)
+        .segments()
+        .any(helm_schema_core::Segment::is_each_member)
 }
 
 fn values_path_contains_wildcard(path: &helm_schema_core::ValuesPath) -> bool {
-    path.segments().any(|segment| segment == "*")
+    path.segments()
+        .any(helm_schema_core::Segment::is_each_member)
 }
 
 /// A truthiness gate over one field of `collection`'s ranged members, which
@@ -887,19 +886,20 @@ pub(super) fn member_local_truthy_selector(
     // (`users.*.existingSecret` under `users`). A deeper wildcard abstains:
     // it names members of that field, not the field itself.
     let collection = helm_schema_core::ValuesPath::parse(collection);
-    let path_segments: Vec<&str> = path.segments().collect();
-    let collection_segments: Vec<&str> = collection.segments().collect();
+    let path_segments = path.segments().collect::<Vec<_>>();
+    let collection_segments = collection.segments().collect::<Vec<_>>();
     let suffix = path_segments.strip_prefix(collection_segments.as_slice())?;
     let (member, suffix) = suffix.split_first()?;
-    if *member != "*" || suffix.is_empty() || suffix.contains(&"*") {
+    if !member.is_each_member()
+        || suffix.is_empty()
+        || suffix.iter().any(|segment| segment.is_each_member())
+    {
         return None;
     }
-    Some(
-        suffix
-            .iter()
-            .map(|segment| (*segment).to_string())
-            .collect(),
-    )
+    suffix
+        .iter()
+        .map(|segment| segment.literal().map(str::to_string))
+        .collect()
 }
 
 pub(super) fn ranged_member_parent(path: &str) -> Option<&str> {
@@ -911,17 +911,18 @@ pub(super) fn range_guard_is_iteration_ancestor(
     source_path: &str,
     guard_path: &helm_schema_core::ValuesPath,
 ) -> bool {
-    let source_segments = helm_schema_core::split_value_path(source_path);
-    let guard_segments: Vec<&str> = guard_path.segments().collect();
+    let source = helm_schema_core::ValuesPath::parse(source_path);
+    let source_segments = source.segments().collect::<Vec<_>>();
+    let guard_segments = guard_path.segments().collect::<Vec<_>>();
     source_segments.len() > guard_segments.len()
         && source_segments
             .iter()
-            .map(String::as_str)
+            .copied()
             .zip(guard_segments.iter().copied())
             .all(|(source, guard)| source == guard)
         && source_segments
             .get(guard_segments.len())
-            .is_some_and(|segment| segment == "*")
+            .is_some_and(|segment| segment.is_each_member())
 }
 
 pub(super) fn predicate_is_structural_ancestor_guard(
@@ -931,12 +932,13 @@ pub(super) fn predicate_is_structural_ancestor_guard(
     let Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) = predicate else {
         return false;
     };
-    let source_segments = helm_schema_core::split_value_path(source_path);
-    let guard_segments: Vec<&str> = path.segments().collect();
+    let source = helm_schema_core::ValuesPath::parse(source_path);
+    let source_segments = source.segments().collect::<Vec<_>>();
+    let guard_segments = path.segments().collect::<Vec<_>>();
     source_segments.len() > guard_segments.len()
         && source_segments
             .iter()
-            .map(String::as_str)
+            .copied()
             .zip(guard_segments.iter().copied())
             .all(|(source, guard)| source == guard)
 }
@@ -967,7 +969,7 @@ pub(super) fn collect_paths_with_descendants(
                 continue;
             };
             let ancestor = ValuesPath::from_segments(prefix.iter().copied());
-            if *segment == "*" {
+            if segment.is_each_member() {
                 item_ancestors.insert(ancestor.clone());
                 if prefix_len + 1 < segments.len() {
                     structured_item_ancestors.insert(ancestor.clone());

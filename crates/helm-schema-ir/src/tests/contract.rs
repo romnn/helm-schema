@@ -189,11 +189,17 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     contract.push(contract_use);
 
     contract.map_value_paths(|path| {
-        if path.segments().next() == Some("global") {
+        if path
+            .segments()
+            .next()
+            .and_then(helm_schema_core::Segment::literal)
+            == Some("global")
+        {
             path
         } else {
             helm_schema_core::ValuesPath::from_segments(
-                std::iter::once("subchart").chain(path.segments()),
+                std::iter::once(helm_schema_core::Segment::from("subchart"))
+                    .chain(path.segments().cloned()),
             )
         }
     });
@@ -437,7 +443,8 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
 
     contract.map_value_paths(|path| {
         helm_schema_core::ValuesPath::from_segments(
-            std::iter::once("subchart").chain(path.segments()),
+            std::iter::once(helm_schema_core::Segment::from("subchart"))
+                .chain(path.segments().cloned()),
         )
     });
 
@@ -507,7 +514,10 @@ fn dependency_global_projection_moves_range_members_to_live_sources() {
     "});
     contract.map_value_paths(|path| {
         helm_schema_core::ValuesPath::from_segments(
-            ["metrics", "agent"].into_iter().chain(path.segments()),
+            ["metrics", "agent"]
+                .into_iter()
+                .map(helm_schema_core::Segment::from)
+                .chain(path.segments().cloned()),
         )
     });
     contract.project_dependency_global_contracts(&["metrics".to_string(), "agent".to_string()]);
@@ -541,7 +551,10 @@ fn dependency_global_projection_keeps_whole_global_range_modes() {
     "});
     contract.map_value_paths(|path| {
         helm_schema_core::ValuesPath::from_segments(
-            ["metrics", "agent"].into_iter().chain(path.segments()),
+            ["metrics", "agent"]
+                .into_iter()
+                .map(helm_schema_core::Segment::from)
+                .chain(path.segments().cloned()),
         )
     });
     contract.project_dependency_global_contracts(&["metrics".to_string(), "agent".to_string()]);

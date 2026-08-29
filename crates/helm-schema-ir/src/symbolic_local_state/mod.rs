@@ -461,24 +461,25 @@ fn quantify_range_member_reduction(condition: &Predicate, reduction: &Predicate)
     else {
         return None;
     };
-    let range_segments: Vec<&str> = range_path.segments().collect();
-    let member_segments: Vec<&str> = member_path.segments().collect();
+    let range_segments: Vec<&helm_schema_core::Segment> = range_path.segments().collect();
+    let member_segments: Vec<&helm_schema_core::Segment> = member_path.segments().collect();
     let [wildcard, member] = member_segments.get(range_segments.len()..)? else {
         return None;
     };
-    if *wildcard != "*" || member_segments.get(..range_segments.len())? != range_segments {
+    if !wildcard.is_each_member() || member_segments.get(..range_segments.len())? != range_segments
+    {
         return None;
     }
 
     match member_predicate {
         Predicate::Guard(Guard::Eq { value, .. }) => Some(Guard::ContainsMemberEquals {
             path: range_path.clone(),
-            member: (*member).to_string(),
+            member: member.literal()?.to_owned(),
             value: value.clone(),
         }),
         Predicate::Guard(Guard::Truthy { .. }) => Some(Guard::ContainsTruthyMember {
             path: range_path.clone(),
-            member: (*member).to_string(),
+            member: member.literal()?.to_owned(),
         }),
         _ => None,
     }

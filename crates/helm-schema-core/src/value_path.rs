@@ -9,7 +9,97 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 /// dots and backslashes in literal keys must not become selector boundaries.
 #[derive(Clone, Debug, Default, Eq)]
 pub struct ValuesPath {
-    segments: Vec<String>,
+    segments: Vec<Segment>,
+}
+
+/// One structural component of a [`ValuesPath`].
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Segment {
+    /// A chart-authored mapping key, including a literal `*` key.
+    Literal(String),
+    /// Every member reached by a Helm `range`.
+    EachMember,
+}
+
+impl PartialOrd for Segment {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Segment {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.encode_component().cmp(&other.encode_component())
+    }
+}
+
+impl Segment {
+    /// Returns the chart-authored key, or `None` for a member wildcard.
+    #[must_use]
+    pub fn literal(&self) -> Option<&str> {
+        match self {
+            Self::Literal(value) => Some(value),
+            Self::EachMember => None,
+        }
+    }
+
+    /// Reports whether this segment selects every ranged member.
+    #[must_use]
+    pub const fn is_each_member(&self) -> bool {
+        matches!(self, Self::EachMember)
+    }
+
+    /// Encodes this segment for legacy string-based phase boundaries.
+    #[must_use]
+    pub fn encode_component(&self) -> String {
+        match self {
+            Self::Literal(value) if value == "*" => r"\*".to_string(),
+            Self::Literal(value) => value.replace('\\', r"\\"),
+            Self::EachMember => "*".to_string(),
+        }
+    }
+
+    /// Decodes one component emitted by [`Self::encode_component`].
+    #[must_use]
+    pub fn from_encoded_component(encoded: &str) -> Self {
+        if encoded == "*" {
+            return Self::EachMember;
+        }
+        let mut literal = String::new();
+        let mut characters = encoded.chars().peekable();
+        while let Some(character) = characters.next() {
+            if character == '\\'
+                && characters
+                    .peek()
+                    .is_some_and(|next| matches!(next, '\\' | '*'))
+            {
+                if let Some(escaped) = characters.next() {
+                    literal.push(escaped);
+                }
+            } else {
+                literal.push(character);
+            }
+        }
+        Self::Literal(literal)
+    }
+}
+
+impl From<String> for Segment {
+    fn from(value: String) -> Self {
+        Self::Literal(value)
+    }
+}
+
+impl From<&str> for Segment {
+    fn from(value: &str) -> Self {
+        Self::Literal(value.to_string())
+    }
+}
+
+impl From<&Segment> for Segment {
+    fn from(value: &Segment) -> Self {
+        value.clone()
+    }
 }
 
 impl ValuesPath {
@@ -18,28 +108,26 @@ impl ValuesPath {
     pub fn parse(path: &str) -> Self {
         let mut segments = Vec::new();
         let mut segment = String::new();
+        let mut escaped_star = false;
         let mut characters = path.chars().peekable();
         while let Some(character) = characters.next() {
             match character {
                 '.' => {
-                    if !segment.is_empty() {
-                        segments.push(std::mem::take(&mut segment));
-                    }
+                    push_parsed_segment(&mut segments, &mut segment, &mut escaped_star);
                 }
                 '\\' if characters
                     .peek()
-                    .is_some_and(|next| matches!(next, '.' | '\\')) =>
+                    .is_some_and(|next| matches!(next, '.' | '\\' | '*')) =>
                 {
                     if let Some(escaped) = characters.next() {
+                        escaped_star |= escaped == '*';
                         segment.push(escaped);
                     }
                 }
                 _ => segment.push(character),
             }
         }
-        if !segment.is_empty() {
-            segments.push(segment);
-        }
+        push_parsed_segment(&mut segments, &mut segment, &mut escaped_star);
         Self { segments }
     }
 
@@ -48,26 +136,45 @@ impl ValuesPath {
     pub fn from_segments<I, S>(segments: I) -> Self
     where
         I: IntoIterator<Item = S>,
-        S: Into<String>,
+        S: Into<Segment>,
     {
         Self {
             segments: segments
                 .into_iter()
                 .map(Into::into)
-                .filter(|segment: &String| !segment.is_empty())
+                .filter(|segment| !matches!(segment, Segment::Literal(value) if value.is_empty()))
                 .collect(),
         }
     }
 
-    /// Iterates literal structural segments from root to leaf.
-    pub fn segments(&self) -> impl DoubleEndedIterator<Item = &str> + ExactSizeIterator {
-        self.segments.iter().map(String::as_str)
+    /// Iterates structural segments from root to leaf.
+    #[must_use]
+    pub fn segments(&self) -> impl DoubleEndedIterator<Item = &Segment> + ExactSizeIterator {
+        self.segments.iter()
     }
 
     /// Encodes the path in the stable escaped-dot wire spelling.
     #[must_use]
     pub fn encode(&self) -> String {
-        self.encoded_chars().collect()
+        let mut encoded = String::new();
+        for (index, segment) in self.segments.iter().enumerate() {
+            if index != 0 {
+                encoded.push('.');
+            }
+            match segment {
+                Segment::EachMember => encoded.push('*'),
+                Segment::Literal(value) if value == "*" => encoded.push_str(r"\*"),
+                Segment::Literal(value) => {
+                    for character in value.chars() {
+                        if matches!(character, '.' | '\\') {
+                            encoded.push('\\');
+                        }
+                        encoded.push(character);
+                    }
+                }
+            }
+        }
+        encoded
     }
 
     /// Returns the strict structural parent, if this path is non-root.
@@ -83,8 +190,13 @@ impl ValuesPath {
     pub fn push(&mut self, segment: impl Into<String>) {
         let segment = segment.into();
         if !segment.is_empty() {
-            self.segments.push(segment);
+            self.segments.push(Segment::Literal(segment));
         }
+    }
+
+    /// Appends the structural marker for every ranged member.
+    pub fn push_each_member(&mut self) {
+        self.segments.push(Segment::EachMember);
     }
 
     /// Reports whether this path is a strict descendant of `ancestor`.
@@ -94,17 +206,27 @@ impl ValuesPath {
             && self.segments.starts_with(&ancestor.segments)
     }
 
-    /// Returns the collection path for a trailing legacy `*` member segment.
+    /// Returns the collection path for a trailing member segment.
     #[must_use]
     pub fn item_parent(&self) -> Option<Self> {
-        (self.segments.last().is_some_and(|segment| segment == "*"))
+        (self.segments.last() == Some(&Segment::EachMember))
             .then(|| self.parent())
             .flatten()
     }
+}
 
-    fn encoded_chars(&self) -> EncodedPathChars<'_> {
-        EncodedPathChars::new(&self.segments)
+fn push_parsed_segment(segments: &mut Vec<Segment>, segment: &mut String, escaped_star: &mut bool) {
+    if segment.is_empty() {
+        *escaped_star = false;
+        return;
     }
+    let segment = std::mem::take(segment);
+    if segment == "*" && !*escaped_star {
+        segments.push(Segment::EachMember);
+    } else {
+        segments.push(Segment::Literal(segment));
+    }
+    *escaped_star = false;
 }
 
 impl PartialEq for ValuesPath {
@@ -121,7 +243,7 @@ impl PartialOrd for ValuesPath {
 
 impl Ord for ValuesPath {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.encoded_chars().cmp(other.encoded_chars())
+        self.encode().cmp(&other.encode())
     }
 }
 
@@ -149,49 +271,6 @@ impl<'de> Deserialize<'de> for ValuesPath {
     }
 }
 
-struct EncodedPathChars<'a> {
-    segments: std::slice::Iter<'a, String>,
-    characters: Option<std::str::Chars<'a>>,
-    emitted_segment: bool,
-    escaped: Option<char>,
-}
-
-impl<'a> EncodedPathChars<'a> {
-    fn new(segments: &'a [String]) -> Self {
-        Self {
-            segments: segments.iter(),
-            characters: None,
-            emitted_segment: false,
-            escaped: None,
-        }
-    }
-}
-
-impl Iterator for EncodedPathChars<'_> {
-    type Item = char;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if let Some(escaped) = self.escaped.take() {
-                return Some(escaped);
-            }
-            if let Some(character) = self.characters.as_mut().and_then(Iterator::next) {
-                if matches!(character, '.' | '\\') {
-                    self.escaped = Some(character);
-                    return Some('\\');
-                }
-                return Some(character);
-            }
-            let segment = self.segments.next()?;
-            self.characters = Some(segment.chars());
-            if self.emitted_segment {
-                return Some('.');
-            }
-            self.emitted_segment = true;
-        }
-    }
-}
-
 /// Joins structural `.Values` path segments into the contract path currency.
 ///
 /// Dots and backslashes inside a segment are escaped so literal YAML keys
@@ -210,10 +289,32 @@ where
     .encode()
 }
 
+/// Joins components previously emitted by [`Segment::encode_component`].
+#[must_use]
+pub fn join_encoded_value_path<I, S>(segments: I) -> String
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    ValuesPath::from_segments(
+        segments
+            .into_iter()
+            .map(|segment| Segment::from_encoded_component(segment.as_ref())),
+    )
+    .encode()
+}
+
 /// Splits the contract `.Values` path currency into structural segments.
 #[must_use]
 pub fn split_value_path(path: &str) -> Vec<String> {
-    ValuesPath::parse(path).segments
+    ValuesPath::parse(path)
+        .segments
+        .into_iter()
+        .map(|segment| match segment {
+            Segment::Literal(value) => value,
+            Segment::EachMember => "*".to_string(),
+        })
+        .collect()
 }
 
 /// Appends one structural segment to an encoded `.Values` path.
@@ -221,5 +322,13 @@ pub fn split_value_path(path: &str) -> Vec<String> {
 pub fn append_value_path(path: &str, segment: &str) -> String {
     let mut path = ValuesPath::parse(path);
     path.push(segment);
+    path.encode()
+}
+
+/// Appends one ranged-member segment to an encoded `.Values` path.
+#[must_use]
+pub fn append_each_member_value_path(path: &str) -> String {
+    let mut path = ValuesPath::parse(path);
+    path.push_each_member();
     path.encode()
 }

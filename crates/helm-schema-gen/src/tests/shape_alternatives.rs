@@ -69,6 +69,56 @@ fn literal_dotted_index_and_get_keys_generate_one_root_property() {
 }
 
 #[test]
+fn literal_star_index_generates_a_named_property() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          selected: {{ index .Values "*" | quote }}
+    "#};
+    let values_yaml = indoc! {r#"
+        "*": value
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+            "*": {},
+        },
+        "type": "object",
+    });
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+#[test]
+fn guarded_literal_star_index_keeps_the_guard_on_the_named_property() {
+    let src = indoc! {r#"
+        {{- if index .Values "*" }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: selected
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        "*": true
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+            "*": {},
+        },
+        "type": "object",
+    });
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+#[test]
 fn tpl_context_does_not_type_the_templated_value_as_an_object() {
     let src = indoc! {r"
         apiVersion: v1

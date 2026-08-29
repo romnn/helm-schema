@@ -199,12 +199,12 @@ fn range_member_value(value: &AbstractValue, effects: &Effects) -> Option<Abstra
     match value {
         AbstractValue::ValuesPath(path) if path_preserves_range_shape(&path.encode(), effects) => {
             let mut path = path.clone();
-            path.push("*");
+            path.push_each_member();
             Some(AbstractValue::ValuesPath(path))
         }
         AbstractValue::JsonDecodedPath(path) => {
             let mut path = path.clone();
-            path.push("*");
+            path.push_each_member();
             Some(AbstractValue::JsonDecodedPath(path))
         }
         AbstractValue::OutputPath(path, meta)
@@ -218,7 +218,7 @@ fn range_member_value(value: &AbstractValue, effects: &Effects) -> Option<Abstra
             // defaults for fields of members that are actually present.
             meta.defaulted = false;
             let mut path = path.clone();
-            path.push("*");
+            path.push_each_member();
             Some(AbstractValue::OutputPath(path, meta))
         }
         AbstractValue::KeysList(path) => Some(AbstractValue::RangeKey(path.clone())),
@@ -266,19 +266,19 @@ fn range_layer_member_value(value: &AbstractValue, effects: &Effects) -> Option<
     match value {
         AbstractValue::ValuesPath(path) => {
             let mut path = path.clone();
-            path.push("*");
+            path.push_each_member();
             Some(AbstractValue::ValuesPath(path))
         }
         AbstractValue::JsonDecodedPath(path) => {
             let mut path = path.clone();
-            path.push("*");
+            path.push_each_member();
             Some(AbstractValue::JsonDecodedPath(path))
         }
         AbstractValue::OutputPath(path, meta) => {
             let mut meta = meta.clone();
             meta.defaulted = false;
             let mut path = path.clone();
-            path.push("*");
+            path.push_each_member();
             Some(AbstractValue::OutputPath(path, meta))
         }
         AbstractValue::Choice(choices) => AbstractValue::choice(
