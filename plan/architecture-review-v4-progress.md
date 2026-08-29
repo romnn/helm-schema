@@ -4679,7 +4679,7 @@
 
 ## B4a.18 — migrate fragment serialization path state
 
-- Status: landed; commit pending.
+- Status: landed in `61f5d577` (`refactor(ir): type fragment serialization paths`).
 - Contract: representation-only migration of fragment-interpreter YAML parse/serialization state,
   current-run templated-text identities, and scalar-arm position claims from encoded strings to
   segmented `ValuesPath`. Text alternatives, quote state, and helper names remain strings.
@@ -4769,3 +4769,87 @@
 
 - Measured production LOC delta: -12 (64,321 to 64,309), from removing encoded-path set maps and
   repeated encode/parse conversions across fragment interpretation and summary propagation.
+
+## B4a.19 — migrate integer-cast source paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of `IntCastSource.path` from encoded `String` to
+  segmented `ValuesPath`, including branch/local propagation and every comparison-predicate
+  consumer. The optional integer fallback remains unchanged.
+- Acceptance baseline: `61f5d577` (B4a.18).
+- Baseline production LOC: 64,309 Rust lines from `task tokei:core` on `61f5d577`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Inline and local-bound `int`/`int64` comparisons retain the same raw-path predicates, fallback
+    subsets, branch joins, and integer domains in legacy encoded order.
+  - The carrier is crate-private, so this round changes no public API or wire format. No coercion
+    trait, cross-type comparison, or cached encoded twin is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - `IntCastSource.path` now carries `ValuesPath` through local bindings, scope snapshots, and
+    branch joins. Inline cast recognition parses once at the expression-resolution boundary.
+  - Every equality, inequality, and bounded-integer predicate consumer clones the typed path
+    directly instead of reparsing the same encoded string.
+  - Schema and symbolic-IR dumps are recursively byte-identical to `61f5d577`. The full-depth
+    battery checks 121,055 probes across 60 charts with zero flips, zero mandatory base/third-level
+    drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - A pre-archive `cargo fmt --check` identified one formatting-only line wrap. `cargo fmt` applied
+    it before the immutable archive and every final gate.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Inline `int`/`int64` cast | Same raw path and integer subset | Condition-predicate suite. |
+| Local cast binding | Same source through assignment/scope | Symbolic-local suite. |
+| Branch join | Same equal-source retention | Branch-join/IR suite. |
+| Comparisons and fallbacks | Same equality and bounded domains | Cilium/Jenkins re-audits. |
+
+### Review dossier
+
+- Focused proof: all-target IR compilation succeeds in 43.42 seconds; 393/393 IR tests pass after
+  the host's 78-second build. Whole-workspace lint passes warning-free in 7 minutes 25 seconds.
+- Immutable build: B4a.19 `final1`; exit 0, 87 binaries and 125 files after a 5-minute-42-second
+  build and 1.36-second archive write.
+- Clean schema dump: exit 0, 62/62 pass in 187.454 seconds; all 84 artifacts are recursively
+  byte-identical to B4a.18.
+- Clean IR dump: exit 0, one test passes in 3.242 seconds; all 18 artifacts are recursively
+  byte-identical to B4a.18.
+- Full-depth proof: baseline `61f5d577`, Helm adjudication enabled; exit 0 in 68.617 seconds, 60
+  charts, 121,055 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+  and 28,868 disclosed reductions.
+- Public/wire decision: none. The cast-source carrier is crate-private and serialized bytes remain
+  unchanged.
+
+### Self-adversarial pass
+
+- Whole-tree searches find `IntCastSource.path` typed and no consumer reparses it. The optional
+  integer fallback and local-variable map keys remain in their distinct domains.
+- No coercion trait, display implementation, cross-type comparison, cached encoding, public API,
+  or wire-format change was introduced.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0 in 7 minutes 25 seconds.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 1,576.30
+  seconds, followed by the ast-grep policy checks.
+- `cargo nextest run --workspace`: exit 0; 1,308/1,308 pass in 186.247 seconds after the native
+  final-tree build.
+- `task test:integration`: exit 0; 558/558 pass, 24 skipped, in 1,525.794 seconds.
+- `task test:all`: exit 0; 1,870/1,870 pass, 24 skipped, in 1,704.758 seconds, including the
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 24.62 seconds.
+- downstream luup2 `check:local` with the documented macOS shims and explicit installed binary:
+  exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,310 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +1 (64,309 to 64,310); the typed source removes repeated parsing
+  at thirteen consumers while the once-only expression-boundary construction remains explicit.

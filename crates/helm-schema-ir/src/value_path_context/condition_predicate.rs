@@ -444,11 +444,11 @@ impl ValuePathContext<'_> {
             let mut guards = vec![guard];
             if default_collides {
                 guards.push(Guard::NotEq {
-                    path: helm_schema_core::ValuesPath::parse(&source.path),
+                    path: source.path.clone(),
                     value: helm_schema_core::GuardValue::Int(0),
                 });
                 guards.push(Guard::NotEq {
-                    path: helm_schema_core::ValuesPath::parse(&source.path),
+                    path: source.path.clone(),
                     value: helm_schema_core::GuardValue::string(""),
                 });
             }
@@ -461,14 +461,14 @@ impl ValuePathContext<'_> {
         Some(Predicate::Or(vec![
             arm(
                 Guard::IntLt {
-                    path: helm_schema_core::ValuesPath::parse(&source.path),
+                    path: source.path.clone(),
                     bound: literal,
                 },
                 "lt",
             ),
             arm(
                 Guard::IntGt {
-                    path: helm_schema_core::ValuesPath::parse(&source.path),
+                    path: source.path.clone(),
                     bound: literal,
                 },
                 "gt",
@@ -2008,11 +2008,11 @@ impl ValuePathContext<'_> {
         };
         let mut guards = vec![
             Guard::TypeIs {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 schema_type: "integer".to_string(),
             },
             Guard::NotEq {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 value: helm_schema_core::GuardValue::Int(literal),
             },
         ];
@@ -2021,7 +2021,7 @@ impl ValuePathContext<'_> {
         // raw 0 no longer satisfies `ne`, so exclude it from the claim.
         if literal != 0 && source.default_int == Some(literal) {
             guards.push(Guard::NotEq {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 value: helm_schema_core::GuardValue::Int(0),
             });
         }
@@ -2061,11 +2061,11 @@ impl ValuePathContext<'_> {
         };
         let mut guards = vec![
             Guard::IntGt {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 bound: below,
             },
             Guard::IntLt {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 bound: above,
             },
         ];
@@ -2074,7 +2074,7 @@ impl ValuePathContext<'_> {
         // raw 0 no longer satisfies the equality, so exclude it.
         if literal == 0 && source.default_int.is_some_and(|fallback| fallback != 0) {
             guards.push(Guard::NotEq {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 value: helm_schema_core::GuardValue::Int(0),
             });
         }
@@ -2379,12 +2379,12 @@ impl ValuePathContext<'_> {
         };
         let mut guards = vec![if greater {
             Guard::IntGt {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 bound,
             }
         } else {
             Guard::IntLt {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 bound,
             }
         }];
@@ -2401,7 +2401,7 @@ impl ValuePathContext<'_> {
         });
         if zero_claims && fallback_escapes {
             guards.push(Guard::NotEq {
-                path: helm_schema_core::ValuesPath::parse(&source.path),
+                path: source.path.clone(),
                 value: helm_schema_core::GuardValue::Int(0),
             });
         }
@@ -2451,7 +2451,8 @@ impl ValuePathContext<'_> {
         ) {
             return None;
         }
-        let path = self.single_resolved_values_path_expr(subject)?;
+        let path =
+            helm_schema_core::ValuesPath::parse(&self.single_resolved_values_path_expr(subject)?);
         Some(crate::symbolic_local_state::IntCastSource { path, default_int })
     }
 

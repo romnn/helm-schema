@@ -80,7 +80,7 @@ pub(crate) struct SymbolicLocalState {
 /// substitutes the literal before the comparison runs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct IntCastSource {
-    pub(crate) path: String,
+    pub(crate) path: helm_schema_core::ValuesPath,
     pub(crate) default_int: Option<i64>,
 }
 
