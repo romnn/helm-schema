@@ -2,7 +2,7 @@ use super::{
     ApproximationRole, BTreeMap, BTreeSet, ConditionalGuard, ConditionalOverlayEvidence,
     ContractRequirednessEvidence, ContractRequirementImplication, ContractRequirementTarget,
     ContractUse, ContractValuePathFacts, FailValueRequirement, Guard, GuardDnf, MetadataFieldKind,
-    Predicate, ProviderSchemaUse, RangeDomain, SourceUseFactSplit, ValueKind,
+    Predicate, ProviderSchemaUse, RangeDomain, SourceUseFactSplit, ValueKind, ValuesPath,
     collapse_layered_truthy_gates, extend_lowerable_predicate, hard_negation_paths,
     lowerable_conditional_guard_set, lowerable_conditional_guard_subset, path_accumulator,
     path_contains_wildcard, predicate_is_structural_ancestor_guard, predicate_tests_source_type,
@@ -247,7 +247,7 @@ impl PathSchemaFactsAccumulator {
 }
 
 pub(super) fn record_contract_use(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
     string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
@@ -380,7 +380,7 @@ pub(super) fn predicate_is_truthy_disjunction_over(
 /// VALUE. Guarded or indirect sites abstain — the synthesized arm would
 /// fire in states the analysis cannot scope.
 pub(super) fn record_range_key_slot_use(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
 ) {
@@ -400,7 +400,7 @@ pub(super) fn record_range_key_slot_use(
         let Some(guards) = lowerable_conditional_guard_set(contract_use, &predicates) else {
             continue;
         };
-        let acc = path_accumulator(paths, &contract_use.source_expr.encode());
+        let acc = path_accumulator(paths, &contract_use.source_expr);
         acc.referenced = true;
         if guards.is_empty() {
             acc.facts.record_provider_schema_use(provider_use.clone());
@@ -466,7 +466,7 @@ pub(super) fn flattened_conjuncts(predicate: &Predicate) -> Vec<&Predicate> {
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
 pub(super) fn record_contract_use_conjunction(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     contract_use: &ContractUse,
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
@@ -479,7 +479,7 @@ pub(super) fn record_contract_use_conjunction(
     let contract_use = kind_resolved.as_ref().unwrap_or(contract_use);
     if contract_use.kind == ValueKind::WidenedDependency {
         if source_path.segments().next().is_some() {
-            path_accumulator(paths, &source_expr).referenced = true;
+            path_accumulator(paths, &source_path).referenced = true;
         }
         return;
     }
@@ -685,7 +685,7 @@ pub(super) fn record_contract_use_conjunction(
             || total_stringified
             || type_dispatched;
         if serialized_tolerant {
-            let acc = path_accumulator(paths, &source_expr);
+            let acc = path_accumulator(paths, &source_path);
             acc.referenced = true;
             acc.facts.facts.used_as_serialized = true;
             acc.facts.facts.has_non_control_use = true;
@@ -762,7 +762,7 @@ pub(super) fn record_contract_use_conjunction(
         // kinds carry actual fragment/text output.
         facts.has_non_control_use = !path_is_empty || contract_use.kind != ValueKind::Scalar;
         facts.has_unlayered_non_control_use = facts.has_non_control_use && merge_layered.is_none();
-        let acc = path_accumulator(paths, &source_expr);
+        let acc = path_accumulator(paths, &source_path);
         acc.requiredness.is_positive_header |= positive_header;
         // A positive dispatch arm normally abstains from provider typing
         // (a transformed scalar arm observes derived text), but an arm that
@@ -950,7 +950,7 @@ pub(super) fn record_contract_use_conjunction(
         .iter()
         .flat_map(Predicate::conditionally_optional_paths)
     {
-        path_accumulator(paths, &path.encode())
+        path_accumulator(paths, &path)
             .requiredness
             .is_conditionally_optional = true;
     }
@@ -958,7 +958,7 @@ pub(super) fn record_contract_use_conjunction(
         Predicate::Guard(Guard::Default { path }) => Some(path),
         _ => None,
     }) {
-        path_accumulator(paths, &path.encode())
+        path_accumulator(paths, path)
             .requiredness
             .has_default_fallback = true;
     }
@@ -971,7 +971,7 @@ pub(super) fn record_contract_use_conjunction(
         conditional_guards.dedup();
         for predicate in conditional_guards {
             for path in predicate.value_paths() {
-                let acc = path_accumulator(paths, &path.encode());
+                let acc = path_accumulator(paths, &path);
                 if !acc.guard_predicates.contains(&predicate) {
                     acc.guard_predicates.push(predicate.clone());
                 }
@@ -982,7 +982,7 @@ pub(super) fn record_contract_use_conjunction(
         if has_source && path.encode() == source_expr {
             continue;
         }
-        let acc = path_accumulator(paths, &path.encode());
+        let acc = path_accumulator(paths, &path);
         acc.referenced |= has_source;
     }
     if has_source && !has_approximate {
@@ -991,9 +991,7 @@ pub(super) fn record_contract_use_conjunction(
                 is_nullable: true,
                 ..ContractValuePathFacts::default()
             };
-            path_accumulator(paths, &path.encode())
-                .facts
-                .record_facts(facts);
+            path_accumulator(paths, &path).facts.record_facts(facts);
         }
     }
 }
@@ -1042,7 +1040,7 @@ pub(super) fn lowerable_range_outer_guards(
 }
 
 pub(super) fn record_range_input_capture(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     path: &str,
     destructured: bool,
@@ -1051,7 +1049,8 @@ pub(super) fn record_range_input_capture(
     if path.trim().is_empty() || capture.contains_approximation() {
         return;
     }
-    let outer_guards = lowerable_range_outer_guards(path, &capture.conjunction);
+    let path = ValuesPath::parse(path);
+    let outer_guards = lowerable_range_outer_guards(&path.encode(), &capture.conjunction);
     let unconditional = outer_guards.as_ref().is_some_and(Vec::is_empty);
     let facts = ContractValuePathFacts {
         is_ranged_source: unconditional,
@@ -1061,20 +1060,18 @@ pub(super) fn record_range_input_capture(
         is_nullable: true,
         ..ContractValuePathFacts::default()
     };
-    path_accumulator(paths, path).facts.record_facts(facts);
+    path_accumulator(paths, &path).facts.record_facts(facts);
 
-    if let Some(parent) = path.strip_suffix(".*")
-        && !path_contains_wildcard(parent)
+    if let Some(parent) = path.item_parent()
+        && !parent.segments().any(|segment| segment == "*")
     {
-        let parent_mode = capture
-            .ranged
-            .mode(&helm_schema_core::ValuesPath::parse(parent));
+        let parent_mode = capture.ranged.mode(&parent);
         if !parent_mode.member_identity {
             return;
         }
         record_member_range_requirement(
             paths,
-            parent,
+            &parent,
             &capture.conjunction,
             !parent_mode.destructured && !parent_mode.json_decoded,
             !destructured && !json_decoded,
@@ -1083,7 +1080,7 @@ pub(super) fn record_range_input_capture(
         // An unconditional row's range facts already live on the base
         // accumulator; only a real guard set opens its own overlay branch.
         if !outer_guards.is_empty() {
-            let branch = path_accumulator(paths, path)
+            let branch = path_accumulator(paths, &path)
                 .conditional_overlay_branches
                 .entry(outer_guards.clone())
                 .or_default();
@@ -1108,7 +1105,7 @@ pub(super) fn record_range_input_capture(
                 allow_integer: !destructured && !json_decoded,
             }],
         };
-        let acc = path_accumulator(paths, path);
+        let acc = path_accumulator(paths, &path);
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);

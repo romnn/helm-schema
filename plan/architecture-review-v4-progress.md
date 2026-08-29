@@ -5054,3 +5054,96 @@
 - Measured production LOC delta: +43 (64,312 to 64,355). The public carrier seam removes implicit
   string currency but necessarily makes the remaining encoded boundaries explicit; no live
   semantic code or test coverage was deleted to force a negative delta.
+
+## B4a.22 — migrate contract-builder path indexes
+
+- Status: in progress; commit pending.
+- Contract: representation-only migration of the contract-signal builder's path accumulator map,
+  descendant indexes, and path-accumulator API from encoded `String` to segmented `ValuesPath`.
+  The builder must hand its typed map directly to `ContractSchemaSignals`, deleting the final
+  map-key parse and the remaining dual encoded-key/typed-value identity.
+- Acceptance baseline: `c8d58a10` (B4a.21).
+- Baseline production LOC: 64,355 Rust lines from `task tokei:core` on `c8d58a10`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Accumulator insertion, ancestor/descendant discovery, item-parent promotion, requirement
+    targeting, and final signal construction retain identical membership and legacy encoded order.
+  - Every path entering from a still-string expression boundary parses once; every typed producer
+    remains typed. No compatibility map, string coercion, or cached encoded key is allowed.
+  - The carrier and builder are crate-private, so this round changes no public API or wire format.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - The contract-signal builder now indexes every `ContractPathAccumulator` by `ValuesPath` from
+    first insertion through final signal construction. Descendant, item-descendant, and structured-
+    item-descendant sets are derived from structural segments and preserve legacy encoded order.
+  - `finish_schema_signals` hands the typed map directly to `ContractSchemaSignals`; the final
+    map-key parse and encoded item-parent reconstruction are deleted.
+  - Schema and symbolic-IR dumps are recursively byte-identical to `c8d58a10`. The full-depth
+    battery checks 121,055 probes across 60 charts with zero flips, zero mandatory base/third-level
+    drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first compiler preflight after changing the accumulator type rejected 43 builder
+    consumers. Each typed producer was wired directly and each still-string capture boundary was
+    parsed explicitly; no archive or dump was produced from that state.
+  - A pre-archive `cargo fmt --check` identified formatting-only wraps. `cargo fmt` applied them
+    before the immutable archive and every final gate.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Contract rows and captures | Same accumulator ownership | IR/contract suites. |
+| Ancestor/item discovery | Same parent and ranged-member facts | Builder/schema suites. |
+| Requirement implications | Same targets and outer guards | Fail/member-access suites. |
+| Final signal construction | Same typed keys and evidence | IR/schema dumps. |
+| Generator consumption | Same schema and acceptance | Full-depth prober and luup2. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds; 1,157/1,157 focused core/IR/gen/engine
+  tests pass in 183.747 seconds after a 3-minute-02-second native build. Whole-workspace lint
+  passes warning-free in 7 minutes 58 seconds.
+- Immutable build: B4a.22 `final1`; exit 0, 87 binaries and 125 files after a 6-minute-34-second
+  build and 2.01-second archive write.
+- Clean schema dump: exit 0, 62/62 pass in 188.431 seconds; all 84 artifacts are recursively
+  byte-identical to B4a.21.
+- Clean IR dump: exit 0, one test passes in 3.290 seconds; all 18 artifacts are recursively
+  byte-identical to B4a.21.
+- Full-depth proof: baseline `c8d58a10`, Helm adjudication enabled; exit 0 in 69.636 seconds, 60
+  charts, 121,055 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+  and 28,868 disclosed reductions.
+- Public/wire decision: none. The builder and accumulator carrier are crate-private, and serialized
+  signal order and bytes remain unchanged.
+
+### Self-adversarial pass
+
+- Whole-tree searches find no `BTreeMap<String, ContractPathAccumulator>` and no parse between the
+  builder's final map and `ContractSchemaSignals`. Ancestors and item parents are structural.
+- Remaining strings in the builder are literal keys, type/kind names, diagnostics, relative field
+  paths, or explicit capture-boundary spellings; no compatibility map, string coercion, display
+  implementation, cross-type comparison, or cached encoded key was introduced.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0 in 7 minutes 58 seconds.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 1,637.48
+  seconds, followed by the ast-grep policy checks.
+- `cargo nextest run --workspace`: exit 0; 1,308/1,308 pass in 187.729 seconds after the
+  6-minute-53-second native final-tree build.
+- `task test:integration`: exit 0; 558/558 pass, 24 skipped, in 1,534.377 seconds.
+- `task test:all`: exit 0; 1,870/1,870 pass, 24 skipped, in 1,627.162 seconds, including the
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 23.24 seconds.
+- downstream luup2 `check:local` with the documented macOS shims and explicit installed binary:
+  exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,352 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: -3 (64,355 to 64,352), from deleting the final map-key parse and
+  replacing encoded ancestor/item-parent reconstruction with the shared structural carrier.

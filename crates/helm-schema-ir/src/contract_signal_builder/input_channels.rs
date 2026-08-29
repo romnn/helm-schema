@@ -38,7 +38,8 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     }
     for value_path in dependency_values_root_fragments {
         if !value_path.trim().is_empty() {
-            let acc = path_accumulator(&mut paths, value_path);
+            let value_path = helm_schema_core::ValuesPath::parse(value_path);
+            let acc = path_accumulator(&mut paths, &value_path);
             acc.referenced = true;
             acc.facts.record_facts(ContractValuePathFacts {
                 accepted_values_root_fragment: true,
@@ -72,7 +73,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         if value_path.segments().next().is_none() {
             continue;
         }
-        let acc = path_accumulator(&mut paths, &value_path.encode());
+        let acc = path_accumulator(&mut paths, value_path);
         acc.referenced = true;
         acc.facts.facts.used_as_serialized = true;
     }
@@ -86,7 +87,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             if value_path.segments().next().is_none() || schema_types.is_empty() {
                 continue;
             }
-            let acc = path_accumulator(&mut paths, &value_path.encode());
+            let acc = path_accumulator(&mut paths, value_path);
             acc.referenced = true;
             match (grade.scope, grade.intent) {
                 (HintScope::Unconditional, HintIntent::Declared) => {

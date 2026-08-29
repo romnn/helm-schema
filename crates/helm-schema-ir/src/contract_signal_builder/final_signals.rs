@@ -2,7 +2,7 @@ use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalOverlayFlavor, ConditionalPathOverlay,
     ContractPathAccumulator, ContractPathSchemaEvidence, ContractSchemaSignals,
     ContractValuePathFacts, MetadataFieldKind, PathSchemaFactsAccumulator, ProviderSchemaUse,
-    collect_paths_with_descendants, record_member_access_implications,
+    ValuesPath, collect_paths_with_descendants, record_member_access_implications,
 };
 
 fn kind_partitioned_overlays(overlay: ConditionalPathOverlay) -> Vec<ConditionalPathOverlay> {
@@ -117,7 +117,7 @@ fn kind_selector_path(
 }
 
 pub(super) fn finish_schema_signals(
-    mut paths: BTreeMap<String, ContractPathAccumulator>,
+    mut paths: BTreeMap<ValuesPath, ContractPathAccumulator>,
     mut terminal_clauses: Vec<Vec<ConditionalGuard>>,
 ) -> ContractSchemaSignals {
     record_member_access_implications(&mut paths, &mut terminal_clauses);
@@ -136,12 +136,12 @@ pub(super) fn finish_schema_signals(
     // A member row carrying a runtime string contract (`tpl` over each
     // ranged member) closes the parent's integer-iteration lane: integer
     // counts iterate int members, which the contract rejects.
-    let string_contract_item_parents: Vec<String> = paths
+    let string_contract_item_parents: Vec<ValuesPath> = paths
         .iter()
         .filter_map(|(path, acc)| {
-            let parent = path.strip_suffix(".*")?;
+            let parent = path.item_parent()?;
             (acc.facts.facts.has_string_contract || acc.type_hints.contains("string"))
-                .then(|| parent.to_string())
+                .then_some(parent)
         })
         .collect();
     for parent in string_contract_item_parents {
@@ -158,7 +158,6 @@ pub(super) fn finish_schema_signals(
             let has_item_descendants = paths_with_item_descendants.contains(&value_path);
             let has_structured_item_descendants =
                 paths_with_structured_item_descendants.contains(&value_path);
-            let value_path = helm_schema_core::ValuesPath::parse(&value_path);
             let evidence = acc.into_schema_evidence(
                 &value_path,
                 has_descendants,
@@ -174,10 +173,10 @@ pub(super) fn finish_schema_signals(
 }
 
 pub(super) fn path_accumulator<'a>(
-    paths: &'a mut BTreeMap<String, ContractPathAccumulator>,
-    path: &str,
+    paths: &'a mut BTreeMap<ValuesPath, ContractPathAccumulator>,
+    path: &ValuesPath,
 ) -> &'a mut ContractPathAccumulator {
-    paths.entry(path.to_string()).or_default()
+    paths.entry(path.clone()).or_default()
 }
 
 /// The path-level and branch-level halves of one recorded source use's

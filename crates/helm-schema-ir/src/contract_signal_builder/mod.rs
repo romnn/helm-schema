@@ -7,7 +7,7 @@ use helm_schema_core::{
     ConditionalPathOverlay, ContractPathSchemaEvidence, ContractRequirednessEvidence,
     ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
     ContractValuePathFacts, FailValueRequirement, GuardDnf, GuardValue, MetadataFieldKind,
-    Predicate, RangeDomain,
+    Predicate, RangeDomain, ValuesPath,
 };
 
 mod conditional_overlays;

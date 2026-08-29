@@ -1,7 +1,7 @@
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ContractPathAccumulator, ContractRequirementImplication,
     ContractRequirementTarget, ContractUse, FailValueRequirement, Guard, Predicate,
-    ProviderSchemaUse, ValueKind, path_accumulator,
+    ProviderSchemaUse, ValueKind, ValuesPath, path_accumulator,
 };
 
 /// Paths tested under a HARD negation of the predicate: every
@@ -734,21 +734,20 @@ pub(super) fn guard_to_conditional_guard(
 /// A nested range over each member of `parent` (`p.*` ranged): members
 /// must be rangeable wherever the outer conditions hold.
 pub(super) fn record_member_range_requirement(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
-    parent: &str,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
+    parent: &ValuesPath,
     predicates: &[Predicate],
     outer_allows_integer: bool,
     inner_allows_integer: bool,
 ) {
-    let parent_path = helm_schema_core::ValuesPath::parse(parent);
-    let member_path =
-        helm_schema_core::ValuesPath::parse(&helm_schema_core::append_value_path(parent, "*"));
+    let mut member_path = parent.clone();
+    member_path.push("*");
     let mut outer_guards = Vec::new();
     for predicate in predicates {
         if matches!(
             predicate,
             Predicate::Guard(Guard::Range { path })
-                if path == &parent_path || path == &member_path
+                if path == parent || path == &member_path
         ) {
             continue;
         }
@@ -949,13 +948,17 @@ pub(super) fn predicate_is_structural_ancestor_guard(
 /// a bare `p.*` value row proves no LIST shape, since `range` iterates
 /// maps too.
 pub(super) fn collect_paths_with_descendants(
-    paths: &BTreeSet<String>,
-) -> (BTreeSet<String>, BTreeSet<String>, BTreeSet<String>) {
+    paths: &BTreeSet<ValuesPath>,
+) -> (
+    BTreeSet<ValuesPath>,
+    BTreeSet<ValuesPath>,
+    BTreeSet<ValuesPath>,
+) {
     let mut ancestors = BTreeSet::new();
     let mut item_ancestors = BTreeSet::new();
     let mut structured_item_ancestors = BTreeSet::new();
     for path in paths {
-        let segments = helm_schema_core::split_value_path(path);
+        let segments = path.segments().collect::<Vec<_>>();
         for prefix_len in 1..segments.len() {
             let Some(prefix) = segments.get(..prefix_len) else {
                 continue;
@@ -963,8 +966,8 @@ pub(super) fn collect_paths_with_descendants(
             let Some(segment) = segments.get(prefix_len) else {
                 continue;
             };
-            let ancestor = helm_schema_core::join_value_path(prefix);
-            if segment == "*" {
+            let ancestor = ValuesPath::from_segments(prefix.iter().copied());
+            if *segment == "*" {
                 item_ancestors.insert(ancestor.clone());
                 if prefix_len + 1 < segments.len() {
                     structured_item_ancestors.insert(ancestor.clone());

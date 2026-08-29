@@ -1,7 +1,7 @@
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ContractPathAccumulator, ContractRequirementImplication,
     ContractRequirementTarget, FailValueRequirement, Guard, GuardDnf, GuardValue,
-    MemberAccessConditions, Predicate, TruthCondition, lowerable_range_outer_guards,
+    MemberAccessConditions, Predicate, TruthCondition, ValuesPath, lowerable_range_outer_guards,
     member_local_truthy_selector, path_accumulator, path_contains_wildcard,
     predicate_is_truthy_disjunction_over, predicate_to_guard, record_range_input_capture,
     remove_redundant_approximate_conditions, terminal_clause_guard,
@@ -17,7 +17,7 @@ use super::{
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
 pub(super) fn record_fail_conjunction(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
     capture: &crate::eval_effect::FailCapture,
     range_modes: &crate::range_modes::RangeModes,
@@ -692,7 +692,7 @@ pub(super) fn record_fail_conjunction(
             }),
         requirements,
     };
-    let acc = path_accumulator(paths, &target);
+    let acc = path_accumulator(paths, &ValuesPath::parse(&target));
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -759,13 +759,13 @@ fn string_requirement_has_execution_scope(
 }
 
 fn record_unconditional_string_requirement_facts(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     path: &str,
 ) {
     if path.trim().is_empty() {
         return;
     }
-    let acc = path_accumulator(paths, path);
+    let acc = path_accumulator(paths, &ValuesPath::parse(path));
     acc.referenced = true;
     acc.type_hints.insert("string".to_string());
     acc.facts.facts.has_string_contract = true;
@@ -773,7 +773,7 @@ fn record_unconditional_string_requirement_facts(
 }
 
 pub(super) fn record_range_key_prefix_requirement(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     kind: &crate::eval_effect::CaptureKind,
     conjunction: &[Predicate],
 ) -> bool {
@@ -854,7 +854,7 @@ pub(super) fn record_range_key_prefix_requirement(
         },
         requirements,
     };
-    let acc = path_accumulator(paths, &collection_path.encode());
+    let acc = path_accumulator(paths, collection_path);
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -868,7 +868,7 @@ pub(super) fn record_range_key_prefix_requirement(
 /// `ingressRoute` keys). Bounded to a single key-pattern conjunct with no
 /// other member-scoped tests; anything richer abstains.
 pub(super) fn record_range_key_matches_requirement(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     kind: &crate::eval_effect::CaptureKind,
     conjunction: &[Predicate],
 ) -> bool {
@@ -949,7 +949,7 @@ pub(super) fn record_range_key_matches_requirement(
         target: ContractRequirementTarget::Keys,
         requirements: vec![requirement],
     };
-    let acc = path_accumulator(paths, &collection_path.encode());
+    let acc = path_accumulator(paths, collection_path);
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -1137,7 +1137,7 @@ pub(super) fn complements_requirement(
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
 pub(super) fn record_value_requirement_capture(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     path: &str,
     mut requirement: FailValueRequirement,
@@ -1210,7 +1210,7 @@ pub(super) fn record_value_requirement_capture(
                 },
                 requirements: vec![requirement],
             };
-            let acc = path_accumulator(paths, &collection_path);
+            let acc = path_accumulator(paths, &ValuesPath::parse(&collection_path));
             acc.referenced = true;
             if !acc.requirement_implications.contains(&implication) {
                 acc.requirement_implications.push(implication);
@@ -1313,7 +1313,7 @@ pub(super) fn record_value_requirement_capture(
             },
             requirements: vec![requirement],
         };
-        let acc = path_accumulator(paths, collection_path);
+        let acc = path_accumulator(paths, &ValuesPath::parse(collection_path));
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
         }
@@ -1424,7 +1424,7 @@ pub(super) fn record_value_requirement_capture(
         target,
         requirements: vec![requirement],
     };
-    let acc = path_accumulator(paths, target_path);
+    let acc = path_accumulator(paths, &ValuesPath::parse(target_path));
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -1432,7 +1432,7 @@ pub(super) fn record_value_requirement_capture(
 }
 
 pub(super) fn record_collection_item_requirements(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     collection_paths: &BTreeSet<String>,
     schema_type: &str,
@@ -1459,7 +1459,7 @@ pub(super) fn record_collection_item_requirements(
             },
             requirements,
         };
-        let acc = path_accumulator(paths, path);
+        let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
@@ -1531,7 +1531,7 @@ pub(super) fn record_absence_abort_clause(
 }
 
 pub(super) fn record_index_access_requirement(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     path: &str,
     index: usize,
@@ -1547,7 +1547,7 @@ pub(super) fn record_index_access_requirement(
         target: ContractRequirementTarget::Value,
         requirements: vec![FailValueRequirement::IndexableAt(index)],
     };
-    let acc = path_accumulator(paths, path);
+    let acc = path_accumulator(paths, &ValuesPath::parse(path));
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -1555,7 +1555,7 @@ pub(super) fn record_index_access_requirement(
 }
 
 pub(super) fn record_split_index_access_requirement(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     source_paths: &BTreeSet<String>,
     separator: &str,
@@ -1593,7 +1593,7 @@ pub(super) fn record_split_index_access_requirement(
                 allow_non_string,
             }],
         };
-        let acc = path_accumulator(paths, path);
+        let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
@@ -1602,7 +1602,7 @@ pub(super) fn record_split_index_access_requirement(
 }
 
 pub(super) fn record_member_relative_split_requirement(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     source_path: &str,
     separator: &str,
@@ -1685,7 +1685,7 @@ pub(super) fn record_member_relative_split_requirement(
             allow_non_string,
         }],
     };
-    let acc = path_accumulator(paths, &collection_path);
+    let acc = path_accumulator(paths, &ValuesPath::parse(&collection_path));
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
@@ -1693,7 +1693,7 @@ pub(super) fn record_member_relative_split_requirement(
 }
 
 pub(super) fn record_range_key_string_requirements(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     range_key_string_paths: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
@@ -1721,7 +1721,7 @@ pub(super) fn record_range_key_string_requirements(
             target: ContractRequirementTarget::Keys,
             requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
         };
-        let acc = path_accumulator(paths, path);
+        let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
@@ -1734,7 +1734,7 @@ pub(super) fn record_range_key_string_requirements(
 /// strict-consumer key contract uses, and with the same direct-iteration
 /// precondition (only a direct range has member key identities).
 pub(super) fn record_range_key_plain_slot_requirements(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     collection_paths: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
@@ -1765,7 +1765,7 @@ pub(super) fn record_range_key_plain_slot_requirements(
                 templated: false,
             }],
         };
-        let acc = path_accumulator(paths, path);
+        let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
@@ -2031,7 +2031,7 @@ pub(super) fn requirements_from_holding(
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
 pub(super) fn record_member_access_capture(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     handled_kinds: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
@@ -2055,7 +2055,6 @@ pub(super) fn record_member_access_capture(
         if incomplete {
             return;
         }
-        let parent_encoded = parent.encode();
         if !capture.ranged.mode(&parent).member_identity {
             return;
         }
@@ -2103,7 +2102,7 @@ pub(super) fn record_member_access_capture(
             },
             requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
         };
-        let acc = path_accumulator(paths, &parent_encoded);
+        let acc = path_accumulator(paths, &parent);
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
@@ -2158,7 +2157,7 @@ pub(super) fn record_member_access_capture(
         }
         outer.push(predicate);
     }
-    let access_conditions = &mut path_accumulator(paths, &target.encode()).member_access_conditions;
+    let access_conditions = &mut path_accumulator(paths, &target).member_access_conditions;
     if condition_lowerable {
         access_conditions.record(
             handled_kinds.iter().cloned().collect(),
@@ -2340,7 +2339,7 @@ fn guard_implies_present_at(guard: &ConditionalGuard, path: &helm_schema_core::V
 }
 
 pub(super) fn record_member_access_implications(
-    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
 ) {
     // Helm rebuilds a MISSING or null dependency values root from the
@@ -2350,15 +2349,15 @@ pub(super) fn record_member_access_implications(
     // present root does stick and does abort; that claim rides the `Absent`
     // encoding, which anchors every dependency-owned absence on the root
     // being present as a table.
-    let dependency_roots: BTreeSet<String> = paths
+    let dependency_roots: BTreeSet<ValuesPath> = paths
         .iter()
         .filter(|(_, acc)| acc.facts.facts.accepted_dependency_values_root_fragment)
         .map(|(path, _)| path.clone())
         .collect();
-    let pending: Vec<(String, MemberAccessConditions)> = paths
+    let pending: Vec<(ValuesPath, MemberAccessConditions)> = paths
         .iter()
         .filter(|(path, acc)| {
-            !acc.member_access_conditions.is_empty() && !path_contains_wildcard(path)
+            !acc.member_access_conditions.is_empty() && !values_path_has_wildcard(path)
         })
         .map(|(path, acc)| (path.clone(), acc.member_access_conditions.clone()))
         .collect();
@@ -2420,7 +2419,7 @@ pub(super) fn record_member_access_implications(
             .filter(|guards| {
                 !guards
                     .iter()
-                    .any(|guard| guard_implies_present(guard, &path))
+                    .any(|guard| guard_implies_present(guard, &path.encode()))
             })
             .collect::<BTreeSet<_>>();
         if absent_abort_sets.is_empty() {
@@ -2434,9 +2433,7 @@ pub(super) fn record_member_access_implications(
         // TOP-LEVEL hosts, which have no parent slot to carry a member
         // requirement.
         let mut clause = fold_member_access_arms(absent_abort_sets);
-        clause.push(ConditionalGuard::Absent {
-            path: helm_schema_core::ValuesPath::parse(&path),
-        });
+        clause.push(ConditionalGuard::Absent { path: path.clone() });
         clause.sort();
         clause.dedup();
         if !terminal_clauses.contains(&clause) {
