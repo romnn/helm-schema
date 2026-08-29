@@ -5147,3 +5147,77 @@
 
 - Measured production LOC delta: -3 (64,355 to 64,352), from deleting the final map-key parse and
   replacing encoded ancestor/item-parent reconstruction with the shared structural carrier.
+
+## B2/E1 — `Transform` vocabulary spike
+
+- Status: recorded and abandoned after two failed E-gated attempts; no production change landed.
+- Contract: representation-only first spike on `HelperOutputMeta`: replace its parallel transform
+  Booleans with the exhaustive `Transform` vocabulary and one `TransformSet`, including
+  `Encoded`. Preserve payload-bearing facts separately and define identity as set emptiness plus
+  absence of those payloads. No other carrier migrates until this spike proves the design.
+- Acceptance baseline: `41036f3f` (B4a.22).
+- Baseline production LOC: 64,352 Rust lines from `task tokei:core` on `41036f3f`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Every helper-output transform producer, merge, clear, identity predicate, and consumer retains
+    exactly its prior truth table, including mixed branches and payload-bearing states.
+  - G2 stage 2 must enumerate `Transform::ALL`, assert the produced fact before full schema
+    equality, and cover mixed-branch, clear/removal, scalar-dispatch, quoted/plain-token, and
+    payload-bearing cases before adoption.
+  - E-gates: delete the helper-output Boolean representation; non-positive whole-tree production
+    LOC; byte-exact schema/IR fixtures; flat-or-better corpus wall-clock. A miss records and
+    abandons the spike rather than forcing it.
+  - Any fixture or acceptance flip fails the representation spike. Candidate-accepts/Helm-aborts
+    allowance and mandatory base/third-level coverage drops remain zero.
+
+- Deviations:
+  - The initial compiler-only carrier replacement rejected 127 helper-output Boolean consumers.
+    This is a preflight inventory, not an adopted state; no archive, dump, fixture, or acceptance
+    artifact has been produced from it.
+  - Attempt 1 completed that compiler migration but failed E1's first hard adoption gate:
+    `task tokei:core` measured 64,486 production Rust lines, +134 from the 64,352 baseline. The
+    verbose ordered-set membership API moved the representation without simplifying the tree, so
+    the entire code state was rejected before fixtures or corpus timing. Attempt 2 restarts from
+    the clean baseline with a compact bit-set carrier and shorter `has`/`set` operations.
+  - Attempt 2 completed the same compiler migration with a compact `u16` set and concise
+    operations. `cargo check -p helm-schema-ir --lib` passed, but `task tokei:core` measured
+    64,419 production Rust lines: +67 from baseline. It therefore failed the same non-positive
+    whole-tree LOC gate. The code state was fully reverted before any archive, fixture dump, or
+    corpus timing run. Per the two-attempt rule, B2/E1 is abandoned for this wave rather than
+    forced; G2 stage 2 remains coupled to a future viable B2 design.
+- Measured results:
+  - Both attempts deleted all 12 helper-output transform Booleans and compiled their complete
+    producer/consumer surface into one transform set, proving the representation is technically
+    viable but not simpler under the frozen whole-tree metric.
+  - The authoritative production tree is byte-identical to baseline after reverting both spikes.
+    No fixture or acceptance artifact was generated from either rejected state.
+- Adjudication evidence: no candidate behavior or fixture state was produced, so there are zero
+  flips and no Helm cells to adjudicate.
+
+### Review dossier
+
+- Attempt 1: compiler migration complete; `task tokei:core` exit 0, 64,486 LOC (+134); rejected.
+- Attempt 2: `cargo check -p helm-schema-ir --lib` exit 0; `task tokei:core` exit 0, 64,419 LOC
+  (+67); rejected. The remaining E-gates were intentionally not run because the first hard gate
+  already failed.
+- Public/wire decision: none. Neither spike was adopted; the production API and wire formats remain
+  those of `41036f3f`.
+
+### Self-adversarial pass
+
+- The second design removed ordered-set allocation and shortened membership/update operations, yet
+  remained +67 LOC. Further compression would select for clever APIs or hidden macros rather than
+  architectural deletion, exactly what the E-gate forbids.
+- Whole-tree status after reversion contains no `Transform` spike code. The recorded failure is an
+  explicit campaign result, not residual compatibility debt.
+
+### Gates
+
+- Attempt 1 `task tokei:core`: exit 0, failed adoption at +134 LOC.
+- Attempt 2 `cargo check -p helm-schema-ir --lib`: exit 0.
+- Attempt 2 `task tokei:core`: exit 0, failed adoption at +67 LOC.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0 on the reverted tree.
+- `git diff --check`: exit 0 on the reverted tree.
+
+- Measured production LOC delta: 0 adopted; attempt 1 measured +134 and attempt 2 +67 before full
+  reversion.
