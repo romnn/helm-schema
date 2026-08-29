@@ -47,7 +47,7 @@ fn parse_get_binding_detects_declaration_from_ast() {
             variable: "value".to_string(),
             kind: AssignmentKind::Declaration,
             binding: GetBinding {
-                base: "config".to_string(),
+                base: helm_schema_core::ValuesPath::parse("config"),
                 key_var: "key".to_string(),
             },
         })
@@ -62,7 +62,7 @@ fn parse_get_binding_detects_assignment_from_ast() {
             variable: "value".to_string(),
             kind: AssignmentKind::Assignment,
             binding: GetBinding {
-                base: "config".to_string(),
+                base: helm_schema_core::ValuesPath::parse("config"),
                 key_var: "key".to_string(),
             },
         })
@@ -91,7 +91,7 @@ fn extract_bound_values_resolves_selector_reads_from_ast() {
     get_bindings.insert(
         "config".to_string(),
         GetBinding {
-            base: "config".to_string(),
+            base: helm_schema_core::ValuesPath::parse("config"),
             key_var: "scope".to_string(),
         },
     );
@@ -120,7 +120,7 @@ fn extract_bound_values_respects_or_short_circuit_eq_predicate() {
     get_bindings.insert(
         "config".to_string(),
         GetBinding {
-            base: "config".to_string(),
+            base: helm_schema_core::ValuesPath::parse("config"),
             key_var: "protocol".to_string(),
         },
     );
@@ -146,7 +146,7 @@ fn extract_bound_values_respects_and_short_circuit_eq_predicate() {
     get_bindings.insert(
         "config".to_string(),
         GetBinding {
-            base: "config".to_string(),
+            base: helm_schema_core::ValuesPath::parse("config"),
             key_var: "protocol".to_string(),
         },
     );

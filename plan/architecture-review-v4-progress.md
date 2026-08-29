@@ -4772,7 +4772,7 @@
 
 ## B4a.19 — migrate integer-cast source paths
 
-- Status: landed; commit pending.
+- Status: landed in `2aa21c84` (`refactor(ir): type integer cast source paths`).
 - Contract: representation-only migration of `IntCastSource.path` from encoded `String` to
   segmented `ValuesPath`, including branch/local propagation and every comparison-predicate
   consumer. The optional integer fallback remains unchanged.
@@ -4853,3 +4853,96 @@
 
 - Measured production LOC delta: +1 (64,309 to 64,310); the typed source removes repeated parsing
   at thirteen consumers while the once-only expression-boundary construction remains explicit.
+
+## B4a.20 — migrate bound `get` paths
+
+- Status: landed; commit pending.
+- Contract: representation-only migration of bound Sprig `get` base paths and resolved selector
+  path sets from encoded strings to segmented `ValuesPath`, including symbolic-local propagation,
+  condition decoding, and expression-effect publication. Variable names and literal key domains
+  remain strings.
+- Acceptance baseline: `2aa21c84` (B4a.19).
+- Baseline production LOC: 64,310 Rust lines from `task tokei:core` on `2aa21c84`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Literal-key range filtering, bound selector expansion, grouped member reads, and truthiness
+    predicates retain identical membership and legacy encoded ordering.
+  - The carriers are crate-private, so this round changes no public API or wire format. No
+    coercion trait, cross-type comparison, or cached encoded twin is allowed.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - `GetBinding.base` now carries `ValuesPath` through parser recognition, symbolic-local state,
+    scope snapshots, and branch joins. Bound selector expansion clones the base and pushes literal
+    key and suffix segments structurally.
+  - `BoundValueContext::selector_paths` returns typed paths; expression effects consume the set
+    directly, and bound-key truthiness builds a typed guard without append/parse round-trips.
+  - Schema and symbolic-IR dumps are recursively byte-identical to `2aa21c84`. The full-depth
+    battery checks 121,055 probes across 60 charts with zero flips, zero mandatory base/third-level
+    drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first all-target compiler preflight rejected six test constructions after production
+    compiled. Tests were migrated explicitly; no archive or dump was produced from that state.
+  - A later `cargo fmt --check` identified two formatting-only wraps. `cargo fmt` applied them
+    before the immutable archive and final gates.
+  - The first whole-workspace lint preflight rejected two redundant `.into_iter()` calls exposed by
+    the typed set. The calls were deleted; no suppression or artifact from that state was adopted.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| `get` binding recognition | Same base and key variable | Bound-value suite. |
+| Literal range domain | Same filtered key alternatives | Bound-value/condition suites. |
+| Selector expansion | Same base/key/suffix paths | Expr/IR suites. |
+| Symbolic state and joins | Same binding lifetime and equality | Symbolic-local suite. |
+| Truthiness/effects | Same typed guards and bound outputs | Re-audits/dumps/prober. |
+
+### Review dossier
+
+- Focused proof: the second all-target IR compilation succeeds in 21.21 seconds; 393/393 IR tests
+  pass after the host's 78-second build. Corrected whole-workspace lint passes warning-free in 6
+  minutes 04 seconds.
+- Immutable build: B4a.20 `final1`; exit 0, 87 binaries and 125 files after a 5-minute-32-second
+  build and 1.39-second archive write.
+- Clean schema dump: exit 0, 62/62 pass in 195.159 seconds; all 84 artifacts are recursively
+  byte-identical to B4a.19.
+- Clean IR dump: exit 0, one test passes in 3.350 seconds; all 18 artifacts are recursively
+  byte-identical to B4a.19.
+- Full-depth proof: baseline `2aa21c84`, Helm adjudication enabled; exit 0 in 77.326 seconds, 60
+  charts, 121,055 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+  and 28,868 disclosed reductions.
+- Public/wire decision: none. The bound-value carriers are crate-private and serialized bytes
+  remain unchanged.
+
+### Self-adversarial pass
+
+- Whole-tree searches find `GetBinding.base` and bound selector result sets typed. Expansion uses
+  structural pushes; expression effects no longer parse bound outputs. Variable names, literal
+  range values, and key variables remain strings in their distinct domains.
+- No coercion trait, display implementation, cross-type comparison, cached encoding, public API,
+  or wire-format change was introduced.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0 in 6 minutes 04 seconds after the rejected preflight above.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 1,451.84
+  seconds, followed by the ast-grep policy checks.
+- `cargo nextest run --workspace`: exit 0; 1,308/1,308 pass in 194.796 seconds after the native
+  final-tree build.
+- `task test:integration`: exit 0; 558/558 pass, 24 skipped, in 1,621.499 seconds.
+- `task test:all`: exit 0; 1,870/1,870 pass, 24 skipped, in 1,701.503 seconds, including the
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 28.95 seconds.
+- downstream luup2 `check:local` with the documented macOS shims and explicit installed binary:
+  exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,312 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +2 (64,310 to 64,312); structural expansion removes path
+  re-encoding at consumers while retaining an explicit once-only parser boundary.

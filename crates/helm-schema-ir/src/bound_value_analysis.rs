@@ -7,7 +7,7 @@ use crate::fragment_assignment::AssignmentKind;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct GetBinding {
-    pub(crate) base: String,
+    pub(crate) base: helm_schema_core::ValuesPath,
     pub(crate) key_var: String,
 }
 
@@ -37,7 +37,10 @@ impl BoundValueContext {
         }
     }
 
-    pub(crate) fn selector_paths(&self, expr: &TemplateExpr) -> BTreeSet<String> {
+    pub(crate) fn selector_paths(
+        &self,
+        expr: &TemplateExpr,
+    ) -> BTreeSet<helm_schema_core::ValuesPath> {
         let Some((variable, rest)) = bound_selector_read(expr) else {
             return BTreeSet::new();
         };
@@ -52,10 +55,12 @@ impl BoundValueContext {
             .iter()
             .filter(|value| self.constraints.allows(&binding.key_var, value))
             .map(|value| {
-                let mut segments = helm_schema_core::split_value_path(&binding.base);
-                segments.push(value.clone());
-                segments.extend(helm_schema_core::split_value_path(&rest));
-                helm_schema_core::join_value_path(segments)
+                let mut path = binding.base.clone();
+                path.push(value.clone());
+                for segment in helm_schema_core::ValuesPath::parse(&rest).segments() {
+                    path.push(segment);
+                }
+                path
             })
             .collect()
     }
@@ -125,7 +130,7 @@ fn get_binding_plan_from_expr(
         variable: variable.trim_start_matches('$').to_string(),
         kind,
         binding: GetBinding {
-            base,
+            base: helm_schema_core::ValuesPath::parse(&base),
             key_var: key_var.clone(),
         },
     })

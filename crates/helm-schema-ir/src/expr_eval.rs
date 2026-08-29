@@ -370,12 +370,9 @@ pub(crate) fn eval_expr_with_helper_calls(
                 );
             }
             effects.output_paths.clear();
-            effects.bound_output_paths.extend(
-                env.bound_values
-                    .selector_paths(expr)
-                    .into_iter()
-                    .map(|path| helm_schema_core::ValuesPath::parse(&path)),
-            );
+            effects
+                .bound_output_paths
+                .extend(env.bound_values.selector_paths(expr));
             match value {
                 Some(value) => {
                     let mut result = EvalResult::from_value(value);
@@ -715,12 +712,10 @@ fn with_bound_selector_paths(
     expr: &TemplateExpr,
     env: &EvalEnv,
 ) -> EvalResult {
-    result.effects.bound_output_paths.extend(
-        env.bound_values
-            .selector_paths(expr)
-            .into_iter()
-            .map(|path| helm_schema_core::ValuesPath::parse(&path)),
-    );
+    result
+        .effects
+        .bound_output_paths
+        .extend(env.bound_values.selector_paths(expr));
     result
 }
 

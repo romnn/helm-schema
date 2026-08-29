@@ -1821,7 +1821,9 @@ impl ValuePathContext<'_> {
         let predicates = keys
             .iter()
             .map(|key| {
-                Predicate::truthy_path(helm_schema_core::append_value_path(&binding.base, key))
+                let mut path = binding.base.clone();
+                path.push(key);
+                Predicate::from(Guard::Truthy { path })
             })
             .collect::<Vec<_>>();
         match predicates.as_slice() {

@@ -496,7 +496,7 @@ fn get_binding_plan(
 
 fn get_binding(base: &str, key_var: &str) -> GetBinding {
     GetBinding {
-        base: base.to_string(),
+        base: ValuesPath::parse(base),
         key_var: key_var.to_string(),
     }
 }
