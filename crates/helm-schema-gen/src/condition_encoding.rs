@@ -6,7 +6,6 @@ use serde_yaml::Value as YamlValue;
 
 use crate::schema_model::guard_value_to_json;
 use crate::schema_node::{JsonSchemaType, SchemaNode};
-use crate::split_value_path;
 use crate::values_yaml::yaml_value_at_values_path as yaml_value_at_path;
 
 /// Which way a condition fragment may err where the encoding cannot be
@@ -527,7 +526,7 @@ pub(crate) fn deleted_dependency_root_terminates<'a>(
     let paths = guards
         .iter()
         .flat_map(ConditionalGuard::value_paths)
-        .map(|path| split_value_path(&path))
+        .map(|path| path.segments().map(str::to_string).collect::<Vec<_>>())
         .collect::<Vec<_>>();
     if paths.is_empty()
         || paths.iter().any(|path| {

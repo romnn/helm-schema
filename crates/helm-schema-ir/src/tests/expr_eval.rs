@@ -871,10 +871,11 @@ fn ternary_preserves_scalar_branch_dispatch() {
         "the selected Boolean literals must remain an exact scalar dispatch: {result:#?}"
     );
     assert!(
-        result
-            .truth
-            .predicate()
-            .is_some_and(|predicate| predicate.value_paths().contains("version")),
+        result.truth.predicate().is_some_and(|predicate| {
+            predicate
+                .value_paths()
+                .contains(&helm_schema_core::ValuesPath::parse("version"))
+        }),
         "the ternary result must retain its selector condition: {result:#?}"
     );
 }

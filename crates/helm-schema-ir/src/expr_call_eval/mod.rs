@@ -1335,7 +1335,7 @@ fn eval_short_circuit_args(
                 .when_true()
                 .value_paths()
                 .union(&operand_truth.when_false().value_paths())
-                .cloned()
+                .map(helm_schema_core::ValuesPath::encode)
                 .collect(),
         );
         if let Some(value) = result.value {
@@ -1361,7 +1361,7 @@ fn eval_short_circuit_args(
                 .when_true()
                 .value_paths()
                 .union(&operand_truth.when_false().value_paths())
-                .cloned()
+                .map(helm_schema_core::ValuesPath::encode)
                 .collect(),
         );
         if next_condition != Predicate::True {

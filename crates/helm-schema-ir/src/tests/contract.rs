@@ -189,10 +189,12 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     contract.push(contract_use);
 
     contract.map_value_paths(|path| {
-        if path.starts_with("global.") {
-            path.to_string()
+        if path.segments().next() == Some("global") {
+            path
         } else {
-            format!("subchart.{path}")
+            helm_schema_core::ValuesPath::from_segments(
+                std::iter::once("subchart").chain(path.segments()),
+            )
         }
     });
 
@@ -433,7 +435,11 @@ fn contract_ir_carries_declared_type_hints_through_mapping_and_signal_derivation
     contract.add_type_hint("image.tag", "string");
     contract.add_type_hint("image.pullPolicy", "string");
 
-    contract.map_value_paths(|path| format!("subchart.{path}"));
+    contract.map_value_paths(|path| {
+        helm_schema_core::ValuesPath::from_segments(
+            std::iter::once("subchart").chain(path.segments()),
+        )
+    });
 
     let signals = contract.finalize().into_schema_signals();
     sim_assert_eq!(
@@ -499,7 +505,11 @@ fn dependency_global_projection_moves_range_members_to_live_sources() {
         {{ .name }}
         {{- end }}
     "});
-    contract.map_value_paths(|path| format!("metrics.agent.{path}"));
+    contract.map_value_paths(|path| {
+        helm_schema_core::ValuesPath::from_segments(
+            ["metrics", "agent"].into_iter().chain(path.segments()),
+        )
+    });
     contract.project_dependency_global_contracts(&["metrics".to_string(), "agent".to_string()]);
 
     let finalized = contract.finalize();
@@ -529,7 +539,11 @@ fn dependency_global_projection_keeps_whole_global_range_modes() {
         {{ . }}
         {{- end }}
     "});
-    contract.map_value_paths(|path| format!("metrics.agent.{path}"));
+    contract.map_value_paths(|path| {
+        helm_schema_core::ValuesPath::from_segments(
+            ["metrics", "agent"].into_iter().chain(path.segments()),
+        )
+    });
     contract.project_dependency_global_contracts(&["metrics".to_string(), "agent".to_string()]);
 
     let signals = contract.finalize().into_schema_signals();
@@ -790,8 +804,8 @@ fn nested_activation_conjoins_every_default_source_guard() {
     sim_assert_eq!(
         have: activation_paths,
         want: std::collections::BTreeSet::from([
-            "mid.enabled".to_string(),
-            "mid.leaf.enabled".to_string(),
+            helm_schema_core::ValuesPath::parse("mid.enabled"),
+            helm_schema_core::ValuesPath::parse("mid.leaf.enabled"),
         ])
     );
 }

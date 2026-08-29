@@ -706,6 +706,7 @@ fn non_string_runtime_requirement_paths(
             .map(Predicate::value_paths)
             .unwrap_or_default()
             .into_iter()
+            .map(|path| path.encode())
             .collect(),
     }
 }

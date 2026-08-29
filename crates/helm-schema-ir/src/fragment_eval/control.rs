@@ -648,7 +648,7 @@ impl Interpreter<'_> {
         // dormant on an empty overlaid map.
         let overlay_entry_subset = if faithful && predicate_reads_member_wildcard(&predicate) {
             let subset = self.definite_member_condition_sound_subset(header.expr());
-            let subset_paths: BTreeSet<String> = subset
+            let subset_paths: BTreeSet<helm_schema_core::ValuesPath> = subset
                 .iter()
                 .flat_map(helm_schema_core::Guard::value_paths)
                 .collect();
@@ -714,13 +714,13 @@ impl Interpreter<'_> {
             if let Some(guards) = conjunct.contract_guards() {
                 for guard in &guards {
                     for path in guard.value_paths() {
-                        self.push_control_read(&path, std::slice::from_ref(guard));
+                        self.push_control_read(&path.encode(), std::slice::from_ref(guard));
                     }
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
             } else if !matches!(conjunct, Predicate::True) {
                 for path in conjunct.value_paths() {
-                    self.push_control_read(&path, &[]);
+                    self.push_control_read(&path.encode(), &[]);
                 }
                 self.push_predicate(conjunct);
             }
@@ -767,7 +767,12 @@ impl Interpreter<'_> {
             let mut paths = self
                 .value_path_context()
                 .resolved_values_paths_from_expr(expr);
-            paths.extend(positive_subset.value_paths());
+            paths.extend(
+                positive_subset
+                    .value_paths()
+                    .into_iter()
+                    .map(|path| path.encode()),
+            );
             Predicate::approximate_with_sound_predicate(marker, paths, positive_subset)
         }
     }
@@ -911,7 +916,7 @@ impl Interpreter<'_> {
         }
         for guard in &predicate.contract_guards().unwrap_or_default() {
             for path in guard.value_paths() {
-                self.push_control_read(&path, &[]);
+                self.push_control_read(&path.encode(), &[]);
             }
         }
         if let TemplateExpr::VariableDefinition { name, .. } = header.expr()
@@ -2189,9 +2194,8 @@ fn root_dispatch_literal(value: &AbstractValue) -> Option<GuardValue> {
 /// Whether a decoded condition reads a WILDCARD member path (`x.*.y`): the
 /// shape a ranged member's own condition takes.
 fn predicate_reads_member_wildcard(predicate: &Predicate) -> bool {
-    predicate.value_paths().iter().any(|path| {
-        helm_schema_core::split_value_path(path)
-            .iter()
-            .any(|segment| segment == "*")
-    })
+    predicate
+        .value_paths()
+        .iter()
+        .any(|path| path.segments().any(|segment| segment == "*"))
 }

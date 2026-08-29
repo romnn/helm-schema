@@ -950,7 +950,7 @@ pub(super) fn record_contract_use_conjunction(
         .iter()
         .flat_map(Predicate::conditionally_optional_paths)
     {
-        path_accumulator(paths, &path)
+        path_accumulator(paths, &path.encode())
             .requiredness
             .is_conditionally_optional = true;
     }
@@ -971,7 +971,7 @@ pub(super) fn record_contract_use_conjunction(
         conditional_guards.dedup();
         for predicate in conditional_guards {
             for path in predicate.value_paths() {
-                let acc = path_accumulator(paths, &path);
+                let acc = path_accumulator(paths, &path.encode());
                 if !acc.guard_predicates.contains(&predicate) {
                     acc.guard_predicates.push(predicate.clone());
                 }
@@ -979,10 +979,10 @@ pub(super) fn record_contract_use_conjunction(
         }
     }
     for path in predicates.iter().flat_map(Predicate::value_paths) {
-        if has_source && path == source_expr {
+        if has_source && path.encode() == source_expr {
             continue;
         }
-        let acc = path_accumulator(paths, &path);
+        let acc = path_accumulator(paths, &path.encode());
         acc.referenced |= has_source;
     }
     if has_source && !has_approximate {
@@ -1030,7 +1030,7 @@ pub(super) fn lowerable_range_outer_guards(
         if guard
             .value_paths()
             .iter()
-            .any(|path| path_contains_wildcard(path))
+            .any(|path| path_contains_wildcard(&path.encode()))
         {
             return None;
         }

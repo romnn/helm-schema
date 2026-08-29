@@ -162,7 +162,7 @@ impl GuardDnf {
     /// Rewrites every values path and re-normalizes the formula.
     pub fn map_value_paths<F>(&mut self, map: &mut F)
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(crate::ValuesPath) -> crate::ValuesPath,
     {
         *self =
             Self::from_disjunction(std::mem::take(&mut self.0).into_iter().map(|conjunction| {

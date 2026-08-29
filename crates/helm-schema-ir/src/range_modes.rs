@@ -86,11 +86,11 @@ impl RangeModes {
     /// Rewrite every path, unioning modes that collapse onto one target.
     pub(crate) fn map_value_paths<F>(&mut self, map: &mut F)
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(ValuesPath) -> ValuesPath,
     {
         let mut mapped = RangeModes::default();
         for (path, mode) in &self.modes {
-            let target = ValuesPath::parse(&map(&path.encode()));
+            let target = map(path.clone());
             let merged = mapped.modes.entry(target).or_default();
             merged.input_identity |= mode.input_identity;
             merged.member_identity |= mode.member_identity;

@@ -31,7 +31,7 @@ fn range_mode_remapping_unions_collapsed_structural_paths() {
     let mut modes = RangeModes::default();
     modes.mark_input_identity(&helm_schema_core::ValuesPath::parse("first.items"));
     modes.mark_member_identity(&helm_schema_core::ValuesPath::parse("second.items"));
-    modes.map_value_paths(&mut |_| "selected.items".to_string());
+    modes.map_value_paths(&mut |_| helm_schema_core::ValuesPath::parse("selected.items"));
 
     let selected = modes.mode(&helm_schema_core::ValuesPath::parse("selected.items"));
     assert!(selected.input_identity && selected.member_identity);

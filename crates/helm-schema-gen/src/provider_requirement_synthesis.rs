@@ -110,7 +110,7 @@ pub(crate) fn synthesized_required_source_implications(
             if overlay
                 .guards
                 .iter()
-                .any(|guard| guard.value_paths().contains(&value_path.encode()))
+                .any(|guard| guard.value_paths().contains(value_path))
             {
                 continue;
             }
@@ -255,7 +255,10 @@ pub(crate) fn synthesized_ranged_member_required_implications(
             let mut undecodable = false;
             for guard in guards {
                 let paths = guard.value_paths();
-                if paths.iter().all(|path| !path.contains('*')) {
+                if paths
+                    .iter()
+                    .all(|path| path.segments().all(|segment| segment != "*"))
+                {
                     outer_guards.push(guard.clone());
                     continue;
                 }

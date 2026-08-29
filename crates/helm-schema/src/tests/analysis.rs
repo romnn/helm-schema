@@ -141,7 +141,7 @@ fn loki_selected_htpasswd_default_program_reaches_required_credentials() -> eyre
             signals.terminal_clauses().iter().any(|clause| clause
                 .iter()
                 .flat_map(helm_schema_core::ConditionalGuard::value_paths)
-                .any(|guard_path| guard_path == path)),
+                .any(|guard_path| guard_path == helm_schema_core::ValuesPath::parse(path))),
             "the selected htpasswd default must retain its required call for {path}: {signals:#?}"
         );
     }
@@ -1560,7 +1560,7 @@ fn activated_rewrite_schema() -> eyre::Result<serde_json::Value> {
             clause
                 .iter()
                 .flat_map(helm_schema_core::ConditionalGuard::value_paths)
-                .any(|path| path == "child.token")
+                .any(|path| path == helm_schema_core::ValuesPath::parse("child.token"))
         })
         .ok_or_else(|| eyre::eyre!("expected activated token absence clause"))?;
     let guarded_source = signals
@@ -2000,7 +2000,7 @@ fn joined_validator_messages_do_not_become_activation_terminals() -> eyre::Resul
                 guard
                     .value_paths()
                     .iter()
-                    .any(|path| path == "child.auth.user")
+                    .any(|path| path == &helm_schema_core::ValuesPath::parse("child.auth.user"))
             })
         })
         .cloned()

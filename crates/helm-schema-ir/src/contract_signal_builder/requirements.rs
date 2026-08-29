@@ -397,7 +397,11 @@ pub(super) fn record_fail_conjunction(
     if conjunction
         .iter()
         .flat_map(Predicate::value_paths)
-        .any(|path| path.starts_with('$'))
+        .any(|path| {
+            path.segments()
+                .next()
+                .is_some_and(|segment| segment.starts_with('$'))
+        })
     {
         return;
     }
@@ -465,8 +469,9 @@ pub(super) fn record_fail_conjunction(
         .filter(|path| {
             let member = helm_schema_core::append_value_path(path, "*");
             test_candidate_paths.iter().any(|candidate| {
-                candidate == &member
-                    || helm_schema_core::values_path_is_descendant(candidate, &member)
+                let candidate = candidate.encode();
+                candidate == member
+                    || helm_schema_core::values_path_is_descendant(&candidate, &member)
             })
         })
         .max_by_key(|path| helm_schema_core::split_value_path(path).len());
@@ -505,14 +510,19 @@ pub(super) fn record_fail_conjunction(
         if let Some(scope) = &member_scope {
             if !paths_of.is_empty()
                 && paths_of.iter().all(|path| {
-                    path == scope || helm_schema_core::values_path_is_descendant(path, scope)
+                    let path = path.encode();
+                    path == *scope || helm_schema_core::values_path_is_descendant(&path, scope)
                 })
             {
                 member_tests.push(predicate);
                 continue;
             }
         } else if paths_of.len() == 1 && predicate_is_negatable_test(predicate) {
-            let path = paths_of.iter().next().cloned().unwrap_or_default();
+            let path = paths_of
+                .iter()
+                .next()
+                .map(helm_schema_core::ValuesPath::encode)
+                .unwrap_or_default();
             if let Some(required) =
                 requirements_from_negation(predicate, &path).filter(|required| !required.is_empty())
             {
@@ -527,7 +537,7 @@ pub(super) fn record_fail_conjunction(
         if guard
             .value_paths()
             .iter()
-            .any(|path| path_contains_wildcard(path))
+            .any(|path| path_contains_wildcard(&path.encode()))
         {
             return;
         }
@@ -573,6 +583,7 @@ pub(super) fn record_fail_conjunction(
                 let mut paths: BTreeSet<String> = member_tests
                     .iter()
                     .flat_map(|predicate| predicate.value_paths())
+                    .map(|path| path.encode())
                     .collect();
                 match paths.pop_first() {
                     Some(path) if paths.is_empty() && !path[scope.len()..].contains('*') => {
@@ -802,8 +813,9 @@ pub(super) fn record_range_key_prefix_requirement(
                 let predicate_paths = predicate.value_paths();
                 !predicate_paths.is_empty()
                     && predicate_paths.iter().all(|path| {
-                        path == &member_scope
-                            || helm_schema_core::values_path_is_descendant(path, &member_scope)
+                        let path = path.encode();
+                        path == member_scope
+                            || helm_schema_core::values_path_is_descendant(&path, &member_scope)
                     })
             } =>
             {
@@ -820,7 +832,7 @@ pub(super) fn record_range_key_prefix_requirement(
                 if guard
                     .value_paths()
                     .iter()
-                    .any(|path| path_contains_wildcard(path))
+                    .any(|path| path_contains_wildcard(&path.encode()))
                 {
                     return true;
                 }
@@ -898,8 +910,9 @@ pub(super) fn record_range_key_matches_requirement(
         match predicate {
             Predicate::Guard(Guard::Range { path }) if path == *collection_path => {}
             _ if predicate.value_paths().iter().any(|path| {
-                path == &member_scope
-                    || helm_schema_core::values_path_is_descendant(path, &member_scope)
+                let path = path.encode();
+                path == member_scope
+                    || helm_schema_core::values_path_is_descendant(&path, &member_scope)
             }) =>
             {
                 return true;
@@ -911,7 +924,7 @@ pub(super) fn record_range_key_matches_requirement(
                 if guard
                     .value_paths()
                     .iter()
-                    .any(|path| path_contains_wildcard(path))
+                    .any(|path| path_contains_wildcard(&path.encode()))
                 {
                     return true;
                 }
@@ -981,7 +994,7 @@ pub(super) fn capture_outer_guards(
     if guards
         .iter()
         .flat_map(ConditionalGuard::value_paths)
-        .any(|path| path_contains_wildcard(&path))
+        .any(|path| path_contains_wildcard(&path.encode()))
     {
         return None;
     }
@@ -1177,7 +1190,7 @@ pub(super) fn record_value_requirement_capture(
                 if guard
                     .value_paths()
                     .iter()
-                    .any(|path| path_contains_wildcard(path))
+                    .any(|path| path_contains_wildcard(&path.encode()))
                 {
                     return;
                 }
@@ -1256,7 +1269,7 @@ pub(super) fn record_value_requirement_capture(
                     if guard
                         .value_paths()
                         .iter()
-                        .any(|path| path_contains_wildcard(path))
+                        .any(|path| path_contains_wildcard(&path.encode()))
                     {
                         return;
                     }
@@ -1352,7 +1365,7 @@ pub(super) fn record_value_requirement_capture(
                     if guard
                         .value_paths()
                         .iter()
-                        .any(|path| path_contains_wildcard(path))
+                        .any(|path| path_contains_wildcard(&path.encode()))
                     {
                         return;
                     }
@@ -1499,7 +1512,10 @@ pub(super) fn record_absence_abort_clause(
         // (cluster-autoscaler's `or $isAzure (and $isAws
         // $awsCredentialsProvided) $isCivo` around the aws `b64enc` arm).
         // Both cases abstain.
-        if guard.value_paths().contains(path) {
+        if guard
+            .value_paths()
+            .contains(&helm_schema_core::ValuesPath::parse(path))
+        {
             return;
         }
         clause.push(guard);
@@ -1645,7 +1661,7 @@ pub(super) fn record_member_relative_split_requirement(
         if guard
             .value_paths()
             .iter()
-            .any(|path| path_contains_wildcard(path))
+            .any(|path| path_contains_wildcard(&path.encode()))
         {
             return;
         }
@@ -2065,7 +2081,7 @@ pub(super) fn record_member_access_capture(
             if guard
                 .value_paths()
                 .iter()
-                .any(|path| path_contains_wildcard(path))
+                .any(|path| path_contains_wildcard(&path.encode()))
             {
                 return;
             }
@@ -2135,7 +2151,7 @@ pub(super) fn record_member_access_capture(
         if guard
             .value_paths()
             .iter()
-            .any(|path| path_contains_wildcard(path))
+            .any(|path| path_contains_wildcard(&path.encode()))
         {
             condition_lowerable = false;
             break;
@@ -2168,7 +2184,7 @@ pub(super) fn lower_member_access_condition(
             if guard
                 .value_paths()
                 .iter()
-                .any(|path| path_contains_wildcard(path))
+                .any(|path| path_contains_wildcard(&path.encode()))
             {
                 return None;
             }

@@ -1045,9 +1045,11 @@ fn root_values_merge_keeps_the_pre_rewrite_source_presence_alternative() -> eyre
         .terminal_clauses()
         .iter()
         .filter(|clause| {
-            clause
-                .iter()
-                .any(|guard| guard.value_paths().iter().any(|path| path == "global"))
+            clause.iter().any(|guard| {
+                guard
+                    .value_paths()
+                    .contains(&helm_schema_core::ValuesPath::parse("global"))
+            })
         })
         .cloned()
         .collect::<Vec<_>>();

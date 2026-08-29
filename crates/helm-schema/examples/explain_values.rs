@@ -11,7 +11,9 @@ use vfs::VfsPath;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
     let chart = args.next().ok_or("chart path")?;
-    let requested_paths: Vec<String> = args.collect();
+    let requested_paths: Vec<helm_schema_core::ValuesPath> = args
+        .map(|path| helm_schema_core::ValuesPath::parse(&path))
+        .collect();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart));
     let session = AnalysisSession::new(GenerateOptions {
         chart_dir,

@@ -331,7 +331,7 @@ impl CaptureKind {
     /// the conjunction's predicate paths).
     pub(crate) fn map_value_paths<F>(&mut self, map: &mut F)
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(ValuesPath) -> ValuesPath,
     {
         match self {
             Self::Fail | Self::MemberAccess { .. } => {}
@@ -339,10 +339,7 @@ impl CaptureKind {
             | Self::RangeKeyPlainSlot { paths }
             | Self::CollectionItems { paths, .. }
             | Self::SplitIndexAccess { paths, .. } => {
-                *paths = paths
-                    .iter()
-                    .map(|path| ValuesPath::parse(&map(&path.encode())))
-                    .collect();
+                *paths = paths.iter().cloned().map(&mut *map).collect();
             }
             Self::IndexAccess { path, .. }
             | Self::ValueType { path, .. }
@@ -355,23 +352,20 @@ impl CaptureKind {
             | Self::QuotedSerialization { path, .. }
             | Self::PrintfStringOperand { path }
             | Self::PlainSlotText { path, .. } => {
-                *path = ValuesPath::parse(&map(&path.encode()));
+                *path = map(path.clone());
             }
             Self::StringRequirement {
                 path, selection, ..
             } => {
-                *path = ValuesPath::parse(&map(&path.encode()));
+                *path = map(path.clone());
                 *selection = selection
                     .drain(..)
                     .map(|predicate| predicate.map_value_paths(map))
                     .collect();
             }
             Self::RangeSelection { path, chain, .. } => {
-                *path = ValuesPath::parse(&map(&path.encode()));
-                *chain = chain
-                    .iter()
-                    .map(|path| ValuesPath::parse(&map(&path.encode())))
-                    .collect();
+                *path = map(path.clone());
+                *chain = chain.iter().cloned().map(&mut *map).collect();
             }
         }
     }
@@ -975,7 +969,12 @@ impl SelectionReachability {
             SelectionState::Exact(predicate) => predicate.clone(),
             SelectionState::Approximate { sound_subset } => {
                 if let Some(sound_subset) = sound_subset {
-                    involved_paths.extend(sound_subset.value_paths());
+                    involved_paths.extend(
+                        sound_subset
+                            .value_paths()
+                            .into_iter()
+                            .map(|path| path.encode()),
+                    );
                 }
                 helm_schema_core::Predicate::approximate_output_selection(
                     marker,
@@ -1011,7 +1010,12 @@ impl SelectionReachability {
             SelectionState::Exact(predicate) => predicate.clone(),
             SelectionState::Approximate { sound_subset } => {
                 if let Some(sound_subset) = sound_subset {
-                    involved_paths.extend(sound_subset.value_paths());
+                    involved_paths.extend(
+                        sound_subset
+                            .value_paths()
+                            .into_iter()
+                            .map(|path| path.encode()),
+                    );
                 }
                 helm_schema_core::Predicate::approximate_with_sound_predicate(
                     marker,

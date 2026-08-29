@@ -125,7 +125,7 @@ pub(super) struct RangeKeyConcretization {
     /// collection path → equated literal key.
     keyed: std::collections::BTreeMap<helm_schema_core::ValuesPath, String>,
     /// (`p.*`, `p.name`) per keyed collection.
-    rewrites: Vec<(String, String)>,
+    rewrites: Vec<(helm_schema_core::ValuesPath, helm_schema_core::ValuesPath)>,
 }
 
 impl RangeKeyConcretization {
@@ -143,10 +143,11 @@ impl RangeKeyConcretization {
         let rewrites = keyed
             .iter()
             .map(|(path, key)| {
-                (
-                    helm_schema_core::append_value_path(&path.encode(), "*"),
-                    helm_schema_core::append_value_path(&path.encode(), key),
-                )
+                let mut member = path.clone();
+                member.push("*");
+                let mut concrete = path.clone();
+                concrete.push(key);
+                (member, concrete)
             })
             .collect();
         Self { keyed, rewrites }
@@ -172,22 +173,22 @@ impl RangeKeyConcretization {
                     key: key.clone(),
                 })
             }
-            predicate => predicate.clone().map_value_paths(&mut |path: &str| {
+            predicate => predicate.clone().map_value_paths(&mut |path| {
                 for (member, concrete) in &self.rewrites {
-                    if path == member {
+                    if path == *member {
                         return concrete.clone();
                     }
-                    let path_segments = helm_schema_core::split_value_path(path);
-                    let member_segments = helm_schema_core::split_value_path(member);
+                    let path_segments = path.segments().collect::<Vec<_>>();
+                    let member_segments = member.segments().collect::<Vec<_>>();
                     if let Some(rest) = path_segments.strip_prefix(member_segments.as_slice())
                         && !rest.is_empty()
                     {
-                        let mut concrete_segments = helm_schema_core::split_value_path(concrete);
-                        concrete_segments.extend(rest.iter().cloned());
-                        return helm_schema_core::join_value_path(concrete_segments);
+                        return helm_schema_core::ValuesPath::from_segments(
+                            concrete.segments().chain(rest.iter().copied()),
+                        );
                     }
                 }
-                path.to_string()
+                path
             }),
         }
     }
@@ -525,10 +526,11 @@ impl Interpreter<'_> {
                         ));
                         let exact = !condition.contains_approximation()
                             && condition.value_paths().iter().all(|path| {
-                                !path.starts_with('$')
-                                    && !helm_schema_core::split_value_path(path)
-                                        .iter()
-                                        .any(|part| part == "*")
+                                !path
+                                    .segments()
+                                    .next()
+                                    .is_some_and(|segment| segment.starts_with('$'))
+                                    && !path.segments().any(|segment| segment == "*")
                             });
                         if exact {
                             or_predicates(previous, condition)

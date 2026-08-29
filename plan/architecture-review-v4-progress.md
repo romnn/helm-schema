@@ -4856,7 +4856,7 @@
 
 ## B4a.20 — migrate bound `get` paths
 
-- Status: landed; commit pending.
+- Status: landed in `13b74300` (`refactor(ir): type bound get paths`).
 - Contract: representation-only migration of bound Sprig `get` base paths and resolved selector
   path sets from encoded strings to segmented `ValuesPath`, including symbolic-local propagation,
   condition decoding, and expression-effect publication. Variable names and literal key domains
@@ -4946,3 +4946,111 @@
 
 - Measured production LOC delta: +2 (64,310 to 64,312); structural expansion removes path
   re-encoding at consumers while retaining an explicit once-only parser boundary.
+
+## B4a.21 — type core path accessors and rewrites
+
+- Status: in progress; commit pending.
+- Contract: representation-only migration of `Guard`, `Predicate`, and `ConditionalGuard` path
+  accessors to `ValuesPath`, plus total typed `map_value_paths` callbacks across the core contract
+  carriers. Encoded paths remain only at diagnostics and wire boundaries.
+- Acceptance baseline: `13b74300` (B4a.20).
+- Baseline production LOC: 64,312 Rust lines from `task tokei:core` on `13b74300`.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Guard/predicate path collection and every scope/reroot rewrite retain identical path membership
+    and legacy encoded ordering, including dotted and backslash-containing literal segments.
+  - Public API decision: accessor and rewrite callback types narrow from encoded `String`/`&str`
+    to `ValuesPath`; this is the scheduled B4a carrier migration. Serde/wire spellings remain
+    byte-identical, and no compatibility overload or string coercion is retained.
+  - Any fixture or acceptance flip stops the round before adoption. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level coverage drops remain zero.
+
+- Measured results:
+  - `Guard`, `Predicate`, `GuardDnf`, `ConditionalGuard`, `ContractUse`, capture kinds, observed
+    facts, range modes, and the contract graph now exchange `ValuesPath` directly through their
+    path accessors and rewrite callbacks. Scope/reroot operations manipulate structural segments;
+    encoded strings remain explicit at diagnostics, legacy builder maps, and wire boundaries.
+  - Range-key concretization now rewrites typed member/concrete paths structurally, so a literal
+    segment cannot be reinterpreted as selector syntax during a predicate rewrite.
+  - Schema and symbolic-IR dumps are recursively byte-identical to `13b74300`. The full-depth
+    battery checks 121,055 probes across 60 charts with zero flips, zero mandatory base/third-level
+    drops, and 28,868 unchanged disclosed reductions.
+- Deviations:
+  - The first core-only compiler preflight rejected three callback conversions. The next workspace
+    preflight exposed seven generator and 95 IR/test mismatches, and the narrowed IR library pass
+    exposed 48 production consumers. Each boundary was migrated explicitly; no archive or dump was
+    produced from those states.
+  - The first all-target pass after production compiled rejected one generator delimiter mistake
+    and 24 IR test constructions. The next pass exposed remaining generator and engine boundary
+    conversions, and the first focused nextest preflight exposed the example CLI's string
+    comparison. All were corrected before the immutable archive.
+  - The first lint preflight rejected three redundant encode closures and one function that grew
+    past the 100-line limit. The first shortening attempt used a method pointer with the wrong
+    owned/reference signature; the second remained one line over the limit. The final version
+    extracts the range-body selection construction into one direct helper, with no suppression.
+    No artifact from any rejected lint state was adopted.
+  - A pre-archive `cargo fmt --check` identified formatting-only wraps. `cargo fmt` applied them
+    before the immutable archive and every final gate.
+- Adjudication evidence: zero flips require no per-cell Helm verdict. Helm 4.2.3 adjudication was
+  enabled and reports zero candidate-accepts/Helm-aborts cells against the zero allowance.
+
+### Producer and route coverage
+
+| Route | Expected result | Verification |
+|---|---|---|
+| Guard/predicate accessors | Same path membership and encoded order | Core/IR suites and IR dump. |
+| Contract graph scope/reroot | Same dependency/global projection | Contract and engine suites. |
+| Capture and observed-fact rewrites | Same capture paths and selection predicates | IR suite and schema dump. |
+| Range-key concretization | Same member substitutions without syntax loss | Fragment/condition suites. |
+| Generator guard consumers | Same conditional schemas and requirements | Schema dump and full-depth prober. |
+
+### Review dossier
+
+- Focused proof: workspace all-target compilation succeeds; 1,157/1,157 focused core/IR/gen/engine
+  tests pass in 189.149 seconds after the native build. Corrected whole-workspace lint passes
+  warning-free in 3 minutes 40 seconds.
+- Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-b4a21-final1-build cargo
+  nextest archive --workspace --archive-file
+  /Volumes/T7/dev/helm-schema/target/campaign-archives/arch-v4-b4a21-final1.tar.zst`; exit 0, 87
+  binaries and 125 files after a 9-minute-35-second build and 1.95-second archive write.
+- Clean schema dump: the B4a.21 `final1` archive under the step-local schema `TMPDIR`; exit 0,
+  62/62 pass in 190.795 seconds; all 84 artifacts are recursively byte-identical to B4a.20.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one test passes in
+  3.334 seconds; all 18 artifacts are recursively byte-identical to B4a.20.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `13b74300`,
+  Helm adjudication enabled; exit 0 in 72.014 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: the public core accessor and rewrite callback types intentionally narrow
+  from encoded strings to `ValuesPath`, as scheduled by B4a and recorded before implementation.
+  Serde output and every fixture byte remain unchanged; no compatibility overload was retained.
+
+### Self-adversarial pass
+
+- Whole-tree compilation proves every accessor and rewrite caller consumes the typed carrier.
+  Structural reroots use segment iteration/pushes; no `Deref`, `AsRef<str>`, `Display`, cross-type
+  comparison, cached encoded twin, or compatibility callback was introduced.
+- Encoded conversions remain visible only where the adjacent representation is still genuinely
+  string-keyed or serialized. Helper names, local variables, literal keys, and diagnostic text stay
+  strings in their distinct domains.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0 in 3 minutes 40 seconds after the rejected preflights above.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 2,504.60
+  seconds, followed by the ast-grep policy checks.
+- `cargo nextest run --workspace`: exit 0; 1,308/1,308 pass in 230.681 seconds after the
+  7-minute-34-second native final-tree build.
+- `task test:integration`: exit 0; 558/558 pass, 24 skipped, in 1,699.223 seconds.
+- `task test:all`: exit 0; 1,870/1,870 pass, 24 skipped, in 2,040.556 seconds, including the
+  live-network tests.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 27.91 seconds.
+- downstream luup2 `check:local` with the documented macOS shims and explicit installed binary:
+  exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,355 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +43 (64,312 to 64,355). The public carrier seam removes implicit
+  string currency but necessarily makes the remaining encoded boundaries explicit; no live
+  semantic code or test coverage was deleted to force a negative delta.

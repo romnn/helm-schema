@@ -19,7 +19,7 @@ use crate::node_eval::{NodeAction, control_header, else_if_pairs, node_action};
 use crate::scalar_value::{TruthCondition, any_predicates, conjoin_predicates};
 use crate::{Guard, ValueKind};
 use helm_schema_ast::children_with_field;
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
 use super::domain::{PathCondition, StringPart, TaintPart, and_conditions, stamp_part_sites};
 use super::eval::Interpreter;
@@ -274,10 +274,7 @@ impl Interpreter<'_> {
             own.push(Predicate::from(guard.clone()));
             self.push_predicate(Predicate::from(guard));
         }
-        let condition = Predicate::all(own);
-        let body_condition =
-            SelectionReachability::exact(condition.clone(), SelectionTruthSource::RawInput)
-                .output_selection_predicate("inline range body", condition.value_paths());
+        let body_condition = inline_range_body_condition(Predicate::all(own));
         self.push_active_range_identity_modes(
             member_identity.as_ref(),
             input_identity.as_ref(),
@@ -601,7 +598,12 @@ impl Interpreter<'_> {
                 .then(|| Predicate::all(dedup_subset.into_iter().map(Predicate::from).collect()));
             let positive_subset =
                 any_predicates(evaluated_subset.into_iter().chain(dedup_subset).collect());
-            paths.extend(positive_subset.value_paths());
+            paths.extend(
+                positive_subset
+                    .value_paths()
+                    .into_iter()
+                    .map(|path| path.encode()),
+            );
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
             predicate = if positive_subset == Predicate::False {
                 Predicate::approximate(marker, paths)
@@ -613,7 +615,7 @@ impl Interpreter<'_> {
         if let Some(guards) = &guards {
             for guard in guards {
                 for path in guard.value_paths() {
-                    self.push_control_read(&path, std::slice::from_ref(guard));
+                    self.push_control_read(&path.encode(), std::slice::from_ref(guard));
                 }
                 self.push_predicate(Predicate::from(guard.clone()));
             }
@@ -756,6 +758,16 @@ impl Interpreter<'_> {
         }
         paths
     }
+}
+
+fn inline_range_body_condition(condition: Predicate) -> Predicate {
+    let paths = condition
+        .value_paths()
+        .iter()
+        .map(ValuesPath::encode)
+        .collect();
+    SelectionReachability::exact(condition, SelectionTruthSource::RawInput)
+        .output_selection_predicate("inline range body", paths)
 }
 
 fn unknown_scalar_arms() -> Vec<(PathCondition, Vec<StringPart>)> {

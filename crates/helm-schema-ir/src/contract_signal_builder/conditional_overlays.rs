@@ -11,7 +11,7 @@ pub(super) fn hard_negation_paths(predicate: &Predicate, out: &mut BTreeSet<Stri
     match predicate {
         Predicate::Not(inner) => {
             if !matches!(inner.as_ref(), Predicate::Guard(Guard::Absent { .. })) {
-                out.extend(inner.value_paths());
+                out.extend(inner.value_paths().into_iter().map(|path| path.encode()));
             }
         }
         Predicate::And(items) | Predicate::Or(items) => {
@@ -359,7 +359,7 @@ pub(super) fn predicate_to_guard(
             if guards
                 .iter()
                 .flat_map(ConditionalGuard::value_paths)
-                .any(|path| path_contains_wildcard(&path))
+                .any(|path| path_contains_wildcard(&path.encode()))
             {
                 return None;
             }
@@ -758,7 +758,7 @@ pub(super) fn record_member_range_requirement(
         if guard
             .value_paths()
             .iter()
-            .any(|path| path_contains_wildcard(path))
+            .any(|path| path_contains_wildcard(&path.encode()))
         {
             return;
         }

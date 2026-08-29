@@ -208,7 +208,7 @@ impl ContractUse {
     /// Rewrites the source expression and every values path in the condition.
     pub fn map_value_paths<F>(&mut self, map: &mut F)
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(ValuesPath) -> ValuesPath,
     {
         let Self {
             source_expr,
@@ -227,11 +227,11 @@ impl ContractUse {
             digest: _,
             merge_operand: _,
         } = self;
-        *source_expr = ValuesPath::parse(&map(&source_expr.encode()));
+        *source_expr = map(source_expr.clone());
         condition.map_value_paths(map);
         if let Some(merge) = merge_layers {
             for layer in &mut merge.layers {
-                *layer = ValuesPath::parse(&map(&layer.encode()));
+                *layer = map(layer.clone());
             }
         }
         for retain_guards in omitted_members.values_mut() {

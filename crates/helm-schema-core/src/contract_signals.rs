@@ -308,7 +308,7 @@ impl TryFrom<&Guard> for ConditionalGuard {
 impl ConditionalGuard {
     /// Returns every values path referenced by this guard tree.
     #[must_use]
-    pub fn value_paths(&self) -> BTreeSet<String> {
+    pub fn value_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
         self.collect_value_paths(&mut paths);
         paths
@@ -319,45 +319,38 @@ impl ConditionalGuard {
     #[must_use]
     pub fn map_value_paths<F>(self, map: &mut F) -> Self
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(ValuesPath) -> ValuesPath,
     {
-        let mut map_path = |path: ValuesPath| ValuesPath::parse(&map(&path.encode()));
         match self {
-            Self::Truthy { path } => Self::Truthy {
-                path: map_path(path),
-            },
-            Self::With { path } => Self::With {
-                path: map_path(path),
-            },
+            Self::Truthy { path } => Self::Truthy { path: map(path) },
+            Self::With { path } => Self::With { path: map(path) },
             Self::Eq { path, value } => Self::Eq {
-                path: map_path(path),
+                path: map(path),
                 value,
             },
             Self::NotEq { path, value } => Self::NotEq {
-                path: map_path(path),
+                path: map(path),
                 value,
             },
-            Self::Absent { path } => Self::Absent {
-                path: map_path(path),
-            },
+            Self::Absent { path } => Self::Absent { path: map(path) },
             Self::TypeIs { path, schema_type } => Self::TypeIs {
-                path: map_path(path),
+                path: map(path),
                 schema_type,
             },
             Self::MatchesPattern { path, pattern } => Self::MatchesPattern {
-                path: map_path(path),
+                path: map(path),
                 pattern,
             },
             Self::IntGt { path, bound } => Self::IntGt {
-                path: map_path(path),
+                path: map(path),
                 bound,
             },
             Self::IntLt { path, bound } => Self::IntLt {
-                path: map_path(path),
+                path: map(path),
                 bound,
             },
             Self::HasKey { path, key } => Self::HasKey {
-                path: map_path(path),
+                path: map(path),
                 key,
             },
             Self::ContainsMemberEquals {
@@ -365,23 +358,21 @@ impl ConditionalGuard {
                 member,
                 value,
             } => Self::ContainsMemberEquals {
-                path: map_path(path),
+                path: map(path),
                 member,
                 value,
             },
             Self::ContainsTruthyMember { path, member } => Self::ContainsTruthyMember {
-                path: map_path(path),
+                path: map(path),
                 member,
             },
             Self::ContainsEquals { path, value } => Self::ContainsEquals {
-                path: map_path(path),
+                path: map(path),
                 value,
             },
-            Self::AtMostOneMember { path } => Self::AtMostOneMember {
-                path: map_path(path),
-            },
+            Self::AtMostOneMember { path } => Self::AtMostOneMember { path: map(path) },
             Self::MinMembers { path, bound } => Self::MinMembers {
-                path: map_path(path),
+                path: map(path),
                 bound,
             },
             Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),
@@ -400,7 +391,7 @@ impl ConditionalGuard {
         }
     }
 
-    fn collect_value_paths(&self, paths: &mut BTreeSet<String>) {
+    fn collect_value_paths(&self, paths: &mut BTreeSet<ValuesPath>) {
         match self {
             Self::Truthy { path }
             | Self::With { path }
@@ -417,7 +408,7 @@ impl ConditionalGuard {
             | Self::ContainsEquals { path, .. }
             | Self::AtMostOneMember { path }
             | Self::MinMembers { path, .. } => {
-                paths.insert(path.encode());
+                paths.insert(path.clone());
             }
             Self::Not(inner) => inner.collect_value_paths(paths),
             Self::AllOf(guards) | Self::AnyOf(guards) => {
@@ -1124,16 +1115,14 @@ impl ContractSchemaSignals {
                             .into_iter()
                             .map(|guard| {
                                 guard.map_value_paths(&mut |guard_path| {
-                                    let guard_path = crate::ValuesPath::parse(guard_path);
                                     if &guard_path == path || guard_path.is_descendant_of(path) {
                                         overlay_source_value_path(
                                             target_path,
                                             source_path,
                                             &guard_path,
                                         )
-                                        .encode()
                                     } else {
-                                        guard_path.encode()
+                                        guard_path
                                     }
                                 })
                             })

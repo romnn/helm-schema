@@ -403,7 +403,7 @@ impl Guard {
 
     /// Return all `.Values.*` paths referenced by this guard.
     #[must_use]
-    pub fn value_paths(&self) -> Vec<String> {
+    pub fn value_paths(&self) -> Vec<ValuesPath> {
         match self {
             Guard::Truthy { path }
             | Guard::Not { path }
@@ -429,9 +429,9 @@ impl Guard {
             | Guard::ContainsEquals { path, .. }
             | Guard::ContainsMemberEquals { path, .. }
             | Guard::ContainsTruthyMember { path, .. } => {
-                vec![path.encode()]
+                vec![path.clone()]
             }
-            Guard::Or { paths } => paths.iter().map(ValuesPath::encode).collect(),
+            Guard::Or { paths } => paths.clone(),
             Guard::AnyOf { alternatives } => alternatives
                 .iter()
                 .flat_map(|alternative| alternative.iter().flat_map(Guard::value_paths))
@@ -447,7 +447,7 @@ impl Guard {
     )]
     pub fn map_value_paths<F>(self, map: &mut F) -> Self
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(ValuesPath) -> ValuesPath,
     {
         match self {
             Guard::Truthy { path } => Guard::Truthy {
@@ -564,14 +564,14 @@ impl Guard {
 
 fn map_values_path<F>(path: &ValuesPath, map: &mut F) -> ValuesPath
 where
-    F: FnMut(&str) -> String,
+    F: FnMut(ValuesPath) -> ValuesPath,
 {
-    ValuesPath::parse(&map(&path.encode()))
+    map(path.clone())
 }
 
 fn map_guard_alternatives<F>(alternatives: Vec<Vec<Guard>>, map: &mut F) -> Vec<Vec<Guard>>
 where
-    F: FnMut(&str) -> String,
+    F: FnMut(ValuesPath) -> ValuesPath,
 {
     alternatives
         .into_iter()

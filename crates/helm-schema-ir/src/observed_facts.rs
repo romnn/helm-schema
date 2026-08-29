@@ -118,7 +118,7 @@ impl ObservedFacts {
 
     pub(crate) fn map_value_paths<F>(&mut self, map: &mut F)
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(ValuesPath) -> ValuesPath,
     {
         let Self {
             type_hints,
@@ -134,23 +134,20 @@ impl ObservedFacts {
         for paths in type_hints.values_mut() {
             let mut mapped = TypeHints::new();
             for (path, hints) in std::mem::take(paths) {
-                mapped
-                    .entry(ValuesPath::parse(&map(&path.encode())))
-                    .or_default()
-                    .extend(hints);
+                mapped.entry(map(path)).or_default().extend(hints);
             }
             *paths = mapped;
         }
         *shape_erased_paths = std::mem::take(shape_erased_paths)
             .into_iter()
-            .map(|path| ValuesPath::parse(&map(&path.encode())))
+            .map(&mut *map)
             .collect();
         range_modes.map_value_paths(map);
         *values_default_sources = std::mem::take(values_default_sources)
             .into_iter()
             .map(|source| crate::ValuesDefaultSource {
-                target_path: ValuesPath::parse(&map(&source.target_path.encode())),
-                source_path: ValuesPath::parse(&map(&source.source_path.encode())),
+                target_path: map(source.target_path),
+                source_path: map(source.source_path),
             })
             .collect();
         *activated_values_default_sources = std::mem::take(activated_values_default_sources)
@@ -162,16 +159,16 @@ impl ObservedFacts {
                     .map(|guard| guard.map_value_paths(map))
                     .collect(),
                 source: crate::ValuesDefaultSource {
-                    target_path: ValuesPath::parse(&map(&fact.source.target_path.encode())),
-                    source_path: ValuesPath::parse(&map(&fact.source.source_path.encode())),
+                    target_path: map(fact.source.target_path),
+                    source_path: map(fact.source.source_path),
                 },
             })
             .collect();
         *values_root_overlays = std::mem::take(values_root_overlays)
             .into_iter()
             .map(|fact| ValuesRootOverlay {
-                target_path: ValuesPath::parse(&map(&fact.target_path.encode())),
-                source_path: ValuesPath::parse(&map(&fact.source_path.encode())),
+                target_path: map(fact.target_path),
+                source_path: map(fact.source_path),
             })
             .collect();
         *activated_values_root_overlays = std::mem::take(activated_values_root_overlays)
@@ -182,8 +179,8 @@ impl ObservedFacts {
                     .into_iter()
                     .map(|guard| guard.map_value_paths(map))
                     .collect(),
-                target_path: ValuesPath::parse(&map(&fact.target_path.encode())),
-                source_path: ValuesPath::parse(&map(&fact.source_path.encode())),
+                target_path: map(fact.target_path),
+                source_path: map(fact.source_path),
             })
             .collect();
         *captures = std::mem::take(captures)

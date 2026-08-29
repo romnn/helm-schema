@@ -1000,13 +1000,12 @@ fn self_guards_exclude_declared_default(
     // A self-type partition that excludes the declared value never applies
     // to that value, even if foreign guards change. Its branch therefore
     // must not be widened back to the sample shape.
-    let encoded_target = target_value_path.encode();
     let self_guards = overlay
         .guards
         .iter()
         .filter(|guard| {
             let paths = guard.value_paths();
-            !paths.is_empty() && paths.iter().all(|path| path == &encoded_target)
+            !paths.is_empty() && paths.iter().all(|path| path == target_value_path)
         })
         .cloned()
         .collect::<Vec<_>>();

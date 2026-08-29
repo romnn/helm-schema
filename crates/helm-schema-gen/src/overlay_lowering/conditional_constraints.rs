@@ -2,7 +2,7 @@ use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, EmissionClass, EmissionReport,
     GuardValue, LoweredConjunct, NestedGuardScope, PathSchemaResolver, ResolvedPathSchema,
     ResourceSchemaOracle, SchemaDocument, SchemaNode, Value, YamlValue, build_condition_clauses,
-    common_prefix_len, evaluate_guard_set_on_values, guard_encodes_fully, split_value_path,
+    common_prefix_len, evaluate_guard_set_on_values, guard_encodes_fully,
 };
 use helm_schema_core::ValuesPath;
 
@@ -28,7 +28,7 @@ pub(super) fn partition_guard_scopes(
         let mut member_anchor = None;
         let mut saw_document_path = false;
         for path in guard.value_paths() {
-            let segments = split_value_path(&path);
+            let segments = path.segments().map(str::to_string).collect::<Vec<_>>();
             let Some(last_wildcard) = segments.iter().rposition(|segment| segment == "*") else {
                 saw_document_path = true;
                 continue;
@@ -93,7 +93,10 @@ pub(super) fn conditional_ancestor_segments(
     let mut shared_prefix = target_segments.to_vec();
     for guard in guards {
         for guard_path in guard.value_paths() {
-            let guard_path = split_value_path(&guard_path);
+            let guard_path = guard_path
+                .segments()
+                .map(str::to_string)
+                .collect::<Vec<_>>();
             shared_prefix.truncate(common_prefix_len(&shared_prefix, &guard_path));
         }
     }
@@ -493,7 +496,10 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
     let mut shared: Option<Vec<String>> = None;
     for guard in guards {
         for guard_path in guard.value_paths() {
-            let mut segments = split_value_path(&guard_path);
+            let mut segments = guard_path
+                .segments()
+                .map(str::to_string)
+                .collect::<Vec<_>>();
             segments.pop();
             shared = Some(match shared {
                 None => segments,

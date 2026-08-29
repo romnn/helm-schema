@@ -92,9 +92,11 @@ fn yaml_serialization_requires_presence_only_with_coexecuting_mapping_members() 
         .terminal_clauses()
         .iter()
         .filter(|clause| {
-            clause
-                .iter()
-                .any(|guard| guard.value_paths().iter().any(|path| path == "config.data"))
+            clause.iter().any(|guard| {
+                guard
+                    .value_paths()
+                    .contains(&helm_schema_core::ValuesPath::parse("config.data"))
+            })
         })
         .cloned()
         .collect::<Vec<_>>();
@@ -142,10 +144,9 @@ fn helper_yaml_serialization_keeps_its_fixed_sequence_sibling() {
         .iter()
         .filter(|clause| {
             clause.iter().any(|guard| {
-                guard
-                    .value_paths()
-                    .iter()
-                    .any(|path| path == "daemonSetVolumeMounts")
+                guard.value_paths().iter().any(|path| {
+                    path == &helm_schema_core::ValuesPath::parse("daemonSetVolumeMounts")
+                })
             })
         })
         .cloned()
@@ -340,9 +341,11 @@ fn yaml_serialization_scopes_presence_to_conditional_mapping_members() {
         .terminal_clauses()
         .iter()
         .filter(|clause| {
-            clause
-                .iter()
-                .any(|guard| guard.value_paths().iter().any(|path| path == "annotations"))
+            clause.iter().any(|guard| {
+                guard
+                    .value_paths()
+                    .contains(&helm_schema_core::ValuesPath::parse("annotations"))
+            })
         })
         .cloned()
         .collect::<Vec<_>>();
@@ -435,7 +438,7 @@ fn defaulted_helper_merge_does_not_require_the_raw_source() {
                 guard
                     .value_paths()
                     .iter()
-                    .any(|path| path == "configMap.merge")
+                    .any(|path| path == &helm_schema_core::ValuesPath::parse("configMap.merge"))
             })
         })
         .cloned()
@@ -576,7 +579,7 @@ fn wrapped_nested_tenant_program_reaches_the_with_alternative() {
             signals.terminal_clauses().iter().any(|clause| clause
                 .iter()
                 .flat_map(helm_schema_core::ConditionalGuard::value_paths)
-                .any(|guard_path| guard_path == path)),
+                .any(|guard_path| guard_path == helm_schema_core::ValuesPath::parse(path))),
             "missing required terminal for {path}: {signals:#?}"
         );
     }
@@ -601,7 +604,7 @@ fn constructed_finite_tpl_program_executes_its_required_call() {
         signals.terminal_clauses().iter().any(|clause| clause
             .iter()
             .flat_map(helm_schema_core::ConditionalGuard::value_paths)
-            .any(|path| path == "name")),
+            .any(|path| path == helm_schema_core::ValuesPath::parse("name"))),
         "the constructed program's required call must remain executable: {signals:#?}"
     );
 }
@@ -635,7 +638,7 @@ fn finite_range_append_accumulator_reaches_the_terminal_clause() {
                     guard
                         .value_paths()
                         .into_iter()
-                        .any(|guard_path| guard_path == *path)
+                        .any(|guard_path| guard_path == helm_schema_core::ValuesPath::parse(path))
                 })
             })
         }),
@@ -1284,12 +1287,18 @@ fn local_nil_fallback_reassignment_preserves_truthy_union() {
                         return false;
                     };
                     let has_direct_arm = arms.iter().any(|arm| {
-                        arm.value_paths().contains("feature.enabled")
-                            && !arm.value_paths().contains("version")
+                        arm.value_paths()
+                            .contains(&helm_schema_core::ValuesPath::parse("feature.enabled"))
+                            && !arm
+                                .value_paths()
+                                .contains(&helm_schema_core::ValuesPath::parse("version"))
                     });
                     let has_fallback_arm = arms.iter().any(|arm| {
-                        arm.value_paths().contains("feature.enabled")
-                            && arm.value_paths().contains("version")
+                        arm.value_paths()
+                            .contains(&helm_schema_core::ValuesPath::parse("feature.enabled"))
+                            && arm
+                                .value_paths()
+                                .contains(&helm_schema_core::ValuesPath::parse("version"))
                     });
                     has_direct_arm && has_fallback_arm
                 })

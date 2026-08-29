@@ -7,6 +7,7 @@ use helm_schema_core::{
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
+use crate::common_prefix_len;
 use crate::condition_encoding::{
     build_condition_clauses, evaluate_guard_set_on_values, guard_encodes_fully,
 };
@@ -20,7 +21,6 @@ use crate::resolve_policy::conditional_target_schema;
 use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
 use crate::values_yaml::yaml_value_at_values_path;
-use crate::{common_prefix_len, split_value_path};
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum ConditionalBaseEffect {

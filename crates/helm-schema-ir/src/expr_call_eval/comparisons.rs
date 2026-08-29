@@ -88,7 +88,7 @@ pub(super) fn eval_ternary(
                     .when_true()
                     .value_paths()
                     .union(&condition_truth.when_false().value_paths())
-                    .cloned()
+                    .map(helm_schema_core::ValuesPath::encode)
                     .collect(),
             );
         }
@@ -143,6 +143,7 @@ pub(super) fn eval_type_is(
             .value_paths()
             .into_iter()
             .chain(truth.when_false().value_paths())
+            .map(|path| path.encode())
             .filter(|path| subject_paths.contains(path))
             .collect();
         // A type test over a structurally derived value can be constant even

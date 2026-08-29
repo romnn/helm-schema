@@ -229,7 +229,7 @@ impl Predicate {
 
     /// Returns every values path referenced by the formula.
     #[must_use]
-    pub fn value_paths(&self) -> BTreeSet<String> {
+    pub fn value_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
         self.collect_value_paths(&mut paths);
         paths
@@ -325,7 +325,7 @@ impl Predicate {
 
     /// Returns values paths whose branch structure permits them to be absent.
     #[must_use]
-    pub fn conditionally_optional_paths(&self) -> BTreeSet<String> {
+    pub fn conditionally_optional_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
         self.collect_conditionally_optional_paths(&mut paths);
         paths
@@ -338,10 +338,10 @@ impl Predicate {
         flatten_contract_guards(self, false)
     }
 
-    fn collect_value_paths(&self, out: &mut BTreeSet<String>) {
+    fn collect_value_paths(&self, out: &mut BTreeSet<ValuesPath>) {
         match self {
             Self::True | Self::False => {}
-            Self::Approximate { paths, .. } => out.extend(paths.iter().map(ValuesPath::encode)),
+            Self::Approximate { paths, .. } => out.extend(paths.iter().cloned()),
             Self::Guard(guard) => {
                 for path in guard.value_paths() {
                     out.insert(path);
@@ -356,14 +356,14 @@ impl Predicate {
         }
     }
 
-    fn collect_conditionally_optional_paths(&self, out: &mut BTreeSet<String>) {
+    fn collect_conditionally_optional_paths(&self, out: &mut BTreeSet<ValuesPath>) {
         match self {
             Self::Guard(Guard::NotEq { path, .. } | Guard::Absent { path }) => {
-                out.insert(path.encode());
+                out.insert(path.clone());
             }
             Self::Not(inner) => match inner.as_ref() {
                 Self::Guard(Guard::Truthy { path }) => {
-                    out.insert(path.encode());
+                    out.insert(path.clone());
                 }
                 _ => inner.collect_conditionally_optional_paths(out),
             },
@@ -429,7 +429,7 @@ impl Predicate {
     #[must_use]
     pub fn map_value_paths<F>(self, map: &mut F) -> Self
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(ValuesPath) -> ValuesPath,
     {
         match self {
             Self::True => Self::True,
@@ -441,10 +441,7 @@ impl Predicate {
                 sound_subset,
             } => Self::Approximate {
                 marker,
-                paths: paths
-                    .into_iter()
-                    .map(|path| ValuesPath::parse(&map(&path.encode())))
-                    .collect(),
+                paths: paths.into_iter().map(&mut *map).collect(),
                 role,
                 sound_subset: sound_subset
                     .map(|predicate| Box::new(predicate.map_value_paths(map))),

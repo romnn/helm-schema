@@ -195,7 +195,7 @@ impl ContractIr {
     /// such as `metadata.name` stay unchanged.
     pub fn map_value_paths<F>(&mut self, mut map: F)
     where
-        F: FnMut(&str) -> String,
+        F: FnMut(helm_schema_core::ValuesPath) -> helm_schema_core::ValuesPath,
     {
         let Self {
             uses,
@@ -210,20 +210,20 @@ impl ContractIr {
         }
         *dependency_values_root_fragments = std::mem::take(dependency_values_root_fragments)
             .into_iter()
-            .map(|path| map(&path))
+            .map(|path| map(helm_schema_core::ValuesPath::parse(&path)).encode())
             .collect();
         observed_facts.map_value_paths(&mut map);
         *values_program_wrappers = std::mem::take(values_program_wrappers)
             .into_iter()
             .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
-                scope_path: helm_schema_core::ValuesPath::parse(&map(&wrapper.scope_path.encode())),
+                scope_path: map(wrapper.scope_path),
                 key: wrapper.key,
                 spread: wrapper.spread,
             })
             .collect();
         *values_program_wrapper_exclusions = std::mem::take(values_program_wrapper_exclusions)
             .into_iter()
-            .map(|path| helm_schema_core::ValuesPath::parse(&map(&path.encode())))
+            .map(&mut map)
             .collect();
     }
 
@@ -296,19 +296,17 @@ impl ContractIr {
         self.dependency_uses
             .retain(|contract_use| !touches(&contract_use.source_expr));
         self.observed_facts.captures.retain(|capture| {
-            let mut paths: Vec<String> = capture
+            let mut paths: Vec<helm_schema_core::ValuesPath> = capture
                 .conjunction
                 .iter()
                 .flat_map(helm_schema_core::Predicate::value_paths)
                 .collect();
             let mut kind = capture.kind.clone();
-            kind.map_value_paths(&mut |path: &str| {
-                paths.push(path.to_string());
-                path.to_string()
+            kind.map_value_paths(&mut |path| {
+                paths.push(path.clone());
+                path
             });
-            !paths
-                .iter()
-                .any(|path| touches(&helm_schema_core::ValuesPath::parse(path)))
+            !paths.iter().any(touches)
         });
     }
 
@@ -468,18 +466,18 @@ fn lower_string_requirement_merge_sources(
         if !overlaps_requirement {
             continue;
         }
-        let source = source_expr;
-        let projected = helm_schema_core::join_value_path(
+        let source = helm_schema_core::ValuesPath::parse(&source_expr);
+        let projected = helm_schema_core::ValuesPath::parse(&helm_schema_core::join_value_path(
             source_segments
                 .iter()
                 .cloned()
                 .chain(suffix.iter().cloned()),
-        );
+        ));
         contract_use.map_value_paths(&mut |path| {
             if path == source {
                 projected.clone()
             } else {
-                path.to_string()
+                path
             }
         });
     }
@@ -625,17 +623,25 @@ fn global_source_selection_guards(
     guards
 }
 
-fn replace_value_path_prefix(path: &str, from: &str, to: &str) -> String {
-    let path_segments = helm_schema_core::split_value_path(path);
-    let from_segments = helm_schema_core::split_value_path(from);
-    let Some(relative) = path_segments.strip_prefix(from_segments.as_slice()) else {
-        return path.to_string();
-    };
-    helm_schema_core::join_value_path(
-        helm_schema_core::split_value_path(to)
-            .into_iter()
-            .chain(relative.iter().cloned()),
-    )
+fn replace_value_path_prefix(
+    path: helm_schema_core::ValuesPath,
+    from: &str,
+    to: &str,
+) -> helm_schema_core::ValuesPath {
+    let from = helm_schema_core::ValuesPath::parse(from);
+    if path != from && !path.is_descendant_of(&from) {
+        return path;
+    }
+    let relative = path
+        .segments()
+        .skip(from.segments().len())
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    let mut target = helm_schema_core::ValuesPath::parse(to);
+    for segment in relative {
+        target.push(segment);
+    }
+    target
 }
 
 fn project_global_fail_captures(

@@ -423,10 +423,7 @@ fn splice_row(
                     role: helm_schema_core::ApproximationRole::OutputSelection,
                     sound_subset: Some(sound_subset),
                     ..
-                } if predicate
-                    .value_paths()
-                    .contains(&splice.values_path.encode()) =>
-                {
+                } if predicate.value_paths().contains(&splice.values_path) => {
                     sound_subset.as_ref().clone()
                 }
                 other => other.clone(),

@@ -17,7 +17,11 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
         data:
           registry: {{ .Values.global.imageRegistry | default "" | b64enc | quote }}
     "#});
-    contract.map_value_paths(|path| format!("metrics.{path}"));
+    contract.map_value_paths(|path| {
+        helm_schema_core::ValuesPath::from_segments(
+            std::iter::once("metrics").chain(path.segments()),
+        )
+    });
     contract.project_dependency_global_contracts(&["metrics".to_string()]);
     let schema = schema_for_values_yaml(contract, None);
     let expected: serde_json::Value = serde_json::from_str(indoc! {r##"
