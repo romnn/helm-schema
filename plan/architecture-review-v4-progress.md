@@ -1074,7 +1074,7 @@
 
 ## A7 — activation-scoped overlay projection and default sources
 
-- Status: landed in `54a261a9`.
+- Status: landed in `c9967847`.
 - Contract: behavior-bearing. Preserve the two distinct fact channels across conditional chart
   activation without pretending they share one consumption model. Root-overlay projection clones
   abort-grade implications and conjoins the chart activation predicate. Default sources stay out
@@ -4949,7 +4949,7 @@
 
 ## B4a.21 — type core path accessors and rewrites
 
-- Status: in progress; commit pending.
+- Status: landed in `c8d58a10` (`refactor(core): type contract path accessors`).
 - Contract: representation-only migration of `Guard`, `Predicate`, and `ConditionalGuard` path
   accessors to `ValuesPath`, plus total typed `map_value_paths` callbacks across the core contract
   carriers. Encoded paths remain only at diagnostics and wire boundaries.
@@ -5057,7 +5057,7 @@
 
 ## B4a.22 — migrate contract-builder path indexes
 
-- Status: in progress; commit pending.
+- Status: landed in `41036f3f` (`refactor(ir): type contract builder path indexes`).
 - Contract: representation-only migration of the contract-signal builder's path accumulator map,
   descendant indexes, and path-accumulator API from encoded `String` to segmented `ValuesPath`.
   The builder must hand its typed map directly to `ContractSchemaSignals`, deleting the final
@@ -5224,7 +5224,7 @@
 
 ## B4b — distinguish literal `*` keys from ranged members
 
-- Status: in progress; commit pending.
+- Status: landed in `45606b5b`.
 - Contract: behavior-bearing typed `Segment::{Literal(String), EachMember}` inside `ValuesPath`.
   Literal `*` keys encode distinctly and remain object members; only `EachMember` selects array/map
   member semantics. Existing wildcard paths and their serialized order remain stable.
@@ -5347,3 +5347,185 @@
 - Measured production LOC delta: +369 (64,352 to 64,721). The typed producer/consumer migration,
   explicit integer-index projection, reversible component codec, and schema-tree distinction add
   code; no live semantics or audit coverage was deleted to force a negative number.
+
+## E2 — split fail conditions from execution context
+
+- Status: recorded and abandoned after two failed E-gated attempts; no production change landed.
+- Contract: representation-only. Replace `FailCapture`'s mixed predicate conjunction with one
+  Boolean `condition: Predicate` and an exhaustive `context: Vec<ContextMark>` for `with`, `range`,
+  and `default` execution scope. Delete marker stripping and marker classification from requirement
+  lowering while preserving `fail_outer_guard`. As an E-step, adoption additionally requires at
+  least one representation deleted, non-positive whole-tree production LOC, byte-exact fixtures,
+  and flat-or-better corpus wall-clock.
+- Acceptance baseline: `45606b5b` (B4b).
+- Baseline production LOC: 64,721 Rust lines.
+- Pre-registered acceptance expectations:
+  - Zero schema or symbolic-IR fixture byte changes and zero acceptance flips.
+  - Multi-path `with` keeps its exact selection predicate; `with`, `range`, and `default` execution
+    marks never become negatable Boolean conditions.
+  - Direct, derived, nested, member-key, and key-equality range lanes preserve their existing
+    implication sets. `fail_outer_guard` and its polarity rules remain unchanged.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero.
+  - Public/wire decision: none; all candidate carriers are crate-private.
+
+- Measured results:
+  - Attempt 1 implemented the split and deleted the two marker-strip dances, but grew production
+    Rust to 64,932 lines (+211). Its apparent dump success was invalid: dump mode returns before
+    fixture comparison. The first real integration comparison found 24 failures, and a manual
+    comparison found 22/56 changed chart-corpus artifacts. The attempt was rejected.
+  - Attempt 2 restored exact typed semantics for the audited failures: selection predicates remain
+    Boolean, context marks retain `With` versus `Truthy` flavor, key-equality subsumes its paired
+    range context, and the contract-row and requirement lanes share one range-context helper.
+    Argo CD, NATS, the generator corpus, and the Temporal lean fixture were byte-exact in the final
+    focused preflight.
+  - Attempt 2 required deterministic compatibility ordering, exhaustive producer bookkeeping,
+    typed member-context classification, and checked scope transfer. Production Rust measured
+    65,083 lines (+362), failing the non-positive E-step adoption gate more heavily than attempt 1.
+  - Per the frozen spike rule, the candidate was abandoned instead of deleting live semantics or
+    tests to manufacture a negative result. All E2 production and test changes were removed with an
+    apply-patch restoration; `git diff --exit-code 45606b5b -- crates/helm-schema-ir` exits 0 and
+    production LOC is again 64,721.
+
+- Deviations:
+  - The initial compiler-driven migration stopped with 121 all-target errors while all 47 capture
+    construction sites were classified. That preflight was expected and rejected.
+  - Generator preflights successively exposed selection-chain, ranged-member, with-scoped absence,
+    numeric-suffix, nil-strict, and guarded member/key regressions. No artifact from those states was
+    adopted.
+  - The first lint preflight exited 201 after context bookkeeping pushed `activate_with` over the
+    line limit; extraction fixed the lint without a suppression, but did not change the E-gate
+    result.
+  - Two full-depth commands were rejected before authoritative use: one omitted `--run-ignored all`
+    and ran zero tests (exit 4), and one omitted `SCHEMA_PROBE_COVERAGE_REPORT` (exit 100 after
+    70.254 seconds).
+  - Final1 was rejected for conflating multi-arm selection with singleton fallback truthiness.
+    Final2 was rejected after a final-tree `if_not_else` lint changed the compiled artifact.
+  - Final3 was rejected when the integration fixture comparison disproved the earlier dump-only
+    claim. The immutable final1/final2/final3 archives and all their artifacts remain rejected.
+  - A speculative candidate-age tracker produced no fixture change and was removed. Three temporary
+    trace insertions initially matched an earlier similarly shaped helper or failed a missing-`Debug`
+    compile; each was corrected only for diagnosis and removed before restoration.
+  - A separate baseline source probe under `/private/tmp/helm-schema-e2-baseline-45606b5b` proved the
+    current legacy capture order was faithful and isolated the real twin-helper/key-equality rules.
+    It did not modify either repository and is not adoption evidence.
+
+- Adjudication evidence:
+  - The rejected final3 full-depth prober used Helm `v4.2.3+g43e8b7f` and measured 60 charts,
+    121,055 probes, zero flips, 112,260/112,260 mandatory base probes, 7,465/7,465 mandatory
+    third-level probes, 28,868 disclosed reductions, and zero candidate-accepts/Helm-aborts.
+  - Those semantic results show the spike's drift was representation/grouping drift, but they do
+    not override byte identity or the E-step LOC gate. No fixture or acceptance result was adopted.
+
+### Producer and route coverage
+
+| Route | Attempt-2 typed finding | Disposition |
+|---|---|---|
+| Direct/guarded fail | Boolean condition is separable from execution context. | Reverted with spike. |
+| Single/multi-path `with` | Flavor and selected-candidate identity are load-bearing. | Reverted with spike. |
+| Direct/derived range | One shared context helper is required across row and requirement lanes. | Reverted with spike. |
+| Nested/member range | Member-local `with` marks require typed selector classification. | Reverted with spike. |
+| Range-key equality | Key equality subsumes the paired outer range context. | Reverted with spike. |
+| `default` fallback | Default is context and remains an abstention/null-safety boundary. | Reverted with spike. |
+| Helper/scoped transfer | Condition composition and context union require stable ordering. | Reverted with spike. |
+
+### Review dossier
+
+- Rejected immutable archives: E2 final1, final2, and final3; none is authoritative.
+- Focused attempt-2 proof before abandonment: exact Argo CD, NATS, generator-corpus, and Temporal
+  lean fixtures. The broader fixture battery was deliberately not promoted after the LOC gate failed.
+- Representation deletion: achieved inside the spike (mixed marker interpretation and duplicate
+  range-context ownership removed), but only by adding a larger producer/context compatibility
+  representation; therefore it did not satisfy the deletion gate in the architecture-level sense.
+- Corpus wall-clock: not accepted or compared because the non-positive LOC gate failed first.
+- Public/wire decision: none. No E2 carrier or serialization change landed.
+
+### Self-adversarial pass
+
+- The typed split can be made semantically and byte exact on every audited sensitive route, but the
+  compatibility ordering and producer-side ownership required to do so are a net-new representation.
+- Removing that compatibility state reintroduced deterministic `$defs` ordering/grouping drift;
+  retaining it violated the non-positive whole-tree LOC gate. There is no honest adoption state in
+  this wave.
+- The rejected spike therefore supplies a measured design result: E2 is not a deletion at the
+  current boundary. A future attempt must first remove or redesign the ordering dependency instead
+  of layering context beside it.
+
+### Gates
+
+- Spike adoption gate (attempt 1): failed; +211 production Rust LOC.
+- Spike adoption gate (attempt 2): failed; +362 production Rust LOC.
+- Post-abandon restoration: `git diff --exit-code 45606b5b -- crates/helm-schema-ir`; exit 0.
+- `task tokei:core`: exit 0; 64,721 production Rust lines.
+- Final ledger/frozen-plan gates: the wave close-out run below passes every gate.
+
+- Measured production LOC delta: 0 landed (64,721 to 64,721). Rejected spike deltas were +211 and
+  +362.
+
+## Wave 1 close-out
+
+- Status: implementation complete through the eligible extended scope. B2/E1 and E2 are measured
+  abandoned spikes; B4b is the last landed semantic round. This ledger-only close-out does not
+  reopen either spike.
+- Range: `0a31f95e` (62,082 production Rust LOC) through `45606b5b` (64,721 LOC), plus this
+  close-out ledger commit. The wave landed 49 commits before close-out: one Helm pin, one standalone
+  timeout-infrastructure commit, the scheduled correctness/enforcement/path-carrier rounds, and the
+  B2/E1 abandonment record.
+- Final production Rust LOC: 64,721; net +2,639 from the wave start. LOC is evidence rather than a
+  target for ordinary rounds. Both E-spikes correctly used the stricter non-positive adoption gate
+  and landed zero production LOC.
+
+### Success-metric reconciliation
+
+| Frozen success metric | Wave-1 result |
+|---|---|
+| Battery coverage guarantee | Achieved: capped probes are deterministic round-robin buckets over every top-level root × replacement kind before any repeat; a zero-base battery is a hard failure. |
+| Capability-probe table | Achieved: every pinned `(api_version, kind)` row is corpus-validated without changing the table's authoritative upstream-first contract. |
+| Raw-string operations on the values-path currency | The entire scheduled B4a carrier surface is segmented and byte-compatible. No `Deref`, `AsRef<str>`, `Display`, cross-type equality, or string-key compatibility map was added; encoding remains at wire/diagnostic boundaries. |
+| Hand-synced producer/consumer pairs | Materially reduced but not honestly countable as zero: exhaustive `CaptureKind`, carrier destructures, cache-key construction, and serde/module ownership are compiler-enforced. B2/E1 and E2 proved remaining transform/context synchronization cannot yet be deleted under their E-gates. |
+| Rules with two owners | Reduced by the B1 guard-flatten collapse and the landed A-round ownership fixes, but not zero. The rejected E2 spike found a concrete duplicate range-context rule; it remains because the whole spike was reverted. |
+| Semantic vocabularies (6+ → 3) | Not achieved in wave 1. B2/E1 failed at +134/+67 LOC; E2 failed at +211/+362 LOC. No vocabulary was forced through a failed simplification gate. |
+| Airflow generation wall-clock | Not re-profiled: B5/C2 are out of this wave. The 112.7-second frozen baseline remains the next relevant comparison point. |
+
+- G2 stage 1 suite size: ten generated transform × consuming-position cells. Every cell first
+  asserts the produced semantic fact and then the complete schema. G2 stage 2 did not land because
+  it is coupled to a viable B2 `Transform::ALL` design, and B2 was abandoned after two LOC-gate
+  failures.
+- Behavior-bearing adjudication: every landed Part-A/S-A flip family is individually recorded in
+  its dossier with Helm 4.2.3 evidence; representation rounds preserve exact schema and symbolic-IR
+  bytes. Neither rejected E-spike adopted a fixture or acceptance change.
+- Public/wire decisions: the S-D fragment API narrowing and every scheduled B4a public typed-path
+  narrowing are recorded in their round dossiers. All serialized contract documents and schema
+  fixtures retain their legacy bytes.
+- Helm reproducibility: Helm 4.2.3 is pinned in `mise.toml`/`mise.lock` by `82f0ea11`; the live
+  battery version guard prevented a transient 4.2.4 upgrade from contaminating adjudication.
+
+### Final close-out gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0; whole-workspace Clippy and all three AST-grep policy tests pass after an
+  11-minute-43-second macOS build/scan.
+- `task lint:fc`: exit 0; 48/48 feature combinations for 13 packages across Linux, Windows GNU,
+  and macOS pass with zero errors or warnings in 2,041.44 seconds.
+- `cargo nextest run --workspace`: exit 0; 1,310/1,310 tests pass, one slow, in 279.331 seconds
+  after compilation.
+- `task test:integration`: exit 0; 559/559 tests pass, 24 skipped, 22 slow, in 2,188.437 seconds.
+- `task test:all`: exit 0; 1,873/1,873 tests pass, 24 skipped, 26 slow, including live-network
+  fetch tests, in 2,292.569 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; release build finishes in 44.23
+  seconds and replaces `/Users/roman/.cargo/bin/helm-schema`.
+- downstream luup2 `check:local` with `/private/tmp/helm-schema-xargs-shim`, prefixed `PATH`, and
+  `HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema`: exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,721 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+### Wave-2 handoff
+
+- Resume at B3, the next item in the frozen suggested order and the first explicitly out-of-scope
+  round for this handoff.
+- Keep B2/E1 and E2 recorded as abandoned. G2 stage 2 remains coupled to a future B2 design that
+  passes the non-positive whole-tree LOC gate; do not revive either spike by layering compatibility
+  state onto the current carriers.
+- After B3, follow the frozen order: `MergeLayersUse`, S-B normalization-once with B5 profiling,
+  B5a/B5b/B5c, E3 spike, E4 study, then C1--C4 and the remaining scoped simplifications.
