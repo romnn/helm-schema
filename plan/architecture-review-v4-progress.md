@@ -30,7 +30,7 @@
 
 ## Round G1+G3 — de-bias capped probes and validate capability rows
 
-- Status: landed in this round's `test(infra)` commit.
+- Status: landed in `0b2e7345` (`test(infra): de-bias probes and validate capability rows`).
 - Contract: test infrastructure only; preserve production behavior and every schema/IR fixture
   byte while replacing DFS-prefix battery truncation with deterministic round-robin sampling over
   `(top-level key, replacement kind)` buckets, rejecting batteries where targeted probes consume
@@ -188,7 +188,7 @@
 
 ## Round A1 — key provider memoization by stringification policy
 
-- Status: landed in this round's `fix(gen)` commit.
+- Status: landed in `1146a3d7` (`fix(gen): key provider memo by stringification policy`).
 - Contract: behavior-bearing; make provider-schema memo identity include `stringified`, and make
   provider preimage lowering consume the same typed policy subkey embedded in the cache key so a
   future policy field cannot be read outside memo identity.
@@ -310,7 +310,7 @@
 
 ## Round A2/G4 — separate values-key uniqueness from installed-chart identity
 
-- Status: landed in this round's `fix(engine)` commit.
+- Status: landed in `3e9dbf8e` (`fix(engine): separate dependency key and installed identities`).
 - Contract: behavior-bearing; validate declaration uniqueness through values keys, retain
   name-based installed-chart lookup, model one vendored chart under multiple unique aliases with
   `name -> Vec<metadata>`, and reject only duplicate installed entries sharing one internal name as
@@ -447,7 +447,7 @@
 
 ## Round A3 — preserve escaped dot and backslash values-path segments
 
-- Status: landed in this round's `fix(ir)` commit.
+- Status: landed in `30e49d82` (`fix(ir): preserve escaped values path segments`).
 - Contract: behavior-bearing; replace raw dot splitting, joining, prefix stripping, and path
   concatenation on the values-path currency with codec-aware helpers. This round repairs literal
   dots and backslashes only; the literal `*` versus range-member distinction remains deferred to
@@ -589,7 +589,7 @@
 
 ## A4 — owned JSON-kind and integer-range requirement operations
 
-- Status: landed in `c72e7d1e`.
+- Status: landed in `90f16dcb` (`fix(gen): separate kind and integer range domains`).
 - Contract: behavior-bearing. Replace the disagreeing stringly requirement interpreters with two
   distinct owned operations: `admitted_json_value_kinds` for set-valued JSON kind-domain reasoning,
   with disjoint integer and non-integer-number classes, and `integer_range_constraint` for the
@@ -761,7 +761,7 @@
 
 ## A5 — refuse unfaithful composite truthiness under negation
 
-- Status: landed in `c7a5eb3a`.
+- Status: landed in `57277fb1` (`fix(ir): separate exact and control condition fidelity`).
 - Contract: behavior-bearing. Make the existing faithfulness oracle reject the generic all-paths
   truthiness fallback for both `MergedLayers` and `FirstTruthy` whenever their exact decoders
   abstain. Cover field/selector projections as well as locals; do not begin B3's decoder/oracle
@@ -904,7 +904,7 @@
 
 ## A6 — branch-local range domain owned by IR
 
-- Status: landed in `52166b67`.
+- Status: landed in `e99d74b6` (`fix(ir): publish branch-local range domains`).
 - Contract: behavior-bearing. IR publishes one branch-scoped `RangeDomain` on conditional overlay
   evidence from the guarded range facts it already owns. Overlay finalization must not promote
   decoded/destructured modes from sibling branches into that carrier, and gen must render the
@@ -2774,7 +2774,7 @@
 
 ## B4a.3a — migrate predicate approximation paths
 
-- Status: landed in `6509de14`.
+- Status: landed in `c72e7d1e` (`refactor(core): type approximation paths`).
 - Contract: representation-only migration of `Predicate::Approximate.paths` to a segmented
   `BTreeSet<ValuesPath>`, the first compiler-bounded core guard subround. Atomic `Guard` and
   `ConditionalGuard` payloads follow separately. Approximation markers remain strings.
@@ -2877,7 +2877,7 @@
 
 ## B4a.3b — migrate atomic guard paths
 
-- Status: landed in `3538aa36`.
+- Status: landed in `c7a5eb3a` (`refactor(core): type guard paths`).
 - Contract: representation-only migration of all value-path payloads in the public `Guard` enum to
   segmented `ValuesPath`, including the `Or.paths` collection and recursively nested `AnyOf`
   alternatives. Literal patterns, keys, members, schema types, and comparison values remain in
@@ -3469,7 +3469,7 @@
 
 ## B4a.6 — migrate contract-use path carriers
 
-- Status: landed in `4c9e321c` (`refactor(ir): type abstract value paths`).
+- Status: landed in `52166b67` (`refactor(core): type contract use paths`).
 - Contract: representation-only migration of the public phase-crossing `ContractUse.source_expr`
   identity and every `MergeLayersUse.layers` identity to segmented `ValuesPath`. YAML paths,
   resource references, literal member keys, split separators, source provenance, transform tags,
@@ -3594,7 +3594,7 @@
 
 ## B4a.7 — migrate contract-schema signal path indexes
 
-- Status: landed in `a65493bb` (`refactor(ir): type abstract influence paths`).
+- Status: landed in `54a261a9` (`refactor(core): type contract signal paths`).
 - Contract: representation-only migration of `ContractSchemaSignals` path-indexed maps and sets to
   segmented `ValuesPath`, deleting the duplicate `ContractPathSchemaEvidence.value_path` identity.
   Schema evidence, path order, provider overlays, requiredness, omission, range, diagnostic, and
@@ -3718,7 +3718,7 @@
 
 ## B4a.8 — migrate provider-use source paths
 
-- Status: landed in `debd89e8` (`refactor(ir): type helper metadata paths`).
+- Status: landed in `6509de14` (`refactor(core): type provider use paths`).
 - Contract: representation-only migration of the public phase-crossing
   `ProviderSchemaUse.value_path` carrier to segmented `ValuesPath`. Provider resource identity,
   YAML slot path, transforms, omission guards, merge layering, lookup policy, and diagnostics
