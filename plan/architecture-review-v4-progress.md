@@ -5529,3 +5529,174 @@
   state onto the current carriers.
 - After B3, follow the frozen order: `MergeLayersUse`, S-B normalization-once with B5 profiling,
   B5a/B5b/B5c, E3 spike, E4 study, then C1--C4 and the remaining scoped simplifications.
+
+## Wave 2 decision register
+
+- Frozen plan: `plan/architecture-review-v4.md` at `bb61a78f`; it remains immutable.
+- Starting tree: clean `main` at `5d8c6443`.
+- Starting production Rust LOC: 64,721.
+- Wave scope: B3 remainder; `MergeLayersUse`; S-B normalization-once; B5a--B5c; C2;
+  remaining S-D; the requested quick S-B/S-C rounds; then the eligible extended C3, C1, C4,
+  remaining S-B, E4 study, activation-DNF spike, and S-E measurement.
+- B2/E1 and E2 remain abandoned. No round may restore either representation by layering
+  compatibility state onto the current carriers. G2 stage 2 remains coupled to a future viable
+  B2 design.
+- E3 is blocked by E2's abandonment unless a future ledger entry first supplies a design that
+  genuinely avoids the context split and retains the generated requirement-lane suite gate.
+- Performance law: the frozen Airflow release-binary baseline is 112.7 seconds CPU / 2:10 wall.
+  A fresh same-host measurement is recorded before S-B normalization-once and after every
+  performance-bearing round.
+- Helm adjudicator: pinned Helm 4.2.3. Candidate-accepts/Helm-aborts allowance remains zero.
+- Public API and wire-format changes are decisions recorded in their owning dossiers, never
+  incidental fallout.
+
+## B3.1 — make faithfulness a decoder result
+
+- Status: landed; commit pending.
+- Contract: representation-only. Replace the separate faithfulness table with one condition
+  decoder returning `Decoded::{Exact, Approximate}` together with the predicate it produced.
+  `condition_lowering_is_faithful`, control-flow usability, and ordinary predicate lowering become
+  projections of that same exhaustive decoder, so a call shape cannot gain a predicate without the
+  same arm deciding its fidelity. Preserve every exact/approximate boundary and serialized order.
+- Acceptance baseline: `5d8c6443`.
+- Baseline production Rust LOC: 64,721.
+- Current-tree audit:
+  - A4 fully closed B3's requirement-kind bullet. The deleted
+    `requirements_allow_runtime_kind` and `requirement_admits_runtime_type` have no callers;
+    `admitted_json_value_kinds` owns JSON-kind domain admission and
+    `integer_range_constraint` separately owns value-sensitive integer-count bounds.
+  - The remaining faithfulness split is live in
+    `value_path_context/condition_predicate.rs`: `condition_lowering_fidelity` classifies the same
+    expression forms that `condition_predicate` lowers, including separately recursive `and`,
+    `or`, and `not` paths.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - `MergedLayers` and `FirstTruthy` remain exact only when their composite decoder proves the
+    result; control-flow lowering retains its existing positive-polarity tolerance where the exact
+    fail-negation lane abstains.
+  - Every `not` path negates only an exact child. Approximate predicates and positive-only sound
+    subsets remain non-negatable.
+  - Helper literal dispatch, pipeline membership, `Files.Get` formatting, stringification, merge,
+    default, coalesce, and root-field paths retain their present truth tables.
+  - If the consolidation exposes a disagreement between the twin tables, stop before fixture
+    adoption and classify it as a separately pre-registered behavior-bearing repair. No fixture
+    change is accepted in this round.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero.
+- Public/wire decision: none expected. The decoder and its fidelity carrier are crate-private;
+  serialized predicates and schemas must remain byte-identical.
+
+- Measured results:
+  - `Decoded::{Exact, Approximate}` now carries the produced predicate and, for an approximation,
+    whether the positive control-flow lane may still consume it. Exact fail negation, control-flow
+    usability, and ordinary condition lowering are projections of this one decoder.
+  - The former `ConditionFidelityUse`, `condition_lowering_fidelity`,
+    `field_condition_lowering_fidelity`, and the separate top-level `condition_predicate` dispatch
+    table are deleted. Expression-family helpers split the exhaustive decoder without duplicating
+    its classification rules.
+  - The decoder deliberately preserves two output positions as dataflow, not as twin semantic
+    tables: a top-level condition prefers an exactly evaluated truth predicate, while an operand
+    nested inside `and`, `or`, or `not` retains the existing structural operand projection. Both
+    positions share the same fidelity classification.
+  - A4's requirement-kind consolidation is confirmed complete and unchanged. No B3 requirement-kind
+    code was added.
+  - The final3 schema dump writes 84 artifacts. All 60 corpus/lean artifacts shared with the B4b
+    baseline are byte-identical, and the additional 24 focused resource/final-output artifacts pass
+    their committed full-equality fixtures. All 18 symbolic-IR artifacts are byte-identical.
+  - The final3 full-depth comparison checks 121,055 probes across 60 charts with zero acceptance
+    flips. Mandatory base coverage is 112,260/112,260 and third-level coverage is 7,465/7,465, both
+    with zero drops. It records 427 guard pairs, 238 composite pairs, 35,428 bounded guard-witness
+    reductions, 2,277 bounded composite reductions, and 28,868 disclosed total drops.
+
+- Deviations:
+  - The first compiler preflight failed the 100-line function lint: the unified decoder was 199
+    lines. It was split by expression family with no lint suppression and no second classification
+    table; the focused Clippy rerun passed.
+  - The rejected final1 archive changed Bitnami Redis and Cilium schema ordering and admitted an
+    extra Cilium resource-quota branch. The cause was a real pre-existing positional distinction:
+    `condition_predicate_expr` prefers an exact evaluated truth predicate at a top-level condition,
+    while nested `condition_predicate` operands historically use the structural call decoder. The
+    initial refactor applied the top-level preference recursively and therefore was not
+    representation-only.
+  - No final1 fixture, dump, or prober result was adopted. The corrected decoder carries the
+    position explicitly, shares fidelity classification across both positions, and a focused
+    Bitnami Redis/Cilium dump became byte-exact before the final2 archive was built.
+  - The final self-adversarial review rejected final2 as the authoritative tree because the generic
+    `Decoded<T>` carrier had only one concrete use. The final3 tree makes `Decoded` concrete over
+    `Option<Predicate>`, deleting an unnecessary type parameter without changing behavior. No
+    final2 artifact or gate is used as final evidence.
+  - The final3 dump filter executes focused resource/final-output tests that the retained B4b dump
+    directory did not contain, so the candidate directory has 84 files against 60 baseline files.
+    Equality was checked over every shared artifact; the 24 additional artifacts were independently
+    checked by their full-fixture tests.
+
+- Adjudication evidence:
+  - Helm `v4.2.3+g43e8b7f` is selected by the committed mise pin and accepted by the battery version
+    guard.
+  - The final3 battery reports zero flips and zero candidate-accepts/Helm-aborts cells. No fixture
+    or acceptance change required adoption.
+
+### Producer and route coverage
+
+| Route | Single-owner result | Verification |
+|---|---|---|
+| Literal, field, selector, and variable truth | Decoder returns predicate plus exact/control fidelity | Focused 41-test condition suite and full IR suite. |
+| `and` / `or` | One junctor decoder combines child fidelity while preserving operand projection | Nested junctor controls, Cilium and Bitnami Redis byte dumps. |
+| `not` | Exact only when its sole child and negated projection are exact | Negated include, membership, equality, type, and simple-path controls. |
+| Atomic calls | One exhaustive call dispatcher selects the exact decoder or explicit truthy fallback | Default, merge, coalesce, `Files.Get`, stringification, pattern, type, and membership suites. |
+| Pipeline calls | One exact-candidate chain owns default, stringification, and membership | Pipeline and helper behavior suites plus corpus identity. |
+| Composite values | `MergedLayers` / `FirstTruthy` exactness comes from their composite decoder | Exact and undecodable composite controls. |
+
+### Review dossier
+
+- Focused proof: `cargo clippy -p helm-schema-ir --all-targets --all-features -- -D warnings`;
+  exit 0 after the rejected long-function preflight. `cargo nextest run -p helm-schema-ir`; exit 0,
+  393/393 tests pass.
+- Immutable build: final3 archive under the absolute step-local build `TMPDIR`; exit 0 after 11m14s,
+  87 binaries and 125 files archived to `/private/tmp/arch-v4-b31-final3.tar.zst`.
+- Clean schema dump: final3 archive under the step-local schema `TMPDIR`; exit 0, 62 tests pass in
+  239.543 seconds and 84 artifacts are written. Every final2 and shared B4b artifact is
+  byte-identical.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one corpus test passes
+  in 4.105 seconds and all 18 artifacts are byte-identical to final2 and B4b.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `5d8c6443`, Helm
+  adjudication enabled; exit 0 in 69.296 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: none. `Decoded` and its position are crate-private. Contract documents,
+  predicate serialization, schema bytes, and public construction remain unchanged.
+
+### Self-adversarial pass
+
+- A decoder that returned only `Predicate` would erase the exactness boundary, while a decoder that
+  returned only fidelity would preserve the twin-table defect. The concrete `Decoded` carrier keeps
+  its `Option<Predicate>` abstention state and fidelity in the same exhaustive expression arm.
+- The rejected final1 archive proves nested call operands are not interchangeable with top-level
+  evaluated truth. The final design names that position in the decoder entry point instead of
+  restoring a second function-name classification table.
+- Approximate values can be usable in positive control flow without becoming negatable. The
+  `usable_for_control` bit exists only on the `Approximate` variant, so exact values cannot disagree
+  with control usability and approximate values cannot silently masquerade as exact.
+- Whole-tree searches find no `ConditionFidelityUse`, `condition_lowering_fidelity`, or second
+  function-name fidelity match. A4's two distinct requirement operations remain the correct
+  quantifier split, not unfinished B3 duplication.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0; whole-workspace Clippy and all three AST-grep policy tests pass in 12m45s.
+- `task lint:fc`: exit 0; 48/48 feature combinations for 13 packages across Linux, Windows GNU,
+  and macOS pass with zero errors and warnings in 2,314.06 seconds.
+- `cargo nextest run --workspace`: exit 0; 1,310/1,310 tests pass, one slow.
+- `task test:integration`: exit 0; 559/559 tests pass, 24 skipped, 22 slow, in 2,182.045 seconds.
+- `task test:all`: exit 0; 1,873/1,873 tests pass, 24 skipped, 24 slow, including live-network
+  tests, in 2,154.308 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; release build and replacement complete
+  in 22.75 seconds.
+- Downstream luup2 `check:local` with `/private/tmp/helm-schema-xargs-shim`, prefixed `PATH`, and
+  `HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema`: exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,797 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +76 (64,721 to 64,797). The delta is the typed fidelity carrier
+  and position-preserving exhaustive decoder; no LOC promise applies to this ordinary round.

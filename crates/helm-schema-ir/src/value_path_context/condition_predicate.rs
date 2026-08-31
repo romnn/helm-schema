@@ -121,10 +121,49 @@ fn single_string_verb_split(format: &str) -> Option<(&str, &str)> {
     (!prefix.contains('%') && !suffix.contains('%')).then_some((prefix, suffix))
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum ConditionFidelityUse {
-    Exact,
-    Control,
+enum Decoded {
+    Exact(Option<Predicate>),
+    Approximate {
+        value: Option<Predicate>,
+        usable_for_control: bool,
+    },
+}
+
+impl Decoded {
+    fn classified(value: Option<Predicate>, exact: bool, usable_for_control: bool) -> Self {
+        if exact {
+            Self::Exact(value)
+        } else {
+            Self::Approximate {
+                value,
+                usable_for_control,
+            }
+        }
+    }
+
+    const fn is_exact(&self) -> bool {
+        matches!(self, Self::Exact(_))
+    }
+
+    const fn is_usable_for_control(&self) -> bool {
+        match self {
+            Self::Exact(_) => true,
+            Self::Approximate {
+                usable_for_control, ..
+            } => *usable_for_control,
+        }
+    }
+
+    fn into_inner(self) -> Option<Predicate> {
+        match self {
+            Self::Exact(value) | Self::Approximate { value, .. } => value,
+        }
+    }
+}
+
+fn exact_candidate(predicate: Option<Predicate>) -> Decoded {
+    let exact = predicate.is_some();
+    Decoded::classified(predicate, exact, exact)
 }
 
 impl ValuePathContext<'_> {
@@ -141,147 +180,245 @@ impl ValuePathContext<'_> {
     /// Rows tolerate approximate (wider) conditions; fail-branch NEGATION
     /// does not, so it consults this before trusting a captured stack.
     pub(crate) fn condition_lowering_is_faithful(&self, expr: &TemplateExpr) -> bool {
-        self.condition_lowering_fidelity(expr, ConditionFidelityUse::Exact)
+        self.decoded_condition_predicate(expr).is_exact()
     }
 
     pub(crate) fn condition_lowering_is_usable_for_control(&self, expr: &TemplateExpr) -> bool {
-        self.condition_lowering_fidelity(expr, ConditionFidelityUse::Control)
+        self.decoded_condition_predicate(expr)
+            .is_usable_for_control()
     }
 
-    fn condition_lowering_fidelity(&self, expr: &TemplateExpr, use_: ConditionFidelityUse) -> bool {
+    fn decoded_condition_predicate(&self, expr: &TemplateExpr) -> Decoded {
+        self.decoded_condition_predicate_at(expr, true)
+    }
+
+    fn decoded_condition_operand(&self, expr: &TemplateExpr) -> Decoded {
+        self.decoded_condition_predicate_at(expr, false)
+    }
+
+    fn decoded_condition_predicate_at(
+        &self,
+        expr: &TemplateExpr,
+        prefer_evaluated_truth: bool,
+    ) -> Decoded {
         if let TemplateExpr::Variable(name) = expr.deparen()
             && self.truthiness_abstains(name)
         {
-            return false;
+            return Decoded::Approximate {
+                value: self.exact_evaluated_truth_predicate(expr),
+                usable_for_control: false,
+            };
         }
-        if self.exact_evaluated_truth_predicate(expr).is_some() {
-            return true;
+        let evaluated_truth = self.exact_evaluated_truth_predicate(expr);
+        let call_like = matches!(
+            expr.deparen(),
+            TemplateExpr::Call { .. } | TemplateExpr::Pipeline(_)
+        );
+        if (prefer_evaluated_truth || !call_like)
+            && let Some(predicate) = evaluated_truth
+        {
+            return Decoded::Exact(Some(predicate));
         }
-        match expr.deparen() {
+        let decoded = match expr.deparen() {
             TemplateExpr::VariableDefinition { value, .. }
-            | TemplateExpr::Assignment { value, .. } => {
-                self.condition_lowering_fidelity(value, use_)
-            }
+            | TemplateExpr::Assignment { value, .. } => self.decoded_condition_predicate(value),
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
-                self.field_condition_lowering_fidelity(expr, use_)
+                self.decoded_field_condition_predicate(expr)
             }
-            TemplateExpr::Literal(_) => true,
-            // A local bound to DERIVED TEXT (`$message := join "\n"
-            // $messages`) is falsy when the derivation produced nothing,
-            // not when its input identities are falsy: a truthy stand-in
-            // over the flowing paths would let negation fire on states the
-            // branch never reaches (bitnami `validateValues` aggregators).
-            TemplateExpr::Variable(name) => {
-                if let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
-                    self.template_truthy_reductions
-                        .get(name.trim_start_matches('$'))
-                }) {
-                    return !matches!(predicate, Predicate::False);
-                }
-                if self.get_binding_truthy_predicate(name).is_some() {
-                    return true;
-                }
-                // Layered merges decode through their own disjunction lane;
-                // the all-paths conjunction below is not faithful for them.
-                if let Some(value) = eval_expr(expr, &self.expression_eval_env()).value
-                    && (matches!(value, AbstractValue::MergedLayers(_))
-                        || use_ == ConditionFidelityUse::Exact)
-                    && let Some(faithful) = composite_truthy_lowering_is_faithful(&value)
-                {
-                    return faithful;
-                }
-                let paths = self.paths_for_expr(expr);
-                if paths.is_empty() {
-                    return false;
-                }
-                let metas = self
-                    .template_output_meta
-                    .get(name)
-                    .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
-                !paths.iter().any(|path| {
-                    metas
-                        .and_then(|metas| metas.get(&helm_schema_core::ValuesPath::parse(path)))
-                        .is_some_and(|meta| meta.derived_text || meta.shape_erased)
-                })
+            TemplateExpr::Literal(_) => Decoded::Exact(self.truthy_predicate(expr)),
+            TemplateExpr::Variable(name) => self.decoded_variable_condition_predicate(expr, name),
+            TemplateExpr::Call { function, args } => {
+                self.decoded_call_condition_predicate(expr, function, args)
             }
-            TemplateExpr::Call { function, args } => match function.as_str() {
-                "and" | "or" => args
-                    .iter()
-                    .all(|arg| self.condition_lowering_fidelity(arg, use_)),
-                "list" | "tuple" | "dict" => true,
-                "not" => {
-                    args.first()
-                        .is_some_and(|arg| self.condition_lowering_is_faithful(arg))
-                        && args.len() == 1
-                        && self.not_predicate(args).is_some()
-                }
-                "eq" => self.value_comparison_predicate(args, false).is_some(),
-                "ne" => self.value_comparison_predicate(args, true).is_some(),
-                "semverCompare" => false,
-                "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args).is_some(),
-                "typeIs" | "kindIs" => self.type_is_predicate(function, args).is_some(),
-                "hasKey" => self.has_key_predicate(args).is_some(),
-                "hasPrefix" => {
-                    self.range_key_prefix_predicate(args).is_some()
-                        || self.string_affix_predicate(args, false).is_some()
-                }
-                "hasSuffix" => self.string_affix_predicate(args, true).is_some(),
-                "contains" => self.contains_predicate(args).is_some(),
-                "has" => self.helper_literal_membership_predicate(args).is_some(),
-                "empty" => self.empty_predicate(args).is_some(),
-                "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
-                "default" => self.default_truthy_predicate(args).is_some(),
-                "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
-                    self.merge_truthy_predicate(args).is_some()
-                }
-                "dig" => self.dig_truthy_predicate(args).is_some(),
-                "toString" => matches!(args.as_slice(), [arg]
-                    if self.tostring_truthy_predicate(arg).is_some()),
-                "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args).is_some(),
-                "include" => self.include_truthy_predicate(expr).is_some(),
-                function if crate::function_semantics::is_files_get(function) => {
-                    self.files_get_printf_predicate(args).is_some()
-                }
-                _ => false,
+            TemplateExpr::Pipeline(stages) => exact_candidate(
+                self.default_pipeline_truthy_predicate(stages)
+                    .or_else(|| self.tostring_pipeline_truthy_predicate(stages))
+                    .or_else(|| self.pipeline_membership_predicate(stages)),
+            ),
+            _ => Decoded::Approximate {
+                value: self.truthy_predicate(expr),
+                usable_for_control: false,
             },
-            TemplateExpr::Pipeline(stages) => {
-                self.default_pipeline_truthy_predicate(stages).is_some()
-                    || self.tostring_pipeline_truthy_predicate(stages).is_some()
-                    || self.pipeline_membership_predicate(stages).is_some()
-            }
-            _ => false,
+        };
+        if evaluated_truth.is_some() {
+            Decoded::Exact(decoded.into_inner())
+        } else {
+            decoded
         }
     }
 
-    fn field_condition_lowering_fidelity(
+    fn decoded_field_condition_predicate(&self, expr: &TemplateExpr) -> Decoded {
+        let predicate = self.truthy_predicate(expr);
+        if self.root_field_truthy_predicate(expr).is_some() {
+            return Decoded::Exact(predicate);
+        }
+        let path_fallback_is_available = !self.paths_for_expr(expr).is_empty();
+        let exact = eval_expr(expr, &self.expression_eval_env())
+            .value
+            .as_ref()
+            .and_then(composite_truthy_lowering_is_faithful)
+            .unwrap_or(path_fallback_is_available);
+        Decoded::classified(predicate, exact, path_fallback_is_available)
+    }
+
+    fn decoded_variable_condition_predicate(&self, expr: &TemplateExpr, name: &str) -> Decoded {
+        // A local bound to DERIVED TEXT (`$message := join "\n"
+        // $messages`) is falsy when the derivation produced nothing,
+        // not when its input identities are falsy: a truthy stand-in
+        // over the flowing paths would let negation fire on states the
+        // branch never reaches (bitnami `validateValues` aggregators).
+        if let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
+            self.template_truthy_reductions
+                .get(name.trim_start_matches('$'))
+        }) {
+            let usable = !matches!(predicate, Predicate::False);
+            return Decoded::classified(Some(predicate.clone()), usable, usable);
+        }
+        if let Some(predicate) = self.get_binding_truthy_predicate(name) {
+            return Decoded::Exact(Some(predicate));
+        }
+        // Layered merges decode through their own disjunction lane;
+        // the all-paths conjunction below is not faithful for them.
+        if let Some(value) = eval_expr(expr, &self.expression_eval_env()).value
+            && let Some(faithful) = composite_truthy_lowering_is_faithful(&value)
+        {
+            let usable_for_control = matches!(value, AbstractValue::MergedLayers(_))
+                .then_some(faithful)
+                .unwrap_or_else(|| self.variable_path_fallback_is_faithful(expr, name));
+            return Decoded::classified(self.truthy_predicate(expr), faithful, usable_for_control);
+        }
+        let faithful = self.variable_path_fallback_is_faithful(expr, name);
+        Decoded::classified(self.truthy_predicate(expr), faithful, faithful)
+    }
+
+    fn variable_path_fallback_is_faithful(&self, expr: &TemplateExpr, name: &str) -> bool {
+        let paths = self.paths_for_expr(expr);
+        let metas = self
+            .template_output_meta
+            .get(name)
+            .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
+        !paths.is_empty()
+            && !paths.iter().any(|path| {
+                metas
+                    .and_then(|metas| metas.get(&helm_schema_core::ValuesPath::parse(path)))
+                    .is_some_and(|meta| meta.derived_text || meta.shape_erased)
+            })
+    }
+
+    fn decoded_call_condition_predicate(
         &self,
         expr: &TemplateExpr,
-        use_: ConditionFidelityUse,
-    ) -> bool {
-        if self.root_field_truthy_predicate(expr).is_some() {
-            return true;
+        function: &str,
+        args: &[TemplateExpr],
+    ) -> Decoded {
+        match function {
+            "and" => self.decoded_junctor_condition_predicate(args, false),
+            "or" => self.decoded_junctor_condition_predicate(args, true),
+            "list" | "tuple" | "dict" => Decoded::Exact(Some(bool_predicate(!args.is_empty()))),
+            "not" => {
+                let predicate = self.not_predicate(args);
+                let exact = args.len() == 1
+                    && args
+                        .first()
+                        .is_some_and(|arg| self.decoded_condition_predicate(arg).is_exact())
+                    && predicate.is_some();
+                Decoded::classified(predicate, exact, exact)
+            }
+            _ => self.decoded_atomic_call_condition_predicate(expr, function, args),
         }
-        if use_ == ConditionFidelityUse::Exact
-            && let Some(faithful) = eval_expr(expr, &self.expression_eval_env())
-                .value
-                .as_ref()
-                .and_then(composite_truthy_lowering_is_faithful)
-        {
-            return faithful;
+    }
+
+    fn decoded_junctor_condition_predicate(
+        &self,
+        args: &[TemplateExpr],
+        disjunction: bool,
+    ) -> Decoded {
+        let decoded: Vec<_> = args
+            .iter()
+            .map(|arg| self.decoded_condition_predicate(arg))
+            .collect();
+        let exact = decoded.iter().all(Decoded::is_exact);
+        let usable_for_control = decoded.iter().all(Decoded::is_usable_for_control);
+        Decoded::classified(
+            if disjunction {
+                self.or_predicate(args)
+            } else {
+                self.and_predicate(args)
+            },
+            exact,
+            usable_for_control,
+        )
+    }
+
+    fn decoded_atomic_call_condition_predicate(
+        &self,
+        expr: &TemplateExpr,
+        function: &str,
+        args: &[TemplateExpr],
+    ) -> Decoded {
+        match function {
+            "eq" => exact_candidate(self.value_comparison_predicate(args, false)),
+            "ne" => exact_candidate(self.value_comparison_predicate(args, true)),
+            "semverCompare" => Decoded::Approximate {
+                value: None,
+                usable_for_control: false,
+            },
+            "gt" | "lt" | "ge" | "le" => {
+                exact_candidate(self.positive_len_predicate(function, args))
+            }
+            "typeIs" | "kindIs" => exact_candidate(self.type_is_predicate(function, args)),
+            "hasKey" => exact_candidate(self.has_key_predicate(args)),
+            "hasPrefix" => exact_candidate(
+                self.range_key_prefix_predicate(args)
+                    .or_else(|| self.string_affix_predicate(args, false)),
+            ),
+            "hasSuffix" => exact_candidate(self.string_affix_predicate(args, true)),
+            "contains" => exact_candidate(self.contains_predicate(args)),
+            "has" => self
+                .decoded_with_truthy_fallback(expr, self.helper_literal_membership_predicate(args)),
+            "empty" => exact_candidate(self.empty_predicate(args)),
+            "coalesce" => exact_candidate(self.coalesce_truthy_predicate(args)),
+            "default" => exact_candidate(self.default_truthy_predicate(args)),
+            "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
+                exact_candidate(self.merge_truthy_predicate(args))
+            }
+            "dig" => self.decoded_with_truthy_fallback(expr, self.dig_truthy_predicate(args)),
+            "toString" => self.decoded_with_truthy_fallback(
+                expr,
+                match args {
+                    [arg] => self.tostring_truthy_predicate(arg),
+                    _ => None,
+                },
+            ),
+            "regexMatch" | "mustRegexMatch" => exact_candidate(self.regex_match_predicate(args)),
+            "include" => {
+                self.decoded_with_truthy_fallback(expr, self.include_truthy_predicate(expr))
+            }
+            function if crate::function_semantics::is_files_get(function) => {
+                self.decoded_with_truthy_fallback(expr, self.files_get_printf_predicate(args))
+            }
+            _ => Decoded::Approximate {
+                value: self.truthy_predicate(expr),
+                usable_for_control: false,
+            },
         }
-        !self.paths_for_expr(expr).is_empty()
+    }
+
+    fn decoded_with_truthy_fallback(
+        &self,
+        expr: &TemplateExpr,
+        exact: Option<Predicate>,
+    ) -> Decoded {
+        let is_exact = exact.is_some();
+        Decoded::classified(
+            exact.or_else(|| self.truthy_predicate(expr)),
+            is_exact,
+            is_exact,
+        )
     }
 
     pub(crate) fn condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
-        if let TemplateExpr::VariableDefinition { value, .. }
-        | TemplateExpr::Assignment { value, .. } = expr.deparen()
-        {
-            return self.condition_predicate_expr(value);
-        }
-        if let Some(predicate) = self.exact_evaluated_truth_predicate(expr) {
-            return predicate;
-        }
-        if let Some(predicate) = self.condition_predicate(expr) {
+        if let Some(predicate) = self.decoded_condition_predicate(expr).into_inner() {
             return predicate;
         }
         if self.condition_has_unrepresentable_values_comparison_expr(expr) {
@@ -484,55 +621,7 @@ impl ValuePathContext<'_> {
     }
 
     fn condition_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
-        if let TemplateExpr::Pipeline(stages) = expr.deparen() {
-            return self
-                .default_pipeline_truthy_predicate(stages)
-                .or_else(|| self.tostring_pipeline_truthy_predicate(stages))
-                .or_else(|| self.pipeline_membership_predicate(stages));
-        }
-        let TemplateExpr::Call { function, args } = expr.deparen() else {
-            return self.truthy_predicate(expr);
-        };
-        match function.as_str() {
-            "and" => self.and_predicate(args),
-            "list" | "tuple" | "dict" => Some(bool_predicate(!args.is_empty())),
-            "not" => self.not_predicate(args),
-            "empty" => self.empty_predicate(args),
-            "hasKey" => self.has_key_predicate(args),
-            "hasPrefix" => self
-                .range_key_prefix_predicate(args)
-                .or_else(|| self.string_affix_predicate(args, false)),
-            "hasSuffix" => self.string_affix_predicate(args, true),
-            "contains" => self.contains_predicate(args),
-            "has" => self
-                .helper_literal_membership_predicate(args)
-                .or_else(|| self.truthy_predicate(expr)),
-            "or" => self.or_predicate(args),
-            "eq" => self.value_comparison_predicate(args, false),
-            "ne" => self.value_comparison_predicate(args, true),
-            "semverCompare" => None,
-            "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args),
-            "typeIs" | "kindIs" => self.type_is_predicate(function, args),
-            "coalesce" => self.coalesce_truthy_predicate(args),
-            "default" => self.default_truthy_predicate(args),
-            "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
-                self.merge_truthy_predicate(args)
-            }
-            "dig" => self
-                .dig_truthy_predicate(args)
-                .or_else(|| self.truthy_predicate(expr)),
-            "toString" if args.len() == 1 => self
-                .tostring_truthy_predicate(args.first()?)
-                .or_else(|| self.truthy_predicate(expr)),
-            "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args),
-            "include" => self
-                .include_truthy_predicate(expr)
-                .or_else(|| self.truthy_predicate(expr)),
-            function if crate::function_semantics::is_files_get(function) => self
-                .files_get_printf_predicate(args)
-                .or_else(|| self.truthy_predicate(expr)),
-            _ => self.truthy_predicate(expr),
-        }
+        self.decoded_condition_operand(expr).into_inner()
     }
 
     /// Truthiness of a total stringification (`toString X` /
