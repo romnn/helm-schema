@@ -303,7 +303,7 @@ pub(super) fn record_contract_use(
                         predicate,
                         Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
                             if path != &source_path
-                                && merge.layers.contains(path)
+                                && merge.layers().iter().any(|layer| &layer.path == path)
                     )
                 })
                 .collect()
@@ -524,7 +524,7 @@ pub(super) fn record_contract_use_conjunction(
     let merge_layered = contract_use
         .merge_layers
         .as_ref()
-        .filter(|merge| merge.layers.get(merge.position) == Some(&contract_use.source_expr))
+        .filter(|merge| merge.own_path_is(&contract_use.source_expr))
         // Binding-carried layer facts reroute only when the merge involves
         // a structural transform: there the member typing must scope to the
         // states each layer actually supplies. Shadowed members stay open,
@@ -533,13 +533,7 @@ pub(super) fn record_contract_use_conjunction(
         // Ordinary binding-carried merges keep the pre-layered routing:
         // their sibling dispatch arms (bitnami's `tplvalues.render` string
         // lane) rely on the branch alternatives the rerouting suppresses.
-        .filter(|merge| {
-            !merge.via_binding
-                || merge
-                    .transforms
-                    .iter()
-                    .any(|transform| *transform != helm_schema_core::MergeLayerTransform::Identity)
-        })
+        .filter(|merge| !merge.via_binding() || merge.has_transformed_layer())
         // Positive row conditions the ungated arm drops only widen its
         // firing states within the render's own selection facts (the
         // documented member-local-wildcard widening). A dropped HARD
@@ -561,10 +555,10 @@ pub(super) fn record_contract_use_conjunction(
                     hard_negation_paths(predicate, &mut negated_paths);
                     negated_paths.iter().all(|path| {
                         let path = helm_schema_core::ValuesPath::parse(path);
-                        merge.layers.iter().any(|layer| {
-                            path == *layer
-                                || path.is_descendant_of(layer)
-                                || layer.is_descendant_of(&path)
+                        merge.layers().iter().any(|layer| {
+                            path == layer.path
+                                || path.is_descendant_of(&layer.path)
+                                || layer.path.is_descendant_of(&path)
                         })
                     })
                 })
@@ -585,7 +579,7 @@ pub(super) fn record_contract_use_conjunction(
         let guards = lowerable_guards
             .clone()
             .unwrap_or_else(|| lowerable_conditional_guard_subset(contract_use, predicates));
-        collapse_layered_truthy_gates(guards, &merge.layers)
+        collapse_layered_truthy_gates(guards, merge.layers().iter().map(|layer| &layer.path))
     });
     let lowerable_guards = merge_layered.map_or(lowerable_guards, |merge| {
         let guard = match merge.own_transform() {
@@ -856,12 +850,10 @@ pub(super) fn record_contract_use_conjunction(
             // projections of a layered parent) keep the info — their
             // synthesized member arms are exactly round 18's ungated lanes.
             .map(|mut provider_use| {
-                let keeps_layer_arms = provider_use.merge_layers.as_ref().is_some_and(|merge| {
-                    !merge.via_binding
-                        || merge.transforms.iter().any(|transform| {
-                            *transform != helm_schema_core::MergeLayerTransform::Identity
-                        })
-                });
+                let keeps_layer_arms = provider_use
+                    .merge_layers
+                    .as_ref()
+                    .is_some_and(|merge| !merge.via_binding() || merge.has_transformed_layer());
                 if !keeps_layer_arms {
                     provider_use.merge_layers = None;
                 }

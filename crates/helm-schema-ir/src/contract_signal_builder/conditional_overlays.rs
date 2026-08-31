@@ -71,15 +71,15 @@ pub(super) fn lowerable_conditional_guard_set(
 /// (per-set) layer contributing the non-emptiness of the collection it
 /// iterates — the strongest spelling the document root has for "some
 /// member could supply this".
-pub(super) fn collapse_layered_truthy_gates(
+pub(super) fn collapse_layered_truthy_gates<'a>(
     guards: Vec<ConditionalGuard>,
-    layers: &[helm_schema_core::ValuesPath],
+    layers: impl IntoIterator<Item = &'a helm_schema_core::ValuesPath>,
 ) -> Vec<ConditionalGuard> {
     // Layers arrive member-projected (each ends with the row's shared
     // member suffix); the merge ROOTS are the layers with the longest
     // common dot-suffix stripped.
     let split: Vec<Vec<helm_schema_core::Segment>> = layers
-        .iter()
+        .into_iter()
         .map(|layer| layer.segments().cloned().collect())
         .collect();
     let Some(first) = split.first() else {

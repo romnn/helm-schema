@@ -2,10 +2,10 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{
     ConditionalGuard, ContractPathSchemaEvidence, ContractRequirementImplication,
-    ContractSchemaSignals, ContractValuePathFacts, MergeLayerTransform, MergeLayersUse,
+    ContractSchemaSignals, ContractValuePathFacts, MergeLayer, MergeLayerTransform, MergeLayersUse,
     ProviderSchemaUse, ResourceRef, ValueKind, ValuesPath, YamlPath,
 };
 use indoc::indoc;
@@ -17,8 +17,15 @@ fn hpa_merge_layer_use(
     value_path: &str,
     layers: Vec<String>,
     outer_guards: Vec<ConditionalGuard>,
-) -> ProviderSchemaUse {
-    ProviderSchemaUse {
+) -> eyre::Result<ProviderSchemaUse> {
+    let merge_layers = layers
+        .into_iter()
+        .map(|path| MergeLayer {
+            path: ValuesPath::parse(&path),
+            transform: MergeLayerTransform::Identity,
+        })
+        .collect();
+    Ok(ProviderSchemaUse {
         value_path: ValuesPath::parse(value_path),
         path: YamlPath(vec!["spec".to_string(), "maxReplicas".to_string()]),
         kind: ValueKind::Scalar,
@@ -31,20 +38,14 @@ fn hpa_merge_layer_use(
         source_null_tolerant: false,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
-        merge_layers: Some(MergeLayersUse {
-            transforms: vec![MergeLayerTransform::Identity; layers.len()],
-            layers: layers
-                .into_iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(&path))
-                .collect(),
-            position: 0,
-            via_binding: false,
-        }),
+        merge_layers: Some(
+            MergeLayersUse::new(merge_layers, 0, false).ok_or_eyre("valid merge-layer position")?,
+        ),
         range_key: false,
         nil_omitting: false,
         omitted_members: BTreeMap::new(),
         outer_guards,
-    }
+    })
 }
 
 /// A provider reads the merged value, so an absent preferred leaf selects
@@ -70,7 +71,7 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
                         "fallback.maxReplicaCount".to_string(),
                     ],
                     Vec::new(),
-                )],
+                )?],
                 ..ContractPathSchemaEvidence::default()
             },
         ),
@@ -87,7 +88,7 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
                     vec![ConditionalGuard::Truthy {
                         path: helm_schema_core::ValuesPath::parse("sets.*.enabled"),
                     }],
-                )],
+                )?],
                 ..ContractPathSchemaEvidence::default()
             },
         ),
@@ -130,7 +131,7 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
 #[test]
 fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
     let value_path = "webhook.securePort";
-    let mut use_ = hpa_merge_layer_use(value_path, vec![value_path.to_string()], Vec::new());
+    let mut use_ = hpa_merge_layer_use(value_path, vec![value_path.to_string()], Vec::new())?;
     use_.merge_layers = None;
     use_.source_null_tolerant = true;
     let evidence = BTreeMap::from([(
@@ -174,7 +175,7 @@ fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
 #[test]
 fn range_key_provider_presence_does_not_require_collection() -> eyre::Result<()> {
     let value_path = "extraContainers";
-    let mut use_ = hpa_merge_layer_use(value_path, vec![value_path.to_string()], Vec::new());
+    let mut use_ = hpa_merge_layer_use(value_path, vec![value_path.to_string()], Vec::new())?;
     use_.merge_layers = None;
     use_.range_key = true;
     let evidence = BTreeMap::from([(

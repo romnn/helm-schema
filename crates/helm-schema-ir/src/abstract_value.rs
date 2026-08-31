@@ -557,14 +557,19 @@ impl AbstractValue {
                             _ => helm_schema_core::MergeLayerTransform::Identity,
                         })
                         .collect::<Vec<_>>();
+                    let merge_layers = layer_paths
+                        .iter()
+                        .cloned()
+                        .zip(transforms.iter().copied())
+                        .map(|(path, transform)| helm_schema_core::MergeLayer { path, transform })
+                        .collect::<Vec<_>>();
                     for (position, layer_path) in layer_paths.iter().enumerate() {
                         let entry = out.entry(layer_path.clone()).or_default();
-                        entry.merge_layers = Some(helm_schema_core::MergeLayersUse {
-                            layers: layer_paths.clone(),
+                        entry.merge_layers = helm_schema_core::MergeLayersUse::new(
+                            merge_layers.clone(),
                             position,
-                            transforms: transforms.clone(),
-                            via_binding: true,
-                        });
+                            true,
+                        );
                     }
                 }
             }

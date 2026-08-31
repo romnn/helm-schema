@@ -396,33 +396,37 @@ pub(crate) fn lower_value(
                 .iter()
                 .map(|layer| layer.merge_layer_identity())
                 .collect();
+            let merge_layers = identities.as_ref().map(|layer_paths| {
+                layer_paths
+                    .iter()
+                    .cloned()
+                    .zip(layers.iter().map(|layer| match layer {
+                        AbstractValue::OutputPath(_, meta) if meta.nil_scrubbed => {
+                            helm_schema_core::MergeLayerTransform::NilScrubbed
+                        }
+                        AbstractValue::OutputPath(_, meta) if meta.parsed_map => {
+                            helm_schema_core::MergeLayerTransform::ParsedMap
+                        }
+                        _ => helm_schema_core::MergeLayerTransform::Identity,
+                    }))
+                    .map(|(path, transform)| helm_schema_core::MergeLayer { path, transform })
+                    .collect::<Vec<_>>()
+            });
             let mut out = Guarded::empty();
             for (position, layer) in layers.iter().enumerate() {
                 let mut lowered = lower_value(layer, kind, scope);
-                if let Some(layer_paths) = &identities {
+                if let (Some(layer_paths), Some(merge_layers)) = (&identities, &merge_layers) {
                     for (_, fragment) in &mut lowered.arms {
                         if let AbstractFragment::Splice(splice) = fragment
                             && layer_paths
                                 .get(position)
                                 .is_some_and(|path| splice.values_path == *path)
                         {
-                            splice.meta.merge_layers = Some(helm_schema_core::MergeLayersUse {
-                                layers: layer_paths.clone(),
+                            splice.meta.merge_layers = helm_schema_core::MergeLayersUse::new(
+                                merge_layers.clone(),
                                 position,
-                                transforms: layers
-                                    .iter()
-                                    .map(|layer| match layer {
-                                        AbstractValue::OutputPath(_, meta) if meta.nil_scrubbed => {
-                                            helm_schema_core::MergeLayerTransform::NilScrubbed
-                                        }
-                                        AbstractValue::OutputPath(_, meta) if meta.parsed_map => {
-                                            helm_schema_core::MergeLayerTransform::ParsedMap
-                                        }
-                                        _ => helm_schema_core::MergeLayerTransform::Identity,
-                                    })
-                                    .collect(),
-                                via_binding: false,
-                            });
+                                false,
+                            );
                         }
                     }
                 }

@@ -4,7 +4,7 @@ use crate::{
 };
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{MergeLayerTransform, MergeLayersUse};
+use helm_schema_core::{MergeLayer, MergeLayerTransform, MergeLayersUse};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -138,7 +138,7 @@ fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
     clippy::too_many_lines,
     reason = "the single scenario compares path rewriting across every correlated contract field"
 )]
-fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
+fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() -> eyre::Result<()> {
     let mut contract = ContractIr::default();
     let mut contract_use = ContractUse::new(
         helm_schema_core::ValuesPath::parse("serviceAccount.name"),
@@ -168,18 +168,23 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
         ],
         None,
     );
-    contract_use.merge_layers = Some(helm_schema_core::MergeLayersUse {
-        layers: vec![
-            conditional_path("serviceAccount.name"),
-            conditional_path("global.serviceAccount.name"),
-        ],
-        position: 0,
-        transforms: vec![
-            helm_schema_core::MergeLayerTransform::ParsedMap,
-            helm_schema_core::MergeLayerTransform::Identity,
-        ],
-        via_binding: true,
-    });
+    contract_use.merge_layers = Some(
+        MergeLayersUse::new(
+            vec![
+                MergeLayer {
+                    path: conditional_path("serviceAccount.name"),
+                    transform: MergeLayerTransform::ParsedMap,
+                },
+                MergeLayer {
+                    path: conditional_path("global.serviceAccount.name"),
+                    transform: MergeLayerTransform::Identity,
+                },
+            ],
+            0,
+            true,
+        )
+        .ok_or_eyre("valid merge-layer position")?,
+    );
     contract_use.omitted_members.insert(
         "automountServiceAccountToken".to_string(),
         vec![Guard::Truthy {
@@ -206,7 +211,7 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
 
     let value_uses = contract.finalize();
     let value_uses = value_uses.uses();
-    let value_use = value_uses.first().expect("mapped value use");
+    let value_use = value_uses.first().ok_or_eyre("mapped value use")?;
 
     sim_assert_eq!(
         have: value_use.source_expr,
@@ -245,13 +250,18 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
         have: value_use
             .merge_layers
             .as_ref()
-            .map(|merge| merge.layers.as_slice()),
+            .map(|merge| {
+                merge
+                    .layers()
+                    .iter()
+                    .map(|layer| layer.path.clone())
+                    .collect::<Vec<_>>()
+            }),
         want: Some(
-            [
+            vec![
                 conditional_path("subchart.serviceAccount.name"),
                 conditional_path("global.serviceAccount.name"),
             ]
-            .as_slice()
         )
     );
     sim_assert_eq!(
@@ -266,6 +276,7 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
             .as_slice()
         )
     );
+    Ok(())
 }
 
 #[test]
@@ -1048,7 +1059,7 @@ fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
 }
 
 #[test]
-fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
+fn scoped_string_requirement_projects_recursive_merge_fallback_rows() -> eyre::Result<()> {
     let mut contract = ContractIr::default();
     let mut row = ContractUse::new(
         helm_schema_core::ValuesPath::parse("workers"),
@@ -1059,16 +1070,24 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     );
-    row.merge_layers = Some(MergeLayersUse {
-        layers: vec![
-            conditional_path("workers.celery.sets.*.query"),
-            conditional_path("workers.celery.query"),
-            conditional_path("workers"),
-        ],
-        position: 2,
-        transforms: vec![MergeLayerTransform::Identity; 3],
-        via_binding: false,
-    });
+    row.merge_layers = Some(
+        MergeLayersUse::new(
+            [
+                "workers.celery.sets.*.query",
+                "workers.celery.query",
+                "workers",
+            ]
+            .into_iter()
+            .map(|path| MergeLayer {
+                path: conditional_path(path),
+                transform: MergeLayerTransform::Identity,
+            })
+            .collect(),
+            2,
+            false,
+        )
+        .ok_or_eyre("valid merge-layer position")?,
+    );
     contract.push(row);
     absorb_captures(
         &mut contract,
@@ -1102,10 +1121,11 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() {
             .map(|row| (row.source_expr.clone(), row.kind)),
         want: Some((conditional_path("workers.query"), ValueKind::YamlSerialized))
     );
+    Ok(())
 }
 
 #[test]
-fn unrelated_string_requirement_keeps_recursive_merge_source() {
+fn unrelated_string_requirement_keeps_recursive_merge_source() -> eyre::Result<()> {
     let mut contract = ContractIr::default();
     let mut row = ContractUse::new(
         helm_schema_core::ValuesPath::parse("ports"),
@@ -1116,16 +1136,20 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() {
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     );
-    row.merge_layers = Some(MergeLayersUse {
-        layers: vec![
-            conditional_path("ports.overrides.*.port"),
-            conditional_path("ports.port"),
-            conditional_path("ports"),
-        ],
-        position: 2,
-        transforms: vec![MergeLayerTransform::Identity; 3],
-        via_binding: false,
-    });
+    row.merge_layers = Some(
+        MergeLayersUse::new(
+            ["ports.overrides.*.port", "ports.port", "ports"]
+                .into_iter()
+                .map(|path| MergeLayer {
+                    path: conditional_path(path),
+                    transform: MergeLayerTransform::Identity,
+                })
+                .collect(),
+            2,
+            false,
+        )
+        .ok_or_eyre("valid merge-layer position")?,
+    );
     contract.push(row);
     absorb_captures(
         &mut contract,
@@ -1147,10 +1171,11 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() {
         have: finalized.uses().first().map(|row| row.source_expr.clone()),
         want: Some(conditional_path("ports"))
     );
+    Ok(())
 }
 
 #[test]
-fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
+fn dormant_string_requirement_keeps_recursive_merge_fallback_source() -> eyre::Result<()> {
     let mut contract = ContractIr::default();
     let mut row = ContractUse::new(
         helm_schema_core::ValuesPath::parse("workers"),
@@ -1161,16 +1186,24 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
         }],
         Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
     );
-    row.merge_layers = Some(MergeLayersUse {
-        layers: vec![
-            conditional_path("workers.celery.sets.*.query"),
-            conditional_path("workers.celery.query"),
-            conditional_path("workers"),
-        ],
-        position: 2,
-        transforms: vec![MergeLayerTransform::Identity; 3],
-        via_binding: false,
-    });
+    row.merge_layers = Some(
+        MergeLayersUse::new(
+            [
+                "workers.celery.sets.*.query",
+                "workers.celery.query",
+                "workers",
+            ]
+            .into_iter()
+            .map(|path| MergeLayer {
+                path: conditional_path(path),
+                transform: MergeLayerTransform::Identity,
+            })
+            .collect(),
+            2,
+            false,
+        )
+        .ok_or_eyre("valid merge-layer position")?,
+    );
     contract.push(row);
     absorb_captures(
         &mut contract,
@@ -1190,6 +1223,7 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() {
         have: finalized.uses().first().map(|row| row.source_expr.clone()),
         want: Some(conditional_path("workers"))
     );
+    Ok(())
 }
 
 #[test]

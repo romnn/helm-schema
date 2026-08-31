@@ -5703,7 +5703,7 @@
 
 ## B3.2 — centralize self-guard classification
 
-- Status: in progress; commit pending.
+- Status: landed in `60cefe48` (`refactor(core): centralize self-guard classification`).
 - Contract: representation-only. Make `ConditionalGuard` the single owner of whether a guard is
   self-truthy or self-presence for a target path. Replace the builder, requirement, and generator
   copies with projections of the core methods while preserving each consumer's operation-specific
@@ -5821,3 +5821,37 @@
 
 - Measured production LOC delta: -4 (64,797 to 64,793). The delta deletes parallel consumer
   classifiers after adding the core owner and its public-surface proof; no LOC promise applies.
+
+## MergeLayersUse — validate layered-use identity
+
+- Status: in progress; commit pending.
+- Contract: representation-only. Replace the parallel `layers` / `transforms` vectors with ordered
+  `MergeLayer { path, transform }` entries, validate the own-layer position at construction and
+  deserialization, and make the carrier's fields private. Delete the shadow-prefix clamp and the
+  missing-transform `Identity` fallback. Preserve legacy serialization and every merge selection,
+  shadow, binding, and path-remapping behavior byte-for-byte.
+- Acceptance baseline: `60cefe48` (B3.2).
+- Baseline production Rust LOC: 64,793.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Every production construction site already derives `position` from enumeration over the same
+    flattened layer list; expected invalid-state count is zero.
+  - `layers.len() == transforms.len()` and `position < layers.len()` become construction and serde
+    invariants. Invalid public or wire inputs are rejected instead of clamped, defaulted, or partly
+    interpreted.
+  - Ordered precedence remains unchanged: `shadowed_by` yields exactly the entries before the own
+    position; `own_transform` is the transform paired with the own path; later layers remain lower
+    precedence.
+  - Binding-carried identity-only merges retain ordinary routing. Any structurally transformed
+    layer retains layered routing, and helper-summary propagation still marks the carrier as
+    binding-owned.
+  - Values-path remapping visits every paired layer path once without changing its transform or
+    position.
+  - Any observed invalid production state makes this round behavior-bearing and stops it for
+    individual adjudication. Candidate-accepts/Helm-aborts allowance and mandatory coverage drops
+    remain zero.
+- Public/wire decision: intentional public Rust API narrowing. Direct `MergeLayersUse` field
+  construction and mutation are replaced by a validating constructor and read-only accessors;
+  `MergeLayer` is the public paired entry type. The existing serialized object keys, field order,
+  values, and accepted valid documents remain byte-identical; invalid parallel-vector documents
+  become explicit deserialization errors.

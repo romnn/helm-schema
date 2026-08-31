@@ -414,10 +414,11 @@ fn lower_string_requirement_merge_sources(
             .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         let specific_layers = merge
-            .layers
+            .layers()
             .iter()
             .map(|layer| {
                 layer
+                    .path
                     .segments()
                     .map(helm_schema_core::Segment::encode_component)
                     .collect::<Vec<_>>()

@@ -330,39 +330,28 @@ pub(super) fn append_merge_shadow_arms(
                     }
                 };
                 let mut guards = vec![own_guard];
-                guards.extend(
-                    merge
-                        .shadowed_by()
-                        .iter()
-                        .enumerate()
-                        .map(|(position, earlier)| {
-                            let earlier_live = match merge
-                                .transforms
-                                .get(position)
-                                .copied()
-                                .unwrap_or(helm_schema_core::MergeLayerTransform::Identity)
-                            {
-                                helm_schema_core::MergeLayerTransform::ParsedMap => {
-                                    ConditionalGuard::AllOf(vec![
-                                        ConditionalGuard::TypeIs {
-                                            path: earlier.clone(),
-                                            schema_type: "object".to_string(),
-                                        },
-                                        ConditionalGuard::Truthy {
-                                            path: earlier.clone(),
-                                        },
-                                    ])
-                                }
-                                helm_schema_core::MergeLayerTransform::Identity
-                                | helm_schema_core::MergeLayerTransform::NilScrubbed => {
-                                    ConditionalGuard::Truthy {
-                                        path: earlier.clone(),
-                                    }
-                                }
-                            };
-                            ConditionalGuard::Not(Box::new(earlier_live))
-                        }),
-                );
+                guards.extend(merge.shadowed_by().map(|earlier| {
+                    let earlier_live = match earlier.transform {
+                        helm_schema_core::MergeLayerTransform::ParsedMap => {
+                            ConditionalGuard::AllOf(vec![
+                                ConditionalGuard::TypeIs {
+                                    path: earlier.path.clone(),
+                                    schema_type: "object".to_string(),
+                                },
+                                ConditionalGuard::Truthy {
+                                    path: earlier.path.clone(),
+                                },
+                            ])
+                        }
+                        helm_schema_core::MergeLayerTransform::Identity
+                        | helm_schema_core::MergeLayerTransform::NilScrubbed => {
+                            ConditionalGuard::Truthy {
+                                path: earlier.path.clone(),
+                            }
+                        }
+                    };
+                    ConditionalGuard::Not(Box::new(earlier_live))
+                }));
                 guards.extend(provider_use.outer_guards.iter().cloned());
                 guards.sort();
                 guards.dedup();
@@ -385,7 +374,7 @@ pub(super) fn append_merge_shadow_arms(
                     false,
                 ));
             }
-            if merge.position == 0 {
+            if merge.position() == 0 {
                 continue;
             }
             let Some(properties) = payload
@@ -408,10 +397,9 @@ pub(super) fn append_merge_shadow_arms(
                 }
                 let mut guards: Vec<ConditionalGuard> = merge
                     .shadowed_by()
-                    .iter()
                     .map(|earlier| {
                         ConditionalGuard::Not(Box::new(ConditionalGuard::HasKey {
-                            path: earlier.clone(),
+                            path: earlier.path.clone(),
                             key: member.clone(),
                         }))
                     })

@@ -29,7 +29,9 @@ pub use contract_signals::{
     ContractValuePathFacts, FailValueRequirement, GuardedValuesDefaultSource, MetadataFieldKind,
     QuotedScalarStyle, RangeDomain, ValuesDefaultSource, ValuesProgramWrapper,
 };
-pub use contract_use::{ContractUse, MergeLayerTransform, MergeLayersUse, SplitSegmentUse};
+pub use contract_use::{
+    ContractUse, MergeLayer, MergeLayerTransform, MergeLayersUse, SplitSegmentUse,
+};
 pub use guard::{Guard, GuardValue};
 pub use guard_dnf::GuardDnf;
 pub use output_path::{

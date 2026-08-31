@@ -1,8 +1,9 @@
 //! Public semantic-contract parsing and path utility regressions.
 
 use helm_schema_core::{
-    ApiPresenceQuery, ConditionalGuard, ContractUse, ContractValuePathFacts, Guard, ValueKind,
-    ValuesPath, YamlPath, join_value_path, split_value_path,
+    ApiPresenceQuery, ConditionalGuard, ContractUse, ContractValuePathFacts, Guard, MergeLayer,
+    MergeLayerTransform, MergeLayersUse, ValueKind, ValuesPath, YamlPath, join_value_path,
+    split_value_path,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -68,6 +69,54 @@ fn conditional_guards_own_self_scope_classification() {
         want: (true, true, true, false),
     );
     sim_assert_eq!(have: opaque_member_presence, want: vec![true; 3]);
+}
+
+#[test]
+fn merge_layers_validate_position_and_preserve_legacy_wire_shape() {
+    let layers = vec![
+        MergeLayer {
+            path: ValuesPath::parse("preferred"),
+            transform: MergeLayerTransform::ParsedMap,
+        },
+        MergeLayer {
+            path: ValuesPath::parse("fallback"),
+            transform: MergeLayerTransform::Identity,
+        },
+    ];
+    let valid = MergeLayersUse::new(layers.clone(), 1, true);
+    let wire = valid
+        .as_ref()
+        .and_then(|merge| serde_json::to_string(merge).ok());
+    let round_trip = wire
+        .as_deref()
+        .and_then(|wire| serde_json::from_str::<MergeLayersUse>(wire).ok());
+
+    sim_assert_eq!(
+        have: wire,
+        want: Some(
+            r#"{"layers":["preferred","fallback"],"position":1,"transforms":["ParsedMap","Identity"],"via_binding":true}"#
+                .to_string()
+        )
+    );
+    sim_assert_eq!(have: round_trip, want: valid);
+    sim_assert_eq!(
+        have: MergeLayersUse::new(layers, 2, false).is_none(),
+        want: true
+    );
+    sim_assert_eq!(
+        have: serde_json::from_str::<MergeLayersUse>(
+            r#"{"layers":["a"],"position":0,"transforms":[],"via_binding":false}"#
+        )
+        .is_err(),
+        want: true
+    );
+    sim_assert_eq!(
+        have: serde_json::from_str::<MergeLayersUse>(
+            r#"{"layers":["a"],"position":1,"transforms":["Identity"],"via_binding":false}"#
+        )
+        .is_err(),
+        want: true
+    );
 }
 
 #[test]

@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use serde::ser::SerializeStruct as _;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{ContractProvenance, Guard, GuardDnf, ResourceRef, ValueKind, ValuesPath, YamlPath};
 
@@ -24,18 +25,24 @@ pub enum MergeLayerTransform {
     ParsedMap,
 }
 
+/// One ordered merge input paired with the transform applied before merging.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct MergeLayer {
+    /// Values path supplying this layer.
+    pub path: ValuesPath,
+    /// Structural transform applied before the merge reads the layer.
+    pub transform: MergeLayerTransform,
+}
+
 /// The value is one layer of an ordered Sprig `merge`: a key of an earlier
 /// layer shadows the same key of every later layer at the rendered sink, so
 /// a later layer's member reaches the sink only where every earlier layer
 /// lacks that member.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MergeLayersUse {
-    /// Every layer's values path, highest precedence first.
-    pub layers: Vec<ValuesPath>,
-    /// This use's own index within `layers`.
-    pub position: usize,
-    /// Per-layer transforms, parallel to `layers`.
-    pub transforms: Vec<MergeLayerTransform>,
+    layers: Vec<MergeLayer>,
+    position: usize,
+    own_transform: MergeLayerTransform,
     /// Whether the layer facts came from a local binding's metadata rather
     /// than the render site's own layered value.
     ///
@@ -43,25 +50,131 @@ pub struct MergeLayersUse {
     /// because sibling dispatch arms may contribute other input shapes.
     /// Structurally transformed bindings retain layered routing so each
     /// transform's selection semantics remain visible at emission.
-    pub via_binding: bool,
+    via_binding: bool,
 }
 
 impl MergeLayersUse {
-    /// The higher-precedence layer paths whose keys shadow this layer's.
+    /// Creates a layered use when `position` selects an entry in `layers`.
     #[must_use]
-    pub fn shadowed_by(&self) -> &[ValuesPath] {
+    pub fn new(layers: Vec<MergeLayer>, position: usize, via_binding: bool) -> Option<Self> {
+        let own_transform = layers
+            .iter()
+            .enumerate()
+            .find_map(|(index, layer)| (index == position).then_some(layer.transform))?;
+        Some(Self {
+            layers,
+            position,
+            own_transform,
+            via_binding,
+        })
+    }
+
+    /// Returns every layer in precedence order.
+    #[must_use]
+    pub fn layers(&self) -> &[MergeLayer] {
+        &self.layers
+    }
+
+    /// Returns this use's checked index in [`Self::layers`].
+    #[must_use]
+    pub fn position(&self) -> usize {
+        self.position
+    }
+
+    /// Reports whether the own layer has `path`.
+    #[must_use]
+    pub fn own_path_is(&self, path: &ValuesPath) -> bool {
         self.layers
-            .get(..self.position.min(self.layers.len()))
-            .unwrap_or_default()
+            .iter()
+            .enumerate()
+            .any(|(index, layer)| index == self.position && &layer.path == path)
+    }
+
+    /// Returns the higher-precedence layers whose keys shadow this layer's.
+    #[must_use]
+    pub fn shadowed_by(&self) -> impl ExactSizeIterator<Item = &MergeLayer> {
+        self.layers.iter().take(self.position)
     }
 
     /// Returns the transform applied to this use's layer.
     #[must_use]
     pub fn own_transform(&self) -> MergeLayerTransform {
-        self.transforms
-            .get(self.position)
-            .copied()
-            .unwrap_or(MergeLayerTransform::Identity)
+        self.own_transform
+    }
+
+    /// Reports whether any layer is structurally transformed.
+    #[must_use]
+    pub fn has_transformed_layer(&self) -> bool {
+        self.layers
+            .iter()
+            .any(|layer| layer.transform != MergeLayerTransform::Identity)
+    }
+
+    /// Reports whether these facts crossed a local binding boundary.
+    #[must_use]
+    pub fn via_binding(&self) -> bool {
+        self.via_binding
+    }
+
+    /// Marks these layer facts as crossing a local binding boundary.
+    #[must_use]
+    pub fn into_via_binding(mut self) -> Self {
+        self.via_binding = true;
+        self
+    }
+}
+
+impl Serialize for MergeLayersUse {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let paths = self
+            .layers
+            .iter()
+            .map(|layer| &layer.path)
+            .collect::<Vec<_>>();
+        let transforms = self
+            .layers
+            .iter()
+            .map(|layer| layer.transform)
+            .collect::<Vec<_>>();
+        let mut state = serializer.serialize_struct("MergeLayersUse", 4)?;
+        state.serialize_field("layers", &paths)?;
+        state.serialize_field("position", &self.position)?;
+        state.serialize_field("transforms", &transforms)?;
+        state.serialize_field("via_binding", &self.via_binding)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for MergeLayersUse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct WireMergeLayersUse {
+            layers: Vec<ValuesPath>,
+            position: usize,
+            transforms: Vec<MergeLayerTransform>,
+            via_binding: bool,
+        }
+
+        let wire = WireMergeLayersUse::deserialize(deserializer)?;
+        if wire.layers.len() != wire.transforms.len() {
+            return Err(serde::de::Error::custom(
+                "merge layer paths and transforms must have equal lengths",
+            ));
+        }
+        let layers = wire
+            .layers
+            .into_iter()
+            .zip(wire.transforms)
+            .map(|(path, transform)| MergeLayer { path, transform })
+            .collect();
+        Self::new(layers, wire.position, wire.via_binding)
+            .ok_or_else(|| serde::de::Error::custom("merge layer position is out of bounds"))
     }
 }
 
@@ -231,7 +344,7 @@ impl ContractUse {
         condition.map_value_paths(map);
         if let Some(merge) = merge_layers {
             for layer in &mut merge.layers {
-                *layer = map(layer.clone());
+                layer.path = map(layer.path.clone());
             }
         }
         for retain_guards in omitted_members.values_mut() {
