@@ -124,3 +124,125 @@ Selector expression on a function call
     (selector_expression
         (identifier)
         (field_identifier)))
+
+====================================
+Unspaced pipe after dot argument splits the enclosing command
+====================================
+{{ toYaml .| nindent 8 }}
+---
+(template
+    (chained_pipeline
+        (function_call
+            (identifier)
+            (argument_list
+                (dot)))
+        (function_call
+            (identifier)
+            (argument_list
+                (int_literal)))))
+
+====================================
+Unspaced pipe after selector argument splits the enclosing command
+====================================
+{{ toYaml .Values.podLabels|nindent 8 }}
+---
+(template
+    (chained_pipeline
+        (function_call
+            (identifier)
+            (argument_list
+                (selector_expression
+                    (field
+                        (identifier))
+                    (field_identifier))))
+        (function_call
+            (identifier)
+            (argument_list
+                (int_literal)))))
+
+====================================
+Unspaced pipe after parenthesized argument splits the enclosing command
+====================================
+{{ print (include "a" .)| sha256sum }}
+---
+(template
+    (chained_pipeline
+        (function_call
+            (identifier)
+            (argument_list
+                (parenthesized_pipeline
+                    (function_call
+                        (identifier)
+                        (argument_list
+                            (interpreted_string_literal)
+                            (dot))))))
+        (function_call
+            (identifier))))
+
+====================================
+Unspaced pipe between identifier arguments splits the enclosing command
+====================================
+{{ f a|b c }}
+---
+(template
+    (chained_pipeline
+        (function_call
+            (identifier)
+            (argument_list
+                (function_call
+                    (identifier))))
+        (function_call
+            (identifier)
+            (argument_list
+                (function_call
+                    (identifier))))))
+
+====================================
+Tab-separated arguments stay flat
+====================================
+{{ eq .Values.mode	"debug" }}
+---
+(template
+    (function_call
+        (identifier)
+        (argument_list
+            (selector_expression
+                (field
+                    (identifier))
+                (field_identifier))
+            (interpreted_string_literal))))
+
+====================================
+Newline-separated arguments stay flat
+====================================
+{{ dict "a" 1
+"b" 2 }}
+---
+(template
+    (function_call
+        (identifier)
+        (argument_list
+            (interpreted_string_literal)
+            (int_literal)
+            (interpreted_string_literal)
+            (int_literal))))
+
+====================================
+Trailing pipe before the right delimiter is tolerated
+====================================
+{{ toYaml .Values.annotations | nindent 4 | }}
+---
+(template
+    (chained_pipeline
+        (chained_pipeline
+            (function_call
+                (identifier)
+                (argument_list
+                    (selector_expression
+                        (field
+                            (identifier))
+                        (field_identifier))))
+            (function_call
+                (identifier)
+                (argument_list
+                    (int_literal))))))

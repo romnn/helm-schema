@@ -77,14 +77,18 @@ pub enum TemplateExpr {
     Parenthesized(Box<TemplateExpr>),
     /// `$x := expr`.
     VariableDefinition {
-        /// Variable name without the leading dollar sign.
+        /// Variable name as written, INCLUDING the leading dollar sign
+        /// (`"$x"`). Note the asymmetry with [`TemplateExpr::Variable`],
+        /// which carries the bare name; consumers normalize with
+        /// `trim_start_matches('$')`.
         name: String,
         /// Expression assigned by the definition.
         value: Box<TemplateExpr>,
     },
     /// `$x = expr`.
     Assignment {
-        /// Variable name without the leading dollar sign.
+        /// Variable name as written, INCLUDING the leading dollar sign
+        /// (`"$x"`), like [`TemplateExpr::VariableDefinition`].
         name: String,
         /// Expression assigned to the existing variable.
         value: Box<TemplateExpr>,
@@ -311,28 +315,50 @@ fn collect_from_node(node: Node<'_>, src: &str, out: &mut Vec<TemplateExpr>) {
 /// Anything we don't recognise becomes [`TemplateExpr::Unknown`] with
 /// the node's source text — never panics, never drops information.
 fn convert_pipeline(node: Node<'_>, src: &str) -> TemplateExpr {
+    // A recovery tree inside an expression means the node's shape does not
+    // faithfully describe the source (tree-sitter may have skipped bytes),
+    // and converting the survivors can fabricate a WRONG values path —
+    // `.Values.١key` (a Go-valid Unicode-digit-initial field this grammar
+    // does not lex) recovered into `Field(["Values","key"])`. Abstain with
+    // the raw text instead: no signal beats a wrong one. String literals
+    // are exempt: their decoder already preserves undecodable escapes
+    // verbatim, which keeps the value typed as a string.
+    if node.has_error()
+        && !matches!(
+            node.kind(),
+            "interpreted_string_literal" | "raw_string_literal"
+        )
+    {
+        return TemplateExpr::Unknown(node_text(node, src).to_string());
+    }
     match node.kind() {
-        "function_call" => call_with_unfolded_pipe(
-            field_text(node, "function", src).to_string(),
-            convert_args(node, src),
-        ),
+        "function_call" => TemplateExpr::Call {
+            function: field_text(node, "function", src).to_string(),
+            args: convert_args(node, src),
+        },
         "method_call" => {
             // `(.x.y).Method arg1 ...` — model as a Call where the
             // function "name" is the selector text (with leading dots).
             // Extractors that care about specific functions check bare
             // identifiers like `"include"` / `"default"`, so a method
             // call name like `".x.y.Method"` never collides.
-            call_with_unfolded_pipe(
-                field_text(node, "method", src).to_string(),
-                convert_args(node, src),
-            )
+            TemplateExpr::Call {
+                function: field_text(node, "method", src).to_string(),
+                args: convert_args(node, src),
+            }
         }
         "chained_pipeline" => {
             // The grammar nests `chained_pipeline` left-associatively:
             // `a | b | c` → `chained_pipeline(chained_pipeline(a, b), c)`.
-            // Flatten back into a linear list for easier matching.
+            // Flatten back into a linear list for easier matching. A
+            // trailing pipe (`{{ x | }}`, tolerated by Go) contributes no
+            // stage, so a single survivor collapses to the stage itself —
+            // exactly what the pipe-less spelling parses to.
             let mut stages: Vec<TemplateExpr> = Vec::new();
             collect_pipeline_stages(node, src, &mut stages);
+            if stages.len() == 1 {
+                return stages.remove(0);
+            }
             TemplateExpr::Pipeline(stages)
         }
         "parenthesized_pipeline" => {
@@ -347,6 +373,13 @@ fn convert_pipeline(node: Node<'_>, src: &str) -> TemplateExpr {
             TemplateExpr::Parenthesized(Box::new(inner))
         }
         "selector_expression" => convert_selector(node, src),
+        // A bare identifier only reaches this converter as a selector
+        // operand (`now.Year`): Go evaluates it as a niladic function whose
+        // result the selector fields index into.
+        "identifier" => TemplateExpr::Call {
+            function: node_text(node, src).to_string(),
+            args: Vec::new(),
+        },
         "field" => TemplateExpr::Field(vec![field_text(node, "name", src).to_string()]),
         "dot" => TemplateExpr::Field(Vec::new()),
         "variable" => TemplateExpr::Variable(field_text(node, "name", src).to_string()),
@@ -442,30 +475,6 @@ fn convert_value_field(node: Node<'_>, src: &str) -> TemplateExpr {
     )
 }
 
-/// Rebuild a call whose LAST argument absorbed an un-spaced pipe.
-///
-/// Go's tokenizer emits `)` and `|` as separate tokens regardless of
-/// spacing, and an argument-position pipeline is only legal when
-/// parenthesized — a pipe always splits the ENCLOSING command. The
-/// tree-sitter grammar instead attaches `(include "x" .)| sha256sum`'s
-/// pipe to the last argument, so a BARE pipeline argument is always that
-/// parsing error: its first stage is the real argument and the remaining
-/// stages pipe the whole call (redis-ha's checksum annotation spells its
-/// digest exactly this way).
-fn call_with_unfolded_pipe(function: String, mut args: Vec<TemplateExpr>) -> TemplateExpr {
-    if matches!(args.last(), Some(TemplateExpr::Pipeline(stages)) if stages.len() >= 2)
-        && let Some(TemplateExpr::Pipeline(mut stages)) = args.pop()
-    {
-        let first = stages.remove(0);
-        args.push(first);
-        let mut out = Vec::with_capacity(stages.len() + 1);
-        out.push(TemplateExpr::Call { function, args });
-        out.append(&mut stages);
-        return TemplateExpr::Pipeline(out);
-    }
-    TemplateExpr::Call { function, args }
-}
-
 fn convert_args(node: Node<'_>, src: &str) -> Vec<TemplateExpr> {
     let Some(list) = node.child_by_field_name("arguments") else {
         return Vec::new();
@@ -496,13 +505,7 @@ fn collect_pipeline_stages(node: Node<'_>, src: &str, out: &mut Vec<TemplateExpr
         if ch.kind() == "chained_pipeline" {
             collect_pipeline_stages(ch, src, out);
         } else {
-            match convert_pipeline(ch, src) {
-                // A stage that unfolded an un-spaced argument pipe (see
-                // `call_with_unfolded_pipe`) is itself a pipeline; Go
-                // reads the whole chain as one flat stage list.
-                TemplateExpr::Pipeline(stages) => out.extend(stages),
-                stage => out.push(stage),
-            }
+            out.push(convert_pipeline(ch, src));
         }
     }
 }
@@ -510,18 +513,23 @@ fn collect_pipeline_stages(node: Node<'_>, src: &str, out: &mut Vec<TemplateExpr
 /// Decode a Go `interpreted_string_literal` (text including the
 /// surrounding `"`s) into its runtime string value. Handles the
 /// escape forms tree-sitter-go-template's grammar models:
-///   - single-char: `\n`, `\r`, `\t`, `\\`, `\"`, `\'`, `\0`, `\a`,
+///   - single-char: `\n`, `\r`, `\t`, `\\`, `\"`, `\'`, `\a`,
 ///     `\b`, `\f`, `\v`
-///   - `\xHH` (exactly two hex digits, byte value)
+///   - `\xHH` (exactly two hex digits, an ASCII byte value; like the
+///     octal form, a non-ASCII byte is one fragment of a UTF-8 sequence
+///     Go assembles byte-wise and is preserved verbatim)
+///   - `\NNN` (exactly three octal digits, same ASCII-byte rule)
 ///   - `\uHHHH` (exactly four hex digits, BMP code point)
 ///   - `\UHHHHHHHH` (exactly eight hex digits, any code point)
 ///
 /// For any malformed escape (wrong digit count, non-hex char, surrogate
 /// code point) the original `\X…` bytes are preserved verbatim — we
-/// never produce silently-wrong output. Octal escapes (`\NNN`) and
-/// other unknown one-char escapes are also preserved as-is. That's
-/// not technically Go's behaviour but it's the safe choice for a
-/// static-analysis tool: produce *no* signal rather than a wrong one.
+/// never produce silently-wrong output. Octal escapes (`\NNN`, exactly
+/// three octal digits) decode when the byte value is ASCII; a non-ASCII
+/// octal byte is one fragment of a UTF-8 sequence Go assembles at the
+/// byte level, which a `char`-based decoder cannot represent alone, so
+/// it is preserved verbatim (abstain rather than guess). Other unknown
+/// one-char escapes are also preserved as-is.
 fn decode_interpreted_string(raw: &str) -> String {
     let inner = raw
         .strip_prefix('"')
@@ -547,7 +555,6 @@ fn decode_interpreted_string(raw: &str) -> String {
             '\\' => out.push('\\'),
             '"' => out.push('"'),
             '\'' => out.push('\''),
-            '0' => out.push('\0'),
             'a' => out.push('\x07'),
             'b' => out.push('\x08'),
             'f' => out.push('\x0c'),
@@ -555,6 +562,7 @@ fn decode_interpreted_string(raw: &str) -> String {
             'x' => decode_hex_escape(&mut chars, 2, 'x', &mut out),
             'u' => decode_hex_escape(&mut chars, 4, 'u', &mut out),
             'U' => decode_hex_escape(&mut chars, 8, 'U', &mut out),
+            '0'..='7' => decode_octal_escape(&mut chars, next, &mut out),
             other => {
                 // Unknown escape — preserve the backslash and the char.
                 out.push('\\');
@@ -563,6 +571,29 @@ fn decode_interpreted_string(raw: &str) -> String {
         }
     }
     out
+}
+
+/// Decode a Go octal escape: `first` plus exactly two more octal digits
+/// name a byte value. An ASCII byte decodes directly; a non-ASCII byte
+/// is one fragment of a UTF-8 sequence Go assembles byte-wise, so it is
+/// preserved verbatim, as is any malformed digit run.
+fn decode_octal_escape(chars: &mut std::str::Chars<'_>, first: char, out: &mut String) {
+    let rest = chars.as_str();
+    let mut tail = rest.chars();
+    let (second, third) = (tail.next(), tail.next());
+    if let (Some(second @ '0'..='7'), Some(third @ '0'..='7')) = (second, third) {
+        let value = (first as u32 - '0' as u32) * 64
+            + (second as u32 - '0' as u32) * 8
+            + (third as u32 - '0' as u32);
+        if value < 0x80 {
+            out.push(char::from_u32(value).unwrap_or('\u{fffd}'));
+            chars.next();
+            chars.next();
+            return;
+        }
+    }
+    out.push('\\');
+    out.push(first);
 }
 
 /// Consume exactly `width` hex digits from `chars` and append the
@@ -586,6 +617,13 @@ fn decode_hex_escape(
     let valid = buf.len() == width && buf.chars().all(|c| c.is_ascii_hexdigit());
     if valid
         && let Ok(code) = u32::from_str_radix(&buf, 16)
+        // `\xHH` names a raw BYTE in Go, not a code point: a non-ASCII
+        // byte is one fragment of a UTF-8 sequence assembled byte-wise
+        // (`"caf\xc3\xa9"` is "café"), which a char-based decoder cannot
+        // represent alone — decoding it as U+00HH would fabricate a
+        // different string. Preserve it verbatim like the octal form.
+        // `\u`/`\U` name code points and decode for any value.
+        && (marker != 'x' || code < 0x80)
         && let Some(ch) = char::from_u32(code)
     {
         out.push(ch);
@@ -620,13 +658,83 @@ fn parse_int_literal(raw: &str) -> Option<i64> {
     } else {
         (10, cleaned.as_str())
     };
-    let value = i64::from_str_radix(digits, radix).ok()?;
-    Some(sign * value)
+    // Parse the magnitude wider than i64 so i64::MIN, whose magnitude
+    // does not fit a positive i64, still decodes.
+    let value = i128::from_str_radix(digits, radix).ok()?;
+    i64::try_from(i128::from(sign) * value).ok()
 }
 
 fn parse_float_literal(raw: &str) -> Option<f64> {
     let cleaned: String = raw.chars().filter(|c| *c != '_').collect();
-    cleaned.parse::<f64>().ok()
+    let (sign, rest) = match cleaned.as_bytes().first() {
+        Some(b'+') => (1.0, &cleaned[1..]),
+        Some(b'-') => (-1.0, &cleaned[1..]),
+        _ => (1.0, cleaned.as_str()),
+    };
+    let value = if let Some(digits) = rest.strip_prefix("0x").or_else(|| rest.strip_prefix("0X")) {
+        parse_hex_float(digits).map(|value| sign * value)
+    } else {
+        cleaned.parse::<f64>().ok()
+    }?;
+    // Go rejects out-of-range float literals in BOTH spellings
+    // (`strconv.ParseFloat` reports ErrRange for `1e400` exactly as for
+    // `0x1p10000`), and a non-finite `Literal::Float` would break
+    // expression equality (NaN != NaN under the derived `PartialEq`).
+    value.is_finite().then_some(value)
+}
+
+/// Decode a Go hex float mantissa-and-exponent (the part after `0x`):
+/// `hexdigits[.hexdigits]p[±]decimal`, e.g. `1p60` or `1.8p-1`. Bitnami's
+/// memory-size helpers spell binary unit factors this way (`0x1p20` for
+/// one MiB). Returns `None` for malformed input; the caller
+/// ([`parse_float_literal`]) rejects non-finite results for both float
+/// spellings. Rounding on very long mantissas may differ from Go's
+/// correctly-rounded `strconv.ParseFloat` in the last ULP, and an
+/// exponent below the subnormal range underflows to `0` where Go
+/// reports a range error — both far outside any precision a chart
+/// value needs.
+fn parse_hex_float(digits: &str) -> Option<f64> {
+    let (mantissa, exponent) = digits.split_once('p').or_else(|| digits.split_once('P'))?;
+    let exponent = exponent.parse::<i32>().ok()?;
+    let (int_part, frac_part) = match mantissa.split_once('.') {
+        Some((int_part, frac_part)) => (int_part, frac_part),
+        None => (mantissa, ""),
+    };
+    if int_part.is_empty() && frac_part.is_empty() {
+        return None;
+    }
+    // Accumulate the whole mantissa as an integer and fold the fraction
+    // into the binary exponent (each hex fraction digit is 2^-4), then
+    // scale stepwise so intermediate powers never overflow or underflow
+    // on the way to a representable (possibly subnormal) result.
+    let mut value = 0.0f64;
+    for c in int_part.chars().chain(frac_part.chars()) {
+        value = value * 16.0 + f64::from(c.to_digit(16)?);
+    }
+    let frac_digits = i32::try_from(frac_part.chars().count()).ok()?;
+    let scaled = scale_by_pow2(value, exponent.checked_sub(frac_digits.checked_mul(4)?)?);
+    scaled.is_finite().then_some(scaled)
+}
+
+/// Multiply `value` by 2^`exp` without letting an intermediate power of
+/// two overflow to infinity or vanish to zero before the mantissa gets a
+/// say (`0x1p-1024` is a representable subnormal, `0x.1p1024` is finite).
+fn scale_by_pow2(mut value: f64, mut exp: i32) -> f64 {
+    if value == 0.0 {
+        // Zero scales to zero for any exponent (Go accepts `0x0p10000`
+        // as plain zero); skipping the loops below would otherwise reach
+        // `0.0 * inf` = NaN.
+        return value;
+    }
+    while exp > 1023 && value.is_finite() {
+        value *= (2.0f64).powi(1023);
+        exp -= 1023;
+    }
+    while exp < -1022 && value != 0.0 {
+        value *= (2.0f64).powi(-1022);
+        exp += 1022;
+    }
+    value * (2.0f64).powi(exp.clamp(-1022, 1023))
 }
 
 #[cfg(test)]

@@ -41,3 +41,22 @@ Range pipeline assignment
                 (identifier)))
         (variable (identifier))
         (variable (identifier))))
+
+====================================
+Two-variable range assignment form
+====================================
+{{ range $i, $v = .Values.items }}{{ $v }}{{ end }}
+---
+(template
+    (range_action
+        (range_variable_definition
+            (variable
+                (identifier))
+            (variable
+                (identifier))
+            (selector_expression
+                (field
+                    (identifier))
+                (field_identifier)))
+        (variable
+            (identifier))))

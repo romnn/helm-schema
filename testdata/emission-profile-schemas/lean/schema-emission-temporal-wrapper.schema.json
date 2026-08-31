@@ -114679,6 +114679,89 @@
       "type": "array"
     },
     "iA": {
+      "additionalProperties": {},
+      "properties": {
+        "metricRelabelings": {
+          "anyOf": [
+            {
+              "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+              "items": {
+                "additionalProperties": false,
+                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                "properties": {
+                  "action": {
+                    "default": "replace",
+                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                    "enum": [
+                      "replace",
+                      "Replace",
+                      "keep",
+                      "Keep",
+                      "drop",
+                      "Drop",
+                      "hashmod",
+                      "HashMod",
+                      "labelmap",
+                      "LabelMap",
+                      "labeldrop",
+                      "LabelDrop",
+                      "labelkeep",
+                      "LabelKeep",
+                      "lowercase",
+                      "Lowercase",
+                      "uppercase",
+                      "Uppercase",
+                      "keepequal",
+                      "KeepEqual",
+                      "dropequal",
+                      "DropEqual"
+                    ],
+                    "type": "string"
+                  },
+                  "modulus": {
+                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "regex": {
+                    "description": "regex defines the regular expression against which the extracted value is matched.",
+                    "type": "string"
+                  },
+                  "replacement": {
+                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                    "type": "string"
+                  },
+                  "separator": {
+                    "description": "separator defines the string between concatenated SourceLabels.",
+                    "type": "string"
+                  },
+                  "sourceLabels": {
+                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                    "items": {
+                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "targetLabel": {
+                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "iB": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -114844,7 +114927,7 @@
         }
       ]
     },
-    "iB": {
+    "iC": {
       "additionalProperties": {},
       "properties": {
         "serviceMonitor": {
@@ -114932,7 +115015,7 @@
         }
       }
     },
-    "iC": {
+    "iD": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -115082,172 +115165,6 @@
         }
       ]
     },
-    "iD": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            }
-          ],
-          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-          "type": "string"
-        },
-        {
-          "allOf": [
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-          "type": "null"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        }
-      ]
-    },
     "iE": {
       "anyOf": [
         {
@@ -115370,6 +115287,172 @@
               }
             }
           ],
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "string"
+        },
+        {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "null"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ]
+    },
+    "iF": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            }
+          ],
           "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
           "type": "string"
         },
@@ -115414,7 +115497,7 @@
         }
       ]
     },
-    "iF": {
+    "iG": {
       "allOf": [
         {
           "not": {
@@ -115470,7 +115553,7 @@
       "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "type": "string"
     },
-    "iG": {
+    "iH": {
       "additionalProperties": {},
       "properties": {
         "nodePort": {
@@ -115505,7 +115588,7 @@
         }
       }
     },
-    "iH": {
+    "iI": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -115655,7 +115738,7 @@
         }
       ]
     },
-    "iI": {
+    "iJ": {
       "additionalProperties": false,
       "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
       "properties": {
@@ -115701,7 +115784,7 @@
         "null"
       ]
     },
-    "iJ": {
+    "iK": {
       "additionalProperties": false,
       "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
@@ -115767,7 +115850,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "iK": {
+    "iL": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -115917,7 +116000,7 @@
         }
       ]
     },
-    "iL": {
+    "iM": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -116067,7 +116150,7 @@
         }
       ]
     },
-    "iM": {
+    "iN": {
       "additionalProperties": false,
       "description": "VolumeMount describes a mounting of a Volume within a container.",
       "properties": {
@@ -116117,7 +116200,7 @@
         "null"
       ]
     },
-    "iN": {
+    "iO": {
       "allOf": [
         {
           "not": {
@@ -116174,14 +116257,14 @@
       "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
       "type": "string"
     },
-    "iO": {
+    "iP": {
       "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
       "type": [
         "string",
         "null"
       ]
     },
-    "iP": {
+    "iQ": {
       "allOf": [
         {
           "not": {
@@ -116237,7 +116320,7 @@
       "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
       "type": "string"
     },
-    "iQ": {
+    "iR": {
       "additionalProperties": {},
       "properties": {
         "serviceMonitor": {
@@ -116313,7 +116396,7 @@
         }
       }
     },
-    "iR": {
+    "iS": {
       "allOf": [
         {
           "not": {
@@ -116369,11 +116452,11 @@
       "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
       "type": "string"
     },
-    "iS": {
+    "iT": {
       "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "type": "null"
     },
-    "iT": {
+    "iU": {
       "allOf": [
         {
           "not": {
@@ -116429,7 +116512,7 @@
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "string"
     },
-    "iU": {
+    "iV": {
       "allOf": [
         {
           "not": {
@@ -116485,7 +116568,7 @@
       "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
       "type": "string"
     },
-    "iV": {
+    "iW": {
       "allOf": [
         {
           "not": {
@@ -116541,7 +116624,7 @@
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "iW": {
+    "iX": {
       "anyOf": [
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
@@ -116577,23 +116660,16 @@
         }
       ]
     },
-    "iX": {
+    "iY": {
       "additionalProperties": {
         "type": "string"
       },
       "description": "timerType: histogram",
       "type": "object"
     },
-    "iY": {
+    "iZ": {
       "description": "separator defines the string between concatenated SourceLabels.",
       "type": "string"
-    },
-    "iZ": {
-      "description": "Specify whether the Secret or its key must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
     },
     "ia": {
       "additionalProperties": {},
@@ -117494,6 +117570,196 @@
       ]
     },
     "iw": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "tlsConfig defines TLS configuration used by the client.",
+          "properties": {
+            "ca": {
+              "additionalProperties": false,
+              "description": "ca defines the Certificate authority used when verifying server certificates.",
+              "properties": {
+                "configMap": {
+                  "additionalProperties": false,
+                  "description": "configMap defines the ConfigMap containing data to use for the targets.",
+                  "properties": {
+                    "key": {
+                      "description": "The key to select.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "default": "",
+                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                      "type": "string"
+                    },
+                    "optional": {
+                      "description": "Specify whether the ConfigMap or its key must be defined",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic"
+                },
+                "secret": {
+                  "additionalProperties": false,
+                  "description": "secret defines the Secret containing data to use for the targets.",
+                  "properties": {
+                    "key": {
+                      "description": "The key of the secret to select from.  Must be a valid secret key.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "default": "",
+                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                      "type": "string"
+                    },
+                    "optional": {
+                      "description": "Specify whether the Secret or its key must be defined",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic"
+                }
+              },
+              "type": "object"
+            },
+            "caFile": {
+              "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
+              "type": "string"
+            },
+            "cert": {
+              "additionalProperties": false,
+              "description": "cert defines the Client certificate to present when doing client-authentication.",
+              "properties": {
+                "configMap": {
+                  "additionalProperties": false,
+                  "description": "configMap defines the ConfigMap containing data to use for the targets.",
+                  "properties": {
+                    "key": {
+                      "description": "The key to select.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "default": "",
+                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                      "type": "string"
+                    },
+                    "optional": {
+                      "description": "Specify whether the ConfigMap or its key must be defined",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic"
+                },
+                "secret": {
+                  "additionalProperties": false,
+                  "description": "secret defines the Secret containing data to use for the targets.",
+                  "properties": {
+                    "key": {
+                      "description": "The key of the secret to select from.  Must be a valid secret key.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "default": "",
+                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                      "type": "string"
+                    },
+                    "optional": {
+                      "description": "Specify whether the Secret or its key must be defined",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic"
+                }
+              },
+              "type": "object"
+            },
+            "certFile": {
+              "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
+              "type": "string"
+            },
+            "insecureSkipVerify": {
+              "description": "insecureSkipVerify defines how to disable target certificate validation.",
+              "type": "boolean"
+            },
+            "keyFile": {
+              "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
+              "type": "string"
+            },
+            "keySecret": {
+              "additionalProperties": false,
+              "description": "keySecret defines the Secret containing the client key file for the targets.",
+              "properties": {
+                "key": {
+                  "description": "The key of the secret to select from.  Must be a valid secret key.",
+                  "type": "string"
+                },
+                "name": {
+                  "default": "",
+                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "string"
+                },
+                "optional": {
+                  "description": "Specify whether the Secret or its key must be defined",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key"
+              ],
+              "type": "object",
+              "x-kubernetes-map-type": "atomic"
+            },
+            "maxVersion": {
+              "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
+              "enum": [
+                "TLS10",
+                "TLS11",
+                "TLS12",
+                "TLS13"
+              ],
+              "type": "string"
+            },
+            "minVersion": {
+              "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
+              "enum": [
+                "TLS10",
+                "TLS11",
+                "TLS12",
+                "TLS13"
+              ],
+              "type": "string"
+            },
+            "serverName": {
+              "description": "serverName is used to verify the hostname for the targets.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/t"
+          }
+        }
+      ]
+    },
+    "ix": {
       "additionalProperties": {},
       "properties": {
         "clusterIP": {
@@ -117664,7 +117930,7 @@
         }
       }
     },
-    "ix": {
+    "iy": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -117826,7 +118092,7 @@
       ],
       "description": "Method to use to detect ConfigMap changes. With WATCH the sidecar will do a WATCH requests, with SLEEP it will list all ConfigMaps, then sleep for 60 seconds."
     },
-    "iy": {
+    "iz": {
       "additionalProperties": {},
       "properties": {
         "loadBalancerIP": {
@@ -117997,89 +118263,6 @@
         }
       }
     },
-    "iz": {
-      "additionalProperties": {},
-      "properties": {
-        "metricRelabelings": {
-          "anyOf": [
-            {
-              "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            }
-          ]
-        }
-      }
-    },
     "j": {
       "anyOf": [
         {
@@ -118150,28 +118333,35 @@
       ]
     },
     "j0": {
+      "description": "Specify whether the Secret or its key must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "j1": {
       "description": "Name of the environment variable. Must be a C_IDENTIFIER.",
       "type": "string"
     },
-    "j1": {
+    "j2": {
       "description": "Specify whether the Secret must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "j2": {
+    "j3": {
       "description": "Specify whether the ConfigMap must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "j3": {
+    "j4": {
       "description": "Relative path from the volume root to write the bundle.",
       "type": "string"
     },
-    "j4": {
+    "j5": {
       "additionalProperties": {},
       "properties": {
         "port": {
@@ -118179,7 +118369,7 @@
         }
       }
     },
-    "j5": {
+    "j6": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -118190,7 +118380,7 @@
       ],
       "type": "object"
     },
-    "j6": {
+    "j7": {
       "oneOf": [
         {
           "type": [
@@ -118206,12 +118396,12 @@
         }
       ]
     },
-    "j7": {
+    "j8": {
       "additionalProperties": {},
       "description": "enabled: false",
       "type": "object"
     },
-    "j8": {
+    "j9": {
       "additionalProperties": {},
       "items": {},
       "type": [
@@ -118220,144 +118410,32 @@
         "object"
       ]
     },
-    "j9": {
-      "additionalProperties": false,
-      "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
-      "properties": {
-        "labelSelector": {
-          "additionalProperties": false,
-          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-          "properties": {
-            "matchExpressions": {
-              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-              "items": {
-                "additionalProperties": false,
-                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                "properties": {
-                  "key": {
-                    "description": "key is the label key that the selector applies to.",
-                    "type": "string"
-                  },
-                  "operator": {
-                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                    "type": "string"
-                  },
-                  "values": {
-                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                    "items": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "key",
-                  "operator"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "matchLabels": {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
-        },
-        "matchLabelKeys": {
-          "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-list-type": "atomic"
-        },
-        "maxSkew": {
-          "description": "MaxSkew describes the degree to which pods may be unevenly distributed. When `whenUnsatisfiable=DoNotSchedule`, it is the maximum permitted difference between the number of matching pods in the target topology and the global minimum. The global minimum is the minimum number of matching pods in an eligible domain or zero if the number of eligible domains is less than MinDomains. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 2/2/1: In this case, the global minimum is 1. | zone1 | zone2 | zone3 | |  P P  |  P P  |   P   | - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2; scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2) violate MaxSkew(1). - if MaxSkew is 2, incoming pod can be scheduled onto any zone. When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence to topologies that satisfy it. It's a required field. Default value is 1 and 0 is not allowed.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "minDomains": {
-          "description": "MinDomains indicates a minimum number of eligible domains. When the number of eligible domains with matching topology keys is less than minDomains, Pod Topology Spread treats \"global minimum\" as 0, and then the calculation of Skew is performed. And when the number of eligible domains with matching topology keys equals or greater than minDomains, this value has no effect on scheduling. As a result, when the number of eligible domains is less than minDomains, scheduler won't schedule more than maxSkew Pods to those domains. If value is nil, the constraint behaves as if MinDomains is equal to 1. Valid values are integers greater than 0. When value is not nil, WhenUnsatisfiable must be DoNotSchedule.\n\nFor example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same labelSelector spread as 2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P P  |  P P  | The number of domains is less than 5(MinDomains), so \"global minimum\" is treated as 0. In this situation, new pod with the same labelSelector cannot be scheduled, because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones, it will violate MaxSkew.\n\nThis is a beta field and requires the MinDomainsInPodTopologySpread feature gate to be enabled (enabled by default).",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "nodeAffinityPolicy": {
-          "description": "NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.\n\nIf this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "nodeTaintsPolicy": {
-          "description": "NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included.\n\nIf this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "topologyKey": {
-          "description": "TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology. We consider each <key, value> as a \"bucket\", and try to put balanced number of pods into each bucket. We define a domain as a particular instance of a topology. Also, we define an eligible domain as a domain whose nodes meet the requirements of nodeAffinityPolicy and nodeTaintsPolicy. e.g. If TopologyKey is \"kubernetes.io/hostname\", each Node is a domain of that topology. And, if TopologyKey is \"topology.kubernetes.io/zone\", each zone is a domain of that topology. It's a required field.",
-          "type": "string"
-        },
-        "whenUnsatisfiable": {
-          "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy the spread constraint. - DoNotSchedule (default) tells the scheduler not to schedule it. - ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod if and only if every possible node assignment for that pod would violate \"MaxSkew\" on some topology. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 3/1/1: | zone1 | zone2 | zone3 | | P P P |   P   |   P   | If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler won't make it *more* imbalanced. It's a required field.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "maxSkew",
-        "topologyKey",
-        "whenUnsatisfiable"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
     "jA": {
+      "additionalProperties": {},
+      "properties": {
+        "membershipPort": {
+          "anyOf": [
+            {
+              "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "jB": {
       "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "jB": {
+    "jC": {
       "properties": {
         "internalFrontend": {
           "properties": {
@@ -118392,14 +118470,14 @@
       ],
       "type": "object"
     },
-    "jC": {
+    "jD": {
       "description": "If true, don't block pod startup if the referenced ClusterTrustBundle(s) aren't available.  If using name, then the named ClusterTrustBundle is allowed not to exist.  If using signerName, then the combination of signerName and labelSelector is allowed to match zero ClusterTrustBundles.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "jD": {
+    "jE": {
       "properties": {
         "frontend": {
           "properties": {
@@ -118434,7 +118512,7 @@
       ],
       "type": "object"
     },
-    "jE": {
+    "jF": {
       "properties": {
         "matching": {
           "properties": {
@@ -118469,7 +118547,7 @@
       ],
       "type": "object"
     },
-    "jF": {
+    "jG": {
       "properties": {
         "history": {
           "properties": {
@@ -118504,7 +118582,7 @@
       ],
       "type": "object"
     },
-    "jG": {
+    "jH": {
       "properties": {
         "worker": {
           "properties": {
@@ -118539,7 +118617,7 @@
       ],
       "type": "object"
     },
-    "jH": {
+    "jI": {
       "additionalProperties": {},
       "properties": {
         "annotations": {
@@ -118563,25 +118641,25 @@
       },
       "type": "object"
     },
-    "jI": {
+    "jJ": {
       "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
       "format": "int32",
       "type": "integer"
     },
-    "jJ": {
+    "jK": {
       "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
       "format": "int32",
       "type": "null"
     },
-    "jK": {
+    "jL": {
       "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
       "type": "string"
     },
-    "jL": {
+    "jM": {
       "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
       "type": "string"
     },
-    "jM": {
+    "jN": {
       "description": "A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.",
       "items": {
         "type": [
@@ -118594,7 +118672,7 @@
         "null"
       ]
     },
-    "jN": {
+    "jO": {
       "description": "A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.",
       "items": {
         "type": [
@@ -118607,7 +118685,7 @@
         "null"
       ]
     },
-    "jO": {
+    "jP": {
       "additionalProperties": {},
       "description": "additionalEnv: []",
       "properties": {
@@ -118623,26 +118701,26 @@
       },
       "type": "object"
     },
-    "jP": {
+    "jQ": {
       "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
       "type": "null"
     },
-    "jQ": {
+    "jR": {
       "description": "path of the directory on the host. If the path is a symlink, it will follow the link to the real path. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath",
       "type": "string"
     },
-    "jR": {
+    "jS": {
       "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
       "type": "string"
     },
-    "jS": {
+    "jT": {
       "description": "targetLabels defines the labels which are transferred from the\nassociated Kubernetes `Service` object onto the ingested metrics.",
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "jT": {
+    "jU": {
       "allOf": [
         {
           "additionalProperties": {
@@ -118666,7 +118744,7 @@
         }
       ]
     },
-    "jU": {
+    "jV": {
       "anyOf": [
         {
           "description": "TopologySpreadConstraints describes how a group of pods ought to spread across topology domains. Scheduler will schedule pods in a way which abides by the constraints. All topologySpreadConstraints are ANDed.",
@@ -118820,7 +118898,7 @@
       ],
       "description": "runAsUser: 11000\nrunAsGroup: 11000\ncapabilities:\ndrop:\n- ALL"
     },
-    "jV": {
+    "jW": {
       "anyOf": [
         {
           "oneOf": [
@@ -118852,15 +118930,15 @@
         }
       ]
     },
-    "jW": {
+    "jX": {
       "description": "driver is the name of the CSI driver that handles this volume. Consult with your admin for the correct name as registered in the cluster.",
       "type": "string"
     },
-    "jX": {
+    "jY": {
       "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
       "type": "string"
     },
-    "jY": {
+    "jZ": {
       "anyOf": [
         {
           "oneOf": [
@@ -118892,38 +118970,164 @@
         }
       ]
     },
-    "jZ": {
-      "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-      "type": "null"
-    },
     "ja": {
+      "additionalProperties": false,
+      "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
+      "properties": {
+        "labelSelector": {
+          "additionalProperties": false,
+          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "matchLabelKeys": {
+          "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        },
+        "maxSkew": {
+          "description": "MaxSkew describes the degree to which pods may be unevenly distributed. When `whenUnsatisfiable=DoNotSchedule`, it is the maximum permitted difference between the number of matching pods in the target topology and the global minimum. The global minimum is the minimum number of matching pods in an eligible domain or zero if the number of eligible domains is less than MinDomains. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 2/2/1: In this case, the global minimum is 1. | zone1 | zone2 | zone3 | |  P P  |  P P  |   P   | - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2; scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2) violate MaxSkew(1). - if MaxSkew is 2, incoming pod can be scheduled onto any zone. When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence to topologies that satisfy it. It's a required field. Default value is 1 and 0 is not allowed.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "minDomains": {
+          "description": "MinDomains indicates a minimum number of eligible domains. When the number of eligible domains with matching topology keys is less than minDomains, Pod Topology Spread treats \"global minimum\" as 0, and then the calculation of Skew is performed. And when the number of eligible domains with matching topology keys equals or greater than minDomains, this value has no effect on scheduling. As a result, when the number of eligible domains is less than minDomains, scheduler won't schedule more than maxSkew Pods to those domains. If value is nil, the constraint behaves as if MinDomains is equal to 1. Valid values are integers greater than 0. When value is not nil, WhenUnsatisfiable must be DoNotSchedule.\n\nFor example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same labelSelector spread as 2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P P  |  P P  | The number of domains is less than 5(MinDomains), so \"global minimum\" is treated as 0. In this situation, new pod with the same labelSelector cannot be scheduled, because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones, it will violate MaxSkew.\n\nThis is a beta field and requires the MinDomainsInPodTopologySpread feature gate to be enabled (enabled by default).",
+          "format": "int32",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "nodeAffinityPolicy": {
+          "description": "NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.\n\nIf this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nodeTaintsPolicy": {
+          "description": "NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included.\n\nIf this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "topologyKey": {
+          "description": "TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology. We consider each <key, value> as a \"bucket\", and try to put balanced number of pods into each bucket. We define a domain as a particular instance of a topology. Also, we define an eligible domain as a domain whose nodes meet the requirements of nodeAffinityPolicy and nodeTaintsPolicy. e.g. If TopologyKey is \"kubernetes.io/hostname\", each Node is a domain of that topology. And, if TopologyKey is \"topology.kubernetes.io/zone\", each zone is a domain of that topology. It's a required field.",
+          "type": "string"
+        },
+        "whenUnsatisfiable": {
+          "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy the spread constraint. - DoNotSchedule (default) tells the scheduler not to schedule it. - ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod if and only if every possible node assignment for that pod would violate \"MaxSkew\" on some topology. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 3/1/1: | zone1 | zone2 | zone3 | | P P P |   P   |   P   | If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler won't make it *more* imbalanced. It's a required field.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "maxSkew",
+        "topologyKey",
+        "whenUnsatisfiable"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "jb": {
       "description": "The key to select.",
       "type": "string"
     },
-    "jb": {
+    "jc": {
       "$ref": "#/$defs/providerSchema39"
     },
-    "jc": {
+    "jd": {
       "$ref": "#/$defs/providerSchema41"
     },
-    "jd": {
+    "je": {
       "$ref": "#/$defs/providerSchema18"
     },
-    "je": {
+    "jf": {
       "$ref": "#/$defs/providerSource_k8s_d8b17f06e0a6"
     },
-    "jf": {
+    "jg": {
       "type": [
         "integer",
         "null"
       ]
     },
-    "jg": {
+    "jh": {
       "enum": [
         "kubernetes"
       ]
     },
-    "jh": {
+    "ji": {
       "anyOf": [
         {
           "additionalProperties": false,
@@ -119131,7 +119335,7 @@
         }
       ]
     },
-    "ji": {
+    "jj": {
       "additionalProperties": false,
       "description": "secret defines the Secret containing data to use for the targets.",
       "properties": {
@@ -119155,7 +119359,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "jj": {
+    "jk": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": [
@@ -119163,7 +119367,7 @@
         "null"
       ]
     },
-    "jk": {
+    "jl": {
       "additionalProperties": false,
       "description": "ResourceFieldSelector represents container resources (cpu, memory) and their output format",
       "properties": {
@@ -119236,7 +119440,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "jl": {
+    "jm": {
       "additionalProperties": false,
       "description": "configMap defines the ConfigMap containing data to use for the targets.",
       "properties": {
@@ -119260,7 +119464,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "jm": {
+    "jn": {
       "additionalProperties": false,
       "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
       "properties": {
@@ -119301,7 +119505,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "jn": {
+    "jo": {
       "default": "replace",
       "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
       "enum": [
@@ -119330,7 +119534,7 @@
       ],
       "type": "string"
     },
-    "jo": {
+    "jp": {
       "description": "defaultMode are the mode bits used to set permissions on created files by default. Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. Directories within the path are not affected by this setting. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
       "format": "int32",
       "type": [
@@ -119338,7 +119542,7 @@
         "null"
       ]
     },
-    "jp": {
+    "jq": {
       "description": "defaultMode is optional: mode bits used to set permissions on created files by default. Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. Defaults to 0644. Directories within the path are not affected by this setting. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
       "format": "int32",
       "type": [
@@ -119346,7 +119550,7 @@
         "null"
       ]
     },
-    "jq": {
+    "jr": {
       "allOf": [
         {
           "additionalProperties": {
@@ -119377,11 +119581,11 @@
         }
       ]
     },
-    "jr": {
+    "js": {
       "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
       "type": "null"
     },
-    "js": {
+    "jt": {
       "description": "A list of DNS resolver options. This will be merged with the base options generated from DNSPolicy. Duplicated entries will be removed. Resolution options given in Options will override those that appear in the base DNSPolicy.",
       "items": {
         "additionalProperties": false,
@@ -119411,7 +119615,7 @@
         "null"
       ]
     },
-    "jt": {
+    "ju": {
       "description": "Custom headers to set in the request. HTTP allows repeated headers.",
       "items": {
         "additionalProperties": false,
@@ -119437,7 +119641,7 @@
       },
       "type": "array"
     },
-    "ju": {
+    "jv": {
       "description": "expirationSeconds is the requested duration of validity of the service account token. As the token approaches expiration, the kubelet volume plugin will proactively rotate the service account token. The kubelet will start trying to rotate the token if the token is older than 80 percent of its time to live or if the token is older than 24 hours.Defaults to 1 hour and must be at least 10 minutes.",
       "format": "int64",
       "type": [
@@ -119445,7 +119649,7 @@
         "null"
       ]
     },
-    "jv": {
+    "jw": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -119466,7 +119670,7 @@
         "null"
       ]
     },
-    "jw": {
+    "jx": {
       "additionalProperties": false,
       "description": "HostAlias holds the mapping between IP and hostnames that will be injected as an entry in the pod's hosts file.",
       "properties": {
@@ -119496,7 +119700,7 @@
         "null"
       ]
     },
-    "jx": {
+    "jy": {
       "additionalProperties": false,
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
@@ -119514,7 +119718,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "jy": {
+    "jz": {
       "anyOf": [
         {
           "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
@@ -119540,24 +119744,6 @@
         }
       ]
     },
-    "jz": {
-      "additionalProperties": {},
-      "properties": {
-        "membershipPort": {
-          "anyOf": [
-            {
-              "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
     "k": {
       "properties": {
         "server": {
@@ -119578,6 +119764,10 @@
       "type": "object"
     },
     "k0": {
+      "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+      "type": "null"
+    },
+    "k1": {
       "properties": {
         "serviceAccount": {
           "properties": {
@@ -119596,12 +119786,12 @@
       ],
       "type": "object"
     },
-    "k1": {
+    "k2": {
       "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
       "format": "int64",
       "type": "integer"
     },
-    "k2": {
+    "k3": {
       "properties": {
         "setup": {
           "properties": {
@@ -119620,7 +119810,7 @@
       ],
       "type": "object"
     },
-    "k3": {
+    "k4": {
       "additionalProperties": {},
       "properties": {
         "membershipPort": {
@@ -119633,44 +119823,44 @@
       },
       "type": "object"
     },
-    "k4": {
+    "k5": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "null"
     },
-    "k5": {
+    "k6": {
       "description": "readOnly specifies a read-only configuration for the volume. Defaults to false (read/write).",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "k6": {
+    "k7": {
       "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "k7": {
+    "k8": {
       "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
       "type": "string"
     },
-    "k8": {
+    "k9": {
       "description": "optional field specify whether the Secret or its key must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "k9": {
+    "ka": {
       "description": "path is the path relative to the mount point of the file to project the token into.",
       "type": "string"
     },
-    "ka": {
+    "kb": {
       "description": "regex defines the regular expression against which the extracted value is matched.",
       "type": "string"
     },
-    "kb": {
+    "kc": {
       "additionalProperties": {},
       "properties": {
         "additionalLabels": {},
@@ -119679,14 +119869,14 @@
         "metricRelabelings": {}
       }
     },
-    "kc": {
+    "kd": {
       "description": "Specify whether the ConfigMap or its key must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "kd": {
+    "ke": {
       "additionalProperties": {
         "$ref": "#/$defs/providerSchema40"
       },
@@ -119694,7 +119884,7 @@
         "$ref": "#/$defs/providerSchema40"
       }
     },
-    "ke": {
+    "kf": {
       "additionalProperties": {},
       "properties": {
         "membershipPort": {},
@@ -154394,7 +154584,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/k0"
+                "$ref": "#/$defs/k1"
               },
               {
                 "$ref": "#/$defs/9F"
@@ -156477,7 +156667,7 @@
                       {
                         "properties": {
                           "server": {
-                            "$ref": "#/$defs/jD"
+                            "$ref": "#/$defs/jE"
                           }
                         },
                         "required": [
@@ -156505,7 +156695,7 @@
                       {
                         "properties": {
                           "server": {
-                            "$ref": "#/$defs/jF"
+                            "$ref": "#/$defs/jG"
                           }
                         },
                         "required": [
@@ -156533,7 +156723,7 @@
                       {
                         "properties": {
                           "server": {
-                            "$ref": "#/$defs/jB"
+                            "$ref": "#/$defs/jC"
                           }
                         },
                         "required": [
@@ -156561,7 +156751,7 @@
                       {
                         "properties": {
                           "server": {
-                            "$ref": "#/$defs/jE"
+                            "$ref": "#/$defs/jF"
                           }
                         },
                         "required": [
@@ -156589,7 +156779,7 @@
                       {
                         "properties": {
                           "server": {
-                            "$ref": "#/$defs/jG"
+                            "$ref": "#/$defs/jH"
                           }
                         },
                         "required": [
@@ -159428,7 +159618,7 @@
                         "description": "Cassandra image version\nref: https://hub.docker.com/r/library/cassandra/",
                         "properties": {
                           "pullSecrets": {
-                            "$ref": "#/$defs/iE"
+                            "$ref": "#/$defs/iF"
                           }
                         }
                       }
@@ -159769,13 +159959,13 @@
                                 "description": "PodDNSConfig defines the DNS parameters of a pod in addition to those generated from DNSPolicy.",
                                 "properties": {
                                   "nameservers": {
-                                    "$ref": "#/$defs/jN"
+                                    "$ref": "#/$defs/jO"
                                   },
                                   "options": {
-                                    "$ref": "#/$defs/js"
+                                    "$ref": "#/$defs/jt"
                                   },
                                   "searches": {
-                                    "$ref": "#/$defs/jM"
+                                    "$ref": "#/$defs/jN"
                                   }
                                 },
                                 "type": [
@@ -160101,7 +160291,7 @@
                                     "volumeMounts": {
                                       "description": "Pod volumes to mount into the container's filesystem. Subpath mounts are not allowed for ephemeral containers. Cannot be updated.",
                                       "items": {
-                                        "$ref": "#/$defs/iM"
+                                        "$ref": "#/$defs/iN"
                                       },
                                       "type": [
                                         "array",
@@ -160136,7 +160326,7 @@
                               "hostAliases": {
                                 "description": "HostAliases is an optional list of hosts and IPs that will be injected into the pod's hosts file if specified. This is only valid for non-hostNetwork pods.",
                                 "items": {
-                                  "$ref": "#/$defs/jw"
+                                  "$ref": "#/$defs/jx"
                                 },
                                 "type": [
                                   "array",
@@ -160183,7 +160373,7 @@
                               "imagePullSecrets": {
                                 "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
                                 "items": {
-                                  "$ref": "#/$defs/jx"
+                                  "$ref": "#/$defs/jy"
                                 },
                                 "type": [
                                   "array",
@@ -160246,7 +160436,7 @@
                               },
                               "overhead": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/j6"
+                                  "$ref": "#/$defs/j7"
                                 },
                                 "description": "Overhead represents the resource overhead associated with running a pod for a given RuntimeClass. This field will be autopopulated at admission time by the RuntimeClass admission controller. If the RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests. The RuntimeClass admission controller will reject Pod create requests which have the overhead already set. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value defined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero. More info: https://git.k8s.io/enhancements/keps/sig-node/688-pod-overhead/README.md",
                                 "type": [
@@ -160491,7 +160681,7 @@
                               "tolerations": {
                                 "description": "If specified, the pod's tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/iI"
+                                  "$ref": "#/$defs/iJ"
                                 },
                                 "type": [
                                   "array",
@@ -160501,7 +160691,7 @@
                               "topologySpreadConstraints": {
                                 "description": "TopologySpreadConstraints describes how a group of pods ought to spread across topology domains. Scheduler will schedule pods in a way which abides by the constraints. All topologySpreadConstraints are ANDed.",
                                 "items": {
-                                  "$ref": "#/$defs/j9"
+                                  "$ref": "#/$defs/ja"
                                 },
                                 "type": [
                                   "array",
@@ -160567,7 +160757,7 @@
                         "description": "Specify a service type\nref: http://kubernetes.io/docs/user-guide/services/",
                         "properties": {
                           "type": {
-                            "$ref": "#/$defs/jb"
+                            "$ref": "#/$defs/jc"
                           }
                         }
                       }
@@ -161468,7 +161658,7 @@
                         "$ref": "#/$defs/b"
                       },
                       {
-                        "$ref": "#/$defs/iR"
+                        "$ref": "#/$defs/iS"
                       },
                       {
                         "$ref": "#/$defs/d"
@@ -164006,7 +164196,7 @@
                                   "description": "Adapts a ConfigMap into a volume.\n\nThe contents of the target ConfigMap's Data field will be presented in a volume as files using the keys in the Data field as the file names, unless the items element is populated with specific mappings of keys to paths. ConfigMap volumes support ownership management and SELinux relabeling.",
                                   "properties": {
                                     "defaultMode": {
-                                      "$ref": "#/$defs/jp"
+                                      "$ref": "#/$defs/jq"
                                     },
                                     "items": {
                                       "$ref": "#/$defs/aW"
@@ -164030,7 +164220,7 @@
                                     "driver": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/jW"
+                                          "$ref": "#/$defs/jX"
                                         },
                                         {
                                           "$ref": "#/$defs/4"
@@ -164055,7 +164245,7 @@
                                       "$ref": "#/$defs/2c"
                                     },
                                     "readOnly": {
-                                      "$ref": "#/$defs/k5"
+                                      "$ref": "#/$defs/k6"
                                     },
                                     "volumeAttributes": {
                                       "additionalProperties": {
@@ -164123,7 +164313,7 @@
                                       ]
                                     },
                                     "sizeLimit": {
-                                      "$ref": "#/$defs/jY"
+                                      "$ref": "#/$defs/jZ"
                                     }
                                   },
                                   "type": [
@@ -164144,7 +164334,7 @@
                                           "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
                                           "properties": {
                                             "annotations": {
-                                              "$ref": "#/$defs/jv"
+                                              "$ref": "#/$defs/jw"
                                             },
                                             "creationTimestamp": {
                                               "$ref": "#/$defs/9b"
@@ -164926,7 +165116,7 @@
                                     "path": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/jQ"
+                                          "$ref": "#/$defs/jR"
                                         },
                                         {
                                           "$ref": "#/$defs/4"
@@ -165232,7 +165422,7 @@
                                   "description": "Represents a projected volume source",
                                   "properties": {
                                     "defaultMode": {
-                                      "$ref": "#/$defs/jo"
+                                      "$ref": "#/$defs/jp"
                                     },
                                     "sources": {
                                       "description": "sources is the list of volume projections",
@@ -165262,12 +165452,12 @@
                                                 ]
                                               },
                                               "optional": {
-                                                "$ref": "#/$defs/jC"
+                                                "$ref": "#/$defs/jD"
                                               },
                                               "path": {
                                                 "anyOf": [
                                                   {
-                                                    "$ref": "#/$defs/j3"
+                                                    "$ref": "#/$defs/j4"
                                                   },
                                                   {
                                                     "$ref": "#/$defs/4"
@@ -165354,7 +165544,7 @@
                                                 "$ref": "#/$defs/1X"
                                               },
                                               "optional": {
-                                                "$ref": "#/$defs/k8"
+                                                "$ref": "#/$defs/k9"
                                               }
                                             },
                                             "type": [
@@ -165381,12 +165571,12 @@
                                                 ]
                                               },
                                               "expirationSeconds": {
-                                                "$ref": "#/$defs/ju"
+                                                "$ref": "#/$defs/jv"
                                               },
                                               "path": {
                                                 "anyOf": [
                                                   {
-                                                    "$ref": "#/$defs/k9"
+                                                    "$ref": "#/$defs/ka"
                                                   },
                                                   {
                                                     "$ref": "#/$defs/4"
@@ -165991,7 +166181,7 @@
                                       "name": {
                                         "anyOf": [
                                           {
-                                            "$ref": "#/$defs/j0"
+                                            "$ref": "#/$defs/j1"
                                           },
                                           {
                                             "$ref": "#/$defs/4"
@@ -166023,7 +166213,7 @@
                                               "key": {
                                                 "anyOf": [
                                                   {
-                                                    "$ref": "#/$defs/ja"
+                                                    "$ref": "#/$defs/jb"
                                                   },
                                                   {
                                                     "$ref": "#/$defs/4"
@@ -166034,7 +166224,7 @@
                                                 "$ref": "#/$defs/1X"
                                               },
                                               "optional": {
-                                                "$ref": "#/$defs/kc"
+                                                "$ref": "#/$defs/kd"
                                               }
                                             },
                                             "required": [
@@ -166047,10 +166237,10 @@
                                             "x-kubernetes-map-type": "atomic"
                                           },
                                           "fieldRef": {
-                                            "$ref": "#/$defs/jm"
+                                            "$ref": "#/$defs/jn"
                                           },
                                           "resourceFieldRef": {
-                                            "$ref": "#/$defs/jk"
+                                            "$ref": "#/$defs/jl"
                                           },
                                           "secretKeyRef": {
                                             "additionalProperties": false,
@@ -166070,7 +166260,7 @@
                                                 "$ref": "#/$defs/1X"
                                               },
                                               "optional": {
-                                                "$ref": "#/$defs/iZ"
+                                                "$ref": "#/$defs/j0"
                                               }
                                             },
                                             "required": [
@@ -166118,7 +166308,7 @@
                                             "$ref": "#/$defs/1X"
                                           },
                                           "optional": {
-                                            "$ref": "#/$defs/j2"
+                                            "$ref": "#/$defs/j3"
                                           }
                                         },
                                         "type": [
@@ -166148,7 +166338,7 @@
                                             "$ref": "#/$defs/1X"
                                           },
                                           "optional": {
-                                            "$ref": "#/$defs/j1"
+                                            "$ref": "#/$defs/j2"
                                           }
                                         },
                                         "type": [
@@ -166358,7 +166548,7 @@
                                           "name": {
                                             "anyOf": [
                                               {
-                                                "$ref": "#/$defs/jR"
+                                                "$ref": "#/$defs/jS"
                                               },
                                               {
                                                 "$ref": "#/$defs/4"
@@ -166619,7 +166809,7 @@
                                           ]
                                         },
                                         "hostProcess": {
-                                          "$ref": "#/$defs/jA"
+                                          "$ref": "#/$defs/jB"
                                         },
                                         "runAsUserName": {
                                           "anyOf": [
@@ -166739,7 +166929,7 @@
                                       "mountPath": {
                                         "anyOf": [
                                           {
-                                            "$ref": "#/$defs/k7"
+                                            "$ref": "#/$defs/k8"
                                           },
                                           {
                                             "$ref": "#/$defs/4"
@@ -166771,7 +166961,7 @@
                                         ]
                                       },
                                       "readOnly": {
-                                        "$ref": "#/$defs/k6"
+                                        "$ref": "#/$defs/k7"
                                       },
                                       "subPath": {
                                         "anyOf": [
@@ -167411,13 +167601,13 @@
                                 "$ref": "#/$defs/b"
                               },
                               {
-                                "$ref": "#/$defs/iV"
+                                "$ref": "#/$defs/iW"
                               },
                               {
                                 "$ref": "#/$defs/d"
                               },
                               {
-                                "$ref": "#/$defs/k4"
+                                "$ref": "#/$defs/k5"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -168579,7 +168769,7 @@
                                   ]
                                 },
                                 "nodePort": {
-                                  "$ref": "#/$defs/jj"
+                                  "$ref": "#/$defs/jk"
                                 },
                                 "port": {
                                   "$ref": "#/$defs/4h"
@@ -168599,7 +168789,7 @@
                                   ]
                                 },
                                 "targetPort": {
-                                  "$ref": "#/$defs/jV"
+                                  "$ref": "#/$defs/jW"
                                 }
                               },
                               "required": [
@@ -168640,7 +168830,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/jq"
+                                "$ref": "#/$defs/jr"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -168822,7 +169012,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/iQ"
+                    "$ref": "#/$defs/iR"
                   },
                   {
                     "additionalProperties": {},
@@ -168833,7 +169023,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/jT"
+                                "$ref": "#/$defs/jU"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -168846,7 +169036,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/iB"
+                    "$ref": "#/$defs/iC"
                   },
                   {
                     "additionalProperties": {},
@@ -169745,7 +169935,7 @@
                         "description": "Add a seperate remote image renderer deployment/service",
                         "properties": {
                           "service": {
-                            "$ref": "#/$defs/iw"
+                            "$ref": "#/$defs/ix"
                           }
                         }
                       }
@@ -170009,7 +170199,7 @@
                         "description": "Add a seperate remote image renderer deployment/service",
                         "properties": {
                           "command": {
-                            "$ref": "#/$defs/kd"
+                            "$ref": "#/$defs/ke"
                           }
                         }
                       }
@@ -170376,7 +170566,7 @@
                               "targetLabels": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/jS"
+                                    "$ref": "#/$defs/jT"
                                   },
                                   {
                                     "$ref": "#/$defs/2"
@@ -170927,13 +171117,13 @@
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/iT"
+                            "$ref": "#/$defs/iU"
                           },
                           {
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/jZ"
+                            "$ref": "#/$defs/k0"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -171224,7 +171414,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "useExistingClusterRole": {
-                            "$ref": "#/$defs/iK"
+                            "$ref": "#/$defs/iL"
                           }
                         }
                       }
@@ -171626,7 +171816,7 @@
                     "description": "Enable persistence using Persistent Volume Claims\nref: http://kubernetes.io/docs/user-guide/persistent-volumes/",
                     "properties": {
                       "existingClaim": {
-                        "$ref": "#/$defs/iC"
+                        "$ref": "#/$defs/iD"
                       }
                     }
                   }
@@ -172036,7 +172226,7 @@
                         "description": "- apiGroups: []\nresources: []\nverbs: []",
                         "properties": {
                           "name": {
-                            "$ref": "#/$defs/iL"
+                            "$ref": "#/$defs/iM"
                           }
                         }
                       }
@@ -172263,7 +172453,7 @@
                         "description": "Expose the grafana service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
                         "properties": {
                           "loadBalancerIP": {
-                            "$ref": "#/$defs/iA"
+                            "$ref": "#/$defs/iB"
                           }
                         }
                       }
@@ -172383,7 +172573,7 @@
                     "description": "Expose the grafana service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
                     "properties": {
                       "targetPort": {
-                        "$ref": "#/$defs/jc"
+                        "$ref": "#/$defs/jd"
                       }
                     }
                   }
@@ -172979,7 +173169,7 @@
                         "description": "Log level default for all sidecars. Can be one of: DEBUG, INFO, WARN, ERROR, CRITICAL. Defaults to INFO\nlogLevel: INFO",
                         "properties": {
                           "watchMethod": {
-                            "$ref": "#/$defs/ix"
+                            "$ref": "#/$defs/iy"
                           }
                         }
                       }
@@ -176309,7 +176499,7 @@
                         "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
                         "properties": {
                           "imagePullSecrets": {
-                            "$ref": "#/$defs/iW"
+                            "$ref": "#/$defs/iX"
                           }
                         }
                       }
@@ -176821,13 +177011,13 @@
                                     "$ref": "#/$defs/b"
                                   },
                                   {
-                                    "$ref": "#/$defs/iP"
+                                    "$ref": "#/$defs/iQ"
                                   },
                                   {
                                     "$ref": "#/$defs/d"
                                   },
                                   {
-                                    "$ref": "#/$defs/jr"
+                                    "$ref": "#/$defs/js"
                                   },
                                   {
                                     "$ref": "#/$defs/2"
@@ -178406,7 +178596,7 @@
                                 "description": "ip dual stack",
                                 "properties": {
                                   "ipFamilies": {
-                                    "$ref": "#/$defs/je"
+                                    "$ref": "#/$defs/jf"
                                   }
                                 }
                               }
@@ -179021,7 +179211,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "configFromSecret": {
-                            "$ref": "#/$defs/iD"
+                            "$ref": "#/$defs/iE"
                           }
                         }
                       }
@@ -181267,10 +181457,10 @@
                                 "$ref": "#/$defs/6t"
                               },
                               {
-                                "$ref": "#/$defs/jI"
+                                "$ref": "#/$defs/jJ"
                               },
                               {
-                                "$ref": "#/$defs/jJ"
+                                "$ref": "#/$defs/jK"
                               },
                               {
                                 "$ref": "#/$defs/7"
@@ -187726,7 +187916,7 @@
                         "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
                         "properties": {
                           "securityContext": {
-                            "$ref": "#/$defs/jh"
+                            "$ref": "#/$defs/ji"
                           }
                         }
                       }
@@ -188147,13 +188337,13 @@
                                 "$ref": "#/$defs/b"
                               },
                               {
-                                "$ref": "#/$defs/iU"
+                                "$ref": "#/$defs/iV"
                               },
                               {
                                 "$ref": "#/$defs/d"
                               },
                               {
-                                "$ref": "#/$defs/jP"
+                                "$ref": "#/$defs/jQ"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -188409,7 +188599,7 @@
                                     "$ref": "#/$defs/3L"
                                   },
                                   {
-                                    "$ref": "#/$defs/jy"
+                                    "$ref": "#/$defs/jz"
                                   }
                                 ]
                               }
@@ -190272,10 +190462,10 @@
                                             "description": "clientId defines a key of a Secret or ConfigMap containing the\nOAuth2 client's ID.",
                                             "properties": {
                                               "configMap": {
-                                                "$ref": "#/$defs/jl"
+                                                "$ref": "#/$defs/jm"
                                               },
                                               "secret": {
-                                                "$ref": "#/$defs/ji"
+                                                "$ref": "#/$defs/jj"
                                               }
                                             },
                                             "type": "object"
@@ -190702,7 +190892,7 @@
                                   "scrapeTimeout": {
                                     "anyOf": [
                                       {
-                                        "$ref": "#/$defs/iN"
+                                        "$ref": "#/$defs/iO"
                                       },
                                       {
                                         "$ref": "#/$defs/2"
@@ -191317,7 +191507,7 @@
                     "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
                     "properties": {
                       "service": {
-                        "$ref": "#/$defs/j4"
+                        "$ref": "#/$defs/j5"
                       }
                     }
                   }
@@ -192590,13 +192780,13 @@
                                     "$ref": "#/$defs/b"
                                   },
                                   {
-                                    "$ref": "#/$defs/iF"
+                                    "$ref": "#/$defs/iG"
                                   },
                                   {
                                     "$ref": "#/$defs/d"
                                   },
                                   {
-                                    "$ref": "#/$defs/iS"
+                                    "$ref": "#/$defs/iT"
                                   },
                                   {
                                     "$ref": "#/$defs/2"
@@ -192627,7 +192817,7 @@
                         "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
                         "properties": {
                           "service": {
-                            "$ref": "#/$defs/iy"
+                            "$ref": "#/$defs/iz"
                           }
                         }
                       }
@@ -192851,7 +193041,7 @@
                             "description": "Sets web configuration\nTo enable basic authentication, provide basicAuthUsers as a map\nbasicAuthUsers:\nusername: password",
                             "properties": {
                               "basicAuthUsers": {
-                                "$ref": "#/$defs/j8"
+                                "$ref": "#/$defs/j9"
                               }
                             }
                           }
@@ -193598,7 +193788,7 @@
                             "description": "Enable this if you're using https://github.com/coreos/prometheus-operator",
                             "properties": {
                               "bearerTokenFile": {
-                                "$ref": "#/$defs/iH"
+                                "$ref": "#/$defs/iI"
                               }
                             }
                           }
@@ -193677,7 +193867,7 @@
                                         "action": {
                                           "anyOf": [
                                             {
-                                              "$ref": "#/$defs/jn"
+                                              "$ref": "#/$defs/jo"
                                             },
                                             {
                                               "$ref": "#/$defs/4"
@@ -193685,12 +193875,12 @@
                                           ]
                                         },
                                         "modulus": {
-                                          "$ref": "#/$defs/k1"
+                                          "$ref": "#/$defs/k2"
                                         },
                                         "regex": {
                                           "anyOf": [
                                             {
-                                              "$ref": "#/$defs/ka"
+                                              "$ref": "#/$defs/kb"
                                             },
                                             {
                                               "$ref": "#/$defs/4"
@@ -193700,7 +193890,7 @@
                                         "replacement": {
                                           "anyOf": [
                                             {
-                                              "$ref": "#/$defs/jX"
+                                              "$ref": "#/$defs/jY"
                                             },
                                             {
                                               "$ref": "#/$defs/4"
@@ -193710,7 +193900,7 @@
                                         "separator": {
                                           "anyOf": [
                                             {
-                                              "$ref": "#/$defs/iY"
+                                              "$ref": "#/$defs/iZ"
                                             },
                                             {
                                               "$ref": "#/$defs/4"
@@ -193722,7 +193912,7 @@
                                           "items": {
                                             "anyOf": [
                                               {
-                                                "$ref": "#/$defs/jK"
+                                                "$ref": "#/$defs/jL"
                                               },
                                               {
                                                 "$ref": "#/$defs/4"
@@ -193734,7 +193924,7 @@
                                         "targetLabel": {
                                           "anyOf": [
                                             {
-                                              "$ref": "#/$defs/jL"
+                                              "$ref": "#/$defs/jM"
                                             },
                                             {
                                               "$ref": "#/$defs/4"
@@ -193894,6 +194084,26 @@
                                   }
                                 ],
                                 "description": "telemetryPath: HTTP resource path from which to fetch metrics.\nTelemetry path, default /metrics, has to be prefixed accordingly if pushgateway sets a route prefix at start-up."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "additionalProperties": {},
+                        "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
+                        "properties": {
+                          "serviceMonitor": {
+                            "additionalProperties": {},
+                            "description": "Enable this if you're using https://github.com/coreos/prometheus-operator",
+                            "properties": {
+                              "tlsConfig": {
+                                "$ref": "#/$defs/iw"
                               }
                             }
                           }
@@ -196210,7 +196420,7 @@
                                 "$ref": "#/$defs/C"
                               },
                               {
-                                "$ref": "#/$defs/jf"
+                                "$ref": "#/$defs/jg"
                               }
                             ]
                           },
@@ -196218,10 +196428,10 @@
                             "$ref": "#/$defs/8x"
                           },
                           "selector": {
-                            "$ref": "#/$defs/iJ"
+                            "$ref": "#/$defs/iK"
                           },
                           "unhealthyPodEvictionPolicy": {
-                            "$ref": "#/$defs/iO"
+                            "$ref": "#/$defs/iP"
                           }
                         },
                         "type": [
@@ -196382,7 +196592,7 @@
                           "probeHeaders": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/jt"
+                                "$ref": "#/$defs/ju"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -196507,7 +196717,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "probeScheme": {
-                        "$ref": "#/$defs/jd"
+                        "$ref": "#/$defs/je"
                       }
                     }
                   }
@@ -197962,7 +198172,7 @@
                           ]
                         },
                         {
-                          "$ref": "#/$defs/jg"
+                          "$ref": "#/$defs/jh"
                         },
                         {
                           "type": "null"
@@ -199444,7 +199654,7 @@
               "if": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/k2"
+                    "$ref": "#/$defs/k3"
                   },
                   {
                     "$ref": "#/$defs/eT"
@@ -199758,7 +199968,7 @@
                                   "$ref": "#/$defs/1s"
                                 },
                                 "serviceMonitor": {
-                                  "$ref": "#/$defs/kb"
+                                  "$ref": "#/$defs/kc"
                                 }
                               }
                             },
@@ -199816,7 +200026,7 @@
                             "replicaCount": {},
                             "resources": {},
                             "service": {
-                              "$ref": "#/$defs/ke"
+                              "$ref": "#/$defs/kf"
                             },
                             "tolerations": {},
                             "topologySpreadConstraints": {
@@ -200439,7 +200649,7 @@
                         "description": "tls:\nenabled: true\nenableHostVerification: true\nserverName: _HOST_ # this is strictly required when using serverless CRDB offerings\ncaFile: /path/to/certs/<CA-file> # Here we assumed that caFile, certFile, keyFile are stored in one secret mounted as 'secret-with-certs' (see: server.additionalVolumes and server.additionalVolumeMounts sections).\ncertFile: /path/to/certs/<client-cert-file>\nkeyFile: /path/to/certs/<client-key-file>\nserver.frontend is the grpc/http temporal API, which we don't want to expose via an ingress.",
                         "properties": {
                           "service": {
-                            "$ref": "#/$defs/jz"
+                            "$ref": "#/$defs/jA"
                           }
                         }
                       }
@@ -200467,7 +200677,7 @@
                         "description": "tls:\nenabled: true\nenableHostVerification: true\nserverName: _HOST_ # this is strictly required when using serverless CRDB offerings\ncaFile: /path/to/certs/<CA-file> # Here we assumed that caFile, certFile, keyFile are stored in one secret mounted as 'secret-with-certs' (see: server.additionalVolumes and server.additionalVolumeMounts sections).\ncertFile: /path/to/certs/<client-cert-file>\nkeyFile: /path/to/certs/<client-key-file>\nserver.frontend is the grpc/http temporal API, which we don't want to expose via an ingress.",
                         "properties": {
                           "topologySpreadConstraints": {
-                            "$ref": "#/$defs/jU"
+                            "$ref": "#/$defs/jV"
                           }
                         }
                       }
@@ -200535,7 +200745,7 @@
                     "description": "tls:\nenabled: true\nenableHostVerification: true\nserverName: _HOST_ # this is strictly required when using serverless CRDB offerings\ncaFile: /path/to/certs/<CA-file> # Here we assumed that caFile, certFile, keyFile are stored in one secret mounted as 'secret-with-certs' (see: server.additionalVolumes and server.additionalVolumeMounts sections).\ncertFile: /path/to/certs/<client-cert-file>\nkeyFile: /path/to/certs/<client-key-file>\nserver.frontend is the grpc/http temporal API, which we don't want to expose via an ingress.",
                     "properties": {
                       "deploymentLabels": {
-                        "$ref": "#/$defs/iX"
+                        "$ref": "#/$defs/iY"
                       }
                     }
                   }
@@ -200644,7 +200854,7 @@
                         "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
                         "properties": {
                           "serviceMonitor": {
-                            "$ref": "#/$defs/iz"
+                            "$ref": "#/$defs/iA"
                           }
                         }
                       }
@@ -200717,7 +200927,7 @@
                                 "$ref": "#/$defs/z"
                               },
                               "containerSecurityContext": {
-                                "$ref": "#/$defs/jO"
+                                "$ref": "#/$defs/jP"
                               },
                               "deploymentAnnotations": {
                                 "$ref": "#/$defs/z"
@@ -200759,7 +200969,7 @@
                                     "$ref": "#/$defs/8n"
                                   },
                                   "prometheus": {
-                                    "$ref": "#/$defs/j7"
+                                    "$ref": "#/$defs/j8"
                                   },
                                   "serviceMonitor": {
                                     "$ref": "#/$defs/z"
@@ -201029,7 +201239,7 @@
                     "description": "tls:\nenabled: true\nenableHostVerification: true\nserverName: _HOST_ # this is strictly required when using serverless CRDB offerings\ncaFile: /path/to/certs/<CA-file> # Here we assumed that caFile, certFile, keyFile are stored in one secret mounted as 'secret-with-certs' (see: server.additionalVolumes and server.additionalVolumeMounts sections).\ncertFile: /path/to/certs/<client-cert-file>\nkeyFile: /path/to/certs/<client-key-file>\nserver.frontend is the grpc/http temporal API, which we don't want to expose via an ingress.",
                     "properties": {
                       "service": {
-                        "$ref": "#/$defs/iG"
+                        "$ref": "#/$defs/iH"
                       }
                     }
                   }
@@ -201349,7 +201559,7 @@
                                 "$ref": "#/$defs/8t"
                               },
                               "metrics": {
-                                "$ref": "#/$defs/jH"
+                                "$ref": "#/$defs/jI"
                               },
                               "nodeSelector": {
                                 "$ref": "#/$defs/z"
@@ -201367,7 +201577,7 @@
                                 "$ref": "#/$defs/z"
                               },
                               "service": {
-                                "$ref": "#/$defs/k3"
+                                "$ref": "#/$defs/k4"
                               },
                               "tolerations": {
                                 "$ref": "#/$defs/1k"
@@ -203535,7 +203745,7 @@
           "allOf": [
             {
               "if": {
-                "$ref": "#/$defs/j5"
+                "$ref": "#/$defs/j6"
               },
               "then": {
                 "allOf": [

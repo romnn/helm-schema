@@ -5,6 +5,25 @@
       "type": "string"
     },
     "10": {
+      "properties": {
+        "controller": {
+          "properties": {
+            "additionalSecrets": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "additionalSecrets"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
+    },
+    "11": {
       "not": {
         "properties": {
           "agent": {
@@ -25,7 +44,7 @@
         "type": "object"
       }
     },
-    "11": {
+    "12": {
       "properties": {
         "JCasC": {
           "properties": {
@@ -44,12 +63,12 @@
       ],
       "type": "object"
     },
-    "12": {
+    "13": {
       "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
       "format": "int32",
       "type": "integer"
     },
-    "13": {
+    "14": {
       "properties": {
         "serviceEnabled": {
           "$ref": "#/$defs/t"
@@ -60,7 +79,7 @@
       ],
       "type": "object"
     },
-    "14": {
+    "15": {
       "not": {
         "properties": {
           "disableSecretMount": {
@@ -73,7 +92,7 @@
         "type": "object"
       }
     },
-    "15": {
+    "16": {
       "anyOf": [
         {
           "not": {
@@ -85,7 +104,7 @@
         }
       ]
     },
-    "16": {
+    "17": {
       "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
       "format": "int64",
       "type": [
@@ -93,7 +112,7 @@
         "null"
       ]
     },
-    "17": {
+    "18": {
       "additionalProperties": false,
       "properties": {
         "port": {
@@ -125,7 +144,7 @@
         "null"
       ]
     },
-    "18": {
+    "19": {
       "additionalProperties": false,
       "description": "TCPSocketAction describes an action based on opening a socket",
       "properties": {
@@ -183,66 +202,6 @@
       "type": [
         "object",
         "null"
-      ]
-    },
-    "19": {
-      "allOf": [
-        {
-          "properties": {
-            "controller": {
-              "properties": {
-                "admin": {
-                  "properties": {
-                    "createSecret": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "createSecret"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "admin"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "controller"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "controller": {
-                "properties": {
-                  "admin": {
-                    "properties": {
-                      "existingSecret": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "existingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "admin"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          }
-        }
       ]
     },
     "1A": {
@@ -1874,6 +1833,66 @@
           "properties": {
             "controller": {
               "properties": {
+                "admin": {
+                  "properties": {
+                    "createSecret": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "createSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "admin"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "controller"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "admin": {
+                    "properties": {
+                      "existingSecret": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "existingSecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "admin"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "1b": {
+      "allOf": [
+        {
+          "properties": {
+            "controller": {
+              "properties": {
                 "httpsKeyStore": {
                   "properties": {
                     "enable": {
@@ -1957,7 +1976,7 @@
         }
       ]
     },
-    "1b": {
+    "1c": {
       "additionalProperties": false,
       "description": "ExecAction describes a \"run in container\" action.",
       "properties": {
@@ -1988,7 +2007,7 @@
         "null"
       ]
     },
-    "1c": {
+    "1d": {
       "description": "Custom headers to set in the request. HTTP allows repeated headers.",
       "items": {
         "additionalProperties": false,
@@ -2033,7 +2052,7 @@
         "null"
       ]
     },
-    "1d": {
+    "1e": {
       "allOf": [
         {
           "properties": {
@@ -2106,7 +2125,7 @@
         }
       ]
     },
-    "1e": {
+    "1f": {
       "additionalProperties": {
         "oneOf": [
           {
@@ -2128,43 +2147,6 @@
         "object",
         "null"
       ]
-    },
-    "1f": {
-      "not": {
-        "properties": {
-          "controller": {
-            "properties": {
-              "sidecars": {
-                "properties": {
-                  "configAutoReload": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configAutoReload"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "sidecars"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "controller"
-        ],
-        "type": "object"
-      }
     },
     "1g": {
       "anyOf": [
@@ -10411,6 +10393,12 @@
       "type": "object"
     },
     "F": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "G": {
       "allOf": [
         {
           "additionalProperties": {
@@ -10433,7 +10421,7 @@
         }
       ]
     },
-    "G": {
+    "H": {
       "anyOf": [
         {
           "not": {
@@ -10476,33 +10464,6 @@
           "type": "object"
         }
       ]
-    },
-    "H": {
-      "properties": {
-        "sidecars": {
-          "properties": {
-            "configAutoReload": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "configAutoReload"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "sidecars"
-      ],
-      "type": "object"
     },
     "I": {
       "properties": {
@@ -10596,12 +10557,6 @@
       "$ref": "#/$defs/helm-double-quoted-safe"
     },
     "O": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "P": {
       "allOf": [
         {
           "additionalProperties": {
@@ -10631,6 +10586,33 @@
           "type": "object"
         }
       ]
+    },
+    "P": {
+      "properties": {
+        "sidecars": {
+          "properties": {
+            "configAutoReload": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "configAutoReload"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "sidecars"
+      ],
+      "type": "object"
     },
     "Q": {
       "properties": {
@@ -10911,6 +10893,43 @@
       "x-kubernetes-list-type": "map"
     },
     "W": {
+      "not": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "sidecars": {
+                "properties": {
+                  "configAutoReload": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "configAutoReload"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sidecars"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
+      }
+    },
+    "X": {
       "properties": {
         "controller": {
           "properties": {
@@ -10937,7 +10956,7 @@
       ],
       "type": "object"
     },
-    "X": {
+    "Y": {
       "properties": {
         "controller": {
           "properties": {
@@ -10964,7 +10983,7 @@
       ],
       "type": "object"
     },
-    "Y": {
+    "Z": {
       "anyOf": [
         {
           "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
@@ -10978,25 +10997,6 @@
           "type": "null"
         }
       ]
-    },
-    "Z": {
-      "properties": {
-        "controller": {
-          "properties": {
-            "additionalSecrets": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "additionalSecrets"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "controller"
-      ],
-      "type": "object"
     },
     "a": {
       "properties": {
@@ -11135,20 +11135,20 @@
       }
     },
     "l": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "m": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "n": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
+    },
+    "m": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "n": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
     },
     "o": {
       "anyOf": [
@@ -16148,7 +16148,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/10"
+                "$ref": "#/$defs/11"
               },
               {
                 "$ref": "#/$defs/5e"
@@ -16210,7 +16210,7 @@
             "$ref": "#/$defs/3"
           },
           {
-            "$ref": "#/$defs/10"
+            "$ref": "#/$defs/11"
           }
         ]
       },
@@ -16275,7 +16275,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/10"
+                "$ref": "#/$defs/11"
               }
             ]
           },
@@ -16291,7 +16291,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/10"
+                "$ref": "#/$defs/11"
               },
               {
                 "$ref": "#/$defs/p"
@@ -16534,10 +16534,10 @@
                   "nodeSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/O"
+                        "$ref": "#/$defs/F"
                       },
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/l"
                       },
                       {
                         "type": "null"
@@ -16630,10 +16630,10 @@
                   "podTemplates": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/O"
+                        "$ref": "#/$defs/F"
                       },
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/l"
                       },
                       {
                         "type": "null"
@@ -17080,7 +17080,7 @@
             "$ref": "#/$defs/1T"
           },
           {
-            "$ref": "#/$defs/1d"
+            "$ref": "#/$defs/1e"
           }
         ]
       },
@@ -17140,11 +17140,234 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "controller": {
-          "$ref": "#/$defs/4l"
+      "if": {
+        "$ref": "#/$defs/W"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "JCasC": {
+                "additionalProperties": {},
+                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
+                "properties": {
+                  "configScripts": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/F"
+                      },
+                      {
+                        "$ref": "#/$defs/l"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
+                  }
+                }
+              }
+            }
+          }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/y"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "$ref": "#/$defs/4l"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "jenkinsUriPrefix": {
+                    "$ref": "#/$defs/helm-double-quoted-safe",
+                    "description": "Root URI Jenkins will be served on"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "sidecars": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configAutoReload": {
+                        "additionalProperties": {},
+                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
+                        "properties": {
+                          "folder": {
+                            "$ref": "#/$defs/helm-double-quoted-safe",
+                            "description": "folder in the pod that should hold the collected dashboards:"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "sidecars": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configAutoReload": {
+                        "additionalProperties": {},
+                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
+                        "properties": {
+                          "healthPort": {
+                            "$ref": "#/$defs/helm-double-quoted-safe",
+                            "description": "Port for sidecar health probes"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "sidecars": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configAutoReload": {
+                        "additionalProperties": {},
+                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
+                        "properties": {
+                          "image": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-double-quoted-safe",
+                                "description": "Registry for the image that triggers the reload"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "sidecars": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configAutoReload": {
+                        "additionalProperties": {},
+                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
+                        "properties": {
+                          "image": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "repository": {
+                                "$ref": "#/$defs/helm-double-quoted-safe",
+                                "description": "Repository of the image that triggers the reload"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "sidecars": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configAutoReload": {
+                        "additionalProperties": {},
+                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
+                        "properties": {
+                          "image": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "tag": {
+                                "$ref": "#/$defs/helm-double-quoted-safe",
+                                "description": "Tag for the image that triggers the reload"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "sidecars": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configAutoReload": {
+                        "additionalProperties": {},
+                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
+                        "properties": {
+                          "reqRetryConnect": {
+                            "$ref": "#/$defs/helm-double-quoted-safe",
+                            "description": "How many connection-related errors to retry on"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -17204,7 +17427,7 @@
                 "$ref": "#/$defs/2D"
               },
               {
-                "$ref": "#/$defs/Z"
+                "$ref": "#/$defs/10"
               },
               {
                 "$ref": "#/$defs/2v"
@@ -17508,10 +17731,10 @@
             "additionalPlugins": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/F"
                 },
                 {
-                  "$ref": "#/$defs/n"
+                  "$ref": "#/$defs/l"
                 },
                 {
                   "$ref": "#/$defs/b"
@@ -17528,7 +17751,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/Z"
+        "$ref": "#/$defs/10"
       },
       "then": {
         "allOf": [
@@ -17692,7 +17915,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/19"
+        "$ref": "#/$defs/1a"
       },
       "then": {
         "additionalProperties": {},
@@ -18024,7 +18247,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/X"
+        "$ref": "#/$defs/Y"
       },
       "then": {
         "allOf": [
@@ -18072,7 +18295,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/W"
+            "$ref": "#/$defs/X"
           },
           {
             "$ref": "#/$defs/55"
@@ -18207,7 +18430,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/W"
+            "$ref": "#/$defs/X"
           },
           {
             "$ref": "#/$defs/2Q"
@@ -18236,7 +18459,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/W"
+        "$ref": "#/$defs/X"
       },
       "then": {
         "allOf": [
@@ -18282,7 +18505,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1a"
+        "$ref": "#/$defs/1b"
       },
       "then": {
         "allOf": [
@@ -18928,10 +19151,10 @@
               "initScripts": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/O"
+                    "$ref": "#/$defs/F"
                   },
                   {
-                    "$ref": "#/$defs/n"
+                    "$ref": "#/$defs/l"
                   },
                   {
                     "type": "null"
@@ -18953,10 +19176,10 @@
             "installPlugins": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/F"
                 },
                 {
-                  "$ref": "#/$defs/n"
+                  "$ref": "#/$defs/l"
                 },
                 {
                   "$ref": "#/$defs/b"
@@ -19115,197 +19338,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/y"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "jenkinsUriPrefix": {
-                    "$ref": "#/$defs/helm-double-quoted-safe",
-                    "description": "Root URI Jenkins will be served on"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "sidecars": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "configAutoReload": {
-                        "additionalProperties": {},
-                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
-                        "properties": {
-                          "folder": {
-                            "$ref": "#/$defs/helm-double-quoted-safe",
-                            "description": "folder in the pod that should hold the collected dashboards:"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "sidecars": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "configAutoReload": {
-                        "additionalProperties": {},
-                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
-                        "properties": {
-                          "healthPort": {
-                            "$ref": "#/$defs/helm-double-quoted-safe",
-                            "description": "Port for sidecar health probes"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "sidecars": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "configAutoReload": {
-                        "additionalProperties": {},
-                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
-                        "properties": {
-                          "image": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "registry": {
-                                "$ref": "#/$defs/helm-double-quoted-safe",
-                                "description": "Registry for the image that triggers the reload"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "sidecars": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "configAutoReload": {
-                        "additionalProperties": {},
-                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
-                        "properties": {
-                          "image": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "repository": {
-                                "$ref": "#/$defs/helm-double-quoted-safe",
-                                "description": "Repository of the image that triggers the reload"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "sidecars": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "configAutoReload": {
-                        "additionalProperties": {},
-                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
-                        "properties": {
-                          "image": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "tag": {
-                                "$ref": "#/$defs/helm-double-quoted-safe",
-                                "description": "Tag for the image that triggers the reload"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "sidecars": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "configAutoReload": {
-                        "additionalProperties": {},
-                        "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected.",
-                        "properties": {
-                          "reqRetryConnect": {
-                            "$ref": "#/$defs/helm-double-quoted-safe",
-                            "description": "How many connection-related errors to retry on"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/X"
+            "$ref": "#/$defs/Y"
           },
           {
             "$ref": "#/$defs/C"
@@ -19376,10 +19411,10 @@
                   "overrideArgs": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/O"
+                        "$ref": "#/$defs/F"
                       },
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/l"
                       },
                       {
                         "$ref": "#/$defs/b"
@@ -19452,7 +19487,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/l"
+                                "$ref": "#/$defs/m"
                               },
                               {
                                 "$ref": "#/$defs/h"
@@ -19467,7 +19502,7 @@
                                 "$ref": "#/$defs/j"
                               },
                               {
-                                "$ref": "#/$defs/m"
+                                "$ref": "#/$defs/n"
                               },
                               {
                                 "$ref": "#/$defs/f"
@@ -20401,7 +20436,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1d"
+        "$ref": "#/$defs/1e"
       },
       "then": {
         "additionalProperties": {},
@@ -20713,7 +20748,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/X"
             }
           }
         ]
@@ -20792,7 +20827,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/X"
+            "$ref": "#/$defs/Y"
           },
           {
             "properties": {
@@ -20838,7 +20873,7 @@
           "extraLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/n"
+                "$ref": "#/$defs/l"
               },
               {
                 "$ref": "#/$defs/2"
@@ -20853,16 +20888,16 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/Z"
+            "$ref": "#/$defs/10"
           },
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/1a"
           },
           {
             "$ref": "#/$defs/q"
           },
           {
-            "$ref": "#/$defs/1a"
+            "$ref": "#/$defs/1b"
           },
           {
             "$ref": "#/$defs/s"
@@ -20966,7 +21001,7 @@
               "fullnameOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/n"
+                    "$ref": "#/$defs/l"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -21169,7 +21204,7 @@
             "$ref": "#/$defs/1T"
           },
           {
-            "$ref": "#/$defs/1d"
+            "$ref": "#/$defs/1e"
           },
           {
             "$ref": "#/$defs/C"
@@ -21250,16 +21285,16 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/Z"
+            "$ref": "#/$defs/10"
           },
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/1a"
           },
           {
             "$ref": "#/$defs/q"
           },
           {
-            "$ref": "#/$defs/1a"
+            "$ref": "#/$defs/1b"
           },
           {
             "$ref": "#/$defs/s"
@@ -21415,7 +21450,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/l"
+                        "$ref": "#/$defs/m"
                       },
                       {
                         "$ref": "#/$defs/h"
@@ -21430,7 +21465,7 @@
                         "$ref": "#/$defs/j"
                       },
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/n"
                       },
                       {
                         "$ref": "#/$defs/f"
@@ -21486,7 +21521,7 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/l"
+                            "$ref": "#/$defs/m"
                           },
                           {
                             "$ref": "#/$defs/h"
@@ -21501,7 +21536,7 @@
                             "$ref": "#/$defs/j"
                           },
                           {
-                            "$ref": "#/$defs/m"
+                            "$ref": "#/$defs/n"
                           },
                           {
                             "$ref": "#/$defs/f"
@@ -21541,7 +21576,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/X"
+                "$ref": "#/$defs/Y"
               },
               {
                 "not": {
@@ -22132,7 +22167,7 @@
             "$ref": "#/$defs/y"
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           }
         ]
       },
@@ -22160,10 +22195,10 @@
             "$ref": "#/$defs/3"
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
-            "$ref": "#/$defs/1f"
+            "$ref": "#/$defs/W"
           }
         ]
       },
@@ -22185,7 +22220,7 @@
             "$ref": "#/$defs/y"
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           }
         ]
       },
@@ -22204,10 +22239,10 @@
             "$ref": "#/$defs/3"
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
-            "$ref": "#/$defs/1f"
+            "$ref": "#/$defs/W"
           }
         ]
       },
@@ -22226,7 +22261,7 @@
             "$ref": "#/$defs/y"
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/p"
@@ -22245,13 +22280,13 @@
             "$ref": "#/$defs/3"
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/p"
           },
           {
-            "$ref": "#/$defs/1f"
+            "$ref": "#/$defs/W"
           }
         ]
       },
@@ -24765,7 +24800,7 @@
                     "$ref": "#/$defs/5a"
                   },
                   {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/P"
                   },
                   {
                     "$ref": "#/$defs/31"
@@ -24778,10 +24813,10 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/11"
+                    "$ref": "#/$defs/12"
                   },
                   {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/P"
                   }
                 ]
               },
@@ -24791,7 +24826,7 @@
                     "$ref": "#/$defs/5d"
                   },
                   {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/P"
                   },
                   {
                     "$ref": "#/$defs/31"
@@ -24813,7 +24848,7 @@
                   "configMapAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/G"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -24828,42 +24863,7 @@
         },
         {
           "if": {
-            "not": {
-              "$ref": "#/$defs/H"
-            }
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "JCasC": {
-                "additionalProperties": {},
-                "description": "Below is the implementation of Jenkins Configuration as Code. Add a key under configScripts for each configuration area,\nwhere each corresponds to a plugin or section of the UI. Each key (prior to | character) is just a label, and can be any value.\nKeys are only used to give the section a meaningful name. The only restriction is they may only contain RFC 1123 \\ DNS label\ncharacters: lowercase letters, numbers, and hyphens. The keys become the name of a configuration yaml file on the controller in\n/var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin. The lines after each |\nbecome the content of the configuration yaml file. The first line after this is a JCasC root element, e.g., jenkins, credentials,\netc. Best reference is https://<jenkins_url>/configuration-as-code/reference. The example below creates a welcome message:",
-                "properties": {
-                  "configScripts": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "List of Jenkins Config as Code scripts\nwelcome-message: |\njenkins:\nsystemMessage: Welcome to our CI\\CD server. This Jenkins is configured and managed 'as code'."
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/P"
           },
           "then": {
             "$ref": "#/$defs/4l"
@@ -24880,11 +24880,11 @@
                 "properties": {
                   "additionalPlugins": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/15"
+                      "$ref": "#/$defs/16"
                     },
                     "description": "List of plugins to install in addition to those listed in controller.installPlugins",
                     "items": {
-                      "$ref": "#/$defs/15"
+                      "$ref": "#/$defs/16"
                     }
                   }
                 }
@@ -24974,7 +24974,7 @@
                   "agentListenerServiceAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/G"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -25154,7 +25154,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/13"
+                "$ref": "#/$defs/14"
               },
               {
                 "properties": {
@@ -25182,7 +25182,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/l"
+                        "$ref": "#/$defs/m"
                       },
                       {
                         "$ref": "#/$defs/h"
@@ -25197,7 +25197,7 @@
                         "$ref": "#/$defs/j"
                       },
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/n"
                       },
                       {
                         "$ref": "#/$defs/f"
@@ -25241,7 +25241,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/13"
+            "$ref": "#/$defs/14"
           },
           "then": {
             "allOf": [
@@ -25326,7 +25326,7 @@
                   "serviceAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/G"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -25490,7 +25490,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/13"
+                "$ref": "#/$defs/14"
               },
               {
                 "properties": {
@@ -25569,7 +25569,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/13"
+                "$ref": "#/$defs/14"
               },
               {
                 "properties": {
@@ -25937,7 +25937,7 @@
                         "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
                         "properties": {
                           "exec": {
-                            "$ref": "#/$defs/1b"
+                            "$ref": "#/$defs/1c"
                           },
                           "failureThreshold": {
                             "description": "Set the failure threshold for the liveness probe",
@@ -25948,7 +25948,7 @@
                             ]
                           },
                           "grpc": {
-                            "$ref": "#/$defs/17"
+                            "$ref": "#/$defs/18"
                           },
                           "httpGet": {
                             "additionalProperties": false,
@@ -25958,7 +25958,7 @@
                                 "$ref": "#/$defs/1m"
                               },
                               "httpHeaders": {
-                                "$ref": "#/$defs/1c"
+                                "$ref": "#/$defs/1d"
                               },
                               "path": {
                                 "$ref": "#/$defs/2C"
@@ -26006,10 +26006,10 @@
                             "$ref": "#/$defs/1l"
                           },
                           "tcpSocket": {
-                            "$ref": "#/$defs/18"
+                            "$ref": "#/$defs/19"
                           },
                           "terminationGracePeriodSeconds": {
-                            "$ref": "#/$defs/16"
+                            "$ref": "#/$defs/17"
                           },
                           "timeoutSeconds": {
                             "description": "Set the timeout for the liveness probe in seconds",
@@ -26040,7 +26040,7 @@
                         "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
                         "properties": {
                           "exec": {
-                            "$ref": "#/$defs/1b"
+                            "$ref": "#/$defs/1c"
                           },
                           "failureThreshold": {
                             "description": "Set the failure threshold for the readiness probe",
@@ -26051,7 +26051,7 @@
                             ]
                           },
                           "grpc": {
-                            "$ref": "#/$defs/17"
+                            "$ref": "#/$defs/18"
                           },
                           "httpGet": {
                             "additionalProperties": false,
@@ -26061,7 +26061,7 @@
                                 "$ref": "#/$defs/1m"
                               },
                               "httpHeaders": {
-                                "$ref": "#/$defs/1c"
+                                "$ref": "#/$defs/1d"
                               },
                               "path": {
                                 "$ref": "#/$defs/2C"
@@ -26109,10 +26109,10 @@
                             "$ref": "#/$defs/1l"
                           },
                           "tcpSocket": {
-                            "$ref": "#/$defs/18"
+                            "$ref": "#/$defs/19"
                           },
                           "terminationGracePeriodSeconds": {
-                            "$ref": "#/$defs/16"
+                            "$ref": "#/$defs/17"
                           },
                           "timeoutSeconds": {
                             "description": "Set the timeout for the readiness probe in seconds",
@@ -26143,7 +26143,7 @@
                         "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
                         "properties": {
                           "exec": {
-                            "$ref": "#/$defs/1b"
+                            "$ref": "#/$defs/1c"
                           },
                           "failureThreshold": {
                             "description": "Set the failure threshold for the startup probe",
@@ -26154,7 +26154,7 @@
                             ]
                           },
                           "grpc": {
-                            "$ref": "#/$defs/17"
+                            "$ref": "#/$defs/18"
                           },
                           "httpGet": {
                             "additionalProperties": false,
@@ -26164,7 +26164,7 @@
                                 "$ref": "#/$defs/1m"
                               },
                               "httpHeaders": {
-                                "$ref": "#/$defs/1c"
+                                "$ref": "#/$defs/1d"
                               },
                               "path": {
                                 "anyOf": [
@@ -26223,10 +26223,10 @@
                             "$ref": "#/$defs/1l"
                           },
                           "tcpSocket": {
-                            "$ref": "#/$defs/18"
+                            "$ref": "#/$defs/19"
                           },
                           "terminationGracePeriodSeconds": {
-                            "$ref": "#/$defs/16"
+                            "$ref": "#/$defs/17"
                           },
                           "timeoutSeconds": {
                             "description": "Set the timeout for the startup probe in seconds",
@@ -26277,7 +26277,7 @@
                     "$ref": "#/$defs/1i"
                   },
                   "requests": {
-                    "$ref": "#/$defs/1e"
+                    "$ref": "#/$defs/1f"
                   }
                 },
                 "type": [
@@ -26332,7 +26332,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/11"
+                "$ref": "#/$defs/12"
               },
               {
                 "$ref": "#/$defs/3E"
@@ -26381,7 +26381,7 @@
               "targetPort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/12"
+                    "$ref": "#/$defs/13"
                   },
                   {
                     "$ref": "#/$defs/u"
@@ -26500,7 +26500,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/l"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -26525,7 +26525,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/l"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -26569,7 +26569,7 @@
                           "scrapeInterval": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/l"
+                                "$ref": "#/$defs/m"
                               },
                               {
                                 "$ref": "#/$defs/h"
@@ -26584,7 +26584,7 @@
                                 "$ref": "#/$defs/j"
                               },
                               {
-                                "$ref": "#/$defs/m"
+                                "$ref": "#/$defs/n"
                               },
                               {
                                 "$ref": "#/$defs/f"
@@ -26645,7 +26645,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/l"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -26691,7 +26691,7 @@
                         "$ref": "#/$defs/K"
                       },
                       {
-                        "$ref": "#/$defs/14"
+                        "$ref": "#/$defs/15"
                       }
                     ]
                   },
@@ -26708,7 +26708,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/l"
+                                    "$ref": "#/$defs/m"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -26723,7 +26723,7 @@
                                     "$ref": "#/$defs/j"
                                   },
                                   {
-                                    "$ref": "#/$defs/m"
+                                    "$ref": "#/$defs/n"
                                   },
                                   {
                                     "$ref": "#/$defs/f"
@@ -26760,7 +26760,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/l"
+                                    "$ref": "#/$defs/m"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -26775,7 +26775,7 @@
                                     "$ref": "#/$defs/j"
                                   },
                                   {
-                                    "$ref": "#/$defs/m"
+                                    "$ref": "#/$defs/n"
                                   },
                                   {
                                     "$ref": "#/$defs/f"
@@ -26823,7 +26823,7 @@
                       "httpPort": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/12"
+                            "$ref": "#/$defs/13"
                           },
                           {
                             "$ref": "#/$defs/u"
@@ -26865,7 +26865,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/l"
+                                "$ref": "#/$defs/m"
                               },
                               {
                                 "$ref": "#/$defs/h"
@@ -26880,7 +26880,7 @@
                                 "$ref": "#/$defs/j"
                               },
                               {
-                                "$ref": "#/$defs/m"
+                                "$ref": "#/$defs/n"
                               },
                               {
                                 "$ref": "#/$defs/f"
@@ -26941,7 +26941,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/P"
+                                "$ref": "#/$defs/O"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -26978,7 +26978,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/l"
+                                    "$ref": "#/$defs/m"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -26993,7 +26993,7 @@
                                     "$ref": "#/$defs/j"
                                   },
                                   {
-                                    "$ref": "#/$defs/m"
+                                    "$ref": "#/$defs/n"
                                   },
                                   {
                                     "$ref": "#/$defs/f"
@@ -27046,7 +27046,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/l"
+                                    "$ref": "#/$defs/m"
                                   },
                                   {
                                     "$ref": "#/$defs/h"
@@ -27061,7 +27061,7 @@
                                     "$ref": "#/$defs/j"
                                   },
                                   {
-                                    "$ref": "#/$defs/m"
+                                    "$ref": "#/$defs/n"
                                   },
                                   {
                                     "$ref": "#/$defs/f"
@@ -27290,10 +27290,10 @@
                     "allOf": [
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/15"
+                          "$ref": "#/$defs/16"
                         },
                         "items": {
-                          "$ref": "#/$defs/15"
+                          "$ref": "#/$defs/16"
                         }
                       },
                       {
@@ -27335,7 +27335,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/F"
+                                "$ref": "#/$defs/G"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -27407,7 +27407,7 @@
                           "alertingRulesAdditionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/l"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -27628,7 +27628,7 @@
                           "scrapeInterval": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/l"
+                                "$ref": "#/$defs/m"
                               },
                               {
                                 "$ref": "#/$defs/h"
@@ -27643,7 +27643,7 @@
                                 "$ref": "#/$defs/j"
                               },
                               {
-                                "$ref": "#/$defs/m"
+                                "$ref": "#/$defs/n"
                               },
                               {
                                 "$ref": "#/$defs/f"
@@ -27670,7 +27670,7 @@
                           "serviceMonitorAdditionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/l"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -27730,7 +27730,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/l"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -27746,7 +27746,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/l"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -27781,7 +27781,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/P"
+                                "$ref": "#/$defs/O"
                               },
                               {
                                 "$ref": "#/$defs/2"
@@ -28121,7 +28121,7 @@
                                   {
                                     "allOf": [
                                       {
-                                        "$ref": "#/$defs/l"
+                                        "$ref": "#/$defs/m"
                                       },
                                       {
                                         "$ref": "#/$defs/h"
@@ -28136,7 +28136,7 @@
                                         "$ref": "#/$defs/j"
                                       },
                                       {
-                                        "$ref": "#/$defs/m"
+                                        "$ref": "#/$defs/n"
                                       },
                                       {
                                         "$ref": "#/$defs/f"
@@ -28188,7 +28188,7 @@
                                     "$ref": "#/$defs/1i"
                                   },
                                   "requests": {
-                                    "$ref": "#/$defs/1e"
+                                    "$ref": "#/$defs/1f"
                                   }
                                 },
                                 "type": [
@@ -28271,7 +28271,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/11"
+                "$ref": "#/$defs/12"
               },
               {
                 "anyOf": [
@@ -28309,7 +28309,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/11"
+                "$ref": "#/$defs/12"
               },
               {
                 "anyOf": [
@@ -28452,7 +28452,7 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/14"
+                        "$ref": "#/$defs/15"
                       },
                       {
                         "$ref": "#/$defs/3b"
@@ -28505,7 +28505,7 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/14"
+                        "$ref": "#/$defs/15"
                       },
                       {
                         "$ref": "#/$defs/3b"
@@ -28558,7 +28558,7 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/14"
+                        "$ref": "#/$defs/15"
                       }
                     ]
                   },
@@ -28620,7 +28620,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/H"
+                "$ref": "#/$defs/P"
               },
               {
                 "anyOf": [
@@ -29321,7 +29321,7 @@
         "agentListenerPort": {
           "anyOf": [
             {
-              "$ref": "#/$defs/12"
+              "$ref": "#/$defs/13"
             },
             {
               "$ref": "#/$defs/u"
@@ -29960,7 +29960,7 @@
                   "$ref": "#/$defs/1i"
                 },
                 "requests": {
-                  "$ref": "#/$defs/1e"
+                  "$ref": "#/$defs/1f"
                 }
               },
               "type": "object"
@@ -30033,7 +30033,7 @@
         "jmxPort": {
           "anyOf": [
             {
-              "$ref": "#/$defs/12"
+              "$ref": "#/$defs/13"
             },
             {
               "$ref": "#/$defs/2"
@@ -30127,7 +30127,7 @@
               "$ref": "#/$defs/x"
             },
             {
-              "$ref": "#/$defs/P"
+              "$ref": "#/$defs/O"
             },
             {
               "$ref": "#/$defs/2"
@@ -30162,7 +30162,7 @@
         "podLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/n"
+              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/4G"
@@ -30187,7 +30187,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/l"
+                  "$ref": "#/$defs/m"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -30202,7 +30202,7 @@
                   "$ref": "#/$defs/j"
                 },
                 {
-                  "$ref": "#/$defs/m"
+                  "$ref": "#/$defs/n"
                 },
                 {
                   "$ref": "#/$defs/f"
@@ -30422,7 +30422,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/l"
+                  "$ref": "#/$defs/m"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -30437,7 +30437,7 @@
                   "$ref": "#/$defs/j"
                 },
                 {
-                  "$ref": "#/$defs/m"
+                  "$ref": "#/$defs/n"
                 },
                 {
                   "$ref": "#/$defs/f"
@@ -30694,7 +30694,7 @@
               "$ref": "#/$defs/x"
             },
             {
-              "$ref": "#/$defs/F"
+              "$ref": "#/$defs/G"
             },
             {
               "$ref": "#/$defs/2"
@@ -30705,7 +30705,7 @@
         "statefulSetLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/n"
+              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/4G"
@@ -30735,7 +30735,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/l"
+                  "$ref": "#/$defs/m"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -30750,7 +30750,7 @@
                   "$ref": "#/$defs/j"
                 },
                 {
-                  "$ref": "#/$defs/m"
+                  "$ref": "#/$defs/n"
                 },
                 {
                   "$ref": "#/$defs/f"
@@ -30801,7 +30801,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/l"
+                  "$ref": "#/$defs/m"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -30816,7 +30816,7 @@
                   "$ref": "#/$defs/j"
                 },
                 {
-                  "$ref": "#/$defs/m"
+                  "$ref": "#/$defs/n"
                 },
                 {
                   "$ref": "#/$defs/f"
@@ -31228,7 +31228,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/G"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -31320,7 +31320,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/l"
+                        "$ref": "#/$defs/m"
                       },
                       {
                         "$ref": "#/$defs/h"
@@ -31335,7 +31335,7 @@
                         "$ref": "#/$defs/j"
                       },
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/n"
                       },
                       {
                         "$ref": "#/$defs/f"
@@ -31460,7 +31460,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/l"
+                  "$ref": "#/$defs/m"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -31475,7 +31475,7 @@
                   "$ref": "#/$defs/j"
                 },
                 {
-                  "$ref": "#/$defs/m"
+                  "$ref": "#/$defs/n"
                 },
                 {
                   "$ref": "#/$defs/f"
@@ -31835,7 +31835,7 @@
                         "$ref": "#/$defs/4X"
                       },
                       "name": {
-                        "$ref": "#/$defs/Y"
+                        "$ref": "#/$defs/Z"
                       },
                       "optional": {
                         "$ref": "#/$defs/3A"
@@ -33130,7 +33130,7 @@
                                   "$ref": "#/$defs/4X"
                                 },
                                 "name": {
-                                  "$ref": "#/$defs/Y"
+                                  "$ref": "#/$defs/Z"
                                 },
                                 "optional": {
                                   "$ref": "#/$defs/3A"
@@ -33176,7 +33176,7 @@
                                   ]
                                 },
                                 "name": {
-                                  "$ref": "#/$defs/Y"
+                                  "$ref": "#/$defs/Z"
                                 },
                                 "optional": {
                                   "description": "optional field specify whether the Secret or its key must be defined",
@@ -33488,7 +33488,7 @@
                         "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                         "properties": {
                           "name": {
-                            "$ref": "#/$defs/Y"
+                            "$ref": "#/$defs/Z"
                           }
                         },
                         "type": "object",
@@ -33792,7 +33792,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/P"
+                        "$ref": "#/$defs/O"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -33952,7 +33952,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/P"
+                        "$ref": "#/$defs/O"
                       },
                       {
                         "$ref": "#/$defs/2"

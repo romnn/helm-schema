@@ -657,6 +657,313 @@ fn unspaced_selector_pipe_splits_the_enclosing_command() {
 }
 
 #[test]
+fn pipe_spacing_never_changes_the_parse() {
+    // Go's lexer emits `|` as its own token regardless of adjacent
+    // whitespace, so every spacing variant of a pipeline must parse
+    // identically. The v0.0.6 grammar absorbed an un-spaced pipe into
+    // the preceding argument, splitting `nindent 8` apart (`8` became
+    // an extra argument of the FIRST stage), which fabricated an
+    // unsatisfiable "subject must be a string" schema constraint.
+    let cases: &[(&str, &[&str])] = &[
+        (
+            "{{ toYaml . | nindent 8 }}",
+            &[
+                "{{ toYaml .| nindent 8 }}",
+                "{{ toYaml . |nindent 8 }}",
+                "{{ toYaml .|nindent 8 }}",
+                "{{ toYaml  .  |  nindent 8 }}",
+            ],
+        ),
+        (
+            "{{ toYaml .Values.podLabels | nindent 8 }}",
+            &["{{ toYaml .Values.podLabels| nindent 8 }}"],
+        ),
+        ("{{ toJson . | indent 2 }}", &["{{ toJson .| indent 2 }}"]),
+        (
+            "{{ default \"x\" .Values.y | quote }}",
+            &["{{ default \"x\" .Values.y|quote }}"],
+        ),
+        (
+            "{{ f a | b c }}",
+            &["{{ f a|b c }}", "{{ f a |b c }}", "{{ f a| b c }}"],
+        ),
+        (
+            "{{ toYaml $v | nindent 8 }}",
+            &["{{ toYaml $v| nindent 8 }}"],
+        ),
+        ("{{ toYaml 5 | nindent 8 }}", &["{{ toYaml 5| nindent 8 }}"]),
+    ];
+    for (spaced, variants) in cases {
+        let want = parse_action_expressions(spaced);
+        assert!(
+            !want.is_empty(),
+            "canonical form must parse to expressions: {spaced}"
+        );
+        for variant in *variants {
+            let have = parse_action_expressions(variant);
+            sim_assert_eq!(have: &have, want: &want);
+        }
+    }
+}
+
+#[test]
+fn unspaced_pipe_keeps_the_piped_calls_arguments() {
+    // The report's exact broken action: the pipe target must keep its
+    // own argument (`nindent 8`), and the fragment predicates that
+    // drive hole classification must see the un-spaced form exactly
+    // like the spaced one.
+    let exprs = parse_action_expressions("{{ toYaml .| nindent 8 }}");
+    let TemplateExpr::Pipeline(stages) = first(&exprs) else {
+        panic!("expected Pipeline, got {exprs:?}");
+    };
+    sim_assert_eq!(
+        have: stages,
+        want: &vec![
+            TemplateExpr::Call {
+                function: "toYaml".into(),
+                args: vec![TemplateExpr::Field(Vec::new())],
+            },
+            TemplateExpr::Call {
+                function: "nindent".into(),
+                args: vec![TemplateExpr::Literal(Literal::Int(8))],
+            },
+        ]
+    );
+    assert!(exprs.iter().any(TemplateExpr::renders_yaml_fragment));
+    sim_assert_eq!(
+        have: exprs.iter().find_map(TemplateExpr::fragment_indent_width),
+        want: Some(8)
+    );
+}
+
+#[test]
+fn call_arguments_are_never_bare_pipelines() {
+    // The invariant that justified deleting `call_with_unfolded_pipe`:
+    // the grammar's argument rule admits only Go operands, so a bare
+    // (un-parenthesized) pipe can never be absorbed into a `Call`
+    // argument — only `Parenthesized(Pipeline)` may appear there. The
+    // synthesized `template` keyword call is exempt: Go's template
+    // action really does take a whole pipeline as its data argument.
+    let battery = [
+        "{{ toYaml .| nindent 8 }}",
+        "{{ toYaml .Values.podLabels|nindent 8 }}",
+        r#"{{ print (include "a" .) (include "b" .)| sha256sum }}"#,
+        "{{ f a|b c }}",
+        r#"{{ default "x" .Values.y|quote }}"#,
+        "{{ $x := f a|b }}",
+        "{{ if .a|empty }}x{{ end }}",
+        "{{ .M a|b 1 }}",
+        "{{ f (a|b) c|d }}",
+    ];
+    for action in battery {
+        for expr in parse_action_expressions(action) {
+            expr.walk(|node| {
+                let TemplateExpr::Call { function, args } = node else {
+                    return;
+                };
+                if function == "template" {
+                    return;
+                }
+                for arg in args {
+                    assert!(
+                        !matches!(arg, TemplateExpr::Pipeline(_)),
+                        "bare pipeline argument leaked into {function} in {action}: {arg:?}"
+                    );
+                }
+            });
+        }
+    }
+}
+
+#[test]
+fn hex_float_literals_decode() {
+    // Go's number lexer accepts hex floats with a binary exponent;
+    // bitnami's memory-size helpers use them for binary unit factors
+    // (`0x1p20` = 1 MiB). These must decode instead of degrading to
+    // `Unknown`.
+    let cases = [
+        ("{{ f 0x1p20 }}", 1_048_576.0),
+        ("{{ f 0x1p60 }}", 1_152_921_504_606_846_976.0),
+        ("{{ f 0x1p-2 }}", 0.25),
+        ("{{ f 0x1.8p1 }}", 3.0),
+        ("{{ f -0x1p10 }}", -1024.0),
+        // Near the f64 range edges the scaling must not overflow or
+        // underflow through an intermediate power of two: 2^-1024 is a
+        // representable subnormal and 0x.1p1024 = 2^1020 is finite.
+        ("{{ f 0x1p-1024 }}", 5.562_684_646_268_003e-309),
+        ("{{ f 0x.1p1024 }}", 1.123_558_209_288_947_4e307),
+        // Go accepts a zero mantissa with any exponent as plain zero.
+        ("{{ f 0x0p10000 }}", 0.0),
+    ];
+    for (action, want) in cases {
+        let exprs = parse_action_expressions(action);
+        let TemplateExpr::Call { args, .. } = first(&exprs) else {
+            panic!("expected Call for {action}: {exprs:?}");
+        };
+        sim_assert_eq!(
+            have: args.first(),
+            want: Some(&TemplateExpr::Literal(Literal::Float(want)))
+        );
+    }
+
+    // Out-of-range exponents overflow f64; Go rejects them outright
+    // ("illegal number syntax"), and a non-finite Literal::Float would
+    // break expression equality (NaN != NaN). They must degrade to
+    // Unknown, never to inf or NaN.
+    let exprs = parse_action_expressions("{{ f 0x1p10000 }}");
+    let TemplateExpr::Call { args, .. } = first(&exprs) else {
+        panic!("expected Call: {exprs:?}");
+    };
+    assert!(
+        !matches!(args.first(), Some(TemplateExpr::Literal(Literal::Float(_)))),
+        "non-finite hex float must not decode: {args:?}"
+    );
+}
+
+#[test]
+fn recovery_trees_abstain_instead_of_fabricating_paths() {
+    // A Go-valid field name the grammar cannot lex (Unicode-digit-INITIAL
+    // identifier) produces a recovery tree; converting its survivors used
+    // to fabricate `Field(["Values","key"])` — a WRONG values path. Any
+    // expression carrying a parse error must abstain as Unknown.
+    let exprs = parse_action_expressions("{{ .Values.١key }}");
+    for expr in &exprs {
+        expr.walk(|node| {
+            assert!(
+                !matches!(node, TemplateExpr::Field(path) if path == &vec!["Values".to_string(), "key".to_string()]),
+                "recovery must not fabricate a truncated values path: {exprs:?}"
+            );
+        });
+    }
+}
+
+#[test]
+fn trailing_pipe_is_tolerated_like_go() {
+    // Go's pipeline parser closes the pipeline when `}}` or `)` follows
+    // a `|`, silently dropping the trailing pipe (datadog-operator ships
+    // `{{- toYaml … | nindent 4 | }}` and Helm renders it). The parse
+    // must equal the pipe-less spelling exactly.
+    let cases = [
+        (
+            "{{ toYaml .Values.sa.annotations | nindent 4 | }}",
+            "{{ toYaml .Values.sa.annotations | nindent 4 }}",
+        ),
+        ("{{ .Values.x | }}", "{{ .Values.x }}"),
+        ("{{ print (list 1 | ) }}", "{{ print (list 1) }}"),
+        ("{{ if .a | }}x{{ end }}", "{{ if .a }}x{{ end }}"),
+    ];
+    for (trailing, plain) in cases {
+        let have = parse_action_expressions(trailing);
+        let want = parse_action_expressions(plain);
+        sim_assert_eq!(have: &have, want: &want);
+        assert!(!want.is_empty(), "canonical form parses: {plain}");
+    }
+}
+
+#[test]
+fn two_variable_range_assignment_form_matches_the_declaring_form() {
+    // Go accepts `range $i, $v = …` (assignment into pre-declared
+    // variables) exactly like `range $i, $v := …`; the grammar used to
+    // hard-code `:=` and drop the element binding via error recovery.
+    let declared = parse_action_expressions("{{ range $i, $v := .Values.items }}x{{ end }}");
+    let assigned = parse_action_expressions("{{ range $i, $v = .Values.items }}x{{ end }}");
+    sim_assert_eq!(have: &assigned, want: &declared);
+    assert!(
+        assigned.contains(&TemplateExpr::Field(vec!["Values".into(), "items".into()])),
+        "the ranged expression survives: {assigned:?}"
+    );
+}
+
+#[test]
+fn unicode_digits_stay_inside_identifiers() {
+    // Go's lexer accepts any Unicode decimal digit after the first
+    // identifier character (unicode.IsDigit), not just ASCII.
+    let exprs = parse_action_expressions("{{ .Values.A١ }}");
+    sim_assert_eq!(
+        have: first(&exprs),
+        want: &TemplateExpr::Field(vec!["Values".into(), "A١".into()])
+    );
+}
+
+#[test]
+fn identifier_rooted_selector_types_the_receiver() {
+    // `now.Year`: Go calls the niladic function `now` and selects a
+    // field of its result; the operand must be a typed zero-arg Call,
+    // never Unknown.
+    let exprs = parse_action_expressions("{{ now.Year }}");
+    sim_assert_eq!(
+        have: first(&exprs),
+        want: &TemplateExpr::Selector {
+            operand: Box::new(TemplateExpr::Call {
+                function: "now".into(),
+                args: Vec::new(),
+            }),
+            path: vec!["Year".into()],
+        }
+    );
+}
+
+#[test]
+fn ascii_octal_escapes_decode_in_interpreted_strings() {
+    // Go decodes `\NNN` (three octal digits) to a byte; ASCII bytes are
+    // whole characters and must decode so helper names spelled with
+    // octal escapes still resolve.
+    let exprs = parse_action_expressions(r#"{{ include "\150\145\154\160\145\162" . }}"#);
+    let TemplateExpr::Call { args, .. } = first(&exprs) else {
+        panic!("expected Call, got {exprs:?}");
+    };
+    sim_assert_eq!(
+        have: args.first(),
+        want: Some(&TemplateExpr::Literal(Literal::String("helper".into())))
+    );
+
+    // A non-ASCII octal byte is one fragment of a UTF-8 sequence Go
+    // assembles byte-wise; a char-based decoder must abstain verbatim
+    // rather than fabricate a wrong code point.
+    let exprs = parse_action_expressions(r#"{{ include "\303\251" . }}"#);
+    let TemplateExpr::Call { args, .. } = first(&exprs) else {
+        panic!("expected Call, got {exprs:?}");
+    };
+    sim_assert_eq!(
+        have: args.first(),
+        want: Some(&TemplateExpr::Literal(Literal::String("\\303\\251".into())))
+    );
+}
+
+#[test]
+fn i64_min_literal_decodes() {
+    // The magnitude of i64::MIN does not fit a positive i64; the sign
+    // must participate in the conversion.
+    let exprs = parse_action_expressions("{{ f -9223372036854775808 }}");
+    let TemplateExpr::Call { args, .. } = first(&exprs) else {
+        panic!("expected Call, got {exprs:?}");
+    };
+    sim_assert_eq!(
+        have: args.first(),
+        want: Some(&TemplateExpr::Literal(Literal::Int(i64::MIN)))
+    );
+}
+
+#[test]
+fn argument_separators_accept_any_whitespace() {
+    // Go's lexer treats spaces, tabs, and newlines inside an action
+    // identically. The v0.0.6 grammar separated arguments with a
+    // literal single-space token, silently NESTING `f a<TAB>b` as
+    // `f (a b)` and only tolerating newline-separated arguments when
+    // the continuation line happened to start with a space.
+    let want = parse_action_expressions("{{ eq .Values.mode \"debug\" }}");
+    for variant in [
+        "{{ eq .Values.mode\t\"debug\" }}",
+        "{{ eq .Values.mode\n\"debug\" }}",
+        "{{ eq .Values.mode\r\n\"debug\" }}",
+        "{{ eq .Values.mode \t \"debug\" }}",
+    ] {
+        let have = parse_action_expressions(variant);
+        sim_assert_eq!(have: &have, want: &want);
+    }
+}
+
+#[test]
 fn parenthesized_pipeline_argument_stays_an_argument() {
     // A REAL pipeline argument is parenthesized; the unfold must leave it
     // in place.

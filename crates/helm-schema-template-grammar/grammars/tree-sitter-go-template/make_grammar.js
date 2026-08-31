@@ -5,7 +5,10 @@ const PREC = {
         else: 2,
     },
     unicodeLetter = /\p{L}/,
-    unicodeDigit = /[0-9]/,
+    // Go's lexer accepts any Unicode decimal digit after the first
+    // identifier character (unicode.IsDigit); number literals below use
+    // the ASCII-only decimalDigit instead.
+    unicodeDigit = /\p{Nd}/,
     letter = choice(unicodeLetter, '_'),
     hexDigit = /[0-9a-fA-F]/,
     octalDigit = /[0-7]/,
@@ -189,12 +192,16 @@ module.exports = function make_grammar(dialect) {
                     )
                 ),
 
+            // Go accepts both the declaring (`:=`) and the assigning (`=`)
+            // form for two-variable range headers; hard-coding `:=` sent
+            // `range $i, $v = …` into error recovery and dropped the
+            // element binding.
             range_variable_definition: ($) =>
                 seq(
                     field('index', $.variable),
                     ',',
                     field('element', $.variable),
-                    token(':='),
+                    choice(token(':='), '='),
                     field('range', $._pipeline)
                 ),
 
@@ -308,8 +315,16 @@ module.exports = function make_grammar(dialect) {
                     field('value', $._pipeline)
                 ),
 
+            // Go's pipeline parser silently tolerates a TRAILING pipe: on
+            // seeing `}}` or `)` right after `|` it closes the pipeline
+            // with the commands parsed so far (datadog-operator ships
+            // `{{- toYaml … | nindent 4 | }}` and Helm renders it), so the
+            // right-hand side is optional here.
             chained_pipeline: ($) =>
-                prec.left(PREC.primary, seq($._pipeline, '|', $._pipeline)),
+                prec.left(
+                    PREC.primary,
+                    seq($._pipeline, '|', optional($._pipeline))
+                ),
 
             parenthesized_pipeline: ($) => seq('(', $._pipeline, ')'),
 
@@ -328,14 +343,38 @@ module.exports = function make_grammar(dialect) {
                     )
                 ),
 
+            // Local divergence from upstream (ngalaiko/tree-sitter-go-template):
+            // upstream models arguments as full pipelines separated by a
+            // literal single-space token, which makes argument boundaries
+            // depend on the exact whitespace byte. Go's text/template
+            // instead lexes any whitespace run as a separator and only
+            // accepts *operands* as arguments (an un-parenthesized `|`
+            // always splits the enclosing command), so `toYaml .| nindent 8`
+            // must parse as `(toYaml .) | (nindent 8)` and `f a\tb` as
+            // three flat commands, never as nested calls.
             argument_list: ($) =>
                 prec.right(
                     seq(
-                        $._pipeline,
-                        repeat(seq(' ', $._pipeline)),
-                        optional(' ')
+                        $._operand,
+                        repeat(seq($._argument_separator, $._operand)),
+                        optional($._argument_separator)
                     )
                 ),
+
+            _argument_separator: (_) => token(/[ \t\r\n]+/),
+
+            // Go's "Arguments" production: a constant, `nil`, `.`, a field
+            // or variable (with optional selector chain), a parenthesized
+            // pipeline, or the name of a niladic function. A call with its
+            // own arguments or a bare pipeline is never a single argument.
+            _operand: ($) =>
+                choice(
+                    $._expression,
+                    $.parenthesized_pipeline,
+                    alias($.operand_call, $.function_call)
+                ),
+
+            operand_call: ($) => field('function', $.identifier),
 
             pipeline_stub: (_) => token('pipeline'),
 
