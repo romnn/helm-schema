@@ -544,12 +544,9 @@ pub(super) fn is_unconditional_self_presence_overlay(
 ) -> bool {
     matches!(
         overlay.guards.as_slice(),
-        [ConditionalGuard::Not(inner)]
-            if matches!(
-                inner.as_ref(),
-                ConditionalGuard::Absent { path }
-                    if path == target_value_path
-            )
+        [guard]
+            if matches!(guard, ConditionalGuard::Not(_))
+                && guard.is_self_presence_for(target_value_path)
     )
 }
 
@@ -584,13 +581,10 @@ pub(super) fn implication_has_self_truthy_guard(
     implication: &helm_schema_core::ContractRequirementImplication,
     target_value_path: &helm_schema_core::ValuesPath,
 ) -> bool {
-    implication.outer_guards.iter().any(|guard| {
-        matches!(
-            guard,
-            ConditionalGuard::Truthy { path } | ConditionalGuard::With { path }
-                if path == target_value_path
-        )
-    })
+    implication
+        .outer_guards
+        .iter()
+        .any(|guard| guard.is_self_truthy_for(target_value_path))
 }
 
 /// Whether an outer guard scopes the arm to the target's own strict
@@ -601,19 +595,10 @@ pub(super) fn implication_has_self_presence_guard(
     implication: &helm_schema_core::ContractRequirementImplication,
     target_value_path: &helm_schema_core::ValuesPath,
 ) -> bool {
-    implication.outer_guards.iter().any(|guard| match guard {
-        ConditionalGuard::Not(inner) => matches!(
-            inner.as_ref(),
-            ConditionalGuard::Absent { path }
-                if path == target_value_path
-        ),
-        ConditionalGuard::HasKey { path, key } => {
-            let mut guarded_path = path.clone();
-            guarded_path.push(key.clone());
-            &guarded_path == target_value_path
-        }
-        _ => false,
-    })
+    implication
+        .outer_guards
+        .iter()
+        .any(|guard| guard.is_self_presence_for(target_value_path))
 }
 
 pub(super) fn resolved_schema_admits_fail_requirement_domain(

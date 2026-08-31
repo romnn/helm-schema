@@ -319,12 +319,9 @@ impl ContractPathAccumulator {
                 }
                 if matches!(
                     guards.as_slice(),
-                    [ConditionalGuard::Not(inner)]
-                        if matches!(
-                            inner.as_ref(),
-                            ConditionalGuard::Absent { path }
-                                if path == value_path
-                        )
+                    [guard]
+                        if matches!(guard, ConditionalGuard::Not(_))
+                            && guard.is_self_presence_for(value_path)
                 ) {
                     // A property schema is consulted only while that property
                     // exists, so an exact self-presence branch has no residual

@@ -1,8 +1,8 @@
 //! Public semantic-contract parsing and path utility regressions.
 
 use helm_schema_core::{
-    ApiPresenceQuery, ContractUse, ContractValuePathFacts, Guard, ValueKind, YamlPath,
-    join_value_path, split_value_path,
+    ApiPresenceQuery, ConditionalGuard, ContractUse, ContractValuePathFacts, Guard, ValueKind,
+    ValuesPath, YamlPath, join_value_path, split_value_path,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -33,6 +33,41 @@ fn value_path_currency_preserves_literal_dots_and_backslashes() {
         have: split_value_path(&path),
         want: segments.map(str::to_string).to_vec()
     );
+}
+
+#[test]
+fn conditional_guards_own_self_scope_classification() {
+    let target = ValuesPath::from_segments(["parent", "literal.key"]);
+    let parent = ValuesPath::parse("parent");
+    let truthy = ConditionalGuard::Truthy {
+        path: target.clone(),
+    };
+    let with = ConditionalGuard::With {
+        path: target.clone(),
+    };
+    let not_absent = ConditionalGuard::Not(Box::new(ConditionalGuard::Absent {
+        path: target.clone(),
+    }));
+    let opaque_member_presence = ["literal.key", r"literal\key", "*"]
+        .map(|key| {
+            ConditionalGuard::HasKey {
+                path: parent.clone(),
+                key: key.to_string(),
+            }
+            .is_self_presence_for(&ValuesPath::from_segments(["parent", key]))
+        })
+        .to_vec();
+
+    sim_assert_eq!(
+        have: (
+            truthy.is_self_truthy_for(&target),
+            with.is_self_truthy_for(&target),
+            not_absent.is_self_presence_for(&target),
+            truthy.is_self_presence_for(&target),
+        ),
+        want: (true, true, true, false),
+    );
+    sim_assert_eq!(have: opaque_member_presence, want: vec![true; 3]);
 }
 
 #[test]

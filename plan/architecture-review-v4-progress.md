@@ -5552,7 +5552,7 @@
 
 ## B3.1 — make faithfulness a decoder result
 
-- Status: landed; commit pending.
+- Status: landed in `ef71d425` (`refactor(ir): unify condition fidelity decoding`).
 - Contract: representation-only. Replace the separate faithfulness table with one condition
   decoder returning `Decoded::{Exact, Approximate}` together with the predicate it produced.
   `condition_lowering_is_faithful`, control-flow usability, and ordinary predicate lowering become
@@ -5700,3 +5700,124 @@
 
 - Measured production LOC delta: +76 (64,721 to 64,797). The delta is the typed fidelity carrier
   and position-preserving exhaustive decoder; no LOC promise applies to this ordinary round.
+
+## B3.2 — centralize self-guard classification
+
+- Status: in progress; commit pending.
+- Contract: representation-only. Make `ConditionalGuard` the single owner of whether a guard is
+  self-truthy or self-presence for a target path. Replace the builder, requirement, and generator
+  copies with projections of the core methods while preserving each consumer's operation-specific
+  restrictions, especially the sole `Not(Absent)` overlay fold. If the formerly parallel tables
+  disagree, stop and split the divergence into a behavior-bearing repair.
+- Acceptance baseline: `ef71d425` (B3.1).
+- Baseline production Rust LOC: 64,797.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Self truthiness remains exactly `Truthy(target)` or `With(target)`.
+  - Self presence remains exactly `Not(Absent(target))` or `HasKey(parent, literal_member)` whose
+    structurally appended member equals the target. Literal dots, backslashes, and stars in the
+    member remain one typed segment.
+  - The builder's unconditional overlay fold remains restricted to a sole `Not(Absent(target))`;
+    a sole `HasKey` guard does not silently acquire that operation-specific rewrite.
+  - Recursive `AllOf` / `AnyOf` presence implication keeps its current quantifiers: any conjunct
+    may establish presence, while every disjunct must establish it.
+  - Any divergence between old and centralized classification stops the representation round
+    before fixture adoption. Candidate-accepts/Helm-aborts allowance and mandatory coverage drops
+    remain zero.
+- Public/wire decision: additive public Rust API. `ConditionalGuard` is already public, and the two
+  read-only classification methods expose semantics previously duplicated by downstream crates.
+  No variant, constructor, serde shape, ordering, or wire bytes change.
+
+- Measured results:
+  - `ConditionalGuard::is_self_truthy_for` now owns the exact `Truthy` / `With` classification,
+    and `ConditionalGuard::is_self_presence_for` owns `Not(Absent)` plus structural `HasKey`
+    membership. The IR builder, recursive requirement implication, and generator overlay lowering
+    project those methods instead of maintaining three local shape tables.
+  - Operation-specific restrictions remain at their operations: the builder and generator still
+    require the sole guard to be `Not(_)` before folding a guarded source into an unconditional
+    source. Central classification therefore does not promote a sole `HasKey` guard.
+  - A public-surface test exercises truthy, with, absent, and opaque `HasKey` members containing a
+    dot, backslash, and literal star. All members remain one `ValuesPath` segment.
+  - The final1 clean schema dump writes 84 artifacts; every artifact is byte-identical to B3.1.
+    The symbolic-IR dump writes 18 artifacts; every artifact is byte-identical to B3.1.
+  - The full-depth comparison checks 121,055 probes across 60 charts with zero acceptance flips.
+    Mandatory base coverage is 112,260/112,260 and third-level coverage is 7,465/7,465, both with
+    zero drops. It records 427 guard pairs, 238 composite pairs, 35,428 bounded guard-witness
+    reductions, 2,277 bounded composite reductions, and 28,868 disclosed total drops.
+
+- Deviations:
+  - The first focused test command used nextest's default profile. That profile excludes the
+    integration-test binary, so it ran zero tests and exited 4. No code or artifact changed. The
+    corrected command selected the `integration` profile explicitly and the intended public-
+    surface test passed 1/1.
+  - No semantic preflight was rejected and no fixture was adopted. The old classifiers agreed on
+    every route once each consumer's separate fold restriction was retained.
+
+- Adjudication evidence:
+  - Helm `v4.2.3+g43e8b7f` is selected by the committed mise pin and accepted by the battery version
+    guard.
+  - The final1 battery reports zero flips and zero candidate-accepts/Helm-aborts cells. No fixture,
+    diagnostic, or acceptance change required adoption.
+
+### Producer and route coverage
+
+| Route | Single-owner result | Verification |
+|---|---|---|
+| `Truthy(path)` / `With(path)` | Core method owns self-truthiness | Public-surface controls, full IR and schema identity. |
+| `Not(Absent(path))` | Core method owns direct self-presence | Public-surface control and requiredness corpus suite. |
+| `HasKey(parent, member)` | Core appends one opaque member segment before comparison | Dot, backslash, and literal-star public controls. |
+| `AllOf` / `AnyOf` implication | Requirement recursion retains any/all quantifiers around the core leaf classifier | Full IR identity and requiredness re-audit suite. |
+| Guarded-source folding | Builder and generator retain their sole-`Not` operation restriction | Full schema identity and downstream 32-chart sweep. |
+
+### Review dossier
+
+- Focused proof: Clippy for `helm-schema-core`, `helm-schema-ir`, and `helm-schema-gen` with all
+  targets and features; exit 0. The corrected integration-profile public-surface test passes 1/1.
+- Immutable build: final1 archive under the absolute step-local build `TMPDIR`; exit 0 after
+  14m33s, 87 binaries and 125 files archived to
+  `/private/tmp/arch-v4-b32-final1.tar.zst`.
+- Clean schema dump: final1 archive under the step-local schema `TMPDIR`; exit 0, 62 tests pass in
+  240.048 seconds and all 84 artifacts are byte-identical to B3.1.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one corpus test passes
+  in 4.101 seconds and all 18 artifacts are byte-identical to B3.1.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `ef71d425`,
+  Helm adjudication enabled; exit 0 in 70.038 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: the two read-only methods are an additive public Rust API on the already
+  public guard type. Serde, ordering, variants, constructors, and wire bytes are unchanged.
+
+### Self-adversarial pass
+
+- Moving only the leaf match while broadening the overlay fold would have made a `HasKey` guard
+  unconditional. Both fold sites retain their explicit `Not` shape check, and byte identity pins
+  the behavior.
+- Comparing encoded path strings would have reintroduced the raw-path protocol removed in B4a.
+  `HasKey` classification clones the typed parent and pushes the member as one structural segment.
+- The core method does not recurse through `AllOf` / `AnyOf`; those quantifiers answer a different
+  implication question and remain in the requirement consumer. This keeps one owner per semantic
+  question instead of moving unrelated policy into a convenience method.
+- Whole-tree searches leave no local `Truthy` / `With` / `HasKey` / `Not(Absent)` self-scope table
+  in the builder or generator. Remaining shape matches implement operation-specific restrictions,
+  not a parallel identity classifier.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0; whole-workspace Clippy and all three AST-grep policy tests pass in 12m32s.
+- `task lint:fc`: exit 0; 48/48 feature combinations for 13 packages across Linux, Windows GNU,
+  and macOS pass with zero errors and warnings in 2,955.44 seconds.
+- `cargo nextest run --workspace`: exit 0; 1,310/1,310 tests pass, one slow, in 241.391 seconds
+  after the final-tree build.
+- `task test:integration`: exit 0; 560/560 tests pass, 24 skipped, 21 slow, in 1,981.664 seconds.
+- `task test:all`: exit 0; 1,874/1,874 tests pass, 24 skipped, 22 slow, including live-network
+  tests, in 2,094.453 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; release build and replacement complete
+  in 25.46 seconds.
+- Downstream luup2 `check:local` with `/private/tmp/helm-schema-xargs-shim`, prefixed `PATH`, and
+  `HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema`: exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,793 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: -4 (64,797 to 64,793). The delta deletes parallel consumer
+  classifiers after adding the core owner and its public-surface proof; no LOC promise applies.

@@ -134,6 +134,33 @@ pub enum ConditionalGuard {
 }
 
 impl ConditionalGuard {
+    /// Reports whether this guard tests the target's own Helm truthiness.
+    #[must_use]
+    pub fn is_self_truthy_for(&self, target: &ValuesPath) -> bool {
+        matches!(
+            self,
+            Self::Truthy { path } | Self::With { path }
+                if path == target
+        )
+    }
+
+    /// Reports whether this guard can hold only while the target path exists.
+    #[must_use]
+    pub fn is_self_presence_for(&self, target: &ValuesPath) -> bool {
+        match self {
+            Self::Not(inner) => {
+                matches!(inner.as_ref(), Self::Absent { path } if path == target)
+            }
+            Self::HasKey { path, key } => {
+                // The opaque member name must remain one structural segment.
+                let mut guarded = path.clone();
+                guarded.push(key.clone());
+                &guarded == target
+            }
+            _ => false,
+        }
+    }
+
     /// Reconstructs the exact Boolean predicate represented by this schema guard.
     #[must_use]
     pub fn predicate(&self) -> Predicate {

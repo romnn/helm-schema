@@ -2347,24 +2347,14 @@ pub(super) fn guard_implies_present(guard: &ConditionalGuard, path: &str) -> boo
 }
 
 fn guard_implies_present_at(guard: &ConditionalGuard, path: &helm_schema_core::ValuesPath) -> bool {
+    if guard.is_self_truthy_for(path) || guard.is_self_presence_for(path) {
+        return true;
+    }
     match guard {
-        ConditionalGuard::Truthy { path: guarded } | ConditionalGuard::With { path: guarded } => {
-            guarded == path
-        }
         ConditionalGuard::TypeIs {
             path: guarded,
             schema_type,
         } => guarded == path && schema_type != "null",
-        ConditionalGuard::HasKey { path: host, key } => {
-            // The key is an OPAQUE property name (it may contain dots), so
-            // it must be appended as one escaped segment, not concatenated.
-            let mut guarded = host.clone();
-            guarded.push(key.clone());
-            &guarded == path
-        }
-        ConditionalGuard::Not(inner) => {
-            matches!(inner.as_ref(), ConditionalGuard::Absent { path: guarded } if guarded == path)
-        }
         ConditionalGuard::AllOf(set) => set
             .iter()
             .any(|guard| guard_implies_present_at(guard, path)),
