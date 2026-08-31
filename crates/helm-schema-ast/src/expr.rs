@@ -619,7 +619,7 @@ fn decode_hex_escape(
         && let Ok(code) = u32::from_str_radix(&buf, 16)
         // `\xHH` names a raw BYTE in Go, not a code point: a non-ASCII
         // byte is one fragment of a UTF-8 sequence assembled byte-wise
-        // (`"caf\xc3\xa9"` is "café"), which a char-based decoder cannot
+        // (Go reads `"\xc3\xa9"` as "é"), which a char-based decoder cannot
         // represent alone — decoding it as U+00HH would fabricate a
         // different string. Preserve it verbatim like the octal form.
         // `\u`/`\U` name code points and decode for any value.
