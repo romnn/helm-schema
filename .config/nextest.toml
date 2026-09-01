@@ -21,14 +21,17 @@
 # developer machine, so a kill threshold set near the observed runtime turns
 # ordinary hardware variance into a red build — that is how the Windows
 # runner failed three `tests::analysis` chart tests at exactly 60s while
-# Linux passed the same tests at 38-46s. The SLOW line keeps slow tests
-# visible; termination is reserved for a test that is genuinely stuck.
+# Linux passed the same tests at 38-46s, and how the v0.0.7 release run
+# killed `airflow_break_scopes_the_deprecated_security_context_candidate`
+# (~250s on a developer machine) at exactly 600s on Windows. The SLOW line
+# keeps slow tests visible; termination is reserved for a test that is
+# genuinely stuck.
 
 [profile.default]
 default-filter = "not kind(test)"
 fail-fast = { max-fail = "all" }
 retries = 0
-slow-timeout = { period = "120s", terminate-after = 5, grace-period = "10s" }
+slow-timeout = { period = "120s", terminate-after = 15, grace-period = "10s" }
 
 [profile.integration]
 default-filter = "kind(test) and not binary(/^network_/)"
