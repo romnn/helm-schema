@@ -186,7 +186,7 @@ pub(super) fn conjoin_formatter_operand_selection(
         };
         if conditions
             .iter()
-            .any(|condition| matches!(condition, helm_schema_core::Predicate::True))
+            .any(|condition| matches!(condition.kind(), helm_schema_core::PredicateKind::True))
         {
             continue;
         }

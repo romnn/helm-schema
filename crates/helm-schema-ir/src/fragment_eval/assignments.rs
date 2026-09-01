@@ -131,12 +131,11 @@ pub(super) struct RangeKeyConcretization {
 impl RangeKeyConcretization {
     pub(super) fn from_conjuncts<'a>(conjuncts: impl Iterator<Item = &'a Predicate>) -> Self {
         let keyed: std::collections::BTreeMap<helm_schema_core::ValuesPath, String> = conjuncts
-            .filter_map(|predicate| match predicate {
-                Predicate::Guard(crate::Guard::RangeKeyEquals { path, key })
-                    if !key.contains('.') && !key.contains('*') =>
-                {
-                    Some((path.clone(), key.clone()))
-                }
+            .filter_map(|predicate| match predicate.kind() {
+                helm_schema_core::PredicateKind::Guard(crate::Guard::RangeKeyEquals {
+                    path,
+                    key,
+                }) if !key.contains('.') && !key.contains('*') => Some((path.clone(), key.clone())),
                 _ => None,
             })
             .collect();
@@ -158,14 +157,16 @@ impl RangeKeyConcretization {
     }
 
     pub(super) fn apply(&self, predicate: &Predicate) -> Predicate {
-        match predicate {
-            Predicate::Guard(crate::Guard::Range { path }) if self.keyed.contains_key(path) => {
+        match predicate.kind() {
+            helm_schema_core::PredicateKind::Guard(crate::Guard::Range { path })
+                if self.keyed.contains_key(path) =>
+            {
                 Predicate::from(crate::Guard::HasKey {
                     path: path.clone(),
                     key: self.keyed.get(path).cloned().unwrap_or_default(),
                 })
             }
-            Predicate::Guard(crate::Guard::RangeKeyEquals { path, key })
+            helm_schema_core::PredicateKind::Guard(crate::Guard::RangeKeyEquals { path, key })
                 if self.keyed.get(path) == Some(key) =>
             {
                 Predicate::from(crate::Guard::HasKey {
@@ -173,7 +174,7 @@ impl RangeKeyConcretization {
                     key: key.clone(),
                 })
             }
-            predicate => predicate.clone().map_value_paths(&mut |path| {
+            _ => predicate.clone().map_value_paths(&mut |path| {
                 for (member, concrete) in &self.rewrites {
                     if path == *member {
                         return concrete.clone();
@@ -208,25 +209,26 @@ fn concretize_range_key_equalities(predicates: &[Predicate]) -> Vec<Predicate> {
 }
 
 pub(super) fn or_predicates(left: Predicate, right: Predicate) -> Predicate {
-    match (left, right) {
-        (Predicate::True, _) | (_, Predicate::True) => Predicate::True,
-        (Predicate::False, predicate) | (predicate, Predicate::False) => predicate,
-        (left, right) if left == right => left,
-        (Predicate::Or(mut left), Predicate::Or(right)) => {
-            left.extend(right);
-            left.sort();
-            left.dedup();
-            Predicate::Or(left)
-        }
-        (Predicate::Or(mut alternatives), predicate)
-        | (predicate, Predicate::Or(mut alternatives)) => {
-            alternatives.push(predicate);
-            alternatives.sort();
-            alternatives.dedup();
-            Predicate::Or(alternatives)
-        }
-        (left, right) => Predicate::Or(vec![left, right]),
+    if left == Predicate::True || right == Predicate::True {
+        return Predicate::True;
     }
+    if left == Predicate::False {
+        return right;
+    }
+    if right == Predicate::False || left == right {
+        return left;
+    }
+    let mut alternatives = match left.kind() {
+        helm_schema_core::PredicateKind::Or(items) => items.to_vec(),
+        _ => vec![left],
+    };
+    match right.kind() {
+        helm_schema_core::PredicateKind::Or(items) => alternatives.extend_from_slice(items),
+        _ => alternatives.push(right),
+    }
+    alternatives.sort();
+    alternatives.dedup();
+    Predicate::Or(alternatives)
 }
 
 impl Interpreter<'_> {
@@ -306,24 +308,22 @@ impl Interpreter<'_> {
                 let mut path = target_path.clone();
                 path.push(&key);
                 for predicate in &self.active_predicates {
-                    let Predicate::Guard(Guard::TypeIs {
+                    let helm_schema_core::PredicateKind::Guard(Guard::TypeIs {
                         path: tested_path,
                         schema_type,
-                    }) = predicate
+                    }) = predicate.kind()
                     else {
                         continue;
                     };
                     if tested_path != &path || schema_type == "object" {
                         continue;
                     }
-                    let mut outer_predicates = self
-                        .active_predicates
-                        .iter()
-                        .filter(|outer| *outer != predicate)
-                        .cloned()
-                        .collect::<Vec<_>>();
-                    outer_predicates.sort();
-                    outer_predicates.dedup();
+                    let outer_predicates = helm_schema_core::Conjunction::new(
+                        self.active_predicates
+                            .iter()
+                            .filter(|outer| *outer != predicate)
+                            .cloned(),
+                    );
                     self.member_host_conversions.insert(MemberHostConversion {
                         path: path.clone(),
                         input_kind: schema_type.clone(),
@@ -339,7 +339,8 @@ impl Interpreter<'_> {
         conversions: &std::collections::BTreeSet<MemberHostConversion>,
     ) {
         for conversion in conversions {
-            let mut outer_predicates = self.active_predicates.clone();
+            let mut outer_predicates =
+                helm_schema_core::Conjunction::new(self.active_predicates.iter().cloned());
             outer_predicates.extend(conversion.outer_predicates.iter().cloned());
             if outer_predicates
                 .iter()
@@ -347,8 +348,6 @@ impl Interpreter<'_> {
             {
                 continue;
             }
-            outer_predicates.sort();
-            outer_predicates.dedup();
             self.member_host_conversions.insert(MemberHostConversion {
                 path: conversion.path.clone(),
                 input_kind: conversion.input_kind.clone(),
@@ -600,10 +599,13 @@ impl Interpreter<'_> {
                     path: child.clone(),
                 })
                 .negated();
-                let guarded = self.active_predicates.iter().any(|active| match active {
-                    Predicate::And(items) => items.contains(&presence),
-                    other => other == &presence,
-                });
+                let guarded = self
+                    .active_predicates
+                    .iter()
+                    .any(|active| match active.kind() {
+                        helm_schema_core::PredicateKind::And(items) => items.contains(&presence),
+                        _ => active == &presence,
+                    });
                 if guarded {
                     self.locals.mark_traversal_advance(&assignment.variable);
                 }

@@ -261,10 +261,12 @@ impl Interpreter<'_> {
                                         self.locals.clone(),
                                     ));
                                 }
-                                remaining = match break_condition {
-                                    Predicate::False => remaining,
-                                    Predicate::True => Predicate::False,
-                                    condition => and_conditions(remaining, condition.negated()),
+                                remaining = if break_condition == Predicate::False {
+                                    remaining
+                                } else if break_condition == Predicate::True {
+                                    Predicate::False
+                                } else {
+                                    and_conditions(remaining, break_condition.negated())
                                 };
                             }
                             if remaining != Predicate::False {
@@ -689,7 +691,7 @@ impl Interpreter<'_> {
             self.push_control_read(path, &[]);
         }
         if evaluated_truth_is_unknown
-            && matches!(predicate, Predicate::True)
+            && matches!(predicate.kind(), helm_schema_core::PredicateKind::True)
             && !helper_paths.is_empty()
         {
             predicate = Predicate::all(
@@ -706,9 +708,9 @@ impl Interpreter<'_> {
         // negates into states the validator never rejects (datadog's
         // cluster-agent NOTES checks). Row conditions tolerate raw
         // conjuncts — the DNF conversion widens.
-        let conjuncts: Vec<Predicate> = match &predicate {
-            Predicate::And(items) => items.clone(),
-            other => vec![other.clone()],
+        let conjuncts: Vec<Predicate> = match predicate.kind() {
+            helm_schema_core::PredicateKind::And(items) => items.to_vec(),
+            _ => vec![predicate.clone()],
         };
         for conjunct in conjuncts {
             if let Some(guards) = conjunct.contract_guards() {
@@ -718,7 +720,7 @@ impl Interpreter<'_> {
                     }
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
-            } else if !matches!(conjunct, Predicate::True) {
+            } else if !matches!(conjunct.kind(), helm_schema_core::PredicateKind::True) {
                 for path in conjunct.value_paths() {
                     self.push_control_read(&path.encode(), &[]);
                 }
@@ -827,8 +829,8 @@ impl Interpreter<'_> {
         let ranged_paths: BTreeSet<&helm_schema_core::ValuesPath> = self
             .active_predicates
             .iter()
-            .filter_map(|predicate| match predicate {
-                Predicate::Guard(Guard::Range { path }) => Some(path),
+            .filter_map(|predicate| match predicate.kind() {
+                helm_schema_core::PredicateKind::Guard(Guard::Range { path }) => Some(path),
                 _ => None,
             })
             .collect();
@@ -872,7 +874,7 @@ impl Interpreter<'_> {
             faithful = true;
         }
         if evaluated_truth_is_unknown
-            && matches!(predicate, Predicate::True)
+            && matches!(predicate.kind(), helm_schema_core::PredicateKind::True)
             && !helper_paths.is_empty()
         {
             predicate = Predicate::all(
@@ -898,16 +900,16 @@ impl Interpreter<'_> {
         // The with-predicate is pushed before its reads so the reads carry
         // the `Guard::With` markers, mirroring the current walker. Inexact
         // conjuncts stay raw, the same rule as `if` headers.
-        let conjuncts: Vec<Predicate> = match &predicate {
-            Predicate::And(items) => items.clone(),
-            other => vec![other.clone()],
+        let conjuncts: Vec<Predicate> = match predicate.kind() {
+            helm_schema_core::PredicateKind::And(items) => items.to_vec(),
+            _ => vec![predicate.clone()],
         };
         for conjunct in conjuncts {
             if let Some(guards) = conjunct.contract_guards() {
                 for guard in &guards {
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
-            } else if !matches!(conjunct, Predicate::True) {
+            } else if !matches!(conjunct.kind(), helm_schema_core::PredicateKind::True) {
                 self.push_predicate(conjunct);
             }
         }
@@ -1069,7 +1071,7 @@ impl Interpreter<'_> {
             if !capture
                 .conjunction
                 .iter()
-                .any(|predicate| matches!(predicate, Predicate::False))
+                .any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::False))
             {
                 self.observed_facts.captures.insert(capture);
             }
@@ -1769,23 +1771,23 @@ impl Interpreter<'_> {
             return None;
         };
         let predicate = self.value_path_context().condition_predicate_expr(header?);
-        let disjuncts = match predicate {
-            Predicate::Or(items) => items,
-            other => vec![other],
+        let disjuncts = match predicate.kind() {
+            helm_schema_core::PredicateKind::Or(items) => items.to_vec(),
+            _ => vec![predicate],
         };
         let mut spellings = BTreeSet::new();
         for disjunct in disjuncts {
-            let Predicate::Guard(Guard::Eq {
+            let helm_schema_core::PredicateKind::Guard(Guard::Eq {
                 path: guard_path,
                 value,
-            }) = disjunct
+            }) = disjunct.kind()
             else {
                 return None;
             };
-            if guard_path != *path {
+            if guard_path != path {
                 return None;
             }
-            spellings.insert(value);
+            spellings.insert(value.clone());
         }
         (!spellings.is_empty()).then_some(spellings)
     }
@@ -1841,12 +1843,14 @@ impl Interpreter<'_> {
             if !context.condition_lowering_is_usable_for_control(expr) {
                 continue;
             }
-            let conjuncts = match context.condition_predicate_expr(expr) {
-                Predicate::And(items) => items,
-                other => vec![other],
+            let predicate = context.condition_predicate_expr(expr);
+            let conjuncts = match predicate.kind() {
+                helm_schema_core::PredicateKind::And(items) => items.to_vec(),
+                _ => vec![predicate],
             };
             for conjunct in conjuncts {
-                if let Predicate::Guard(Guard::Eq { path, value }) = &conjunct
+                if let helm_schema_core::PredicateKind::Guard(Guard::Eq { path, value }) =
+                    conjunct.kind()
                     && !path.encode().starts_with('$')
                     && !path
                         .segments()
@@ -1862,8 +1866,9 @@ impl Interpreter<'_> {
                 // only on falsy values, so the kept raw identity is
                 // consumed exactly on the truthy ones (datadog's
                 // empty-tag → agent-version fallback).
-                if let Predicate::Not(inner) = &conjunct
-                    && let Predicate::Guard(Guard::Truthy { path }) = inner.as_ref()
+                if let helm_schema_core::PredicateKind::Not(inner) = conjunct.kind()
+                    && let helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) =
+                        inner.kind()
                     && !path.encode().starts_with('$')
                     && !path
                         .segments()

@@ -658,7 +658,8 @@ fn contract_ir_activation_guards_gate_fail_captures() {
             conjunction: vec![
                 helm_schema_core::Predicate::truthy_path("auth.enabled"),
                 helm_schema_core::Predicate::truthy_path("auth.usePassword"),
-            ],
+            ]
+            .into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::Fail,
         }],
@@ -691,12 +692,12 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
     absorb_captures(
         &mut contract,
         [crate::eval_effect::FailCapture {
-            conjunction: Vec::new(),
+            conjunction: Vec::new().into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path("image.repository"),
                 route: crate::eval_effect::StringRequirementRoute::Direct,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -746,7 +747,8 @@ fn canonical_range_selection_retains_the_selected_truthy_tail() -> eyre::Result<
                 helm_schema_core::Predicate::from(Guard::Or {
                     paths: vec![primary.clone(), fallback.clone()],
                 }),
-            ],
+            ]
+            .into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::RangeSelection {
                 path: primary.clone(),
@@ -887,12 +889,12 @@ fn activation_guards_scope_dependency_root_overlay_twins() -> eyre::Result<()> {
     absorb_captures(
         &mut contract,
         [crate::eval_effect::FailCapture {
-            conjunction: Vec::new(),
+            conjunction: Vec::new().into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path("child.name"),
                 route: crate::eval_effect::StringRequirementRoute::Direct,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -951,12 +953,13 @@ fn selected_string_requirement_does_not_retype_a_broader_row() -> eyre::Result<(
                     path: helm_schema_core::ValuesPath::parse(path),
                     schema_type: "string".to_string(),
                 }),
-            ],
+            ]
+            .into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path(path),
                 route: crate::eval_effect::StringRequirementRoute::Scoped,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -990,12 +993,12 @@ fn scoped_string_requirement_suppresses_only_the_matching_provider_route() {
     absorb_captures(
         &mut contract,
         [crate::eval_effect::FailCapture {
-            conjunction: vec![helm_schema_core::Predicate::truthy_path("first.enabled")],
+            conjunction: vec![helm_schema_core::Predicate::truthy_path("first.enabled")].into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path(path),
                 route: crate::eval_effect::StringRequirementRoute::Scoped,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -1037,12 +1040,13 @@ fn scoped_string_requirement_matches_a_logically_implied_disjunction() {
             conjunction: vec![helm_schema_core::Predicate::Or(vec![
                 helm_schema_core::Predicate::truthy_path("selected"),
                 helm_schema_core::Predicate::truthy_path("fallback"),
-            ])],
+            ])]
+            .into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path(path),
                 route: crate::eval_effect::StringRequirementRoute::Scoped,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -1082,12 +1086,12 @@ fn direct_string_requirement_suppresses_only_transformed_provider_preimages() {
     absorb_captures(
         &mut contract,
         [crate::eval_effect::FailCapture {
-            conjunction: Vec::new(),
+            conjunction: Vec::new().into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path(path),
                 route: crate::eval_effect::StringRequirementRoute::Direct,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -1140,21 +1144,23 @@ fn scoped_string_requirement_projects_recursive_merge_fallback_rows() -> eyre::R
         &mut contract,
         [
             crate::eval_effect::FailCapture {
-                conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+                conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")]
+                    .into(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::StringRequirement {
                     path: conditional_path("workers.celery.query"),
                     route: crate::eval_effect::StringRequirementRoute::Scoped,
-                    selection: Vec::new(),
+                    selection: Vec::new().into(),
                 },
             },
             crate::eval_effect::FailCapture {
-                conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+                conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")]
+                    .into(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::StringRequirement {
                     path: conditional_path("workers.celery.sets.*.query"),
                     route: crate::eval_effect::StringRequirementRoute::Scoped,
-                    selection: Vec::new(),
+                    selection: Vec::new().into(),
                 },
             },
         ],
@@ -1203,12 +1209,14 @@ fn unrelated_string_requirement_keeps_recursive_merge_source() -> eyre::Result<(
         [crate::eval_effect::FailCapture {
             conjunction: vec![helm_schema_core::Predicate::truthy_path(
                 "deployment.enabled",
-            )],
+            )]
+            .into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path("ports.*.protocol"),
                 route: crate::eval_effect::StringRequirementRoute::Selected,
-                selection: vec![helm_schema_core::Predicate::truthy_path("ports.*.protocol")],
+                selection: vec![helm_schema_core::Predicate::truthy_path("ports.*.protocol")]
+                    .into(),
             },
         }],
     );
@@ -1255,12 +1263,12 @@ fn dormant_string_requirement_keeps_recursive_merge_fallback_source() -> eyre::R
     absorb_captures(
         &mut contract,
         [crate::eval_effect::FailCapture {
-            conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")],
+            conjunction: vec![helm_schema_core::Predicate::truthy_path("workers.enabled")].into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path("workers.celery.query"),
                 route: crate::eval_effect::StringRequirementRoute::Scoped,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -1281,12 +1289,13 @@ fn propagated_wildcard_string_requirement_needs_its_range_scope() {
         [crate::eval_effect::FailCapture {
             conjunction: vec![helm_schema_core::Predicate::truthy_path(
                 "workers.celery.enabled",
-            )],
+            )]
+            .into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path("workers.*"),
                 route: crate::eval_effect::StringRequirementRoute::Selected,
-                selection: Vec::new(),
+                selection: Vec::new().into(),
             },
         }],
     );
@@ -1314,14 +1323,15 @@ fn ranged_wildcard_string_requirement_keeps_its_member_contract() -> eyre::Resul
     absorb_captures(
         &mut contract,
         [crate::eval_effect::FailCapture {
-            conjunction: Vec::new(),
+            conjunction: Vec::new().into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::StringRequirement {
                 path: conditional_path("workers.*"),
                 route: crate::eval_effect::StringRequirementRoute::Selected,
                 selection: vec![helm_schema_core::Predicate::Guard(Guard::Range {
                     path: helm_schema_core::ValuesPath::parse("workers"),
-                })],
+                })]
+                .into(),
             },
         }],
     );

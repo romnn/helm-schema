@@ -8,13 +8,17 @@ use super::{
 /// `Predicate::Not` subtree except plain presence (`¬Absent`), whose
 /// positive reading keeps it out of the dormancy class.
 pub(super) fn hard_negation_paths(predicate: &Predicate, out: &mut BTreeSet<String>) {
-    match predicate {
-        Predicate::Not(inner) => {
-            if !matches!(inner.as_ref(), Predicate::Guard(Guard::Absent { .. })) {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Not(inner) => {
+            if !matches!(
+                inner.kind(),
+                helm_schema_core::PredicateKind::Guard(Guard::Absent { .. })
+            ) {
                 out.extend(inner.value_paths().into_iter().map(|path| path.encode()));
             }
         }
-        Predicate::And(items) | Predicate::Or(items) => {
+        helm_schema_core::PredicateKind::And(items)
+        | helm_schema_core::PredicateKind::Or(items) => {
             for item in items {
                 hard_negation_paths(item, out);
             }
@@ -34,8 +38,10 @@ pub(super) fn lowerable_conditional_guard_set(
     let source_expr = source_path.encode();
     let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = predicates
         .iter()
-        .filter_map(|predicate| match predicate {
-            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path),
+        .filter_map(|predicate| match predicate.kind() {
+            helm_schema_core::PredicateKind::Guard(Guard::RangeKeyEquals { path, .. }) => {
+                Some(path)
+            }
             _ => None,
         })
         .collect();
@@ -47,8 +53,8 @@ pub(super) fn lowerable_conditional_guard_set(
         // over a DIFFERENT path stays unlowerable unless a key-equality
         // pins the exact member the iteration must contain.
         if matches!(
-            predicate,
-            Predicate::Guard(Guard::Range { path })
+            predicate.kind(),
+            helm_schema_core::PredicateKind::Guard(Guard::Range { path })
                 if path == &source_path
                     || range_guard_is_iteration_ancestor(&source_expr, path)
                     || key_equals_ranges.contains(path)
@@ -213,8 +219,10 @@ pub(super) fn lowerable_conditional_guard_subset(
     let source_expr = source_path.encode();
     let key_equals_ranges: BTreeSet<&helm_schema_core::ValuesPath> = predicates
         .iter()
-        .filter_map(|predicate| match predicate {
-            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path),
+        .filter_map(|predicate| match predicate.kind() {
+            helm_schema_core::PredicateKind::Guard(Guard::RangeKeyEquals { path, .. }) => {
+                Some(path)
+            }
             _ => None,
         })
         .collect();
@@ -223,8 +231,8 @@ pub(super) fn lowerable_conditional_guard_subset(
         // The row's own iteration is how the row fires, not a foreign
         // condition — the same skip as the full-set decode.
         if matches!(
-            predicate,
-            Predicate::Guard(Guard::Range { path })
+            predicate.kind(),
+            helm_schema_core::PredicateKind::Guard(Guard::Range { path })
                 if path == &source_path
                     || range_guard_is_iteration_ancestor(&source_expr, path)
                     || key_equals_ranges.contains(path)
@@ -313,9 +321,13 @@ pub(super) fn predicate_to_guard(
     predicate: &Predicate,
     target_value_path: Option<&str>,
 ) -> Option<ConditionalGuard> {
-    match predicate {
-        Predicate::True | Predicate::False | Predicate::Approximate { .. } => None,
-        Predicate::Guard(guard) => guard_to_conditional_guard(guard, target_value_path),
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. } => None,
+        helm_schema_core::PredicateKind::Guard(guard) => {
+            guard_to_conditional_guard(guard, target_value_path)
+        }
         // Predicates inside a negation are load-bearing even when they test
         // the target itself. Dropping a target conjunct from `not (a &&
         // target)` widens the branch into states where the render never
@@ -323,10 +335,10 @@ pub(super) fn predicate_to_guard(
         // A negated range-key equality has no document-level encoding: the
         // else-arm runs for every OTHER member even when the named key is
         // also present, so inverting the has-key lowering would be unsound.
-        Predicate::Not(inner) => {
+        helm_schema_core::PredicateKind::Not(inner) => {
             if matches!(
-                inner.as_ref(),
-                Predicate::Guard(Guard::RangeKeyEquals { .. })
+                inner.kind(),
+                helm_schema_core::PredicateKind::Guard(Guard::RangeKeyEquals { .. })
             ) {
                 return None;
             }
@@ -334,7 +346,7 @@ pub(super) fn predicate_to_guard(
                 inner, None,
             )?)))
         }
-        Predicate::And(predicates) => {
+        helm_schema_core::PredicateKind::And(predicates) => {
             let mut guards = predicates
                 .iter()
                 .map(|predicate| predicate_to_guard(predicate, target_value_path))
@@ -347,7 +359,7 @@ pub(super) fn predicate_to_guard(
                 _ => Some(ConditionalGuard::AllOf(guards)),
             }
         }
-        Predicate::Or(predicates) => {
+        helm_schema_core::PredicateKind::Or(predicates) => {
             // Inside a disjunction a guard on the target itself is
             // load-bearing (`or .Values.other (and .Values.self .flag)`),
             // unlike a top-level self conjunct (the row's own firing
@@ -377,35 +389,35 @@ pub(super) fn extend_lowerable_predicate(
     out: &mut Vec<ConditionalGuard>,
 ) -> Option<()> {
     let target = helm_schema_core::ValuesPath::parse(target_value_path);
-    match predicate {
-        Predicate::True
-        | Predicate::False
-        | Predicate::Approximate { .. }
-        | Predicate::Guard(Guard::Range { .. }) => return None,
-        Predicate::Guard(Guard::With { path }) if path == &target => {}
-        Predicate::Guard(Guard::With { .. }) => {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. }
+        | helm_schema_core::PredicateKind::Guard(Guard::Range { .. }) => return None,
+        helm_schema_core::PredicateKind::Guard(Guard::With { path }) if path == &target => {}
+        helm_schema_core::PredicateKind::Guard(Guard::With { .. }) => {
             out.push(predicate_to_guard(predicate, None)?);
         }
-        Predicate::And(predicates) => {
+        helm_schema_core::PredicateKind::And(predicates) => {
             for predicate in predicates {
                 extend_lowerable_predicate(predicate, target_value_path, out)?;
             }
         }
-        Predicate::Guard(Guard::Default { path }) if path == &target => {}
+        helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &target => {}
         // The row's own truthiness is nullability evidence (captured as
         // source null-tolerance), not a conditional shape over *other*
         // paths; like the self-default and self-negation arms it must not
         // poison the foreign overlay keys. Root-to-leaf guard stacks put it
         // on every `with .Values.x`-wrapped render since the fragment
         // interpreter landed.
-        Predicate::Guard(Guard::Truthy { path }) if path == &target => {}
+        helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == &target => {}
         // Self-negation carries the branch's own-arm exclusion, not a
         // conditional shape over *other* paths; the overlay keys stay on the
         // foreign conditions.
-        Predicate::Not(inner)
+        helm_schema_core::PredicateKind::Not(inner)
             if matches!(
-                inner.as_ref(),
-                Predicate::Guard(Guard::Truthy { path }) if path == &target
+                inner.kind(),
+                helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == &target
             ) => {}
         // A type test on the row's own path (also negated or a disjunction
         // of such tests) partitions its domain (a type-switch arm). The
@@ -417,16 +429,16 @@ pub(super) fn extend_lowerable_predicate(
         // wildcard guard path is encodable at the member slot, exactly like
         // its negated complement (signoz's per-member object-versus-scalar
         // EnvVar dispatch).
-        other if predicate_is_self_type_partition(other, target_value_path) => {
+        _ if predicate_is_self_type_partition(predicate, target_value_path) => {
             let target = if path_contains_wildcard(target_value_path) {
                 None
             } else {
                 Some(target_value_path)
             };
-            out.push(predicate_to_guard(other, target)?);
+            out.push(predicate_to_guard(predicate, target)?);
         }
-        other => {
-            out.push(predicate_to_guard(other, Some(target_value_path))?);
+        _ => {
+            out.push(predicate_to_guard(predicate, Some(target_value_path))?);
         }
     }
     Some(())
@@ -444,20 +456,20 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
     // the ones `range` refuses to iterate, so the render terminates at the
     // range itself. Both readings of a truthy subject therefore terminate,
     // which is what this clause claims.
-    if let Predicate::Guard(Guard::Range { path }) = predicate {
+    if let helm_schema_core::PredicateKind::Guard(Guard::Range { path }) = predicate.kind() {
         return Some(ConditionalGuard::Truthy { path: path.clone() });
     }
-    if let Predicate::Approximate {
+    if let helm_schema_core::PredicateKind::Approximate {
         sound_subset: Some(sound_subset),
         ..
-    } = predicate
+    } = predicate.kind()
     {
         return predicate_to_guard(sound_subset, None);
     }
     // A disjunction of strengthened arms implies the real disjunction, so
     // it stays inside the clause's positive position (jenkins' two-sided
     // `$replicas` domain check).
-    if let Predicate::Or(items) = predicate
+    if let helm_schema_core::PredicateKind::Or(items) = predicate.kind()
         && predicate.contains_approximation()
     {
         let mut guards = items
@@ -476,7 +488,7 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
     // strengthening strengthens the whole, while dropping one would widen
     // it (cilium's `and (ge …) (le …)` cluster-id window arms inside the
     // ENI check's disjunction).
-    if let Predicate::And(items) = predicate
+    if let helm_schema_core::PredicateKind::And(items) = predicate.kind()
         && predicate.contains_approximation()
     {
         let mut guards = items
@@ -745,8 +757,8 @@ pub(super) fn record_member_range_requirement(
     let mut outer_guards = Vec::new();
     for predicate in predicates {
         if matches!(
-            predicate,
-            Predicate::Guard(Guard::Range { path })
+            predicate.kind(),
+            helm_schema_core::PredicateKind::Guard(Guard::Range { path })
                 if path == parent || path == &member_path
         ) {
             continue;
@@ -785,16 +797,19 @@ pub(super) fn record_member_range_requirement(
 /// negation.
 pub(super) fn predicate_tests_source_type(predicate: &Predicate, source_expr: &str) -> bool {
     let source_path = helm_schema_core::ValuesPath::parse(source_expr);
-    match predicate {
-        Predicate::Guard(Guard::TypeIs { path, .. }) => path == &source_path,
-        Predicate::Not(inner) => predicate_tests_source_type(inner, source_expr),
-        Predicate::And(items) | Predicate::Or(items) => items
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(Guard::TypeIs { path, .. }) => path == &source_path,
+        helm_schema_core::PredicateKind::Not(inner) => {
+            predicate_tests_source_type(inner, source_expr)
+        }
+        helm_schema_core::PredicateKind::And(items)
+        | helm_schema_core::PredicateKind::Or(items) => items
             .iter()
             .any(|item| predicate_tests_source_type(item, source_expr)),
-        Predicate::True
-        | Predicate::False
-        | Predicate::Approximate { .. }
-        | Predicate::Guard(_) => false,
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. }
+        | helm_schema_core::PredicateKind::Guard(_) => false,
     }
 }
 
@@ -806,19 +821,22 @@ pub(super) fn predicate_is_self_type_partition(
     target_value_path: &str,
 ) -> bool {
     let target = helm_schema_core::ValuesPath::parse(target_value_path);
-    match predicate {
-        Predicate::Guard(Guard::TypeIs { path, .. }) => path == &target,
-        Predicate::Not(inner) => predicate_is_self_type_partition(inner, target_value_path),
-        Predicate::And(items) | Predicate::Or(items) => {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(Guard::TypeIs { path, .. }) => path == &target,
+        helm_schema_core::PredicateKind::Not(inner) => {
+            predicate_is_self_type_partition(inner, target_value_path)
+        }
+        helm_schema_core::PredicateKind::And(items)
+        | helm_schema_core::PredicateKind::Or(items) => {
             !items.is_empty()
                 && items
                     .iter()
                     .all(|item| predicate_is_self_type_partition(item, target_value_path))
         }
-        Predicate::True
-        | Predicate::False
-        | Predicate::Approximate { .. }
-        | Predicate::Guard(_) => false,
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. }
+        | helm_schema_core::PredicateKind::Guard(_) => false,
     }
 }
 
@@ -873,7 +891,9 @@ pub(super) fn member_local_truthy_selector(
     predicate: &Predicate,
     constrained: Option<&str>,
 ) -> Option<Vec<String>> {
-    let Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) = predicate else {
+    let helm_schema_core::PredicateKind::Guard(Guard::Truthy { path } | Guard::With { path }) =
+        predicate.kind()
+    else {
         return None;
     };
     if constrained
@@ -929,7 +949,9 @@ pub(super) fn predicate_is_structural_ancestor_guard(
     predicate: &Predicate,
     source_path: &str,
 ) -> bool {
-    let Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) = predicate else {
+    let helm_schema_core::PredicateKind::Guard(Guard::Truthy { path } | Guard::With { path }) =
+        predicate.kind()
+    else {
         return false;
     };
     let source = helm_schema_core::ValuesPath::parse(source_path);

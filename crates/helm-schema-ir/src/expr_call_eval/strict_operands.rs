@@ -321,7 +321,10 @@ fn record_strict_parser_result(
     }
 }
 
-fn parser_operand_selection_conjunctions(operand: &EvalResult, path: &str) -> Vec<Vec<Predicate>> {
+fn parser_operand_selection_conjunctions(
+    operand: &EvalResult,
+    path: &str,
+) -> Vec<helm_schema_core::Conjunction> {
     let base = operand_selection_conjunctions(&operand.effects, path);
     let metas = parser_output_metas(operand.value.as_ref(), path);
     if metas.is_empty() {
@@ -346,8 +349,6 @@ fn parser_operand_selection_conjunctions(operand: &EvalResult, path: &str) -> Ve
                 // raw path: the parser observes the raw value only
                 // where those reassignments did not run.
                 conjunction.extend(meta.capture_exclusions.iter().cloned());
-                conjunction.sort();
-                conjunction.dedup();
                 out.push(conjunction);
             }
         }
@@ -431,7 +432,7 @@ pub(super) fn record_string_consumer_effects(
         let requirements = string_operand_requirements(value, effects, path);
         for (route, conjunction) in requirements {
             let capture = crate::eval_effect::FailCapture {
-                conjunction: Vec::new(),
+                conjunction: Vec::new().into(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::StringRequirement {
                     path: helm_schema_core::ValuesPath::parse(path),
@@ -458,7 +459,10 @@ fn string_operand_requirements(
     value: Option<&AbstractValue>,
     effects: &Effects,
     path: &str,
-) -> Vec<(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)> {
+) -> Vec<(
+    crate::eval_effect::StringRequirementRoute,
+    helm_schema_core::Conjunction,
+)> {
     let output_metas = parser_output_metas(value, path);
     let typed_path = helm_schema_core::ValuesPath::parse(path);
     let path_is_derived = effects.derived_text_paths.contains(&typed_path)
@@ -478,7 +482,11 @@ fn string_operand_requirements(
                 ) => candidate.encode() == path,
                 _ => false,
             };
-            if !exact_identity && conjunctions.iter().all(Vec::is_empty) {
+            if !exact_identity
+                && conjunctions
+                    .iter()
+                    .all(|conjunction| conjunction.is_empty())
+            {
                 return Vec::new();
             }
             conjunctions
@@ -503,7 +511,7 @@ fn string_operand_requirements(
             })
             .flat_map(|meta| {
                 let branches = if meta.predicates.is_empty() {
-                    vec![Vec::new()]
+                    vec![helm_schema_core::Conjunction::default()]
                 } else {
                     meta.predicates
                         .iter()
@@ -556,7 +564,7 @@ pub(super) fn record_raw_range_key_string_consumer_paths(
 ) {
     if !raw_paths.is_empty() {
         let capture = crate::eval_effect::FailCapture {
-            conjunction: Vec::new(),
+            conjunction: Vec::new().into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::RangeKeyStrings {
                 paths: raw_paths
@@ -829,9 +837,10 @@ pub(super) fn record_collection_item_kind_result(
 pub(super) fn record_forbidden_kind(
     path: &str,
     schema_type: &str,
-    mut conjunction: Vec<Predicate>,
+    conjunction: impl Into<helm_schema_core::Conjunction>,
     effects: &mut Effects,
 ) {
+    let mut conjunction = conjunction.into();
     conjunction.push(Predicate::from(crate::Guard::TypeIs {
         path: helm_schema_core::ValuesPath::parse(path),
         schema_type: schema_type.to_string(),
@@ -839,9 +848,12 @@ pub(super) fn record_forbidden_kind(
     push_fail_capture(conjunction, effects);
 }
 
-pub(super) fn push_fail_capture(conjunction: Vec<Predicate>, effects: &mut Effects) {
+pub(super) fn push_fail_capture(
+    conjunction: impl Into<helm_schema_core::Conjunction>,
+    effects: &mut Effects,
+) {
     let capture = crate::eval_effect::FailCapture {
-        conjunction,
+        conjunction: conjunction.into(),
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::Fail,
     };
@@ -849,14 +861,14 @@ pub(super) fn push_fail_capture(conjunction: Vec<Predicate>, effects: &mut Effec
 }
 
 pub(super) fn push_value_type_capture(
-    conjunction: Vec<Predicate>,
+    conjunction: impl Into<helm_schema_core::Conjunction>,
     path: &str,
     schema_type: String,
     null_aborts: bool,
     effects: &mut Effects,
 ) {
     let capture = crate::eval_effect::FailCapture {
-        conjunction,
+        conjunction: conjunction.into(),
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::ValueType {
             path: helm_schema_core::ValuesPath::parse(path),
@@ -868,14 +880,14 @@ pub(super) fn push_value_type_capture(
 }
 
 fn push_value_pattern_capture(
-    conjunction: Vec<Predicate>,
+    conjunction: impl Into<helm_schema_core::Conjunction>,
     path: &str,
     pattern: String,
     templated: bool,
     effects: &mut Effects,
 ) {
     let capture = crate::eval_effect::FailCapture {
-        conjunction,
+        conjunction: conjunction.into(),
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::ValuePattern {
             path: helm_schema_core::ValuesPath::parse(path),
@@ -1057,11 +1069,14 @@ pub(super) fn layered_strict_operand_identity_paths(
 pub(super) fn strict_operand_selection_conjunctions(
     operand: &EvalResult,
     path: &str,
-) -> Vec<Vec<Predicate>> {
+) -> Vec<helm_schema_core::Conjunction> {
     operand_selection_conjunctions(&operand.effects, path)
 }
 
-pub(super) fn operand_selection_conjunctions(effects: &Effects, path: &str) -> Vec<Vec<Predicate>> {
+pub(super) fn operand_selection_conjunctions(
+    effects: &Effects,
+    path: &str,
+) -> Vec<helm_schema_core::Conjunction> {
     let mut shared = BTreeSet::new();
     let typed_path = helm_schema_core::ValuesPath::parse(path);
     if effects.defaults.contains(&typed_path) || effects.local_default_paths.contains(&typed_path) {

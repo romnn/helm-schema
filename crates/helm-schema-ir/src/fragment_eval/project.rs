@@ -113,7 +113,8 @@ fn walk_guarded(
             | AbstractFragment::Opaque(_) => {}
         }
     }
-    sibling_conditions.retain(|condition| !matches!(condition, Predicate::False));
+    sibling_conditions
+        .retain(|condition| !matches!(condition.kind(), helm_schema_core::PredicateKind::False));
     sibling_conditions.sort();
     sibling_conditions.dedup();
     let minimal_sibling_conditions = sibling_conditions
@@ -149,15 +150,15 @@ fn walk_guarded(
 
 fn predicate_is_conjunctive_subset(subset: &Predicate, superset: &Predicate) -> bool {
     fn collect(predicate: &Predicate, out: &mut std::collections::BTreeSet<Predicate>) {
-        match predicate {
-            Predicate::True => {}
-            Predicate::And(predicates) => {
+        match predicate.kind() {
+            helm_schema_core::PredicateKind::True => {}
+            helm_schema_core::PredicateKind::And(predicates) => {
                 for predicate in predicates {
                     collect(predicate, out);
                 }
             }
-            other => {
-                out.insert(other.clone());
+            _ => {
+                out.insert(predicate.clone());
             }
         }
     }
@@ -302,11 +303,11 @@ fn walk_node(
                                 .collect(),
                         )
                         .normalize_boolean();
-                        let conjunction = match condition {
-                            Predicate::False => continue,
-                            Predicate::True => Vec::new(),
-                            Predicate::And(predicates) => predicates,
-                            predicate => vec![predicate],
+                        let conjunction = match condition.kind() {
+                            helm_schema_core::PredicateKind::False => continue,
+                            helm_schema_core::PredicateKind::True => Vec::new(),
+                            helm_schema_core::PredicateKind::And(predicates) => predicates.to_vec(),
+                            _ => vec![condition],
                         };
                         conjunctions.insert(conjunction);
                     }
@@ -315,7 +316,7 @@ fn walk_node(
                         .captures
                         .extend(conjunctions.into_iter().map(|conjunction| {
                             crate::eval_effect::FailCapture {
-                                conjunction,
+                                conjunction: conjunction.into(),
                                 ranged: crate::range_modes::RangeModes::default(),
                                 kind: crate::eval_effect::CaptureKind::AbsenceAborts {
                                     path: row.source_expr.clone(),
@@ -418,15 +419,13 @@ fn splice_row(
         // the provider sees this input value there. Derived scalar influence
         // stays opaque and therefore keeps the approximation.
         condition = GuardDnf::from_disjunction(condition.disjuncts().iter().map(|conjunction| {
-            conjunction.iter().map(|predicate| match predicate {
-                Predicate::Approximate {
+            conjunction.iter().map(|predicate| match predicate.kind() {
+                helm_schema_core::PredicateKind::Approximate {
                     role: helm_schema_core::ApproximationRole::OutputSelection,
                     sound_subset: Some(sound_subset),
                     ..
-                } if predicate.value_paths().contains(&splice.values_path) => {
-                    sound_subset.as_ref().clone()
-                }
-                other => other.clone(),
+                } if predicate.value_paths().contains(&splice.values_path) => sound_subset.clone(),
+                _ => predicate.clone(),
             })
         }));
     }

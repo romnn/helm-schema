@@ -178,14 +178,15 @@ pub(super) fn joined_truthy_reduction_arms(
         let Some(entry_reduction) = entry.truthy_reductions.get(variable) else {
             continue;
         };
-        if matches!(entry_reduction, Predicate::False)
-            || !outcomes.iter().any(|(_, state)| {
-                matches!(
-                    state.truthy_reductions.get(variable),
-                    Some(Predicate::False)
-                )
-            })
-        {
+        if matches!(
+            entry_reduction.kind(),
+            helm_schema_core::PredicateKind::False
+        ) || !outcomes.iter().any(|(_, state)| {
+            matches!(
+                state.truthy_reductions.get(variable),
+                Some(predicate) if predicate == &Predicate::False
+            )
+        }) {
             continue;
         }
         let mut alternatives = Vec::new();
@@ -341,11 +342,13 @@ fn join_meta_by_path(
 fn join_predicate_union(predicates: Vec<&Predicate>) -> Predicate {
     let mut alternatives = BTreeSet::new();
     for predicate in predicates {
-        match predicate {
-            Predicate::True => return Predicate::True,
-            Predicate::False => {}
-            Predicate::Or(inner) => alternatives.extend(inner.iter().cloned()),
-            predicate => {
+        match predicate.kind() {
+            helm_schema_core::PredicateKind::True => return Predicate::True,
+            helm_schema_core::PredicateKind::False => {}
+            helm_schema_core::PredicateKind::Or(inner) => {
+                alternatives.extend(inner.iter().cloned());
+            }
+            _ => {
                 alternatives.insert(predicate.clone());
             }
         }

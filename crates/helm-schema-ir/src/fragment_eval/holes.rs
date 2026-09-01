@@ -521,7 +521,7 @@ impl Interpreter<'_> {
         let mut captures: Vec<crate::eval_effect::FailCapture> = captures
             .into_iter()
             .map(|kind| crate::eval_effect::FailCapture {
-                conjunction: Vec::new(),
+                conjunction: Vec::new().into(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind,
             })
@@ -1058,7 +1058,8 @@ impl Interpreter<'_> {
                 conjunction: vec![Predicate::from(crate::Guard::TypeIs {
                     path,
                     schema_type: "array".to_string(),
-                })],
+                })]
+                .into(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::Fail,
             });
@@ -1087,7 +1088,7 @@ impl Interpreter<'_> {
         ] {
             for path in paths {
                 captures.push(crate::eval_effect::FailCapture {
-                    conjunction: Vec::new(),
+                    conjunction: Vec::new().into(),
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::QuotedSerialization {
                         path,
@@ -1104,7 +1105,7 @@ impl Interpreter<'_> {
         let mut text_captures = Vec::new();
         for path in agreed.plain_templated {
             text_captures.push(crate::eval_effect::FailCapture {
-                conjunction: Vec::new(),
+                conjunction: Vec::new().into(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::PlainSlotText {
                     path,

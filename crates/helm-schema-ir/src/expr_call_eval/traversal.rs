@@ -105,7 +105,8 @@ pub(super) fn eval_dig(
                             schema_type: "object".to_string(),
                         })
                         .negated(),
-                    ],
+                    ]
+                    .into(),
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::Fail,
                 }]
@@ -150,7 +151,7 @@ fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
     };
     vec![
         crate::eval_effect::FailCapture {
-            conjunction: Vec::new(),
+            conjunction: Vec::new().into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::RequiredPresence {
                 path: helm_schema_core::ValuesPath::parse(path),
@@ -160,7 +161,8 @@ fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
             conjunction: vec![Predicate::from(crate::Guard::HasKey {
                 path: helm_schema_core::ValuesPath::parse(&parent),
                 key: leaf,
-            })],
+            })]
+            .into(),
             ranged: crate::range_modes::RangeModes::default(),
             kind: crate::eval_effect::CaptureKind::DigSubject {
                 path: helm_schema_core::ValuesPath::parse(path),
@@ -180,7 +182,8 @@ fn chain_subject_capture(path: &str) -> crate::eval_effect::FailCapture {
     crate::eval_effect::FailCapture {
         conjunction: vec![Predicate::from(crate::Guard::Truthy {
             path: helm_schema_core::ValuesPath::parse(path),
-        })],
+        })]
+        .into(),
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::DigSubject {
             path: helm_schema_core::ValuesPath::parse(path),
@@ -266,7 +269,7 @@ pub(super) fn eval_index(
                     } = value
                     {
                         let capture = crate::eval_effect::FailCapture {
-                            conjunction: Vec::new(),
+                            conjunction: Vec::new().into(),
                             ranged: crate::range_modes::RangeModes::default(),
                             kind: crate::eval_effect::CaptureKind::SplitIndexAccess {
                                 paths: source_paths.clone(),

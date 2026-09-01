@@ -6700,3 +6700,144 @@
 - Measured production LOC delta: +40 (65,055 to 65,095). The delta is the temporary boundary
   canonicalizer plus typed-tail reconstruction; the next B5a carrier round is required to delete
   the boundary canonicalizer. No LOC promise applies.
+
+## B5a retry 2 — canonical conjunction carrier and shared predicate nodes
+
+- Status: in progress; commit pending.
+- Contract: representation-only. Retry B5a after both measured output-order prerequisites. Replace
+  set-like predicate vectors with one canonical `Conjunction` carrier, move predicate nodes behind
+  private immutable `Arc`s, preserve former structural ordering manually, and delete the temporary
+  capture-boundary canonicalizer plus scattered sort/dedup owners.
+- Acceptance baseline: `deb4ef28` (prose-only successor to semantic baseline `3164e8c7`).
+- Baseline production Rust LOC: 65,095.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+    The six canonical-output artifacts landed by `3164e8c7` are now part of the byte baseline.
+  - `Predicate` structural order remains exactly `True`, `False`, `Approximate`, `Guard`, `Not`,
+    `And`, `Or`, with former field and recursive ordering. Cached structural hashes are equality
+    fast-rejects only and never participate in `Ord`, serialization, or definition naming.
+  - `Conjunction` owns one canonical vector. Construction recursively flattens nested `And`, drops
+    `True`, sorts in legacy structural order, and deduplicates exact predicates while preserving
+    `False`, `Or`, approximations, context markers, and every nontrivial predicate.
+  - The temporary `ContractIr::finalize` capture canonicalizer is deleted. Canonicality is enforced
+    by the carrier at construction; no raw presentation, producer-order, legacy-order, or
+    compatibility vector may remain.
+  - The typed `RangeSelection.path` truthy-tail reconstruction survives the migration. Its local
+    post-reconstruction sort/dedup disappears into `Conjunction` construction without changing
+    scope or acceptance.
+  - Ordered predicate stacks representing evaluation, priority, or provenance remain ordinary
+    vectors. `FailCapture`, member-host implications, selected-string implications, parser
+    selection conjunctions, and their route handoffs migrate because their semantics are set-like.
+  - Public API decision: `Predicate` becomes opaque at ownership while retaining an exhaustive
+    borrowed `PredicateKind` view. This is the planned Part-F narrowing; all wire bytes remain exact.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero. Any fixture-byte difference or acceptance flip rejects the representation retry before
+    artifact adoption.
+
+- Measured results:
+  - `Predicate` is now an opaque cloneable owner around private immutable nodes. Nontrivial nodes
+    share an `Arc`; each node caches its structural hash for equality fast-rejection, while manual
+    `Ord` and `Hash` walk the exact former enum variant/field order.
+  - `Conjunction` owns one canonical predicate vector. Construction recursively flattens nested
+    `And`, removes `True`, sorts structurally, and deduplicates. `extend`, `push`, `prepend`,
+    `retain`, iteration, conversion, equality, ordering, and hashing preserve that one invariant;
+    no presentation or producer-order vector remains.
+  - `FailCapture`, selected-string implications, member-host implications, parser selection
+    handoffs, and string-requirement merge-source routing use the carrier. The temporary
+    `ContractIr::finalize` canonicalizer and the migrated local sort/dedup calls are deleted.
+  - The final2 immutable archive contains 90 binaries and 128 files. Its sole clean schema dump
+    passes 62/62 tests in 180.753 seconds and writes 84 artifacts; direct comparison finds all
+    84 byte-identical to the `deb4ef28` semantic baseline.
+  - The final2 symbolic-IR dump passes in 3.328 seconds and writes 18 artifacts. A separate exact
+    fixture-comparison invocation from the same archive passes in 3.293 seconds.
+  - The final2 full-depth battery passes in 89.283 seconds across 60 charts and 120,833 probes with
+    zero acceptance flips, zero candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base
+    probes, and 7,465/7,465 mandatory third-level probes.
+  - Canonical dedup reduces disclosed duplicate guard candidates: discovered guards fall from
+    14,542 to 12,538 and total capped reductions from 29,718 to 25,710. The emitted guard-pair count
+    remains 427, composite pairs remain 127, and mandatory coverage remains complete.
+
+- Deviations:
+  - The first compiler pass found one private regression test still constructing
+    `FailCapture.conjunction` as a raw vector. Converting that test setup through the carrier was the
+    only compiler-driven correction; no archive or dump was produced from the failing state.
+  - Final1 passed focused tests, 84-file schema identity, 18-file IR identity, and the full-depth
+    prober, but a self-adversarial audit found one string-requirement merge-source handoff converting
+    a canonical conjunction back to `Vec<Predicate>` for map/set storage. That handoff migrated to
+    `Conjunction`; every final1 artifact is therefore non-authoritative, and final2 alone supplies
+    adoption evidence.
+  - Final2's schema dump marked `final_outputs_match_policy_annotation_fixtures` as `LEAK` because a
+    child process outlived nextest's grace interval. The assertion passed, the command exited 0, all
+    four final-output artifacts are byte-identical, and no later gate reproduced a failure.
+  - The host was not guaranteed idle. Dump/prober/gate wall times are iteration evidence, not the
+    quiet-host Airflow curve required by B5b.
+
+- Adjudication evidence:
+  - Helm 4.2.3 adjudication is enabled in the final2 full-depth run. Zero fixture bytes and zero
+    acceptance cells change, so no individual Helm fixture decision is required.
+  - The Kyverno selected-range regression passes in focused, integration, and complete batteries;
+    the typed selected truthy tail remains present after carrier canonicalization.
+  - Accepted-abort allowance remains zero and observed candidate-accepts/Helm-aborts remains zero.
+
+- Producer/route coverage:
+
+  | Producer or route | Final representation and proof |
+  | --- | --- |
+  | Direct and guarded fail captures | `FailCapture.conjunction: Conjunction`; focused IR, corpus, and re-audit batteries are exact. |
+  | Selected string requirements | `CaptureKind::StringRequirement.selection: Conjunction`; NATS/OAuth2/Kyverno routes and schema bytes are exact. |
+  | Member-host implications | `MemberHostConversion.outer_predicates: Conjunction`; provider/member-host re-audits pass. |
+  | Parser and strict-operand selection | Set-like branch conjunctions construct the carrier; ordered evaluation and provenance stacks remain vectors. |
+  | Contract normalization handoff | String-requirement ancestor and merge-source maps retain `Conjunction` rather than reopening raw vectors. |
+  | Range-selection lowering | The typed selected-path truthy tail survives stamp removal; the temporary boundary canonicalizer is deleted. |
+  | Predicate readers | Every reader exhaustively matches borrowed `PredicateKind`; focused Clippy and all feature/target combinations pass. |
+  | Guard DNF ordering | Manual predicate order matches the former derived order; all 84 schema and 18 IR artifacts are byte-exact. |
+
+- Review dossier:
+  - Local-vs-global verdict: the two prerequisites removed the accidental `$defs` grouping and
+    duplicate-marker dependencies, so this retry reaches the intended global shape rather than
+    preserving legacy presentation. One canonical carrier now owns conjunction invariants and one
+    opaque predicate node owns sharing/hash/order semantics.
+  - Ownership: private `PredicateNode` owns nontrivial formula storage and cached equality hashes;
+    `Conjunction::new` owns set-like canonicalization. Callers can inspect formulas only through the
+    exhaustive borrowed `PredicateKind`, so adding a variant still forces compiler-visible readers.
+  - Remaining raw predicate vectors were audited. Active interpreter predicates, branch-priority
+    lists, render alternatives, BDD paths, and provenance/shadow stacks retain order semantics and
+    are not conjunction carriers. Local filtered vectors do not cross a phase boundary or own an
+    invariant.
+  - Part-F decision: the public `Predicate` enum becomes an opaque public struct and public
+    `PredicateKind` borrowed view. External exhaustive value-pattern matching is intentionally
+    narrowed; constructor methods and semantic operations remain available. No serialized IR,
+    schema, diagnostic, or other wire-format byte changes.
+
+- Self-adversarial pass:
+  - Verified the cached hash is consulted only in node equality and never in `Ord`, serialization,
+    definition naming, or public `Hash` ordering. Exact node-kind equality remains the collision
+    backstop.
+  - Compared manual ordering against the former derived variant sequence and recursive field order:
+    `True`, `False`, `Approximate`, `Guard`, `Not`, `And`, `Or`. The focused ordering test and all
+    BTree-backed fixture bytes remain exact.
+  - Rejected the final1 audit gap rather than treating a carrier-to-vector conversion as harmless.
+    Final2 repeats the archive, dump, IR equality, prober, and every required gate after that edit.
+  - Confirmed no `presentation`, producer-order, legacy-order, or temporary capture canonicalizer
+    remains in production core/IR source.
+  - Confirmed canonical `retain` preserves sorted/deduplicated order, while mutation operations that
+    add predicates reconstruct through `Conjunction::new`.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in 29.81 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 171.05 seconds; the same two warnings remain.
+  - `cargo nextest run --workspace`: exit 0, 1,328/1,328 tests in 158.898 seconds.
+  - `task test:integration`: exit 0, 565/565 tests in 970.962 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,897/1,897 tests in 1,210.982 seconds; 24 tests skipped by profile.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 28.39 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts, using the documented macOS shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,634.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +539 (65,095 to 65,634). Opaque node ownership requires explicit
+  constructors, borrowed variants, manual structural traits, and compiler-driven reader matches;
+  it deletes the temporary boundary canonicalizer and scattered conjunction normalization without
+  meeting an E-style LOC gate. B5a is an ordinary representation round, so no LOC promise applies.

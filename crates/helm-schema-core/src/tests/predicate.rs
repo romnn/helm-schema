@@ -1,9 +1,50 @@
-use super::Predicate;
+use super::{Conjunction, Predicate};
 use crate::{Guard, GuardValue, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
 fn path(value: &str) -> ValuesPath {
     ValuesPath::parse(value)
+}
+
+#[test]
+fn predicate_order_preserves_the_former_variant_sequence() {
+    let guard = Predicate::truthy_path("guard");
+    let mut predicates = vec![
+        Predicate::Or(vec![guard.clone()]),
+        Predicate::And(vec![guard.clone()]),
+        Predicate::Not(Box::new(guard.clone())),
+        guard.clone(),
+        Predicate::approximate("opaque", ["path".to_string()].into_iter().collect()),
+        Predicate::False,
+        Predicate::True,
+    ];
+    predicates.sort();
+
+    sim_assert_eq!(
+        have: predicates,
+        want: vec![
+            Predicate::True,
+            Predicate::False,
+            Predicate::approximate("opaque", ["path".to_string()].into_iter().collect()),
+            guard.clone(),
+            Predicate::Not(Box::new(guard.clone())),
+            Predicate::And(vec![guard.clone()]),
+            Predicate::Or(vec![guard]),
+        ]
+    );
+}
+
+#[test]
+fn conjunction_canonicalizes_nested_and_identity_parts() {
+    let first = Predicate::truthy_path("first");
+    let second = Predicate::truthy_path("second");
+    let conjunction = Conjunction::new([
+        second.clone(),
+        Predicate::True,
+        Predicate::And(vec![first.clone(), second]),
+    ]);
+
+    sim_assert_eq!(have: conjunction.into_vec(), want: vec![first, Predicate::truthy_path("second")]);
 }
 
 #[test]

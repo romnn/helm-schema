@@ -271,7 +271,7 @@ impl ValuePathContext<'_> {
             self.template_truthy_reductions
                 .get(name.trim_start_matches('$'))
         }) {
-            let usable = !matches!(predicate, Predicate::False);
+            let usable = !matches!(predicate.kind(), helm_schema_core::PredicateKind::False);
             return Decoded::classified(Some(predicate.clone()), usable, usable);
         }
         if let Some(predicate) = self.get_binding_truthy_predicate(name) {
@@ -984,7 +984,8 @@ impl ValuePathContext<'_> {
         // Statically true conjuncts (`and $shouldContinue …` where the
         // local's reduction is `True`) carry nothing: dropping them keeps
         // the remaining conjunct in its exact single-predicate shape.
-        predicates.retain(|predicate| !matches!(predicate, Predicate::True));
+        predicates
+            .retain(|predicate| !matches!(predicate.kind(), helm_schema_core::PredicateKind::True));
         Some(Predicate::all(predicates))
     }
 
@@ -1650,7 +1651,9 @@ impl ValuePathContext<'_> {
             .collect::<Option<Vec<_>>>();
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
         let mut predicates = predicates?;
-        predicates.retain(|predicate| !matches!(predicate, Predicate::False));
+        predicates.retain(|predicate| {
+            !matches!(predicate.kind(), helm_schema_core::PredicateKind::False)
+        });
         match predicates.as_slice() {
             [] => Some(Predicate::False),
             [predicate] => Some(predicate.clone()),
@@ -3187,13 +3190,13 @@ pub(crate) fn stringified_equality_preimage(text: &str) -> Vec<GuardValue> {
 pub(crate) fn predicate_any(predicates: Vec<Predicate>) -> Predicate {
     if predicates
         .iter()
-        .any(|predicate| matches!(predicate, Predicate::True))
+        .any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::True))
     {
         return Predicate::True;
     }
     let mut predicates = predicates
         .into_iter()
-        .filter(|predicate| !matches!(predicate, Predicate::False))
+        .filter(|predicate| !matches!(predicate.kind(), helm_schema_core::PredicateKind::False))
         .collect::<Vec<_>>();
     match predicates.len() {
         0 => Predicate::False,
@@ -3355,7 +3358,9 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                         .iter()
                         .map(|choice| value_has_key(choice, key))
                         .collect::<Option<Vec<_>>>()?;
-                    resolved.retain(|predicate| !matches!(predicate, Predicate::False));
+                    resolved.retain(|predicate| {
+                        !matches!(predicate.kind(), helm_schema_core::PredicateKind::False)
+                    });
                     resolved.sort();
                     resolved.dedup();
                     match resolved.as_slice() {
@@ -3383,7 +3388,7 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                     for (index, (candidate, predicate)) in
                         candidates.iter().zip(resolved).enumerate()
                     {
-                        if matches!(predicate, Predicate::False)
+                        if matches!(predicate.kind(), helm_schema_core::PredicateKind::False)
                             && (index == last || candidate.static_truthiness() == Some(false))
                         {
                             continue;
@@ -3467,8 +3472,8 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                 && meta.predicates.iter().all(|conjunction| {
                     conjunction.iter().all(|predicate| {
                         matches!(
-                            predicate,
-                            Predicate::Guard(Guard::Truthy { path: guarded })
+                            predicate.kind(),
+                            helm_schema_core::PredicateKind::Guard(Guard::Truthy { path: guarded })
                                 if guarded != path && path.is_descendant_of(guarded)
                         )
                     })

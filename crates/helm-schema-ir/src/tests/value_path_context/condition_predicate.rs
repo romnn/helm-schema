@@ -61,7 +61,7 @@ fn invalid_kind_is_absence_or_null_instead_of_truthiness() {
         .expect("condition expression");
     let predicate = condition_context(HashMap::new()).condition_predicate_expr(&present);
     assert!(
-        matches!(predicate, Predicate::Not(ref inner) if matches!(inner.as_ref(), Predicate::Or(_))),
+        matches!(predicate.kind(), helm_schema_core::PredicateKind::Not(inner) if matches!(inner.kind(), helm_schema_core::PredicateKind::Or(_))),
         "negating invalid must preserve required-and-non-null semantics: {predicate:#?}"
     );
 }

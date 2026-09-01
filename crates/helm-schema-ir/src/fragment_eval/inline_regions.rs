@@ -399,7 +399,7 @@ impl Interpreter<'_> {
             if !capture
                 .conjunction
                 .iter()
-                .any(|predicate| matches!(predicate, Predicate::False))
+                .any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::False))
             {
                 self.observed_facts.captures.insert(capture);
             }
@@ -438,7 +438,7 @@ impl Interpreter<'_> {
             if !capture
                 .conjunction
                 .iter()
-                .any(|predicate| matches!(predicate, Predicate::False))
+                .any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::False))
             {
                 self.observed_facts.captures.insert(capture);
             }
@@ -579,7 +579,7 @@ impl Interpreter<'_> {
             faithful = true;
         }
         if evaluated_truth_is_unknown
-            && matches!(predicate, Predicate::True)
+            && matches!(predicate.kind(), helm_schema_core::PredicateKind::True)
             && !helper_paths.is_empty()
         {
             predicate = Predicate::all(

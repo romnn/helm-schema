@@ -159,10 +159,12 @@ pub(crate) fn eval_bound_helper_fragment(
     .flatten();
     let scalar_dispatch =
         merge_scalar_dispatch_candidates(structural_scalar_dispatch, projected_scalar_dispatch);
-    let json_payload_truth = match interpreter.json_payload_truth_outputs.as_slice() {
-        [(Predicate::True, truth)] => truth.clone(),
-        _ => TruthCondition::Unknown,
-    };
+    let json_payload_truth = interpreter
+        .json_payload_truth_outputs
+        .first()
+        .filter(|_| interpreter.json_payload_truth_outputs.len() == 1)
+        .filter(|(predicate, _)| predicate == &Predicate::True)
+        .map_or(TruthCondition::Unknown, |(_, truth)| truth.clone());
     // Guard reads that are strict ancestors of an index-narrowed path are
     // traversal steps, not conditions on the ancestor (the narrowing severed
     // them); dependency rows and the narrowed paths themselves stay.
@@ -519,11 +521,11 @@ fn rebase_node_sites(node: &mut AbstractFragment, call_site: Option<&Rc<SiteFact
 fn condition_branch(conditions: &[PathCondition]) -> BTreeSet<Predicate> {
     let mut branch = BTreeSet::new();
     for condition in conditions {
-        match condition {
-            Predicate::True => {}
-            Predicate::And(parts) => branch.extend(parts.iter().cloned()),
-            other => {
-                branch.insert(other.clone());
+        match condition.kind() {
+            helm_schema_core::PredicateKind::True => {}
+            helm_schema_core::PredicateKind::And(parts) => branch.extend(parts.iter().cloned()),
+            _ => {
+                branch.insert(condition.clone());
             }
         }
     }
@@ -1016,24 +1018,24 @@ fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]
         let read_path = read.values_path.encode();
         let conjunctions = read.condition.disjuncts().iter().map(|conjunction| {
             let has_truthy_sibling = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read_path))
+                matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read_path))
             });
             let defaulted = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Default { path }) if path == &read.values_path)
+                matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(crate::Guard::Default { path }) if path == &read.values_path)
             });
             let has_self_truthy = conjunction.iter().any(|predicate| {
-                matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path)
+                matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(crate::Guard::Truthy { path }) if path == &read.values_path)
             });
             let mut predicates = conjunction
                 .iter()
                 .filter(|predicate| {
-                    !matches!(predicate, Predicate::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read_path))
+                    !matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(crate::Guard::Truthy { path }) if unrelated_sibling(&path.encode(), &read_path))
                 })
                 .cloned()
                 .collect::<Vec<_>>();
             if defaulted && (has_self_truthy || has_truthy_sibling) {
                 predicates.retain(|predicate| {
-                    !matches!(predicate, Predicate::Not(inner) if matches!(inner.as_ref(), Predicate::Guard(crate::Guard::Truthy { path }) if path == &read.values_path))
+                    !matches!(predicate.kind(), helm_schema_core::PredicateKind::Not(inner) if matches!(inner.kind(), helm_schema_core::PredicateKind::Guard(crate::Guard::Truthy { path }) if path == &read.values_path))
                 });
             }
             predicates

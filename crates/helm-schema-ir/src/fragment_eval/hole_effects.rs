@@ -126,12 +126,13 @@ fn guard_gates_hint(guard: &Guard, path: &str) -> bool {
 }
 
 fn predicate_gates_hint(predicate: &Predicate, path: &str) -> bool {
-    match predicate {
-        Predicate::True | Predicate::False => false,
-        Predicate::Approximate { .. } => true,
-        Predicate::Guard(guard) => guard_gates_hint(guard, path),
-        Predicate::Not(inner) => predicate_gates_hint(inner, path),
-        Predicate::And(predicates) | Predicate::Or(predicates) => predicates
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::True | helm_schema_core::PredicateKind::False => false,
+        helm_schema_core::PredicateKind::Approximate { .. } => true,
+        helm_schema_core::PredicateKind::Guard(guard) => guard_gates_hint(guard, path),
+        helm_schema_core::PredicateKind::Not(inner) => predicate_gates_hint(inner, path),
+        helm_schema_core::PredicateKind::And(predicates)
+        | helm_schema_core::PredicateKind::Or(predicates) => predicates
             .iter()
             .any(|inner| predicate_gates_hint(inner, path)),
     }
@@ -222,9 +223,11 @@ pub(super) fn predicate_applies_to_flowing_path(
     path: &str,
     flowing: &std::collections::BTreeSet<String>,
 ) -> bool {
-    let predicate_path = match predicate {
-        Predicate::Guard(Guard::Truthy { path } | Guard::Not { path }) => path,
-        Predicate::Not(inner) => {
+    let predicate_path = match predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(Guard::Truthy { path } | Guard::Not { path }) => {
+            path
+        }
+        helm_schema_core::PredicateKind::Not(inner) => {
             return predicate_applies_to_flowing_path(inner, path, flowing);
         }
         _ => return true,
@@ -712,19 +715,19 @@ fn non_string_runtime_requirement_paths(
 }
 
 fn predicate_is_runtime_kind_requirement(predicate: &Predicate) -> bool {
-    match predicate {
-        Predicate::Guard(
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(
             Guard::TypeIs { .. }
             | Guard::NotTypeIs { .. }
             | Guard::MatchesPattern { .. }
             | Guard::NotMatchesPattern { .. },
         ) => true,
-        Predicate::Not(inner) => predicate_is_runtime_kind_requirement(inner),
-        Predicate::True
-        | Predicate::False
-        | Predicate::Approximate { .. }
-        | Predicate::Guard(_)
-        | Predicate::And(_)
-        | Predicate::Or(_) => false,
+        helm_schema_core::PredicateKind::Not(inner) => predicate_is_runtime_kind_requirement(inner),
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. }
+        | helm_schema_core::PredicateKind::Guard(_)
+        | helm_schema_core::PredicateKind::And(_)
+        | helm_schema_core::PredicateKind::Or(_) => false,
     }
 }

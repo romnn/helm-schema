@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::guard_algebra::minimize_disjunction_by;
-use crate::{ConditionalGuard, Guard, Predicate};
+use crate::{ConditionalGuard, Guard, Predicate, PredicateKind};
 
 /// Disjunction of conjunctions of typed predicates.
 ///
@@ -199,14 +199,15 @@ fn normalize_conjunction(
     predicates: impl IntoIterator<Item = Predicate>,
 ) -> Option<Vec<Predicate>> {
     fn push(predicate: Predicate, normalized: &mut BTreeSet<Predicate>) -> bool {
-        match predicate {
-            Predicate::True => true,
-            Predicate::False => false,
-            Predicate::And(predicates) => predicates
-                .into_iter()
+        match predicate.kind() {
+            PredicateKind::True => true,
+            PredicateKind::False => false,
+            PredicateKind::And(predicates) => predicates
+                .iter()
+                .cloned()
                 .all(|predicate| push(predicate, normalized)),
-            Predicate::Or(predicates) if disjunction_is_tautology(&predicates) => true,
-            predicate => {
+            PredicateKind::Or(predicates) if disjunction_is_tautology(predicates) => true,
+            _ => {
                 if normalized
                     .iter()
                     .any(|other| predicates_are_contradictory(&predicate, other))
@@ -227,8 +228,8 @@ fn normalize_conjunction(
     }
     let absorbed_disjunctions = normalized
         .iter()
-        .filter(|predicate| match predicate {
-            Predicate::Or(alternatives) => alternatives
+        .filter(|predicate| match predicate.kind() {
+            PredicateKind::Or(alternatives) => alternatives
                 .iter()
                 .any(|alternative| normalized.contains(alternative)),
             _ => false,
@@ -246,10 +247,10 @@ fn normalize_conjunction(
             .collect(),
     );
     normalized.retain(|predicate| {
-        let Predicate::Approximate {
+        let PredicateKind::Approximate {
             sound_subset: Some(sound_subset),
             ..
-        } = predicate
+        } = predicate.kind()
         else {
             return true;
         };
@@ -272,22 +273,22 @@ fn predicates_are_contradictory(left: &Predicate, right: &Predicate) -> bool {
     }
 
     if matches!(
-        (left, right),
+        (left.kind(), right.kind()),
         (
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: left_path,
                 value: left_value,
             }),
-            Predicate::Guard(Guard::NotEq {
+            PredicateKind::Guard(Guard::NotEq {
                 path: right_path,
                 value: right_value,
             })
         ) | (
-            Predicate::Guard(Guard::NotEq {
+            PredicateKind::Guard(Guard::NotEq {
                 path: left_path,
                 value: left_value,
             }),
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: right_path,
                 value: right_value,
             })
@@ -296,51 +297,51 @@ fn predicates_are_contradictory(left: &Predicate, right: &Predicate) -> bool {
         return true;
     }
 
-    match (left, right) {
+    match (left.kind(), right.kind()) {
         (
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: left_path,
                 value: left_value,
             }),
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: right_path,
                 value: right_value,
             }),
         ) => left_path == right_path && left_value != right_value,
         (
-            Predicate::Guard(Guard::MatchesPattern {
+            PredicateKind::Guard(Guard::MatchesPattern {
                 path: pattern_path, ..
             }),
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: value_path,
                 value,
             }),
         )
         | (
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: value_path,
                 value,
             }),
-            Predicate::Guard(Guard::MatchesPattern {
+            PredicateKind::Guard(Guard::MatchesPattern {
                 path: pattern_path, ..
             }),
         ) => pattern_path == value_path && !matches!(value, crate::GuardValue::String(_)),
         (
-            Predicate::Guard(Guard::TypeIs {
+            PredicateKind::Guard(Guard::TypeIs {
                 path: type_path,
                 schema_type,
             }),
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: value_path,
                 value,
             }),
         )
         | (
-            Predicate::Guard(Guard::Eq {
+            PredicateKind::Guard(Guard::Eq {
                 path: value_path,
                 value,
             }),
-            Predicate::Guard(Guard::TypeIs {
+            PredicateKind::Guard(Guard::TypeIs {
                 path: type_path,
                 schema_type,
             }),
@@ -360,12 +361,10 @@ fn guard_value_has_schema_type(value: &crate::GuardValue, schema_type: &str) -> 
 }
 
 fn predicates_are_complementary(left: &Predicate, right: &Predicate) -> bool {
-    match (left, right) {
-        (predicate, Predicate::Not(negated)) | (Predicate::Not(negated), predicate) => {
-            predicate == negated.as_ref()
-        }
-        _ => false,
+    if let PredicateKind::Not(negated) = right.kind() {
+        return left == negated;
     }
+    matches!(left.kind(), PredicateKind::Not(negated) if negated == right)
 }
 
 #[cfg(test)]

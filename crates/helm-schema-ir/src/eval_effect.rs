@@ -118,7 +118,7 @@ pub(crate) struct Effects {
 pub(crate) struct MemberHostConversion {
     pub(crate) path: ValuesPath,
     pub(crate) input_kind: String,
-    pub(crate) outer_predicates: Vec<helm_schema_core::Predicate>,
+    pub(crate) outer_predicates: helm_schema_core::Conjunction,
 }
 
 /// One captured `fail` call: the predicate conjunction reaching it. Raw
@@ -129,14 +129,54 @@ pub(crate) struct MemberHostConversion {
 /// conjunction as [`helm_schema_core::Predicate::Approximate`] conjuncts,
 /// so the negation can abstain instead of manufacturing requirements the
 /// chart never stated.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug)]
 pub(crate) struct FailCapture {
-    pub(crate) conjunction: Vec<helm_schema_core::Predicate>,
+    pub(crate) conjunction: helm_schema_core::Conjunction,
     /// The range facts active at the capture site. Input identity says which
     /// path the header actually iterates; member identity says which path
     /// supplies the values-backed members of a possibly derived iterable.
     pub(crate) ranged: crate::range_modes::RangeModes,
     pub(crate) kind: CaptureKind,
+}
+
+impl PartialEq for FailCapture {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other).is_eq()
+    }
+}
+
+impl Eq for FailCapture {}
+
+impl PartialOrd for FailCapture {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for FailCapture {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.conjunction
+            .cmp(&other.conjunction)
+            .then_with(|| self.ranged.cmp(&other.ranged))
+            .then_with(|| match (&self.kind, &other.kind) {
+                (
+                    CaptureKind::StringRequirement {
+                        path: left_path,
+                        route: left_route,
+                        selection: left_selection,
+                    },
+                    CaptureKind::StringRequirement {
+                        path: right_path,
+                        route: right_route,
+                        selection: right_selection,
+                    },
+                ) => left_path
+                    .cmp(right_path)
+                    .then_with(|| left_route.cmp(right_route))
+                    .then_with(|| left_selection.cmp(right_selection)),
+                _ => self.kind.cmp(&other.kind),
+            })
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -195,7 +235,7 @@ pub(crate) enum CaptureKind {
     StringRequirement {
         path: ValuesPath,
         route: StringRequirementRoute,
-        selection: Vec<helm_schema_core::Predicate>,
+        selection: helm_schema_core::Conjunction,
     },
     /// A range header iterates this values path itself, or a wildcard path
     /// identifies the values-backed member alternative supplied to a
@@ -359,7 +399,8 @@ impl CaptureKind {
             } => {
                 *path = map(path.clone());
                 *selection = selection
-                    .drain(..)
+                    .iter()
+                    .cloned()
                     .map(|predicate| predicate.map_value_paths(map))
                     .collect();
             }
@@ -848,10 +889,10 @@ impl SelectionReachability {
             let condition = TruthCondition::exact(predicate);
             return Self::from((&condition, SelectionPolarity::Truthy, truth_source));
         }
-        let state = match predicate {
-            helm_schema_core::Predicate::True => SelectionState::Always,
-            helm_schema_core::Predicate::False => SelectionState::Never,
-            predicate => SelectionState::Exact(predicate),
+        let state = match predicate.kind() {
+            helm_schema_core::PredicateKind::True => SelectionState::Always,
+            helm_schema_core::PredicateKind::False => SelectionState::Never,
+            _ => SelectionState::Exact(predicate),
         };
         Self {
             state,
@@ -867,7 +908,7 @@ impl SelectionReachability {
             return Self::always(truth_source);
         }
         let sound_subset = sound_subset.filter(|predicate| {
-            !matches!(predicate, helm_schema_core::Predicate::False)
+            !matches!(predicate.kind(), helm_schema_core::PredicateKind::False)
                 && !predicate.contains_approximation()
         });
         Self {
@@ -992,10 +1033,13 @@ impl SelectionReachability {
         marker: impl Into<String>,
         involved_paths: BTreeSet<String>,
     ) -> BTreeSet<helm_schema_core::Predicate> {
-        match self.output_selection_predicate(marker, involved_paths) {
-            helm_schema_core::Predicate::True => BTreeSet::new(),
-            helm_schema_core::Predicate::And(predicates) => predicates.into_iter().collect(),
-            predicate => BTreeSet::from([predicate]),
+        let predicate = self.output_selection_predicate(marker, involved_paths);
+        match predicate.kind() {
+            helm_schema_core::PredicateKind::True => BTreeSet::new(),
+            helm_schema_core::PredicateKind::And(predicates) => {
+                predicates.iter().cloned().collect()
+            }
+            _ => BTreeSet::from([predicate]),
         }
     }
 

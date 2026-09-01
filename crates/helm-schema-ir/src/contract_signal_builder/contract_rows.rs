@@ -250,7 +250,10 @@ pub(super) fn record_contract_use(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
-    string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
+    string_requirement_routes: &[(
+        crate::eval_effect::StringRequirementRoute,
+        helm_schema_core::Conjunction,
+    )],
     has_yaml_serialized_use: bool,
 ) {
     let source_path = contract_use.source_expr.clone();
@@ -277,11 +280,11 @@ pub(super) fn record_contract_use(
             && !predicates.is_empty()
             && predicates.iter().all(|predicate| {
                 matches!(
-                    predicate,
-                    Predicate::Not(inner)
+                    predicate.kind(),
+                    helm_schema_core::PredicateKind::Not(inner)
                         if matches!(
-                            inner.as_ref(),
-                            Predicate::Guard(Guard::Absent { path })
+                            inner.kind(),
+                            helm_schema_core::PredicateKind::Guard(Guard::Absent { path })
                                 if path == &source_path
                         )
                 )
@@ -300,8 +303,8 @@ pub(super) fn record_contract_use(
                 .into_iter()
                 .filter(|predicate| {
                     !matches!(
-                        predicate,
-                        Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
+                        predicate.kind(),
+                        helm_schema_core::PredicateKind::Guard(Guard::Truthy { path } | Guard::With { path })
                             if path != &source_path
                                 && merge.layers().iter().any(|layer| &layer.path == path)
                     )
@@ -319,8 +322,8 @@ pub(super) fn record_contract_use(
         // influence on a selected value does not prove source identity.
         let predicates: Vec<Predicate> = predicates
             .into_iter()
-            .map(|predicate| match &predicate {
-                Predicate::Approximate {
+            .map(|predicate| match predicate.kind() {
+                helm_schema_core::PredicateKind::Approximate {
                     role: ApproximationRole::Control,
                     sound_subset: Some(sound_subset),
                     ..
@@ -329,7 +332,7 @@ pub(super) fn record_contract_use(
                         && !contract_use.path.0.is_empty()
                         && predicate_to_guard(sound_subset, None).is_some()) =>
                 {
-                    sound_subset.as_ref().clone()
+                    sound_subset.clone()
                 }
                 _ => predicate,
             })
@@ -346,9 +349,9 @@ pub(super) fn record_contract_use(
 }
 
 pub(super) fn at_most_one_member_predicate(predicate: &Predicate) -> bool {
-    match predicate {
-        Predicate::Guard(Guard::AtMostOneMember { .. }) => true,
-        Predicate::And(predicates) => {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(Guard::AtMostOneMember { .. }) => true,
+        helm_schema_core::PredicateKind::And(predicates) => {
             !predicates.is_empty() && predicates.iter().all(at_most_one_member_predicate)
         }
         _ => false,
@@ -359,13 +362,13 @@ pub(super) fn predicate_is_truthy_disjunction_over(
     predicate: &Predicate,
     paths: &[helm_schema_core::ValuesPath],
 ) -> bool {
-    let Predicate::Or(alternatives) = predicate else {
+    let helm_schema_core::PredicateKind::Or(alternatives) = predicate.kind() else {
         return false;
     };
     let candidates = alternatives
         .iter()
-        .filter_map(|alternative| match alternative {
-            Predicate::Guard(Guard::Truthy { path }) => Some(path.clone()),
+        .filter_map(|alternative| match alternative.kind() {
+            helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) => Some(path.clone()),
             _ => None,
         })
         .collect::<BTreeSet<_>>();
@@ -436,7 +439,10 @@ pub(super) fn kind_branch_resolved_use(
     let mut selected = resource.kind_branches.iter().filter(|branch| {
         flattened_conjuncts(&branch.predicate)
             .iter()
-            .all(|conjunct| matches!(conjunct, Predicate::True) || row_conjuncts.contains(conjunct))
+            .all(|conjunct| {
+                matches!(conjunct.kind(), helm_schema_core::PredicateKind::True)
+                    || row_conjuncts.contains(conjunct)
+            })
     });
     let selected_kind = match (selected.next(), selected.next()) {
         (Some(branch), None) => Some(branch.kind.clone()),
@@ -455,9 +461,11 @@ pub(super) fn kind_branch_resolved_use(
 /// The leaf conjuncts of a predicate: nested `And`s flatten, everything
 /// else (including `Not`/`Or`) is one leaf.
 pub(super) fn flattened_conjuncts(predicate: &Predicate) -> Vec<&Predicate> {
-    match predicate {
-        Predicate::And(items) => items.iter().flat_map(flattened_conjuncts).collect(),
-        other => vec![other],
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::And(items) => {
+            items.iter().flat_map(flattened_conjuncts).collect()
+        }
+        _ => vec![predicate],
     }
 }
 
@@ -470,7 +478,10 @@ pub(super) fn record_contract_use_conjunction(
     contract_use: &ContractUse,
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
-    string_requirement_routes: &[(crate::eval_effect::StringRequirementRoute, Vec<Predicate>)],
+    string_requirement_routes: &[(
+        crate::eval_effect::StringRequirementRoute,
+        helm_schema_core::Conjunction,
+    )],
     has_yaml_serialized_use: bool,
 ) {
     let source_path = contract_use.source_expr.clone();
@@ -498,8 +509,8 @@ pub(super) fn record_contract_use_conjunction(
             && !predicates.is_empty()
             && predicates.iter().all(|predicate| {
                 matches!(
-                    predicate,
-                    Predicate::Guard(Guard::Range { path })
+                    predicate.kind(),
+                    helm_schema_core::PredicateKind::Guard(Guard::Range { path })
                         if !range_modes.mode(path).member_identity
                 )
             })
@@ -595,9 +606,12 @@ pub(super) fn record_contract_use_conjunction(
         Some(vec![guard])
     });
     if ranged_member_parent(&source_expr).is_some()
-        && predicates
-            .iter()
-            .any(|predicate| !matches!(predicate, Predicate::Guard(Guard::Range { .. })))
+        && predicates.iter().any(|predicate| {
+            !matches!(
+                predicate.kind(),
+                helm_schema_core::PredicateKind::Guard(Guard::Range { .. })
+            )
+        })
         && lowerable_guards.is_none()
     {
         // A member-local wildcard guard cannot be encoded at the document
@@ -609,8 +623,8 @@ pub(super) fn record_contract_use_conjunction(
     let path_is_empty = contract_use.path.0.is_empty();
     let range_guard_paths = predicates
         .iter()
-        .filter_map(|predicate| match predicate {
-            Predicate::Guard(Guard::Range { path }) => Some(path.clone()),
+        .filter_map(|predicate| match predicate.kind() {
+            helm_schema_core::PredicateKind::Guard(Guard::Range { path }) => Some(path.clone()),
             _ => None,
         })
         .collect::<BTreeSet<_>>();
@@ -620,8 +634,8 @@ pub(super) fn record_contract_use_conjunction(
     let self_range_guarded = range_guard_paths.contains(&source_path);
     let has_matching_self_guard = predicates.iter().any(|predicate| {
         matches!(
-            predicate,
-            Predicate::Guard(
+            predicate.kind(),
+            helm_schema_core::PredicateKind::Guard(
                 Guard::Truthy { path }
                     | Guard::Eq { path, .. }
                     | Guard::Range { path }
@@ -632,7 +646,7 @@ pub(super) fn record_contract_use_conjunction(
     });
     let pathless_self_default_guarded = path_is_empty
         && predicates.iter().any(|predicate| {
-            matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &source_path)
+            matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &source_path)
         });
     // A row dispatched by a type test on its own path belongs to a
     // type-switch (`if eq (typeOf .Values.x) "string" … else …`): values of
@@ -654,8 +668,8 @@ pub(super) fn record_contract_use_conjunction(
         && predicates.iter().all(|predicate| {
             !predicate_tests_source_type(predicate, &source_expr)
                 || matches!(
-                    predicate,
-                    Predicate::Not(inner)
+                    predicate.kind(),
+                    helm_schema_core::PredicateKind::Not(inner)
                         if predicate_tests_source_type(inner, &source_expr)
                 )
         });
@@ -741,8 +755,8 @@ pub(super) fn record_contract_use_conjunction(
             && !predicates.is_empty()
             && predicates.iter().all(|predicate| {
                 matches!(
-                    predicate,
-                    Predicate::Guard(
+                    predicate.kind(),
+                    helm_schema_core::PredicateKind::Guard(
                         Guard::Truthy { path }
                             | Guard::With { path }
                             | Guard::Eq { path, .. }
@@ -823,7 +837,9 @@ pub(super) fn record_contract_use_conjunction(
         let row_predicate = Predicate::all(predicates.to_vec());
         let matching_string_routes = string_requirement_routes
             .iter()
-            .filter(|(_, route)| row_predicate.exactly_implies(&Predicate::all(route.clone())))
+            .filter(|(_, route)| {
+                row_predicate.exactly_implies(&Predicate::all(route.clone().into_vec()))
+            })
             .map(|(route, _)| *route)
             .collect::<BTreeSet<_>>();
         let provider_route_consumes_raw_string = matching_string_routes
@@ -946,10 +962,13 @@ pub(super) fn record_contract_use_conjunction(
             .requiredness
             .is_conditionally_optional = true;
     }
-    for path in predicates.iter().filter_map(|predicate| match predicate {
-        Predicate::Guard(Guard::Default { path }) => Some(path),
-        _ => None,
-    }) {
+    for path in predicates
+        .iter()
+        .filter_map(|predicate| match predicate.kind() {
+            helm_schema_core::PredicateKind::Guard(Guard::Default { path }) => Some(path),
+            _ => None,
+        })
+    {
         path_accumulator(paths, path)
             .requiredness
             .has_default_fallback = true;
@@ -996,11 +1015,11 @@ pub(super) fn lowerable_range_outer_guards(
     let mut guards = Vec::new();
     for predicate in predicates {
         if matches!(
-            predicate,
-            Predicate::Guard(Guard::Range { path }) if path == &ranged
+            predicate.kind(),
+            helm_schema_core::PredicateKind::Guard(Guard::Range { path }) if path == &ranged
         ) || matches!(
-            predicate,
-            Predicate::Guard(Guard::Range { path })
+            predicate.kind(),
+            helm_schema_core::PredicateKind::Guard(Guard::Range { path })
                 if range_guard_is_iteration_ancestor(ranged_path, path)
         ) || predicate_is_structural_ancestor_guard(predicate, ranged_path)
         {
@@ -1011,8 +1030,8 @@ pub(super) fn lowerable_range_outer_guards(
         // including self-truthiness and `with`: false scalars skip the range
         // entirely and must not receive its live-branch collection contract.
         if matches!(
-            predicate,
-            Predicate::Guard(Guard::Default { path }) if path == &ranged
+            predicate.kind(),
+            helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &ranged
         ) {
             continue;
         }
@@ -1118,10 +1137,10 @@ pub(super) fn remove_redundant_approximate_conditions(conjunction: &[Predicate])
             if !predicate.contains_approximation() {
                 return true;
             }
-            !matches!(predicate, Predicate::Or(alternatives) if alternatives.iter().any(|alternative| {
-                match alternative {
-                    Predicate::And(items) => items.iter().all(|item| exact.contains(item)),
-                    item => exact.contains(item),
+            !matches!(predicate.kind(), helm_schema_core::PredicateKind::Or(alternatives) if alternatives.iter().any(|alternative| {
+                match alternative.kind() {
+                    helm_schema_core::PredicateKind::And(items) => items.iter().all(|item| exact.contains(item)),
+                    _ => exact.contains(alternative),
                 }
             }))
         })

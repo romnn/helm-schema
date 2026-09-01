@@ -39,7 +39,7 @@ pub use output_path::{
     sequence_item_path, values_path_has_descendant, values_path_is_descendant,
 };
 pub use pattern_dialect::{escape_regex_literal, normalize_schema_pattern_dialects};
-pub use predicate::{ApproximationRole, Predicate};
+pub use predicate::{ApproximationRole, Conjunction, Predicate, PredicateKind};
 pub use provenance::{ContractProvenance, SourceSpan};
 pub use provider_origin::ProviderOrigin;
 pub use provider_schema_fragment::{

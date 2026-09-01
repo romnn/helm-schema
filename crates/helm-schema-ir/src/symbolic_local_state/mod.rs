@@ -157,7 +157,9 @@ impl SymbolicLocalState {
         condition: &Predicate,
     ) {
         const MAX_STAMPED_GUARDS: usize = 6;
-        if matches!(condition, Predicate::True) || condition.contains_approximation() {
+        if matches!(condition.kind(), helm_schema_core::PredicateKind::True)
+            || condition.contains_approximation()
+        {
             return;
         }
         // A range exit reads each reduction existentially ("some iteration
@@ -167,8 +169,8 @@ impl SymbolicLocalState {
         // instead of quantifying: `[{enabled: true}, {enabled: false}]`
         // ends the sentinel falsy while a member still satisfies ∃.
         if matches!(
-            single_term(condition),
-            Some(Predicate::Guard(Guard::Range { .. }))
+            single_term(condition).map(Predicate::kind),
+            Some(helm_schema_core::PredicateKind::Guard(Guard::Range { .. }))
         ) {
             let clears = &self.truthiness_clears;
             self.truthy_reductions
@@ -178,7 +180,7 @@ impl SymbolicLocalState {
         self.truthy_reductions.retain(|variable, reduction| {
             let entry_reduction = entry.truthy_reductions.get(variable);
             if entry_reduction == Some(reduction)
-                || matches!(reduction, Predicate::False)
+                || matches!(reduction.kind(), helm_schema_core::PredicateKind::False)
                 || reduction.contains_approximation()
             {
                 return true;
@@ -424,16 +426,16 @@ fn restore_map_entry<T>(map: &mut HashMap<String, T>, variable: &str, value: Opt
 /// exactly one; a `False` conjunct or a second term abstains.
 fn single_term(predicate: &Predicate) -> Option<&Predicate> {
     fn collect<'a>(predicate: &'a Predicate, term: &mut Option<&'a Predicate>) -> Option<()> {
-        match predicate {
-            Predicate::True => Some(()),
-            Predicate::And(items) => {
+        match predicate.kind() {
+            helm_schema_core::PredicateKind::True => Some(()),
+            helm_schema_core::PredicateKind::And(items) => {
                 for item in items {
                     collect(item, term)?;
                 }
                 Some(())
             }
-            Predicate::False => None,
-            predicate => {
+            helm_schema_core::PredicateKind::False => None,
+            _ => {
                 if term.replace(predicate).is_some() {
                     return None;
                 }
@@ -448,16 +450,18 @@ fn single_term(predicate: &Predicate) -> Option<&Predicate> {
 }
 
 fn quantify_range_member_reduction(condition: &Predicate, reduction: &Predicate) -> Option<Guard> {
-    let Predicate::Guard(Guard::Range { path: range_path }) = single_term(condition)? else {
+    let helm_schema_core::PredicateKind::Guard(Guard::Range { path: range_path }) =
+        single_term(condition)?.kind()
+    else {
         return None;
     };
     let member_predicate = single_term(reduction)?;
-    let Predicate::Guard(
+    let helm_schema_core::PredicateKind::Guard(
         Guard::Eq {
             path: member_path, ..
         }
         | Guard::Truthy { path: member_path },
-    ) = member_predicate
+    ) = member_predicate.kind()
     else {
         return None;
     };
@@ -471,41 +475,48 @@ fn quantify_range_member_reduction(condition: &Predicate, reduction: &Predicate)
         return None;
     }
 
-    match member_predicate {
-        Predicate::Guard(Guard::Eq { value, .. }) => Some(Guard::ContainsMemberEquals {
-            path: range_path.clone(),
-            member: member.literal()?.to_owned(),
-            value: value.clone(),
-        }),
-        Predicate::Guard(Guard::Truthy { .. }) => Some(Guard::ContainsTruthyMember {
-            path: range_path.clone(),
-            member: member.literal()?.to_owned(),
-        }),
+    match member_predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(Guard::Eq { value, .. }) => {
+            Some(Guard::ContainsMemberEquals {
+                path: range_path.clone(),
+                member: member.literal()?.to_owned(),
+                value: value.clone(),
+            })
+        }
+        helm_schema_core::PredicateKind::Guard(Guard::Truthy { .. }) => {
+            Some(Guard::ContainsTruthyMember {
+                path: range_path.clone(),
+                member: member.literal()?.to_owned(),
+            })
+        }
         _ => None,
     }
 }
 
 fn predicate_guard_count(predicate: &Predicate) -> usize {
-    match predicate {
-        Predicate::True | Predicate::False | Predicate::Approximate { .. } => 0,
-        Predicate::Guard(_) => 1,
-        Predicate::Not(inner) => predicate_guard_count(inner),
-        Predicate::And(items) | Predicate::Or(items) => {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. } => 0,
+        helm_schema_core::PredicateKind::Guard(_) => 1,
+        helm_schema_core::PredicateKind::Not(inner) => predicate_guard_count(inner),
+        helm_schema_core::PredicateKind::And(items)
+        | helm_schema_core::PredicateKind::Or(items) => {
             items.iter().map(predicate_guard_count).sum()
         }
     }
 }
 
 fn changed_truthy_reduction(entry: &Predicate, reduction: &Predicate) -> Option<Predicate> {
-    if matches!(entry, Predicate::False) {
+    if matches!(entry.kind(), helm_schema_core::PredicateKind::False) {
         return Some(reduction.clone());
     }
-    let Predicate::Or(reduction_items) = reduction else {
+    let helm_schema_core::PredicateKind::Or(reduction_items) = reduction.kind() else {
         return None;
     };
-    let entry_items = match entry {
-        Predicate::Or(items) => items.as_slice(),
-        predicate => std::slice::from_ref(predicate),
+    let entry_items = match entry.kind() {
+        helm_schema_core::PredicateKind::Or(items) => items,
+        _ => std::slice::from_ref(entry),
     };
     if !entry_items
         .iter()
@@ -526,15 +537,15 @@ fn changed_truthy_reduction(entry: &Predicate, reduction: &Predicate) -> Option<
 }
 
 fn union_truthy_reductions(left: &Predicate, right: &Predicate) -> Predicate {
-    if matches!(left, Predicate::False) {
+    if matches!(left.kind(), helm_schema_core::PredicateKind::False) {
         return right.clone();
     }
-    if matches!(right, Predicate::False) || left == right {
+    if matches!(right.kind(), helm_schema_core::PredicateKind::False) || left == right {
         return left.clone();
     }
-    match left {
-        Predicate::Or(predicates) => {
-            let mut predicates = predicates.clone();
+    match left.kind() {
+        helm_schema_core::PredicateKind::Or(predicates) => {
+            let mut predicates = predicates.to_vec();
             if !predicates.contains(right) {
                 predicates.push(right.clone());
             }
@@ -548,25 +559,29 @@ fn predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> bool {
     if antecedent.exactly_implies(consequent) {
         return true;
     }
-    if let (Predicate::Or(antecedents), Predicate::Or(consequents)) = (antecedent, consequent) {
+    if let (
+        helm_schema_core::PredicateKind::Or(antecedents),
+        helm_schema_core::PredicateKind::Or(consequents),
+    ) = (antecedent.kind(), consequent.kind())
+    {
         return antecedents.iter().all(|antecedent| {
             consequents
                 .iter()
                 .any(|consequent| predicate_implies(antecedent, consequent))
         });
     }
-    match consequent {
-        Predicate::And(predicates) => predicates
+    match consequent.kind() {
+        helm_schema_core::PredicateKind::And(predicates) => predicates
             .iter()
             .all(|predicate| predicate_implies(antecedent, predicate)),
-        Predicate::Or(predicates) => predicates
+        helm_schema_core::PredicateKind::Or(predicates) => predicates
             .iter()
             .any(|predicate| predicate_implies(antecedent, predicate)),
-        _ => match antecedent {
-            Predicate::Or(predicates) => predicates
+        _ => match antecedent.kind() {
+            helm_schema_core::PredicateKind::Or(predicates) => predicates
                 .iter()
                 .all(|predicate| predicate_implies(predicate, consequent)),
-            Predicate::And(predicates) => predicates
+            helm_schema_core::PredicateKind::And(predicates) => predicates
                 .iter()
                 .any(|predicate| predicate_implies(predicate, consequent)),
             _ => leaf_predicate_implies(antecedent, consequent),
@@ -578,25 +593,29 @@ fn leaf_predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> boo
     let Some(present_path) = predicate_present_path(antecedent) else {
         return false;
     };
-    match consequent {
-        Predicate::Not(inner) => matches!(
-            inner.as_ref(),
-            Predicate::Guard(Guard::Absent { path })
+    match consequent.kind() {
+        helm_schema_core::PredicateKind::Not(inner) => matches!(
+            inner.kind(),
+            helm_schema_core::PredicateKind::Guard(Guard::Absent { path })
                 if path == present_path || path_is_strict_ancestor(path, present_path)
         ),
-        Predicate::Guard(Guard::HasKey { path, key }) => {
+        helm_schema_core::PredicateKind::Guard(Guard::HasKey { path, key }) => {
             let mut key_path = path.clone();
             key_path.push(key);
             present_path == &key_path || present_path.is_descendant_of(&key_path)
         }
-        Predicate::Guard(Guard::Truthy { path }) if path == present_path => match antecedent {
-            Predicate::Guard(Guard::Eq { value, .. }) => guard_value_is_truthy(value),
-            Predicate::Guard(Guard::MatchesPattern { pattern, .. }) => {
-                regex::Regex::new(pattern).is_ok_and(|pattern| !pattern.is_match(""))
+        helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == present_path => {
+            match antecedent.kind() {
+                helm_schema_core::PredicateKind::Guard(Guard::Eq { value, .. }) => {
+                    guard_value_is_truthy(value)
+                }
+                helm_schema_core::PredicateKind::Guard(Guard::MatchesPattern {
+                    pattern, ..
+                }) => regex::Regex::new(pattern).is_ok_and(|pattern| !pattern.is_match("")),
+                _ => false,
             }
-            _ => false,
-        },
-        Predicate::Guard(Guard::Range { path } | Guard::Truthy { path }) => {
+        }
+        helm_schema_core::PredicateKind::Guard(Guard::Range { path } | Guard::Truthy { path }) => {
             path_is_strict_ancestor(path, present_path)
         }
         _ => false,
@@ -604,12 +623,12 @@ fn leaf_predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> boo
 }
 
 fn predicate_present_path(predicate: &Predicate) -> Option<&helm_schema_core::ValuesPath> {
-    match predicate {
-        Predicate::Not(inner) => match inner.as_ref() {
-            Predicate::Guard(Guard::Absent { path }) => Some(path),
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Not(inner) => match inner.kind() {
+            helm_schema_core::PredicateKind::Guard(Guard::Absent { path }) => Some(path),
             _ => None,
         },
-        Predicate::Guard(
+        helm_schema_core::PredicateKind::Guard(
             Guard::Truthy { path }
             | Guard::Eq { path, .. }
             | Guard::MatchesPattern { path, .. }

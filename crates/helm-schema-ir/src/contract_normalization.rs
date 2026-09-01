@@ -222,10 +222,10 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
             let source_path = contract_use.source_expr.clone();
             let predicates = predicates_by_index.get(index).cloned().unwrap_or_default();
             let has_self_truthy = predicates.iter().any(
-                |predicate| matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &source_path),
+                |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == &source_path),
             );
             if predicates.iter().any(
-                |predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &source_path),
+                |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &source_path),
             ) {
                 continue;
             }
@@ -247,7 +247,7 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
                         && predicates.is_subset(other_predicates)
                         && ((!has_self_truthy
                             && other_predicates.iter().any(|predicate| {
-                                matches!(predicate, Predicate::Guard(Guard::Truthy { path }) if path == &source_path)
+                                matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == &source_path)
                             }))
                             || extra_predicates_are_truthy_parents(
                                 &predicates,
@@ -276,13 +276,15 @@ fn extra_predicates_are_truthy_parents(
         .iter()
         .filter(|predicate| !predicates.contains(predicate))
         .all(|predicate| {
-            let Predicate::Guard(Guard::Truthy { path: parent }) = predicate else {
+            let helm_schema_core::PredicateKind::Guard(Guard::Truthy { path: parent }) =
+                predicate.kind()
+            else {
                 return false;
             };
             predicates.iter().any(|existing| {
                 matches!(
-                    existing,
-                    Predicate::Guard(Guard::Truthy { path: child })
+                    existing.kind(),
+                    helm_schema_core::PredicateKind::Guard(Guard::Truthy { path: child })
                         if child.is_descendant_of(parent)
                 )
             })
@@ -291,8 +293,8 @@ fn extra_predicates_are_truthy_parents(
 
 fn string_requirements_by_ancestor(
     fail_conditions: &[crate::eval_effect::FailCapture],
-) -> BTreeMap<String, BTreeSet<(String, Vec<helm_schema_core::Predicate>)>> {
-    let mut requirements: BTreeMap<String, BTreeSet<(String, Vec<helm_schema_core::Predicate>)>> =
+) -> BTreeMap<String, BTreeSet<(String, helm_schema_core::Conjunction)>> {
+    let mut requirements: BTreeMap<String, BTreeSet<(String, helm_schema_core::Conjunction)>> =
         BTreeMap::new();
     for capture in fail_conditions {
         let crate::eval_effect::CaptureKind::StringRequirement {
@@ -308,8 +310,6 @@ fn string_requirements_by_ancestor(
         }
         let mut predicates = capture.conjunction.clone();
         predicates.extend(selection.iter().cloned());
-        predicates.sort();
-        predicates.dedup();
         let segments = path
             .segments()
             .map(helm_schema_core::Segment::encode_component)
@@ -430,9 +430,9 @@ fn lower_string_requirement_merge_sources(
 
 fn merge_suffix_string_requirements(
     source: &str,
-    requirements: &BTreeSet<(String, Vec<helm_schema_core::Predicate>)>,
+    requirements: &BTreeSet<(String, helm_schema_core::Conjunction)>,
     suffix: &[String],
-) -> Option<BTreeSet<Vec<helm_schema_core::Predicate>>> {
+) -> Option<BTreeSet<helm_schema_core::Conjunction>> {
     let source_segments = helm_schema_core::split_value_path(source);
     let mut paths = BTreeSet::new();
     let mut conjunctions = BTreeSet::new();
@@ -470,7 +470,7 @@ fn has_self_default_guard(contract_use: &ContractUse) -> bool {
     let source_path = contract_use.source_expr.clone();
     contract_predicates(contract_use)
         .iter()
-        .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &source_path))
+        .any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &source_path))
 }
 
 fn contract_predicates(contract_use: &ContractUse) -> BTreeSet<Predicate> {

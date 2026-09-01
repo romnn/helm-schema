@@ -209,36 +209,41 @@ fn call_site_predicate_is_implied_by_selected_default(predicate: &Predicate, pat
         predicate: &Predicate,
         implied_kind: &impl Fn(&str) -> Option<&'static str>,
     ) -> Option<bool> {
-        match predicate {
-            Predicate::True => Some(true),
-            Predicate::False => Some(false),
-            Predicate::Guard(Guard::Range { path } | Guard::Truthy { path }) => {
-                implied_kind(&path.encode()).map(|_| true)
+        match predicate.kind() {
+            helm_schema_core::PredicateKind::True => Some(true),
+            helm_schema_core::PredicateKind::False => Some(false),
+            helm_schema_core::PredicateKind::Guard(
+                Guard::Range { path } | Guard::Truthy { path },
+            ) => implied_kind(&path.encode()).map(|_| true),
+            helm_schema_core::PredicateKind::Guard(Guard::Absent { path }) => {
+                implied_kind(&path.encode()).map(|_| false)
             }
-            Predicate::Guard(Guard::Absent { path }) => implied_kind(&path.encode()).map(|_| false),
-            Predicate::Guard(Guard::TypeIs { path, schema_type }) => {
+            helm_schema_core::PredicateKind::Guard(Guard::TypeIs { path, schema_type }) => {
                 implied_kind(&path.encode()).map(|kind| kind == schema_type)
             }
-            Predicate::Guard(Guard::Eq {
+            helm_schema_core::PredicateKind::Guard(Guard::Eq {
                 path,
                 value: GuardValue::Null,
             }) => implied_kind(&path.encode()).map(|_| false),
-            Predicate::Not(inner) => known_truth(inner, implied_kind).map(|value| !value),
-            Predicate::And(items) => {
+            helm_schema_core::PredicateKind::Not(inner) => {
+                known_truth(inner, implied_kind).map(|value| !value)
+            }
+            helm_schema_core::PredicateKind::And(items) => {
                 let values = items
                     .iter()
                     .map(|item| known_truth(item, implied_kind))
                     .collect::<Option<Vec<_>>>()?;
                 Some(values.into_iter().all(|value| value))
             }
-            Predicate::Or(items) => {
+            helm_schema_core::PredicateKind::Or(items) => {
                 let values = items
                     .iter()
                     .map(|item| known_truth(item, implied_kind))
                     .collect::<Option<Vec<_>>>()?;
                 Some(values.into_iter().any(|value| value))
             }
-            Predicate::Approximate { .. } | Predicate::Guard(_) => None,
+            helm_schema_core::PredicateKind::Approximate { .. }
+            | helm_schema_core::PredicateKind::Guard(_) => None,
         }
     }
 

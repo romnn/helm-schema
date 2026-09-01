@@ -567,16 +567,17 @@ fn take_mapping_continuation_arms(
 }
 
 fn predicate_has_range(predicate: &Predicate) -> bool {
-    match predicate {
-        Predicate::Guard(Guard::Range { .. }) => true,
-        Predicate::Not(inner) => predicate_has_range(inner),
-        Predicate::And(predicates) | Predicate::Or(predicates) => {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(Guard::Range { .. }) => true,
+        helm_schema_core::PredicateKind::Not(inner) => predicate_has_range(inner),
+        helm_schema_core::PredicateKind::And(predicates)
+        | helm_schema_core::PredicateKind::Or(predicates) => {
             predicates.iter().any(predicate_has_range)
         }
-        Predicate::True
-        | Predicate::False
-        | Predicate::Approximate { .. }
-        | Predicate::Guard(_) => false,
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. }
+        | helm_schema_core::PredicateKind::Guard(_) => false,
     }
 }
 
@@ -1036,7 +1037,7 @@ impl<'a> Interpreter<'a> {
         if capture
             .conjunction
             .iter()
-            .any(|p| matches!(p, Predicate::False))
+            .any(|p| matches!(p.kind(), helm_schema_core::PredicateKind::False))
         {
             return;
         }
@@ -1068,7 +1069,7 @@ impl<'a> Interpreter<'a> {
         if capture
             .conjunction
             .iter()
-            .any(|p| matches!(p, Predicate::False))
+            .any(|p| matches!(p.kind(), helm_schema_core::PredicateKind::False))
         {
             return;
         }
@@ -1076,15 +1077,35 @@ impl<'a> Interpreter<'a> {
     }
 
     /// The ambient predicates plus `tail`.
-    pub(super) fn fail_capture_conjunction(&self, tail: Vec<Predicate>) -> Vec<Predicate> {
-        let mut conjunction = self.active_predicates.clone();
-        for approximate in &self.alternative_capture_approximates {
-            if !conjunction.contains(approximate) {
-                conjunction.push(approximate.clone());
+    pub(super) fn fail_capture_conjunction(
+        &self,
+        tail: impl IntoIterator<Item = Predicate>,
+    ) -> helm_schema_core::Conjunction {
+        fn append(predicate: Predicate, out: &mut Vec<Predicate>) {
+            match predicate.kind() {
+                helm_schema_core::PredicateKind::True => {}
+                helm_schema_core::PredicateKind::And(items)
+                    if !predicate.contains_approximation() =>
+                {
+                    for item in items.iter().cloned() {
+                        append(item, out);
+                    }
+                }
+                _ => out.push(predicate),
             }
         }
-        conjunction.extend(tail);
-        conjunction
+
+        let mut predicates = Vec::new();
+        for predicate in self
+            .active_predicates
+            .iter()
+            .chain(&self.alternative_capture_approximates)
+            .cloned()
+            .chain(tail)
+        {
+            append(predicate, &mut predicates);
+        }
+        helm_schema_core::Conjunction::new(predicates)
     }
 
     /// The exact range facts active at a fail capture site.
@@ -1115,7 +1136,9 @@ impl<'a> Interpreter<'a> {
         // `False` is load-bearing: a decoded-dead branch (a `hasKey` probe
         // into a folded literal table that misses) must poison the captures
         // recorded under it. Only `True` is skippable noise.
-        if !matches!(predicate, Predicate::True) && !self.active_predicates.contains(&predicate) {
+        if !matches!(predicate.kind(), helm_schema_core::PredicateKind::True)
+            && !self.active_predicates.contains(&predicate)
+        {
             self.active_predicates.push(predicate);
         }
     }
@@ -1356,10 +1379,10 @@ impl<'a> Interpreter<'a> {
             self.active_predicates
                 .iter()
                 .filter(|predicate| {
-                    let path = match predicate {
-                        Predicate::Guard(Guard::Truthy { path }) => path,
-                        Predicate::Not(inner) => match inner.as_ref() {
-                            Predicate::Guard(Guard::Truthy { path }) => path,
+                    let path = match predicate.kind() {
+                        helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) => path,
+                        helm_schema_core::PredicateKind::Not(inner) => match inner.kind() {
+                            helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) => path,
                             _ => return true,
                         },
                         _ => return true,
@@ -1459,17 +1482,18 @@ impl<'a> Interpreter<'a> {
                 };
             }
             if let CaptureKind::MemberAccess { handled_kinds } = &mut kind {
-                let target = conjunction.iter().find_map(|predicate| match predicate {
-                    Predicate::Not(inner) => match inner.as_ref() {
-                        Predicate::Guard(Guard::TypeIs { path, schema_type })
-                            if schema_type == "object" =>
-                        {
-                            Some(path)
-                        }
+                let target = conjunction
+                    .iter()
+                    .find_map(|predicate| match predicate.kind() {
+                        helm_schema_core::PredicateKind::Not(inner) => match inner.kind() {
+                            helm_schema_core::PredicateKind::Guard(Guard::TypeIs {
+                                path,
+                                schema_type,
+                            }) if schema_type == "object" => Some(path),
+                            _ => None,
+                        },
                         _ => None,
-                    },
-                    _ => None,
-                });
+                    });
                 if let Some(target) = target {
                     handled_kinds.extend(
                         self.member_host_conversions
@@ -1493,7 +1517,7 @@ impl<'a> Interpreter<'a> {
             if capture
                 .conjunction
                 .iter()
-                .any(|p| matches!(p, Predicate::False))
+                .any(|p| matches!(p.kind(), helm_schema_core::PredicateKind::False))
             {
                 continue;
             }
@@ -1641,10 +1665,12 @@ impl<'a> Interpreter<'a> {
             let exit_condition = next.loop_control.exit_condition();
             next.guard_all(&remaining);
             out.extend(next);
-            remaining = match exit_condition {
-                Predicate::False => remaining,
-                Predicate::True => Predicate::False,
-                exit => and_conditions(remaining, exit.negated()),
+            remaining = if exit_condition == Predicate::False {
+                remaining
+            } else if exit_condition == Predicate::True {
+                Predicate::False
+            } else {
+                and_conditions(remaining, exit_condition.negated())
             };
             index += 1;
         }

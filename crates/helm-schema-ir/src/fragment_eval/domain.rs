@@ -97,18 +97,18 @@ impl<T> Guarded<T> {
 pub(crate) fn and_conditions(outer: PathCondition, inner: PathCondition) -> PathCondition {
     let mut parts = Vec::new();
     for condition in [outer, inner] {
-        match condition {
-            Predicate::True => {}
-            Predicate::And(inner_parts) => {
+        match condition.kind() {
+            helm_schema_core::PredicateKind::True => {}
+            helm_schema_core::PredicateKind::And(inner_parts) => {
                 for part in inner_parts {
-                    if !parts.contains(&part) {
-                        parts.push(part);
+                    if !parts.contains(part) {
+                        parts.push(part.clone());
                     }
                 }
             }
-            other => {
-                if !parts.contains(&other) {
-                    parts.push(other);
+            _ => {
+                if !parts.contains(&condition) {
+                    parts.push(condition);
                 }
             }
         }

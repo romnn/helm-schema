@@ -139,10 +139,10 @@ fn fmt_splice(splice: &Splice) -> String {
 }
 
 fn fmt_condition(condition: &Predicate) -> String {
-    match condition {
-        Predicate::True => "always".to_string(),
-        Predicate::False => "never".to_string(),
-        Predicate::Approximate { paths, .. } => {
+    match condition.kind() {
+        helm_schema_core::PredicateKind::True => "always".to_string(),
+        helm_schema_core::PredicateKind::False => "never".to_string(),
+        helm_schema_core::PredicateKind::Approximate { paths, .. } => {
             format!(
                 "approximate({})",
                 paths
@@ -152,13 +152,13 @@ fn fmt_condition(condition: &Predicate) -> String {
                     .join(", ")
             )
         }
-        Predicate::Guard(guard) => fmt_guard(guard),
-        Predicate::Not(inner) => format!("!({})", fmt_condition(inner)),
-        Predicate::And(parts) => {
+        helm_schema_core::PredicateKind::Guard(guard) => fmt_guard(guard),
+        helm_schema_core::PredicateKind::Not(inner) => format!("!({})", fmt_condition(inner)),
+        helm_schema_core::PredicateKind::And(parts) => {
             let rendered: Vec<String> = parts.iter().map(fmt_condition).collect();
             format!("({})", rendered.join(" && "))
         }
-        Predicate::Or(parts) => {
+        helm_schema_core::PredicateKind::Or(parts) => {
             let rendered: Vec<String> = parts.iter().map(fmt_condition).collect();
             format!("({})", rendered.join(" || "))
         }

@@ -429,11 +429,11 @@ fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
                 crate::eval_effect::CaptureKind::MemberAccess { .. }
             ) && capture.conjunction.iter().any(|predicate| {
                 matches!(
-                    predicate,
-                    Predicate::Not(inner)
+                    predicate.kind(),
+                    helm_schema_core::PredicateKind::Not(inner)
                         if matches!(
-                            inner.as_ref(),
-                            Predicate::Guard(Guard::TypeIs { path, schema_type })
+                            inner.kind(),
+                            helm_schema_core::PredicateKind::Guard(Guard::TypeIs { path, schema_type })
                                 if path.encode() == "resources.limits" && schema_type == "object"
                         )
                 )
@@ -1083,7 +1083,7 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
                 path: capture_path("input"),
                 schema_type: "integer".to_string(),
             },
-            Vec::new(),
+            Vec::new().into(),
         )])
     );
     sim_assert_eq!(
@@ -1093,7 +1093,7 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
                 path: capture_path("input"),
                 schema_type: "number".to_string(),
             },
-            Vec::new(),
+            Vec::new().into(),
         )])
     );
 }
@@ -1270,7 +1270,7 @@ fn lexical_transforms_preserve_selected_string_consumption() {
         have: routes,
         want: BTreeSet::from([(
             crate::eval_effect::StringRequirementRoute::Selected,
-            vec![Predicate::truthy_path("image.tag")],
+            vec![Predicate::truthy_path("image.tag")].into(),
         )])
     );
 }
@@ -1429,7 +1429,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
                 crate::eval_effect::CaptureKind::StringRequirement {
                     path: capture_path("primary"),
                     route: crate::eval_effect::StringRequirementRoute::Selected,
-                    selection: vec![Predicate::truthy_path("primary")],
+                    selection: vec![Predicate::truthy_path("primary")].into(),
                 },
                 BTreeSet::new(),
             ),
@@ -1440,7 +1440,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
                     selection: vec![
                         Predicate::truthy_path("fallback"),
                         Predicate::truthy_path("primary").negated(),
-                    ],
+                    ].into(),
                 },
                 BTreeSet::new(),
             ),
@@ -1539,7 +1539,7 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
                 crate::eval_effect::CaptureKind::StringRequirement {
                     path: capture_path("payload"),
                     route: crate::eval_effect::StringRequirementRoute::Direct,
-                    selection: Vec::new(),
+                    selection: Vec::new().into(),
                 },
                 BTreeSet::from([Predicate::truthy_path("ready").negated()]),
             ),

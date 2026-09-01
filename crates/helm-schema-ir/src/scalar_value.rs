@@ -259,10 +259,12 @@ impl ScalarValueDispatch {
         if !self.complete {
             return None;
         }
-        match self.arms.as_slice() {
-            [(helm_schema_core::Predicate::True, value)] => value.constant_value(),
-            _ => None,
-        }
+        let [(predicate, value)] = self.arms.as_slice() else {
+            return None;
+        };
+        (predicate == &helm_schema_core::Predicate::True)
+            .then(|| value.constant_value())
+            .flatten()
     }
 
     pub(crate) fn condition_equals(&self, target: &helm_schema_core::GuardValue) -> TruthCondition {
@@ -336,8 +338,10 @@ impl ScalarValueDispatch {
             return None;
         }
         let complete = match primary_truth.predicate() {
-            Some(helm_schema_core::Predicate::True) => primary.complete,
-            Some(helm_schema_core::Predicate::False) => fallback.complete,
+            Some(predicate) if predicate == &helm_schema_core::Predicate::True => primary.complete,
+            Some(predicate) if predicate == &helm_schema_core::Predicate::False => {
+                fallback.complete
+            }
             Some(_) => primary.complete && fallback.complete,
             None => false,
         };
@@ -366,8 +370,12 @@ impl ScalarValueDispatch {
             return None;
         }
         let complete = match condition.predicate() {
-            Some(helm_schema_core::Predicate::True) => when_true.complete,
-            Some(helm_schema_core::Predicate::False) => when_false.complete,
+            Some(predicate) if predicate == &helm_schema_core::Predicate::True => {
+                when_true.complete
+            }
+            Some(predicate) if predicate == &helm_schema_core::Predicate::False => {
+                when_false.complete
+            }
             Some(_) => when_true.complete && when_false.complete,
             None => false,
         };
@@ -874,19 +882,21 @@ impl TruthCondition {
         if !predicate.contains_approximation() {
             return Self::exact(predicate);
         }
-        match predicate {
-            Predicate::Approximate { sound_subset, .. } => {
-                let when_true = sound_subset.map_or(Predicate::False, |subset| *subset);
+        match predicate.kind() {
+            helm_schema_core::PredicateKind::Approximate { sound_subset, .. } => {
+                let when_true = sound_subset.cloned().unwrap_or(Predicate::False);
                 Self::from_subsets(when_true, Predicate::False, false)
             }
-            Predicate::Not(inner) => Self::from_predicate(*inner).negated(),
-            Predicate::And(predicates) => {
-                Self::all(predicates.into_iter().map(Self::from_predicate))
+            helm_schema_core::PredicateKind::Not(inner) => {
+                Self::from_predicate(inner.clone()).negated()
             }
-            Predicate::Or(predicates) => {
-                Self::any(predicates.into_iter().map(Self::from_predicate))
+            helm_schema_core::PredicateKind::And(predicates) => {
+                Self::all(predicates.iter().cloned().map(Self::from_predicate))
             }
-            predicate => Self::Exact(predicate),
+            helm_schema_core::PredicateKind::Or(predicates) => {
+                Self::any(predicates.iter().cloned().map(Self::from_predicate))
+            }
+            _ => Self::Exact(predicate),
         }
     }
 

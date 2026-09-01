@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{Guard, GuardDnf, Predicate};
+use crate::{Guard, GuardDnf, Predicate, PredicateKind};
 
 const FALSE: usize = 0;
 const TRUE: usize = 1;
@@ -55,21 +55,24 @@ pub(crate) fn normalize(predicate: Predicate) -> Predicate {
 }
 
 fn simplify_structure(predicate: Predicate) -> Predicate {
-    match predicate {
-        Predicate::Not(inner) => match simplify_structure(*inner) {
-            Predicate::True => Predicate::False,
-            Predicate::False => Predicate::True,
-            Predicate::Not(inner) => *inner,
-            inner => Predicate::Not(Box::new(inner)),
-        },
-        Predicate::And(predicates) => {
+    match predicate.kind() {
+        PredicateKind::Not(inner) => {
+            let inner = simplify_structure(inner.clone());
+            match inner.kind() {
+                PredicateKind::True => Predicate::False,
+                PredicateKind::False => Predicate::True,
+                PredicateKind::Not(nested) => nested.clone(),
+                _ => Predicate::Not(Box::new(inner)),
+            }
+        }
+        PredicateKind::And(predicates) => {
             let mut factors = BTreeSet::new();
-            for predicate in predicates.into_iter().map(simplify_structure) {
-                match predicate {
-                    Predicate::False => return Predicate::False,
-                    Predicate::True => {}
-                    Predicate::And(inner) => factors.extend(inner),
-                    predicate => {
+            for predicate in predicates.iter().cloned().map(simplify_structure) {
+                match predicate.kind() {
+                    PredicateKind::False => return Predicate::False,
+                    PredicateKind::True => {}
+                    PredicateKind::And(inner) => factors.extend(inner.iter().cloned()),
+                    _ => {
                         factors.insert(predicate);
                     }
                 }
@@ -82,10 +85,10 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
                     .collect(),
             );
             factors.retain(|factor| {
-                let Predicate::Approximate {
+                let PredicateKind::Approximate {
                     sound_subset: Some(sound_subset),
                     ..
-                } = factor
+                } = factor.kind()
                 else {
                     return true;
                 };
@@ -100,14 +103,14 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
                 _ => Predicate::And(factors.into_iter().collect()),
             }
         }
-        Predicate::Or(predicates) => {
+        PredicateKind::Or(predicates) => {
             let mut alternatives = BTreeSet::new();
-            for predicate in predicates.into_iter().map(simplify_structure) {
-                match predicate {
-                    Predicate::True => return Predicate::True,
-                    Predicate::False => {}
-                    Predicate::Or(inner) => alternatives.extend(inner),
-                    predicate => {
+            for predicate in predicates.iter().cloned().map(simplify_structure) {
+                match predicate.kind() {
+                    PredicateKind::True => return Predicate::True,
+                    PredicateKind::False => {}
+                    PredicateKind::Or(inner) => alternatives.extend(inner.iter().cloned()),
+                    _ => {
                         alternatives.insert(predicate);
                     }
                 }
@@ -118,7 +121,7 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
                 _ => Predicate::Or(alternatives.into_iter().collect()),
             }
         }
-        predicate => predicate,
+        _ => predicate,
     }
 }
 
@@ -158,10 +161,10 @@ impl PredicateBdd {
     }
 
     fn build(&mut self, predicate: &Predicate) -> Option<usize> {
-        match predicate {
-            Predicate::True => Some(TRUE),
-            Predicate::False => Some(FALSE),
-            Predicate::Guard(guard) => {
+        match predicate.kind() {
+            PredicateKind::True => Some(TRUE),
+            PredicateKind::False => Some(FALSE),
+            PredicateKind::Guard(guard) => {
                 let (atom, positive) = canonical_guard(guard);
                 let variable = *self.atom_indices.get(&atom)?;
                 let node = self.make_node(variable, FALSE, TRUE)?;
@@ -171,11 +174,11 @@ impl PredicateBdd {
                     self.negated(node)
                 }
             }
-            Predicate::Not(inner) => {
+            PredicateKind::Not(inner) => {
                 let inner = self.build(inner)?;
                 self.negated(inner)
             }
-            Predicate::And(predicates) => {
+            PredicateKind::And(predicates) => {
                 let mut result = TRUE;
                 for predicate in predicates {
                     let next = self.build(predicate)?;
@@ -183,7 +186,7 @@ impl PredicateBdd {
                 }
                 Some(result)
             }
-            Predicate::Or(predicates) => {
+            PredicateKind::Or(predicates) => {
                 let mut result = FALSE;
                 for predicate in predicates {
                     let next = self.build(predicate)?;
@@ -191,7 +194,7 @@ impl PredicateBdd {
                 }
                 Some(result)
             }
-            Predicate::Approximate { .. } => None,
+            PredicateKind::Approximate { .. } => None,
         }
     }
 
@@ -325,20 +328,20 @@ impl PredicateBdd {
 }
 
 fn collect_atoms(predicate: &Predicate, atoms: &mut BTreeSet<Guard>) -> Option<()> {
-    match predicate {
-        Predicate::True | Predicate::False => Some(()),
-        Predicate::Guard(guard) => {
+    match predicate.kind() {
+        PredicateKind::True | PredicateKind::False => Some(()),
+        PredicateKind::Guard(guard) => {
             atoms.insert(canonical_guard(guard).0);
             Some(())
         }
-        Predicate::Not(inner) => collect_atoms(inner, atoms),
-        Predicate::And(predicates) | Predicate::Or(predicates) => {
+        PredicateKind::Not(inner) => collect_atoms(inner, atoms),
+        PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
             for predicate in predicates {
                 collect_atoms(predicate, atoms)?;
             }
             Some(())
         }
-        Predicate::Approximate { .. } => None,
+        PredicateKind::Approximate { .. } => None,
     }
 }
 
@@ -405,14 +408,14 @@ fn predicate_from_false_paths(paths: Vec<Vec<Predicate>>) -> Predicate {
 }
 
 fn predicate_size(predicate: &Predicate) -> usize {
-    match predicate {
-        Predicate::Not(inner) => 1 + predicate_size(inner),
-        Predicate::And(predicates) | Predicate::Or(predicates) => {
+    match predicate.kind() {
+        PredicateKind::Not(inner) => 1 + predicate_size(inner),
+        PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
             1 + predicates.iter().map(predicate_size).sum::<usize>()
         }
-        Predicate::True
-        | Predicate::False
-        | Predicate::Approximate { .. }
-        | Predicate::Guard(_) => 1,
+        PredicateKind::True
+        | PredicateKind::False
+        | PredicateKind::Approximate { .. }
+        | PredicateKind::Guard(_) => 1,
     }
 }

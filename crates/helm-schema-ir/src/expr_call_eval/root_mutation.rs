@@ -282,13 +282,13 @@ pub(super) fn root_set_literal_is_truthy(literal: &Literal) -> bool {
 pub(super) fn root_set_predicate_any(predicates: Vec<Predicate>) -> Predicate {
     if predicates
         .iter()
-        .any(|predicate| matches!(predicate, Predicate::True))
+        .any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::True))
     {
         return Predicate::True;
     }
     let mut predicates = predicates
         .into_iter()
-        .filter(|predicate| !matches!(predicate, Predicate::False))
+        .filter(|predicate| !matches!(predicate.kind(), helm_schema_core::PredicateKind::False))
         .collect::<Vec<_>>();
     match predicates.len() {
         0 => Predicate::False,

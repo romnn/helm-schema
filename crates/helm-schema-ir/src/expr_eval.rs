@@ -175,7 +175,7 @@ fn record_member_host_capture(
         .negated(),
     );
     let capture = crate::eval_effect::FailCapture {
-        conjunction,
+        conjunction: conjunction.into(),
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::MemberAccess { handled_kinds },
     };
