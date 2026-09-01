@@ -20,6 +20,10 @@ impl ContractDocument {
     #[must_use]
     pub fn from_contract_uses(mut uses: Vec<ContractUse>) -> Self {
         canonicalize_contract_uses(&mut uses);
+        Self::from_normalized_contract_uses(uses)
+    }
+
+    pub(in crate::contract) fn from_normalized_contract_uses(uses: Vec<ContractUse>) -> Self {
         Self {
             version: Self::VERSION,
             uses,

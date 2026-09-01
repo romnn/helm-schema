@@ -5969,3 +5969,178 @@
 
 - Measured production LOC delta: +88 (64,793 to 64,881). The delta is the paired public carrier,
   validating/accessor surface, and byte-compatible serde edge; no LOC promise applies.
+
+## S-B — normalize the contract once
+
+- Status: in progress; commit pending.
+- Contract: representation-only and performance-bearing. Give contract normalization one owner
+  with explicit form transitions: raw DNF rows expand once into single-conjunction rows; primary and
+  dependency subsumption, append, pathless-resource merging, and merge-source rebasing operate on
+  that expanded form; path mapping is re-canonicalized; only the final boundary compacts rows back
+  into DNF. Store the resulting `ContractDocument` in `FinalizedContract` instead of rebuilding and
+  re-normalizing it for each request. Preserve exact IR, schema, diagnostic, and serialized order.
+- Acceptance baseline: `ad2b3c68` (MergeLayersUse dossier closure, after the independent v0.0.7
+  grammar hotfix and its tooling cleanup).
+- Baseline production Rust LOC: 64,941.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Every row entering subsumption, append, pathless-resource merging, or merge-source rebasing has
+    exactly one conjunction. No operation may compact early and force a later re-expansion.
+  - Primary uses retain the existing default/self-truthy/pathless-resource sequence. Dependency
+    uses retain their separate self-truthy pass before append. Cross-source default and self-truthy
+    subsumption still run after append.
+  - `merge_pathless_resource_variants` remains before the second primary self-truthy pass; its
+    post-merge deduplication effect is load-bearing.
+  - Merge-source rebasing may make formerly distinct rows equal. Re-canonicalization immediately
+    after the path map remains mandatory before final compaction.
+  - Final compaction preserves the current `GuardDnf` order, complement absorption, provenance
+    union, and render-site grouping exactly.
+  - `FinalizedContract::document` returns a clone of the once-built versioned document. It must not
+    expose mutable state or change the public wire format.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero. Any acceptance or fixture change stops the representation round before adoption.
+- Public/wire decision: no public API or wire change. `FinalizedContract`'s private storage changes
+  from normalized uses to a `ContractDocument`; `uses()` and `document()` retain their signatures
+  and exact bytes.
+- Performance baseline:
+  - Frozen campaign baseline: 112.7 seconds CPU / 2m10s wall for the installed release binary.
+  - Fresh pre-round run on `ad2b3c68`-equivalent v0.0.7 production code:
+    `/usr/bin/time -p helm-schema --k8s-version 1.31.0 testdata/charts/airflow`, with schema stdout
+    written to `target/arch-v4-sb-baseline/airflow.schema.json`; exit 0, 221.37 seconds wall,
+    219.87 seconds user, 0.91 seconds system (220.78 seconds CPU).
+  - Host caveat: load average was 3.57 / 3.77 / 4.69 after the only stale analyzer worker was gone;
+    WindowServer and browser processes remained active. Per user direction, load is recorded but
+    does not pause or invalidate subsequent same-host measurements.
+  - The first timing preflight used `/usr/bin/time -lp`; the generator completed in 222.83 seconds
+    wall / 221.63 seconds CPU, but the wrapper exited 1 after a sandbox-blocked
+    `sysctl kern.clockrate`. That run is not the authoritative baseline.
+
+- Measured results:
+  - `normalize_contract_uses` now owns the complete production transition from raw primary and
+    dependency DNF rows to expanded rows, primary normalization, dependency normalization, append,
+    cross-source subsumption, merge-source rebasing, post-map re-canonicalization, and one final DNF
+    compaction.
+  - `drop_default_guard_subsumed_duplicates` and `drop_self_truthy_subsumed_duplicates` no longer
+    defensively re-expand the vector. `ContractIr::finalize` delegates the whole sequence once
+    instead of invoking four canonicalization/compaction cycles around append and rebasing.
+  - `canonicalize_expanded_contract_uses` performs one rank-assisted sort and preserves the legacy
+    full-row winner as its final tie-break. `compact_contract_uses` consumes that order without a
+    second sort and unions only at the final boundary.
+  - Merge-source rebasing and its requirement-index helpers moved beside the normalization owner.
+    The graph module now supplies the two row sets and fail captures rather than coordinating phase
+    transitions itself.
+  - `FinalizedContract` stores one `ContractDocument`; `uses()` borrows its rows and `document()`
+    clones the already-versioned artifact without another canonicalization pass.
+  - Whole-tree production search finds `expand_condition_disjuncts` only in the normalization
+    owner (once per initial row set) and in the raw expert `ContractDocument::from_contract_uses`
+    compatibility path. The finalized hot path never re-enters that raw constructor.
+  - The final2 clean schema dump writes 84 artifacts; every artifact is byte-identical to the
+    pre-round baseline. The symbolic-IR dump writes 18 artifacts; every artifact is byte-identical.
+  - The final2 full-depth comparison checks 121,055 probes across 60 charts with zero acceptance
+    flips. Mandatory base coverage is 112,260/112,260 and third-level coverage is 7,465/7,465, both
+    with zero drops. It records 427 guard pairs, 238 composite pairs, 35,428 bounded guard-witness
+    reductions, 2,277 bounded composite reductions, and 28,856 disclosed total drops.
+  - Clean corpus dump wall time improves from 238.274 seconds to 234.805 seconds (-3.469 seconds,
+    -1.46%). Final2 Airflow measures 229.70 seconds wall / 229.27 seconds CPU at load average
+    6.14 / 6.54 / 6.64, versus 221.37 / 220.78 at baseline load 3.57 / 3.77 / 4.69. The whole-chart
+    signal is noisy and +3.85% CPU; no speedup is claimed.
+
+- Deviations:
+  - Final1 passed focused IR tests, 84-file schema identity, 18-file IR identity, and the full-depth
+    battery, but the complete unit gate exposed an order-sensitive provider-cache regression:
+    `provider_schema_cache_distinguishes_stringified_scalar_uses` failed while the other 1,321 tests
+    passed. Removing the preliminary full-row sort had left equal render-site/condition rows in
+    caller order before their row-scoped flags collapsed.
+  - No final1 artifact or performance result is adopted. The repair adds the old full `ContractUse`
+    ordering as the last tie-break of the single rank-assisted sort, preserving the deterministic
+    winner without restoring a preliminary sort or extra normalization pass. The focused cache test
+    passes, and final2 rebuilt every authoritative artifact from that corrected tree.
+  - `task lint` reports two pre-existing AST-grep warnings in the independent grammar hotfix tests
+    for explicit LF/CRLF escape spellings. The command's own exit is 0; S-B does not alter those
+    tests or lint policy.
+  - The fresh Airflow baseline is roughly twice the frozen 112.7-second CPU observation. Host load,
+    current cache/network state, and the independent grammar release differ from the frozen run, so
+    the ledger preserves both measurements rather than treating the old number as reproducible.
+  - The normalization round meets its representation and work-reduction contract but does not
+    produce a measurable whole-chart Airflow improvement under the recorded host load. Per the wave
+    contract, wall-clock is evidence rather than an adoption threshold for this ordinary round.
+
+- Adjudication evidence:
+  - Helm `v4.2.3+g43e8b7f` is selected by the committed mise pin and accepted by the battery version
+    guard.
+  - The final2 battery reports zero flips and zero candidate-accepts/Helm-aborts cells. No fixture,
+    diagnostic, ordering, or acceptance change required adoption.
+
+### Producer and route coverage
+
+| Phase | Final form and owner | Verification |
+|---|---|---|
+| Raw primary rows | Expand once to one conjunction per row | Normalization controls and 18-file IR identity. |
+| Raw dependency rows | Expand once, then dependency-local self-truthy subsumption | Dependency/global projection suites. |
+| Primary normalization | Default → self-truthy → pathless merge → self-truthy | Full contract normalization and corpus identity. |
+| Append | Both inputs remain expanded | Cross-source default/self-truthy controls. |
+| Merge-source rebase | Expanded paths map, then re-canonicalize immediately | Recursive merge-source tests and provider-cache order control. |
+| Final compaction | One render-site union into stable `GuardDnf` | Contract document equality and all serialized IR artifacts. |
+| Inspection document | Constructed once inside `FinalizedContract` | Public session/document deterministic tests. |
+
+### Review dossier
+
+- Focused proof: `cargo clippy -p helm-schema-ir --all-targets --all-features -- -D warnings`;
+  exit 0. `cargo nextest run -p helm-schema-ir`; exit 0, 393/393 tests pass. The isolated
+  provider-cache order regression passes after the final2 tie-break repair.
+- Baseline immutable archive: 90 binaries and 128 files at
+  `/private/tmp/arch-v4-sb-baseline.tar.zst`. Its clean schema dump passes 62 tests in 238.274
+  seconds; its IR dump passes in 4.138 seconds.
+- Final immutable build: final2 archive under the absolute step-local build `TMPDIR`; exit 0 after
+  27.56 seconds of compilation and 1.83 seconds of archiving, with 90 binaries and 128 files at
+  `/private/tmp/arch-v4-sb-final2.tar.zst`.
+- Clean schema dump: final2 archive under the step-local schema `TMPDIR`; exit 0, 62 tests pass in
+  234.805 seconds and all 84 artifacts are byte-identical to baseline.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one corpus test passes
+  in 4.152 seconds and all 18 artifacts are byte-identical to baseline.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `ad2b3c68`,
+  Helm adjudication enabled; exit 0 in 71.959 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,856 disclosed reductions.
+- Public/wire decision: none. The private `FinalizedContract` storage changes; public methods,
+  contract version 3, serialized field order, row order, and schema signals remain exact.
+
+### Self-adversarial pass
+
+- Compacting primary or dependency rows before append recreates the repeated-expansion profile and
+  can change subsumption quantifiers. The owner keeps both sets expanded until every path-changing
+  operation is complete.
+- Omitting the post-rebase canonicalization leaves duplicate projected paths and changes provenance
+  grouping. The map is immediately followed by the expanded-form canonicalizer before compaction.
+- Removing the full-row tie-break makes row-scoped flags caller-order dependent even when corpus
+  fixtures happen to be stable. The rejected final1 unit gate exposed this exact hidden invariant;
+  final2 preserves it inside the one required sort.
+- The public raw `ContractDocument::from_contract_uses` constructor still canonicalizes arbitrary
+  caller rows. Finalized production code uses the private normalized constructor, so compatibility
+  does not reintroduce hot-path work.
+- Caching a document without deriving schema signals from the same stored rows would create two
+  owners. `FinalizedContract::new` builds the document first and passes `document.uses` directly to
+  signal derivation.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0; whole-workspace Clippy and all three AST-grep policy tests pass in 12.35
+  seconds. Two disclosed pre-existing AST-grep scan warnings remain outside this round.
+- `task lint:fc`: exit 0; 48/48 feature combinations for 13 packages across Linux, Windows GNU,
+  and macOS pass with zero compiler errors or warnings in 74.95 seconds; the same two independent
+  AST-grep scan warnings follow the matrix.
+- `cargo nextest run --workspace`: exit 0; 1,322/1,322 tests pass, one slow, in 232.438 seconds.
+- `task test:integration`: exit 0; 565/565 tests pass, 24 skipped and 21 slow, in 1,929.932 seconds.
+- `task test:all`: exit 0; 1,891/1,891 tests pass, 24 skipped and 22 slow, including live-network
+  tests, in 2,037.176 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; release replacement completes in 3.31
+  seconds on the final tree.
+- Downstream luup2 `check:local` with the macOS shims, prefixed `PATH`, and
+  `HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema`: exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 64,957 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +16 (64,941 to 64,957). The graph loses its normalization
+  sequencing and merge-source helper block; the normalization owner gains explicit phase code,
+  comments, and the cached document constructor. No LOC promise applies.

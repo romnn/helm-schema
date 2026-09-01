@@ -41,7 +41,7 @@ fn activation_guard_disjunction(guard_sets: Vec<Vec<ConditionalGuard>>) -> Vec<C
 /// a [`super::ContractIr`] separately or hop through another wrapper type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FinalizedContract {
-    uses: Vec<ContractUse>,
+    document: ContractDocument,
     schema_signals: ContractSchemaSignals,
 }
 
@@ -95,8 +95,9 @@ impl FinalizedContract {
                 )
             }))
             .collect::<Vec<_>>();
+        let document = ContractDocument::from_normalized_contract_uses(normalized_uses);
         let schema_signals = derive_schema_signals_from_contract_parts(
-            &normalized_uses,
+            &document.uses,
             observed_facts,
             dependency_values_root_fragments,
         )
@@ -107,7 +108,7 @@ impl FinalizedContract {
         .with_values_program_wrapper_exclusions(values_program_wrapper_exclusions);
 
         Self {
-            uses: normalized_uses,
+            document,
             schema_signals,
         }
     }
@@ -115,7 +116,7 @@ impl FinalizedContract {
     /// Returns normalized contract uses in stable inspection order.
     #[must_use]
     pub fn uses(&self) -> &[ContractUse] {
-        &self.uses
+        &self.document.uses
     }
 
     /// Returns path-local facts prepared for schema lowering.
@@ -127,7 +128,7 @@ impl FinalizedContract {
     /// Builds the versioned inspection document for this contract.
     #[must_use]
     pub fn document(&self) -> ContractDocument {
-        ContractDocument::from_contract_uses(self.uses.clone())
+        self.document.clone()
     }
 
     /// Consumes the contract and returns its schema-lowering signals.

@@ -4,19 +4,41 @@ use crate::contract::ContractUse;
 use crate::{Guard, ResourceRef, ValueKind, YamlPath};
 use helm_schema_core::Predicate;
 
-/// Apply semantic finalization to claims produced by the interpreter.
+/// Finalizes primary and dependency claims through one normalization pipeline.
 ///
-/// This removes duplicates that are equivalent after chart-default lowering,
-/// prefers resource evidence for pathless duplicate roots, and then
-/// canonicalizes ordering.
+/// Raw DNF rows expand once into single-conjunction rows. Subsumption,
+/// append, pathless-resource merging, and merge-source rebasing preserve that
+/// expanded form. The final pass compacts equal render sites back into DNF.
 #[tracing::instrument(skip_all)]
-pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
-    canonicalize_contract_use_inputs(uses);
-    drop_default_guard_subsumed_duplicates(uses);
-    drop_self_truthy_subsumed_duplicates(uses);
-    merge_pathless_resource_variants(uses);
-    drop_self_truthy_subsumed_duplicates(uses);
-    canonicalize_contract_uses(uses);
+pub(crate) fn normalize_contract_uses(
+    mut uses: Vec<ContractUse>,
+    mut dependency_uses: Vec<ContractUse>,
+    fail_conditions: &[crate::eval_effect::FailCapture],
+) -> Vec<ContractUse> {
+    canonicalize_contract_use_inputs(&mut uses);
+    canonicalize_contract_use_inputs(&mut dependency_uses);
+    expand_condition_disjuncts(&mut uses);
+    expand_condition_disjuncts(&mut dependency_uses);
+
+    drop_default_guard_subsumed_duplicates(&mut uses);
+    drop_self_truthy_subsumed_duplicates(&mut uses);
+    merge_pathless_resource_variants(&mut uses);
+    drop_self_truthy_subsumed_duplicates(&mut uses);
+    canonicalize_expanded_contract_uses(&mut uses);
+
+    drop_self_truthy_subsumed_duplicates(&mut dependency_uses);
+    canonicalize_expanded_contract_uses(&mut dependency_uses);
+    uses.append(&mut dependency_uses);
+
+    drop_default_guard_subsumed_duplicates(&mut uses);
+    drop_self_truthy_subsumed_duplicates(&mut uses);
+    canonicalize_expanded_contract_uses(&mut uses);
+
+    lower_string_requirement_merge_sources(&mut uses, fail_conditions);
+    // Path rebasing can make formerly distinct rows equal.
+    canonicalize_expanded_contract_uses(&mut uses);
+    compact_contract_uses(&mut uses);
+    uses
 }
 
 /// Canonicalize contract claims without dropping semantically distinct rows.
@@ -28,7 +50,13 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
 pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
     canonicalize_contract_use_inputs(uses);
     expand_condition_disjuncts(uses);
-    // Deep `GuardDnf` comparisons dominate both sorts below, and conditions
+    canonicalize_expanded_contract_uses(uses);
+    compact_contract_uses(uses);
+}
+
+fn canonicalize_expanded_contract_uses(uses: &mut Vec<ContractUse>) {
+    canonicalize_contract_use_inputs(uses);
+    // Deep `GuardDnf` comparisons dominate this sort, and conditions
     // repeat heavily across rows. Ranking each DISTINCT condition once and
     // comparing ranks yields the identical order (rank order is condition
     // order) at integer-comparison cost.
@@ -57,7 +85,11 @@ pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
         .zip(std::mem::take(uses))
         .collect();
     rows.sort_by(|(left_rank, left), (right_rank, right)| {
-        contract_use_base_cmp(left, right).then_with(|| left_rank.cmp(right_rank))
+        contract_use_base_cmp(left, right)
+            .then_with(|| left_rank.cmp(right_rank))
+            // Equal semantic rows can carry different row-scoped flags.
+            // Preserve the legacy full-row winner without a preliminary sort.
+            .then_with(|| left.cmp(right))
     });
 
     let mut semantic_rows: Vec<(u32, ContractUse)> = Vec::with_capacity(rows.len());
@@ -72,11 +104,15 @@ pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
         semantic_rows.push((rank, contract_use));
     }
 
-    semantic_rows.sort_by(|(left_rank, left), (right_rank, right)| {
-        contract_use_render_site_cmp(left, right).then_with(|| left_rank.cmp(right_rank))
-    });
-    let mut merged_sites: Vec<ContractUse> = Vec::with_capacity(semantic_rows.len());
-    for (_, contract_use) in semantic_rows {
+    *uses = semantic_rows
+        .into_iter()
+        .map(|(_, contract_use)| contract_use)
+        .collect();
+}
+
+fn compact_contract_uses(uses: &mut Vec<ContractUse>) {
+    let mut merged_sites: Vec<ContractUse> = Vec::with_capacity(uses.len());
+    for contract_use in std::mem::take(uses) {
         if let Some(existing) = merged_sites.last_mut()
             && contract_use_render_site_cmp(existing, &contract_use).is_eq()
         {
@@ -133,7 +169,6 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
-    expand_condition_disjuncts(uses);
     let defaulted_render_sites: BTreeSet<_> = uses
         .iter()
         .filter(|contract_use| has_self_default_guard(contract_use))
@@ -150,7 +185,6 @@ pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
-    expand_condition_disjuncts(uses);
     // The subsumption scan only ever compares rows sharing one render site
     // (source, path, kind, resource), so group indices once and keep the
     // quadratic candidate scan inside those buckets instead of over all rows.
@@ -255,6 +289,167 @@ fn extra_predicates_are_truthy_parents(
         })
 }
 
+fn string_requirements_by_ancestor(
+    fail_conditions: &[crate::eval_effect::FailCapture],
+) -> BTreeMap<String, BTreeSet<(String, Vec<helm_schema_core::Predicate>)>> {
+    let mut requirements: BTreeMap<String, BTreeSet<(String, Vec<helm_schema_core::Predicate>)>> =
+        BTreeMap::new();
+    for capture in fail_conditions {
+        let crate::eval_effect::CaptureKind::StringRequirement {
+            path,
+            route,
+            selection,
+        } = &capture.kind
+        else {
+            continue;
+        };
+        if *route == crate::eval_effect::StringRequirementRoute::Serialized {
+            continue;
+        }
+        let mut predicates = capture.conjunction.clone();
+        predicates.extend(selection.iter().cloned());
+        predicates.sort();
+        predicates.dedup();
+        let segments = path
+            .segments()
+            .map(helm_schema_core::Segment::encode_component)
+            .collect::<Vec<_>>();
+        for end in 1..segments.len() {
+            requirements
+                .entry(helm_schema_core::join_encoded_value_path(
+                    segments.get(..end).unwrap_or_default().iter().cloned(),
+                ))
+                .or_default()
+                .insert((path.encode(), predicates.clone()));
+        }
+    }
+    requirements
+}
+
+fn lower_string_requirement_merge_sources(
+    uses: &mut [ContractUse],
+    fail_conditions: &[crate::eval_effect::FailCapture],
+) {
+    let requirements_by_ancestor = string_requirements_by_ancestor(fail_conditions);
+    let mut overlap_cache = BTreeMap::new();
+
+    for contract_use in uses {
+        let Some(merge) = &contract_use.merge_layers else {
+            continue;
+        };
+        let source_expr = contract_use.source_expr.encode();
+        let Some(requirements) = requirements_by_ancestor.get(&source_expr) else {
+            continue;
+        };
+        let source_segments = contract_use
+            .source_expr
+            .segments()
+            .map(helm_schema_core::Segment::encode_component)
+            .collect::<Vec<_>>();
+        let specific_layers = merge
+            .layers()
+            .iter()
+            .map(|layer| {
+                layer
+                    .path
+                    .segments()
+                    .map(helm_schema_core::Segment::encode_component)
+                    .collect::<Vec<_>>()
+            })
+            .filter(|layer| {
+                layer.len() > source_segments.len() && layer.starts_with(source_segments.as_slice())
+            })
+            .collect::<Vec<_>>();
+        let [first, second, rest @ ..] = specific_layers.as_slice() else {
+            continue;
+        };
+        let mut common_suffix_len = first
+            .iter()
+            .rev()
+            .zip(second.iter().rev())
+            .take_while(|(left, right)| left == right)
+            .count();
+        for layer in rest {
+            common_suffix_len = common_suffix_len.min(
+                first
+                    .iter()
+                    .rev()
+                    .zip(layer.iter().rev())
+                    .take_while(|(left, right)| left == right)
+                    .count(),
+            );
+        }
+        let suffix = first.get(first.len().saturating_sub(common_suffix_len)..);
+        let Some(suffix) = suffix.filter(|suffix| {
+            !suffix.is_empty() && suffix.iter().all(|segment| segment.as_str() != "*")
+        }) else {
+            continue;
+        };
+        let Some(requirements) =
+            merge_suffix_string_requirements(&source_expr, requirements, suffix)
+        else {
+            continue;
+        };
+        let cache_key = (
+            contract_use.source_expr.clone(),
+            suffix.to_vec(),
+            contract_use.condition.clone(),
+        );
+        let overlaps_requirement = overlap_cache.get(&cache_key).copied().unwrap_or_else(|| {
+            let overlaps = contract_use.condition.disjuncts().iter().any(|row| {
+                requirements.iter().any(|requirement| {
+                    !helm_schema_core::GuardDnf::from_conjunction(
+                        row.iter().cloned().chain(requirement.iter().cloned()),
+                    )
+                    .is_never()
+                })
+            });
+            overlap_cache.insert(cache_key, overlaps);
+            overlaps
+        });
+        if !overlaps_requirement {
+            continue;
+        }
+        let source = helm_schema_core::ValuesPath::parse(&source_expr);
+        let projected =
+            helm_schema_core::ValuesPath::parse(&helm_schema_core::join_encoded_value_path(
+                source_segments
+                    .iter()
+                    .cloned()
+                    .chain(suffix.iter().cloned()),
+            ));
+        contract_use.map_value_paths(&mut |path| {
+            if path == source {
+                projected.clone()
+            } else {
+                path
+            }
+        });
+    }
+}
+
+fn merge_suffix_string_requirements(
+    source: &str,
+    requirements: &BTreeSet<(String, Vec<helm_schema_core::Predicate>)>,
+    suffix: &[String],
+) -> Option<BTreeSet<Vec<helm_schema_core::Predicate>>> {
+    let source_segments = helm_schema_core::split_value_path(source);
+    let mut paths = BTreeSet::new();
+    let mut conjunctions = BTreeSet::new();
+    for (path, predicates) in requirements {
+        let segments = helm_schema_core::split_value_path(path);
+        if segments.len() <= source_segments.len()
+            || !segments.starts_with(source_segments.as_slice())
+            || !segments.ends_with(suffix)
+        {
+            continue;
+        }
+        paths.insert(segments);
+        conjunctions.insert(predicates.clone());
+    }
+    (paths.len() >= 2).then_some(conjunctions)
+}
+
 type RenderSite = (
     helm_schema_core::ValuesPath,
     YamlPath,
@@ -304,10 +499,6 @@ fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {
             expanded.push(branch);
         }
     }
-    // Unstable sort: equal rows are fully interchangeable (dedup keeps one
-    // of an identical run), so stability buys nothing here.
-    expanded.sort_unstable();
-    expanded.dedup();
     *uses = expanded;
 }
 

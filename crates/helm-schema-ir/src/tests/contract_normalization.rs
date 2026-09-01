@@ -4,10 +4,10 @@ use crate::{
 };
 use test_util::prelude::sim_assert_eq;
 
-use super::{canonicalize_contract_uses, expand_condition_disjuncts, normalize_contract_uses};
+use super::{canonicalize_contract_uses, normalize_contract_uses};
 
 #[test]
-fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
+fn normalization_deduplicates_expanded_rows_before_subsumption() {
     let row = ContractUse::new(
         helm_schema_core::ValuesPath::parse("feature.enabled"),
         YamlPath(vec!["spec".to_string(), "enabled".to_string()]),
@@ -17,9 +17,7 @@ fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
         }],
         None,
     );
-    let mut uses = vec![row.clone(), row];
-
-    expand_condition_disjuncts(&mut uses);
+    let uses = normalize_contract_uses(vec![row.clone(), row], Vec::new(), &[]);
 
     sim_assert_eq!(have: uses.len(), want: 1);
 }
@@ -218,7 +216,7 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
         ),
     ];
 
-    normalize_contract_uses(&mut uses);
+    uses = normalize_contract_uses(uses, Vec::new(), &[]);
 
     sim_assert_eq!(have: uses.len(), want: 1);
     assert!(uses[0].single_guard_conjunction().iter().any(|guard| {
@@ -267,7 +265,7 @@ fn normalization_drops_subsumed_truthy_branch_across_provenance_sites() {
         ),
     ];
 
-    normalize_contract_uses(&mut uses);
+    uses = normalize_contract_uses(uses, Vec::new(), &[]);
 
     sim_assert_eq!(have: uses.len(), want: 1);
     sim_assert_eq!(
