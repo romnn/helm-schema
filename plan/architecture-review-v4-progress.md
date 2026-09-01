@@ -5972,7 +5972,7 @@
 
 ## S-B — normalize the contract once
 
-- Status: in progress; commit pending.
+- Status: landed in `6dee3291` (`refactor(ir): normalize contracts once`).
 - Contract: representation-only and performance-bearing. Give contract normalization one owner
   with explicit form transitions: raw DNF rows expand once into single-conjunction rows; primary and
   dependency subsumption, append, pathless-resource merging, and merge-source rebasing operate on
@@ -6144,3 +6144,138 @@
 - Measured production LOC delta: +16 (64,941 to 64,957). The graph loses its normalization
   sequencing and merge-source helper block; the normalization owner gains explicit phase code,
   comments, and the cached document constructor. No LOC promise applies.
+
+## B5a — canonical conjunctions and shared predicate nodes
+
+- Status: recorded and abandoned after the representation-only byte gate failed repeatedly; no
+  production or test change landed.
+- Contract: representation-only. Introduce one canonical `Conjunction` owner that sorts,
+  deduplicates, flattens nested `And` predicates, and removes `True` at construction. Replace the
+  raw predicate vectors that represent fail and implication conjunctions, deleting their manual
+  canonicalization. Store immutable predicate nodes behind private `Arc`s; use a cached structural
+  hash only to reject unequal nodes quickly, while manual ordering exactly preserves the former
+  derived-enum order used by `GuardDnf` and serialized fixtures.
+- Acceptance baseline: `6dee3291`.
+- Baseline production Rust LOC: 64,957.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+  - Predicate structural order remains exactly `True`, `False`, `Approximate`, `Guard`, `Not`,
+    `And`, `Or`, with each variant retaining its former derived field and recursive ordering.
+    Cached hashes never participate in `Ord` or serialization.
+  - Canonical conjunction construction may remove only nested `And` wrappers, `True`, and exact
+    duplicate predicates. It preserves `False`, `Or`, approximation markers and sound subsets,
+    context-marker guards, and every nontrivial predicate in former structural order.
+  - Ordered predicate stacks whose order represents evaluation, branch priority, or provenance
+    remain ordinary vectors. Only set-like logical conjunction carriers migrate.
+  - `FailCapture.conjunction`, member-host implication predicates, selected-string implication
+    predicates, and their parser/normalization handoffs use the new carrier. Any audited raw vector
+    that is not provably a conjunction stays unchanged.
+  - Public API decision: `Predicate` becomes opaque at ownership while keeping an exhaustive
+    borrowed view. This is an intentional Part-F narrowing; `GuardDnf` wire bytes remain exact.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero. Any acceptance flip or fixture-byte difference rejects the representation round before
+    fixture adoption.
+
+- Measured results:
+  - The compiler-driven candidate made `Predicate` a private `Arc`-backed node with cached
+    structural hash, manual `Eq`/`Ord`/`Hash`, and an exhaustive borrowed kind. Focused tests proved
+    the former seven-variant order and canonical conjunction construction.
+  - `Conjunction` replaced `FailCapture.conjunction`, member-host predicates, selected-string
+    predicates, parser selection conjunctions, and route handoffs. The former sort-plus-dedup pairs
+    disappeared from contract normalization, input-channel routing, two requirement paths, two
+    member-host paths, and parser selection.
+  - Focused final-candidate Clippy for core and IR exits 0; 434/434 focused core/IR tests pass.
+    Symbolic-IR corpus output remains byte-identical across all 18 artifacts.
+  - The schema byte gate is irreconcilable at the present boundary. A canonical flattened
+    presentation makes Jenkins byte-identical but changes Bitnami PostgreSQL's repeated-definition
+    grouping. Retaining the raw producer presentation restores Bitnami PostgreSQL but changes
+    Jenkins definition allocation. Hybrid candidates reduced the full-corpus difference from 12
+    artifacts to four, but never to zero.
+  - Every differing schema retained the same tested behavior in focused generation; the observed
+    drift is repeated-subtree grouping and `$defs` allocation. Representation-only acceptance is
+    nevertheless byte identity, so none of those states is adoptable and no fixture was touched.
+  - All candidate production/test changes were restored from the saved reverse patch. Production
+    LOC is again 64,957 and the source tree is byte-identical to `6dee3291` outside this ledger.
+
+- Deviations:
+  - The first opaque-node compile preflight produced 316 expected pattern-match errors across the
+    exhaustive predicate reader surface. The migration was completed mechanically, then audited by
+    the compiler; no public pattern-matching compatibility facade was retained.
+  - Rejected full archive `final1`: 62/62 dump tests pass in 189.375 seconds and 84 artifacts are
+    written, but 12 schema artifacts differ from the acceptance baseline.
+  - Rejected full archive `final2`: 62/62 pass in 189.838 seconds; explicit legacy capture ordering
+    does not change the same 12-artifact failure.
+  - Rejected full archive `final3`: 62/62 pass in 188.834 seconds; separating canonical identity
+    from producer presentation restores Jenkins and Traefik, but ten artifacts still differ.
+  - Rejected full archive `final8`: 62/62 pass in 189.814 seconds; retaining raw logical grouping
+    restores eight more charts, but Cilium, Jenkins, Kyverno, and Traefik still differ.
+  - Targeted discriminator preflights `final4` through `final14` tested raw order, top-level
+    sort/dedup, flattened order, `True` elision, exact-only flattening, and canonical-vs-presentation
+    capture identity. Bitnami PostgreSQL and Jenkins require opposite presentation choices. No
+    artifact from any targeted run was adopted.
+  - The attempted byte-compatibility lane required a second producer-order vector beside the
+    canonical conjunction. It reproduced the E2 finding: `$defs` grouping is coupled to legacy
+    capture shape. Keeping that vector would violate the wave's no-compatibility-state lesson even
+    if another chart-specific ordering heuristic were added.
+
+- Adjudication evidence:
+  - No acceptance cell was eligible for adoption because fixture identity failed first. The
+    full-depth prober was therefore not run on a rejected code state, and no generated fixture was
+    copied or modified.
+  - Helm remains pinned at 4.2.3. Candidate-accepts/Helm-aborts allowance remains zero for the next
+    viable design.
+
+### Producer and route coverage
+
+| Route | Candidate result | Disposition |
+|---|---|---|
+| Direct and guarded fail captures | Canonical membership works; raw grouping affects `$defs`. | Reverted. |
+| Selected string requirements | One conjunction carrier removes the route-vector sort pairs. | Reverted. |
+| Member-host implications | Canonical construction removes both local sort/dedup sites. | Reverted. |
+| Parser selection branches | Canonical construction removes branch-local sorting. | Reverted. |
+| Contract normalization/routes | Canonical handoffs remove two more manual pairs. | Reverted. |
+| Predicate readers | Exhaustive borrowed kind compiles across every production and test reader. | Reverted. |
+| Guard DNF ordering | Manual predicate order matches the former derived enum order. | Reverted. |
+
+### Review dossier
+
+- Rejected immutable archives: `/private/tmp/arch-v4-b5a-final1.tar.zst`, `final2`, `final3`, and
+  `final8`; none is authoritative or adoption evidence.
+- Focused proof before abandonment: affected-crate Clippy exits 0; 434/434 core/IR tests pass; the
+  18-file symbolic-IR dump is byte-identical.
+- Schema proof: each full archive writes 84 artifacts from 62 passing tests. The best candidate
+  still changes four artifacts, so the byte-exact gate fails.
+- Public/wire decision: the proposed opaque `Predicate` API narrowing was reviewed and mechanically
+  viable, but did not land. The restored public enum API and every wire format remain unchanged.
+- Resume prerequisite: first remove or redesign the deterministic `$defs` ordering/grouping
+  dependency as its own representation-only, byte-exact round. Then re-run B5a from `6dee3291`.
+  B5b/B5c remain blocked because they explicitly profile and optimize the B5a tree.
+
+### Self-adversarial pass
+
+- Treating `$defs` renumbering as harmless would violate the round's explicit byte contract and
+  repeat the rejected E2 reasoning. No fixture normalization or regeneration is allowed here.
+- Keeping both canonical and producer-order conjunction vectors is a compatibility representation,
+  not the deletion promised by B5a. Adding chart-specific ordering rules would make that debt worse.
+- The structural predicate order itself is not the fault: focused tests and manual comparison prove
+  the exact former variant/field order. The conflict appears only when canonical conjunction shape
+  reaches repeated-schema grouping.
+- The honest result is therefore a blocker, not a partial B5a commit. C2 and later rounds are not
+  started because the wave's stop rule says an unfixable in-scope gate stops the campaign.
+
+### Gates
+
+- Candidate `cargo fmt --check`: exit 0 before every immutable archive.
+- Candidate affected-crate Clippy (`helm-schema-core`, `helm-schema-ir`, all targets/features,
+  warnings denied): exit 0.
+- Candidate focused nextest: exit 0; 434/434 tests pass.
+- Candidate symbolic-IR identity: exit 0; all 18 artifacts byte-identical.
+- Candidate schema fixture identity: **failed**; best measured state differs in 4/84 artifacts.
+- Restored-tree `git diff --exit-code 6dee3291 -- crates`: exit 0.
+- Restored-tree `task tokei:core`: exit 0; 64,957 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: 0. The rejected candidate peaked at 65,423 lines (+466), but all
+  production and test changes were removed. The next session resumes at the `$defs` ordering
+  prerequisite, before B5a; B5b, B5c, C2, and the remaining wave-2 scope are untouched.
