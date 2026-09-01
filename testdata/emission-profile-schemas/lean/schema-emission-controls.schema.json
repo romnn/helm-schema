@@ -17,15 +17,15 @@
           "type": "string"
         },
         {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
           "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
           "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
           "type": "string"
         }
       ]
@@ -137,15 +137,15 @@
               ]
             },
             {
-              "enum": [
-                "Service"
-              ]
-            },
-            {
               "type": "null"
             },
             {
               "type": "string"
+            },
+            {
+              "enum": [
+                "Service"
+              ]
             }
           ]
         },
@@ -167,21 +167,7 @@
           "if": {
             "anyOf": [
               {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
                 "allOf": [
-                  {
-                    "type": "object"
-                  },
                   {
                     "anyOf": [
                       {
@@ -209,8 +195,22 @@
                         "type": "object"
                       }
                     ]
+                  },
+                  {
+                    "type": "object"
                   }
                 ]
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
             ]
           },

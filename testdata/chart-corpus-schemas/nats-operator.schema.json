@@ -54,27 +54,22 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "type": "boolean"
+            "maxItems": 0,
+            "type": "array"
           },
           {
             "type": "integer"
           },
           {
-            "type": "null"
-          },
-          {
-            "type": "number"
-          },
-          {
             "allOf": [
               {
                 "not": {
-                  "pattern": ":[ \\t]|:$"
+                  "pattern": "[ \\t]#"
                 }
               },
               {
                 "not": {
-                  "pattern": "[ \\t]#"
+                  "pattern": ":[ \\t]|:$"
                 }
               },
               {
@@ -86,8 +81,13 @@
             "type": "string"
           },
           {
-            "maxItems": 0,
-            "type": "array"
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
           },
           {
             "maxProperties": 0,
@@ -99,12 +99,12 @@
         "allOf": [
           {
             "not": {
-              "pattern": ":[ \\t]|:$"
+              "pattern": "[ \\t]#"
             }
           },
           {
             "not": {
-              "pattern": "[ \\t]#"
+              "pattern": ":[ \\t]|:$"
             }
           },
           {
@@ -120,16 +120,16 @@
     "9": {
       "allOf": [
         {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
           "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
         },
         {
           "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
           }
         }
       ],
@@ -402,9 +402,8 @@
               "failureThreshold": {
                 "anyOf": [
                   {
-                    "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-                    "format": "int32",
-                    "type": "integer"
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
                   },
                   {
                     "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -412,7 +411,7 @@
                     "type": "null"
                   },
                   {
-                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
@@ -424,8 +423,9 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
+                    "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "integer"
                   }
                 ]
               }
@@ -437,9 +437,8 @@
               "initialDelaySeconds": {
                 "anyOf": [
                   {
-                    "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-                    "format": "int32",
-                    "type": "integer"
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
                   },
                   {
                     "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -447,7 +446,7 @@
                     "type": "null"
                   },
                   {
-                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
@@ -459,8 +458,9 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
+                    "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                    "format": "int32",
+                    "type": "integer"
                   }
                 ]
               }
@@ -472,17 +472,11 @@
               "periodSeconds": {
                 "anyOf": [
                   {
-                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-                    "format": "int32",
-                    "type": "null"
-                  },
-                  {
                     "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
@@ -494,8 +488,14 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
+                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "null"
                   }
                 ]
               }
@@ -507,9 +507,8 @@
               "successThreshold": {
                 "anyOf": [
                   {
-                    "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-                    "format": "int32",
-                    "type": "integer"
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
                   },
                   {
                     "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
@@ -517,7 +516,12 @@
                     "type": "null"
                   },
                   {
-                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
@@ -526,10 +530,6 @@
                   },
                   {
                     "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   }
                 ]
@@ -544,15 +544,19 @@
                   {
                     "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
                     "format": "int32",
-                    "type": "integer"
+                    "type": "null"
                   },
                   {
                     "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
                     "format": "int32",
-                    "type": "null"
+                    "type": "integer"
                   },
                   {
                     "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
@@ -561,10 +565,6 @@
                   },
                   {
                     "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   }
                 ]
@@ -582,30 +582,43 @@
         {
           "anyOf": [
             {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                },
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
               "additionalProperties": {
                 "anyOf": [
                   {
-                    "type": "boolean"
+                    "maxItems": 0,
+                    "type": "array"
                   },
                   {
                     "type": "integer"
                   },
                   {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
                     "allOf": [
                       {
                         "not": {
-                          "pattern": ":[ \\t]|:$"
+                          "pattern": "[ \\t]#"
                         }
                       },
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "pattern": ":[ \\t]|:$"
                         }
                       },
                       {
@@ -617,8 +630,13 @@
                     "type": "string"
                   },
                   {
-                    "maxItems": 0,
-                    "type": "array"
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "boolean"
                   },
                   {
                     "maxProperties": 0,
@@ -630,12 +648,12 @@
                 "allOf": [
                   {
                     "not": {
-                      "pattern": ":[ \\t]|:$"
+                      "pattern": "[ \\t]#"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "[ \\t]#"
+                      "pattern": ":[ \\t]|:$"
                     }
                   },
                   {
@@ -652,42 +670,7 @@
               "allOf": [
                 {
                   "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
                     "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                   }
                 },
                 {
@@ -697,25 +680,42 @@
                 },
                 {
                   "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
                     "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                   }
-                }
-              ],
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
                 },
                 {
                   "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                   }
                 },
                 {
                   "not": {
-                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                   }
                 }
               ],
@@ -1065,42 +1065,7 @@
       "allOf": [
         {
           "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
             "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
@@ -1110,7 +1075,42 @@
         },
         {
           "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
             "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         }
       ],
@@ -1243,25 +1243,90 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "additionalProperties": {},
-      "properties": {
-        "antiAffinity": {
-          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/C"
+          },
+          {
+            "properties": {
+              "cluster": {
+                "$ref": "#/$defs/B"
+              }
+            },
+            "required": [
+              "cluster"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/4"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "servicemonitor": {
+                        "description": "Prometheus Operator ServiceMonitor config",
+                        "required": [
+                          "prometheusInstance"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "servicemonitor": {
+                        "additionalProperties": {},
+                        "description": "Prometheus Operator ServiceMonitor config",
+                        "properties": {
+                          "prometheusInstance": {
+                            "not": {
+                              "type": "null"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/4"
+            "$ref": "#/$defs/m"
           }
         ]
       },
@@ -1326,215 +1391,144 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/m"
+            "not": {
+              "properties": {
+                "cluster": {}
+              },
+              "required": [
+                "cluster"
+              ],
+              "type": "object"
+            }
           },
           {
             "properties": {
               "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "username": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "username"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
+                "enum": [
+                  null
+                ]
               }
             },
             "required": [
               "cluster"
             ],
             "type": "object"
-          },
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
           {
-            "$ref": "#/$defs/4"
+            "properties": {
+              "readinessProbe": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "readinessProbe"
+            ],
+            "type": "object"
           },
           {
             "not": {
-              "$ref": "#/$defs/D"
+              "properties": {
+                "readinessProbe": {}
+              },
+              "required": [
+                "readinessProbe"
+              ],
+              "type": "object"
             }
           }
         ]
       },
-      "then": {
-        "allOf": [
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
           {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "auth": {
-                    "additionalProperties": {},
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                    "properties": {
-                      "password": {
-                        "$ref": "#/$defs/o"
-                      }
-                    }
-                  }
-                }
-              }
+            "not": {
+              "properties": {
+                "securityContext": {}
+              },
+              "required": [
+                "securityContext"
+              ],
+              "type": "object"
             }
           },
           {
-            "additionalProperties": {},
             "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "auth": {
-                    "additionalProperties": {},
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                    "properties": {
-                      "username": {
-                        "$ref": "#/$defs/helm-double-quoted-safe",
-                        "description": "This is where you enter a username/password for 1 user"
-                      }
-                    }
-                  }
-                }
+              "securityContext": {
+                "enum": [
+                  null
+                ]
               }
+            },
+            "required": [
+              "securityContext"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "livenessProbe": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "livenessProbe"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "livenessProbe": {}
+              },
+              "required": [
+                "livenessProbe"
+              ],
+              "type": "object"
             }
           }
         ]
-      }
+      },
+      "then": false
     },
     {
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/4"
+          },
+          {
             "$ref": "#/$defs/m"
           },
           {
             "$ref": "#/$defs/D"
-          },
-          {
-            "$ref": "#/$defs/4"
           }
         ]
       },
       "then": {
         "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "auth": {
-                    "additionalProperties": {},
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                    "properties": {
-                      "users": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "$ref": "#/$defs/x"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "additionalProperties": {
-                              "$ref": "#/$defs/x"
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "auth": {
-                    "additionalProperties": {},
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                    "properties": {
-                      "users": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "$ref": "#/$defs/v"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "additionalProperties": {
-                              "$ref": "#/$defs/v"
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "auth": {
-                    "additionalProperties": {},
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                    "properties": {
-                      "users": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "$ref": "#/$defs/w"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "additionalProperties": {
-                              "$ref": "#/$defs/w"
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
           {
             "additionalProperties": {},
             "properties": {
@@ -1550,6 +1544,114 @@
                         "not": {
                           "type": "boolean"
                         }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/$defs/w"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "items": {
+                              "$ref": "#/$defs/w"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/$defs/v"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "items": {
+                              "$ref": "#/$defs/v"
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "$ref": "#/$defs/x"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/$defs/x"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
                       }
                     }
                   }
@@ -1606,815 +1708,52 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/4"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "auth": {
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "enabled": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "pullPolicy": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "repository": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "tag": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "required": [
-                      "pullPolicy"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "enabled": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "pullPolicy": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "repository": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "tag": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "description": "Prometheus Metrics Exporter",
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "description": "Prometheus Metrics Exporter",
-                    "required": [
-                      "pullPolicy"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "description": "Prometheus Metrics Exporter",
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "description": "Prometheus Metrics Exporter",
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "description": "Prometheus Metrics Exporter",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "name": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "size": {
-                    "description": "Cluster Size",
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "version": {
-                    "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "required": [
-                  "size"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "required": [
-                  "version"
-                ],
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/4"
-          },
-          {
-            "$ref": "#/$defs/C"
-          },
+        "anyOf": [
           {
             "properties": {
-              "cluster": {
-                "$ref": "#/$defs/B"
+              "image": {
+                "enum": [
+                  null
+                ]
               }
             },
             "required": [
-              "cluster"
+              "image"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "servicemonitor": {
-                        "additionalProperties": {},
-                        "description": "Prometheus Operator ServiceMonitor config",
-                        "properties": {
-                          "prometheusInstance": {
-                            "not": {
-                              "type": "null"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "servicemonitor": {
-                        "description": "Prometheus Operator ServiceMonitor config",
-                        "required": [
-                          "prometheusInstance"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/4"
-          },
-          {
-            "$ref": "#/$defs/C"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "description": "Prometheus Metrics Exporter",
-                "properties": {
-                  "servicemonitor": {
-                    "description": "Prometheus Operator ServiceMonitor config",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/y"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/h"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/c"
-                              },
-                              {
-                                "$ref": "#/$defs/j"
-                              },
-                              {
-                                "$ref": "#/$defs/l"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
-                              },
-                              {
-                                "$ref": "#/$defs/k"
-                              }
-                            ],
-                            "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-                            "type": "string"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-                            "type": "null"
-                          },
-                          {
-                            "$ref": "#/$defs/6"
-                          },
-                          {
-                            "$ref": "#/$defs/5"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/$defs/1"
-                  }
-                ],
-                "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/4"
-          },
-          {
-            "$ref": "#/$defs/y"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/p"
-                  },
-                  {
-                    "$ref": "#/$defs/1"
-                  }
-                ],
-                "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/4"
-          },
-          {
-            "properties": {
-              "cluster": {
-                "$ref": "#/$defs/u"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "routesSecret": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "serverSecret": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "required": [
-                      "routesSecret"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "required": [
-                      "serverSecret"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "registry": {
-              "description": "natsio/nats-operator:0.8.3",
-              "not": {
-                "type": "array"
-              }
-            }
-          }
-        }
-      }
+      "then": false
     },
     {
       "if": {
         "properties": {
-          "nameOverride": {
+          "schedulerName": {
             "$ref": "#/$defs/t"
           }
         },
         "required": [
-          "nameOverride"
+          "schedulerName"
         ],
         "type": "object"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "schedulerName": {
+            "$ref": "#/$defs/o"
           }
         }
       }
@@ -2456,23 +1795,278 @@
     },
     {
       "if": {
-        "properties": {
-          "schedulerName": {
-            "$ref": "#/$defs/t"
+        "allOf": [
+          {
+            "$ref": "#/$defs/4"
+          },
+          {
+            "properties": {
+              "cluster": {
+                "$ref": "#/$defs/u"
+              }
+            },
+            "required": [
+              "cluster"
+            ],
+            "type": "object"
           }
-        },
-        "required": [
-          "schedulerName"
-        ],
-        "type": "object"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "required": [
+                      "routesSecret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "required": [
+                      "serverSecret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "routesSecret": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serverSecret": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/C"
+          },
+          {
+            "$ref": "#/$defs/4"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "schedulerName": {
-            "$ref": "#/$defs/o"
+          "cluster": {
+            "additionalProperties": {},
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "description": "Prometheus Metrics Exporter",
+                "properties": {
+                  "servicemonitor": {
+                    "description": "Prometheus Operator ServiceMonitor config",
+                    "type": "object"
+                  }
+                }
+              }
+            }
           }
         }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "antiAffinity": {
+          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/4"
+          },
+          {
+            "$ref": "#/$defs/y"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "cluster": {
+            "additionalProperties": {},
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/1"
+                  },
+                  {
+                    "$ref": "#/$defs/p"
+                  }
+                ],
+                "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "registry": {
+              "description": "natsio/nats-operator:0.8.3",
+              "not": {
+                "type": "array"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/D"
+            }
+          },
+          {
+            "$ref": "#/$defs/4"
+          },
+          {
+            "$ref": "#/$defs/m"
+          },
+          {
+            "properties": {
+              "cluster": {
+                "properties": {
+                  "auth": {
+                    "properties": {
+                      "username": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "username"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "auth"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cluster"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "username": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "This is where you enter a username/password for 1 user"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "password": {
+                        "$ref": "#/$defs/o"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -2489,158 +2083,564 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "cluster": {}
-              },
-              "required": [
-                "cluster"
-              ],
-              "type": "object"
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/y"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "cluster": {
+            "additionalProperties": {},
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/1"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/k"
+                              },
+                              {
+                                "$ref": "#/$defs/j"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
+                                "$ref": "#/$defs/l"
+                              }
+                            ],
+                            "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                ],
+                "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
+              }
             }
-          },
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/4"
+      },
+      "then": {
+        "allOf": [
           {
+            "additionalProperties": {},
             "properties": {
               "cluster": {
-                "enum": [
-                  null
-                ]
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                }
               }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "image": {}
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "image": {
-                "enum": [
-                  null
-                ]
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  }
+                }
               }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "livenessProbe": {}
-              },
-              "required": [
-                "livenessProbe"
-              ],
-              "type": "object"
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "livenessProbe": {
-                "enum": [
-                  null
-                ]
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "type": "object"
+                  }
+                }
               }
-            },
-            "required": [
-              "livenessProbe"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "readinessProbe": {
-                "enum": [
-                  null
-                ]
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "size": {
+                    "description": "Cluster Size",
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
               }
-            },
-            "required": [
-              "readinessProbe"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "securityContext": {}
-              },
-              "required": [
-                "securityContext"
-              ],
-              "type": "object"
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "securityContext": {
-                "enum": [
-                  null
-                ]
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "repository": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
               }
-            },
-            "required": [
-              "securityContext"
-            ],
-            "type": "object"
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "repository": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "tag": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "pullPolicy": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "pullPolicy"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "pullPolicy": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "pullPolicy"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "tag": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "version": {
+                    "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "repository"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "enabled": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "required": [
+                  "version"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "enabled": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "required": [
+                  "size"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "repository"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
           }
         ]
-      },
-      "then": false
+      }
     }
   ],
   "properties": {
@@ -2648,12 +2648,12 @@
       "anyOf": [
         {
           "enum": [
-            "hard"
+            "soft"
           ]
         },
         {
           "enum": [
-            "soft"
+            "hard"
           ]
         },
         {
@@ -2677,94 +2677,16 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "annotations": {
+                  "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1"
+                        "$ref": "#/$defs/b"
                       },
                       {
-                        "$ref": "#/$defs/b"
+                        "$ref": "#/$defs/1"
                       }
                     ],
-                    "description": "Optional custom annotations to add to Pods in the cluster"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/s"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "pullPolicy": {
-                        "$ref": "#/$defs/2"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "repository": {
-                        "$ref": "#/$defs/2"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/1"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          }
-                        ],
-                        "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "configReload": {
-                    "additionalProperties": {},
-                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                    "properties": {
-                      "tag": {
-                        "$ref": "#/$defs/2"
-                      }
-                    }
+                    "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
                   }
                 }
               },
@@ -2777,34 +2699,6 @@
                     "properties": {
                       "enabled": {
                         "$ref": "#/$defs/s"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "pullPolicy": {
-                        "$ref": "#/$defs/2"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Metrics Exporter",
-                    "properties": {
-                      "repository": {
-                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -2835,32 +2729,64 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "$ref": "#/$defs/b"
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/2"
                       }
-                    ],
-                    "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
+                    }
                   }
                 }
               },
               {
                 "additionalProperties": {},
                 "properties": {
-                  "size": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/a"
-                      },
-                      {
-                        "type": "integer"
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/s"
                       }
-                    ],
-                    "description": "Cluster Size"
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "resources": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/1"
+                          }
+                        ],
+                        "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "pullPolicy": {
+                        "$ref": "#/$defs/2"
+                      }
+                    }
                   }
                 }
               },
@@ -2870,163 +2796,107 @@
                   "version": {
                     "anyOf": [
                       {
+                        "$ref": "#/$defs/9"
+                      },
+                      {
                         "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/q"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
                       }
                     ],
                     "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags"
                   }
                 }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/E"
               },
               {
-                "$ref": "#/$defs/3"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
                 "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                 "properties": {
-                  "enableServiceAccounts": {
+                  "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/b"
                       },
                       {
-                        "type": "boolean"
+                        "$ref": "#/$defs/1"
                       }
                     ],
-                    "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled."
+                    "description": "Optional custom annotations to add to Pods in the cluster"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "size": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/$defs/a"
+                      }
+                    ],
+                    "description": "Cluster Size"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "pullPolicy": {
+                        "$ref": "#/$defs/2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/2"
+                      }
+                    }
                   }
                 }
               }
-            }
+            ]
           }
         },
         {
           "if": {
             "allOf": [
-              {
-                "$ref": "#/$defs/3"
-              },
               {
                 "$ref": "#/$defs/r"
               },
               {
-                "$ref": "#/$defs/B"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "description": "Prometheus Metrics Exporter",
-                "properties": {
-                  "servicemonitor": {
-                    "additionalProperties": {},
-                    "description": "Prometheus Operator ServiceMonitor config",
-                    "properties": {
-                      "prometheusInstance": {
-                        "$ref": "#/$defs/2"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "$ref": "#/$defs/3"
-              },
-              {
-                "$ref": "#/$defs/u"
-              }
-            ]
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "routesSecret": {
-                        "$ref": "#/$defs/2"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "serverSecret": {
-                        "$ref": "#/$defs/2"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/3"
-              },
-              {
-                "$ref": "#/$defs/r"
               },
               {
                 "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "servicemonitor": {}
-                          },
-                          "required": [
-                            "servicemonitor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
-                  },
                   {
                     "properties": {
                       "metrics": {
@@ -3045,6 +2915,101 @@
                     },
                     "required": [
                       "metrics"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "metrics": {
+                          "properties": {
+                            "servicemonitor": {}
+                          },
+                          "required": [
+                            "servicemonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "metrics"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "configReload": {}
+                      },
+                      "required": [
+                        "configReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "configReload": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "configReload"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/3"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/3"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {}
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tls"
                     ],
                     "type": "object"
                   }
@@ -3099,36 +3064,109 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "configReload": {}
-                      },
-                      "required": [
-                        "configReload"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "configReload": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "configReload"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/E"
               }
             ]
           },
-          "then": false
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "auth": {
+                "additionalProperties": {},
+                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                "properties": {
+                  "enableServiceAccounts": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/F"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ],
+                    "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/B"
+              },
+              {
+                "$ref": "#/$defs/r"
+              },
+              {
+                "$ref": "#/$defs/3"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "description": "Prometheus Metrics Exporter",
+                "properties": {
+                  "servicemonitor": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Operator ServiceMonitor config",
+                    "properties": {
+                      "prometheusInstance": {
+                        "$ref": "#/$defs/2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/u"
+              },
+              {
+                "$ref": "#/$defs/3"
+              }
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "routesSecret": {
+                        "$ref": "#/$defs/2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serverSecret": {
+                        "$ref": "#/$defs/2"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
         },
         {
           "if": {
@@ -3138,17 +3176,6 @@
               },
               {
                 "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "metrics": {}
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
-                  },
                   {
                     "properties": {
                       "metrics": {
@@ -3161,44 +3188,17 @@
                       "metrics"
                     ],
                     "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/3"
-              },
-              {
-                "anyOf": [
+                  },
                   {
                     "not": {
                       "properties": {
-                        "tls": {}
+                        "metrics": {}
                       },
                       "required": [
-                        "tls"
+                        "metrics"
                       ],
                       "type": "object"
                     }
-                  },
-                  {
-                    "properties": {
-                      "tls": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
                   }
                 ]
               }
@@ -3301,45 +3301,6 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/8"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
-                },
-                {
-                  "$ref": "#/$defs/h"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/j"
-                },
-                {
-                  "$ref": "#/$defs/l"
-                },
-                {
-                  "$ref": "#/$defs/i"
-                },
-                {
-                  "$ref": "#/$defs/k"
-                }
-              ],
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/9"
             },
             {
@@ -3350,10 +3311,49 @@
               "$ref": "#/$defs/6"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/8"
             },
             {
               "$ref": "#/$defs/7"
+            },
+            {
+              "$ref": "#/$defs/5"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/e"
+                },
+                {
+                  "$ref": "#/$defs/i"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
+                  "$ref": "#/$defs/h"
+                },
+                {
+                  "$ref": "#/$defs/k"
+                },
+                {
+                  "$ref": "#/$defs/j"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/f"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/l"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
             }
           ],
           "description": "Specify an imagePullPolicy\nDefaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images\nOptionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistrKeySecretName"
@@ -3407,12 +3407,6 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/8"
-        },
-        {
-          "$ref": "#/$defs/q"
-        },
-        {
           "$ref": "#/$defs/9"
         },
         {
@@ -3422,18 +3416,27 @@
           "$ref": "#/$defs/6"
         },
         {
-          "$ref": "#/$defs/5"
+          "$ref": "#/$defs/8"
         },
         {
           "$ref": "#/$defs/7"
         },
         {
+          "$ref": "#/$defs/5"
+        },
+        {
           "type": "null"
+        },
+        {
+          "$ref": "#/$defs/q"
         }
       ]
     },
     "nodeSelector": {
       "anyOf": [
+        {
+          "$ref": "#/$defs/1"
+        },
         {
           "additionalProperties": {
             "type": [
@@ -3446,9 +3449,6 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/1"
-        },
-        {
           "type": "null"
         }
       ]
@@ -3456,16 +3456,13 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "$ref": "#/$defs/1"
+        },
+        {
           "$ref": "#/$defs/z"
         },
         {
           "allOf": [
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": [
@@ -3478,11 +3475,14 @@
                 "object",
                 "null"
               ]
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             }
           ]
-        },
-        {
-          "$ref": "#/$defs/1"
         }
       ],
       "description": "Pod annotations\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
@@ -3490,16 +3490,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/z"
+          "$ref": "#/$defs/1"
         },
         {
           "allOf": [
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
             {
               "additionalProperties": {
                 "type": [
@@ -3512,11 +3506,17 @@
                 "object",
                 "null"
               ]
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             }
           ]
         },
         {
-          "$ref": "#/$defs/1"
+          "$ref": "#/$defs/z"
         }
       ],
       "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
@@ -3557,13 +3557,13 @@
           "$ref": "#/$defs/6"
         },
         {
+          "$ref": "#/$defs/7"
+        },
+        {
           "$ref": "#/$defs/a"
         },
         {
           "$ref": "#/$defs/5"
-        },
-        {
-          "$ref": "#/$defs/7"
         }
       ],
       "description": "Set default Replica Count for the Operator"
@@ -3644,17 +3644,15 @@
                   "fsGroup": {
                     "anyOf": [
                       {
-                        "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
-                        "format": "int64",
-                        "type": "integer"
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
                       },
                       {
                         "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
                         "format": "int64",
                         "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/6"
                       },
                       {
                         "$ref": "#/$defs/a"
@@ -3663,7 +3661,9 @@
                         "$ref": "#/$defs/5"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
+                        "format": "int64",
+                        "type": "integer"
                       }
                     ]
                   }
@@ -3677,24 +3677,24 @@
                       {
                         "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
                         "format": "int64",
-                        "type": "integer"
-                      },
-                      {
-                        "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-                        "format": "int64",
                         "type": "null"
                       },
                       {
                         "$ref": "#/$defs/6"
                       },
                       {
+                        "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+                        "format": "int64",
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
+                      },
+                      {
                         "$ref": "#/$defs/a"
                       },
                       {
                         "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/7"
                       }
                     ]
                   }
@@ -3775,59 +3775,59 @@
     "updateStrategy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/6"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/d"
-            },
-            {
               "$ref": "#/$defs/e"
-            },
-            {
-              "$ref": "#/$defs/f"
-            },
-            {
-              "$ref": "#/$defs/h"
-            },
-            {
-              "$ref": "#/$defs/g"
-            },
-            {
-              "$ref": "#/$defs/c"
-            },
-            {
-              "$ref": "#/$defs/j"
-            },
-            {
-              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/i"
             },
             {
+              "$ref": "#/$defs/d"
+            },
+            {
+              "$ref": "#/$defs/h"
+            },
+            {
               "$ref": "#/$defs/k"
+            },
+            {
+              "$ref": "#/$defs/j"
+            },
+            {
+              "$ref": "#/$defs/c"
+            },
+            {
+              "$ref": "#/$defs/f"
+            },
+            {
+              "$ref": "#/$defs/g"
+            },
+            {
+              "$ref": "#/$defs/l"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/8"
         },
         {
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/6"
+          "$ref": "#/$defs/7"
         },
         {
           "$ref": "#/$defs/5"
-        },
-        {
-          "$ref": "#/$defs/7"
         }
       ],
       "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%"

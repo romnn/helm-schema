@@ -27,27 +27,22 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "type": "boolean"
+            "maxItems": 0,
+            "type": "array"
           },
           {
             "type": "integer"
           },
           {
-            "type": "null"
-          },
-          {
-            "type": "number"
-          },
-          {
             "allOf": [
               {
                 "not": {
-                  "pattern": ":[ \\t]|:$"
+                  "pattern": "[ \\t]#"
                 }
               },
               {
                 "not": {
-                  "pattern": "[ \\t]#"
+                  "pattern": ":[ \\t]|:$"
                 }
               },
               {
@@ -59,8 +54,13 @@
             "type": "string"
           },
           {
-            "maxItems": 0,
-            "type": "array"
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
           },
           {
             "maxProperties": 0,
@@ -72,12 +72,12 @@
         "allOf": [
           {
             "not": {
-              "pattern": ":[ \\t]|:$"
+              "pattern": "[ \\t]#"
             }
           },
           {
             "not": {
-              "pattern": "[ \\t]#"
+              "pattern": ":[ \\t]|:$"
             }
           },
           {
@@ -93,16 +93,16 @@
     "6": {
       "allOf": [
         {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
           "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
         },
         {
           "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
           }
         }
       ],
@@ -363,31 +363,34 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "ingress": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/t"
+        "anyOf": [
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "enum": [
+                  null
+                ]
               }
-            ]
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -407,6 +410,17 @@
             "additionalProperties": {},
             "properties": {
               "podDisruptionBudget": {
+                "required": [
+                  "minAvailable"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "podDisruptionBudget": {
                 "additionalProperties": {},
                 "properties": {
                   "minAvailable": {
@@ -417,51 +431,37 @@
                 }
               }
             }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "required": [
-                  "minAvailable"
-                ],
-                "type": "object"
-              }
-            }
           }
         ]
       }
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "podDisruptionBudget": {}
+        "properties": {
+          "ingress": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/t"
               },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "enum": [
-                  null
-                ]
+              {
+                "type": "object"
               }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
+            ]
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
             "type": "object"
           }
-        ]
-      },
-      "then": false
+        }
+      }
     }
   ],
   "properties": {
@@ -472,17 +472,17 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/t"
-                  }
-                ]
+                "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/1"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/t"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
@@ -492,56 +492,7 @@
               "className": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/5"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/b"
-                      },
-                      {
-                        "$ref": "#/$defs/d"
-                      },
-                      {
-                        "$ref": "#/$defs/c"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/9"
-                      },
-                      {
-                        "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/8"
-                      },
-                      {
-                        "$ref": "#/$defs/a"
-                      }
-                    ],
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "string"
-                  },
-                  {
                     "$ref": "#/$defs/6"
-                  },
-                  {
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "null"
                   },
                   {
                     "not": {
@@ -552,10 +503,59 @@
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/2"
+                    "$ref": "#/$defs/5"
+                  },
+                  {
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "null"
                   },
                   {
                     "$ref": "#/$defs/4"
+                  },
+                  {
+                    "$ref": "#/$defs/2"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/8"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/d"
+                      },
+                      {
+                        "$ref": "#/$defs/a"
+                      },
+                      {
+                        "$ref": "#/$defs/9"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/b"
+                      },
+                      {
+                        "$ref": "#/$defs/c"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
+                      }
+                    ],
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "string"
                   }
                 ]
               }
@@ -583,58 +583,9 @@
                   "maxUnavailable": {
                     "anyOf": [
                       {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      {
                         "oneOf": [
                           {
                             "anyOf": [
-                              {
-                                "$ref": "#/$defs/5"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^[-?:]([ \\t]|$)"
-                                    }
-                                  },
-                                  {
-                                    "$ref": "#/$defs/b"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/d"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/c"
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(|~|null|Null|NULL)$"
-                                    }
-                                  },
-                                  {
-                                    "$ref": "#/$defs/9"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/7"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/8"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/a"
-                                  }
-                                ],
-                                "type": "string"
-                              },
                               {
                                 "$ref": "#/$defs/6"
                               },
@@ -642,13 +593,57 @@
                                 "$ref": "#/$defs/3"
                               },
                               {
-                                "$ref": "#/$defs/2"
+                                "$ref": "#/$defs/5"
                               },
                               {
                                 "$ref": "#/$defs/4"
                               },
                               {
+                                "$ref": "#/$defs/2"
+                              },
+                              {
                                 "type": "null"
+                              },
+                              {
+                                "allOf": [
+                                  {
+                                    "not": {
+                                      "pattern": "^[-?:]([ \\t]|$)"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/$defs/8"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/$defs/d"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/a"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/9"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "^(|~|null|Null|NULL)$"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/$defs/b"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/c"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/7"
+                                  }
+                                ],
+                                "type": "string"
                               }
                             ]
                           },
@@ -658,6 +653,12 @@
                                 "$ref": "#/$defs/3"
                               },
                               {
+                                "type": "integer"
+                              },
+                              {
+                                "$ref": "#/$defs/4"
+                              },
+                              {
                                 "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                                 "type": "string"
                               },
@@ -665,17 +666,16 @@
                                 "$ref": "#/$defs/2"
                               },
                               {
-                                "$ref": "#/$defs/4"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
                                 "type": "null"
                               }
                             ]
                           }
                         ]
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/t"
+                        }
                       }
                     ]
                   }

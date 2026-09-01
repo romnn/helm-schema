@@ -20,16 +20,16 @@
     "5": {
       "allOf": [
         {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
           "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
         },
         {
           "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
           }
         }
       ],
@@ -39,27 +39,22 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "type": "boolean"
+            "maxItems": 0,
+            "type": "array"
           },
           {
             "type": "integer"
           },
           {
-            "type": "null"
-          },
-          {
-            "type": "number"
-          },
-          {
             "allOf": [
               {
                 "not": {
-                  "pattern": ":[ \\t]|:$"
+                  "pattern": "[ \\t]#"
                 }
               },
               {
                 "not": {
-                  "pattern": "[ \\t]#"
+                  "pattern": ":[ \\t]|:$"
                 }
               },
               {
@@ -71,8 +66,13 @@
             "type": "string"
           },
           {
-            "maxItems": 0,
-            "type": "array"
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
           },
           {
             "maxProperties": 0,
@@ -84,12 +84,12 @@
         "allOf": [
           {
             "not": {
-              "pattern": ":[ \\t]|:$"
+              "pattern": "[ \\t]#"
             }
           },
           {
             "not": {
-              "pattern": "[ \\t]#"
+              "pattern": ":[ \\t]|:$"
             }
           },
           {
@@ -124,12 +124,12 @@
         "paths": {
           "anyOf": [
             {
-              "items": {},
-              "type": "array"
-            },
-            {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
             }
           ]
         }
@@ -138,17 +138,6 @@
     },
     "B": {
       "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "envs": {}
-            },
-            "required": [
-              "envs"
-            ],
-            "type": "object"
-          }
-        },
         {
           "properties": {
             "envs": {
@@ -161,6 +150,17 @@
             "envs"
           ],
           "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "envs": {}
+            },
+            "required": [
+              "envs"
+            ],
+            "type": "object"
+          }
         }
       ]
     },
@@ -187,42 +187,7 @@
       "allOf": [
         {
           "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
             "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
@@ -232,7 +197,42 @@
         },
         {
           "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
             "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         }
       ],
@@ -329,6 +329,17 @@
         "hosts": {
           "anyOf": [
             {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
               "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
               "items": {
                 "type": [
@@ -340,21 +351,10 @@
               "x-kubernetes-list-type": "atomic"
             },
             {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "type": "array"
-            },
-            {
-              "type": "integer"
-            },
-            {
               "type": "null"
             },
             {
-              "type": "object"
+              "type": "array"
             }
           ]
         }
@@ -494,12 +494,6 @@
       "allOf": [
         {
           "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "additionalProperties": {
             "type": [
               "string",
               "null"
@@ -510,6 +504,12 @@
             "object",
             "null"
           ]
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
         }
       ]
     },
@@ -993,30 +993,51 @@
           "additionalProperties": {
             "anyOf": [
               {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                    }
+                  },
+                  {
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                "type": "string"
+              },
+              {
+                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                "type": "null"
+              },
+              {
                 "additionalProperties": {
                   "anyOf": [
                     {
-                      "type": "boolean"
+                      "maxItems": 0,
+                      "type": "array"
                     },
                     {
                       "type": "integer"
                     },
                     {
-                      "type": "null"
-                    },
-                    {
-                      "type": "number"
-                    },
-                    {
                       "allOf": [
                         {
                           "not": {
-                            "pattern": ":[ \\t]|:$"
+                            "pattern": "[ \\t]#"
                           }
                         },
                         {
                           "not": {
-                            "pattern": "[ \\t]#"
+                            "pattern": ":[ \\t]|:$"
                           }
                         },
                         {
@@ -1028,8 +1049,13 @@
                       "type": "string"
                     },
                     {
-                      "maxItems": 0,
-                      "type": "array"
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "boolean"
                     },
                     {
                       "maxProperties": 0,
@@ -1041,12 +1067,12 @@
                   "allOf": [
                     {
                       "not": {
-                        "pattern": ":[ \\t]|:$"
+                        "pattern": "[ \\t]#"
                       }
                     },
                     {
                       "not": {
-                        "pattern": "[ \\t]#"
+                        "pattern": ":[ \\t]|:$"
                       }
                     },
                     {
@@ -1063,42 +1089,7 @@
                 "allOf": [
                   {
                     "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
                       "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                     }
                   },
                   {
@@ -1108,45 +1099,54 @@
                   },
                   {
                     "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
                       "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                     }
-                  }
-                ],
-                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                "type": "string"
-              },
-              {
-                "allOf": [
-                  {
-                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
                   },
                   {
                     "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                      "pattern": "^(|~|null|Null|NULL)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                     }
                   }
                 ],
-                "type": "string"
-              },
-              {
                 "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                "type": "null"
-              },
-              {
-                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                "type": "string"
-              },
-              {
-                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
                 "type": "string"
               },
               {
                 "pattern": "^[ \\t]*(#.*)?$",
+                "type": "string"
+              },
+              {
+                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
                 "type": "string"
               }
             ]
@@ -1154,30 +1154,51 @@
           "items": {
             "anyOf": [
               {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                    }
+                  },
+                  {
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                "type": "string"
+              },
+              {
+                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                "type": "null"
+              },
+              {
                 "additionalProperties": {
                   "anyOf": [
                     {
-                      "type": "boolean"
+                      "maxItems": 0,
+                      "type": "array"
                     },
                     {
                       "type": "integer"
                     },
                     {
-                      "type": "null"
-                    },
-                    {
-                      "type": "number"
-                    },
-                    {
                       "allOf": [
                         {
                           "not": {
-                            "pattern": ":[ \\t]|:$"
+                            "pattern": "[ \\t]#"
                           }
                         },
                         {
                           "not": {
-                            "pattern": "[ \\t]#"
+                            "pattern": ":[ \\t]|:$"
                           }
                         },
                         {
@@ -1189,8 +1210,13 @@
                       "type": "string"
                     },
                     {
-                      "maxItems": 0,
-                      "type": "array"
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "boolean"
                     },
                     {
                       "maxProperties": 0,
@@ -1202,12 +1228,12 @@
                   "allOf": [
                     {
                       "not": {
-                        "pattern": ":[ \\t]|:$"
+                        "pattern": "[ \\t]#"
                       }
                     },
                     {
                       "not": {
-                        "pattern": "[ \\t]#"
+                        "pattern": ":[ \\t]|:$"
                       }
                     },
                     {
@@ -1224,42 +1250,7 @@
                 "allOf": [
                   {
                     "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
                       "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                     }
                   },
                   {
@@ -1269,45 +1260,54 @@
                   },
                   {
                     "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
                       "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                     }
-                  }
-                ],
-                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                "type": "string"
-              },
-              {
-                "allOf": [
-                  {
-                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
                   },
                   {
                     "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "^(null|Null|NULL)[ \\t]+#"
+                      "pattern": "^(|~|null|Null|NULL)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                     }
                   }
                 ],
-                "type": "string"
-              },
-              {
                 "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                "type": "null"
-              },
-              {
-                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                "type": "string"
-              },
-              {
-                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
                 "type": "string"
               },
               {
                 "pattern": "^[ \\t]*(#.*)?$",
+                "type": "string"
+              },
+              {
+                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
                 "type": "string"
               }
             ]
@@ -1321,30 +1321,51 @@
         "secretName": {
           "anyOf": [
             {
+              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "type": "null"
+            },
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                },
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
+              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
               "additionalProperties": {
                 "anyOf": [
                   {
-                    "type": "boolean"
+                    "maxItems": 0,
+                    "type": "array"
                   },
                   {
                     "type": "integer"
                   },
                   {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
                     "allOf": [
                       {
                         "not": {
-                          "pattern": ":[ \\t]|:$"
+                          "pattern": "[ \\t]#"
                         }
                       },
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "pattern": ":[ \\t]|:$"
                         }
                       },
                       {
@@ -1356,8 +1377,13 @@
                     "type": "string"
                   },
                   {
-                    "maxItems": 0,
-                    "type": "array"
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "boolean"
                   },
                   {
                     "maxProperties": 0,
@@ -1369,12 +1395,12 @@
                 "allOf": [
                   {
                     "not": {
-                      "pattern": ":[ \\t]|:$"
+                      "pattern": "[ \\t]#"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "[ \\t]#"
+                      "pattern": ":[ \\t]|:$"
                     }
                   },
                   {
@@ -1388,45 +1414,14 @@
               "type": "object"
             },
             {
+              "pattern": "^[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
               "allOf": [
                 {
                   "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
                     "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                   }
                 },
                 {
@@ -1436,45 +1431,50 @@
                 },
                 {
                   "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
                     "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                   }
-                }
-              ],
-              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
                 },
                 {
                   "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                   }
                 },
                 {
                   "not": {
-                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                   }
                 }
               ],
-              "type": "string"
-            },
-            {
               "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-              "type": "null"
-            },
-            {
-              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
               "type": "string"
             },
             {
               "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-              "type": "string"
-            },
-            {
-              "pattern": "^[ \\t]*(#.*)?$",
               "type": "string"
             }
           ]
@@ -1484,140 +1484,18 @@
     "w": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
           "allOf": [
             {
               "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
               }
             },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "allOf": [
             {
               "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
             },
             {
               "not": {
                 "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
               }
             }
           ],
@@ -1633,15 +1511,137 @@
           "type": "string"
         },
         {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
         },
         {
           "pattern": "^[ \\t]*(#.*)?$",
           "type": "string"
         },
         {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
           "type": "null"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            }
+          ],
+          "type": "string"
         }
       ]
     },
@@ -1708,12 +1708,12 @@
         "hosts": {
           "anyOf": [
             {
-              "items": {},
-              "type": "array"
-            },
-            {
               "additionalProperties": {},
               "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
             }
           ]
         },
@@ -1726,94 +1726,260 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "additionalProperties": {},
-      "properties": {
-        "envs": {
-          "additionalProperties": {},
-          "description": "configure UI ENVs",
-          "properties": {
-            "teams": {
-              "type": "array"
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {}
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
             }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "envs": {
-          "additionalProperties": {},
-          "description": "configure UI ENVs",
-          "properties": {
-            "teams": {
-              "$ref": "#/$defs/I"
-            }
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/k"
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "$ref": "#/$defs/o"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/C"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/w"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
+        "allOf": [
+          {
+            "$ref": "#/$defs/B"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "envs": {
+                    "$ref": "#/$defs/r"
+                  }
+                },
+                "required": [
+                  "envs"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "envs": {
+                      "properties": {
+                        "teams": {}
+                      },
+                      "required": [
+                        "teams"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "envs"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/B"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/k"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "$ref": "#/$defs/q"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "description": "configure ui image",
-          "properties": {
-            "registry": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "description": "configure ui image",
-          "properties": {
-            "repository": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "description": "configure ui image",
-          "properties": {
-            "tag": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
+          "ingress": {
+            "additionalProperties": {},
+            "description": "configure UI ingress. If needed: \"enabled: true\"",
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/$defs/z"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/z"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org"
+              }
             }
           }
         }
@@ -1892,54 +2058,44 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/k"
-          },
+        "anyOf": [
           {
             "properties": {
-              "ingress": {
-                "$ref": "#/$defs/q"
+              "image": {
+                "enum": [
+                  null
+                ]
               }
             },
             "required": [
-              "ingress"
+              "image"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "configure UI ingress. If needed: \"enabled: true\"",
-            "properties": {
-              "tls": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "$ref": "#/$defs/z"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "$ref": "#/$defs/z"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org"
-              }
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "envs": {
+          "additionalProperties": {},
+          "description": "configure UI ENVs",
+          "properties": {
+            "teams": {
+              "type": "array"
             }
           }
         }
@@ -1947,31 +2103,97 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/k"
-          },
-          {
-            "$ref": "#/$defs/C"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "$ref": "#/$defs/o"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
           }
-        ]
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/w"
+          "fullnameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "registry": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "additionalProperties": {},
+          "description": "configure UI service",
+          "properties": {
+            "type": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "tag": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "envs": {
+          "additionalProperties": {},
+          "description": "configure UI ENVs",
+          "properties": {
+            "teams": {
+              "$ref": "#/$defs/I"
+            }
           }
         }
       }
@@ -2001,23 +2223,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "configure UI service",
-          "properties": {
-            "type": {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/C"
       },
@@ -2030,58 +2235,12 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/1"
+                  },
+                  {
                     "allOf": [
                       {
                         "anyOf": [
-                          {
-                            "$ref": "#/$defs/6"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/9"
-                              },
-                              {
-                                "$ref": "#/$defs/a"
-                              },
-                              {
-                                "$ref": "#/$defs/b"
-                              },
-                              {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/c"
-                              },
-                              {
-                                "$ref": "#/$defs/8"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/7"
-                              }
-                            ],
-                            "description": "Name is the name of resource being referenced",
-                            "type": "string"
-                          },
-                          {
-                            "$ref": "#/$defs/5"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/6"
-                          },
                           {
                             "$ref": "#/$defs/D"
                           },
@@ -2089,23 +2248,69 @@
                             "$ref": "#/$defs/5"
                           },
                           {
-                            "$ref": "#/$defs/H"
-                          },
-                          {
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/2"
+                            "$ref": "#/$defs/6"
                           },
                           {
                             "$ref": "#/$defs/4"
+                          },
+                          {
+                            "$ref": "#/$defs/H"
+                          },
+                          {
+                            "$ref": "#/$defs/2"
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/a"
+                              },
+                              {
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/9"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/7"
+                              },
+                              {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
+                                "$ref": "#/$defs/8"
+                              },
+                              {
+                                "$ref": "#/$defs/b"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/e"
+                              }
+                            ],
+                            "description": "Name is the name of resource being referenced",
+                            "type": "string"
                           }
                         ]
                       }
                     ]
-                  },
-                  {
-                    "$ref": "#/$defs/1"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -2114,211 +2319,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/B"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "envs": {
-                      "properties": {
-                        "teams": {}
-                      },
-                      "required": [
-                        "teams"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "envs"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "envs": {
-                    "$ref": "#/$defs/r"
-                  }
-                },
-                "required": [
-                  "envs"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/B"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "image": {}
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "image": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {}
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "service": {}
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "service": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "properties": {
@@ -2484,6 +2484,9 @@
           "if": {
             "anyOf": [
               {
+                "$ref": "#/$defs/r"
+              },
+              {
                 "not": {
                   "properties": {
                     "teams": {}
@@ -2493,9 +2496,6 @@
                   ],
                   "type": "object"
                 }
-              },
-              {
-                "$ref": "#/$defs/r"
               }
             ]
           },
@@ -2507,59 +2507,59 @@
         "appUrl": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/5"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/9"
-                },
-                {
                   "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/e"
                 },
                 {
                   "$ref": "#/$defs/f"
                 },
                 {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
                   "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/e"
                 }
               ],
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/5"
-            },
-            {
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "null"
-            },
-            {
               "$ref": "#/$defs/3"
+            },
+            {
+              "$ref": "#/$defs/6"
+            },
+            {
+              "$ref": "#/$defs/4"
             },
             {
               "$ref": "#/$defs/2"
             },
             {
-              "$ref": "#/$defs/4"
+              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+              "type": "null"
             }
           ],
           "description": "IMPORTANT: While operator chart and UI chart are independent, this is the interface between\nUI and operator API. Insert the service name of the operator API here!"
@@ -2577,7 +2577,7 @@
               "type": "array"
             },
             {
-              "type": "array"
+              "type": "object"
             },
             {
               "type": "integer"
@@ -2586,7 +2586,7 @@
               "type": "null"
             },
             {
-              "type": "object"
+              "type": "array"
             }
           ]
         }
@@ -2761,45 +2761,6 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/9"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
-                },
-                {
-                  "$ref": "#/$defs/7"
-                }
-              ],
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/5"
             },
             {
@@ -2810,10 +2771,49 @@
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/6"
             },
             {
               "$ref": "#/$defs/4"
+            },
+            {
+              "$ref": "#/$defs/2"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/a"
+                },
+                {
+                  "$ref": "#/$defs/f"
+                },
+                {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
+                  "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/e"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
             }
           ]
         },
@@ -2825,6 +2825,12 @@
     },
     "imagePullSecrets": {
       "anyOf": [
+        {
+          "$ref": "#/$defs/1"
+        },
+        {
+          "type": "null"
+        },
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
           "items": {
@@ -2844,12 +2850,6 @@
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
           "x-kubernetes-patch-strategy": "merge"
-        },
-        {
-          "$ref": "#/$defs/1"
-        },
-        {
-          "type": "null"
         }
       ]
     },
@@ -2862,21 +2862,6 @@
           },
           "then": {
             "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/l"
-                      },
-                      {
-                        "$ref": "#/$defs/1"
-                      }
-                    ]
-                  }
-                }
-              },
               {
                 "additionalProperties": {},
                 "properties": {
@@ -2893,61 +2878,10 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "hosts": {
-                    "$ref": "#/$defs/y"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
                   "ingressClassName": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/6"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          }
-                        ],
-                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                        "type": "string"
-                      },
-                      {
                         "$ref": "#/$defs/5"
-                      },
-                      {
-                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                        "type": "null"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -2956,13 +2890,79 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/2"
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                        "type": "null"
                       },
                       {
                         "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          }
+                        ],
+                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                        "type": "string"
                       }
                     ],
                     "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/l"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "$ref": "#/$defs/y"
                   }
                 }
               },
@@ -2981,10 +2981,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/n"
+                "$ref": "#/$defs/q"
               },
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/n"
               }
             ]
           },
@@ -2995,11 +2995,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/G"
+                      "$ref": "#/$defs/v"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/G"
+                      "$ref": "#/$defs/v"
                     }
                   }
                 }
@@ -3009,11 +3009,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/v"
+                      "$ref": "#/$defs/G"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/v"
+                      "$ref": "#/$defs/G"
                     }
                   }
                 }
@@ -3053,13 +3053,13 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "$ref": "#/$defs/1"
+        },
+        {
           "$ref": "#/$defs/p"
         },
         {
           "$ref": "#/$defs/l"
-        },
-        {
-          "$ref": "#/$defs/1"
         }
       ],
       "description": "Extra pod annotations"
@@ -3067,50 +3067,7 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/6"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/9"
-            },
-            {
-              "$ref": "#/$defs/a"
-            },
-            {
-              "$ref": "#/$defs/b"
-            },
-            {
-              "$ref": "#/$defs/d"
-            },
-            {
-              "$ref": "#/$defs/c"
-            },
-            {
-              "$ref": "#/$defs/8"
-            },
-            {
-              "$ref": "#/$defs/g"
-            },
-            {
-              "$ref": "#/$defs/e"
-            },
-            {
-              "$ref": "#/$defs/f"
-            },
-            {
-              "$ref": "#/$defs/7"
-            }
-          ],
-          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
-          "type": "string"
-        },
-        {
           "$ref": "#/$defs/5"
-        },
-        {
-          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
-          "type": "null"
         },
         {
           "$ref": "#/$defs/1"
@@ -3119,10 +3076,53 @@
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/2"
+          "$ref": "#/$defs/6"
         },
         {
           "$ref": "#/$defs/4"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/a"
+            },
+            {
+              "$ref": "#/$defs/f"
+            },
+            {
+              "$ref": "#/$defs/9"
+            },
+            {
+              "$ref": "#/$defs/d"
+            },
+            {
+              "$ref": "#/$defs/7"
+            },
+            {
+              "$ref": "#/$defs/g"
+            },
+            {
+              "$ref": "#/$defs/8"
+            },
+            {
+              "$ref": "#/$defs/b"
+            },
+            {
+              "$ref": "#/$defs/c"
+            },
+            {
+              "$ref": "#/$defs/e"
+            }
+          ],
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "null"
         }
       ],
       "description": "priority class for operator-ui pod"
@@ -3152,13 +3152,13 @@
           "$ref": "#/$defs/3"
         },
         {
+          "$ref": "#/$defs/4"
+        },
+        {
           "$ref": "#/$defs/i"
         },
         {
           "$ref": "#/$defs/2"
-        },
-        {
-          "$ref": "#/$defs/4"
         }
       ]
     },
@@ -3288,13 +3288,13 @@
                     "$ref": "#/$defs/3"
                   },
                   {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
                     "$ref": "#/$defs/i"
                   },
                   {
                     "$ref": "#/$defs/2"
-                  },
-                  {
-                    "$ref": "#/$defs/4"
                   }
                 ]
               }
@@ -3307,13 +3307,13 @@
         "annotations": {
           "anyOf": [
             {
+              "$ref": "#/$defs/1"
+            },
+            {
               "$ref": "#/$defs/p"
             },
             {
               "$ref": "#/$defs/l"
-            },
-            {
-              "$ref": "#/$defs/1"
             }
           ],
           "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521"
@@ -3334,39 +3334,40 @@
         "type": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
+              "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+              "type": "null"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/9"
-                },
-                {
                   "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/e"
                 },
                 {
                   "$ref": "#/$defs/f"
                 },
                 {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
                   "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/e"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -3376,17 +3377,16 @@
               "$ref": "#/$defs/5"
             },
             {
-              "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-              "type": "null"
-            },
-            {
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/6"
             },
             {
               "$ref": "#/$defs/4"
+            },
+            {
+              "$ref": "#/$defs/2"
             }
           ]
         }
@@ -3409,16 +3409,10 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/6"
-                  },
-                  {
                     "$ref": "#/$defs/D"
                   },
                   {
                     "$ref": "#/$defs/5"
-                  },
-                  {
-                    "$ref": "#/$defs/H"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -3427,10 +3421,16 @@
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/2"
+                    "$ref": "#/$defs/6"
                   },
                   {
                     "$ref": "#/$defs/4"
+                  },
+                  {
+                    "$ref": "#/$defs/H"
+                  },
+                  {
+                    "$ref": "#/$defs/2"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -3446,45 +3446,6 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/9"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
-                },
-                {
-                  "$ref": "#/$defs/7"
-                }
-              ],
-              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/5"
             },
             {
@@ -3498,13 +3459,52 @@
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/6"
             },
             {
               "$ref": "#/$defs/4"
             },
             {
+              "$ref": "#/$defs/2"
+            },
+            {
               "type": "null"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/a"
+                },
+                {
+                  "$ref": "#/$defs/f"
+                },
+                {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
+                  "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/e"
+                }
+              ],
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "string"
             }
           ],
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"

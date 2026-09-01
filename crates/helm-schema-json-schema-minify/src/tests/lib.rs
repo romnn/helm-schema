@@ -157,8 +157,40 @@ fn schemas_containing_refs_are_not_extracted() {
         }
     });
 
-    let result = minimize_schema(schema.clone());
-    sim_assert_eq!(have: result, want: schema);
+    let result = minimize_schema(schema);
+    sim_assert_eq!(
+        have: result,
+        want: json!({
+            "type": "object",
+            "definitions": {
+                "base": { "type": "object" }
+            },
+            "properties": {
+                "left": {
+                    "allOf": [
+                        { "$ref": "#/definitions/base" },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "name": { "type": "string" }
+                            }
+                        }
+                    ]
+                },
+                "right": {
+                    "allOf": [
+                        { "$ref": "#/definitions/base" },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "name": { "type": "string" }
+                            }
+                        }
+                    ]
+                }
+            }
+        })
+    );
 }
 
 #[test]
@@ -199,14 +231,14 @@ fn repeated_schemas_may_reference_unchanged_root_definitions() {
             "$defs": {
                 "1": {
                     "allOf": [
-                        { "$ref": "#/$defs/base" },
                         {
                             "properties": {
                                 "enabled": { "type": "boolean" },
                                 "name": { "type": "string" }
                             },
                             "type": "object"
-                        }
+                        },
+                        { "$ref": "#/$defs/base" }
                     ]
                 },
                 "base": {
@@ -331,5 +363,118 @@ fn existing_defs_names_are_not_reused() {
     sim_assert_eq!(
         have: result.pointer("/properties/left/$ref"),
         want: Some(&Value::String("#/$defs/2".to_string()))
+    );
+}
+
+#[test]
+fn equivalent_junctor_grouping_produces_one_stable_definition() {
+    let arm = |name: &str| {
+        json!({
+            "properties": {
+                (name): {
+                    "description": "A deliberately substantial repeated validation payload.",
+                    "pattern": "^[A-Za-z][A-Za-z0-9._/-]{8,128}$",
+                    "type": "string"
+                }
+            },
+            "required": [name],
+            "type": "object"
+        })
+    };
+    let first = arm("first");
+    let second = arm("second");
+    let third = arm("third");
+    let schema = json!({
+        "properties": {
+            "left": {
+                "allOf": [first.clone(), second.clone(), third.clone()]
+            },
+            "right": {
+                "allOf": [third, { "allOf": [second, first] }]
+            }
+        },
+        "type": "object"
+    });
+
+    let minimized = minimize_schema(schema);
+    let regrouped = minimize_schema(json!({
+        "properties": {
+            "left": {
+                "allOf": [arm("third"), { "allOf": [arm("first"), arm("second")] }]
+            },
+            "right": {
+                "allOf": [arm("second"), arm("third"), arm("first")]
+            }
+        },
+        "type": "object"
+    }));
+
+    // Grouping and source order cannot create two definition identities.
+    sim_assert_eq!(have: regrouped, want: minimized.clone());
+    sim_assert_eq!(
+        have: minimized.pointer("/properties/left/$ref"),
+        want: Some(&Value::String("#/$defs/1".to_string()))
+    );
+    sim_assert_eq!(
+        have: minimized.pointer("/properties/right/$ref"),
+        want: Some(&Value::String("#/$defs/1".to_string()))
+    );
+    sim_assert_eq!(
+        have: minimized.pointer("/$defs/1/allOf").and_then(Value::as_array).map(Vec::len),
+        want: Some(3)
+    );
+}
+
+#[test]
+fn logical_normal_form_does_not_flatten_annotated_junctor_wrappers() {
+    let schema = json!({
+        "allOf": [
+            {
+                "allOf": [
+                    { "type": "string" },
+                    { "minLength": 3 }
+                ],
+                "title": "annotation boundary"
+            },
+            { "type": "string" }
+        ]
+    });
+
+    let mut normalized = schema.clone();
+    normalize_logical_schema(&mut normalized);
+
+    sim_assert_eq!(
+        have: normalized.pointer("/allOf/0/title"),
+        want: Some(&Value::String("annotation boundary".to_string()))
+    );
+    sim_assert_eq!(
+        have: normalized.pointer("/allOf/0/allOf").and_then(Value::as_array).map(Vec::len),
+        want: Some(2)
+    );
+}
+
+#[test]
+fn logical_normal_form_keeps_duplicate_one_of_arms() {
+    let schema = json!({
+        "oneOf": [
+            { "type": "string" },
+            { "type": "string" }
+        ],
+        "allOf": [
+            { "type": "number" },
+            { "type": "number" }
+        ]
+    });
+
+    let mut normalized = schema.clone();
+    normalize_logical_schema(&mut normalized);
+
+    sim_assert_eq!(
+        have: normalized.pointer("/oneOf").and_then(Value::as_array).map(Vec::len),
+        want: Some(2)
+    );
+    sim_assert_eq!(
+        have: normalized.pointer("/allOf").and_then(Value::as_array).map(Vec::len),
+        want: Some(1)
     );
 }

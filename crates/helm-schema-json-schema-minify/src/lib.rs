@@ -19,9 +19,15 @@ const DEFINITION_REF_PREFIX: &str = "#/$defs/";
 /// extension metadata, are never replaced with `$ref`.
 #[must_use]
 #[tracing::instrument(skip_all)]
-pub fn minimize_schema(schema: Value) -> Value {
+pub fn minimize_schema(mut schema: Value) -> Value {
     if !can_insert_generated_definitions(&schema) {
         return schema;
+    }
+
+    let existing_definitions = remove_definitions(&mut schema);
+    normalize_logical_schema(&mut schema);
+    if !existing_definitions.is_empty() {
+        insert_definitions(&mut schema, existing_definitions);
     }
 
     let mut candidate_schema = schema.clone();
@@ -265,6 +271,105 @@ fn candidate_fingerprint(schema: &Value) -> Option<String> {
         return None;
     }
     Some(helm_schema_json_schema_walk::canonical_json_string(schema))
+}
+
+fn normalize_logical_schema(schema: &mut Value) {
+    visit_subschemas_mut(schema, &mut normalize_logical_schema);
+    let Value::Object(object) = schema else {
+        return;
+    };
+    for keyword in ["allOf", "anyOf"] {
+        let Some(Value::Array(items)) = object.get_mut(keyword) else {
+            continue;
+        };
+        let mut flattened = Vec::new();
+        for mut item in std::mem::take(items) {
+            let nested = match &mut item {
+                Value::Object(child) if child.len() == 1 => {
+                    child.get_mut(keyword).and_then(Value::as_array_mut)
+                }
+                _ => None,
+            };
+            if let Some(nested) = nested {
+                flattened.append(nested);
+            } else {
+                flattened.push(item);
+            }
+        }
+        let mut buckets = BTreeMap::<u128, Vec<Value>>::new();
+        for item in flattened {
+            let bucket = buckets.entry(logical_sort_digest(&item)).or_default();
+            if !bucket.contains(&item) {
+                bucket.push(item);
+            }
+        }
+        *items = buckets
+            .into_values()
+            .flat_map(|mut bucket| {
+                if bucket.len() > 1 {
+                    bucket.sort_by_cached_key(helm_schema_json_schema_walk::canonical_json_string);
+                }
+                bucket
+            })
+            .collect();
+    }
+}
+
+fn logical_sort_digest(value: &Value) -> u128 {
+    fn update(hash: &mut u128, value: &Value) {
+        match value {
+            Value::Null => update_bytes(hash, &[0]),
+            Value::Bool(value) => update_bytes(hash, &[1, u8::from(*value)]),
+            Value::Number(value) => {
+                update_bytes(hash, &[2]);
+                update_sized_bytes(hash, value.to_string().as_bytes());
+            }
+            Value::String(value) => {
+                update_bytes(hash, &[3]);
+                update_sized_bytes(hash, value.as_bytes());
+            }
+            Value::Array(values) => {
+                update_bytes(hash, &[4]);
+                update_len(hash, values.len());
+                for value in values {
+                    update(hash, value);
+                }
+            }
+            Value::Object(object) => {
+                update_bytes(hash, &[5]);
+                update_len(hash, object.len());
+                let mut keys = object.keys().collect::<Vec<_>>();
+                keys.sort();
+                for key in keys {
+                    update_sized_bytes(hash, key.as_bytes());
+                    if let Some(value) = object.get(key) {
+                        update(hash, value);
+                    }
+                }
+            }
+        }
+    }
+
+    fn update_len(hash: &mut u128, len: usize) {
+        update_bytes(hash, &u64::try_from(len).unwrap_or(u64::MAX).to_be_bytes());
+    }
+
+    fn update_sized_bytes(hash: &mut u128, bytes: &[u8]) {
+        update_len(hash, bytes.len());
+        update_bytes(hash, bytes);
+    }
+
+    fn update_bytes(hash: &mut u128, bytes: &[u8]) {
+        const FNV_PRIME: u128 = 0x0000_0000_0100_0000_0000_0000_0000_013b;
+        for byte in bytes {
+            *hash ^= u128::from(*byte);
+            *hash = hash.wrapping_mul(FNV_PRIME);
+        }
+    }
+
+    let mut hash = 0x6c62_272e_07bb_0142_62b8_2175_6295_c58d;
+    update(&mut hash, value);
+    hash
 }
 
 fn contains_unsafe_reference_scope_keyword(value: &Value) -> bool {

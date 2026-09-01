@@ -20,16 +20,16 @@
     "5": {
       "allOf": [
         {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
           "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
         },
         {
           "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
           }
         }
       ],
@@ -39,27 +39,22 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "type": "boolean"
+            "maxItems": 0,
+            "type": "array"
           },
           {
             "type": "integer"
           },
           {
-            "type": "null"
-          },
-          {
-            "type": "number"
-          },
-          {
             "allOf": [
               {
                 "not": {
-                  "pattern": ":[ \\t]|:$"
+                  "pattern": "[ \\t]#"
                 }
               },
               {
                 "not": {
-                  "pattern": "[ \\t]#"
+                  "pattern": ":[ \\t]|:$"
                 }
               },
               {
@@ -71,8 +66,13 @@
             "type": "string"
           },
           {
-            "maxItems": 0,
-            "type": "array"
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
           },
           {
             "maxProperties": 0,
@@ -84,12 +84,12 @@
         "allOf": [
           {
             "not": {
-              "pattern": ":[ \\t]|:$"
+              "pattern": "[ \\t]#"
             }
           },
           {
             "not": {
-              "pattern": "[ \\t]#"
+              "pattern": ":[ \\t]|:$"
             }
           },
           {
@@ -121,42 +121,7 @@
       "allOf": [
         {
           "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
             "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
@@ -166,7 +131,42 @@
         },
         {
           "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
             "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         }
       ],
@@ -214,12 +214,6 @@
       "allOf": [
         {
           "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "additionalProperties": {
             "type": [
               "string",
               "null"
@@ -230,6 +224,12 @@
             "object",
             "null"
           ]
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
         }
       ]
     },
@@ -239,19 +239,6 @@
     },
     "E": {
       "allOf": [
-        {
-          "not": {
-            "properties": {
-              "buildMode": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "buildMode"
-            ],
-            "type": "object"
-          }
-        },
         {
           "not": {
             "properties": {
@@ -269,6 +256,19 @@
             },
             "required": [
               "nfs"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "buildMode": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "buildMode"
             ],
             "type": "object"
           }
@@ -434,12 +434,6 @@
       "allOf": [
         {
           "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "additionalProperties": {
             "type": [
               "string",
               "null"
@@ -450,6 +444,12 @@
             "object",
             "null"
           ]
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
         }
       ]
     },
@@ -1325,140 +1325,18 @@
     "r": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
           "allOf": [
             {
               "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
               }
             },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "allOf": [
             {
               "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
             },
             {
               "not": {
                 "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
               }
             }
           ],
@@ -1474,15 +1352,137 @@
           "type": "string"
         },
         {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
         },
         {
           "pattern": "^[ \\t]*(#.*)?$",
           "type": "string"
         },
         {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
           "type": "null"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            }
+          ],
+          "type": "string"
         }
       ]
     },
@@ -1553,42 +1553,7 @@
       "allOf": [
         {
           "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
             "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
@@ -1598,7 +1563,42 @@
         },
         {
           "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
             "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         }
       ],
@@ -1750,188 +1750,34 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "tag": {
-              "$ref": "#/$defs/helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "podSecurityPolicy": {
-            "$ref": "#/$defs/l"
-          }
-        },
-        "required": [
-          "podSecurityPolicy"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "labels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/F"
-              },
-              {
-                "$ref": "#/$defs/1"
-              }
-            ],
-            "description": "Additional labels for any resource created"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/k"
+            "not": {
+              "properties": {
+                "storageClass": {}
+              },
+              "required": [
+                "storageClass"
+              ],
+              "type": "object"
+            }
           },
           {
             "properties": {
-              "podDisruptionBudget": {
-                "$ref": "#/$defs/l"
+              "storageClass": {
+                "enum": [
+                  null
+                ]
               }
             },
             "required": [
-              "podDisruptionBudget"
+              "storageClass"
             ],
             "type": "object"
-          },
-          {
-            "$ref": "#/$defs/y"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "$ref": "#/$defs/m"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/j"
           }
         ]
       },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/C"
-                  },
-                  {
-                    "$ref": "#/$defs/1"
-                  }
-                ],
-                "description": "Additional labels for any resource created"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/$defs/r"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "leaderElection": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "When set to false leader election will be disabled",
-              "type": [
-                "boolean",
-                "null"
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      }
+      "then": false
     },
     {
       "if": {
@@ -1957,439 +1803,6 @@
                 "items": {
                   "$ref": "#/$defs/providerSchema3"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/j"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "mountOptions": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {},
-                        "items": {},
-                        "type": "object"
-                      },
-                      {
-                        "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
-                        "items": {
-                          "$ref": "#/$defs/h"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "storageClass": {
-                "additionalProperties": {},
-                "description": "For creating the StorageClass automatically:",
-                "properties": {
-                  "archiveOnDelete": {
-                    "$ref": "#/$defs/helm-double-quoted-safe",
-                    "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/k"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "mountOptions": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "storageClass": {
-                "additionalProperties": {},
-                "description": "For creating the StorageClass automatically:",
-                "properties": {
-                  "accessModes": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/6"
-                      },
-                      {
-                        "$ref": "#/$defs/A"
-                      },
-                      {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/E"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "$ref": "#/$defs/p"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/6"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          }
-                        ],
-                        "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
-                        "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/k"
-          },
-          {
-            "$ref": "#/$defs/E"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "required": [
-                  "path"
-                ],
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/y"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/6"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/9"
-                      },
-                      {
-                        "$ref": "#/$defs/a"
-                      },
-                      {
-                        "$ref": "#/$defs/b"
-                      },
-                      {
-                        "$ref": "#/$defs/d"
-                      },
-                      {
-                        "$ref": "#/$defs/c"
-                      },
-                      {
-                        "$ref": "#/$defs/8"
-                      },
-                      {
-                        "$ref": "#/$defs/g"
-                      },
-                      {
-                        "$ref": "#/$defs/e"
-                      },
-                      {
-                        "$ref": "#/$defs/f"
-                      },
-                      {
-                        "$ref": "#/$defs/7"
-                      }
-                    ],
-                    "description": "Name of the object being referenced.",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/5"
-                  },
-                  {
-                    "$ref": "#/$defs/1"
-                  }
-                ],
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/j"
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "onDelete": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "onDelete"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "onDelete": {
-                "$ref": "#/$defs/helm-double-quoted-safe",
-                "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/j"
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "pathPattern": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "pathPattern"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "pathPattern": {
-                "$ref": "#/$defs/helm-double-quoted-safe",
-                "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
               }
             }
           }
@@ -2440,14 +1853,344 @@
           {
             "not": {
               "properties": {
-                "image": {}
+                "rbac": {}
               },
               "required": [
-                "image"
+                "rbac"
               ],
               "type": "object"
             }
           },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "pathPattern": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "pathPattern"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/j"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "pathPattern": {
+                "$ref": "#/$defs/helm-double-quoted-safe",
+                "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "podSecurityPolicy": {
+            "$ref": "#/$defs/l"
+          }
+        },
+        "required": [
+          "podSecurityPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "labels": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/1"
+              },
+              {
+                "$ref": "#/$defs/F"
+              }
+            ],
+            "description": "Additional labels for any resource created"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/k"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountOptions": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "storageClass": {
+                "additionalProperties": {},
+                "description": "For creating the StorageClass automatically:",
+                "properties": {
+                  "accessModes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/3"
+                      },
+                      {
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/A"
+                      }
+                    ],
+                    "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/k"
+          },
+          {
+            "$ref": "#/$defs/E"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "podSecurityPolicy": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podSecurityPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "podSecurityPolicy": {}
+              },
+              "required": [
+                "podSecurityPolicy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "properties": {
               "image": {
@@ -2460,10 +2203,45 @@
               "image"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
     },
     {
       "if": {
@@ -2498,18 +2276,50 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "nfs": {}
-              },
-              "required": [
-                "nfs"
-              ],
-              "type": "object"
-            }
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "onDelete": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "onDelete"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
           },
+          {
+            "$ref": "#/$defs/j"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "onDelete": {
+                "$ref": "#/$defs/helm-double-quoted-safe",
+                "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "properties": {
               "nfs": {
@@ -2522,37 +2332,17 @@
               "nfs"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "podDisruptionBudget": {}
-              },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
-            }
           },
           {
-            "properties": {
-              "podDisruptionBudget": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
+            "not": {
+              "properties": {
+                "nfs": {}
+              },
+              "required": [
+                "nfs"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -2562,130 +2352,343 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "podSecurityPolicy": {}
-              },
-              "required": [
-                "podSecurityPolicy"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "podSecurityPolicy": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podSecurityPolicy"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {}
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/k"
           },
           {
             "properties": {
               "serviceAccount": {
-                "enum": [
-                  null
-                ]
+                "$ref": "#/$defs/m"
               }
             },
             "required": [
               "serviceAccount"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
           {
-            "not": {
-              "properties": {
-                "storageClass": {}
-              },
-              "required": [
-                "storageClass"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/y"
           },
           {
             "properties": {
-              "storageClass": {
-                "enum": [
-                  null
-                ]
+              "podDisruptionBudget": {
+                "$ref": "#/$defs/l"
               }
             },
             "required": [
-              "storageClass"
+              "podDisruptionBudget"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/$defs/j"
           }
         ]
       },
-      "then": false
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/1"
+                  },
+                  {
+                    "$ref": "#/$defs/C"
+                  }
+                ],
+                "description": "Additional labels for any resource created"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "$ref": "#/$defs/r"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "tag": {
+              "$ref": "#/$defs/helm-double-quoted-safe"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/j"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountOptions": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "items": {},
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
+                        "items": {
+                          "$ref": "#/$defs/h"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "items": {},
+                        "type": "array"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "storageClass": {
+                "additionalProperties": {},
+                "description": "For creating the StorageClass automatically:",
+                "properties": {
+                  "archiveOnDelete": {
+                    "$ref": "#/$defs/helm-double-quoted-safe",
+                    "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/E"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          }
+                        ],
+                        "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/3"
+                      },
+                      {
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
+                      },
+                      {
+                        "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "$ref": "#/$defs/p"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "leaderElection": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "When set to false leader election will be disabled",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/y"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/5"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/a"
+                      },
+                      {
+                        "$ref": "#/$defs/f"
+                      },
+                      {
+                        "$ref": "#/$defs/9"
+                      },
+                      {
+                        "$ref": "#/$defs/d"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
+                      },
+                      {
+                        "$ref": "#/$defs/g"
+                      },
+                      {
+                        "$ref": "#/$defs/8"
+                      },
+                      {
+                        "$ref": "#/$defs/b"
+                      },
+                      {
+                        "$ref": "#/$defs/c"
+                      },
+                      {
+                        "$ref": "#/$defs/e"
+                      }
+                    ],
+                    "description": "Name of the object being referenced.",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/1"
+                  },
+                  {
+                    "$ref": "#/$defs/6"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "properties": {
     "affinity": {
       "anyOf": [
+        {
+          "$ref": "#/$defs/1"
+        },
         {
           "additionalProperties": false,
           "description": "Affinity is a group of affinity scheduling rules.",
@@ -2842,9 +2845,6 @@
           "$ref": "#/$defs/i"
         },
         {
-          "$ref": "#/$defs/1"
-        },
-        {
           "type": "null"
         }
       ]
@@ -2857,45 +2857,6 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/9"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
-                },
-                {
-                  "$ref": "#/$defs/7"
-                }
-              ],
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/5"
             },
             {
@@ -2906,10 +2867,49 @@
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/6"
             },
             {
               "$ref": "#/$defs/4"
+            },
+            {
+              "$ref": "#/$defs/2"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/a"
+                },
+                {
+                  "$ref": "#/$defs/f"
+                },
+                {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
+                  "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/e"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
             }
           ]
         },
@@ -2920,6 +2920,12 @@
     },
     "imagePullSecrets": {
       "anyOf": [
+        {
+          "$ref": "#/$defs/1"
+        },
+        {
+          "type": "null"
+        },
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
           "items": {
@@ -2943,25 +2949,19 @@
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
           "x-kubernetes-patch-strategy": "merge"
-        },
-        {
-          "$ref": "#/$defs/1"
-        },
-        {
-          "type": "null"
         }
       ]
     },
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/1"
         },
         {
           "$ref": "#/$defs/C"
         },
         {
-          "$ref": "#/$defs/1"
+          "$ref": "#/$defs/i"
         }
       ],
       "description": "Additional labels for any resource created"
@@ -2977,10 +2977,10 @@
               ]
             },
             {
-              "type": "boolean"
+              "type": "null"
             },
             {
-              "type": "null"
+              "type": "boolean"
             }
           ],
           "description": "When set to false leader election will be disabled"
@@ -3001,7 +3001,55 @@
           "then": {
             "allOf": [
               {
-                "$ref": "#/$defs/p"
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          }
+                        ],
+                        "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
               },
               {
                 "additionalProperties": {},
@@ -3009,59 +3057,59 @@
                   "reclaimPolicy": {
                     "anyOf": [
                       {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/3"
+                      },
+                      {
                         "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
                             "$ref": "#/$defs/a"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
                             "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
                           }
                         ],
                         "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
                         "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
                         "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
                       }
                     ],
                     "description": "Reclaim policy for the main nfs volume"
@@ -3069,55 +3117,7 @@
                 }
               },
               {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/6"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          }
-                        ],
-                        "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/5"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/p"
               }
             ]
           }
@@ -3130,18 +3130,18 @@
               "const": null
             },
             {
+              "$ref": "#/$defs/1"
+            },
+            {
+              "type": "object"
+            },
+            {
               "description": "mountOptions is the list of mount options, e.g. [\"ro\", \"soft\"]. Not validated - mount will simply fail if one is invalid. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#mount-options",
               "items": {},
               "type": "array"
             },
             {
-              "$ref": "#/$defs/1"
-            },
-            {
               "type": "null"
-            },
-            {
-              "type": "object"
             }
           ]
         },
@@ -3161,56 +3161,56 @@
         "server": {
           "anyOf": [
             {
-              "$ref": "#/$defs/providerSchema1"
+              "const": null
             },
             {
-              "const": null
+              "$ref": "#/$defs/providerSchema1"
             }
           ]
         },
         "volumeName": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/5"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/9"
-                },
-                {
                   "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/e"
                 },
                 {
                   "$ref": "#/$defs/f"
                 },
                 {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
                   "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/e"
                 }
               ],
               "description": "This must match the Name of a Volume.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/6"
             }
           ]
         }
@@ -3223,7 +3223,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/1"
         },
         {
           "additionalProperties": {
@@ -3234,7 +3234,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/1"
+          "$ref": "#/$defs/i"
         },
         {
           "type": "null"
@@ -3244,13 +3244,13 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "$ref": "#/$defs/1"
+        },
+        {
           "$ref": "#/$defs/i"
         },
         {
           "$ref": "#/$defs/n"
-        },
-        {
-          "$ref": "#/$defs/1"
         }
       ],
       "description": "Deployment pod annotations"
@@ -3268,18 +3268,9 @@
               "maxUnavailable": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1"
-                  },
-                  {
                     "oneOf": [
                       {
                         "anyOf": [
-                          {
-                            "$ref": "#/$defs/6"
-                          },
-                          {
-                            "$ref": "#/$defs/A"
-                          },
                           {
                             "$ref": "#/$defs/5"
                           },
@@ -3287,13 +3278,19 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/2"
+                            "$ref": "#/$defs/6"
                           },
                           {
                             "$ref": "#/$defs/4"
                           },
                           {
+                            "$ref": "#/$defs/2"
+                          },
+                          {
                             "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/A"
                           }
                         ]
                       },
@@ -3303,16 +3300,16 @@
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/x"
-                          },
-                          {
-                            "$ref": "#/$defs/2"
+                            "type": "integer"
                           },
                           {
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "type": "integer"
+                            "$ref": "#/$defs/x"
+                          },
+                          {
+                            "$ref": "#/$defs/2"
                           },
                           {
                             "type": "null"
@@ -3320,6 +3317,9 @@
                         ]
                       }
                     ]
+                  },
+                  {
+                    "$ref": "#/$defs/1"
                   }
                 ]
               }
@@ -3468,18 +3468,24 @@
           "$ref": "#/$defs/3"
         },
         {
+          "$ref": "#/$defs/4"
+        },
+        {
           "$ref": "#/$defs/x"
         },
         {
           "$ref": "#/$defs/2"
-        },
-        {
-          "$ref": "#/$defs/4"
         }
       ]
     },
     "resources": {
       "anyOf": [
+        {
+          "$ref": "#/$defs/1"
+        },
+        {
+          "$ref": "#/$defs/i"
+        },
         {
           "additionalProperties": false,
           "description": "ResourceRequirements describes the compute resource requirements.",
@@ -3554,12 +3560,6 @@
             }
           },
           "type": "object"
-        },
-        {
-          "$ref": "#/$defs/i"
-        },
-        {
-          "$ref": "#/$defs/1"
         },
         {
           "type": "null"
@@ -3679,35 +3679,13 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/n"
-                      },
-                      {
-                        "$ref": "#/$defs/1"
-                      }
-                    ],
-                    "description": "Annotations to add to the service account"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
                   "name": {
                     "anyOf": [
-                      {
-                        "$ref": "#/$defs/6"
-                      },
                       {
                         "$ref": "#/$defs/u"
                       },
                       {
                         "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/D"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3716,13 +3694,35 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/2"
+                        "$ref": "#/$defs/6"
                       },
                       {
                         "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/D"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
                       }
                     ],
                     "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/n"
+                      }
+                    ],
+                    "description": "Annotations to add to the service account"
                   }
                 }
               }
@@ -3740,45 +3740,6 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/9"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
-                },
-                {
-                  "$ref": "#/$defs/7"
-                }
-              ],
-              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/5"
             },
             {
@@ -3792,15 +3753,54 @@
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/6"
             },
             {
               "$ref": "#/$defs/4"
             },
             {
+              "$ref": "#/$defs/2"
+            },
+            {
               "type": "null"
             },
             {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/a"
+                },
+                {
+                  "$ref": "#/$defs/f"
+                },
+                {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
+                  "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/b"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/e"
+                }
+              ],
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "string"
             }
           ],
@@ -3821,44 +3821,13 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "allowVolumeExpansion": {
-                    "anyOf": [
-                      {
-                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
-                        "type": "boolean"
-                      },
-                      {
-                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
-                      }
-                    ],
-                    "description": "Allow volume to be expanded dynamically"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/1"
+                        "$ref": "#/$defs/n"
                       }
                     ],
                     "description": "Storage class annotations"
@@ -3873,25 +3842,25 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/6"
-                          },
-                          {
                             "$ref": "#/$defs/u"
                           },
                           {
                             "$ref": "#/$defs/5"
                           },
                           {
-                            "$ref": "#/$defs/D"
-                          },
-                          {
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/2"
+                            "$ref": "#/$defs/6"
                           },
                           {
                             "$ref": "#/$defs/4"
+                          },
+                          {
+                            "$ref": "#/$defs/D"
+                          },
+                          {
+                            "$ref": "#/$defs/2"
                           }
                         ]
                       },
@@ -3909,45 +3878,6 @@
                   "reclaimPolicy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/6"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          }
-                        ],
-                        "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
-                        "type": "string"
-                      },
-                      {
                         "$ref": "#/$defs/5"
                       },
                       {
@@ -3958,10 +3888,49 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/2"
+                        "$ref": "#/$defs/6"
                       },
                       {
                         "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          }
+                        ],
+                        "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
+                        "type": "string"
                       }
                     ],
                     "description": "Method used to reclaim an obsoleted volume"
@@ -3971,62 +3940,93 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "volumeBindingMode": {
+                  "allowVolumeExpansion": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/6"
+                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
+                        "type": "null"
                       },
                       {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          }
-                        ],
-                        "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
+                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
+                        "type": "boolean"
+                      },
+                      {
+                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
                         "type": "string"
                       },
                       {
+                        "$ref": "#/$defs/3"
+                      },
+                      {
+                        "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
+                      }
+                    ],
+                    "description": "Allow volume to be expanded dynamically"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "volumeBindingMode": {
+                    "anyOf": [
+                      {
                         "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/3"
                       },
                       {
                         "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/3"
+                        "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/2"
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          }
+                        ],
+                        "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
+                        "type": "string"
                       },
                       {
                         "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
                       }
                     ],
                     "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer"
@@ -4077,59 +4077,59 @@
     "strategyType": {
       "anyOf": [
         {
-          "$ref": "#/$defs/6"
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/3"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/9"
-            },
-            {
               "$ref": "#/$defs/a"
-            },
-            {
-              "$ref": "#/$defs/b"
-            },
-            {
-              "$ref": "#/$defs/d"
-            },
-            {
-              "$ref": "#/$defs/c"
-            },
-            {
-              "$ref": "#/$defs/8"
-            },
-            {
-              "$ref": "#/$defs/g"
-            },
-            {
-              "$ref": "#/$defs/e"
             },
             {
               "$ref": "#/$defs/f"
             },
             {
+              "$ref": "#/$defs/9"
+            },
+            {
+              "$ref": "#/$defs/d"
+            },
+            {
               "$ref": "#/$defs/7"
+            },
+            {
+              "$ref": "#/$defs/g"
+            },
+            {
+              "$ref": "#/$defs/8"
+            },
+            {
+              "$ref": "#/$defs/b"
+            },
+            {
+              "$ref": "#/$defs/c"
+            },
+            {
+              "$ref": "#/$defs/e"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/5"
+          "$ref": "#/$defs/6"
         },
         {
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/3"
+          "$ref": "#/$defs/4"
         },
         {
           "$ref": "#/$defs/2"
-        },
-        {
-          "$ref": "#/$defs/4"
         }
       ]
     },

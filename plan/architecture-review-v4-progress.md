@@ -6279,3 +6279,168 @@
 - Measured production LOC delta: 0. The rejected candidate peaked at 65,423 lines (+466), but all
   production and test changes were removed. The next session resumes at the `$defs` ordering
   prerequisite, before B5a; B5b, B5c, C2, and the remaining wave-2 scope are untouched.
+
+## B5 prerequisite — canonical logical-schema fingerprints
+
+- Status: in progress; commit pending.
+- Contract: behavior-bearing output canonicalization. Give schema minimization one logical
+  fingerprint for validation-equivalent `allOf` and `anyOf` grouping, ordering, and duplication.
+  Definition planning, replacement, and emitted definition bodies consume that same normalized
+  shape so `$defs` sharing and names no longer depend on incidental capture/conjunction
+  presentation. This is the prerequisite required by the B5a and E2 ordering findings.
+- Acceptance baseline: `f2bdee35` (production-equivalent to `6dee3291`).
+- Baseline production Rust LOC: 64,957.
+- Pre-registered acceptance expectations:
+  - Zero corpus acceptance flips and zero candidate-accepts/Helm-aborts cells.
+  - Fixture changes are limited to deterministic `$defs` selection, normalized logical-combinator
+    grouping/order, rewritten internal references, and the policy fingerprint derived from those
+    output bytes. Root properties, defaults, descriptions, runtime kinds, requirements, and
+    unreferenced inline schemas remain unchanged.
+  - `allOf` and `anyOf` arms are recursively normalized, flattened only through an object whose sole
+    validation keyword is the same junctor, sorted by canonical JSON bytes, and deduplicated.
+    `oneOf` is not deduplicated because duplicate arms change its validation semantics.
+  - Objects carrying annotations, `$id`/anchor scope, unevaluated keywords, or any sibling keyword
+    are never flattened through their junctor wrapper. Unsafe reference scopes remain ineligible for
+    generated definitions exactly as before.
+  - Candidate counting, savings calculation, definition planning, replacement lookup, and emitted
+    definition values use one normalized schema; no raw-vs-normalized compatibility map is allowed.
+  - Repeated runs on the same input are byte-identical. Reordering or regrouping equivalent
+    `allOf`/`anyOf` arms before minimization produces the same final schema bytes.
+  - Public/wire decision: the minimized schema's `$defs` names and grouping are intentionally
+    canonicalized. This changes generated output bytes but not the public Rust API or accepted
+    values language; the exact changed fixture family is adjudicated as this round's output-format
+    decision under Part F.
+  - Mandatory base and third-level probe drops remain zero. Every changed acceptance cell requires
+    Helm 4.2.3 adjudication, and the accepted-abort allowance remains zero.
+
+- Measured results:
+  - The minifier now removes the existing root `$defs`, recursively normalizes schema positions,
+    and restores the caller-owned definitions unchanged before candidate collection. Generated
+    candidates, replacement lookup, and emitted generated definitions consequently share one
+    normalized schema tree; there is no raw-versus-normalized compatibility map.
+  - `allOf` and `anyOf` normalize bottom-up. A wrapper is flattened only when it is an object whose
+    sole key is the same junctor; annotation, reference-scope, evaluation, and other sibling
+    boundaries remain intact. `oneOf` arms retain their source multiplicity.
+  - Logical arms use a stable structural 128-bit digest for the common ordering path. Equal-digest
+    collision buckets compare canonical JSON strings, so a collision can affect neither
+    determinism nor deduplication correctness. The digest is an ordering accelerator, not an
+    equality or semantic identity oracle.
+  - Full equality tests prove that regrouped and reordered equivalent conjunctions minimize to one
+    definition and identical complete schema bytes. Separate controls prove annotated wrappers are
+    preserved and duplicate `oneOf` arms remain semantically significant.
+  - The authoritative clean dump writes 84 artifacts from 62 passing tests. Exactly 60 tracked
+    fixtures change: 54 chart-corpus schemas, three lean-profile schemas, and three final-output
+    schemas. Generator-only fixtures and the remaining profile/final-output controls stay exact.
+    All changes are confined to logical-arm order/grouping, generated-definition selection or
+    numbering and dependent internal references, plus the final-output policy fingerprint derived
+    from those bytes.
+  - The full-depth battery reports zero acceptance flips. Canonical output therefore changes no
+    tested accepted-values language and introduces no candidate-accepts/Helm-aborts cell.
+
+- Deviations:
+  - Rejected preflight `final1` normalized each candidate independently while fingerprinting. Its
+    62/62 dump passed but took 255.183 seconds and repeated normalization work at every occurrence;
+    no artifact was adopted.
+  - Rejected preflight `final2` moved normalization to the whole generated schema and sorted every
+    arm by a cached canonical JSON string. Its 62/62 dump passed in 234.912 seconds, but the
+    temporary strings retained avoidable allocation proportional to every logical arm.
+  - Rejected preflight `final3` used a cryptographic SHA digest as the sort key. Its 62/62 dump
+    passed in 245.678 seconds, but a cryptographic dependency and cost are unnecessary for a stable
+    in-process ordering key; no artifact was adopted.
+  - Adopted preflight `final4` replaces SHA with an in-module deterministic FNV-1a structural
+    digest and canonical-string collision fallback. Its 62/62 clean dump passed in 234.562 seconds,
+    effectively flat against S-B's 234.805-second clean dump on the non-idle host. The later
+    `final5` archive rebuilds the exact final test tree and is the sole authoritative artifact.
+  - The pre-registration described arm ordering by canonical JSON bytes. The adopted implementation
+    produces a deterministic digest order instead, with canonical bytes only inside collision
+    buckets. This is an intentional implementation-level deviation: byte ordering itself is newly
+    owned by this round, while equivalence, stability, and collision correctness are preserved and
+    exhaustively tested. It avoids turning serialization allocation into the normal hot path.
+  - No fixture from a rejected preflight was adopted. The 60 changed tracked fixtures were copied
+    once from the final4 production-equivalent clean dump; final5 independently reproduces every
+    adopted byte from the exact final source and test tree.
+
+- Adjudication evidence:
+  - Helm `v4.2.3+g43e8b7f` remains selected by the committed mise pin and accepted by the battery
+    version guard.
+  - The final5 full-depth battery checks 60 charts and 121,061 probes: 112,260/112,260 mandatory
+    base probes and 7,465/7,465 mandatory third-level probes are emitted, with zero drops in either
+    category. It emits 430 guard witness pairs and 238 composite pairs, while disclosing 52,554
+    bounded reductions in capped categories.
+  - The battery reports zero flips, so no individual Helm rendering cell required fixture
+    adjudication. Helm adjudication was enabled; candidate-accepts/Helm-aborts is 0 against an
+    allowance of 0.
+
+### Producer and route coverage
+
+| Route | Canonicalization boundary | Verification |
+|---|---|---|
+| Root generated schema | Normalize once before candidate collection | Full corpus and repeated-run equality. |
+| Existing caller `$defs` | Remove before normalization; restore unchanged | Existing-definition controls and full output fixtures. |
+| Candidate identity | Exact canonical JSON of the normalized subtree | Regrouped/reordered full-schema equality. |
+| Definition planning | One normalized candidate count and savings input | 60 changed fixtures and minifier unit controls. |
+| Replacement lookup | Same normalized schema traversed for fingerprints | Both equivalent properties reference one definition. |
+| Emitted generated definitions | Clone from the normalized tree | Definition body has one flat, deduplicated junctor. |
+| Annotation and scope wrappers | Never flattened through sibling keywords | Annotated-wrapper and unsafe-reference tests. |
+| `oneOf` | Recursed into, never flattened or deduplicated | Duplicate-arm semantic control. |
+
+### Review dossier
+
+- Focused proof: minifier Clippy exits 0; 13/13 minifier tests pass, including the new complete
+  schema equality and semantic-boundary controls.
+- Final immutable build: absolute step-local build `TMPDIR`; exit 0, 90 binaries and 128 files
+  archived to `/private/tmp/arch-v4-def-order-final5.tar.zst` in 2.11 seconds.
+- Clean schema dump: the final5 archive under its absolute step-local schema `TMPDIR`; exit 0,
+  62/62 tests pass in 230.575 seconds and 84 artifacts are written in one batch. Direct comparison
+  of all 56 chart, four lean-profile, and four final-output artifacts against the adopted fixtures
+  checks 64/64 exact with zero mismatches.
+- Full-depth proof: the same archive under its absolute step-local prober `TMPDIR`, acceptance
+  baseline `f2bdee35`, and Helm adjudication enabled; exit 0 in 77.380 seconds, 60 charts, 121,061
+  probes, zero flips, zero unallowed accepted-abort cells, and zero mandatory drops.
+- Public/wire decision: no Rust public API changes. Generated schema bytes intentionally acquire a
+  canonical logical-junctor order and definition allocation; the 60-file fixture update is the
+  reviewed wire-format decision. JSON Schema acceptance remains unchanged across the measured
+  battery.
+
+### Self-adversarial pass
+
+- Flattening a junctor wrapper with annotations or reference-scope siblings could alter annotation
+  collection or base URI semantics. The owner requires the wrapper object to have exactly one key,
+  a stricter boundary than trying to enumerate every non-validation keyword.
+- Deduplicating `oneOf` arms changes exclusive-choice truth counts. Only `allOf` and `anyOf`, where
+  duplicate arms are idempotent, enter the deduplication path.
+- A digest alone is not a collision-safe identity. Exact `Value` equality controls deduplication,
+  and canonical-string ordering resolves distinct values in the same digest bucket.
+- Normalizing caller-owned `$defs` would silently rewrite external identities and bodies. They are
+  removed before traversal and restored byte-for-byte; only generated definition allocation is
+  newly canonicalized.
+- Sorting only during candidate fingerprinting would let planning and emitted bodies observe
+  different representations. The schema tree is normalized once before every minifier phase.
+- Treating the 60-file rewrite as representation-only would hide a real wire-format decision. This
+  prerequisite is explicitly behavior-bearing in output bytes, and its zero-flip battery proves
+  acceptance equivalence rather than assuming it.
+
+### Gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0; whole-workspace Clippy and all three AST-grep policy tests pass in 21.08
+  seconds. Two pre-existing AST-grep scan warnings in the independent grammar tests remain
+  disclosed.
+- `task lint:fc`: exit 0; 48/48 feature combinations for 13 packages across Linux, Windows GNU,
+  and macOS pass in 125.80 seconds; the same two independent scan warnings follow the matrix.
+- `cargo nextest run --workspace`: exit 0; 1,325/1,325 tests pass, one slow, in 231.549 seconds.
+- `task test:integration`: exit 0; 565/565 tests pass, 24 skipped and 21 slow, in 1,944.505
+  seconds.
+- `task test:all`: exit 0; 1,894/1,894 tests pass, 24 skipped and 22 slow, including live-network
+  tests, in 2,020.632 seconds.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; the release binary is installed in
+  24.26 seconds.
+- Downstream luup2 `check:local` with the macOS shims, prefixed `PATH`, and
+  `HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema`: exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 65,055 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +98 (64,957 to 65,055). The new lines are the single logical-form
+  owner and collision-safe stable ordering implementation; no compatibility carrier, alternate
+  representation, or call-site adapter remains. No LOC promise applies.

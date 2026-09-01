@@ -30,57 +30,29 @@
           "type": "string"
         },
         {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
           "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
           "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
           "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
         }
       ]
     },
     "3": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "requiredText": {}
-            },
-            "required": [
-              "requiredText"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "requiredText": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "requiredText"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "4": {
       "allOf": [
         {
           "not": {
-            "pattern": ":[ \\t]|:$"
+            "pattern": "[ \\t]#"
           }
         },
         {
           "not": {
-            "pattern": "[ \\t]#"
+            "pattern": ":[ \\t]|:$"
           }
         },
         {
@@ -91,7 +63,7 @@
       ],
       "type": "string"
     },
-    "5": {
+    "4": {
       "properties": {
         "kind": {
           "enum": [
@@ -104,15 +76,15 @@
       ],
       "type": "object"
     },
-    "6": {
+    "5": {
       "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
       "type": "string"
     },
-    "7": {
+    "6": {
       "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "8": {
+    "7": {
       "pattern": "^[ \\t]*(#.*)?$",
       "type": "string"
     },
@@ -145,6 +117,155 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "properties": {
+                "host": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "host"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "host": {}
+                },
+                "required": [
+                  "host"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "host": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "local": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "local"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "local": {}
+              },
+              "required": [
+                "local"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "version": {}
+              },
+              "required": [
+                "version"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "version": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "version"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "local": {
+          "additionalProperties": {},
+          "properties": {
+            "kind": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "dynamic": {}
+              },
+              "required": [
+                "dynamic"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "dynamic": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "dynamic"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
     {
       "if": {
         "not": {
@@ -207,62 +328,6 @@
       }
     },
     {
-      "if": {
-        "not": {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "host": {}
-                },
-                "required": [
-                  "host"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "host": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "host"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "host": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "local": {
-          "additionalProperties": {},
-          "properties": {
-            "kind": {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "version": {
@@ -272,61 +337,8 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "worker": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "dynamic": {}
-              },
-              "required": [
-                "dynamic"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "dynamic": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "dynamic"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "guard": {}
-              },
-              "required": [
-                "guard"
-              ],
-              "type": "object"
-            }
-          },
           {
             "properties": {
               "guard": {
@@ -339,72 +351,32 @@
               "guard"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "guard": {}
+              },
+              "required": [
+                "guard"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": false
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "local": {}
-              },
-              "required": [
-                "local"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "local": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "local"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "version": {}
-              },
-              "required": [
-                "version"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "version": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "version"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
+      "additionalProperties": {},
+      "properties": {
+        "worker": {
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
     },
     {
       "if": {
@@ -423,10 +395,28 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/3"
+            "not": {
+              "properties": {
+                "requiredText": {}
+              },
+              "required": [
+                "requiredText"
+              ],
+              "type": "object"
+            }
           },
           {
-            "$ref": "#/$defs/3"
+            "properties": {
+              "requiredText": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "requiredText"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -471,12 +461,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/5"
+                "$ref": "#/$defs/4"
               },
               {
-                "not": {
-                  "$ref": "#/$defs/1"
-                }
+                "$ref": "#/$defs/1"
               }
             ]
           },
@@ -484,128 +472,7 @@
             "additionalProperties": {},
             "properties": {
               "setting": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "$ref": "#/$defs/4"
-                        },
-                        {
-                          "maxItems": 0,
-                          "type": "array"
-                        },
-                        {
-                          "maxProperties": 0,
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/$defs/4"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-                    "type": "string"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(null|Null|NULL)[ \\t]+#"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/7"
-                  },
-                  {
-                    "$ref": "#/$defs/6"
-                  },
-                  {
-                    "$ref": "#/$defs/8"
-                  }
-                ]
+                "type": "boolean"
               }
             }
           }
@@ -620,17 +487,6 @@
               "setting": {
                 "anyOf": [
                   {
-                    "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/7"
-                  },
-                  {
                     "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
                     "type": "string"
                   },
@@ -638,7 +494,18 @@
                     "$ref": "#/$defs/6"
                   },
                   {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/7"
+                  },
+                  {
+                    "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/5"
+                  },
+                  {
+                    "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
+                    "type": "boolean"
                   }
                 ]
               }
@@ -649,10 +516,12 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/1"
+                "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/5"
+                "not": {
+                  "$ref": "#/$defs/1"
+                }
               }
             ]
           },
@@ -660,7 +529,128 @@
             "additionalProperties": {},
             "properties": {
               "setting": {
-                "type": "boolean"
+                "anyOf": [
+                  {
+                    "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+                    "type": "null"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      }
+                    ],
+                    "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+                    "type": "string"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/6"
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "$ref": "#/$defs/3"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/$defs/3"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/7"
+                  },
+                  {
+                    "$ref": "#/$defs/5"
+                  }
+                ]
               }
             }
           }
@@ -675,15 +665,15 @@
               ]
             },
             {
-              "enum": [
-                "Service"
-              ]
-            },
-            {
               "type": "null"
             },
             {
               "type": "string"
+            },
+            {
+              "enum": [
+                "Service"
+              ]
             }
           ]
         },
@@ -705,21 +695,7 @@
           "if": {
             "anyOf": [
               {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
                 "allOf": [
-                  {
-                    "type": "object"
-                  },
                   {
                     "anyOf": [
                       {
@@ -747,8 +723,22 @@
                         "type": "object"
                       }
                     ]
+                  },
+                  {
+                    "type": "object"
                   }
                 ]
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
             ]
           },
