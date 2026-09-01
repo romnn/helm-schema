@@ -6571,7 +6571,7 @@
 
 ## B5 prerequisite 2b — complete canonical capture output family
 
-- Status: in progress; commit pending.
+- Status: landed in `3164e8c7` (`fix(ir): canonicalize capture conjunctions`).
 - Contract: behavior-bearing output canonicalization, retried from the clean `e6660809` tree with
   the complete measured artifact family. Canonicalize fail-capture and selected-string conjunction
   vectors once at `ContractIr` finalization, and reconstruct `RangeSelection`'s selected truthy tail
