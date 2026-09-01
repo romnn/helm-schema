@@ -6,6 +6,40 @@ use crate::observed_facts::{
     ActivatedValuesDefaultSource, ActivatedValuesRootOverlay, HintGrade, ObservedFacts,
 };
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
+use helm_schema_core::Predicate;
+
+fn canonicalize_capture_conjunction(predicates: Vec<Predicate>) -> Vec<Predicate> {
+    fn append(predicate: Predicate, out: &mut Vec<Predicate>) {
+        match predicate {
+            Predicate::True => {}
+            Predicate::And(items) => {
+                for item in items {
+                    append(item, out);
+                }
+            }
+            predicate => out.push(predicate),
+        }
+    }
+
+    let mut canonical = Vec::new();
+    for predicate in predicates {
+        append(predicate, &mut canonical);
+    }
+    canonical.sort();
+    canonical.dedup();
+    canonical
+}
+
+fn canonicalize_capture(
+    mut capture: crate::eval_effect::FailCapture,
+) -> crate::eval_effect::FailCapture {
+    capture.conjunction = canonicalize_capture_conjunction(capture.conjunction);
+    if let crate::eval_effect::CaptureKind::StringRequirement { selection, .. } = &mut capture.kind
+    {
+        *selection = canonicalize_capture_conjunction(std::mem::take(selection));
+    }
+    capture
+}
 
 /// Opaque guarded contract graph for one template interpretation.
 ///
@@ -318,11 +352,15 @@ impl ContractIr {
         let Self {
             uses,
             mut dependency_uses,
-            observed_facts,
+            mut observed_facts,
             values_program_wrappers,
             values_program_wrapper_exclusions,
             dependency_values_root_fragments,
         } = self;
+        observed_facts.captures = std::mem::take(&mut observed_facts.captures)
+            .into_iter()
+            .map(canonicalize_capture)
+            .collect();
         for source_expr in &dependency_values_root_fragments {
             dependency_uses.push(ContractUse::new(
                 helm_schema_core::ValuesPath::parse(source_expr),

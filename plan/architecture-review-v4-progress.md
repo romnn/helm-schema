@@ -6282,7 +6282,7 @@
 
 ## B5 prerequisite — canonical logical-schema fingerprints
 
-- Status: in progress; commit pending.
+- Status: landed in `e6660809` (`fix(minify): canonicalize logical schema definitions`).
 - Contract: behavior-bearing output canonicalization. Give schema minimization one logical
   fingerprint for validation-equivalent `allOf` and `anyOf` grouping, ordering, and duplication.
   Definition planning, replacement, and emitted definition bodies consume that same normalized
@@ -6444,3 +6444,259 @@
 - Measured production LOC delta: +98 (64,957 to 65,055). The new lines are the single logical-form
   owner and collision-safe stable ordering implementation; no compatibility carrier, alternate
   representation, or call-site adapter remains. No LOC promise applies.
+
+## B5a retry — canonical conjunctions and shared predicate nodes
+
+- Status: first retry rejected before fixture adoption; redirected through the behavior-bearing
+  canonical-capture prerequisite below.
+- Contract: representation-only. Retry the frozen B5a carrier migration after the canonical
+  logical-schema prerequisite removed `$defs` allocation's dependency on raw conjunction grouping.
+  Introduce one canonical `Conjunction` owner and private immutable predicate nodes behind `Arc`;
+  delete the scattered sort/dedup pairs without retaining producer-presentation compatibility
+  state.
+- Acceptance baseline: `e6660809`.
+- Baseline production Rust LOC: 65,055.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, ordering, corpus acceptance, or fixture byte changes.
+    The prerequisite's canonical output bytes are the baseline for this round.
+  - Predicate structural order remains exactly `True`, `False`, `Approximate`, `Guard`, `Not`,
+    `And`, `Or`, with each variant retaining its former derived field and recursive ordering.
+    Cached hashes are equality fast-rejects only and never participate in `Ord` or serialization.
+  - `Conjunction` owns one canonical vector. Construction recursively flattens nested `And`, drops
+    `True`, sorts in legacy structural predicate order, and deduplicates exact predicates. It
+    preserves `False`, `Or`, approximation markers and sound subsets, context-marker guards, and
+    every nontrivial predicate.
+  - No second raw, presentation, producer-order, or legacy-order vector may land. Logical schema
+    canonicalization is the sole owner of emitted junctor order and repeated-definition identity.
+  - Ordered predicate stacks whose order represents evaluation, branch priority, or provenance
+    remain ordinary vectors. Only set-like logical conjunction carriers migrate.
+  - `FailCapture.conjunction`, member-host implication predicates, selected-string implication
+    predicates, parser selection conjunctions, and their normalization/route handoffs use the new
+    carrier. Every remaining raw predicate vector is audited as non-conjunctive or migrated.
+  - Public API decision: `Predicate` becomes opaque at ownership while retaining one exhaustive
+    borrowed `PredicateKind` view. This is an intentional Part-F narrowing; `GuardDnf` wire bytes
+    and all generated schema bytes remain exact.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero. Any acceptance flip or fixture-byte difference rejects the representation round before
+    fixture adoption.
+
+- Measured preflight result:
+  - The compatibility-free compiler migration passes affected-crate Clippy and 434/434 focused
+    core/IR tests. Its symbolic-IR corpus remains byte-exact, and its 62-test schema dump completes
+    in 188.620 seconds versus the prerequisite's 230.575-second final dump under non-idle host
+    load.
+  - Direct schema comparison rejects the round: Airflow, Cilium, Jenkins, Kyverno, and Traefik
+    differ from `e6660809`. No fixture was copied or modified.
+  - Diagnostic full-depth adjudication fails with 12 candidate-accepts/Helm-aborts cells, all the
+    same Kyverno family: `false` and empty-string values at each of six component/global
+    `imagePullSecrets` default-selection inputs render successfully in Helm 4.2.3 but the candidate
+    rejects them.
+
+- Rejected-preflight diagnosis:
+  - Canonical conjunction dedup removes duplicate positive markers that formerly distinguished a
+    `RangeSelection` chain's synthetic all-candidates stamp from the selected candidate's real
+    truthy tail. The reducer removes the stamp after recognizing it; without duplicate
+    multiplicity it also removes the real tail and promotes iterable requirements outside the
+    selected value's truthy scope.
+  - Reconstructing the real tail from `RangeSelection.path` is structural and needs no legacy
+    vector: `path` is the typed selected identity. A targeted Kyverno generation restores the one
+    correctly scoped image-pull-secret conditional and eliminates the over-broad second
+    conditional.
+  - Rejected diagnostic variants that flattened only exact `And` nodes, ordered captures by kind,
+    or reversed canonical conjunction order all retained the five-file mismatch. They prove the
+    issue is marker multiplicity at lowering, not approximation grouping or set iteration order.
+  - Because the B5a contract is byte-exact, the representation round remains rejected even after
+    the false-rejection repair. The canonical capture behavior must land first as its own
+    adjudicated output round; B5a then retries against that new baseline.
+
+## B5 prerequisite 2 — canonical capture boundary and selected-tail reconstruction
+
+- Status: rejected at the complete integration gate; no production, test, or fixture change
+  retained.
+- Contract: behavior-bearing output canonicalization. Canonicalize fail-capture and selected-string
+  conjunction vectors once at the `ContractIr` finalization boundary using the exact B5a logical
+  form (flatten `And`, remove `True`, sort, deduplicate). Reconstruct a `RangeSelection` capture's
+  selected truthy tail from its typed `path` after removing the synthetic chain stamp. This makes
+  lowering independent of duplicate-marker multiplicity before the carrier type changes.
+- Acceptance baseline: `e6660809`.
+- Baseline production Rust LOC: 65,055.
+- Pre-registered acceptance expectations:
+  - Zero corpus acceptance flips and zero candidate-accepts/Helm-aborts cells. In particular,
+    Kyverno's `false` and empty-string component/global `imagePullSecrets` inputs remain accepted
+    because Helm's `default` bypasses those falsy values.
+  - Expected fixture-byte changes are confined to the five preflight charts: Airflow, Cilium,
+    Jenkins, Kyverno, and Traefik. They may change logical-arm factoring, repeated-definition
+    selection/naming, and dependent internal references only. No other schema, symbolic-IR,
+    diagnostic, default, description, provider shape, or policy surface may change.
+  - The canonicalizer is one temporary boundary owner, not per-producer hand synchronization. It
+    processes `FailCapture.conjunction` and the selected-string conjunction embedded in its
+    `CaptureKind`; the immediately following B5a round deletes it when the carrier enforces the
+    invariant at construction.
+  - The selected truthy tail is reconstructed only after the complete typed chain stamp and its
+    disjunction are recognized. Incomplete stamps, genuine enclosing markers, fallback negations,
+    and unrelated predicates remain untouched.
+  - Public/wire decision: no public Rust API change. The five generated schema files intentionally
+    adopt canonical capture factoring; acceptance must remain Helm-equivalent under the full-depth
+    battery.
+  - Mandatory base and third-level probe drops remain zero. Every unexpected flip or sixth fixture
+    file stops the round before adoption; accepted-abort allowance remains zero.
+
+- Measured rejected result:
+  - The final1 immutable archive contains 90 binaries and 128 files. Its clean 62-test schema dump
+    passes in 230.525 seconds. Direct comparison confirms the five registered chart-corpus changes
+    and no sixth chart/profile/final-output change.
+  - The full-depth battery checks 60 charts and 120,833 probes with zero acceptance flips, zero
+    candidate-accepts/Helm-aborts cells, and zero mandatory base/third-level drops. The repaired
+    Kyverno family keeps every falsy `default` input Helm accepts.
+  - Focused IR Clippy and the typed selected-tail regression pass. Format, workspace lint, 48/48
+    feature-matrix lint, and 1,326/1,326 unit tests pass on the final1 tree.
+  - The complete integration gate correctly rejects the round after 6,315.452 seconds: 564/565
+    tests pass, but `helm-schema-gen::corpus schema_fixtures_match` exposes one unregistered sixth
+    artifact, `signoz-zookeeper-statefulset.schema.json`. The change is the same canonical
+    conjunction factoring/order family, but the pre-registration explicitly required every
+    generator-only fixture to remain exact.
+  - The five provisionally copied chart fixtures were restored immediately. All final1 production,
+    test, and fixture changes were then removed; the tree is again byte-identical to `e6660809`
+    outside this ledger. No rejected artifact is adopted.
+
+- Deviations:
+  - The clean-dump comparison initially covered all 56 chart-corpus, four lean-profile, and four
+    final-output artifacts but omitted the 20 generator-owned artifacts written by the same dump.
+    That incomplete comparison let the five chart files reach provisional adoption before the full
+    integration gate caught the Signoz mismatch. The next round compares all 84 dump artifacts
+    before copying any fixture.
+  - Energy-saver mode and unrelated background work made this gate unsuitable for performance
+    conclusions: Airflow re-audit cases took 723–749 seconds and the integration suite took about
+    105 minutes. These numbers are recorded as loaded-host evidence only.
+
+## B5 prerequisite 2b — complete canonical capture output family
+
+- Status: in progress; commit pending.
+- Contract: behavior-bearing output canonicalization, retried from the clean `e6660809` tree with
+  the complete measured artifact family. Canonicalize fail-capture and selected-string conjunction
+  vectors once at `ContractIr` finalization, and reconstruct `RangeSelection`'s selected truthy tail
+  from its typed `path` after removing the synthetic chain stamp.
+- Acceptance baseline: `6cf6e4ff` (test-infra-only successor to production baseline `e6660809`).
+- Baseline production Rust LOC: 65,055.
+- Pre-registered acceptance expectations:
+  - Zero corpus acceptance flips and zero candidate-accepts/Helm-aborts cells. Kyverno `false` and
+    empty-string values in all six measured image-pull-secret selection roots remain accepted.
+  - Exactly six fixture artifacts may change: the chart-corpus schemas for Airflow, Cilium,
+    Jenkins, Kyverno, and Traefik, plus the generator fixture
+    `signoz-zookeeper-statefulset.schema.json`. Changes are limited to logical-arm factoring/order,
+    repeated-definition selection/naming, and dependent internal references.
+  - The other 78 artifacts from the one clean 84-artifact dump remain byte-exact, including all
+    symbolic-IR fixtures, the other generator schemas, lean profiles, and final-output controls.
+  - The canonicalizer remains one temporary finalization-boundary owner and is deleted by the
+    immediately following B5a carrier round. No producer-local copies or compatibility vectors may
+    land.
+  - The selected truthy tail is reconstructed only after recognizing the complete typed chain stamp
+    and disjunction. Incomplete stamps, genuine enclosing markers, fallback negations, and unrelated
+    predicates remain unchanged.
+  - Public/wire decision: no public Rust API change. The six generated schema artifacts
+    intentionally adopt canonical capture factoring; Helm-equivalent acceptance is mandatory.
+  - Mandatory base and third-level probe drops remain zero. Any seventh artifact or acceptance flip
+    rejects the retry before fixture adoption; accepted-abort allowance remains zero.
+  - Infra note: standalone commit `6cf6e4ff` raises the integration and CI nextest profiles from
+    four to eight workers at the user's request. It contains no semantic or ledger change; this
+    round records the first eight-worker wall-clock, with energy-saver/background load disclosed.
+
+- Measured results:
+  - The final2 immutable nextest archive contains 90 binaries and 128 files. The one clean
+    step-local dump produces all 84 expected artifacts and completes 62/62 schema-generation tests
+    in 702.632 seconds under disclosed energy-saver/background load.
+  - Direct comparison checks all 84 dump artifacts before adoption. Exactly the six pre-registered
+    artifacts differ; the other 78 are byte-identical. The changed bytes are confined to canonical
+    conjunction factoring/order, repeated-definition selection/naming, and dependent internal
+    references.
+  - The final2 full-depth battery checks 60 charts and 120,833 probes in 481.799 seconds. It records
+    zero acceptance flips, zero candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base
+    probes, and 7,465/7,465 mandatory third-level probes.
+  - Disclosed bounded categories emit 427 guard witness pairs and 127 composite pairs. The caps
+    skip 13,981 guard rows and 704 composite rows; total disclosed drops are 29,718. Mandatory base
+    and third-level drops remain zero.
+  - The complete eight-worker integration gate passes 565/565 tests in 3,990.563 seconds. On the
+    same loaded host and semantic code, this is 36.8% faster than the rejected four-worker run at
+    6,315.452 seconds, though neither run is a clean performance benchmark.
+
+- Deviations:
+  - The first preflight exposed five chart fixtures and 12 false-rejection cells because canonical
+    dedup erased duplicate range-selection marker multiplicity. That state was rejected before any
+    fixture adoption. Reconstructing the selected truthy tail from the typed `RangeSelection.path`
+    removes the accidental multiplicity dependency and restores every Helm-accepted falsy value.
+  - The first prerequisite attempt registered only five chart artifacts because its dump
+    comparison omitted generator-owned outputs. The complete integration gate exposed the sixth
+    Signoz generator fixture; that attempt was fully restored and recorded above. This retry
+    compares the complete 84-artifact family before adoption.
+  - The canonicalizer is intentionally temporary at the finalization boundary. The immediately
+    following B5a carrier retry must delete it rather than retain a second normalization owner.
+  - Energy-saver mode and unrelated background work make the 702.632-second dump,
+    481.799-second prober, 3,990.563-second integration gate, and 2,030.843-second complete battery
+    unsuitable for the frozen quiet-host Airflow curve. They are reported as loaded-host iteration
+    evidence only.
+
+- Adjudication evidence:
+  - Helm 4.2.3 adjudication is enabled in the authoritative full-depth battery. It finds zero
+    acceptance flips and therefore no changed cell requiring an individual fixture decision.
+  - The 12 Kyverno falsy-input false rejections from the rejected B5a preflight are absent. `false`
+    and empty-string values at all six component/global image-pull-secret roots remain accepted by
+    both the candidate and Helm.
+  - Accepted-abort allowance remains zero and observed candidate-accepts/Helm-aborts remains zero.
+
+- Producer/route coverage:
+
+  | Producer or route | Final evidence |
+  | --- | --- |
+  | `FailCapture` finalization | Every finalized capture conjunction is recursively flattened, stripped of `True`, sorted, and deduplicated once. |
+  | Selected-string implication | The nested selection conjunction receives the same canonical form at the same boundary. |
+  | Complete range-selection chain | The synthetic stamp and disjunction are removed, then the typed selected path republishes its real truthy tail. |
+  | Incomplete or unrelated markers | The recognizer does not fire; enclosing, fallback, and unrelated predicates remain unchanged. |
+  | Chart-corpus output | Five registered chart schemas adopt canonical factoring; 51 other chart schemas remain byte-identical. |
+  | Generator-only output | One registered Signoz schema adopts canonical factoring; the other 19 generator artifacts remain byte-identical. |
+  | Symbolic IR and profiles | All symbolic-IR, lean-profile, and final-output controls remain byte-identical. |
+  | Full-depth acceptance | 120,833 probes, zero flips, zero mandatory drops, and zero accepted-abort cells. |
+
+- Review dossier:
+  - Local-vs-global verdict: this is a narrow prerequisite, not the destination. The duplicate
+    marker multiplicity was an accidental protocol between producer and reducer; deriving the real
+    tail from typed selection identity is the structurally correct repair. B5a remains responsible
+    for moving canonicality into the carrier and deleting this boundary helper.
+  - Ownership: `ContractIr::finalize` is the sole temporary owner because every capture crosses it
+    exactly once. No producer-local sort/dedup copy, presentation vector, legacy-order field, or
+    compatibility adapter is added.
+  - Invariants: canonical capture conjunctions contain no nested `And`, no `True`, and no duplicate
+    predicate. Range-selection lowering preserves a real truthy tail independently of stamp
+    multiplicity. Both are pinned by focused private-IR coverage and the full fixture battery.
+  - Part-F decision: no public API or wire-format contract changes. Six generated schema artifacts
+    intentionally change internal canonical factoring while preserving Helm-equivalent acceptance.
+
+- Self-adversarial pass:
+  - Rechecked the canonicalizer's recursive `And` flattening, `True` removal, structural sort, and
+    exact dedup against the forthcoming B5a constructor semantics.
+  - Rechecked that tail reconstruction occurs only after a complete typed stamp and its disjunction
+    are recognized, and that it uses the selected `path` rather than a string or positional guess.
+  - Audited the clean dump as one immutable-code-state batch and compared all 84 outputs before
+    adopting the six fixtures. No rejected-state artifact remains.
+  - Inspected the eight-worker run under load: all eight long re-audit processes remained
+    CPU-saturated at about 99-100% with modest memory use. There is no evidence of a deadlock or a
+    memory-pressure regression.
+  - Rechecked the frozen plan, working-tree whitespace, and generated fixture set after the final
+    edit. The frozen plan remains byte-identical to `bb61a78f`.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in 57.10 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 333.67 seconds; the same two warnings remain.
+  - `cargo nextest run --workspace`: exit 0, 1,326/1,326 tests in 692.169 seconds.
+  - `task test:integration`: exit 0, 565/565 tests in 3,990.563 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,895/1,895 tests in 2,030.843 seconds; 24 tests skipped by profile.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 34.13 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts, using the documented macOS shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,095.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +40 (65,055 to 65,095). The delta is the temporary boundary
+  canonicalizer plus typed-tail reconstruction; the next B5a carrier round is required to delete
+  the boundary canonicalizer. No LOC promise applies.

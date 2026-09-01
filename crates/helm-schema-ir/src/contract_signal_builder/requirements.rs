@@ -211,6 +211,11 @@ pub(super) fn record_fail_conjunction(
                     };
                     !remaining_markers.remove(marker)
                 });
+                capture
+                    .conjunction
+                    .push(Predicate::Guard(Guard::Truthy { path: path.clone() }));
+                capture.conjunction.sort();
+                capture.conjunction.dedup();
             }
             record_value_requirement_capture(
                 paths,

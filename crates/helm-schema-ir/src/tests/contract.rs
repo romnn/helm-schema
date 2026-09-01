@@ -729,6 +729,53 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
 }
 
 #[test]
+fn canonical_range_selection_retains_the_selected_truthy_tail() -> eyre::Result<()> {
+    let primary = conditional_path("primary.items");
+    let fallback = conditional_path("fallback.items");
+    let mut contract = ContractIr::default();
+    absorb_captures(
+        &mut contract,
+        [crate::eval_effect::FailCapture {
+            conjunction: vec![
+                helm_schema_core::Predicate::Guard(Guard::Truthy {
+                    path: primary.clone(),
+                }),
+                helm_schema_core::Predicate::Guard(Guard::Truthy {
+                    path: fallback.clone(),
+                }),
+                helm_schema_core::Predicate::from(Guard::Or {
+                    paths: vec![primary.clone(), fallback.clone()],
+                }),
+            ],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::RangeSelection {
+                path: primary.clone(),
+                chain: vec![primary.clone(), fallback],
+                allow_integer: true,
+            },
+        }],
+    );
+
+    let signals = contract.finalize().into_schema_signals();
+    let evidence = signals
+        .evidence_for(&primary)
+        .ok_or_eyre("expected selected range evidence")?;
+    sim_assert_eq!(
+        have: evidence.requirement_implications.clone(),
+        want: vec![helm_schema_core::ContractRequirementImplication {
+            outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                path: primary,
+            }],
+            target: helm_schema_core::ContractRequirementTarget::Value,
+            requirements: vec![helm_schema_core::FailValueRequirement::Iterable {
+                allow_integer: true,
+            }],
+        }]
+    );
+    Ok(())
+}
+
+#[test]
 fn activation_guards_scope_values_default_sources() {
     let mut contract = ContractIr::default();
     let mut facts = crate::observed_facts::ObservedFacts::default();

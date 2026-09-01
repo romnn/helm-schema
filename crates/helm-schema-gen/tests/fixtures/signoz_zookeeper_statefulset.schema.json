@@ -6591,47 +6591,6 @@
                 }
               },
               {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/t"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "storageClass": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "storageClass"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
                 "anyOf": [
                   {
                     "properties": {
@@ -6861,47 +6820,6 @@
                   ],
                   "type": "object"
                 }
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/t"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "storageClass": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "storageClass"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "anyOf": [
@@ -11508,6 +11426,24 @@
               },
               {
                 "properties": {
+                  "global": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/t"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
                   "persistence": {
                     "properties": {
                       "enabled": {
@@ -11529,7 +11465,15 @@
                 "not": {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/t"
+                      "properties": {
+                        "storageClass": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      "required": [
+                        "storageClass"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
@@ -11754,6 +11698,19 @@
               {
                 "not": {
                   "properties": {
+                    "global": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
                     "persistence": {
                       "properties": {
                         "dataLogDir": {
@@ -11781,7 +11738,7 @@
                 }
               },
               {
-                "allOf": [
+                "anyOf": [
                   {
                     "properties": {
                       "global": {
@@ -11801,18 +11758,71 @@
                     "type": "object"
                   },
                   {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  },
+                  {
                     "not": {
                       "properties": {
                         "global": {
-                          "properties": {
-                            "storageClass": {
-                              "$ref": "#/$defs/t"
-                            }
-                          },
-                          "required": [
-                            "storageClass"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
@@ -11822,6 +11832,143 @@
                     }
                   }
                 ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "dataLogDir": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/t"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "dataLogDir"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "existingClaim": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "existingClaim"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/t"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "storageClass": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      "required": [
+                        "storageClass"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "existingClaim": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      "required": [
+                        "existingClaim"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
               },
               {
                 "anyOf": [
@@ -12029,243 +12176,6 @@
                   ],
                   "type": "object"
                 }
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/t"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "persistence": {
-                        "properties": {
-                          "storageClass": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "storageClass"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "persistence"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "storageClass": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "storageClass"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "persistence": {
-                        "properties": {
-                          "storageClass": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "storageClass"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "persistence"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "persistence": {
-                          "properties": {
-                            "dataLogDir": {
-                              "properties": {
-                                "existingClaim": {
-                                  "$ref": "#/$defs/t"
-                                }
-                              },
-                              "required": [
-                                "existingClaim"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "dataLogDir"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "persistence"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "persistence": {
-                          "properties": {
-                            "existingClaim": {
-                              "$ref": "#/$defs/t"
-                            }
-                          },
-                          "required": [
-                            "existingClaim"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "persistence"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "persistence": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "existingClaim": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "existingClaim"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/t"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "storageClass": {
-                              "$ref": "#/$defs/t"
-                            }
-                          },
-                          "required": [
-                            "storageClass"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
               },
               {
                 "anyOf": [
