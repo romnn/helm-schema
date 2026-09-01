@@ -5824,7 +5824,7 @@
 
 ## MergeLayersUse — validate layered-use identity
 
-- Status: in progress; commit pending.
+- Status: landed in `312da1dc` (`refactor(core): validate merge-layer uses`).
 - Contract: representation-only. Replace the parallel `layers` / `transforms` vectors with ordered
   `MergeLayer { path, transform }` entries, validate the own-layer position at construction and
   deserialization, and make the carrier's fields private. Delete the shadow-prefix clamp and the
@@ -5855,3 +5855,117 @@
   `MergeLayer` is the public paired entry type. The existing serialized object keys, field order,
   values, and accepted valid documents remain byte-identical; invalid parallel-vector documents
   become explicit deserialization errors.
+
+- Measured results:
+  - `MergeLayer` now pairs each values path with its transform. `MergeLayersUse` owns a private
+    ordered vector, checked own-layer position, cached validated own transform, and binding origin.
+    Its constructor and custom deserializer reject empty/out-of-range positions and unequal legacy
+    path/transform vector lengths.
+  - `shadowed_by` iterates the exact prefix before the checked own position. `own_transform` no
+    longer defaults to `Identity`, and generator lowering consumes each earlier layer's paired
+    transform directly instead of looking it up in a second vector.
+  - Every production constructor derives the position while enumerating the same flattened layer
+    list. No invalid construction occurred in focused tests, corpus generation, the full-depth
+    battery, or the downstream sweep.
+  - Custom serialization preserves the legacy `layers`, `position`, `transforms`, `via_binding`
+    object keys and field order. A public-surface test pins exact JSON bytes, valid round-trip,
+    unequal-vector rejection, and out-of-bounds rejection.
+  - The final1 clean schema dump writes 84 artifacts; every artifact is byte-identical to B3.2.
+    The symbolic-IR dump writes 18 artifacts; every artifact is byte-identical to B3.2.
+  - The full-depth comparison checks 121,055 probes across 60 charts with zero acceptance flips.
+    Mandatory base coverage is 112,260/112,260 and third-level coverage is 7,465/7,465, both with
+    zero drops. It records 427 guard pairs, 238 composite pairs, 35,428 bounded guard-witness
+    reductions, 2,277 bounded composite reductions, and 28,868 disclosed total drops.
+
+- Deviations:
+  - The first schema-dump invocation used the required absolute `TMPDIR` before creating that
+    directory. Archive extraction exited 96 without running a test or writing an artifact. After
+    creating the step-local directory, the same immutable archive produced the sole adopted dump.
+  - The round was committed at the user's requested pause after its exact-tree immutable evidence,
+    `cargo fmt`, whole-workspace lint, feature-combination lint, LOC, frozen-plan, and diff gates had
+    passed. The exact-tree workspace suite was interrupted during compilation and deliberately
+    terminated; no result from that run is counted.
+  - Before the deferred gates resumed, the independent unspaced-pipe grammar hotfix and v0.0.7 bump
+    landed in `abb753c2` through `7fa6dd99`. The remaining unit, integration, live-network, install,
+    and downstream gates therefore ran on cumulative HEAD `7fa6dd99`, not on the exact
+    `312da1dc` tree. This is an explicit user-directed exception to the normal final-tree gate
+    discipline. The exact round's immutable schema/IR/prober evidence remains isolated at
+    `312da1dc`; the cumulative gates exercise that code plus the separately reviewed hotfix.
+  - No invalid merge-layer state, semantic preflight rejection, fixture adoption, or behavior
+    repair was needed.
+
+- Adjudication evidence:
+  - Helm `v4.2.3+g43e8b7f` is selected by the committed mise pin and accepted by the battery version
+    guard.
+  - The final1 battery reports zero flips and zero candidate-accepts/Helm-aborts cells. No fixture,
+    diagnostic, or acceptance change required adoption.
+
+### Producer and route coverage
+
+| Route | Validated owner | Verification |
+|---|---|---|
+| Abstract-value output metadata | Paired layers built from the same flattened identity enumeration | Focused IR tests and 18-file IR identity. |
+| Fragment splice lowering | Paired transform list shared by every enumerated position | Fragment and merge-shadowing suites plus schema identity. |
+| Helper-summary propagation | `into_via_binding` changes only the origin bit | Binding-carried identity and transformed merge corpus controls. |
+| Contract path remapping | Core mutates each paired layer path while retaining transform and position | Public contract path-remapping regression. |
+| IR row routing | Accessors own own-path, transformed-layer, and binding decisions | Contract synthesis tests and full IR identity. |
+| Generator shadow lowering | Earlier layer path and transform come from one `MergeLayer` | Merge-shadowing fixtures and 121,055-probe equality. |
+| Legacy wire input/output | Custom serde validates on input and preserves exact valid bytes | Public-surface byte and rejection controls. |
+
+### Review dossier
+
+- Focused proof: Clippy for `helm-schema-core`, `helm-schema-ir`, and `helm-schema-gen` with all
+  targets and features; exit 0 in 3m09s. Seven core public-surface tests, four focused IR contract
+  tests, and three provider-requirement tests pass.
+- Immutable build: final1 archive under the absolute step-local build `TMPDIR`; exit 0 after
+  13m59s, 87 binaries and 125 files archived to
+  `/private/tmp/arch-v4-merge-final1.tar.zst`.
+- Clean schema dump: final1 archive under the step-local schema `TMPDIR`; exit 0, 62 tests pass in
+  238.619 seconds and all 84 artifacts are byte-identical to B3.2.
+- Clean IR dump: the same archive under the step-local IR `TMPDIR`; exit 0, one corpus test passes
+  in 4.224 seconds and all 18 artifacts are byte-identical to B3.2.
+- Full-depth proof: the same archive under the step-local prober `TMPDIR`, baseline `60cefe48`,
+  Helm adjudication enabled; exit 0 in 97.842 seconds, 60 charts, 121,055 probes, zero flips, zero
+  unallowed accepted-abort cells, zero mandatory drops, and 28,868 disclosed reductions.
+- Public/wire decision: direct public field construction is intentionally removed so invalid
+  parallel state cannot cross the API. Valid legacy JSON retains exact bytes and round-trips;
+  invalid legacy JSON now returns a serde error.
+
+### Self-adversarial pass
+
+- Keeping public vectors with a validating helper would preserve the illegal state after
+  construction. Private fields make the constructor and deserializer the only creation boundaries.
+- Returning `Option` from `own_transform` would force every consumer to invent an invalid-state
+  policy. Validation caches the selected transform, so downstream reads are total without a panic,
+  clamp, or semantic fallback.
+- Pairing only at generator consumption would leave the IR wire carrier and builder vulnerable to
+  drift. The paired entry is the core representation and both producer families construct it.
+- Custom serde is compatibility work, not a second semantic representation: the parallel vectors
+  exist only within the serialization edge and are immediately zipped or rejected.
+- Whole-tree searches leave no production `transforms` field, position clamp, or missing-transform
+  `Identity` fallback. Remaining `MergeLayersUse` construction flows through `new`.
+
+### Gates
+
+- Exact `312da1dc` tree, `cargo fmt --check`: exit 0.
+- Exact `312da1dc` tree, `task lint`: exit 0; whole-workspace Clippy and all three AST-grep policy
+  tests pass in 9m21s.
+- Exact `312da1dc` tree, `task lint:fc`: exit 0; 48/48 feature combinations for 13 packages across
+  Linux, Windows GNU, and macOS pass with zero errors and warnings in 2,837.12 seconds.
+- Cumulative `7fa6dd99` tree, `cargo nextest run --workspace`: exit 0; 1,322/1,322 tests pass, one
+  slow, in 251.928 seconds.
+- Cumulative `7fa6dd99` tree, `task test:integration`: exit 0; 565/565 tests pass, 24 skipped and 21
+  slow, in 2,380.329 seconds.
+- Cumulative `7fa6dd99` tree, `task test:all`: exit 0; 1,891/1,891 tests pass, 24 skipped and 27
+  slow, including live-network tests, in 2,338.903 seconds.
+- Cumulative `d77a6372` tree, `cargo install --path ./crates/helm-schema-cli/`: exit 0; v0.0.7
+  release build and replacement complete in 29.93 seconds.
+- Cumulative `d77a6372` tree, downstream luup2 `check:local` with the macOS shims, prefixed `PATH`,
+  and `HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema`: exit 0; 32/32 charts pass.
+- Exact `312da1dc` tree, `task tokei:core`: exit 0; 64,881 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0 on both the exact and
+  cumulative trees.
+- `git diff --check`: exit 0 on the exact tree; rerun after this ledger-only closure below.
+
+- Measured production LOC delta: +88 (64,793 to 64,881). The delta is the paired public carrier,
+  validating/accessor surface, and byte-compatible serde edge; no LOC promise applies.
