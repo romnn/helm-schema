@@ -6703,7 +6703,7 @@
 
 ## B5a retry 2 — canonical conjunction carrier and shared predicate nodes
 
-- Status: in progress; commit pending.
+- Status: landed in `ac9b54ab` (`refactor(core): canonicalize predicate conjunctions`).
 - Contract: representation-only. Retry B5a after both measured output-order prerequisites. Replace
   set-like predicate vectors with one canonical `Conjunction` carrier, move predicate nodes behind
   private immutable `Arc`s, preserve former structural ordering manually, and delete the temporary
