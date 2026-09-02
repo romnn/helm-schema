@@ -7079,7 +7079,7 @@
 
 ## C2 — one schema materialization and one description traversal
 
-- Status: landed; commit pending.
+- Status: landed in `2a20036f` (`perf(gen): eliminate repeated schema materialization`).
 - Contract: representation/performance-only. Keep the schema as `SchemaNode` while materializing
   declared ranged-map members, editing the typed tree directly instead of serializing and reparsing
   the whole root for each ranged path. Replace the per-description root walk with one trie-guided
