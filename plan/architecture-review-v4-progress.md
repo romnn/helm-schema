@@ -8911,3 +8911,91 @@
 - `git diff --check`: exit 0.
 
 - Measured production LOC delta: 0 landed. Rejected attempts were +1 and +3.
+
+## S-E — dynamic helper resolver dispatch
+
+- Status: measured and rejected; all candidate production changes were restored.
+- Contract: representation/performance-only, measure then commit. Replace the 56
+  `&mut impl HelperCallValueResolver` signatures with one `&mut dyn HelperCallValueResolver`
+  dispatch boundary, deleting the second monomorphized evaluator copy. Adopt only if schema and IR
+  bytes are exact and the clean corpus wall-clock is flat or better.
+- Acceptance baseline: `a9922a11` (Activation-DNF abandonment record; production equals
+  `ef92a851`).
+- Baseline production Rust LOC: 66,064.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, public-API, wire, fixture, or acceptance changes.
+  - Both production resolver implementations and the test resolver retain identical call order,
+    mutation, cache, recursion-depth, and helper-output behavior. Indirect dispatch occurs only at
+    resolver calls; ordinary expression evaluation stays statically dispatched internally.
+  - Compare clean corpus runs from immutable baseline and candidate archives on the disclosed
+    non-idle host. Adopt only a flat-or-better result; a material regression is reverted and
+    recorded without fixture adoption.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero.
+
+- Measured results:
+  - The mechanical compiler-driven sweep changed exactly 56 evaluator signatures across eight IR
+    source files. Zero generic resolver signatures remained, both production implementations and
+    the test implementation coerced through the object-safe trait, and the IR all-target build
+    completed successfully.
+  - Immutable baseline and candidate archives each contain 90 binaries and 128 files. Their clean
+    schema dumps each pass 62/62 tests and emit 84 artifacts; recursive comparison is byte-exact.
+  - Baseline corpus time is 192.10 seconds wall, 719.45 user, and 12.36 system. Candidate time is
+    269.52 seconds wall, 782.53 user, and 13.92 system: +77.42 seconds wall (+40.3%) and +64.64
+    aggregate CPU (+8.8%). The host was explicitly non-idle, but both wall and CPU move materially
+    in the wrong direction, so the candidate fails the adopt-only-if-flat rule.
+  - The signature sweep changes no source LOC (66,064). All eight files were restored mechanically;
+    `git diff --exit-code a9922a11 -- crates` proves the production and test tree is byte-identical
+    to baseline.
+
+- Deviations:
+  - The frozen plan predicted a deleted roughly 6k-LOC monomorphized machine-code copy, but binary
+    size was not used as a substitute for the required corpus timing. Dynamic dispatch made the
+    actual workload slower under the measured host state.
+  - The candidate archive and dump are rejected performance evidence only. No IR dump, full-depth
+    prober, fixture adoption, or final gate battery was run after the hard timing gate failed.
+  - The loaded host makes the wall delta noisy, but aggregate CPU is also 8.8% worse. Repeating until
+    a favorable noisy sample appeared would violate the measure-then-commit contract.
+- Adjudication evidence: the two clean schema dumps are byte-identical, so there is no fixture or
+  acceptance candidate to adjudicate. The implementation was rejected solely by its performance
+  gate before a full-depth acceptance run.
+
+### Review dossier
+
+- Compiler inventory: 56/56 signatures use `dyn` in the candidate; `cargo check -p helm-schema-ir
+  --all-targets` exits 0 after a 57.28-second loaded-host build.
+- Baseline archive: reused immutable S-B4 final2, 90 binaries and 128 files. Candidate archive:
+  S-E final1, exit 0 after a 3-minute-30-second build, also 90 binaries and 128 files.
+- Baseline clean dump: exit 0, 62/62 in 188.350 nextest seconds / 192.10 wrapper seconds; 84
+  artifacts. Candidate clean dump: exit 0, 62/62 in 265.365 / 269.52 seconds; 84 byte-identical
+  artifacts.
+- Public/wire decision: none. The resolver trait and affected functions are crate-private, and the
+  rejected candidate was fully removed.
+
+### Self-adversarial pass
+
+- The comparison uses the same archive format, test expression, integration profile, eight-thread
+  limit, absolute step-local `TMPDIR`, and warm repository state. Only the compiled dispatch form
+  differs.
+- Wall time alone could be host contention; aggregate CPU rising by 64.64 seconds is independent
+  corroboration that the indirect calls are not flat in this workload.
+- The trait call itself is sparse, but changing every mutually recursive evaluator signature also
+  prevents the compiler from specializing and inlining the resolver-bearing call graph. The
+  measured cost therefore matches the actual proposed boundary, not merely the final trait method.
+- Retaining generics keeps two machine-code instantiations but no parallel semantic representation;
+  this is a deliberate performance trade rather than architectural ownership debt.
+
+### Gates
+
+- Candidate `cargo fmt --check`: exit 0.
+- Candidate `cargo check -p helm-schema-ir --all-targets`: exit 0.
+- Candidate clean corpus: exit 0 but fails the flat-or-better adoption gate (269.52 versus 192.10
+  seconds wall; 796.45 versus 731.81 aggregate CPU seconds).
+- Candidate schema identity: exit 0; 84/84 artifacts byte-identical.
+- Post-rejection `cargo fmt --check`: exit 0.
+- Post-rejection restoration: `git diff --exit-code a9922a11 -- crates`; exit 0.
+- Final `task tokei:core`: exit 0; 66,064 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: 0 landed; the rejected candidate was also 0 LOC.
