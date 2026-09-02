@@ -8735,3 +8735,94 @@
 - Measured production LOC delta: -7 attributable to S-B4 (66,071 after standalone lint commit
   `097ef212` to 66,064). The intervening Rust 1.98 lint migration is -6 LOC (66,077 to 66,071), so
   the total tree change from the S-B4 acceptance baseline is -13.
+
+## E4 — guard-vocabulary unification study
+
+- Status: study complete; the two representations are genuinely distinct at the current phase
+  boundary, so no unification spike or production change was adopted.
+- Contract: evidence-only study. Determine whether the 26-variant execution `Guard` vocabulary and
+  18-variant schema-lowerable `ConditionalGuard` vocabulary can become one owner after the wave-1
+  E2 abandonment. A recorded distinct-representations verdict is success; do not restore E2-style
+  compatibility state or change contract-document wire bytes merely to force a unification.
+- Acceptance baseline: `1e826e85` (S-B4 ledger closure commit).
+- Baseline production Rust LOC: 66,064.
+- Pre-registered acceptance expectations:
+  - No production, fixture, diagnostic, public-API, wire-format, schema, symbolic-IR, or acceptance
+    change. This round studies the present owners and stops before a candidate implementation.
+  - A viable unification must delete a representation while retaining exact instance-level
+    lowerability, target-relative self-guard policy, approximation polarity, deterministic guard
+    ordering, and decoding of the public `ContractUse.condition` wire vocabulary.
+  - If those obligations still require the E2 condition/context split or a compatibility carrier,
+    record the dependency and retain both vocabularies.
+
+- Measured results:
+  - `Guard` is the public execution/wire atom vocabulary: 26 variants feed `Predicate`, whose
+    additional true/false, approximation, negation, conjunction, and disjunction nodes preserve
+    control-flow facts that are not necessarily schema-decidable. `ContractUse.condition` stores
+    that algebra as `GuardDnf` and serializes it in all 18 symbolic-IR fixtures.
+  - `ConditionalGuard` is an 18-variant closed vocabulary consumed exhaustively by schema overlay
+    lowering. It admits arbitrary `Not`/`AllOf`/`AnyOf`, but only over atoms whose JSON Schema
+    interpretation is valid at that consumer boundary.
+  - The core has a total inverse from every `ConditionalGuard` to `Predicate` and a context-free
+    `TryFrom<&Guard>` for the exact shared subset. That does not subsume the IR boundary policy:
+    `guard_to_conditional_guard` remains target-relative and instance-sensitive.
+  - The policy rejects templated pattern matches, range-prefix/range-pattern guards, range context,
+    guarded defaults, and target-relative `with`; rewrites `NotMatchesPattern` into a typed
+    conjunction; interprets positive range-key equality as `HasKey` while rejecting the negative
+    meaning; and retains self-targeted `TypeIs`/`MinMembers` only under their documented structural
+    conditions. Approximate predicates are admitted only through positive terminal clauses.
+  - Therefore the apparent enum overlap is not the ownership seam. `Predicate` owns observed
+    execution logic and public contract transport; `ConditionalGuard` owns the proven
+    schema-lowerable projection after target and polarity are known. Replacing either with the
+    other would make an invalid state constructible or move the partial policy into every gen
+    consumer.
+
+- Deviations:
+  - The frozen plan expected E4 to be more promising after E2. Wave 1 measured E2 as +211 LOC on
+    attempt 1 and +362 LOC on attempt 2, with deterministic `$defs` grouping/order requiring
+    compatibility state. Because that prerequisite was abandoned, the unification premise did not
+    become true.
+  - No compiler spike was started. It could only repeat the already rejected condition/context
+    carrier or change the 18-fixture public wire representation, neither of which satisfies this
+    study's adoption contract.
+- Adjudication evidence: no candidate behavior or artifact exists; there are zero flips and no Helm
+  cells to adjudicate.
+
+### Review dossier
+
+- Domain verdict: sound phase boundary, not a local maximum. Execution predicates preserve what
+  the chart says; conditional guards preserve only what schema emission may soundly enforce.
+- Ownership audit: `Guard`/`Predicate` are produced and normalized in core/IR contract analysis;
+  `ConditionalGuard` is created at contract-signal finalization and consumed by gen's conditional
+  constraint and member-projection lowering.
+- Mapping audit: the context-free shared-subset conversion is compiler-exhaustive, while the IR
+  mapper deliberately carries target path, polarity, wildcard, and approximation policy. This is
+  semantic lowering, not a hand-synchronized duplicate enum table.
+- Public/wire decision: retain the existing public `Guard`, `Predicate`, `GuardDnf`, and
+  `ContractUse.condition` encoding. `ConditionalGuard` remains the typed schema-signal carrier; no
+  breaking release or document-version mechanism is introduced.
+
+### Self-adversarial pass
+
+- The existence of `ConditionalGuard::predicate` does not prove duplication: it is a lossless
+  embedding of the smaller language into the larger one, while the reverse direction is partial by
+  design.
+- The shared 15 atomic shapes do not justify one enum because their admissibility changes per
+  instance. A unified vocabulary would still need a separate lowerability proof, recreating
+  `ConditionalGuard` as a flag, wrapper, or repeated consumer check.
+- E2's rejected implementations demonstrate that separating execution context first is not a
+  deletion at the current ordering boundary. E4 cannot honestly assume that prerequisite away.
+- Revisit only after a separate byte-exact round removes or redesigns the `$defs` ordering/grouping
+  dependency; then re-evaluate whether a proven-lowerable predicate newtype can replace the current
+  carrier without compatibility state.
+
+### Gates
+
+- Production/fixture batteries: not rerun; this evidence-only study changes no production, test,
+  fixture, dependency, or configuration file, and relies on the immediately preceding S-B4 final-
+  tree gates at the same production commit.
+- `task tokei:core`: exit 0; 66,064 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: 0.
