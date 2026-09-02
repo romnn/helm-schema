@@ -8999,3 +8999,68 @@
 - `git diff --check`: exit 0.
 
 - Measured production LOC delta: 0 landed; the rejected candidate was also 0 LOC.
+
+## E3 — producer-lowered requirement vocabulary
+
+- Status: recorded blocker; no spike was attempted because the frozen prerequisite E2 was
+  abandoned and no design independent of its condition/context split was found.
+- Contract: study the prerequisite honestly before code. E3 may begin only with a ledgered design
+  that lets producers emit `(context, condition, Subject, Req)` without restoring E2 compatibility
+  state, while retaining the generated requirement-lane suite and the two irreducibly global
+  reductions (`Fail` and `MemberAccess`).
+- Acceptance baseline: `2fb91c55` (rejected S-E measurement record).
+- Baseline production Rust LOC: 66,064.
+- Pre-registered acceptance expectations: no production or artifact change unless an independent
+  design satisfies the prerequisite. Any candidate would require byte-exact schema/IR output, G2
+  stage 2 over the complete transform vocabulary, zero acceptance flips, and an actual deletion of
+  the per-kind translation representation.
+
+- Measured results:
+  - The current `FailCapture` still couples one canonical conjunction to one of 20 `CaptureKind`
+    variants. Nineteen signal-builder ladder arms translate those payloads after global scope,
+    range-mode, negation, and cross-capture facts are available.
+  - E2's two attempts proved that separating execution context from condition needs deterministic
+    compatibility ordering tied to current `$defs` grouping: +211 LOC in attempt 1 and +362 LOC in
+    attempt 2. Both were correctly abandoned.
+  - B2/E1's two attempts likewise failed its representation-deletion gate (+134 and +67 LOC), so
+    the required claim-attached `TransformSet` and `Transform::ALL` G2 stage-2 matrix do not exist.
+  - Producer lowering cannot therefore spell the frozen tuple without either rebuilding the
+    abandoned context carrier or erasing the selection, range, and serializer facts that the
+    current global reducer needs. That is not a design independent of E2.
+
+- Deviations: none. The wave instructions explicitly name this prerequisite failure as the honest
+  default outcome. No code, compiler preflight, archive, dump, fixture, or acceptance artifact was
+  created.
+- Adjudication evidence: no candidate behavior exists; zero flips and no Helm cells to adjudicate.
+
+### Review dossier
+
+- The global-maximum destination remains credible after its prerequisites change: producers own
+  local subject/requirement facts; one reducer owns only range/document scope, `Fail`, and
+  `MemberAccess`. The current tree cannot reach it by deleting a representation first.
+- The generated G2 stage-1 suite remains ten transform-by-position cells. Stage 2 is still coupled
+  to a viable B2 vocabulary and cannot be claimed by enumerating today's parallel Booleans.
+- Public/wire decision: none. `CaptureKind`, `FailCapture`, and their producer/reducer boundary stay
+  crate-private and unchanged.
+
+### Self-adversarial pass
+
+- Moving the existing 19 ladder arms into producers would relocate, not delete, the translations
+  and would duplicate document-global range/scope knowledge.
+- Keeping `CaptureKind` beside a new producer-lowered claim would be the prohibited compatibility
+  layering, not an incremental route.
+- Dropping the context-sensitive claims to make the tuple smaller would violate Helm behavior and
+  the exact fixture gates. The blocker is architectural ordering, not implementation difficulty.
+- Resume E3 only after a separate byte-exact round removes or redesigns the `$defs` ordering
+  dependency, E2 then deletes its mixed condition/context carrier, and a viable B2 supplies the
+  claim-level transform vocabulary and G2 stage 2.
+
+### Gates
+
+- Production/fixture batteries: not run; the prerequisite study changes only this ledger and
+  creates no candidate implementation.
+- `task tokei:core`: exit 0; 66,064 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: 0.
