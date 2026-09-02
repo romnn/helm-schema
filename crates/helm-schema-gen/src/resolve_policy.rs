@@ -160,20 +160,22 @@ impl ValuePathSchemaFacts {
 ///
 /// These are the evidence streams collected for a single `.Values.*` path
 /// before the policy decides which schemas to prefer, merge, or preserve.
-pub(crate) struct ValuePathSchemaInputs {
-    pub(crate) facts: ValuePathSchemaFacts,
-    pub(crate) provider_schema: Value,
-    pub(crate) values_yaml_schema: Value,
-    pub(crate) guard_predicate_schema: Value,
-    pub(crate) type_hint_schema: Value,
-    /// Branch-scoped hints: they may only WIDEN an otherwise-typed base
-    /// (add accepted alternatives), never stand alone as its typing —
-    /// `allOf` branches can narrow but never re-widen a base.
-    pub(crate) guarded_type_hint_schema: Value,
-    /// Hints from literal `default`/`coalesce` fallbacks: they type only the
-    /// truthy arm of the path, so when they are the path's only typing the
-    /// base must keep the whole Helm-falsy set open beside them.
-    pub(crate) fallback_type_hint_schema: Value,
+pub(crate) enum ValuePathSchemaInputs {
+    Complete {
+        facts: ValuePathSchemaFacts,
+        provider_schema: SchemaNode,
+        values_yaml_schema: SchemaNode,
+        guard_predicate_schema: SchemaNode,
+        type_hint_schema: SchemaNode,
+        /// Branch-scoped hints: they may only WIDEN an otherwise-typed base
+        /// (add accepted alternatives), never stand alone as its typing —
+        /// `allOf` branches can narrow but never re-widen a base.
+        guarded_type_hint_schema: SchemaNode,
+        /// Hints from literal `default`/`coalesce` fallbacks: they type only the
+        /// truthy arm of the path, so when they are the path's only typing the
+        /// base must keep the whole Helm-falsy set open beside them.
+        fallback_type_hint_schema: SchemaNode,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -319,7 +321,7 @@ impl ResolvePolicy {
         reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
     )]
     pub(crate) fn resolve_schema_for_value_path(input: ValuePathSchemaInputs) -> Value {
-        let ValuePathSchemaInputs {
+        let ValuePathSchemaInputs::Complete {
             facts,
             provider_schema,
             values_yaml_schema,
@@ -328,6 +330,12 @@ impl ResolvePolicy {
             guarded_type_hint_schema,
             fallback_type_hint_schema,
         } = input;
+        let provider_schema = provider_schema.into_value();
+        let values_yaml_schema = values_yaml_schema.into_value();
+        let guard_predicate_schema = guard_predicate_schema.into_value();
+        let type_hint_schema = type_hint_schema.into_value();
+        let guarded_type_hint_schema = guarded_type_hint_schema.into_value();
+        let fallback_type_hint_schema = fallback_type_hint_schema.into_value();
         // A literal fallback documents intent, not a contract: like the
         // declared default, its type must not narrow a path that some
         // serializing or totally-formatting render provably tolerates any
@@ -433,14 +441,14 @@ impl ResolvePolicy {
         let guard_predicate_schema =
             merge_schema_list(vec![guard_predicate_schema, partial_scalar_schema]);
         let merged = Self::resolve_merged_schema_for_value_path(
-            ValuePathSchemaInputs {
+            ValuePathSchemaInputs::Complete {
                 facts,
-                provider_schema,
-                values_yaml_schema,
-                guard_predicate_schema,
-                type_hint_schema,
-                guarded_type_hint_schema: empty_schema(),
-                fallback_type_hint_schema: empty_schema(),
+                provider_schema: SchemaNode::from_value(provider_schema),
+                values_yaml_schema: SchemaNode::from_value(values_yaml_schema),
+                guard_predicate_schema: SchemaNode::from_value(guard_predicate_schema),
+                type_hint_schema: SchemaNode::from_value(type_hint_schema),
+                guarded_type_hint_schema: SchemaNode::empty(),
+                fallback_type_hint_schema: SchemaNode::empty(),
             },
             preserve_empty_string_fallback,
         );
@@ -661,48 +669,61 @@ impl ResolvePolicy {
         input: ValuePathSchemaInputs,
         preserve_empty_string_fallback: bool,
     ) -> Value {
-        let base = if !is_empty_schema(&input.provider_schema) {
-            if is_empty_schema(&input.values_yaml_schema) {
-                input.provider_schema
+        let ValuePathSchemaInputs::Complete {
+            facts,
+            provider_schema,
+            values_yaml_schema,
+            guard_predicate_schema,
+            type_hint_schema,
+            guarded_type_hint_schema: _,
+            fallback_type_hint_schema: _,
+        } = input;
+        let provider_schema = provider_schema.into_value();
+        let values_yaml_schema = values_yaml_schema.into_value();
+        let guard_predicate_schema = guard_predicate_schema.into_value();
+        let type_hint_schema = type_hint_schema.into_value();
+        let base = if !is_empty_schema(&provider_schema) {
+            if is_empty_schema(&values_yaml_schema) {
+                provider_schema
             } else {
                 // Some charts use scalar "preset" values that are fed into helpers which
                 // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
                 // In these cases the *input* type in values.yaml is the scalar, not the output
                 // object type, so prefer the values.yaml scalar schema.
-                if input.facts.contract.has_referenced_descendants
-                    && is_declared_object_schema(&input.values_yaml_schema)
-                    && is_scalar_schema(&input.provider_schema)
+                if facts.contract.has_referenced_descendants
+                    && is_declared_object_schema(&values_yaml_schema)
+                    && is_scalar_schema(&provider_schema)
                 {
-                    input.values_yaml_schema
-                } else if input.facts.contract.used_as_fragment
-                    && is_declared_object_schema(&input.values_yaml_schema)
-                    && is_open_string_map_schema(&input.provider_schema)
+                    values_yaml_schema
+                } else if facts.contract.used_as_fragment
+                    && is_declared_object_schema(&values_yaml_schema)
+                    && is_open_string_map_schema(&provider_schema)
                 {
-                    input.provider_schema
-                } else if input.facts.contract.used_as_fragment
-                    && is_scalar_schema(&input.values_yaml_schema)
-                    && is_object_or_array_schema(&input.provider_schema)
+                    provider_schema
+                } else if facts.contract.used_as_fragment
+                    && is_scalar_schema(&values_yaml_schema)
+                    && is_object_or_array_schema(&provider_schema)
                 {
-                    input.values_yaml_schema
-                } else if let Some(values_yaml_ty) = schema_type(&input.values_yaml_schema)
-                    && is_scalar_schema(&input.values_yaml_schema)
-                    && schema_allows_type(&input.provider_schema, values_yaml_ty)
+                    values_yaml_schema
+                } else if let Some(values_yaml_ty) = schema_type(&values_yaml_schema)
+                    && is_scalar_schema(&values_yaml_schema)
+                    && schema_allows_type(&provider_schema, values_yaml_ty)
                 {
                     if preserve_empty_string_fallback
                         && values_yaml_ty == "string"
-                        && !schema_permits_empty_string(&input.provider_schema)
+                        && !schema_permits_empty_string(&provider_schema)
                     {
-                        union_schema_list(vec![input.provider_schema, empty_string_schema()])
+                        union_schema_list(vec![provider_schema, empty_string_schema()])
                     } else {
-                        input.provider_schema
+                        provider_schema
                     }
                 } else {
-                    merge_two_schemas(input.provider_schema, input.values_yaml_schema)
+                    merge_two_schemas(provider_schema, values_yaml_schema)
                 }
             }
-        } else if input.facts.contract.used_as_fragment
-            && !input.facts.contract.used_as_serialized
-            && (is_empty_schema(&input.values_yaml_schema) || input.facts.values_yaml.is_empty_map)
+        } else if facts.contract.used_as_fragment
+            && !facts.contract.used_as_serialized
+            && (is_empty_schema(&values_yaml_schema) || facts.values_yaml.is_empty_map)
         {
             // A fragment-only path with no shape evidence (undeclared, or a
             // declared-`{}` placeholder) splices whatever the user supplies
@@ -711,22 +732,22 @@ impl ResolvePolicy {
             // shape; independent consumers narrow through their own
             // guarded lanes.
             empty_schema()
-        } else if !is_empty_schema(&input.values_yaml_schema) {
-            input.values_yaml_schema
+        } else if !is_empty_schema(&values_yaml_schema) {
+            values_yaml_schema
         } else {
             empty_schema()
         };
 
-        let base = merge_two_schemas(base, input.type_hint_schema);
+        let base = merge_two_schemas(base, type_hint_schema);
         // Condition guards are MAY-BE dispatch evidence (`kindIs "map" x`
         // arms prove the chart handles maps), never a requirement: a
         // declared default shape must not erase a structurally handled
         // alternative, so the guard domain unions with the base instead of
         // intersecting it.
-        if is_empty_schema(&base) || is_empty_schema(&input.guard_predicate_schema) {
-            merge_two_schemas(base, input.guard_predicate_schema)
+        if is_empty_schema(&base) || is_empty_schema(&guard_predicate_schema) {
+            merge_two_schemas(base, guard_predicate_schema)
         } else {
-            union_schema_list(vec![base, input.guard_predicate_schema])
+            union_schema_list(vec![base, guard_predicate_schema])
         }
     }
 }

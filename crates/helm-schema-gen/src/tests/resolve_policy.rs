@@ -1,6 +1,5 @@
 use super::*;
 use crate::resolve_policy::schema_covers_strict_plain_scalar_string;
-use crate::schema_model::empty_schema;
 use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
@@ -287,17 +286,17 @@ fn plain_probe_port_expected_schema() -> Value {
 
 #[test]
 fn branch_only_type_hint_keeps_declared_shape_until_base_classification() {
-    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
+    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts::default(),
             ValuesYamlPathFacts::default(),
         ),
-        provider_schema: empty_schema(),
-        values_yaml_schema: serde_json::json!({ "type": "boolean" }),
-        guard_predicate_schema: empty_schema(),
-        type_hint_schema: empty_schema(),
-        guarded_type_hint_schema: serde_json::json!({ "type": "string" }),
-        fallback_type_hint_schema: empty_schema(),
+        provider_schema: SchemaNode::empty(),
+        values_yaml_schema: SchemaNode::from_value(serde_json::json!({ "type": "boolean" })),
+        guard_predicate_schema: SchemaNode::empty(),
+        type_hint_schema: SchemaNode::empty(),
+        guarded_type_hint_schema: SchemaNode::from_value(serde_json::json!({ "type": "string" })),
+        fallback_type_hint_schema: SchemaNode::empty(),
     });
 
     sim_assert_eq!(
@@ -313,20 +312,20 @@ fn branch_only_type_hint_keeps_declared_shape_until_base_classification() {
 
 #[test]
 fn branch_only_string_hint_widens_restricted_string_provider_domain() {
-    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
+    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts::default(),
             ValuesYamlPathFacts::default(),
         ),
-        provider_schema: serde_json::json!({
+        provider_schema: SchemaNode::from_value(serde_json::json!({
             "type": "string",
             "pattern": "^restricted$"
-        }),
-        values_yaml_schema: empty_schema(),
-        guard_predicate_schema: empty_schema(),
-        type_hint_schema: empty_schema(),
-        guarded_type_hint_schema: serde_json::json!({ "type": "string" }),
-        fallback_type_hint_schema: empty_schema(),
+        })),
+        values_yaml_schema: SchemaNode::empty(),
+        guard_predicate_schema: SchemaNode::empty(),
+        type_hint_schema: SchemaNode::empty(),
+        guarded_type_hint_schema: SchemaNode::from_value(serde_json::json!({ "type": "string" })),
+        fallback_type_hint_schema: SchemaNode::empty(),
     });
 
     sim_assert_eq!(
@@ -345,12 +344,12 @@ fn branch_only_string_hint_widens_restricted_string_provider_domain() {
 
 #[test]
 fn common_plain_string_survives_all_provider_evidence_merges() {
-    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
+    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts::default(),
             ValuesYamlPathFacts::default(),
         ),
-        provider_schema: serde_json::json!({
+        provider_schema: SchemaNode::from_value(serde_json::json!({
             "anyOf": [
                 {
                     "type": "string",
@@ -370,15 +369,15 @@ fn common_plain_string_survives_all_provider_evidence_merges() {
                 },
                 { "type": "null" },
             ]
-        }),
-        values_yaml_schema: serde_json::json!({
+        })),
+        values_yaml_schema: SchemaNode::from_value(serde_json::json!({
             "type": "array",
             "items": {},
-        }),
-        guard_predicate_schema: empty_schema(),
-        type_hint_schema: serde_json::json!({ "type": "string" }),
-        guarded_type_hint_schema: empty_schema(),
-        fallback_type_hint_schema: empty_schema(),
+        })),
+        guard_predicate_schema: SchemaNode::empty(),
+        type_hint_schema: SchemaNode::from_value(serde_json::json!({ "type": "string" })),
+        guarded_type_hint_schema: SchemaNode::empty(),
+        fallback_type_hint_schema: SchemaNode::empty(),
     });
 
     sim_assert_eq!(
@@ -393,7 +392,7 @@ fn dependency_default_refill_accepts_null_without_parent_consumer() {
         "additionalProperties": { "type": "string" },
         "type": "object",
     });
-    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
+    let resolved = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts {
                 has_render_use: true,
@@ -406,12 +405,12 @@ fn dependency_default_refill_accepts_null_without_parent_consumer() {
                 ..ValuesYamlPathFacts::default()
             },
         ),
-        provider_schema: provider_schema.clone(),
-        values_yaml_schema: empty_schema(),
-        guard_predicate_schema: empty_schema(),
-        type_hint_schema: empty_schema(),
-        guarded_type_hint_schema: empty_schema(),
-        fallback_type_hint_schema: empty_schema(),
+        provider_schema: SchemaNode::from_value(provider_schema.clone()),
+        values_yaml_schema: SchemaNode::empty(),
+        guard_predicate_schema: SchemaNode::empty(),
+        type_hint_schema: SchemaNode::empty(),
+        guarded_type_hint_schema: SchemaNode::empty(),
+        fallback_type_hint_schema: SchemaNode::empty(),
     });
 
     sim_assert_eq!(
@@ -424,50 +423,52 @@ fn dependency_default_refill_accepts_null_without_parent_consumer() {
         })
     );
 
-    let parent_consumed = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
-        facts: ValuePathSchemaFacts::new(
-            ContractValuePathFacts {
-                has_render_use: true,
-                has_unconditional_render_use: true,
-                all_render_uses_self_guarded: helm_schema_core::AllUses::new(false),
-                all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
-                ..ContractValuePathFacts::default()
-            },
-            ValuesYamlPathFacts {
-                has_dependency_default: true,
-                ..ValuesYamlPathFacts::default()
-            },
-        ),
-        provider_schema: provider_schema.clone(),
-        values_yaml_schema: empty_schema(),
-        guard_predicate_schema: empty_schema(),
-        type_hint_schema: empty_schema(),
-        guarded_type_hint_schema: empty_schema(),
-        fallback_type_hint_schema: empty_schema(),
-    });
+    let parent_consumed =
+        ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
+            facts: ValuePathSchemaFacts::new(
+                ContractValuePathFacts {
+                    has_render_use: true,
+                    has_unconditional_render_use: true,
+                    all_render_uses_self_guarded: helm_schema_core::AllUses::new(false),
+                    all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
+                    ..ContractValuePathFacts::default()
+                },
+                ValuesYamlPathFacts {
+                    has_dependency_default: true,
+                    ..ValuesYamlPathFacts::default()
+                },
+            ),
+            provider_schema: SchemaNode::from_value(provider_schema.clone()),
+            values_yaml_schema: SchemaNode::empty(),
+            guard_predicate_schema: SchemaNode::empty(),
+            type_hint_schema: SchemaNode::empty(),
+            guarded_type_hint_schema: SchemaNode::empty(),
+            fallback_type_hint_schema: SchemaNode::empty(),
+        });
     sim_assert_eq!(have: parent_consumed, want: provider_schema);
 
-    let dependency_root = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
-        facts: ValuePathSchemaFacts::new(
-            ContractValuePathFacts {
-                has_render_use: true,
-                accepted_dependency_values_root_fragment: true,
-                all_render_uses_self_guarded: helm_schema_core::AllUses::new(false),
-                all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
-                ..ContractValuePathFacts::default()
-            },
-            ValuesYamlPathFacts {
-                has_dependency_default: true,
-                ..ValuesYamlPathFacts::default()
-            },
-        ),
-        provider_schema: provider_schema.clone(),
-        values_yaml_schema: empty_schema(),
-        guard_predicate_schema: empty_schema(),
-        type_hint_schema: empty_schema(),
-        guarded_type_hint_schema: empty_schema(),
-        fallback_type_hint_schema: empty_schema(),
-    });
+    let dependency_root =
+        ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
+            facts: ValuePathSchemaFacts::new(
+                ContractValuePathFacts {
+                    has_render_use: true,
+                    accepted_dependency_values_root_fragment: true,
+                    all_render_uses_self_guarded: helm_schema_core::AllUses::new(false),
+                    all_render_uses_falsy_tolerant: helm_schema_core::AllUses::new(false),
+                    ..ContractValuePathFacts::default()
+                },
+                ValuesYamlPathFacts {
+                    has_dependency_default: true,
+                    ..ValuesYamlPathFacts::default()
+                },
+            ),
+            provider_schema: SchemaNode::from_value(provider_schema.clone()),
+            values_yaml_schema: SchemaNode::empty(),
+            guard_predicate_schema: SchemaNode::empty(),
+            type_hint_schema: SchemaNode::empty(),
+            guarded_type_hint_schema: SchemaNode::empty(),
+            fallback_type_hint_schema: SchemaNode::empty(),
+        });
     sim_assert_eq!(have: dependency_root, want: provider_schema);
 }
 

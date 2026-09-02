@@ -299,17 +299,21 @@ fn build_path_schema_inputs(
         .unwrap_or_else(empty_schema);
 
     (
-        ValuePathSchemaInputs {
+        ValuePathSchemaInputs::Complete {
             facts,
-            provider_schema,
-            values_yaml_schema,
-            guard_predicate_schema: guard_predicate_schema(
+            provider_schema: SchemaNode::from_value(provider_schema),
+            values_yaml_schema: SchemaNode::from_value(values_yaml_schema),
+            guard_predicate_schema: SchemaNode::from_value(guard_predicate_schema(
                 &value_path.encode(),
                 &evidence.guard_predicates,
-            ),
-            type_hint_schema: type_hint_schema(&evidence.type_hints),
-            guarded_type_hint_schema: type_hint_schema(&evidence.guarded_type_hints),
-            fallback_type_hint_schema: type_hint_schema(&evidence.fallback_type_hints),
+            )),
+            type_hint_schema: SchemaNode::from_value(type_hint_schema(&evidence.type_hints)),
+            guarded_type_hint_schema: SchemaNode::from_value(type_hint_schema(
+                &evidence.guarded_type_hints,
+            )),
+            fallback_type_hint_schema: SchemaNode::from_value(type_hint_schema(
+                &evidence.fallback_type_hints,
+            )),
         },
         provider_schema_candidate,
     )

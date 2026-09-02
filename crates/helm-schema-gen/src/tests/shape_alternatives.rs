@@ -445,7 +445,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         "type": "string"
     });
 
-    let schema = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
+    let schema = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts {
                 has_render_use: true,
@@ -459,12 +459,12 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
                 ..ValuesYamlPathFacts::default()
             },
         ),
-        provider_schema,
-        values_yaml_schema,
-        guard_predicate_schema: serde_json::json!({}),
-        type_hint_schema: serde_json::json!({}),
-        guarded_type_hint_schema: serde_json::json!({}),
-        fallback_type_hint_schema: serde_json::json!({}),
+        provider_schema: SchemaNode::from_value(provider_schema),
+        values_yaml_schema: SchemaNode::from_value(values_yaml_schema),
+        guard_predicate_schema: SchemaNode::empty(),
+        type_hint_schema: SchemaNode::empty(),
+        guarded_type_hint_schema: SchemaNode::empty(),
+        fallback_type_hint_schema: SchemaNode::empty(),
     });
 
     assert!(

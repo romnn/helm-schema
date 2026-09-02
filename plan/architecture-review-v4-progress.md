@@ -8237,3 +8237,115 @@
 - Measured production LOC delta: +44 (65,906 to 65,950). The typed predicates and direct carrier
   transitions replace raw field protocols; this ordinary representation round has no E-style LOC
   gate.
+
+## C1c — total typed value-path schema channels
+
+- Status: landed; commit pending.
+- Contract: representation-only. Replace `ValuePathSchemaInputs`' raw schema fields with one total
+  enum variant whose channel names carry `SchemaNode`s, so construction and exhaustive consumption
+  cannot erase provider, declared-default, guard, ordinary-hint, guarded-hint, or fallback-hint
+  identity.
+- Acceptance baseline: `587d9a7d` (C1b ledger closure commit).
+- Baseline production Rust LOC: 65,950.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+  - The frozen plan counted seven positional `Value` fields; the current tree has six schema fields
+    plus `ValuePathSchemaFacts`, after prior rounds separated facts from schema evidence. This round
+    types all six live schema channels and records the audited count instead of inventing a seventh.
+  - Every construction site names every channel; every consumer uses an exhaustive enum match. No
+    optional channel map, missing-channel default, positional tuple, raw compatibility carrier, or
+    dual accessor is permitted.
+  - Provider JSON enters through `SchemaNode::from_value`; resolved JSON leaves through
+    `SchemaNode::into_value`. Any changed artifact byte rejects the round. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - `ValuePathSchemaInputs` is now an enum with one total `Complete` variant. Its named provider,
+    values-YAML, guard-predicate, ordinary-hint, guarded-hint, and fallback-hint channels each own a
+    `SchemaNode`; the separately typed `ValuePathSchemaFacts` remains beside them.
+  - The path resolver constructs every channel explicitly at the provider/values/IR boundary. Both
+    policy consumption stages exhaustively match the variant before applying the existing schema
+    algebra, so no channel can be read positionally, omitted, defaulted from absence, or confused
+    with a sibling channel.
+  - All seven private direct construction sites now name the complete variant and pass typed nodes.
+    Empty channels use `SchemaNode::empty`; no raw `{}` compatibility spelling or parallel raw
+    carrier remains.
+  - All 84 schema artifacts and all 18 symbolic-IR artifacts are byte-identical to C1b. The
+    full-depth battery checks 120,837 probes across 60 charts with zero flips, zero candidate-
+    accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and 7,465/7,465 mandatory
+    third-level probes; the disclosed bounded category remains 25,718 reductions.
+
+- Deviations:
+  - Current-tree audit found six schema channels plus facts, not seven raw schema fields as counted
+    by the frozen plan at `bb61a78f`. Prior rounds had already separated the facts carrier; this
+    round types every live schema channel and records the proven count instead of manufacturing a
+    dead seventh field.
+  - The first compiler-driven pass rejected seven old struct literals after the carrier became an
+    enum. The next pass rejected 42 raw test-channel values. All sites were migrated explicitly;
+    neither state produced an archive, dump, fixture, or acceptance result.
+  - A pre-archive lint preflight reported one test import made obsolete when empty channels became
+    typed nodes. The import was deleted before final1; no suppression was added and no artifact was
+    adopted from the warning state.
+  - Resolve-policy's local merge algebra still operates on owned JSON values after the exhaustive
+    typed handoff and returns final JSON. This round removes the phase-crossing positional carrier;
+    it does not introduce a second typed/raw carrier or claim the established local algebra is a
+    phase artifact.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and enabled in final1. Exact schema/IR bytes and
+  zero acceptance flips require no fixture or individual Helm verdict. Candidate-accepts/
+  Helm-aborts and mandatory coverage drops remain zero.
+
+- Producer/route coverage:
+
+  | Channel/route | Final owner and proof |
+  | --- | --- |
+  | Provider schema | Provider/path resolver → typed provider channel; provider and resolution suites. |
+  | Values-YAML schema | Prepared path facts → typed declared channel; defaults/nullability suites. |
+  | Guard predicate | Guard lowering → typed guard channel; guard/shape suites. |
+  | Ordinary type hint | Contract facts → typed ordinary-hint channel; resolve-policy suite. |
+  | Guarded type hint | Branch facts → typed widening channel; branch-only focused tests. |
+  | Fallback type hint | Default/coalesce facts → typed fallback channel; fallback/nullability suites. |
+  | Merge-stage re-entry | Exhaustive complete-channel reconstruction; 84 exact schemas and full battery. |
+
+- Review dossier:
+  - Focused proof: 41/41 resolve-policy and shape-alternative tests pass.
+  - Immutable build: C1c final1; exit 0, 90 binaries and 128 files.
+  - Clean schema dump: final1 archive and absolute step-local `TMPDIR`; exit 0, 62/62 in 159.686
+    seconds; all 84 artifacts are byte-identical to C1b.
+  - Clean IR dump: same archive and its own step-local `TMPDIR`; exit 0, one test in 5.602 seconds;
+    all 18 artifacts are byte-identical.
+  - Full-depth proof: same archive, baseline `587d9a7d`, Helm enabled; exit 0 in 108.696 seconds, 60
+    charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+    and 25,718 disclosed bounded reductions.
+  - Public/wire decision: none. `ValuePathSchemaInputs` is crate-private and the enum replacement
+    changes neither serialized artifacts nor public APIs.
+
+- Self-adversarial pass:
+  - A single total variant deliberately avoids an optional map: all channel names are compile-time
+    fields, and construction cannot omit one or supply duplicates. Exhaustive destructuring keeps
+    additions compiler-driven.
+  - The provider and values-YAML channels remain distinct even when their serialized schemas are
+    equal; policy continues to apply provenance-specific precedence before merging.
+  - Guarded and fallback hints do not collapse into ordinary hints at the carrier boundary. Their
+    widening/falsy escape behavior is applied only after the exhaustive match, preserving the
+    campaign's branch-local semantics.
+  - Whole-tree search finds no raw schema field, positional tuple, `Option` channel, missing-channel
+    fallback, or dual accessor on `ValuePathSchemaInputs`.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in approximately 125 seconds; the two pre-existing ast-grep warnings remain
+    informational.
+  - `task lint:fc`: exit 0; 48/48 combinations across three targets in 549.28 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,337/1,337 pass in 111.219 seconds.
+  - `task test:integration`: exit 0; 564/564 pass in 886.453 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,905/1,905 pass in 1,044.093 seconds; 24 skipped and live tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 18.73 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts with the documented host shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,975.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +25 (65,950 to 65,975). This ordinary representation round makes
+  channel identity total and compiler-checked; no E-style LOC gate applies.

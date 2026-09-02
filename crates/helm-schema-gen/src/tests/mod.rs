@@ -9,6 +9,7 @@ use crate::{
         ProviderValueUsePolicy, ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
         open_objects_rejecting_declared_members, preserve_declared_default_in_schema,
     },
+    schema_node::SchemaNode,
     values_yaml::ValuesYamlPathFacts,
 };
 use helm_schema_ast::DefineIndex;
