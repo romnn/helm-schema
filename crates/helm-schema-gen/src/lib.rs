@@ -31,7 +31,6 @@ use helm_schema_core::{ContractSchemaSignals, ResourceSchemaOracle};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
-pub(crate) use emission_plan::CompletionPass;
 use emission_plan::LoweredEmissionPlan;
 pub use emission_policy::{
     ConditionalAnchors, EmissionClassKind, EmissionOrigin, EmissionPolicy, EmissionPolicyDelta,
@@ -175,16 +174,9 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
 /// output-pipeline transforms.
 #[tracing::instrument(skip_all)]
 pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> (Value, EmissionReport) {
-    generate_values_schema_through(&input, CompletionPass::Descriptions)
-}
-
-fn generate_values_schema_through(
-    input: &ValuesSchemaInput<'_>,
-    completion_pass: CompletionPass,
-) -> (Value, EmissionReport) {
-    let plan = LoweredEmissionPlan::build(input);
+    let plan = LoweredEmissionPlan::build(&input);
     let projected = plan.project(input.emission_policy);
-    let completed = plan.complete(projected, completion_pass);
+    let completed = plan.complete(projected);
     (completed.schema, completed.emission_report)
 }
 

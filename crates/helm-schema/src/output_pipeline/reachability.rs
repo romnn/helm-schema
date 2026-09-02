@@ -16,22 +16,9 @@ pub(crate) struct OwnedDefinitions {
 
 impl OwnedDefinitions {
     pub(crate) fn capture(schema: &Value) -> Self {
-        let mut original = BTreeMap::new();
-        for keyword in ["$defs", "definitions"] {
-            let Some(definitions) = schema.get(keyword).and_then(Value::as_object) else {
-                continue;
-            };
-            for (name, definition) in definitions {
-                original.insert(
-                    DefinitionId {
-                        keyword: keyword.to_string(),
-                        name: name.clone(),
-                    },
-                    definition.clone(),
-                );
-            }
+        Self {
+            original: root_definitions(schema),
         }
-        Self { original }
     }
 
     pub(crate) fn retain_unchanged(mut self, schema: &Value) -> Self {

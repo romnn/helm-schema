@@ -11,9 +11,8 @@ use crate::cache::{
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::filename::candidate_filenames_for_resource;
+use crate::inference::ApiVersionCandidate;
 use crate::inference::cache_scan::scan_k8s_cache;
-use crate::inference::shortlist::canonical_api_version_for_kind;
-use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::source_bundle::{SourceBundleNode, bundle_source_definition};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
@@ -21,8 +20,8 @@ use crate::lookup::{
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
-    CachedSchemaDocRequest, SourceDocOutcome, allow_download_from_env, load_source_schema_doc,
-    probe_source_schema_doc, source_url,
+    CachedSchemaDocRequest, SchemaCachePolicy, SourceDocOutcome, allow_download_from_env,
+    load_source_schema_doc, probe_source_schema_doc, source_url,
 };
 
 use super::capability_probe::build_capability_probe;
@@ -62,9 +61,6 @@ pub struct KubernetesJsonSchemaProvider {
     pub use_cache: bool,
     /// Whether bounded API-version inference is enabled.
     pub allow_api_version_guess: bool,
-    /// Whether returned fragments retain provider source ownership.
-    pub record_source: bool,
-
     fetcher: Arc<dyn HttpFetcher>,
     negative_cache: Arc<NegativeCache>,
     layout_checker: Arc<LayoutChecker>,
@@ -97,7 +93,6 @@ impl KubernetesJsonSchemaProvider {
             allow_download: allow_download_from_env(),
             use_cache: true,
             allow_api_version_guess: false,
-            record_source: false,
             fetcher: Arc::new(UreqFetcher::new()),
             negative_cache: Arc::new(NegativeCache::new()),
             layout_checker: Arc::new(LayoutChecker::new()),
@@ -169,13 +164,6 @@ impl KubernetesJsonSchemaProvider {
         self
     }
 
-    /// Controls whether returned fragments retain source-document metadata.
-    #[must_use]
-    pub fn with_record_source(mut self, record: bool) -> Self {
-        self.record_source = record;
-        self
-    }
-
     /// Provider-facing entry point: walk `(version, mirror)` and
     /// return the first source that owns the resource.
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
@@ -223,9 +211,9 @@ impl KubernetesJsonSchemaProvider {
             cache_namespace: version,
             cache_key: filename,
             allow_download: self.allow_download,
-            use_cache: self.use_cache,
-            record_source: self.record_source,
-            use_not_found_marker: true,
+            cache_policy: SchemaCachePolicy::Kubernetes {
+                use_cache: self.use_cache,
+            },
             fetcher: self.fetcher.as_ref(),
             negative_cache: &self.negative_cache,
         }
@@ -357,31 +345,6 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         }
     }
 
-    /// Schema for a resource is owned by us if any (version, source)
-    /// has its file already cached or recorded as negative-cache; no
-    /// fetches issued during ownership probe (PR 0e contract).
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        if !self.use_cache {
-            return false;
-        }
-        if resource.api_version.trim().is_empty() {
-            return false;
-        }
-        let candidates = candidate_filenames_for_resource(resource);
-        for version in self.versions.ordered() {
-            for filename in &candidates {
-                for source in &self.mirrors.sources {
-                    let local =
-                        k8s_cache_path(&self.cache_dir, &source.source_id, &version, filename);
-                    if local.exists() {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
     fn primary_k8s_version(&self) -> Option<&str> {
         self.versions.primary()
     }
@@ -485,13 +448,6 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             return Vec::new();
         }
         let mut out: Vec<ApiVersionCandidate> = Vec::new();
-        if let Some(api_version) = canonical_api_version_for_kind(kind) {
-            out.push(ApiVersionCandidate {
-                api_version: api_version.to_string(),
-                source: InferenceSource::Shortlist,
-                origin: ProviderOrigin::KubernetesOpenApi,
-            });
-        }
         let inference_versions: std::collections::HashSet<String> = self
             .versions
             .inference_scan_versions()

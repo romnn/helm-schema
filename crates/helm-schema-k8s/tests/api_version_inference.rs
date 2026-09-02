@@ -97,21 +97,32 @@ fn api_version_guess_shortlist_resolves_known_kind() -> eyre::Result<()> {
         .with_cache_dir(k8s)
         .with_fetcher(mock)
         .with_api_version_guess(true);
+    let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(crd_provider), Box::new(k8s_provider)])
-        .with_inference_enabled(true);
+        .with_inference_enabled(true)
+        .with_diagnostic_sink(diagnostics.clone());
 
-    let candidates: Vec<_> = chain
-        .providers()
-        .iter()
-        .flat_map(|p| p.infer_api_version_candidates("ServiceMonitor"))
-        .collect();
+    let _ = chain.schema_fragment_for_use(&use_with_kind("ServiceMonitor"));
 
-    assert!(
-        candidates
-            .iter()
-            .any(|c| c.api_version == "monitoring.coreos.com/v1"
-                && c.source == InferenceSource::Shortlist),
-        "expected ServiceMonitor → monitoring.coreos.com/v1 from shortlist; got {candidates:?}"
+    let inferred = diagnostics
+        .snapshot()
+        .into_iter()
+        .find_map(|diagnostic| match diagnostic {
+            Diagnostic::InferredApiVersion {
+                inferred_api_version,
+                source,
+                origin,
+                ..
+            } => Some((inferred_api_version, source, origin)),
+            _ => None,
+        });
+    sim_assert_eq!(
+        have: inferred,
+        want: Some((
+            "monitoring.coreos.com/v1".to_string(),
+            InferenceSource::Shortlist,
+            ProviderOrigin::DefaultCatalog,
+        ))
     );
     Ok(())
 }
@@ -292,9 +303,6 @@ fn infer_api_version_candidates_default_impl_empty() {
             _p: &helm_schema_core::YamlPath,
         ) -> ProviderLookupResult {
             ProviderLookupResult::NotOwned
-        }
-        fn has_resource(&self, _r: &helm_schema_core::ResourceRef) -> bool {
-            false
         }
     }
     let provider = Empty;
@@ -528,12 +536,16 @@ fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() -> eyre::Result<()>
 fn inference_for_builtin_kind_does_not_emit_diagnostic() -> eyre::Result<()> {
     // A throwaway cache root, so what this asserts cannot change with
     // whatever a previous run left in the shared per-user cache.
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+    let crd_provider = CrdsCatalogSchemaProvider::new()
+        .with_cache_dir(tmp_dir("inf-builtin-kind-crd")?)
+        .with_allow_download(false)
+        .with_api_version_guess(true);
+    let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(tmp_dir("inf-builtin-kind")?)
         .with_allow_download(false)
         .with_api_version_guess(true);
     let diagnostics = DiagnosticSink::new();
-    let chain = Chain::new(vec![Box::new(provider)])
+    let chain = Chain::new(vec![Box::new(crd_provider), Box::new(k8s_provider)])
         .with_inference_enabled(true)
         .with_diagnostic_sink(diagnostics.clone());
 

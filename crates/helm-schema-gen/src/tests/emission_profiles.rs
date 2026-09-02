@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    CompletionPass, SchemaProfile,
+    SchemaProfile,
     emission_plan::LoweredEmissionPlan,
     emission_policy::{EmissionClassKind, EmissionPolicy},
     generate_values_schema_with_report,
@@ -293,16 +293,6 @@ fn completion_passes_preserve_profile_monotonicity() -> eyre::Result<()> {
     let input = ValuesSchemaInput::new(&signals, &NoopProvider).with_values_documents(&documents);
     let plan = LoweredEmissionPlan::build(&input);
     let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
-    let passes = [
-        CompletionPass::Projected,
-        CompletionPass::ValuesDefaultBackfill,
-        CompletionPass::OpenGlobal,
-        CompletionPass::DeclaredDefaults,
-        CompletionPass::RepeatedProviderPayloads,
-        CompletionPass::SharedDefinitions,
-        CompletionPass::ProgramWrappers,
-        CompletionPass::Descriptions,
-    ];
     let modes = [
         serde_json::json!(null),
         serde_json::json!("off"),
@@ -317,30 +307,81 @@ fn completion_passes_preserve_profile_monotonicity() -> eyre::Result<()> {
         serde_json::json!({ "$tplYaml": "2" }),
     ];
 
-    for pass in passes {
-        let full = plan.complete(plan.project(full_policy), pass).schema;
-        let lean = plan
-            .complete(
-                plan.project(EmissionPolicy::for_profile(SchemaProfile::Lean)),
-                pass,
-            )
-            .schema;
+    for ((pass, full), (lean_pass, lean)) in
+        completion_schemas(&plan, full_policy)
+            .into_iter()
+            .zip(completion_schemas(
+                &plan,
+                EmissionPolicy::for_profile(SchemaProfile::Lean),
+            ))
+    {
+        sim_assert_eq!(have: lean_pass, want: pass);
         let full = jsonschema::validator_for(&full)
-            .map_err(|error| eyre::eyre!("compile full schema after {pass:?}: {error}"))?;
+            .map_err(|error| eyre::eyre!("compile full schema after {pass}: {error}"))?;
         let lean = jsonschema::validator_for(&lean)
-            .map_err(|error| eyre::eyre!("compile lean schema after {pass:?}: {error}"))?;
+            .map_err(|error| eyre::eyre!("compile lean schema after {pass}: {error}"))?;
         for mode in &modes {
             for payload in &payloads {
                 let instance = serde_json::json!({ "mode": mode, "payload": payload });
                 eyre::ensure!(
                     !full.is_valid(&instance) || lean.is_valid(&instance),
-                    "{pass:?} narrowed the widened profile for {instance}"
+                    "{pass} narrowed the widened profile for {instance}"
                 );
             }
         }
     }
 
     Ok(())
+}
+
+fn completion_schemas(
+    plan: &LoweredEmissionPlan,
+    policy: EmissionPolicy,
+) -> Vec<(&'static str, serde_json::Value)> {
+    let projected = plan.project(policy);
+    let mut schemas = vec![("projected", finish_projected(projected.clone()))];
+    let projected = plan.merge_missing_defaults(projected);
+    schemas.push((
+        "values-default-backfill",
+        finish_projected(projected.clone()),
+    ));
+    let projected = LoweredEmissionPlan::open_global_namespace(projected);
+    schemas.push(("open-global", finish_projected(projected.clone())));
+    let materialized = plan.preserve_declared_defaults(projected);
+    schemas.push((
+        "declared-defaults",
+        finish_materialized(materialized.clone()),
+    ));
+    let materialized = LoweredEmissionPlan::extract_repeated_payloads(materialized);
+    schemas.push((
+        "repeated-provider-payloads",
+        finish_materialized(materialized.clone()),
+    ));
+    let materialized = LoweredEmissionPlan::insert_shared_definitions(materialized);
+    schemas.push((
+        "shared-definitions",
+        finish_materialized(materialized.clone()),
+    ));
+    let materialized = plan.apply_program_wrappers(materialized);
+    schemas.push((
+        "program-wrappers",
+        finish_materialized(materialized.clone()),
+    ));
+    let materialized = plan.apply_values_descriptions(materialized);
+    schemas.push(("descriptions", finish_materialized(materialized)));
+    schemas
+}
+
+fn finish_projected(projected: crate::emission_plan::ProjectedTree) -> serde_json::Value {
+    crate::emission_plan::finish_generated(
+        projected.document.into_value(),
+        projected.emission_report,
+    )
+    .schema
+}
+
+fn finish_materialized(materialized: crate::emission_plan::MaterializedTree) -> serde_json::Value {
+    crate::emission_plan::finish_generated(materialized.schema, materialized.emission_report).schema
 }
 
 #[test]
@@ -373,10 +414,10 @@ fn one_plan_projections_obey_floors_and_ignore_projection_order() {
     let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
     let lean_policy = EmissionPolicy::for_profile(SchemaProfile::Lean);
 
-    let full_first = plan.complete(plan.project(full_policy), CompletionPass::Descriptions);
-    let lean_second = plan.complete(plan.project(lean_policy), CompletionPass::Descriptions);
-    let lean_first = plan.complete(plan.project(lean_policy), CompletionPass::Descriptions);
-    let full_second = plan.complete(plan.project(full_policy), CompletionPass::Descriptions);
+    let full_first = plan.complete(plan.project(full_policy));
+    let lean_second = plan.complete(plan.project(lean_policy));
+    let lean_first = plan.complete(plan.project(lean_policy));
+    let full_second = plan.complete(plan.project(full_policy));
 
     sim_assert_eq!(have: full_first.schema, want: full_second.schema);
     sim_assert_eq!(
@@ -452,8 +493,8 @@ fn projections_never_reenter_the_provider() {
 
     let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
     let lean_policy = EmissionPolicy::for_profile(SchemaProfile::Lean);
-    let _ = plan.complete(plan.project(full_policy), CompletionPass::Descriptions);
-    let _ = plan.complete(plan.project(lean_policy), CompletionPass::Descriptions);
+    let _ = plan.complete(plan.project(full_policy));
+    let _ = plan.complete(plan.project(lean_policy));
 
     sim_assert_eq!(
         have: provider.calls.load(Ordering::Relaxed),

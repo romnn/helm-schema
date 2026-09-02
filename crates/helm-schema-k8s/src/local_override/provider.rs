@@ -5,8 +5,8 @@ use serde_json::Value;
 
 use crate::cache::SourceDocCache;
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
+use crate::inference::ApiVersionCandidate;
 use crate::inference::cache_scan::scan_crd_source_dir;
-use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_schema_universe::ResourceDocKey;
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
@@ -129,21 +129,12 @@ impl K8sSchemaProvider for LocalSchemaProvider {
         }
     }
 
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        self.override_file_for(resource).is_some_and(|p| p.exists())
-    }
-
     fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {
         if !self.allow_api_version_guess {
             return Vec::new();
         }
         let kind_lc = kind.to_ascii_lowercase();
-        let mut out = scan_crd_source_dir(&self.root_dir, &kind_lc, ProviderOrigin::LocalOverride);
-        // Override-as-shortlist: stamp source=Shortlist if found locally.
-        for c in &mut out {
-            c.source = InferenceSource::Shortlist;
-        }
-        out
+        scan_crd_source_dir(&self.root_dir, &kind_lc, ProviderOrigin::LocalOverride)
     }
 }
 

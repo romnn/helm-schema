@@ -111,15 +111,11 @@ impl K8sSchemaProvider for FakeIngressProvider {
                 })),
                 resolved_k8s_version: None,
             }
-        } else if self.has_resource(resource) {
+        } else if resource.kind == "Ingress" && resource.api_version == "networking.k8s.io/v1" {
             ProviderLookupResult::PathUnresolved
         } else {
             ProviderLookupResult::NotOwned
         }
-    }
-
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        resource.kind == "Ingress" && resource.api_version == "networking.k8s.io/v1"
     }
 
     fn origin(&self) -> ProviderOrigin {

@@ -10,14 +10,15 @@ use crate::cache::{
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
 use crate::fetch::{HttpFetcher, UreqFetcher};
+use crate::inference::ApiVersionCandidate;
 use crate::inference::cache_scan::scan_crd_cache;
-use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
 };
 use crate::schema_doc::SchemaDoc;
 use crate::source_cache::{
-    CachedSchemaDocRequest, allow_download_from_env, load_source_schema_doc, source_url,
+    CachedSchemaDocRequest, SchemaCachePolicy, allow_download_from_env, load_source_schema_doc,
+    source_url,
 };
 
 use super::cross_scan::collect_other_versions;
@@ -196,9 +197,9 @@ impl CrdsCatalogSchemaProvider {
                 cache_namespace: "",
                 cache_key: relative_path,
                 allow_download: self.allow_download,
-                use_cache: true,
-                record_source: self.record_source,
-                use_not_found_marker: false,
+                cache_policy: SchemaCachePolicy::CrdCatalog {
+                    record_source: self.record_source,
+                },
                 fetcher: self.fetcher.as_ref(),
                 negative_cache: &self.negative_cache,
             },
@@ -248,15 +249,6 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         };
         lookup_root_metadata_path(&loaded.doc, path, |leaf| {
             Self::source_for_leaf(&loaded, leaf)
-        })
-    }
-
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        let Some(relative_path) = relative_path_for_resource(resource) else {
-            return false;
-        };
-        self.mirrors.sources.iter().any(|source| {
-            crd_cache_path(&self.cache_dir, &source.source_id, &relative_path).exists()
         })
     }
 
@@ -312,17 +304,6 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
                     kind,
                 ));
             }
-        }
-        // Stamp source as Shortlist if the shortlist owns the kind so
-        // the aggregator's `Shortlist > Cache > Online` priority is
-        // applied uniformly.
-        if let Some(api_version) = crate::inference::shortlist::canonical_api_version_for_kind(kind)
-        {
-            out.push(ApiVersionCandidate {
-                api_version: api_version.to_string(),
-                source: InferenceSource::Shortlist,
-                origin: ProviderOrigin::DefaultCatalog,
-            });
         }
         out
     }

@@ -70,10 +70,6 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
         })
     }
 
-    fn has_resource(&self, resource: &ResourceRef) -> bool {
-        self.universe.schema_doc_for_resource(resource).is_some()
-    }
-
     fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {
         if !self.allow_api_version_guess {
             return Vec::new();

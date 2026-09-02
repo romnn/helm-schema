@@ -54,9 +54,10 @@ fn extracts_served_crd_version_schema() {
     })]);
 
     let schema = universe
-        .schema_doc_for_resource(&resource("example.com/v1"))
-        .and_then(|schema_doc| {
-            schema_doc
+        .schema_document_for_resource(&resource("example.com/v1"))
+        .and_then(|document| {
+            document
+                .doc
                 .root()
                 .pointer("/properties/spec/properties/size")
         });
@@ -84,7 +85,7 @@ fn ignores_unserved_crd_versions() {
 
     assert!(
         universe
-            .schema_doc_for_resource(&resource("example.com/v1"))
+            .schema_document_for_resource(&resource("example.com/v1"))
             .is_none()
     );
 }
@@ -141,8 +142,8 @@ fn structural_crd_schemas_carry_their_pruning_contract() {
     })]);
 
     let root = universe
-        .schema_doc_for_resource(&resource("example.com/v1"))
-        .map(|schema_doc| schema_doc.root().clone())
+        .schema_document_for_resource(&resource("example.com/v1"))
+        .map(|document| document.doc.root().clone())
         .unwrap_or(Value::Null);
 
     for (pointer, want, label) in [
@@ -199,9 +200,10 @@ fn inserts_direct_resource_schema_without_crd_envelope() {
     });
 
     let schema = universe
-        .schema_doc_for_resource(&resource("example.com/v1"))
-        .and_then(|schema_doc| {
-            schema_doc
+        .schema_document_for_resource(&resource("example.com/v1"))
+        .and_then(|document| {
+            document
+                .doc
                 .root()
                 .pointer("/properties/spec/properties/enabled")
         });

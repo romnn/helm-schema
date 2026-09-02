@@ -77,11 +77,6 @@ impl LocalSchemaUniverse {
         self.docs.is_empty()
     }
 
-    pub(crate) fn schema_doc_for_resource(&self, resource: &ResourceRef) -> Option<&SchemaDoc> {
-        self.schema_document_for_resource(resource)
-            .map(|document| document.doc.as_ref())
-    }
-
     pub(crate) fn schema_document_for_resource(
         &self,
         resource: &ResourceRef,

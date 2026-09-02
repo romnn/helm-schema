@@ -7237,3 +7237,181 @@
   replace two superlinear raw-JSON protocols and yield byte-exact output plus a 29.5% clean-corpus
   wall-time reduction. C2 is an ordinary performance/representation round, so no E-style LOC gate
   applies.
+
+## S-D — delete the remaining mechanism-backed dead surface
+
+- Status: landed; commit pending.
+- Contract: behavior-bearing diagnostic ownership plus representation/API-surface deletion.
+  Complete the frozen S-D work that remains after
+  wave 1's already-landed IR privacy round: remove dead provider ownership/source knobs, centralize
+  shortlist evidence, replace the completion enum with named phases, collapse fact accounting to
+  its sole live dimension, and reuse the existing root-definition collector.
+- Acceptance baseline: `ddbf3933` (C2 closure commit).
+- Baseline production Rust LOC: 65,848.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, acceptance, wire, or fixture byte changes. Diagnostic changes are
+    limited to the registered shortlist-origin family below; any other diagnostic or acceptance
+    cell rejects the round before artifact adoption.
+  - Remove public `K8sSchemaProvider::has_resource` and all four production implementations. Tests
+    that used the dead ownership probe must assert through typed `lookup` outcomes or cache files;
+    no replacement ownership Boolean enters production.
+  - Remove only `KubernetesJsonSchemaProvider.record_source` and its public builder: production
+    never wires them. Preserve the separately wired CRD catalog `--crd-cache-record-source`
+    behavior and test. Replace fixed cache-request Boolean call-site literals with named request
+    policy constructors; the K8s cache bypass and persistent not-found semantics stay exact.
+  - Consult the canonical kind shortlist once in the inference owner. Assign
+    `ProviderOrigin::KubernetesOpenApi` for core/built-in API groups and
+    `ProviderOrigin::DefaultCatalog` for CRD groups, and add evidence only when that provider family
+    is configured. Provider scans contribute cache/online/chart-local facts only; local overrides
+    retain their authoritative origin without restamping cache evidence as `Shortlist`.
+  - Registered diagnostic flip: a shortlist-inferred core/built-in kind previously received two
+    duplicate shortlist candidates and reported the earlier-sorting, false
+    `ProviderOrigin::DefaultCatalog`. It now reports `ProviderOrigin::KubernetesOpenApi`.
+    External/CRD shortlist kinds remain `DefaultCatalog`; explicit local overrides remain
+    authoritative `LocalOverride`, with their evidence source changing from the provider-local
+    synthetic `Shortlist` stamp to the truthful cache-scan source. No schema or Helm acceptance can
+    change because the selected apiVersion is identical.
+  - Delete `CompletionPass`, its seven early returns, `FactAccounting`, and
+    `generate_values_schema_through`. `LoweredEmissionPlan::complete` composes named typed-tree and
+    materialized-tree steps; the profile monotonicity test composes those same functions directly
+    to inspect every boundary.
+  - Collapse `EmissionReport`'s private `(class, origin)` map to a class-keyed map and delete the
+    unused public `counts_for_class_and_origin` accessor. Total and per-class counts remain exact.
+  - Implement `OwnedDefinitions::capture` through the file's existing `root_definitions` owner with
+    no change to reachability, caller-ownership, or pruning order.
+  - Public API removals are deliberate Part-F decisions: `K8sSchemaProvider::has_resource`,
+    `KubernetesJsonSchemaProvider.record_source`,
+    `KubernetesJsonSchemaProvider::with_record_source`, and
+    `EmissionReport::counts_for_class_and_origin`. No wire-format version is required because none
+    of these APIs serialize.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - `K8sSchemaProvider::has_resource` and all four production implementations are deleted. Typed
+    `lookup` outcomes remain the sole ownership/path/miss protocol; test fakes and cache-layout
+    tests now exercise that same path. Two integration tests whose only subject was the removed
+    Boolean disappear, accounting exactly for the 565→563 and 1,902→1,900 gate-count changes.
+  - Kubernetes OpenAPI's unwired `record_source` field/builder are deleted. A typed
+    `SchemaCachePolicy` makes the remaining cache differences explicit: K8s alone can bypass cache
+    and persists authoritative-not-found markers; the CRD catalog always caches and alone carries
+    its wired source-sidecar option. The CRD sidecar integration test remains green.
+  - The canonical kind shortlist is consulted once in `infer_api_version`. Core and built-in API
+    groups are attributed to `KubernetesOpenApi`; CRD groups to `DefaultCatalog`; the row is omitted
+    if the modeled provider family is absent. Provider methods now contribute only their actual
+    chart-local, cache-scan, or online facts, and local overrides no longer rewrite scan evidence.
+  - `CompletionPass`, seven early-return branches, `FactAccounting`, and the private generation
+    forwarder are deleted. `complete` now composes seven named phase functions over
+    `ProjectedTree` and `MaterializedTree`; the monotonicity test directly composes and validates
+    all eight observable boundaries using those same functions.
+  - `EmissionReport` stores `BTreeMap<EmissionClassKind, FactCounts>` directly. The unused
+    class-and-origin accessor and producer dimension are gone; public total/per-class accounting
+    stays exact. `OwnedDefinitions::capture` delegates to the existing `root_definitions` owner.
+  - The final immutable archive contains 90 binaries and 128 files. Its one clean schema dump passes
+    62/62 tests in 155.369 seconds (158.13 process seconds), writes 84 artifacts, and is recursively
+    byte-identical to C2. The IR dump passes in 3.190 seconds with all 18 artifacts unchanged.
+  - The full-depth battery passes in 84.705 seconds across 60 charts and 120,833 probes with zero
+    schema/acceptance flips, zero candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory
+    base probes, and 7,465/7,465 mandatory third-level probes.
+- Deviations:
+  - The initial audit classified the shortlist hoist as representation-only. A rejected preflight
+    exposed that both remote providers had been emitting the same shortlist row, so built-in kinds
+    falsely attributed the chosen diagnostic to `DefaultCatalog`; local overrides also restamped
+    every scan as `Shortlist`. The centralization code was fully reverted before this diagnostic
+    family was pre-registered, then the behavior-bearing round resumed. No archive, dump, fixture,
+    or test artifact was produced from the unregistered state.
+  - The first completion lint preflight rejected three named phase methods whose receiver was not
+    used. They became associated functions instead of gaining suppressions; no archive or dump had
+    been built.
+  - The first K8s integration preflight retained a test that gathered shortlist rows directly from
+    providers. It failed as intended after ownership moved. The test now drives the chain and pins
+    the final `ServiceMonitor` diagnostic tuple; the complete 96-test K8s integration suite then
+    passed before the immutable archive was built.
+- Adjudication evidence:
+  - Helm 4.2.3 remains pinned and was used by the final full-depth battery. All 84 schema and all 18
+    symbolic-IR bytes match `ddbf3933`; zero acceptance cells change, so no fixture or individual
+    Helm cell requires adoption.
+  - Focused diagnostic proof pins external `ServiceMonitor` to
+    `(monitoring.coreos.com/v1, Shortlist, DefaultCatalog)` and constructs both CRD and K8s
+    providers for a built-in `ConfigMap`, proving the corrected K8s ownership suppresses the former
+    false CRD inference notice. Local-override aggregation remains authoritative while its source
+    now reflects the scan rather than a provider-local restamp.
+  - Candidate-accepts/Helm-aborts remains zero against a zero allowance. Mandatory base and
+    third-level coverage have zero drops; 25,710 disclosed bounded reductions remain outside the
+    mandatory categories.
+
+- Producer/route coverage:
+
+  | Route | Final behavior and proof |
+  | --- | --- |
+  | Concrete provider lookup | One typed `ProviderLookupResult` protocol; chain precedence/path/miss tests and 32-chart downstream gate. |
+  | K8s cache policy | Cache bypass plus persistent negative markers; offline capability and multi-version integration suites. |
+  | CRD cache policy | Persistent cache plus optional source sidecar, no not-found marker; mirror and sidecar integration tests. |
+  | API-version shortlist | One central consult with explicit built-in/CRD origin; focused external and dual-provider built-in diagnostics. |
+  | Completion phases | Named typed/materialized transitions shared by production and boundary monotonicity test; 84 exact schemas. |
+  | Fact accounting | One class-keyed owner with conserved totals/per-class counts; emission-profile tests and exact reports. |
+  | Owned definition pruning | Shared `root_definitions` capture; reachability unit/integration tests and exact output. |
+
+- Review dossier:
+  - Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd2-final1-build cargo
+    nextest archive --workspace --archive-file /private/tmp/arch-v4-sd2-final1.tar.zst`; exit 0, 90
+    binaries and 128 files.
+  - Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd2-final1-schema
+    SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sd2-final1.tar.zst --profile
+    integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+    exit 0, 62/62 in 155.369 seconds and 84 exact artifacts.
+  - Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd2-final1-ir
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-sd2-final1.tar.zst --profile integration -E
+    'test(ir_corpus_fixtures_match)'`; exit 0, one test in 3.190 seconds and 18 exact artifacts.
+  - Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sd2-final1-prober
+    SCHEMA_ACCEPTANCE_BASELINE_REF=ddbf3933
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sd2-final1-schema
+    SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sd2-final1-coverage.json
+    ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-sd2-final1.tar.zst --profile integration -E
+    'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+    ignored-only`; exit 0 in 84.705 seconds with zero flips and zero mandatory drops.
+  - Part-F decisions: remove the public `K8sSchemaProvider::has_resource`,
+    `KubernetesJsonSchemaProvider.record_source`,
+    `KubernetesJsonSchemaProvider::with_record_source`, and
+    `EmissionReport::counts_for_class_and_origin` surfaces. Each had zero production consumer and
+    represented a deleted parallel protocol/dimension; no deprecation facade is retained. No wire
+    format changes because none of these APIs serialize.
+
+- Self-adversarial pass:
+  - Distinguished the unwired Kubernetes source knob from the live CRD CLI option. The latter and
+    its meta-sidecar test survive; deleting both would have exceeded frozen scope and broken a real
+    feature.
+  - Rejected moving three independent cache Booleans behind constructor defaults. The typed policy
+    enum instead makes the two valid provider policies exhaustive and prevents invalid combinations
+    without preserving literal flag drift.
+  - Verified shortlist centralization does not invent candidates when the appropriate provider
+    family is absent, and uses the existing built-in-group classifier rather than a suffix heuristic.
+  - Kept local-override authority separate from evidence tier: aggregation still selects the first
+    authoritative partition, so deleting the false `Shortlist` stamp cannot change its apiVersion.
+  - Confirmed every completion boundary is exercised from the production functions, with no
+    test-only helper in production and no enum/Boolean replacement for the deleted pass knob.
+  - Confirmed no `has_resource`, `CompletionPass`, `FactAccounting`, class-and-origin report map,
+    duplicated definition capture, or Kubernetes record-source symbol remains in production.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0 in 1.00 seconds.
+  - `task lint`: exit 0 in 31.57 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 143.20 seconds using the previously approved Zig
+    cache permission.
+  - `cargo nextest run --workspace`: exit 0, 1,333/1,333 tests in 104.869 seconds.
+  - `task test:integration`: exit 0, 563/563 tests in 741.074 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,900/1,900 tests in 788.007 seconds; 24 tests skipped by profile and
+    all live network tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 16.77 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts in 41.87 seconds, using the documented
+    macOS shims and `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,789.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: -59 (65,848 to 65,789). The round deletes four public dead APIs,
+  three Boolean cache knobs, one pass enum, one wrapper, one forwarder, one report dimension, and
+  one duplicate collector while adding typed cache and materialized-phase carriers. No E-style LOC
+  gate applies.

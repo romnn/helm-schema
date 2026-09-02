@@ -17,10 +17,6 @@ impl K8sSchemaProvider for CountingProvider {
         ProviderOrigin::KubernetesOpenApi
     }
 
-    fn has_resource(&self, _resource: &ResourceRef) -> bool {
-        true
-    }
-
     fn lookup(&self, _resource: &ResourceRef, _path: &YamlPath) -> ProviderLookupResult {
         self.calls.fetch_add(1, Ordering::SeqCst);
         ProviderLookupResult::Found {
@@ -64,10 +60,6 @@ impl K8sSchemaProvider for CountingInferenceProvider {
 
     fn lookup(&self, _resource: &ResourceRef, _path: &YamlPath) -> ProviderLookupResult {
         ProviderLookupResult::NotOwned
-    }
-
-    fn has_resource(&self, _resource: &ResourceRef) -> bool {
-        false
     }
 
     fn infer_api_version_candidates(&self, _kind: &str) -> Vec<ApiVersionCandidate> {

@@ -177,14 +177,7 @@ fn dot_k8s_io_suffix_groups_resolve_against_the_live_catalog() -> eyre::Result<(
         "autoscaling.k8s.io/v1".to_string(),
         "VerticalPodAutoscaler".to_string(),
     );
-    // Populate first: `has_resource` reports on-disk state by contract and
-    // never fetches.
-    let _ = root_schema(&provider, &resource);
-
-    assert!(
-        provider.has_resource(&resource),
-        "VerticalPodAutoscaler (autoscaling.k8s.io/v1) must be resolvable \
-         through the CRDs catalog — a `.k8s.io` suffix is not a built-in group"
-    );
+    root_schema(&provider, &resource)
+        .ok_or_eyre("VerticalPodAutoscaler must resolve through the CRD catalog")?;
     Ok(())
 }

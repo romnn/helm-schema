@@ -17,14 +17,35 @@ pub(crate) struct CachedSchemaDocRequest<'a> {
     pub(crate) cache_namespace: &'a str,
     pub(crate) cache_key: &'a str,
     pub(crate) allow_download: bool,
-    pub(crate) use_cache: bool,
-    pub(crate) record_source: bool,
-    /// When set, an authoritative upstream 404 is persisted as a
-    /// `<local>.not-found` sidecar so absence survives across processes
-    /// (the in-process [`NegativeCache`] does not).
-    pub(crate) use_not_found_marker: bool,
+    pub(crate) cache_policy: SchemaCachePolicy,
     pub(crate) fetcher: &'a dyn HttpFetcher,
     pub(crate) negative_cache: &'a NegativeCache,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum SchemaCachePolicy {
+    Kubernetes { use_cache: bool },
+    CrdCatalog { record_source: bool },
+}
+
+impl SchemaCachePolicy {
+    fn use_cache(self) -> bool {
+        match self {
+            Self::Kubernetes { use_cache } => use_cache,
+            Self::CrdCatalog { .. } => true,
+        }
+    }
+
+    fn record_source(self) -> bool {
+        match self {
+            Self::Kubernetes { .. } => false,
+            Self::CrdCatalog { record_source } => record_source,
+        }
+    }
+
+    fn use_not_found_marker(self) -> bool {
+        matches!(self, Self::Kubernetes { .. })
+    }
 }
 
 /// Tri-state outcome of one `(source, cache slot)` schema-doc probe.
@@ -56,7 +77,7 @@ pub(crate) fn probe_source_schema_doc<K>(
 where
     K: Eq + Hash,
 {
-    if request.use_cache {
+    if request.cache_policy.use_cache() {
         if let Some(doc) = mem.read(&mem_key) {
             return SourceDocOutcome::Found(doc);
         }
@@ -74,7 +95,8 @@ where
             request.source_id,
             request.cache_namespace,
             request.cache_key,
-        ) || (request.use_not_found_marker && not_found_marker_exists(&request.local))
+        ) || (request.cache_policy.use_not_found_marker()
+            && not_found_marker_exists(&request.local))
         {
             return SourceDocOutcome::AuthoritativelyAbsent;
         }
@@ -92,7 +114,7 @@ where
                 &request.local,
                 &request.url,
                 &bytes,
-                request.record_source,
+                request.cache_policy.record_source(),
             ) else {
                 // Couldn't persist or parse — we still proved the
                 // schema exists upstream, but treat as Uncertain so
@@ -100,7 +122,7 @@ where
                 // cache miss.
                 return SourceDocOutcome::Uncertain;
             };
-            if request.use_not_found_marker {
+            if request.cache_policy.use_not_found_marker() {
                 remove_cache_file_if_present(
                     &not_found_marker_path(&request.local),
                     "failed to remove stale schema not-found marker",
@@ -115,7 +137,7 @@ where
                 request.cache_namespace,
                 request.cache_key,
             );
-            if request.use_not_found_marker {
+            if request.cache_policy.use_not_found_marker() {
                 remove_cache_file_if_present(
                     &request.local,
                     "failed to remove stale schema cache file",

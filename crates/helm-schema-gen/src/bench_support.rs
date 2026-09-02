@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use serde_json::Value;
 
-use crate::emission_plan::{CompletionPass, LoweredEmissionPlan};
+use crate::emission_plan::LoweredEmissionPlan;
 use crate::{EmissionPolicy, EmissionReport, ValuesSchemaInput};
 
 /// One named policy projected from the shared benchmark plan.
@@ -84,7 +84,7 @@ pub fn benchmark_policies(
             output.projection_times.push(started.elapsed());
 
             let started = Instant::now();
-            let completed = plan.complete(projected, CompletionPass::Descriptions);
+            let completed = plan.complete(projected);
             output.completion_times.push(started.elapsed());
             output.schema = completed.schema;
             output.emission_report = completed.emission_report;

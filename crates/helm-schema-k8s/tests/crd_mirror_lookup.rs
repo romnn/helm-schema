@@ -33,25 +33,6 @@ fn crd_doc() -> String {
 }
 
 #[test]
-fn crd_has_resource_does_not_speculatively_download() -> eyre::Result<()> {
-    let cache = tmp_dir("crd-has-resource")?;
-    let mock = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
-    let provider = CrdsCatalogSchemaProvider::new()
-        .with_cache_dir(cache)
-        .with_allow_download(true)
-        .with_fetcher(mock.clone());
-
-    let resource = ResourceRef::concrete(
-        "monitoring.coreos.com/v1".to_string(),
-        "ServiceMonitor".to_string(),
-    );
-    let owns = provider.has_resource(&resource);
-    assert!(!owns);
-    sim_assert_eq!(have: mock.total_calls(), want: 0, "has_resource must not fetch");
-    Ok(())
-}
-
-#[test]
 fn crd_loose_probes_mirrors_for_exact_version() -> eyre::Result<()> {
     let cache = tmp_dir("crd-loose-mirror")?;
     let mirror_url = "https://example.com/crds";

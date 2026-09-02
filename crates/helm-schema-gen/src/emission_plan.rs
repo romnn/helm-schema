@@ -175,31 +175,23 @@ struct EmissionSupportPlan {
     conditional_hosts: ConditionalHostPreparation,
 }
 
+#[derive(Clone)]
 pub(crate) struct ProjectedTree {
-    document: SchemaDocument,
-    fact_accounting: FactAccounting,
+    pub(crate) document: SchemaDocument,
+    pub(crate) emission_report: EmissionReport,
     provider_definitions: BTreeMap<String, Value>,
 }
 
-struct FactAccounting {
-    emission_report: EmissionReport,
+#[derive(Clone)]
+pub(crate) struct MaterializedTree {
+    pub(crate) schema: Value,
+    pub(crate) emission_report: EmissionReport,
+    provider_definitions: BTreeMap<String, Value>,
 }
 
 pub(crate) struct CompletedGeneratedSchema {
     pub(crate) schema: Value,
     pub(crate) emission_report: EmissionReport,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum CompletionPass {
-    Projected,
-    ValuesDefaultBackfill,
-    OpenGlobal,
-    DeclaredDefaults,
-    RepeatedProviderPayloads,
-    SharedDefinitions,
-    ProgramWrappers,
-    Descriptions,
 }
 
 impl LoweredEmissionPlan {
@@ -297,7 +289,6 @@ impl LoweredEmissionPlan {
             let selected = policy.selects(&conjunct.class);
             emission_report.record_fact(FactRecord {
                 class: &conjunct.class,
-                origin: conjunct.origin,
                 selected,
             });
             if selected {
@@ -311,7 +302,6 @@ impl LoweredEmissionPlan {
                 let selected = policy.selects(&conjunct.class);
                 emission_report.record_fact(FactRecord {
                     class: &conjunct.class,
-                    origin: conjunct.origin,
                     selected,
                 });
                 selected
@@ -367,46 +357,48 @@ impl LoweredEmissionPlan {
 
         ProjectedTree {
             document,
-            fact_accounting: FactAccounting { emission_report },
+            emission_report,
             provider_definitions,
         }
     }
 
-    pub(crate) fn complete(
-        &self,
-        projected: ProjectedTree,
-        completion_pass: CompletionPass,
-    ) -> CompletedGeneratedSchema {
+    pub(crate) fn complete(&self, projected: ProjectedTree) -> CompletedGeneratedSchema {
+        let projected = self.merge_missing_defaults(projected);
+        let projected = Self::open_global_namespace(projected);
+        let materialized = self.preserve_declared_defaults(projected);
+        let materialized = Self::extract_repeated_payloads(materialized);
+        let materialized = Self::insert_shared_definitions(materialized);
+        let materialized = self.apply_program_wrappers(materialized);
+        let materialized = self.apply_values_descriptions(materialized);
+        finish_generated(materialized.schema, materialized.emission_report)
+    }
+
+    pub(crate) fn merge_missing_defaults(&self, mut projected: ProjectedTree) -> ProjectedTree {
+        let _span = tracing::info_span!("merge_missing_defaults").entered();
+        projected
+            .emission_report
+            .canonicalization
+            .default_backfill_abstentions += projected
+            .document
+            .merge_missing_values_yaml_defaults_under_roots(
+                &self.documents.input_defaults,
+                &self.support.accepted_values_root_paths,
+                &self.support.default_fill_skip_paths,
+            );
+        projected
+    }
+
+    pub(crate) fn open_global_namespace(mut projected: ProjectedTree) -> ProjectedTree {
+        projected.document.open_helm_global_namespace();
+        projected
+    }
+
+    pub(crate) fn preserve_declared_defaults(&self, projected: ProjectedTree) -> MaterializedTree {
         let ProjectedTree {
-            mut document,
-            fact_accounting,
-            mut provider_definitions,
+            document,
+            emission_report,
+            provider_definitions,
         } = projected;
-        let mut emission_report = fact_accounting.emission_report;
-        if completion_pass == CompletionPass::Projected {
-            return finish_generated(document.into_value(), emission_report);
-        }
-
-        let fill_span = tracing::info_span!("default_fill_and_finish").entered();
-        {
-            let _span = tracing::info_span!("merge_missing_defaults").entered();
-            emission_report
-                .canonicalization
-                .default_backfill_abstentions += document
-                .merge_missing_values_yaml_defaults_under_roots(
-                    &self.documents.input_defaults,
-                    &self.support.accepted_values_root_paths,
-                    &self.support.default_fill_skip_paths,
-                );
-        }
-        if completion_pass == CompletionPass::ValuesDefaultBackfill {
-            return finish_generated(document.into_value(), emission_report);
-        }
-        document.open_helm_global_namespace();
-        if completion_pass == CompletionPass::OpenGlobal {
-            return finish_generated(document.into_value(), emission_report);
-        }
-
         let mut schema = document.into_value();
         if let Ok(declared_defaults) = serde_json::to_value(&self.documents.input_defaults)
             && declared_defaults.is_object()
@@ -417,23 +409,36 @@ impl LoweredEmissionPlan {
                 &declared_defaults,
             );
         }
-        if completion_pass == CompletionPass::DeclaredDefaults {
-            return finish_generated(schema, emission_report);
+        MaterializedTree {
+            schema,
+            emission_report,
+            provider_definitions,
         }
+    }
+
+    pub(crate) fn extract_repeated_payloads(
+        mut materialized: MaterializedTree,
+    ) -> MaterializedTree {
         {
             let _span = tracing::info_span!("extract_repeated_provider_payloads").entered();
-            provider_definitions.extend(extract_repeated_provider_payloads(&mut schema));
+            materialized
+                .provider_definitions
+                .extend(extract_repeated_provider_payloads(&mut materialized.schema));
         }
-        if completion_pass == CompletionPass::RepeatedProviderPayloads {
-            return finish_generated(schema, emission_report);
-        }
+        materialized
+    }
+
+    pub(crate) fn insert_shared_definitions(
+        mut materialized: MaterializedTree,
+    ) -> MaterializedTree {
         let truthy_span = tracing::info_span!("helm_truthy_scan").entered();
-        if value_references_helm_truthy(&schema)
-            || provider_definitions
+        if value_references_helm_truthy(&materialized.schema)
+            || materialized
+                .provider_definitions
                 .values()
                 .any(value_references_helm_truthy)
         {
-            provider_definitions.insert(
+            materialized.provider_definitions.insert(
                 HELM_TRUTHY_DEFINITION_NAME.to_string(),
                 helm_truthy_definition_schema(),
             );
@@ -442,40 +447,56 @@ impl LoweredEmissionPlan {
             helm_schema_core::QuotedScalarStyle::Double,
             helm_schema_core::QuotedScalarStyle::Single,
         ] {
-            if crate::quoted_serialization::value_references(&schema, style)
-                || provider_definitions.values().any(|definition| {
-                    crate::quoted_serialization::value_references(definition, style)
-                })
+            if crate::quoted_serialization::value_references(&materialized.schema, style)
+                || materialized
+                    .provider_definitions
+                    .values()
+                    .any(|definition| {
+                        crate::quoted_serialization::value_references(definition, style)
+                    })
             {
-                provider_definitions.insert(
+                materialized.provider_definitions.insert(
                     crate::quoted_serialization::definition_name(style).to_string(),
                     crate::quoted_serialization::definition_schema(style),
                 );
             }
         }
         drop(truthy_span);
-        insert_definitions_into_root(&mut schema, provider_definitions);
-        if completion_pass == CompletionPass::SharedDefinitions {
-            return finish_generated(schema, emission_report);
-        }
+        insert_definitions_into_root(
+            &mut materialized.schema,
+            std::mem::take(&mut materialized.provider_definitions),
+        );
+        materialized
+    }
+
+    pub(crate) fn apply_program_wrappers(
+        &self,
+        mut materialized: MaterializedTree,
+    ) -> MaterializedTree {
         {
             let _span = tracing::info_span!("apply_program_wrappers").entered();
             crate::program_wrapper::apply_program_wrapper_alternatives(
-                &mut schema,
+                &mut materialized.schema,
                 self.contract_schema_signals.values_program_wrappers(),
                 self.contract_schema_signals
                     .values_program_wrapper_exclusions(),
             );
         }
-        if completion_pass == CompletionPass::ProgramWrappers {
-            return finish_generated(schema, emission_report);
-        }
+        materialized
+    }
+
+    pub(crate) fn apply_values_descriptions(
+        &self,
+        mut materialized: MaterializedTree,
+    ) -> MaterializedTree {
         {
             let _span = tracing::info_span!("apply_values_descriptions").entered();
-            crate::schema_tree::apply_values_descriptions(&mut schema, &self.values_descriptions);
+            crate::schema_tree::apply_values_descriptions(
+                &mut materialized.schema,
+                &self.values_descriptions,
+            );
         }
-        drop(fill_span);
-        finish_generated(schema, emission_report)
+        materialized
     }
 
     #[cfg(feature = "bench-support")]
@@ -700,7 +721,7 @@ fn tree_segment_spelling(segment: &helm_schema_core::Segment) -> String {
     segment.literal().unwrap_or("*").to_owned()
 }
 
-fn finish_generated(
+pub(crate) fn finish_generated(
     schema: Value,
     mut emission_report: EmissionReport,
 ) -> CompletedGeneratedSchema {

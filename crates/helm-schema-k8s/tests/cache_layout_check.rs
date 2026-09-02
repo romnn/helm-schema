@@ -45,7 +45,6 @@ fn legacy_cache_layout_is_invalidated_in_alpha() -> eyre::Result<()> {
 
     // Trigger the layout check via any normal entry point.
     let resource = helm_schema_core::ResourceRef::concrete("v1".to_string(), "Service".to_string());
-    let _ = provider.has_resource(&resource);
     let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     // Legacy `<root>/v1.35.0/foo.json` was wiped.
@@ -88,7 +87,6 @@ fn cache_layout_version_marker_written_after_repopulate() -> eyre::Result<()> {
         .with_diagnostic_sink(diagnostics.clone());
 
     let resource = helm_schema_core::ResourceRef::concrete("v1".to_string(), "Service".to_string());
-    let _ = provider.has_resource(&resource);
     let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     let marker = root.join(LAYOUT_MARKER_FILENAME);
@@ -425,7 +423,6 @@ fn cache_layout_version_newer_marker_refuses_mutation() -> eyre::Result<()> {
         .with_diagnostic_sink(diagnostics.clone());
 
     let resource = helm_schema_core::ResourceRef::concrete("v1".to_string(), "Service".to_string());
-    let _ = provider.has_resource(&resource);
     let _ = provider.lookup(&resource, &helm_schema_core::YamlPath(Vec::new()));
 
     // Marker untouched.

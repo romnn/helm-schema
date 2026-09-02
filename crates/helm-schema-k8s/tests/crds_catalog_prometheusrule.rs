@@ -103,12 +103,8 @@ fn prometheusrule_leaf_schema_rules_items() -> eyre::Result<()> {
     Ok(())
 }
 
-/// `has_resource` reports whether the catalog has the resource's schema
-/// FILE, distinct from whether a specific path resolves inside it. Used
-/// by chain providers to commit to the first owning provider and avoid
-/// downstream "missing schema" warnings on path misses.
 #[test]
-fn has_resource_true_for_cached_crd() {
+fn cached_crd_root_lookup_resolves() {
     let provider = bundled_crd_provider();
 
     // Force the cache to populate first.
@@ -118,10 +114,10 @@ fn has_resource_true_for_cached_crd() {
     );
     let _ = materialize_schema_for_resource(&provider, &r);
 
-    assert!(
-        provider.has_resource(&r),
-        "PrometheusRule (cached CRD) should report has_resource=true"
-    );
+    assert!(matches!(
+        provider.lookup(&r, &YamlPath(Vec::new())),
+        helm_schema_k8s::ProviderLookupResult::Found { .. }
+    ));
 }
 
 /// Built-in K8s API groups stay skipped — there's no point downloading
@@ -139,9 +135,9 @@ fn relative_path_skips_built_in_k8s_groups() {
     ] {
         let (api_version, kind) = built_in;
         let r = ResourceRef::concrete(api_version.to_string(), kind.to_string());
-        assert!(
-            !provider.has_resource(&r),
-            "{kind} ({api_version}) is a built-in K8s API group — CRDs catalog must skip it",
-        );
+        assert!(matches!(
+            provider.lookup(&r, &YamlPath(Vec::new())),
+            helm_schema_k8s::ProviderLookupResult::NotOwned
+        ));
     }
 }

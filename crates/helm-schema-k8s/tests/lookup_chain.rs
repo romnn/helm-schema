@@ -16,7 +16,6 @@ use test_util::prelude::sim_assert_eq;
 struct FakeProvider {
     name: ProviderOrigin,
     behaviour: FakeBehaviour,
-    has_resource: bool,
     capability_answers: std::collections::HashMap<String, bool>,
 }
 
@@ -48,11 +47,10 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
 }
 
 impl FakeProvider {
-    fn new(name: ProviderOrigin, has_resource: bool, behaviour: FakeBehaviour) -> Self {
+    fn new(name: ProviderOrigin, behaviour: FakeBehaviour) -> Self {
         Self {
             name,
             behaviour,
-            has_resource,
             capability_answers: std::collections::HashMap::new(),
         }
     }
@@ -87,10 +85,6 @@ impl K8sSchemaProvider for FakeProvider {
         }
     }
 
-    fn has_resource(&self, _r: &ResourceRef) -> bool {
-        self.has_resource
-    }
-
     fn capability_has_query_at_primary_version(&self, query: &ApiPresenceQuery) -> Option<bool> {
         self.capability_answers
             .get(&query.canonical_helm_literal())
@@ -119,17 +113,14 @@ fn branch_literals(
 fn chain_precedence_local_over_crd_over_k8s() {
     let local = FakeProvider::new(
         ProviderOrigin::LocalOverride,
-        true,
         FakeBehaviour::Found(Value::String("local".to_string())),
     );
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
-        true,
         FakeBehaviour::Found(Value::String("crd".to_string())),
     );
     let k8s = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
-        true,
         FakeBehaviour::Found(Value::String("k8s".to_string())),
     );
     let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
@@ -147,7 +138,6 @@ fn chain_precedence_local_over_crd_over_k8s() {
 fn provider_local_path_unresolved_is_not_missing() {
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
-        true,
         FakeBehaviour::PathUnresolved,
     );
     let diagnostics = DiagnosticSink::new();
@@ -171,21 +161,9 @@ fn provider_local_path_unresolved_is_not_missing() {
 fn chain_emits_missing_schema_only_at_chain_layer() {
     // Every provider returns NotOwned, so the chain emits exactly one
     // MissingSchema (and none of the providers does).
-    let p1 = FakeProvider::new(
-        ProviderOrigin::LocalOverride,
-        false,
-        FakeBehaviour::NotOwned,
-    );
-    let p2 = FakeProvider::new(
-        ProviderOrigin::DefaultCatalog,
-        false,
-        FakeBehaviour::NotOwned,
-    );
-    let p3 = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    );
+    let p1 = FakeProvider::new(ProviderOrigin::LocalOverride, FakeBehaviour::NotOwned);
+    let p2 = FakeProvider::new(ProviderOrigin::DefaultCatalog, FakeBehaviour::NotOwned);
+    let p3 = FakeProvider::new(ProviderOrigin::KubernetesOpenApi, FakeBehaviour::NotOwned);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p1), Box::new(p2), Box::new(p3)])
         .with_diagnostic_sink(diagnostics.clone());
@@ -206,12 +184,11 @@ fn chain_emits_missing_schema_only_at_chain_layer() {
 
 #[test]
 fn chain_local_override_unreadable_does_not_fall_through() {
-    // Local claims the resource (has_resource=true) but its file is
-    // unreadable, so the chain emits LocalOverrideUnreadable and returns
+    // Local reports an unreadable resource document, so the chain emits
+    // LocalOverrideUnreadable and returns
     // no schema, never falling through to CRD or K8s.
     let local = FakeProvider::new(
         ProviderOrigin::LocalOverride,
-        true,
         FakeBehaviour::ResourceDocMissing {
             path: "/path/to/override.json".to_string(),
             io: "permission denied".to_string(),
@@ -219,12 +196,10 @@ fn chain_local_override_unreadable_does_not_fall_through() {
     );
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
-        true,
         FakeBehaviour::Found(Value::String("crd-would-have-answered".to_string())),
     );
     let k8s = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
-        true,
         FakeBehaviour::Found(Value::String("k8s-would-have-answered".to_string())),
     );
     let diagnostics = DiagnosticSink::new();
@@ -266,7 +241,6 @@ fn chain_non_override_resource_doc_missing_falls_through() {
     // CRD claims it but its doc is missing, so the chain falls through to K8s.
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
-        true,
         FakeBehaviour::ResourceDocMissing {
             path: String::new(),
             io: "transient".to_string(),
@@ -274,7 +248,6 @@ fn chain_non_override_resource_doc_missing_falls_through() {
     );
     let k8s = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
-        true,
         FakeBehaviour::Found(Value::String("k8s-wins".to_string())),
     );
     let chain = Chain::new(vec![Box::new(crd), Box::new(k8s)]);
@@ -300,10 +273,6 @@ fn chain_exposes_provider_kube_version() {
 
         fn lookup(&self, _r: &ResourceRef, _p: &YamlPath) -> ProviderLookupResult {
             ProviderLookupResult::NotOwned
-        }
-
-        fn has_resource(&self, _r: &ResourceRef) -> bool {
-            false
         }
 
         fn primary_k8s_version(&self) -> Option<&str> {
@@ -358,13 +327,9 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
                 ProviderLookupResult::NotOwned
             }
         }
-        fn has_resource(&self, r: &ResourceRef) -> bool {
-            r.api_version == self.wants
-        }
     }
     let crd = FakeProvider::new(
         ProviderOrigin::DefaultCatalog,
-        true,
         FakeBehaviour::Found(Value::String("policy/v1beta1-schema".to_string())),
     );
     drop(crd);
@@ -423,11 +388,7 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
 // apiVersions that were tried, not a single empty-apiVersion attribution.
 #[test]
 fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    );
+    let p = FakeProvider::new(ProviderOrigin::KubernetesOpenApi, FakeBehaviour::NotOwned);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
@@ -485,12 +446,8 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
 fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
     use helm_schema_core::CapabilityGuard;
 
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    )
-    .with_capability("policy/v1", false);
+    let p = FakeProvider::new(ProviderOrigin::KubernetesOpenApi, FakeBehaviour::NotOwned)
+        .with_capability("policy/v1", false);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
@@ -545,12 +502,8 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
 fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
     use helm_schema_core::CapabilityGuard;
 
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    )
-    .with_capability("policy/v1", true);
+    let p = FakeProvider::new(ProviderOrigin::KubernetesOpenApi, FakeBehaviour::NotOwned)
+        .with_capability("policy/v1", true);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
@@ -604,13 +557,9 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
 fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
     use helm_schema_core::CapabilityGuard;
 
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    )
-    .with_capability("example.com/v1", true)
-    .with_capability("other.example.com/v1", true);
+    let p = FakeProvider::new(ProviderOrigin::KubernetesOpenApi, FakeBehaviour::NotOwned)
+        .with_capability("example.com/v1", true)
+        .with_capability("other.example.com/v1", true);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
@@ -670,13 +619,9 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
 fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
     use helm_schema_core::CapabilityGuard;
 
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    )
-    .with_capability("example.com/v1", true)
-    .with_capability("other.example.com/v1", false);
+    let p = FakeProvider::new(ProviderOrigin::KubernetesOpenApi, FakeBehaviour::NotOwned)
+        .with_capability("example.com/v1", true)
+        .with_capability("other.example.com/v1", false);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
@@ -731,11 +676,7 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
 fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
     use helm_schema_core::CapabilityGuard;
 
-    let p = FakeProvider::new(
-        ProviderOrigin::KubernetesOpenApi,
-        false,
-        FakeBehaviour::NotOwned,
-    );
+    let p = FakeProvider::new(ProviderOrigin::KubernetesOpenApi, FakeBehaviour::NotOwned);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 
@@ -781,11 +722,9 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
 // every nested path.
 #[test]
 fn chain_schema_fragment_for_use_path_unresolved_does_not_leak_missing_schema() {
-    // Provider claims ownership (has_resource=true) and returns
-    // PathUnresolved (silent gap, not a missing-resource case).
+    // Provider returns PathUnresolved (silent gap, not a missing-resource case).
     let provider = FakeProvider::new(
         ProviderOrigin::KubernetesOpenApi,
-        true,
         FakeBehaviour::PathUnresolved,
     );
     let diagnostics = DiagnosticSink::new();
@@ -826,9 +765,6 @@ fn chain_schema_fragment_for_use_multi_candidate_all_path_unresolved_does_not_le
         fn lookup(&self, _r: &ResourceRef, _p: &YamlPath) -> ProviderLookupResult {
             ProviderLookupResult::PathUnresolved
         }
-        fn has_resource(&self, _r: &ResourceRef) -> bool {
-            true
-        }
     }
 
     let diagnostics = DiagnosticSink::new();
@@ -864,11 +800,7 @@ fn chain_schema_fragment_for_use_multi_candidate_all_path_unresolved_does_not_le
 // the user-written primary apiVersion, not a speculative candidate.
 #[test]
 fn chain_schema_fragment_for_use_total_failure_attributes_to_primary() {
-    let p = FakeProvider::new(
-        ProviderOrigin::DefaultCatalog,
-        false,
-        FakeBehaviour::NotOwned,
-    );
+    let p = FakeProvider::new(ProviderOrigin::DefaultCatalog, FakeBehaviour::NotOwned);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(p)]).with_diagnostic_sink(diagnostics.clone());
 

@@ -124,38 +124,6 @@ fn k8s_version_fallback_offline_returns_none() -> eyre::Result<()> {
 }
 
 #[test]
-fn has_resource_does_not_speculatively_download() -> eyre::Result<()> {
-    let cache_dir = tmp_dir("k8s-has-resource-no-download")?;
-    let mock = Arc::new(MockFetcher::new());
-    let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
-        vec![
-            "v1.35.0".to_string(),
-            "v1.34.0".to_string(),
-            "v1.33.0".to_string(),
-            "v1.32.0".to_string(),
-            "v1.31.0".to_string(),
-        ],
-        None,
-    ))
-    .with_cache_dir(cache_dir)
-    .with_allow_download(true)
-    .with_fetcher(mock.clone());
-
-    let resource = ResourceRef::concrete(
-        "policy/v1beta1".to_string(),
-        "PodDisruptionBudget".to_string(),
-    );
-    let owns = provider.has_resource(&resource);
-    assert!(!owns, "empty cache + no downloads → has_resource=false");
-    sim_assert_eq!(
-        have: mock.total_calls(),
-        want: 0,
-        "has_resource must not trigger any fetches"
-    );
-    Ok(())
-}
-
-#[test]
 fn explicit_k8s_version_order_preserved() {
     // No sort: the chain order returned by `K8sVersionChain::ordered`
     // must match the order the user typed.

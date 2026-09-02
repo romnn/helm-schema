@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::emission_policy::{EmissionClass, EmissionClassKind, EmissionOrigin};
+use crate::emission_policy::{EmissionClass, EmissionClassKind};
 
 /// Fact totals at one emission-selection boundary.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -76,7 +76,7 @@ pub struct InsertionAbstentionCounts {
 pub struct EmissionReport {
     /// Accounting for the selector that produced the current document.
     pub facts: FactCounts,
-    facts_by_class_and_origin: BTreeMap<(EmissionClassKind, EmissionOrigin), FactCounts>,
+    facts_by_class: BTreeMap<EmissionClassKind, FactCounts>,
     /// Outcomes for mandatory facts selected by the operative selector.
     pub mandatory_outcomes: MandatoryOutcomes,
     /// Completed-document carrier accounting.
@@ -90,7 +90,6 @@ pub struct EmissionReport {
 #[derive(Clone, Copy)]
 pub(crate) struct FactRecord<'a> {
     pub(crate) class: &'a EmissionClass,
-    pub(crate) origin: EmissionOrigin,
     pub(crate) selected: bool,
 }
 
@@ -98,22 +97,20 @@ impl EmissionReport {
     pub(crate) fn record_fact(&mut self, fact: FactRecord<'_>) {
         Self::record_counts(
             &mut self.facts,
-            &mut self.facts_by_class_and_origin,
+            &mut self.facts_by_class,
             fact.class.kind(),
-            fact.origin,
             fact.selected,
         );
     }
 
     fn record_counts(
         totals: &mut FactCounts,
-        by_class_and_origin: &mut BTreeMap<(EmissionClassKind, EmissionOrigin), FactCounts>,
+        by_class: &mut BTreeMap<EmissionClassKind, FactCounts>,
         class: EmissionClassKind,
-        origin: EmissionOrigin,
         selected: bool,
     ) {
         totals.lowered += 1;
-        let counts = by_class_and_origin.entry((class, origin)).or_default();
+        let counts = by_class.entry(class).or_default();
         counts.lowered += 1;
         if selected {
             totals.selected += 1;
@@ -127,34 +124,6 @@ impl EmissionReport {
     /// Returns operative-selector accounting for one policy class.
     #[must_use]
     pub fn counts_for_class(&self, class: EmissionClassKind) -> FactCounts {
-        Self::counts_for(&self.facts_by_class_and_origin, class)
-    }
-
-    /// Returns operative-selector accounting for one class and producer pair.
-    #[must_use]
-    pub fn counts_for_class_and_origin(
-        &self,
-        class: EmissionClassKind,
-        origin: EmissionOrigin,
-    ) -> FactCounts {
-        self.facts_by_class_and_origin
-            .get(&(class, origin))
-            .copied()
-            .unwrap_or_default()
-    }
-
-    fn counts_for(
-        counts: &BTreeMap<(EmissionClassKind, EmissionOrigin), FactCounts>,
-        class: EmissionClassKind,
-    ) -> FactCounts {
-        counts
-            .iter()
-            .filter(|((candidate, _), _)| *candidate == class)
-            .fold(FactCounts::default(), |mut total, (_, counts)| {
-                total.lowered += counts.lowered;
-                total.selected += counts.selected;
-                total.dropped += counts.dropped;
-                total
-            })
+        self.facts_by_class.get(&class).copied().unwrap_or_default()
     }
 }

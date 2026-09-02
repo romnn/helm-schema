@@ -33,13 +33,10 @@ pub enum ProviderLookupResult {
     /// purposes.
     PathUnresolved,
 
-    /// Provider owns the resource (claimed it in `has_resource`) but
-    /// its expected source file is genuinely missing — e.g. a transient
-    /// fetch error in `schema_fragment_for_resource_path` after `has_resource`
-    /// returned true. Rare; the chain treats this as equivalent to
-    /// `NotOwned` and moves on (since some other provider may still
-    /// have it). Local overrides are the exception: see the chain's
-    /// origin-specific handling.
+    /// The expected source file is genuinely missing. The chain treats
+    /// this as equivalent to `NotOwned` and moves on because another
+    /// provider may still have it. Local overrides are the exception:
+    /// see the chain's origin-specific handling.
     ///
     /// `source_path` is the filesystem path the provider tried to read
     /// (when applicable — non-local providers may leave it empty).
