@@ -163,11 +163,11 @@ fn literal_dict_keys(expr: &TemplateExpr) -> Option<Vec<String>> {
         return None;
     }
     let keys = args
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| {
-            let [key, _] = pair else {
-                return None;
-            };
+            let [key, _] = pair;
             string_literal_value(key.deparen())
                 .filter(|key| !key.is_empty())
                 .map(str::to_string)

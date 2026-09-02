@@ -1489,7 +1489,9 @@ fn parsed_map_renderer_call(expression: &TemplateExpr) -> Option<&str> {
         return None;
     }
     entries
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .any(|entry| {
             matches!(
                 entry,

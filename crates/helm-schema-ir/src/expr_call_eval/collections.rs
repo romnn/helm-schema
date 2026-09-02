@@ -492,10 +492,7 @@ pub(super) fn eval_dict(
     let mut map = BTreeMap::new();
     let mut field_scalar_dispatches = BTreeMap::new();
     let mut effects = Effects::default();
-    for pair in args.chunks_exact(2) {
-        let [key, value] = pair else {
-            continue;
-        };
+    for [key, value] in args.as_chunks::<2>().0 {
         let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) = key else {
             continue;
         };

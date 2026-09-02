@@ -248,14 +248,13 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         if dict != "dict" {
             return None;
         }
-        let values = entries.chunks_exact(2).find_map(|entry| {
+        let values = entries.as_chunks::<2>().0.iter().find_map(|[key, value]| {
             matches!(
-                entry.first().map(TemplateExpr::deparen),
-                Some(TemplateExpr::Literal(helm_schema_ast::Literal::String(key)))
+                key.deparen(),
+                TemplateExpr::Literal(helm_schema_ast::Literal::String(key))
                     if key == "values"
             )
-            .then(|| entry.get(1))
-            .flatten()
+            .then_some(value)
         })?;
         let TemplateExpr::Call {
             function: list,

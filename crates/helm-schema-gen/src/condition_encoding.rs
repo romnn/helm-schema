@@ -1138,9 +1138,7 @@ fn guard_value_matches_optional_yaml(value: &GuardValue, yaml: Option<&YamlValue
         GuardValue::Bool(expected) => yaml.as_bool() == Some(*expected),
         GuardValue::Int(expected) => {
             yaml.as_i64() == Some(*expected)
-                || u64::try_from(*expected)
-                    .ok()
-                    .is_some_and(|expected| yaml.as_u64() == Some(expected))
+                || u64::try_from(*expected).is_ok_and(|expected| yaml.as_u64() == Some(expected))
         }
         GuardValue::Float(expected) => {
             let Some(expected) = expected.parse::<f64>().ok() else {

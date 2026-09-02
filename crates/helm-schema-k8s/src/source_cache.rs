@@ -179,9 +179,7 @@ fn remove_cache_file_if_present(path: &Path, message: &'static str) {
 /// Default download policy for providers whose caller didn't configure
 /// one: `HELM_SCHEMA_ALLOW_NET=1` (or `true`) enables network fetches.
 pub(crate) fn allow_download_from_env() -> bool {
-    std::env::var("HELM_SCHEMA_ALLOW_NET")
-        .ok()
-        .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+    std::env::var("HELM_SCHEMA_ALLOW_NET").is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"))
 }
 
 pub(crate) fn source_url(base_url: &str, relative_path: &str) -> String {
