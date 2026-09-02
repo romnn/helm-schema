@@ -9064,3 +9064,137 @@
 - `git diff --check`: exit 0.
 
 - Measured production LOC delta: 0.
+
+## Wave 2 close-out
+
+- Status: complete through the full primary and extended scope. Every adopted semantic round is
+  committed; E4 has a distinct-representations verdict, Activation-DNF exhausted its two attempts,
+  S-E was rejected by measurement, and E3 has its designed prerequisite blocker.
+- Range: `5d8c6443` (64,721 production Rust LOC) through `3c8001e6` (66,064 LOC), plus this
+  ledger-only close-out.
+- Final production Rust LOC: 66,064; net +1,343 for Wave 2. The scheduled semantic rounds account
+  for +1,289, the independent unspaced-pipe parser hotfix accounts for +60, and the standalone Rust
+  1.98 lint migration accounts for -6. LOC remains evidence, not the wave's success target.
+- Acceptance result: every adopted or measured round reports zero corpus acceptance flips and zero
+  candidate-accepts/Helm-aborts cells. S-D deliberately changes one diagnostic attribution family;
+  the two canonicalization repairs change only registered schema/order bytes and remain acceptance-
+  equivalent under Helm 4.2.3.
+
+### Round and commit ledger
+
+`G0` means every required final-tree gate in that round's dossier exited 0: format, workspace lint,
+feature-combination lint, unit, integration, all/live-network, install, luup2, LOC, frozen-plan
+identity, and diff hygiene. Measurement/study rounds list their narrower disposition explicitly.
+
+| Round | Implementation / record commit | LOC | Acceptance and adjudication | Gates |
+| --- | --- | ---: | --- | --- |
+| B3.1 fidelity owner | `ef71d425` | +76 | 0 flips; exact fixtures | G0 |
+| B3.2 self-guard owner | `60cefe48` | -4 | 0 flips; exact fixtures | G0 |
+| `MergeLayersUse` | `312da1dc` / `ad2b3c68` | +88 | 0 flips; exact valid wire bytes | All recorded exits 0; deferred gates ran on the disclosed cumulative hotfix tree |
+| S-B normalize once | `6dee3291` | +16 | 0 flips; exact fixtures | G0 |
+| B5 logical-schema prerequisite | `e6660809` | +98 | 0 flips; registered canonical bytes, Helm-equivalent | G0 |
+| B5 capture prerequisite | `3164e8c7` / `deb4ef28` | +40 | 0 flips; six registered canonical artifacts, Helm-equivalent | G0 |
+| B5a conjunction/predicate ownership | `ac9b54ab` / `4ec344bf` | +539 | 0 flips; exact fixtures | G0 |
+| B5b profile | `55e322fa` / `1fb87efc` | 0 | 0 flips; measurement only | G0, reused sealed B5a archive |
+| B5c minimizer | `b052fb06` / `e4bc9fcc` | +25 | 0 flips; exact fixtures | G0 |
+| C2 typed materialization | `2a20036f` / `ddbf3933` | +189 | 0 flips; exact fixtures | G0 |
+| S-D dead surfaces | `8dd6a115` / `87485309` / `a408db2a` | -59 | 0 acceptance flips; one registered provider-origin diagnostic correction | G0 |
+| S-B quick paths | `c8d4bdce` / `9ac3d3ee` | +4 | 0 flips; exact fixtures | G0 |
+| S-C scope discipline | `67b4ac13` / `9a4d77e2` | +9 | 0 flips; exact fixtures | G0 |
+| S-C canonical forms | `b18a7da7` / `473ac567` | -42 | 0 flips; four registered ordering-only schema artifacts | G0 |
+| C3a loaded corpus | `98edc212` / `18761889` | +36 | 0 flips; exact fixtures | G0 |
+| C3b parsed defines | `320ad739` / `1a526b93` | +71 | 0 flips; exact fixtures | G0 |
+| C1a typed schema operations | `32171b72` / `24d8cd21` | +39 | 0 flips; exact fixtures | G0 |
+| C1b typed conjuncts | `4b3a7bd2` / `587d9a7d` | +44 | 0 flips; exact fixtures | G0 |
+| C1c typed schema channels | `edc332da` / `3bdd43c7` | +25 | 0 flips; exact fixtures | G0 |
+| C4 provider artifact | `c5ddc78d` / `714532c9` | +106 | 0 flips; exact fixtures | G0 |
+| S-B3 shared evaluation environment | `9e8af212` / `3c5cbb79` | -4 | 0 flips; exact fixtures | G0 |
+| Rust 1.98 lint migration | `097ef212` | -6 | no semantic or fixture change | lint, cargo-fc, typos, and cumulative final gates exit 0 |
+| S-B4 helper-summary fold | `ef92a851` / `1e826e85` | -7 | 0 flips; exact fixtures | G0 |
+| E4 study | `ac7e7ac2` | 0 | no candidate; vocabularies are genuinely phase-distinct | Study/restoration gates exit 0 |
+| Activation-DNF spike | `a9922a11` | 0 | no adoption; attempts +1/+3 failed byte/LOC gates | Restoration, LOC, frozen-plan, diff exits 0 |
+| S-E resolver dispatch | `2fb91c55` | 0 | 84 exact artifacts; rejected +40.3% wall/+8.8% CPU | Candidate compile/identity and restoration gates exit 0; timing gate failed as designed |
+| E3 requirement vocabulary | `3c8001e6` | 0 | no candidate; blocked by E2/B2 prerequisites | Study, LOC, frozen-plan, diff exits 0 |
+
+The initial B5a candidate and its first retry remain rejected and production-neutral in
+`f2bdee35` and the prerequisite dossiers. The separate eight-worker test-infrastructure change is
+`6cf6e4ff`; the unspaced-pipe parser repair, v0.0.7 bump, timeout maintenance, and associated cleanup
+remain independently attributable in `abb753c2` through `d77a6372`.
+
+### Performance curve
+
+All post-baseline points were measured on the explicitly non-isolated host, so the raw curve is
+reported without treating cross-load differences as a controlled benchmark.
+
+| Tree | Airflow wall | Airflow CPU | Clean corpus wall |
+| --- | ---: | ---: | ---: |
+| Frozen baseline | 130.00s | 112.70s | — |
+| Fresh pre-S-B | 221.37s | 220.78s | 238.274s |
+| After S-B | 229.70s | 229.27s | 234.805s |
+| After B5a / B5b profile | 127.14s | 126.76s | 197.136s |
+| After B5c | 92.57s | 90.46s | 221.207s |
+| After C2 | 85.49s | 85.39s | 155.923s |
+| After C3a | 85.18s | 84.80s | 156.656s |
+| After C3b | 85.13s | 84.72s | 154.426s |
+| Final production tree, S-E baseline measurement | not rerun | not rerun | 192.10s wrapper / 188.350s nextest |
+
+The last comparable Airflow point is 24.8% lower CPU and 34.5% lower wall than the frozen baseline,
+despite the loaded-host caveat. The strongest mechanism-backed improvements are B5c's allocation-
+and-sort reduction and C2's single schema materialization; C3b is flat-to-better and confirms the
+shared parsed-helper artifact adds no eager-work regression. The final corpus point is deliberately
+not smoothed: host contention made it slower even though the final semantic tree is unchanged from
+the byte-exact S-B4 archive.
+
+### Success-metric reconciliation
+
+| Frozen metric | Wave-2 result |
+| --- | --- |
+| Hand-synced producer/consumer pairs | Reduced again: fidelity decoding, self-guard classification, merge-layer identity, normalization, schema materialization, parsed helpers, provider resolution, evaluation context, and helper summary each have one owner. Not honestly zero while B2/E1's transform flags and E2's mixed context/condition boundary remain. |
+| Rules with two owners | Reduced from at least four to one known residual: the range-context rule identified by the rejected E2 spike. E4's mapper is semantic lowering, not a twin rule. |
+| Semantic vocabularies, 6+ to 3 | Not achieved. B2/E1 and E2 failed their deletion gates, E4 is genuinely phase-distinct, and E3 is consequently blocked. No compatibility vocabulary was forced into the tree. |
+| Raw values-path operations, 15+ to 0 | Achieved on the scheduled values-path currency: B4a made the carrier segmented and wave-2 consumers keep operations structural. No `Deref`, `AsRef<str>`, `Display`, cross-type equality, or string-key twin was restored. |
+| Airflow wall-clock | Last comparable point is 85.13s wall / 84.72s CPU versus 130s / 112.7s frozen. This remains far from the aspirational sub-second law, but the curve moved materially. |
+| Battery coverage guarantee | Preserved: mandatory base and third-level coverage have zero drops in every authoritative battery; bounded reductions are disclosed. Integration and CI profiles use eight workers. |
+
+- G2 suite size remains ten generated transform-by-position cells. Stage 2 remains correctly coupled
+  to a future B2 design and was not simulated over the rejected Boolean representation.
+- Public/API decisions are recorded in their owning dossiers: validated merge-layer construction,
+  dead provider/emission removals, canonical signal constructors, parsed-define sharing, and typed
+  schema-operation boundaries. Existing serialized contract documents remain decodable and stable.
+- E4 verdict: execution `Guard`/`Predicate` and schema-lowerable `ConditionalGuard` are genuinely
+  distinct phase representations at the current boundary.
+- E3 verdict: blocked by E2 abandonment and the absent B2 transform vocabulary. Do not move its 19
+  translations into producers while retaining `CaptureKind`; that would relocate rather than
+  delete the representation.
+
+### Final close-out gates
+
+- `cargo fmt --check`: exit 0.
+- `task lint`: exit 0; whole-workspace Clippy and three AST-grep policy tests pass in approximately
+  181 seconds. Two existing escaped-newline parser-test findings remain informational.
+- `task lint:fc`: exit 0; 48/48 feature combinations for 13 packages across Linux, Windows GNU, and
+  macOS pass with zero errors or warnings in 1,012.17 seconds.
+- `cargo nextest run --workspace`: exit 0; 1,338/1,338 tests pass in 170.339 seconds after a
+  5-minute-28-second loaded-host build.
+- `task test:integration`: exit 0; 564/564 tests pass in 803.179 seconds, with 24 skipped by the
+  profile. An earlier run was invalidated by an external SIGTERM at 787.677 seconds and is not gate
+  evidence.
+- `task test:all`: exit 0; 1,906/1,906 tests pass in 849.316 seconds, with 24 profile skips and all
+  live-network tests passing.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; release build and replacement finish in
+  24.88 seconds.
+- downstream luup2 `check:local`: exit 0; 32/32 charts pass using the recreated external macOS
+  `xargs`/`flock` shims and `/Users/roman/.cargo/bin/helm-schema`. Neither repository was edited for
+  host compatibility.
+- `task tokei:core`: exit 0; 66,064 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+### Campaign handoff
+
+- Wave 2's requested scope is complete. The current tree is a valid campaign-close point.
+- If a Wave 3 is commissioned, its first semantic round must remove or redesign the deterministic
+  `$defs` ordering/grouping dependency as a byte-exact change. Only after that owner is gone should
+  E2 be re-spiked; a viable B2 with G2 stage 2 must then precede E3.
+- Do not directly revive B2/E1, E2, Activation-DNF, or S-E from their rejected implementations.
+  Their evidence identifies the missing boundary or measured regression each successor must solve.
