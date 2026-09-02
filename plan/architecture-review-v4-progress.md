@@ -6951,7 +6951,7 @@
 
 ## B5c — optimize disjunction minimization in place
 
-- Status: in progress; commit pending.
+- Status: landed in `b052fb06` (`perf(core): optimize disjunction minimization`).
 - Contract: representation/performance-only. Optimize `minimize_disjunction_by` at its existing
   boundary without moving any call site. Preserve exact disjunct membership and serialized order,
   then remeasure the frozen Airflow command before considering the optional boundary-only half.
