@@ -8492,7 +8492,7 @@
 
 ## S-B3 — embedded value-path evaluation environment
 
-- Status: landed; commit pending.
+- Status: landed in `9e8af212` (`perf(ir): reuse value path evaluation environment`).
 - Contract: representation/performance-only. Make `ValuePathContext` own one fully prepared
   `EvalEnv`, delete its parallel expression-environment fields and per-decode projection/cloning,
   and route direct condition/path readers through that same environment.
