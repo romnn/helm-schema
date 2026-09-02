@@ -7915,7 +7915,7 @@
 
 ## C3b — shared lazy parsed defines
 
-- Status: landed; commit pending.
+- Status: landed in `320ad739` (`perf(ir): share parsed helper programs`).
 - Contract: representation-only. Extend the loaded-source boundary with one shared
   `ParsedDefines` artifact: define bodies are discovered once, while each helper program's
   tree-sitter tree and flattened expression list initialize lazily and are shared by every
