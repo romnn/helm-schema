@@ -8023,3 +8023,113 @@
 - Measured production LOC delta: +71 (65,796 to 65,867). The explicit shared artifact and its
   lazy cells replace repeated source/body/tree/expression ownership; this ordinary representation
   round has no E-style LOC gate.
+
+## C1a — total schema-node runtime type and default relaxation operations
+
+- Status: landed; commit pending.
+- Contract: representation-only. Move runtime-type inference and recursive removal of
+  default-supplied `required` members from raw `serde_json::Value` keyword walks onto exhaustive
+  `SchemaNode` operations.
+- Acceptance baseline: `1a526b93` (C3b ledger closure commit).
+- Baseline production Rust LOC: 65,867.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, wire, or fixture byte changes.
+  - Runtime types use the typed `JsonSchemaType` domain and exhaustively traverse Boolean schemas,
+    explicit object/array nodes, typed keywords, combinators, `const`, and `enum`. Unknown extra
+    keywords remain lossless and cannot be mistaken for an unsupported schema shape.
+  - Default relaxation mutates typed `required`, `properties`, and `allOf`/`anyOf`/`oneOf` children
+    directly, preserving legacy recursion and emitted key ordering exactly.
+  - Any changed byte rejects this representation round. Candidate-accepts/Helm-aborts allowance
+    and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - `SchemaNode::runtime_types` now owns the exhaustive JSON runtime-domain projection. Typed
+    object/array nodes, Boolean schemas, typed keyword schemas, `type`, `const`, `enum`, and every
+    combinator preserve the deleted raw walk's exact domain, including integer membership in the
+    JSON `number` domain.
+  - `SchemaNode::relax_required_members_supplied_by_default` now removes defaulted names and
+    descends through typed properties and `allOf`/`anyOf`/`oneOf` children without serializing the
+    tree to JSON for inspection. Unknown keywords remain in `extra_keywords` and round-trip
+    untouched.
+  - Provider-fragment string admission and fail-requirement compatibility now compare the typed
+    `JsonSchemaType` domain. The raw string-domain helper and the generator-level raw recursive
+    mutation function are deleted.
+  - Two private regression tests cover combinator/type/const/enum/Boolean runtime domains and
+    recursive nested-default relaxation with an unknown keyword. All 84 schema artifacts and all
+    18 symbolic-IR artifacts are byte-identical to `1a526b93`.
+  - The full-depth battery checks 120,837 probes over 60 charts with zero flips, zero candidate-
+    accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and 7,465/7,465 mandatory
+    third-level probes. The disclosed bounded category remains 25,718 reductions.
+
+- Deviations:
+  - The first compiler/lint preflight exposed merged exhaustive arms, one flattenable optional-
+    combinator loop, and two implicit string clones after the type move. They were simplified
+    directly; no suppression, archive, dump, or fixture was produced from that state.
+  - Final1 was sealed and proved byte-exact, but the subsequent full lint gate found that the new
+    YAML test fixture used an escaped multiline string. The test now constructs the same value
+    structurally. Final1 is rejected evidence: final2 rebuilt the archive and repeated the clean
+    schema dump, IR dump, and full-depth battery before any gate result was adopted.
+  - The two call sites that still receive raw schema values perform the existing lossless
+    `SchemaNode::from_value` boundary conversion. C1b/C1c type their owning carriers; C1a does not
+    layer a second runtime-domain or mutation representation in the meantime.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and was enabled in the final full-depth run.
+  Exact schema/IR bytes and zero acceptance flips leave no fixture or per-cell verdict to adopt.
+  Candidate-accepts/Helm-aborts and mandatory coverage drops are zero.
+
+- Producer/route coverage:
+
+  | Route | Final owner and proof |
+  | --- | --- |
+  | Fail requirement compatibility | Typed `JsonSchemaType` subset comparison; focused requirement suites and 84 exact schemas. |
+  | Provider string requirements | `SchemaNode::runtime_types`; provider synthesis suites and exact corpus. |
+  | Root/default relaxation | Typed required/property/combinator descent; recursive private test and nullability/default suites. |
+  | Boolean and unknown schemas | Exhaustive Boolean arms plus lossless `extra_keywords`; private round-trip/domain tests. |
+
+- Review dossier:
+  - Focused proof: 6/6 schema-node tests pass, including the two new total-operation tests.
+  - Immutable build: C1a final2; exit 0, 90 binaries and 128 files. Final1 is rejected as described
+    above.
+  - Clean schema dump: final2 archive and absolute step-local `TMPDIR`; exit 0, 62/62 in 159.523
+    seconds; all 84 artifacts are byte-identical to C3b.
+  - Clean IR dump: the same archive and its own step-local `TMPDIR`; exit 0, one test in 5.031
+    seconds; all 18 artifacts are byte-identical.
+  - Full-depth proof: same final2 archive, baseline `1a526b93`, Helm enabled; exit 0 in 89.962
+    seconds, 60 charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero
+    mandatory drops, and 25,718 disclosed bounded reductions.
+  - Public/wire decision: none. `SchemaNode`, `JsonSchemaType`, and both operations remain
+    crate-private; serialized schemas, symbolic IR, diagnostics, and public APIs are unchanged.
+
+- Self-adversarial pass:
+  - `number` continues to admit both integer and non-integer JSON numbers, while `const` and `enum`
+    intersections retain the old numeric spelling distinction. Union arms are joined before the
+    outer intersection; `allOf` arms intersect one by one.
+  - Boolean false remains the empty runtime domain and Boolean true remains the total domain.
+    Untyped object hosts stay total rather than being accidentally narrowed by their storage
+    representation.
+  - Default relaxation removes only string names represented by the typed `required` carrier and
+    follows only mapping defaults. It preserves non-defaulted order and recursively applies the
+    same complete default document to combinator branches, matching the deleted function.
+  - Whole-tree search finds one runtime-domain implementation and one default-relaxation
+    implementation. No raw keyword walker, compatibility table, lint suppression, or fixture
+    rewrite remains.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in approximately 107 seconds; the two pre-existing ast-grep warnings in
+    `helm-schema-ast` remain informational.
+  - `task lint:fc`: exit 0; 48/48 feature combinations across three targets in 441.45 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,337/1,337 pass in 105.879 seconds.
+  - `task test:integration`: exit 0; 564/564 pass in 787.131 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,905/1,905 pass in 983.005 seconds; 24 skipped and live network tests
+    pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 16.75 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts with the documented host shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,906.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +39 (65,867 to 65,906). This ordinary representation round adds
+  exhaustive typed operations and focused tests while deleting the parallel raw walkers; no
+  E-style LOC gate applies.

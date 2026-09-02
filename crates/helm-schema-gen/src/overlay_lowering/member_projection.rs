@@ -1,8 +1,9 @@
 use super::{
     BTreeSet, ConditionalBaseEffect, ConditionalFlavor, ConditionalGuard, ConditionalPathOverlay,
     ContractSchemaSignals, EmissionOrigin, LoweredConjunct, ProviderSchemaFragment,
-    ResolvedPathSchema, ResourceSchemaOracle, SchemaNode, Value, YamlValue,
+    ResolvedPathSchema, ResourceSchemaOracle, SchemaNode, Value,
 };
+use crate::schema_node::JsonSchemaType;
 
 pub(crate) fn member_descendant_projection(
     target_segments: &[String],
@@ -592,12 +593,12 @@ pub(super) fn resolved_schema_admits_fail_requirement_domain(
 ) -> bool {
     !crate::schema_model::is_empty_schema(resolved_schema)
         && fail_requirement_runtime_types(implication)
-            .is_subset(&schema_runtime_types(resolved_schema))
+            .is_subset(&SchemaNode::from_value(resolved_schema.clone()).runtime_types())
 }
 
 fn fail_requirement_runtime_types(
     implication: &helm_schema_core::ContractRequirementImplication,
-) -> BTreeSet<&'static str> {
+) -> BTreeSet<JsonSchemaType> {
     use helm_schema_core::ContractRequirementTarget;
 
     match &implication.target {
@@ -605,17 +606,23 @@ fn fail_requirement_runtime_types(
         | ContractRequirementTarget::MembersExceptKeys { allow_integer, .. }
         | ContractRequirementTarget::MembersAt { allow_integer, .. }
         | ContractRequirementTarget::MembersAtWhereTruthy { allow_integer, .. } => {
-            let mut types = BTreeSet::from(["array", "null", "object"]);
+            let mut types = BTreeSet::from([
+                JsonSchemaType::Array,
+                JsonSchemaType::Null,
+                JsonSchemaType::Object,
+            ]);
             if *allow_integer {
-                types.insert("integer");
+                types.insert(JsonSchemaType::Integer);
             }
             types
         }
         ContractRequirementTarget::MembersMatchingPrefix { .. }
-        | ContractRequirementTarget::MembersWhereEquals { .. } => {
-            BTreeSet::from(["array", "null", "object"])
-        }
-        ContractRequirementTarget::Keys => BTreeSet::from(["array", "null", "object"]),
+        | ContractRequirementTarget::MembersWhereEquals { .. }
+        | ContractRequirementTarget::Keys => BTreeSet::from([
+            JsonSchemaType::Array,
+            JsonSchemaType::Null,
+            JsonSchemaType::Object,
+        ]),
         ContractRequirementTarget::Value => crate::requirement_domain::admitted_json_value_kinds(
             &implication.requirements,
             crate::requirement_domain::RequirementPosition::WholeValue,
@@ -626,118 +633,14 @@ fn fail_requirement_runtime_types(
     }
 }
 
-fn json_kind_runtime_type(kind: crate::requirement_domain::JsonValueKind) -> &'static str {
+fn json_kind_runtime_type(kind: crate::requirement_domain::JsonValueKind) -> JsonSchemaType {
     match kind {
-        crate::requirement_domain::JsonValueKind::Null => "null",
-        crate::requirement_domain::JsonValueKind::Boolean => "boolean",
-        crate::requirement_domain::JsonValueKind::Integer => "integer",
-        crate::requirement_domain::JsonValueKind::NonIntegerNumber => "number",
-        crate::requirement_domain::JsonValueKind::String => "string",
-        crate::requirement_domain::JsonValueKind::Array => "array",
-        crate::requirement_domain::JsonValueKind::Object => "object",
-    }
-}
-
-pub(crate) fn schema_runtime_types(schema: &Value) -> BTreeSet<&'static str> {
-    let all_types = || {
-        BTreeSet::from([
-            "array", "boolean", "integer", "null", "number", "object", "string",
-        ])
-    };
-    let Some(object) = schema.as_object() else {
-        return if schema.as_bool() == Some(false) {
-            BTreeSet::new()
-        } else {
-            all_types()
-        };
-    };
-
-    let mut types = match object.get("type") {
-        Some(Value::String(schema_type)) => runtime_types_for_declared_type(schema_type),
-        Some(Value::Array(schema_types)) => schema_types
-            .iter()
-            .filter_map(Value::as_str)
-            .flat_map(runtime_types_for_declared_type)
-            .collect(),
-        _ => all_types(),
-    };
-    if let Some(value) = object.get("const") {
-        let const_types = BTreeSet::from([runtime_type_for_value(value)]);
-        types = types.intersection(&const_types).copied().collect();
-    }
-    if let Some(values) = object.get("enum").and_then(Value::as_array) {
-        let enum_types = values.iter().map(runtime_type_for_value).collect();
-        types = types.intersection(&enum_types).copied().collect();
-    }
-
-    for keyword in ["anyOf", "oneOf"] {
-        if let Some(arms) = object.get(keyword).and_then(Value::as_array) {
-            let arm_types = arms.iter().flat_map(schema_runtime_types).collect();
-            types = types.intersection(&arm_types).copied().collect();
-        }
-    }
-    if let Some(arms) = object.get("allOf").and_then(Value::as_array) {
-        for arm in arms {
-            let arm_types = schema_runtime_types(arm);
-            types = types.intersection(&arm_types).copied().collect();
-        }
-    }
-
-    types
-}
-
-fn runtime_type_for_value(value: &Value) -> &'static str {
-    match value {
-        Value::Array(_) => "array",
-        Value::Bool(_) => "boolean",
-        Value::Null => "null",
-        Value::Number(number) if number.is_i64() || number.is_u64() => "integer",
-        Value::Number(_) => "number",
-        Value::Object(_) => "object",
-        Value::String(_) => "string",
-    }
-}
-
-fn runtime_types_for_declared_type(schema_type: &str) -> BTreeSet<&'static str> {
-    match schema_type {
-        "array" => BTreeSet::from(["array"]),
-        "boolean" => BTreeSet::from(["boolean"]),
-        "integer" => BTreeSet::from(["integer"]),
-        "null" => BTreeSet::from(["null"]),
-        "number" => BTreeSet::from(["integer", "number"]),
-        "object" => BTreeSet::from(["object"]),
-        "string" => BTreeSet::from(["string"]),
-        _ => BTreeSet::new(),
-    }
-}
-
-pub(super) fn relax_required_members_supplied_by_default(schema: &mut Value, default: &YamlValue) {
-    let (Some(schema), YamlValue::Mapping(defaults)) = (schema.as_object_mut(), default) else {
-        return;
-    };
-    if let Some(required) = schema.get_mut("required").and_then(Value::as_array_mut) {
-        required.retain(|member| {
-            member
-                .as_str()
-                .is_none_or(|member| !defaults.contains_key(YamlValue::String(member.to_string())))
-        });
-        if required.is_empty() {
-            schema.remove("required");
-        }
-    }
-    if let Some(properties) = schema.get_mut("properties").and_then(Value::as_object_mut) {
-        for (member, member_schema) in properties {
-            if let Some(member_default) = defaults.get(YamlValue::String(member.clone())) {
-                relax_required_members_supplied_by_default(member_schema, member_default);
-            }
-        }
-    }
-    for keyword in ["allOf", "anyOf", "oneOf"] {
-        let Some(branches) = schema.get_mut(keyword).and_then(Value::as_array_mut) else {
-            continue;
-        };
-        for branch in branches {
-            relax_required_members_supplied_by_default(branch, default);
-        }
+        crate::requirement_domain::JsonValueKind::Null => JsonSchemaType::Null,
+        crate::requirement_domain::JsonValueKind::Boolean => JsonSchemaType::Boolean,
+        crate::requirement_domain::JsonValueKind::Integer => JsonSchemaType::Integer,
+        crate::requirement_domain::JsonValueKind::NonIntegerNumber => JsonSchemaType::Number,
+        crate::requirement_domain::JsonValueKind::String => JsonSchemaType::String,
+        crate::requirement_domain::JsonValueKind::Array => JsonSchemaType::Array,
+        crate::requirement_domain::JsonValueKind::Object => JsonSchemaType::Object,
     }
 }

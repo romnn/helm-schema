@@ -1,10 +1,10 @@
-use std::fs;
+use std::{collections::BTreeSet, fs};
 
 use color_eyre::eyre::{self, WrapErr as _};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 
-use crate::schema_node::{SchemaNode, TypedSchemaNode};
+use crate::schema_node::{JsonSchemaType, SchemaNode, TypedSchemaNode};
 
 #[test]
 fn lossless_schema_node_round_trips_required_schema_families() -> eyre::Result<()> {
@@ -136,6 +136,103 @@ fn schema_node_carries_generator_provenance_in_typed_keywords() -> eyre::Result<
     if !schema.references(truthy_reference) {
         return Err(eyre::eyre!("typed schema lost Helm-truthy provenance"));
     }
+    Ok(())
+}
+
+#[test]
+fn schema_node_derives_runtime_types_from_typed_keywords() {
+    let cases = [
+        (
+            json!({ "type": "number" }),
+            [JsonSchemaType::Integer, JsonSchemaType::Number]
+                .into_iter()
+                .collect(),
+        ),
+        (
+            json!({ "type": ["string", "null"] }),
+            [JsonSchemaType::Null, JsonSchemaType::String]
+                .into_iter()
+                .collect(),
+        ),
+        (
+            json!({
+                "anyOf": [
+                    { "type": "string" },
+                    { "const": 1 },
+                    false,
+                ]
+            }),
+            [JsonSchemaType::Integer, JsonSchemaType::String]
+                .into_iter()
+                .collect(),
+        ),
+        (
+            json!({
+                "allOf": [
+                    { "type": "number" },
+                    { "enum": [1, 2.5, "three"] },
+                ]
+            }),
+            [JsonSchemaType::Integer, JsonSchemaType::Number]
+                .into_iter()
+                .collect(),
+        ),
+        (Value::Bool(false), BTreeSet::new()),
+    ];
+
+    for (schema, expected) in cases {
+        sim_assert_eq!(
+            have: SchemaNode::from_value(schema).runtime_types(),
+            want: expected
+        );
+    }
+}
+
+#[test]
+fn schema_node_relaxes_required_members_recursively() -> eyre::Result<()> {
+    let mut schema = SchemaNode::from_value(json!({
+        "allOf": [{ "required": ["top", "missing"] }],
+        "properties": {
+            "top": {
+                "anyOf": [
+                    {
+                        "properties": { "nested": { "type": "string" } },
+                        "required": ["nested", "absent"],
+                        "type": "object",
+                    },
+                    false,
+                ]
+            }
+        },
+        "required": ["top", "other"],
+        "type": "object",
+        "x-unknown": true,
+    }));
+    let defaults = serde_yaml::to_value(json!({ "top": { "nested": "supplied" } }))?;
+
+    schema.relax_required_members_supplied_by_default(&defaults);
+
+    sim_assert_eq!(
+        have: schema.into_value(),
+        want: json!({
+            "allOf": [{ "required": ["missing"] }],
+            "properties": {
+                "top": {
+                    "anyOf": [
+                        {
+                            "properties": { "nested": { "type": "string" } },
+                            "required": ["absent"],
+                            "type": "object",
+                        },
+                        false,
+                    ]
+                }
+            },
+            "required": ["other"],
+            "type": "object",
+            "x-unknown": true,
+        })
+    );
     Ok(())
 }
 

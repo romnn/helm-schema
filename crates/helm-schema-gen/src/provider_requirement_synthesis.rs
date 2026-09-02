@@ -493,8 +493,8 @@ pub(crate) fn synthesized_range_key_implications(
             let Some(fragment) = provider.schema_fragment_for_use(use_) else {
                 continue;
             };
-            if crate::overlay_lowering::schema_runtime_types(fragment.schema())
-                != std::collections::BTreeSet::from(["string"])
+            if crate::schema_node::SchemaNode::from_value(fragment.schema().clone()).runtime_types()
+                != std::collections::BTreeSet::from([crate::schema_node::JsonSchemaType::String])
             {
                 continue;
             }

@@ -1,8 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::{Map, Number, Value};
+use serde_yaml::Value as YamlValue;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum JsonSchemaType {
     Array,
     Boolean,
@@ -98,6 +99,70 @@ pub(crate) struct SchemaKeywords {
     pub(crate) extra_keywords: BTreeMap<String, Value>,
 }
 
+impl SchemaKeywords {
+    fn runtime_types(&self, mut types: BTreeSet<JsonSchemaType>) -> BTreeSet<JsonSchemaType> {
+        if let Some(schema_type) = &self.schema_type {
+            types = match schema_type {
+                SchemaTypeKeyword::Single(schema_type) => runtime_types_for_type(*schema_type),
+                SchemaTypeKeyword::Multiple(schema_types) => schema_types
+                    .iter()
+                    .flat_map(|schema_type| runtime_types_for_type(*schema_type))
+                    .collect(),
+            };
+        }
+        if let Some(value) = self.extra_keywords.get("const") {
+            let const_types = BTreeSet::from([runtime_type_for_value(value)]);
+            types = types.intersection(&const_types).copied().collect();
+        }
+        if let Some(values) = self.extra_keywords.get("enum").and_then(Value::as_array) {
+            let enum_types = values.iter().map(runtime_type_for_value).collect();
+            types = types.intersection(&enum_types).copied().collect();
+        }
+        for arms in [&self.any_of, &self.one_of].into_iter().flatten() {
+            let arm_types = arms.iter().flat_map(SchemaNode::runtime_types).collect();
+            types = types.intersection(&arm_types).copied().collect();
+        }
+        if let Some(arms) = &self.all_of {
+            for arm in arms {
+                let arm_types = arm.runtime_types();
+                types = types.intersection(&arm_types).copied().collect();
+            }
+        }
+        types
+    }
+}
+
+fn runtime_types_for_type(schema_type: JsonSchemaType) -> BTreeSet<JsonSchemaType> {
+    if schema_type == JsonSchemaType::Number {
+        BTreeSet::from([JsonSchemaType::Integer, JsonSchemaType::Number])
+    } else {
+        BTreeSet::from([schema_type])
+    }
+}
+
+fn runtime_type_for_value(value: &Value) -> JsonSchemaType {
+    match value {
+        Value::Array(_) => JsonSchemaType::Array,
+        Value::Bool(_) => JsonSchemaType::Boolean,
+        Value::Null => JsonSchemaType::Null,
+        Value::Number(number) if number.is_i64() || number.is_u64() => JsonSchemaType::Integer,
+        Value::Number(_) => JsonSchemaType::Number,
+        Value::Object(_) => JsonSchemaType::Object,
+        Value::String(_) => JsonSchemaType::String,
+    }
+}
+
+fn relax_defaulted_properties(
+    properties: &mut BTreeMap<String, SchemaNode>,
+    defaults: &serde_yaml::Mapping,
+) {
+    for (member, member_schema) in properties {
+        if let Some(member_default) = defaults.get(YamlValue::String(member.clone())) {
+            member_schema.relax_required_members_supplied_by_default(member_default);
+        }
+    }
+}
+
 pub(crate) fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
     schema.as_object().is_some_and(|object| {
         object.get("type").and_then(Value::as_str) == Some("object")
@@ -111,6 +176,75 @@ pub(crate) fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
 }
 
 impl SchemaNode {
+    pub(crate) fn runtime_types(&self) -> BTreeSet<JsonSchemaType> {
+        let all_types = || {
+            BTreeSet::from([
+                JsonSchemaType::Array,
+                JsonSchemaType::Boolean,
+                JsonSchemaType::Integer,
+                JsonSchemaType::Null,
+                JsonSchemaType::Number,
+                JsonSchemaType::Object,
+                JsonSchemaType::String,
+            ])
+        };
+        match self {
+            Self::Object { typed: true, .. } => BTreeSet::from([JsonSchemaType::Object]),
+            Self::Array { .. } => BTreeSet::from([JsonSchemaType::Array]),
+            Self::Typed(TypedSchemaNode::Boolean(false)) => BTreeSet::new(),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.runtime_types(all_types()),
+            Self::Empty
+            | Self::Foreign(_)
+            | Self::Object { typed: false, .. }
+            | Self::Typed(TypedSchemaNode::Boolean(true)) => all_types(),
+        }
+    }
+
+    pub(crate) fn relax_required_members_supplied_by_default(&mut self, default: &YamlValue) {
+        let YamlValue::Mapping(defaults) = default else {
+            return;
+        };
+        match self {
+            Self::Object {
+                properties,
+                required,
+                all_of,
+                ..
+            } => {
+                required.retain(|member| !defaults.contains_key(YamlValue::String(member.clone())));
+                relax_defaulted_properties(properties, defaults);
+                for branch in all_of {
+                    branch.relax_required_members_supplied_by_default(default);
+                }
+            }
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                if let Some(required) = &mut keywords.required {
+                    required
+                        .retain(|member| !defaults.contains_key(YamlValue::String(member.clone())));
+                    if required.is_empty() {
+                        keywords.required = None;
+                    }
+                }
+                if let Some(properties) = &mut keywords.properties {
+                    relax_defaulted_properties(properties, defaults);
+                }
+                for branches in [
+                    &mut keywords.all_of,
+                    &mut keywords.any_of,
+                    &mut keywords.one_of,
+                ] {
+                    for branch in branches.iter_mut().flatten() {
+                        branch.relax_required_members_supplied_by_default(default);
+                    }
+                }
+            }
+            Self::Empty
+            | Self::Array { .. }
+            | Self::Typed(TypedSchemaNode::Boolean(_))
+            | Self::Foreign(_) => {}
+        }
+    }
+
     pub(crate) fn visit_foreign_values(&self, visit: &mut impl FnMut(&Value)) {
         match self {
             Self::Empty => {}

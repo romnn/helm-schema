@@ -370,7 +370,9 @@ pub(crate) fn collect_conditional_schemas(
                 )
                 && let Some(default) = yaml_value_at_values_path(values_yaml_doc, target_value_path)
             {
-                relax_required_members_supplied_by_default(&mut target_schema, default);
+                let mut typed_schema = SchemaNode::from_value(target_schema);
+                typed_schema.relax_required_members_supplied_by_default(default);
+                target_schema = typed_schema.into_value();
             }
             let target_segments = target_value_path
                 .segments()
@@ -672,11 +674,10 @@ use conditional_constraints::{
     conditional_ancestor_segments, guards_supported_for_conditional_lowering,
     implication_guards_supported, partition_guard_scopes, resolve_overlay_target_schema,
 };
+pub(crate) use member_projection::member_descendant_projection;
 use member_projection::{
     append_merge_shadow_arms, append_omitted_member_arms, implication_has_self_presence_guard,
     implication_has_self_truthy_guard, is_bare_iterable_implication,
     is_unconditional_self_presence_overlay, member_implication_covers_range_domain,
-    relax_required_members_supplied_by_default, resolved_schema_admits_fail_requirement_domain,
-    structural_collection_member_projection,
+    resolved_schema_admits_fail_requirement_domain, structural_collection_member_projection,
 };
-pub(crate) use member_projection::{member_descendant_projection, schema_runtime_types};
