@@ -7326,6 +7326,10 @@
     providers. It failed as intended after ownership moved. The test now drives the chain and pins
     the final `ServiceMonitor` diagnostic tuple; the complete 96-test K8s integration suite then
     passed before the immutable archive was built.
+  - The first final-tree `task test:all` terminal session closed after reporting 1,897/1,900 passes
+    but before its command exit reached the harness. That is not gate evidence. The exact task was
+    rerun with a retained log and explicit exit propagation; the recorded 1,900/1,900 result below
+    is solely that verified rerun.
 - Adjudication evidence:
   - Helm 4.2.3 remains pinned and was used by the final full-depth battery. All 84 schema and all 18
     symbolic-IR bytes match `ddbf3933`; zero acceptance cells change, so no fixture or individual
@@ -7402,7 +7406,7 @@
     cache permission.
   - `cargo nextest run --workspace`: exit 0, 1,333/1,333 tests in 104.869 seconds.
   - `task test:integration`: exit 0, 563/563 tests in 741.074 seconds; 24 tests skipped by profile.
-  - `task test:all`: exit 0, 1,900/1,900 tests in 788.007 seconds; 24 tests skipped by profile and
+  - `task test:all`: exit 0, 1,900/1,900 tests in 788.398 seconds; 24 tests skipped by profile and
     all live network tests pass.
   - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 16.77 seconds.
   - downstream luup2 `check:local`: exit 0, 32/32 charts in 41.87 seconds, using the documented
