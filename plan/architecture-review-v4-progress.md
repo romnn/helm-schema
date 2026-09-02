@@ -6844,7 +6844,7 @@
 
 ## B5b — re-profile predicate work after canonical sharing
 
-- Status: complete; commit pending.
+- Status: recorded in `55e322fa` (`chore(plan): record b5 predicate profile`).
 - Contract: measurement-only. Re-run the frozen release Airflow command on the B5a tree and capture
   symbolicated samples from the debug binary. Record wall/CPU time, host-load caveats, and the new
   dominant stacks so B5c optimizes measured work rather than the pre-B5a profile.
