@@ -8026,7 +8026,7 @@
 
 ## C1a — total schema-node runtime type and default relaxation operations
 
-- Status: landed; commit pending.
+- Status: landed in `32171b72` (`refactor(gen): move schema operations onto typed nodes`).
 - Contract: representation-only. Move runtime-type inference and recursive removal of
   default-supplied `required` members from raw `serde_json::Value` keyword walks onto exhaustive
   `SchemaNode` operations.
