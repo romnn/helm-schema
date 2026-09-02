@@ -1,9 +1,13 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Read as _;
 use std::path::Path;
 
 use vfs::VfsPath;
 
+use crate::error::CliError;
 use crate::error::EngineResult;
+
+use super::ChartContext;
 
 /// Structural role a file plays in chart analysis.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -28,26 +32,77 @@ pub(crate) struct ChartFile {
     roles: BTreeSet<FileRole>,
 }
 
-impl ChartFile {
+#[derive(Debug)]
+pub(crate) struct LoadedChartFile {
+    pub(crate) path: VfsPath,
+    roles: BTreeSet<FileRole>,
+    source: Option<String>,
+}
+
+impl LoadedChartFile {
+    pub(crate) fn source(&self) -> EngineResult<&str> {
+        self.source
+            .as_deref()
+            .ok_or_else(|| CliError::NonUtf8ChartSource {
+                path: self.path.as_str().to_string(),
+            })
+    }
+
+    pub(crate) fn utf8_source(&self) -> Option<&str> {
+        self.source.as_deref()
+    }
+
     pub(crate) fn has_role(&self, role: FileRole) -> bool {
         self.roles.contains(&role)
     }
 }
 
-type ChartFileMap = BTreeMap<String, ChartFile>;
-
-/// List the chart files that play `role`, in stable path order.
-pub(crate) fn files_with_role(
-    chart_dir: &VfsPath,
-    include_tests: bool,
-    role: FileRole,
-) -> EngineResult<Vec<VfsPath>> {
-    Ok(list_chart_files(chart_dir, include_tests)?
-        .into_iter()
-        .filter(|file| file.has_role(role))
-        .map(|file| file.path)
-        .collect())
+#[derive(Debug)]
+pub(crate) struct LoadedChart {
+    files: Vec<LoadedChartFile>,
 }
+
+impl LoadedChart {
+    pub(crate) fn files_with_role(&self, role: FileRole) -> impl Iterator<Item = &LoadedChartFile> {
+        self.files.iter().filter(move |file| file.has_role(role))
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct LoadedChartCorpus {
+    charts: BTreeMap<String, LoadedChart>,
+}
+
+impl LoadedChartCorpus {
+    #[tracing::instrument(skip_all)]
+    pub(crate) fn load(charts: &[ChartContext], include_tests: bool) -> EngineResult<Self> {
+        let mut loaded = BTreeMap::new();
+        for chart in charts {
+            let mut files = Vec::new();
+            for file in list_chart_files(&chart.chart_dir, include_tests)? {
+                let mut bytes = Vec::new();
+                file.path.open_file()?.read_to_end(&mut bytes)?;
+                files.push(LoadedChartFile {
+                    path: file.path,
+                    roles: file.roles,
+                    source: String::from_utf8(bytes).ok(),
+                });
+            }
+            loaded.insert(chart.chart_dir.as_str().to_string(), LoadedChart { files });
+        }
+        Ok(Self { charts: loaded })
+    }
+
+    pub(crate) fn chart(&self, chart: &ChartContext) -> EngineResult<&LoadedChart> {
+        self.charts
+            .get(chart.chart_dir.as_str())
+            .ok_or_else(|| CliError::LoadedChartMissing {
+                path: chart.chart_dir.as_str().to_string(),
+            })
+    }
+}
+
+type ChartFileMap = BTreeMap<String, ChartFile>;
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn list_chart_files(

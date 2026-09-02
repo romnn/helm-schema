@@ -1,52 +1,39 @@
-use std::io::Read as _;
-
 use helm_schema_ast::DefineIndex;
 use tracing::instrument;
 use vfs::VfsPath;
 
 use super::types::ChartContext;
-use super::{FileRole, list_chart_files};
+use super::{FileRole, LoadedChartCorpus};
 use crate::error::EngineResult;
 
 #[instrument(skip_all)]
 pub fn build_define_index(
     charts: &[ChartContext],
-    include_tests: bool,
+    corpus: &LoadedChartCorpus,
 ) -> EngineResult<DefineIndex> {
     let mut index = DefineIndex::new();
 
     for chart in charts {
-        let chart_files = list_chart_files(&chart.chart_dir, include_tests)?;
+        let chart_files = corpus.chart(chart)?;
 
-        for path in chart_files
-            .iter()
-            .filter(|file| file.has_role(FileRole::DefineIndexTemplate))
-            .map(|file| &file.path)
-        {
+        for path in chart_files.files_with_role(FileRole::DefineIndexTemplate) {
             index.add_file_source(
-                &define_source_logical_path(chart, path),
-                &path.read_to_string()?,
+                &define_source_logical_path(chart, &path.path),
+                path.source()?,
             );
         }
 
-        for path in chart_files
-            .iter()
-            .filter(|file| file.has_role(FileRole::FilesGetSource))
-            .map(|file| &file.path)
-        {
-            if let Some(source) = read_utf8_files_get_source(path)? {
-                index.add_file_source(&files_get_relative_path(&chart.chart_dir, path), &source);
+        for path in chart_files.files_with_role(FileRole::FilesGetSource) {
+            if let Some(source) = path.utf8_source() {
+                index.add_file_source(
+                    &files_get_relative_path(&chart.chart_dir, &path.path),
+                    source,
+                );
             }
         }
     }
 
     Ok(index)
-}
-
-fn read_utf8_files_get_source(path: &VfsPath) -> EngineResult<Option<String>> {
-    let mut bytes = Vec::new();
-    path.open_file()?.read_to_end(&mut bytes)?;
-    Ok(String::from_utf8(bytes).ok())
 }
 
 fn chart_relative_path(chart_dir: &VfsPath, path: &VfsPath) -> String {

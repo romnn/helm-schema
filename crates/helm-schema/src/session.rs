@@ -72,7 +72,8 @@ impl PreparedSession {
         let charts = &chart::discover_chart_contexts(&opts.chart_dir)?;
         chart::reject_legacy_boolean_alias_keys(charts, &opts.values_files)?;
 
-        let defines = chart::build_define_index(charts, opts.include_tests)?;
+        let loaded_corpus = chart::LoadedChartCorpus::load(charts, opts.include_tests)?;
+        let defines = chart::build_define_index(charts, &loaded_corpus)?;
         let composed_values =
             chart::build_composed_values_document(charts, opts.include_subchart_values)?;
         // What a DELETED dependency root refills with, which the subtracted
@@ -102,8 +103,8 @@ impl PreparedSession {
         let kubernetes_version = primary_kubernetes_version(opts);
         let chart_analysis = analyze_charts(
             charts,
+            &loaded_corpus,
             &defines,
-            opts.include_tests,
             &values_roots,
             kubernetes_version.as_deref(),
         )?;

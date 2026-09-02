@@ -72,11 +72,12 @@ fn airflow_break_scopes_the_deprecated_security_context_candidate() -> eyre::Res
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -124,7 +125,8 @@ fn loki_selected_htpasswd_default_program_reaches_required_credentials() -> eyre
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let values_yaml = chart::build_composed_values_document(&charts, true)?;
     let values_roots = crate::values_roots::ValuesRoots::from_values_document(&values_yaml);
     assert!(
@@ -133,7 +135,7 @@ fn loki_selected_htpasswd_default_program_reaches_required_credentials() -> eyre
             .contains_key("gateway.basicAuth.htpasswd"),
         "the composed values document must preserve the chart-authored program"
     );
-    let collection = analyze_charts(&charts, &defines, false, &values_roots, None)?;
+    let collection = analyze_charts(&charts, &loaded_corpus, &defines, &values_roots, None)?;
     let signals = contract_schema_signals!(collection);
 
     for path in ["gateway.basicAuth.username", "gateway.basicAuth.password"] {
@@ -203,11 +205,12 @@ fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact() -> eyre
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -233,11 +236,12 @@ fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped() -> eyre:
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -296,11 +300,12 @@ fn bitnami_redis_existing_secret_string_contract_stays_branch_scoped() -> eyre::
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -352,11 +357,12 @@ fn selected_string_contract_preserves_only_live_provider_preimages() -> eyre::Re
         let chart_dir_str = chart_dir.to_string_lossy().to_string();
         let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
         let charts = chart::discover_chart_contexts(&chart_dir)?;
-        let defines = chart::build_define_index(&charts, false)?;
+        let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+        let defines = chart::build_define_index(&charts, &loaded_corpus)?;
         let collection = analyze_charts(
             &charts,
+            &loaded_corpus,
             &defines,
-            false,
             &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
             None,
         )?;
@@ -406,11 +412,12 @@ fn harbor_defaulted_secret_string_contract_keeps_its_truthy_tooth() -> eyre::Res
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -455,11 +462,12 @@ fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract() -> 
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -487,11 +495,12 @@ fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> eyre::Res
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -526,11 +535,12 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> eyre::Re
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -637,11 +647,12 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -734,11 +745,12 @@ fn traefik_host_users_keeps_provider_sink_under_invalid_kind_guard() -> eyre::Re
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -768,11 +780,12 @@ fn prometheus_namespace_helper_keeps_join_conversion_boundary() -> eyre::Result<
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -799,11 +812,12 @@ fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -871,12 +885,13 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability() -
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let values_yaml = chart::build_composed_values_document(&charts, true)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&values_yaml),
         None,
     )?;
@@ -926,12 +941,13 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> eyre::Result<()
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let values_yaml = chart::build_composed_values_document(&charts, true)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&values_yaml),
         None,
     )?;
@@ -1044,11 +1060,12 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -1082,11 +1099,12 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence() -> eyre
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -1120,12 +1138,13 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment() -> e
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let values_yaml = chart::build_composed_values_document(&charts, true)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&values_yaml),
         None,
     )?;
@@ -1235,11 +1254,12 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -1387,11 +1407,12 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -1703,11 +1724,12 @@ fn nested_dependency_global_defaults_keep_null_fallback_contracts() -> eyre::Res
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -1792,11 +1814,12 @@ fn literal_crd_template_populates_chart_local_schema_universe() -> eyre::Result<
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -1878,11 +1901,12 @@ fn templated_crd_template_populates_chart_local_schema_universe() -> eyre::Resul
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;
@@ -1980,11 +2004,12 @@ fn joined_validator_messages_do_not_become_activation_terminals() -> eyre::Resul
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
-    let defines = chart::build_define_index(&charts, false)?;
+    let loaded_corpus = chart::LoadedChartCorpus::load(&charts, false)?;
+    let defines = chart::build_define_index(&charts, &loaded_corpus)?;
     let collection = analyze_charts(
         &charts,
+        &loaded_corpus,
         &defines,
-        false,
         &crate::values_roots::ValuesRoots::from_values_document(&serde_yaml::Value::Null),
         None,
     )?;

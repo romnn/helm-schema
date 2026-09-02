@@ -8,7 +8,7 @@ mod yaml_boolean_keys;
 
 pub use define_index::build_define_index;
 pub use discovery::discover_chart_contexts;
-pub(crate) use file_roles::{FileRole, files_with_role, list_chart_files};
+pub(crate) use file_roles::{FileRole, LoadedChart, LoadedChartCorpus};
 pub(crate) use paths::scope_values_path;
 pub use types::{ChartContext, ChartDependencyActivation};
 pub(crate) use values::build_dependency_global_ownership;

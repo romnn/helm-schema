@@ -10,8 +10,8 @@ use crate::error::EngineResult;
 #[tracing::instrument(skip_all, fields(prefix_len = chart.values_prefix.len()))]
 pub(crate) fn collect_manifest_contract_for_chart(
     chart: &chart::ChartContext,
+    loaded_chart: &chart::LoadedChart,
     symbolic_context: &SymbolicIrContext,
-    include_tests: bool,
     optional_helpers: &[OptionalDependencyHelpers],
     corpus: &DefineCorpus,
 ) -> EngineResult<ManifestContractAnalysis> {
@@ -19,15 +19,10 @@ pub(crate) fn collect_manifest_contract_for_chart(
     let mut local_resource_schemas = Vec::new();
     let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation_chain);
 
-    let manifests = chart::files_with_role(
-        &chart.chart_dir,
-        include_tests,
-        chart::FileRole::ManifestTemplate,
-    )?;
-    for path in manifests {
-        let source = path.read_to_string()?;
+    for file in loaded_chart.files_with_role(chart::FileRole::ManifestTemplate) {
+        let source = file.source()?;
         let (mut manifest_contract, template_local_resource_schemas) =
-            collect_manifest_contract_for_template(&source, &path, symbolic_context)?;
+            collect_manifest_contract_for_template(source, &file.path, symbolic_context)?;
         manifest_contract.map_value_paths(|path| {
             helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
                 &path.encode(),
@@ -42,7 +37,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
         // scoping and BEFORE its activation guards (an optional chart's
         // clause must itself only fire while the chart is active).
         if !optional_helpers.is_empty() {
-            let reached = unconditional_include_closure(&source, corpus);
+            let reached = unconditional_include_closure(source, corpus);
             for entry in optional_helpers {
                 if reached.iter().any(|name| entry.helper_names.contains(name)) {
                     manifest_contract.add_terminal_fail_condition(entry.inactive.clone());
@@ -60,15 +55,10 @@ pub(crate) fn collect_manifest_contract_for_chart(
     // evidence like any manifest's. Its prose is NOT a manifest — resource
     // schema extraction would try to YAML-parse free text (ASCII art,
     // indented URLs) and fail, so only the contract lane runs here.
-    let notes = chart::files_with_role(
-        &chart.chart_dir,
-        include_tests,
-        chart::FileRole::NotesTemplate,
-    )?;
-    for path in notes {
-        let source = path.read_to_string()?;
+    for file in loaded_chart.files_with_role(chart::FileRole::NotesTemplate) {
+        let source = file.source()?;
         let mut notes_contract =
-            symbolic_context.generate_contract_ir_for_source(&source, path.as_str());
+            symbolic_context.generate_contract_ir_for_source(source, file.path.as_str());
         // NOTES is a Go-template text program, not YAML. Direct holes use
         // Go's textual formatting and therefore impose no input shape; real
         // strict calls and terminal effects remain in their own channels.

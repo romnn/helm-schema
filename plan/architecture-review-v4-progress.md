@@ -7803,3 +7803,112 @@
 - Measured production LOC delta: -42 (65,802 to 65,760). This ordinary representation round
   deletes duplicated canonicalization/read-time compatibility and helper bodies; no E-style LOC
   gate applies.
+
+## C3a — immutable loaded chart corpus
+
+- Status: landed; commit pending.
+- Contract: representation-only. Classify each discovered chart tree once, read every classified
+  source once, and make one immutable `LoadedChartCorpus` the source owner for define indexing,
+  manifest/NOTES analysis, static CRD collection, and `.Files.Get` registration.
+- Acceptance baseline: `473ac567` (S-C canonical-forms closure commit).
+- Baseline production Rust LOC: 65,760.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+    File and chart traversal order remains stable and every former text-decoding failure remains a
+    hard error at the same semantic consumer.
+  - Session preparation constructs the corpus after discovery and Boolean-key validation, then
+    passes it through define-index construction and chart analysis. No production consumer calls
+    `files_with_role`, `list_chart_files`, or `read_to_string` for a loaded template, NOTES source,
+    static CRD, or `.Files.Get` source.
+  - Binary `.Files.Get` sources remain silently absent from the UTF-8 file-source index; text-only
+    roles reject invalid UTF-8 rather than silently skipping it.
+  - The corpus is crate-private and changes no public API or wire format. Candidate-accepts/
+    Helm-aborts allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - Session preparation now constructs one `LoadedChartCorpus` immediately after discovery and
+    declaration validation. Each chart calls `list_chart_files` once; every classified file is read
+    once into corpus-owned UTF-8 state before define indexing or analysis begins.
+  - Define indexing, static CRD collection, manifest analysis, NOTES analysis, and `.Files.Get`
+    indexing consume borrowed paths and sources from that snapshot. Whole-tree search finds no
+    production `files_with_role` rescan and no loaded template/CRD/NOTES source `read_to_string`.
+  - Binary `.Files.Get` inputs remain omitted from the text index, while a non-UTF-8 source reaching
+    a text-only role returns a typed path-bearing error. A private snapshot test mutates the backing
+    VFS after loading and proves analysis retains the original corpus-owned source.
+  - All 84 schema artifacts and all 18 symbolic-IR artifacts are recursively byte-identical to
+    `473ac567`. The full-depth battery checks 120,837 probes over 60 charts with zero flips, zero
+    candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and
+    7,465/7,465 mandatory third-level probes.
+  - Clean corpus dump wall time is 156.656 seconds versus 156.407 seconds at the immediately prior
+    canonical round (+0.16%, noisy-host range). Release Airflow is 85.18 seconds wall / 84.80 CPU,
+    versus 85.49/85.39 after C2; the host was not isolated, as authorized by the user.
+
+- Deviations:
+  - The first all-target compiler pass was intentionally compiler-driven after the production seam
+    moved: it rejected 25 private analysis-test call sites still passing `include_tests` instead of
+    the snapshot. They were migrated mechanically to construct and share the same corpus shape;
+    no archive or dump existed from that state.
+  - That pass also exposed a local name collision between `LoadedChartCorpus` and `DefineCorpus` and
+    one now test-only role helper. The define corpus was named explicitly and the dead production
+    helper deleted rather than suppressed.
+  - The prober's disclosed bounded category records 25,718 reductions and four more emitted probes
+    than the prior round despite byte-identical schemas; mandatory categories remain complete and
+    acceptance remains identical. This is reported as battery sampling variance, not normalized.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and was enabled in the final full-depth run.
+  Schema and IR bytes are exact and all acceptance cells are unchanged, so no fixture or individual
+  Helm verdict was adopted. Candidate-accepts/Helm-aborts and mandatory coverage drops are zero.
+
+- Producer/route coverage:
+
+  | Route | Final owner and proof |
+  | --- | --- |
+  | Template/helper sources | Snapshot feeds `DefineIndex`; helper and corpus identity. |
+  | Manifest templates | Snapshot feeds structural contract and template CRD extraction; 84 schemas/18 IR. |
+  | NOTES templates | Snapshot feeds text-program contract lane; NOTES regressions and corpus identity. |
+  | Static CRDs | Snapshot feeds local schema universe; CRD tests and downstream charts. |
+  | `.Files.Get` sources | Snapshot preserves UTF-8 filtering and relative keys; file-backed helper tests. |
+
+- Review dossier:
+  - Focused proof: 109/109 `helm-schema` tests pass in 103.587 seconds; whole-workspace lint passes
+    in 38.43 seconds with only the two pre-existing ast-grep warnings.
+  - Immutable build: C3a `final1`, 90 binaries and 128 files.
+  - Clean schema dump: final1 archive and step-local `TMPDIR`; exit 0, 62/62 in 156.656 seconds;
+    all 84 artifacts are byte-identical to the baseline.
+  - Clean IR dump: same archive and step-local `TMPDIR`; exit 0, one test in 4.561 seconds; all 18
+    artifacts are byte-identical.
+  - Full-depth proof: same archive, baseline `473ac567`, Helm adjudication enabled; exit 0 in 86.438
+    seconds, 60 charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero
+    mandatory drops, and 25,718 disclosed bounded reductions.
+  - Public/wire decision: none. The snapshot and its lookup errors are crate-private; public
+    analysis artifacts and serialized formats are unchanged.
+
+- Self-adversarial pass:
+  - A file with both static-CRD and `.Files.Get` roles stores one source and serves both consumers;
+    role overlap therefore cannot reintroduce a second read.
+  - Snapshot keys use the discovered chart directory identity, while iteration remains the
+    pre-existing stable path order. A missing chart entry is a typed invariant error rather than an
+    empty iterator that could silently drop analysis.
+  - Invalid UTF-8 is skipped only for `.Files.Get`; text-only roles call `source()` and fail. The
+    owned-source mutation test proves consumers do not fall back to the VFS after preparation.
+  - Values, Chart metadata, and Boolean-key scans remain outside this source snapshot because they
+    have distinct composition/validation semantics; the removed repeated reads are precisely the
+    roles named by C3.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in 38.43 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0; 48/48 combinations in 140.93 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,335/1,335 pass in 105.506 seconds.
+  - `task test:integration`: exit 0; 564/564 pass in 762.724 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,903/1,903 pass in 808.746 seconds; 24 skipped and live tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 12.37 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts using the documented macOS shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,796.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +36 (65,760 to 65,796). The typed snapshot adds explicit source
+  ownership and invariant errors while deleting all repeated role scans/reads in its scheduled
+  lanes; this is an ordinary representation round, so no E-style LOC gate applies.

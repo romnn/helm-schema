@@ -6,7 +6,7 @@ use test_util::prelude::sim_assert_eq;
 fn role_paths(files: &[ChartFile], role: FileRole) -> Vec<String> {
     let mut paths = files
         .iter()
-        .filter(|file| file.has_role(role))
+        .filter(|file| file.roles.contains(&role))
         .map(|file| {
             file.path
                 .as_str()
@@ -73,5 +73,30 @@ fn file_roles_preserve_existing_chart_file_classification() -> eyre::Result<()> 
         want: vec!["deployment.yaml", "test-job.yaml"]
     );
 
+    Ok(())
+}
+
+#[test]
+fn loaded_chart_corpus_owns_the_classified_source_snapshot() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    let template = chart_dir.join("templates/configmap.yaml")?;
+    test_util::write(&template, "kind: ConfigMap\n")?;
+    let chart = ChartContext {
+        chart_dir,
+        values_prefix: Vec::new(),
+        is_library: false,
+        static_root_strings: BTreeMap::new(),
+        dependency_activation_chain: Vec::new(),
+    };
+
+    let corpus = LoadedChartCorpus::load(std::slice::from_ref(&chart), false)?;
+    test_util::write(&template, "kind: Secret\n")?;
+    let sources = corpus
+        .chart(&chart)?
+        .files_with_role(FileRole::ManifestTemplate)
+        .map(LoadedChartFile::source)
+        .collect::<EngineResult<Vec<_>>>()?;
+
+    sim_assert_eq!(have: sources, want: vec!["kind: ConfigMap\n"]);
     Ok(())
 }

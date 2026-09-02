@@ -7,6 +7,20 @@ pub enum CliError {
     #[error("vfs error: {0}")]
     Vfs(#[from] vfs::VfsError),
 
+    /// A chart source used as text is not valid UTF-8.
+    #[error("chart source is not valid UTF-8: {path}")]
+    NonUtf8ChartSource {
+        /// Logical or virtual path of the invalid source.
+        path: String,
+    },
+
+    /// Prepared chart files were requested for a chart outside the snapshot.
+    #[error("loaded chart corpus has no entry for {path}")]
+    LoadedChartMissing {
+        /// Discovered chart directory missing from the corpus.
+        path: String,
+    },
+
     /// Operating-system I/O operation failed.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),

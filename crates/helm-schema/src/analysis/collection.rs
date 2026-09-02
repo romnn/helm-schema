@@ -24,8 +24,8 @@ pub(crate) struct ChartAnalysis {
 #[tracing::instrument(skip_all)]
 pub(crate) fn analyze_charts(
     charts: &[chart::ChartContext],
+    corpus: &chart::LoadedChartCorpus,
     defines: &DefineIndex,
-    include_tests: bool,
     values_roots: &ValuesRoots,
     kubernetes_version: Option<&str>,
 ) -> EngineResult<ChartAnalysis> {
@@ -37,7 +37,7 @@ pub(crate) fn analyze_charts(
         // simply skips injection into every child.
         contract.push_pathless_scalar("global");
     }
-    let mut local_schema_universe = collect_static_crd_universe(charts)?;
+    let mut local_schema_universe = collect_static_crd_universe(charts, corpus)?;
     for chart in charts {
         for path in chart
             .dependency_activation_chain
@@ -51,7 +51,7 @@ pub(crate) fn analyze_charts(
         }
     }
 
-    let corpus = DefineCorpus::build(charts, defines);
+    let define_corpus = DefineCorpus::build(charts, defines);
     let dependency_global_ownership = chart::build_dependency_global_ownership(charts)?;
     for chart in charts {
         if chart.is_library {
@@ -66,16 +66,16 @@ pub(crate) fn analyze_charts(
                 static_root_strings: chart.static_root_strings.clone(),
             },
         );
-        let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, &corpus);
+        let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, &define_corpus);
         let ManifestContractAnalysis {
             contract: manifest_contract,
             local_resource_schemas,
         } = collect_manifest_contract_for_chart(
             chart,
+            corpus.chart(chart)?,
             &symbolic_context,
-            include_tests,
             &optional_helpers,
-            &corpus,
+            &define_corpus,
         )?;
         contract.append(manifest_contract);
         for resource_schema in local_resource_schemas {
