@@ -7669,7 +7669,7 @@
 
 ## S-C canonical forms — constructor-owned conjunctions and duplicate deletion
 
-- Status: landed; commit pending.
+- Status: landed in `b18a7da7` (`refactor(ir): centralize conditional canonicalization`).
 - Contract: representation-only. Make `GuardScopes`, `ContractRequirementImplication`, and
   `ConditionalPathOverlay` the canonicalization owners for their conditional-guard conjunctions;
   recursively flatten `AbstractValue::MergedLayers` at construction; and retain one owner for
