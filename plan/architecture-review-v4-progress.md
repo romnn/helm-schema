@@ -7912,3 +7912,114 @@
 - Measured production LOC delta: +36 (65,760 to 65,796). The typed snapshot adds explicit source
   ownership and invariant errors while deleting all repeated role scans/reads in its scheduled
   lanes; this is an ordinary representation round, so no E-style LOC gate applies.
+
+## C3b — shared lazy parsed defines
+
+- Status: landed; commit pending.
+- Contract: representation-only. Extend the loaded-source boundary with one shared
+  `ParsedDefines` artifact: define bodies are discovered once, while each helper program's
+  tree-sitter tree and flattened expression list initialize lazily and are shared by every
+  chart-local `SymbolicIrContext`.
+- Acceptance baseline: `18761889` (C3a ledger closure commit).
+- Baseline production Rust LOC: 65,796.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public wire, or fixture byte changes.
+    Stable file order, last-define-wins resolution, implicit `@file:` names, and multi-owner
+    optional-dependency attribution remain exact.
+  - `IrAnalysisDb` no longer clones file sources or reparses define blocks per chart context, and
+    its recognizers consume cached expressions instead of re-running `parse_action_expressions` on
+    the same helper body.
+  - Trees and expressions remain lazy per body. A helper never inspected by analysis must not pay
+    either parse cost; expression-only consumers must not force the tree cache.
+  - Measure clean corpus and release Airflow against C3a. Any material eager-work regression rejects
+    the implementation for redesign even if bytes remain exact.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - One `ParsedDefines` discovers define boundaries and Helm's last-definition winner once for the
+    whole chart tree. Every chart-local `SymbolicIrContext` clones its `Rc` handle instead of
+    cloning file sources, define bodies, implicit-file maps, and tree caches.
+  - Each cached body owns independent `OnceCell<Option<Tree>>` and `OnceCell<Vec<TemplateExpr>>`
+    cells. Tree consumers initialize both views through `parsed_helper_body`; expression-only
+    wrapper analysis initializes only expressions. Six repeated body-wide expression parses and
+    the per-context tree map are deleted.
+  - `DefineCorpus` borrows the parsed artifact for winning bodies and uses its complete stable
+    source-path set for multi-owner attribution. The former public `define_bodies_in_source`
+    projection and its second full-source parse disappear.
+  - All 84 schema and 18 symbolic-IR artifacts are byte-identical to C3a. The full-depth battery
+    checks 120,837 probes across 60 charts with zero flips, zero candidate-accepts/Helm-aborts,
+    112,260/112,260 mandatory base probes, and 7,465/7,465 third-level probes.
+  - Clean corpus wall time improves from 156.656 to 154.426 seconds (-1.42%). Release Airflow moves
+    from 85.18/84.80 to 85.13/84.72 seconds wall/CPU. Both measurements used the authorized
+    non-isolated host; there is no eager-work regression.
+
+- Deviations:
+  - The first compiler-driven all-target pass rejected one leftover `&&[TemplateExpr]` loop after
+    expression ownership narrowed to a borrowed slice. The redundant reference was removed before
+    any archive or dump.
+  - The first lint preflight then found one needless borrow of the now-borrowed cached tree in
+    fragment-summary fact collection. It was removed directly; no suppression and no artifact from
+    that state was adopted.
+  - The frozen plan described `ParsedDefines` as a session-owned extension. Cross-crate sharing
+    requires the carrier itself and its read-only winner/owner queries to be public in
+    `helm-schema-ir`; this deliberately replaces, rather than layers beside, the broader public
+    `define_bodies_in_source` projection.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and enabled. Exact schema/IR bytes and zero
+  acceptance flips require no fixture or per-cell adoption; candidate-accepts/Helm-aborts and both
+  mandatory coverage-drop categories remain zero. The disclosed bounded category is 25,718.
+
+- Producer/route coverage:
+
+  | Route | Final owner and proof |
+  | --- | --- |
+  | Define discovery/winner | `ParsedDefines::new`; duplicate-name and helper-resolution suites. |
+  | Owner attribution | Complete source-path sets consumed by `DefineCorpus`; optional dependency tests. |
+  | Helper tree consumers | Lazy tree cell shared by fragment/control recognizers; 504 focused tests and IR identity. |
+  | Expression-only wrapper analysis | Lazy expression cell without tree initialization; nats wrapper re-audits. |
+  | Implicit `@file:` programs | Parsed artifact owns implicit map and bodies; `.Files.Get`/file-template tests. |
+  | Per-chart policies | Shared parsed programs plus distinct immutable policy maps; full corpus identity. |
+
+- Review dossier:
+  - Focused proof: 504/504 engine/IR tests pass in 102.250 seconds; corrected whole-workspace lint
+    passes in 35.58 seconds with only the two pre-existing ast-grep warnings.
+  - Immutable build: C3b `final1`; exit 0, 90 binaries and 128 files.
+  - Clean schema dump: final1 archive and step-local `TMPDIR`; exit 0, 62/62 in 154.426 seconds; all
+    84 artifacts are byte-identical to C3a.
+  - Clean IR dump: same archive and step-local `TMPDIR`; exit 0, one test in 4.787 seconds; all 18
+    artifacts are byte-identical.
+  - Full-depth proof: same archive, baseline `18761889`, Helm enabled; exit 0 in 85.536 seconds, 60
+    charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+    and 25,718 disclosed bounded reductions.
+  - Public/wire decision: add the read-only `ParsedDefines` carrier and remove
+    `define_bodies_in_source`. This is an intentional source-API replacement required for
+    cross-crate single ownership. No serialized wire type or bytes change.
+
+- Self-adversarial pass:
+  - Stable `DefineIndex::file_sources` order still drives definition overwrite order, while every
+    defining path is retained separately for ownership. Winner and owner information therefore do
+    not collapse into one lossy map.
+  - `program_wrapper_sentinels` calls the expression accessor directly; a whole-tree search finds
+    no helper-body `parse_action_expressions` call except the single cell initializer. Subrange
+    expressions remain separately parsed because they are different source slices.
+  - `IrAnalysisDb` owns only the cheap parsed handle plus policy-dependent caches. File sources,
+    helper bodies, trees, and flattened expressions each have one chart-tree owner.
+  - Byte identity, a faster corpus dump, and flat Airflow CPU jointly rule out semantic drift and
+    eager parsing hidden by the representation change.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in 35.58 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0; 48/48 combinations in 190.37 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,335/1,335 pass in 104.238 seconds.
+  - `task test:integration`: exit 0; 564/564 pass in 741.797 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,903/1,903 pass in 786.523 seconds; 24 skipped and live tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 20.65 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts with the documented host shims.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,867.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +71 (65,796 to 65,867). The explicit shared artifact and its
+  lazy cells replace repeated source/body/tree/expression ownership; this ordinary representation
+  round has no E-style LOC gate.

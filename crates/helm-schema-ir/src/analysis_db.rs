@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{OnceCell, RefCell};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
@@ -22,7 +22,107 @@ pub(crate) struct ParsedHelperBody<'a> {
     pub(crate) source: &'a str,
     pub(crate) source_path: &'a str,
     pub(crate) body_offset: usize,
-    pub(crate) tree: tree_sitter::Tree,
+    pub(crate) tree: &'a tree_sitter::Tree,
+    pub(crate) expressions: &'a [TemplateExpr],
+}
+
+/// Shared parsed helper programs for one immutable define index.
+///
+/// Define boundaries are discovered once. Each body tree and flattened
+/// expression list remains lazy so unused helpers pay no body-parse cost.
+#[derive(Clone)]
+pub struct ParsedDefines {
+    inner: Rc<ParsedDefinesInner>,
+}
+
+struct ParsedDefinesInner {
+    define_bodies: HashMap<String, CachedDefineBody>,
+    define_names: BTreeSet<String>,
+    define_source_paths: BTreeMap<String, BTreeSet<String>>,
+    implicit_template_names: BTreeMap<String, String>,
+    file_sources: HashMap<String, String>,
+}
+
+impl ParsedDefines {
+    /// Discovers define boundaries and prepares lazy per-body parse cells.
+    #[must_use]
+    pub fn new(defines: &DefineIndex) -> Self {
+        let mut define_bodies = HashMap::new();
+        let mut define_names = BTreeSet::new();
+        let mut define_source_paths: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        let mut implicit_template_names = BTreeMap::new();
+        let mut file_sources = HashMap::new();
+        for (path, src) in defines.file_sources() {
+            file_sources.insert(path.to_string(), src.to_string());
+            if let Some(template_relative_path) = template_relative_path(path) {
+                let name = format!("@file:{path}");
+                implicit_template_names.insert(template_relative_path, name.clone());
+                define_bodies.insert(name, CachedDefineBody::new(src, path, 0));
+            }
+            for block in extract_define_blocks(src) {
+                define_names.insert(block.name.clone());
+                define_source_paths
+                    .entry(block.name.clone())
+                    .or_default()
+                    .insert(path.to_string());
+                define_bodies.insert(
+                    block.name,
+                    CachedDefineBody::new(&block.body, path, block.body_offset),
+                );
+            }
+        }
+        Self {
+            inner: Rc::new(ParsedDefinesInner {
+                define_bodies,
+                define_names,
+                define_source_paths,
+                implicit_template_names,
+                file_sources,
+            }),
+        }
+    }
+
+    /// Iterates real define names in stable order, excluding implicit files.
+    pub fn define_names(&self) -> impl Iterator<Item = &str> {
+        self.inner.define_names.iter().map(String::as_str)
+    }
+
+    /// Returns the last-defined body Helm resolves for `name`.
+    #[must_use]
+    pub fn define_body(&self, name: &str) -> Option<&str> {
+        self.inner
+            .define_bodies
+            .get(name)
+            .map(|body| body.source.as_str())
+    }
+
+    /// Iterates every source path that defines `name` in stable order.
+    pub fn define_source_paths(&self, name: &str) -> impl Iterator<Item = &str> {
+        self.inner
+            .define_source_paths
+            .get(name)
+            .into_iter()
+            .flatten()
+            .map(String::as_str)
+    }
+
+    fn parsed_body(&self, name: &str) -> Option<ParsedHelperBody<'_>> {
+        let body = self.inner.define_bodies.get(name)?;
+        Some(ParsedHelperBody {
+            source: body.source.as_str(),
+            source_path: body.source_path.as_str(),
+            body_offset: body.body_offset,
+            tree: body.tree()?,
+            expressions: body.expressions(),
+        })
+    }
+
+    fn expressions(&self, name: &str) -> Option<&[TemplateExpr]> {
+        self.inner
+            .define_bodies
+            .get(name)
+            .map(CachedDefineBody::expressions)
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -34,13 +134,8 @@ pub(crate) enum CustomMergeHelper {
 }
 
 pub(crate) struct IrAnalysisDb {
-    define_bodies: HashMap<String, CachedDefineBody>,
-    implicit_template_names: BTreeMap<String, String>,
-    /// Raw template file sources by index path (static `files/*` templates
-    /// requested through `.Files.Get` resolve here).
-    file_sources: HashMap<String, String>,
+    parsed_defines: ParsedDefines,
     chart_default_strings: BTreeMap<String, String>,
-    define_trees: RefCell<HashMap<String, tree_sitter::Tree>>,
     /// Source-only evaluation facts per helper body (control headers,
     /// resource spans), shared across memoized-summary misses.
     body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
@@ -141,6 +236,13 @@ impl IrAnalysisDb {
     }
 
     pub(crate) fn with_policy(defines: &DefineIndex, policy: SymbolicPolicy) -> Self {
+        Self::with_parsed_policy(&ParsedDefines::new(defines), policy)
+    }
+
+    pub(crate) fn with_parsed_policy(
+        parsed_defines: &ParsedDefines,
+        policy: SymbolicPolicy,
+    ) -> Self {
         let SymbolicPolicy {
             chart_default_strings,
             kubernetes_version,
@@ -149,40 +251,9 @@ impl IrAnalysisDb {
         if let Some(version) = kubernetes_version.as_deref() {
             insert_kubernetes_version_fields(&mut static_root_strings, version);
         }
-        let mut define_bodies = HashMap::new();
-        let mut implicit_template_names = BTreeMap::new();
-        let mut file_sources = HashMap::new();
-        for (path, src) in defines.file_sources() {
-            file_sources.insert(path.to_string(), src.to_string());
-            if let Some(template_relative_path) = template_relative_path(path) {
-                let name = format!("@file:{path}");
-                implicit_template_names.insert(template_relative_path, name.clone());
-                define_bodies.insert(
-                    name,
-                    CachedDefineBody {
-                        source: src.to_string(),
-                        source_path: path.to_string(),
-                        body_offset: 0,
-                    },
-                );
-            }
-            for block in extract_define_blocks(src) {
-                define_bodies.insert(
-                    block.name,
-                    CachedDefineBody {
-                        source: block.body,
-                        source_path: path.to_string(),
-                        body_offset: block.body_offset,
-                    },
-                );
-            }
-        }
         Self {
-            define_bodies,
-            implicit_template_names,
-            file_sources,
+            parsed_defines: parsed_defines.clone(),
             chart_default_strings,
-            define_trees: RefCell::new(HashMap::new()),
             body_eval_facts: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
             custom_merge_helpers: RefCell::new(HashMap::new()),
@@ -196,12 +267,14 @@ impl IrAnalysisDb {
     }
 
     pub(crate) fn has_helper(&self, name: &str) -> bool {
-        self.define_bodies.contains_key(name)
+        self.parsed_defines.inner.define_bodies.contains_key(name)
     }
 
     pub(crate) fn implicit_template_name(&self, suffix: &str) -> Option<&str> {
         let suffix = suffix.trim_start_matches('/');
         let mut matches = self
+            .parsed_defines
+            .inner
             .implicit_template_names
             .iter()
             .filter(|(path, _)| path.as_str() == suffix)
@@ -211,7 +284,11 @@ impl IrAnalysisDb {
     }
 
     pub(crate) fn file_source(&self, path: &str) -> Option<&str> {
-        self.file_sources.get(path).map(String::as_str)
+        self.parsed_defines
+            .inner
+            .file_sources
+            .get(path)
+            .map(String::as_str)
     }
 
     /// Chart-authored defaults that one exact or wildcard values provenance
@@ -250,23 +327,15 @@ impl IrAnalysisDb {
     /// Indexed chart file paths (templates plus `.Files.Get` sources),
     /// sorted for deterministic enumeration.
     pub(crate) fn file_source_paths(&self) -> Vec<&str> {
-        let mut paths: Vec<&str> = self.file_sources.keys().map(String::as_str).collect();
+        let mut paths: Vec<&str> = self
+            .parsed_defines
+            .inner
+            .file_sources
+            .keys()
+            .map(String::as_str)
+            .collect();
         paths.sort_unstable();
         paths
-    }
-
-    #[tracing::instrument(skip_all)]
-    fn define_tree(&self, name: &str) -> Option<tree_sitter::Tree> {
-        if let Some(tree) = self.define_trees.borrow().get(name) {
-            return Some(tree.clone());
-        }
-
-        let src = self.define_bodies.get(name)?.source.as_str();
-        let tree = parse_go_template(src)?;
-        self.define_trees
-            .borrow_mut()
-            .insert(name.to_string(), tree.clone());
-        Some(tree)
     }
 
     /// The source-only evaluation facts of one helper body, computed once.
@@ -306,13 +375,13 @@ impl IrAnalysisDb {
             if visited.len() >= MAX_FAMILY || !visited.insert(name.clone()) {
                 continue;
             }
-            let Some(body) = self.define_bodies.get(&name) else {
+            let Some(expressions) = self.parsed_defines.expressions(&name) else {
                 continue;
             };
             // Per body: `get`-bound variables feeding a later `tpl` call.
             let mut get_bound: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
             let mut tpl_variables: BTreeSet<String> = BTreeSet::new();
-            for expr in helm_schema_ast::parse_action_expressions(&body.source) {
+            for expr in expressions {
                 expr.walk(|inner| match inner {
                     TemplateExpr::Call { function, args } => match function.as_str() {
                         "hasKey" => {
@@ -437,7 +506,7 @@ impl IrAnalysisDb {
             return None;
         };
 
-        let exprs = helm_schema_ast::parse_action_expressions(body.source);
+        let exprs = body.expressions;
         let [
             accumulator_init,
             range_header,
@@ -448,7 +517,7 @@ impl IrAnalysisDb {
             not_nil_test,
             member_write,
             render,
-        ] = exprs.as_slice()
+        ] = exprs
         else {
             return None;
         };
@@ -606,12 +675,12 @@ impl IrAnalysisDb {
             return None;
         }
 
-        let exprs = helm_schema_ast::parse_action_expressions(body.source);
+        let exprs = body.expressions;
         let mut indexed_params: BTreeMap<i64, String> = BTreeMap::new();
         let mut accumulator: Option<String> = None;
         let mut literal_lists: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
         let mut nested_vars: BTreeSet<String> = BTreeSet::new();
-        for expr in &exprs {
+        for expr in exprs {
             let TemplateExpr::VariableDefinition {
                 name: var_name,
                 value,
@@ -697,7 +766,7 @@ impl IrAnalysisDb {
         };
         let mut full_overwrite_sources: BTreeSet<String> = BTreeSet::new();
         let mut disciplined = true;
-        for expr in &exprs {
+        for expr in exprs {
             expr.walk(|inner| match inner {
                 TemplateExpr::Call { function, args } => match function.as_str() {
                     "has" => {
@@ -801,8 +870,8 @@ impl IrAnalysisDb {
     /// only mapping source shapes retain identity at the output.
     fn classify_parsed_map_list_merge_helper(&self, name: &str) -> Option<()> {
         let body = self.parsed_helper_body(name)?;
-        let expressions = helm_schema_ast::parse_action_expressions(body.source);
-        let [init, range_subject, assignment, render] = expressions.as_slice() else {
+        let expressions = body.expressions;
+        let [init, range_subject, assignment, render] = expressions else {
             return None;
         };
 
@@ -890,8 +959,8 @@ impl IrAnalysisDb {
         let Some(body) = self.parsed_helper_body(name) else {
             return false;
         };
-        let expressions = helm_schema_ast::parse_action_expressions(body.source);
-        let [binding, contains, scope, scoped_tpl, tpl, output] = expressions.as_slice() else {
+        let expressions = body.expressions;
+        let [binding, contains, scope, scoped_tpl, tpl, output] = expressions else {
             return false;
         };
         let TemplateExpr::VariableDefinition {
@@ -915,13 +984,7 @@ impl IrAnalysisDb {
     }
 
     pub(crate) fn parsed_helper_body(&self, name: &str) -> Option<ParsedHelperBody<'_>> {
-        let body = self.define_bodies.get(name)?;
-        Some(ParsedHelperBody {
-            source: body.source.as_str(),
-            source_path: body.source_path.as_str(),
-            body_offset: body.body_offset,
-            tree: self.define_tree(name)?,
-        })
+        self.parsed_defines.parsed_body(name)
     }
 
     /// Evaluate one bound helper call in the fragment domain, memoized per
@@ -1183,6 +1246,31 @@ struct CachedDefineBody {
     source: String,
     source_path: String,
     body_offset: usize,
+    tree: OnceCell<Option<tree_sitter::Tree>>,
+    expressions: OnceCell<Vec<TemplateExpr>>,
+}
+
+impl CachedDefineBody {
+    fn new(source: &str, source_path: &str, body_offset: usize) -> Self {
+        Self {
+            source: source.to_string(),
+            source_path: source_path.to_string(),
+            body_offset,
+            tree: OnceCell::new(),
+            expressions: OnceCell::new(),
+        }
+    }
+
+    fn tree(&self) -> Option<&tree_sitter::Tree> {
+        self.tree
+            .get_or_init(|| parse_go_template(&self.source))
+            .as_ref()
+    }
+
+    fn expressions(&self) -> &[TemplateExpr] {
+        self.expressions
+            .get_or_init(|| helm_schema_ast::parse_action_expressions(&self.source))
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -1239,17 +1327,6 @@ struct DefineBlock {
     name: String,
     body: String,
     body_offset: usize,
-}
-
-/// The `(name, body)` pairs a template source `define`s, for include-graph
-/// walks that need to follow helper calls through helper bodies and for
-/// chart-ownership queries over the define index's files.
-#[must_use]
-pub fn define_bodies_in_source(src: &str) -> Vec<(String, String)> {
-    extract_define_blocks(src)
-        .into_iter()
-        .map(|block| (block.name, block.body))
-        .collect()
 }
 
 fn extract_define_blocks(src: &str) -> Vec<DefineBlock> {

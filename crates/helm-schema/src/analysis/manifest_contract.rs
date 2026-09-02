@@ -13,7 +13,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
     loaded_chart: &chart::LoadedChart,
     symbolic_context: &SymbolicIrContext,
     optional_helpers: &[OptionalDependencyHelpers],
-    corpus: &DefineCorpus,
+    corpus: &DefineCorpus<'_>,
 ) -> EngineResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
@@ -231,9 +231,6 @@ pub(crate) struct OptionalDependencyHelpers {
 
 /// Everything the analysis knows about one define name.
 pub(crate) struct DefineFacts {
-    /// The body Helm's global define namespace resolves for the name (last
-    /// parse wins; the index's stable path order stands in for parse order).
-    body: String,
     /// Every chart directory owning a file that defines the name: the deepest
     /// chart whose directory contains the defining file. More than one owner
     /// means the name's resolution is ambiguous and ownership-based reasoning
@@ -247,39 +244,39 @@ pub(crate) struct DefineFacts {
 /// decisions for optional dependencies (owner dirs) — read the same parse of
 /// the same helper files, so the corpus is one pass over the define index
 /// rather than two parallel projections that could drift.
-pub(crate) struct DefineCorpus {
+pub(crate) struct DefineCorpus<'a> {
+    defines: &'a helm_schema_ir::ParsedDefines,
     facts: std::collections::BTreeMap<String, DefineFacts>,
 }
 
-impl DefineCorpus {
+impl<'a> DefineCorpus<'a> {
     pub(crate) fn build(
         charts: &[chart::ChartContext],
-        defines: &helm_schema_ast::DefineIndex,
+        defines: &'a helm_schema_ir::ParsedDefines,
     ) -> Self {
         let mut facts: std::collections::BTreeMap<String, DefineFacts> =
             std::collections::BTreeMap::new();
-        for (path, src) in defines.file_sources() {
-            let owner = charts
-                .iter()
-                .map(normalized_chart_dir)
-                .filter(|dir| file_in_dir(path, dir))
-                .max_by_key(String::len);
-            for (name, body) in helm_schema_ir::define_bodies_in_source(src) {
-                let entry = facts.entry(name).or_insert_with(|| DefineFacts {
-                    body: String::new(),
-                    owner_dirs: std::collections::BTreeSet::new(),
-                });
-                entry.body = body;
+        for name in defines.define_names() {
+            let mut owner_dirs = std::collections::BTreeSet::new();
+            for path in defines.define_source_paths(name) {
+                let owner = charts
+                    .iter()
+                    .map(normalized_chart_dir)
+                    .filter(|dir| file_in_dir(path, dir))
+                    .max_by_key(String::len);
                 if let Some(owner) = &owner {
-                    entry.owner_dirs.insert(owner.clone());
+                    owner_dirs.insert(owner.clone());
                 }
             }
+            if defines.define_body(name).is_some() {
+                facts.insert(name.to_string(), DefineFacts { owner_dirs });
+            }
         }
-        Self { facts }
+        Self { defines, facts }
     }
 
     fn body(&self, name: &str) -> Option<&str> {
-        self.facts.get(name).map(|facts| facts.body.as_str())
+        self.defines.define_body(name)
     }
 
     /// Define names whose every known owner lies inside `dir` (or is `dir`
@@ -314,7 +311,7 @@ fn file_in_dir(file: &str, dir: &str) -> bool {
 pub(crate) fn optional_dependency_helpers_for_chart(
     chart: &chart::ChartContext,
     charts: &[chart::ChartContext],
-    corpus: &DefineCorpus,
+    corpus: &DefineCorpus<'_>,
 ) -> Vec<OptionalDependencyHelpers> {
     let mut out = Vec::new();
     for dependency in charts {
@@ -363,7 +360,7 @@ pub(crate) fn optional_dependency_helpers_for_chart(
 /// reached helper body's top-level includes.
 pub(crate) fn unconditional_include_closure(
     source: &str,
-    corpus: &DefineCorpus,
+    corpus: &DefineCorpus<'_>,
 ) -> std::collections::BTreeSet<String> {
     let mut reached = std::collections::BTreeSet::new();
     let mut queue: Vec<String> = helm_schema_ast::unconditional_include_names(source)

@@ -107,7 +107,7 @@ pub(crate) fn eval_bound_helper_fragment(
     };
     let document = TemplatedDocument::parse_with_root(body.source, body.tree.root_node());
     let body_facts = db.helper_body_eval_facts(name, || {
-        super::eval::BodyEvalFacts::collect(body.source, db, &body.tree, &document)
+        super::eval::BodyEvalFacts::collect(body.source, db, body.tree, &document)
     });
     let make_interpreter = || {
         let mut interpreter = Interpreter::with_body_facts(

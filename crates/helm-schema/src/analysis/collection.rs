@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::DefineIndex;
-use helm_schema_ir::{ContractIr, SymbolicIrContext, SymbolicPolicy};
+use helm_schema_ir::{ContractIr, ParsedDefines, SymbolicIrContext, SymbolicPolicy};
 use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::local_crd_projection::collect_static_crd_universe;
@@ -29,6 +29,7 @@ pub(crate) fn analyze_charts(
     values_roots: &ValuesRoots,
     kubernetes_version: Option<&str>,
 ) -> EngineResult<ChartAnalysis> {
+    let parsed_defines = ParsedDefines::new(defines);
     let mut contract = ContractIr::default();
     if charts.iter().any(|chart| !chart.values_prefix.is_empty()) {
         // Helm accepts a root `global` value for dependency propagation even
@@ -51,14 +52,14 @@ pub(crate) fn analyze_charts(
         }
     }
 
-    let define_corpus = DefineCorpus::build(charts, defines);
+    let define_corpus = DefineCorpus::build(charts, &parsed_defines);
     let dependency_global_ownership = chart::build_dependency_global_ownership(charts)?;
     for chart in charts {
         if chart.is_library {
             continue;
         }
-        let symbolic_context = SymbolicIrContext::with_policy(
-            defines,
+        let symbolic_context = SymbolicIrContext::with_parsed_policy(
+            &parsed_defines,
             SymbolicPolicy {
                 chart_default_strings: values_roots
                     .string_defaults_for_prefix(&chart.values_prefix),

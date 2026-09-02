@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use helm_schema_ast::DefineIndex;
 
-use crate::analysis_db::IrAnalysisDb;
+use crate::analysis_db::{IrAnalysisDb, ParsedDefines};
 use crate::contract::ContractIr;
 
 /// Immutable non-values inputs supplied by the Helm render environment.
@@ -63,6 +63,14 @@ impl SymbolicIrContext {
     pub fn with_policy(defines: &DefineIndex, policy: SymbolicPolicy) -> Self {
         Self {
             analysis_db: Rc::new(IrAnalysisDb::with_policy(defines, policy)),
+        }
+    }
+
+    /// Builds a context over define programs parsed once for the chart tree.
+    #[must_use]
+    pub fn with_parsed_policy(defines: &ParsedDefines, policy: SymbolicPolicy) -> Self {
+        Self {
+            analysis_db: Rc::new(IrAnalysisDb::with_parsed_policy(defines, policy)),
         }
     }
 
