@@ -12,6 +12,65 @@ fn truthy(path: &str) -> Predicate {
     Predicate::truthy_path(path)
 }
 
+fn reference_minimize_disjunction(mut keys: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    fn complementary(left: u8, right: u8) -> bool {
+        matches!((left, right), (0, 1) | (1, 0) | (2, 3) | (3, 2))
+    }
+
+    fn resolve(left: &[u8], right: &[u8]) -> Option<Vec<u8>> {
+        if left.len() != right.len() {
+            return None;
+        }
+        let left_only = left
+            .iter()
+            .filter(|item| !right.contains(item))
+            .collect::<Vec<_>>();
+        let right_only = right
+            .iter()
+            .filter(|item| !left.contains(item))
+            .collect::<Vec<_>>();
+        let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
+            return None;
+        };
+        complementary(**left_extra, **right_extra).then(|| {
+            left.iter()
+                .filter(|item| *item != *left_extra)
+                .copied()
+                .collect()
+        })
+    }
+
+    keys.sort();
+    keys.dedup();
+    loop {
+        let mut resolved = None;
+        'search: for (index, left) in keys.iter().enumerate() {
+            for (other_index, right) in keys.iter().enumerate().skip(index + 1) {
+                if let Some(common) = resolve(left, right) {
+                    resolved = Some((index, other_index, common));
+                    break 'search;
+                }
+            }
+        }
+        let Some((index, other_index, common)) = resolved else {
+            break;
+        };
+        keys.remove(other_index);
+        keys.remove(index);
+        if !keys.contains(&common) {
+            keys.push(common);
+        }
+        keys.sort();
+    }
+    let sets = keys.clone();
+    keys.retain(|candidate| {
+        !sets.iter().any(|other| {
+            other.len() < candidate.len() && other.iter().all(|item| candidate.contains(item))
+        })
+    });
+    keys
+}
+
 #[test]
 fn complementary_conjunctions_resolve_to_their_shared_key() {
     let condition = GuardDnf::from_disjunction([
@@ -23,6 +82,36 @@ fn complementary_conjunctions_resolve_to_their_shared_key() {
         have: condition,
         want: GuardDnf::from_conjunction([truthy("shared")])
     );
+}
+
+#[test]
+fn optimized_minimizer_matches_the_former_fixed_point_order() {
+    let candidates = [
+        vec![],
+        vec![0],
+        vec![1],
+        vec![2],
+        vec![3],
+        vec![0, 2],
+        vec![0, 3],
+        vec![1, 2],
+        vec![1, 3],
+    ];
+
+    for selection in 0..(1_usize << candidates.len()) {
+        let keys = candidates
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| selection & (1 << index) != 0)
+            .map(|(_, key)| key.clone())
+            .collect::<Vec<_>>();
+        let have = crate::guard_algebra::minimize_disjunction_by(keys.clone(), |left, right| {
+            matches!((*left, *right), (0, 1) | (1, 0) | (2, 3) | (3, 2))
+        });
+        let want = reference_minimize_disjunction(keys);
+
+        sim_assert_eq!(have: have, want: want);
+    }
 }
 
 #[test]

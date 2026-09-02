@@ -33,9 +33,27 @@ fn resolve_complementary_keys_by<T: Clone + PartialEq>(
     if left.len() != right.len() {
         return None;
     }
-    let left_only: Vec<&T> = left.iter().filter(|guard| !right.contains(guard)).collect();
-    let right_only: Vec<&T> = right.iter().filter(|guard| !left.contains(guard)).collect();
-    let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
+
+    let mut left_extra = None;
+    let mut right_extra = None;
+    for item in left {
+        if !right.contains(item) {
+            if left_extra.is_some() {
+                return None;
+            }
+            left_extra = Some(item);
+        }
+    }
+    for item in right {
+        if !left.contains(item) {
+            if right_extra.is_some() {
+                return None;
+            }
+            right_extra = Some(item);
+        }
+    }
+
+    let (Some(left_extra), Some(right_extra)) = (left_extra, right_extra) else {
         return None;
     };
     if !are_complementary(left_extra, right_extra) {
@@ -43,7 +61,7 @@ fn resolve_complementary_keys_by<T: Clone + PartialEq>(
     }
     Some(
         left.iter()
-            .filter(|guard| *guard != *left_extra)
+            .filter(|item| *item != left_extra)
             .cloned()
             .collect(),
     )
@@ -53,6 +71,10 @@ pub(crate) fn minimize_disjunction_by<T: Clone + Ord>(
     mut keys: Vec<Vec<T>>,
     are_complementary: impl Copy + Fn(&T, &T) -> bool,
 ) -> Vec<Vec<T>> {
+    debug_assert!(keys.iter().all(|key| {
+        key.windows(2)
+            .all(|pair| matches!(pair, [left, right] if left < right))
+    }));
     keys.sort();
     keys.dedup();
     loop {
@@ -72,15 +94,21 @@ pub(crate) fn minimize_disjunction_by<T: Clone + Ord>(
         keys.remove(other_index);
         keys.remove(index);
         if !keys.contains(&common) {
-            keys.push(common);
+            let insert_at = keys.partition_point(|key| key < &common);
+            keys.insert(insert_at, common);
         }
-        keys.sort();
     }
-    let sets = keys.clone();
-    keys.retain(|candidate| {
-        !sets
-            .iter()
-            .any(|other| other != candidate && key_is_strict_subset_by(other, candidate))
-    });
+
+    let retained = keys
+        .iter()
+        .enumerate()
+        .map(|(candidate_index, candidate)| {
+            !keys.iter().enumerate().any(|(other_index, other)| {
+                candidate_index != other_index && key_is_strict_subset_by(other, candidate)
+            })
+        })
+        .collect::<Vec<_>>();
+    let mut retained = retained.into_iter();
+    keys.retain(|_| retained.next().unwrap_or_default());
     keys
 }

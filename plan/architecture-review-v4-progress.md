@@ -6948,3 +6948,131 @@
 
 - Measured production LOC delta: 0. B5b changes only the progress ledger; profile outputs remain
   ignored under `target/`.
+
+## B5c — optimize disjunction minimization in place
+
+- Status: in progress; commit pending.
+- Contract: representation/performance-only. Optimize `minimize_disjunction_by` at its existing
+  boundary without moving any call site. Preserve exact disjunct membership and serialized order,
+  then remeasure the frozen Airflow command before considering the optional boundary-only half.
+- Acceptance baseline: `1fb87efc` (B5b hash-record successor to semantic B5a tree `ac9b54ab`).
+- Baseline production Rust LOC: 65,634.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+    Any changed byte or acceptance cell rejects the round before artifact adoption.
+  - Keep both `GuardDnf` call sites in place. No delayed/boundary-only minimization, observer move,
+    or intermediate DNF representation change enters this round.
+  - Preserve the existing deterministic algorithm: lexicographically sorted unique disjuncts;
+    first resolvable pair by that order; sorted insertion of the common conjunction; fixed-point
+    complementary resolution; then strict-superset absorption without reordering survivors.
+  - Replace repeated linear membership scans within sorted conjunctions by a two-pointer walk.
+    Replace `contains` plus whole-vector resort after resolution by binary search/insertion, and
+    replace the cloned absorption snapshot by index-based keep accounting.
+  - Both current callers already produce sorted, deduplicated conjunctions. The optimized owner
+    checks that invariant in debug builds rather than silently sorting inner keys and changing the
+    existing function contract.
+  - The final release Airflow command and clean corpus dump are measured on the final tree with host
+    load disclosed. Byte identity is mandatory regardless of timing direction.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops remain zero.
+    Optional boundary-only minimization remains deferred unless the final profile justifies its
+    separate observer/max-DNF/RSS/order study.
+
+- Measured results:
+  - The adopted minimizer keeps cached-hash `PartialEq` membership checks but removes the temporary
+    `left_only`/`right_only` vectors. Successful resolution clones only the final common key.
+  - Resolved keys use equality membership plus `partition_point` insertion, preserving the former
+    sorted fixed-point order without re-sorting the whole disjunction after every pair. Final
+    absorption computes an index-aligned keep vector over borrowed keys instead of deep-cloning the
+    complete disjunction.
+  - A 512-input exhaustive small-space test compares the optimized function with the exact former
+    implementation across two complementary atom pairs, duplicates, empty conjunctions,
+    fixed-point resolution, and absorption. Every result and survivor order is identical.
+  - The final release Airflow run exits 0 at 92.57 seconds wall, 90.00 seconds user, and 0.46 seconds
+    system: 90.46 seconds CPU. Against B5b's loaded 127.14/126.76 point this is 27.2% less wall and
+    28.6% less CPU; against the frozen idle 130/112.7 baseline it is 28.8% less wall and 19.7% less
+    CPU. The run began under load averages 17.25/13.03/18.01 and ended at 9.40/11.42/16.82, so the
+    direction is strong but not an idle-host benchmark.
+  - The final immutable archive contains 90 binaries and 128 files. Its one clean schema dump passes
+    62/62 tests in 221.207 seconds and writes 84 artifacts, all byte-identical to B5b. Its IR dump
+    and exact comparison pass in 3.973 and 3.297 seconds with all 18 artifacts unchanged.
+  - The full-depth battery passes in 150.785 seconds across 60 charts and 120,833 probes with zero
+    flips, zero candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and
+    7,465/7,465 mandatory third-level probes.
+
+- Deviations:
+  - The pre-registered two-pointer design replaced B5a's cached-hash equality with recursive `Ord`
+    comparisons. It remained byte-exact and passed the equivalence test, but its release preflight
+    took 249.54 seconds wall and 242.49 seconds CPU under load 8.39/11.50/18.92. That implementation
+    was rejected before archive construction; none of its timing or output artifacts is adopted.
+  - The corrected design retains equality scans and removes allocation/sorting/cloning work around
+    them. Its 92.57/90.46 result demonstrates that the first preflight's regression was the deep
+    ordering substitution, not the round's in-place optimization premise.
+  - B5c's debug sample records a 157.3 MiB physical footprint during its window versus B5b's
+    71.4 MiB window. The samplers attached at different execution phases (about 26 versus 17 seconds
+    after launch) and neither reports process-lifetime peak RSS, so the values are disclosed but not
+    treated as comparable memory evidence. Full batteries show no memory-pressure failure.
+
+- Adjudication evidence:
+  - Helm 4.2.3 adjudication is enabled in the final full-depth run. Zero schema bytes and zero
+    acceptance cells change, so no individual fixture decision is required.
+  - Accepted-abort allowance remains zero and observed candidate-accepts/Helm-aborts remains zero.
+
+- Producer/route coverage:
+
+  | Route | Final behavior and proof |
+  | --- | --- |
+  | Predicate DNF construction | Same call site, fixed-point resolution, survivor membership, and order; 512-case oracle plus exact dumps. |
+  | Conditional-guard normalization | Same generic owner and complement callback; conditional-guard tests and serialized contract bytes are exact. |
+  | Complement candidate search | Equality-only scan with no temporary difference vectors; cached predicate hashes remain effective. |
+  | Resolved common insertion | Equality dedup plus lexicographic `partition_point`; no full-vector re-sort. |
+  | Strict-superset absorption | Borrowed pair scan plus aligned keep vector; survivor order is unchanged. |
+  | Intermediate consumers | No call-site move; all existing `GuardDnf` observers retain immediate normalized form. |
+
+- Review dossier:
+  - The optimization stays on the correct hill: one normalization owner and the same semantic
+    boundary, with fewer allocations and repeated sorts. It does not add caches, alternate DNF
+    forms, lazy state, or call-site policy.
+  - Post-B5c debug sampling records 2,494 samples. Leading leaves are `ValuesPath::encode` 370
+    (14.8%), hashing 283 (11.3%), minimizer internals 174 (7.0%), predicate equality 77 (3.1%), and
+    predicate ordering 66 (2.6%). B5b's predicate-equality leaf was 15.0%; the final profile and
+    release timing agree that repeated deep equality work materially fell.
+  - Optional boundary-only minimization is skipped. Intermediate observers include
+    `is_unconditional`, `is_never`, `disjuncts`, guard projection/serialization,
+    `single_guard_conjunction`, `conjoined`, equality/ordering/hashing, union, and path mapping.
+    Delaying normalization would require a raw-versus-normalized representation and its own
+    max-disjunct/RSS/order study, while path encoding and hashing now exceed the minimizer leaf.
+  - Because no boundary spike is attempted, its adoption-only max-disjunct and peak-RSS gates are
+    not claimed. The precise future starting point would be a separately pre-registered lazy-DNF
+    representation study, not an extension of this in-place commit.
+  - Public/wire decision: none. `minimize_disjunction_by` and the equivalence oracle are private;
+    serialized guards, IR, schemas, diagnostics, and public construction remain byte-exact.
+
+- Self-adversarial pass:
+  - Rejected the superficially faster-asymptotic two-pointer walk when measurement showed it
+    defeated the cached equality invariant. The final code keeps the cheapest comparator for the
+    actual `Predicate` domain.
+  - Verified that `partition_point` sees the same sorted outer vector produced by the former
+    post-push full sort, and that equality is checked first so an existing common key is not inserted
+    twice.
+  - Verified that keep flags are computed before mutation and consumed once in original index order,
+    making absorption membership and survivor ordering identical to the cloned-snapshot algorithm.
+  - Compared release and sampled-debug schemas byte-for-byte, then repeated schema/IR identity from
+    the immutable archive. No rejected-preflight artifact enters final evidence.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in 30.63 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 177.57 seconds; the same two warnings remain.
+  - `cargo nextest run --workspace`: exit 0, 1,329/1,329 tests in 120.547 seconds.
+  - `task test:integration`: exit 0, 565/565 tests in 935.117 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,898/1,898 tests in 1,116.664 seconds; 24 tests skipped by profile.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 1.63 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts, using the documented macOS shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,659.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +25 (65,634 to 65,659). The production delta is the allocation-
+  and sort-free fixed-point bookkeeping; the exhaustive reference oracle lives under `src/tests/`
+  and is excluded from production LOC. No E-style LOC gate applies.
