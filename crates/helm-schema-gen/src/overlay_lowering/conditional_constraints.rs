@@ -1,8 +1,8 @@
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, EmissionClass, EmissionReport,
     GuardValue, LoweredConjunct, NestedGuardScope, PathSchemaResolver, ResolvedPathSchema,
-    ResourceSchemaOracle, SchemaDocument, SchemaNode, Value, YamlValue, build_condition_clauses,
-    common_prefix_len, evaluate_guard_set_on_values, guard_encodes_fully,
+    SchemaDocument, SchemaNode, Value, YamlValue, build_condition_clauses, common_prefix_len,
+    evaluate_guard_set_on_values, guard_encodes_fully,
 };
 use helm_schema_core::ValuesPath;
 
@@ -11,10 +11,14 @@ use crate::values_yaml::yaml_value_at_values_path;
 pub(super) fn resolve_overlay_target_schema(
     target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &crate::provider_resolution::ProviderSchemaResolutions,
 ) -> ResolvedPathSchema {
     let evidence = overlay.evidence.as_path_evidence();
-    PathSchemaResolver::resolve_single_path_evidence(target_value_path, &evidence, provider)
+    PathSchemaResolver::resolve_single_path_evidence(
+        target_value_path,
+        &evidence,
+        provider_resolutions,
+    )
 }
 
 pub(super) fn partition_guard_scopes(

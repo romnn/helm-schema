@@ -8,7 +8,7 @@ use super::*;
 
 /// Proves use order cannot choose which provider preimage survives memoization.
 #[test]
-fn provider_schema_cache_distinguishes_stringified_scalar_uses() {
+fn provider_resolution_distinguishes_stringified_scalar_uses() {
     #[derive(Debug)]
     struct ScalarOrObjectProvider;
 
@@ -2772,11 +2772,13 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
         ),
     ])
     .with_inference_enabled(true);
+    let provider_resolutions =
+        crate::provider_resolution::ProviderSchemaResolutions::resolve(&schema_signals, &provider);
     let resolved = crate::path_resolver::PathSchemaResolver::new(
         &schema_signals,
         &values_yaml,
         &serde_yaml::Value::Null,
-        &provider,
+        &provider_resolutions,
     )
     .resolve_all();
     let resolved_metric_relabelings = resolved
@@ -2819,7 +2821,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
     let resolved_overlay = crate::path_resolver::PathSchemaResolver::resolve_single_path_evidence(
         &metric_relabelings_path,
         &overlay.evidence.as_path_evidence(),
-        &provider,
+        &provider_resolutions,
     );
     sim_assert_eq!(
         have: resolved_overlay.schema.pointer("/anyOf/0/type").and_then(Value::as_str),
@@ -2897,12 +2899,14 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
     let values_yaml: serde_yaml::Value = serde_yaml::from_str(&values_yaml_source)
         .wrap_err("parse Zalando operator values fixture")?;
     let provider = production_chain_provider();
+    let provider_resolutions =
+        crate::provider_resolution::ProviderSchemaResolutions::resolve(&schema_signals, &provider);
 
     let resolved = crate::path_resolver::PathSchemaResolver::new(
         &schema_signals,
         &values_yaml,
         &serde_yaml::Value::Null,
-        &provider,
+        &provider_resolutions,
     )
     .resolve_all();
     let resolved_extra_envs = resolved

@@ -15,6 +15,7 @@ mod path_schema;
 mod program_wrapper;
 mod provider_definitions;
 mod provider_requirement_synthesis;
+mod provider_resolution;
 mod provider_schema;
 mod quoted_serialization;
 pub mod required_inference;

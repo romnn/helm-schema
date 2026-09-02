@@ -243,11 +243,15 @@ impl LoweredEmissionPlan {
             dependency_refill,
             guarded,
         };
+        let provider_resolutions = crate::provider_resolution::ProviderSchemaResolutions::resolve(
+            &contract_schema_signals,
+            input.provider,
+        );
         let resolved_paths = PathSchemaResolver::new(
             &contract_schema_signals,
             &documents.input_defaults,
             &documents.subchart_defaults,
-            input.provider,
+            &provider_resolutions,
         )
         .resolve_all();
         let (conditional_schemas, insertion_abstentions) = collect_conditional_schemas(
@@ -255,7 +259,7 @@ impl LoweredEmissionPlan {
             &contract_schema_signals,
             &documents.composed,
             &documents.subchart_defaults,
-            input.provider,
+            &provider_resolutions,
         );
         let terminal_schemas = contract_schema_signals
             .terminal_clauses()

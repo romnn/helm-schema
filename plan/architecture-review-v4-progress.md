@@ -8349,3 +8349,143 @@
 
 - Measured production LOC delta: +25 (65,950 to 65,975). This ordinary representation round makes
   channel identity total and compiler-checked; no E-style LOC gate applies.
+
+## C4 — provider resolution phase artifact
+
+- Status: landed; commit pending.
+- Contract: representation/performance-only. Resolve every distinct provider use once into one
+  immutable phase artifact before path or overlay lowering; make the path resolver and all four
+  provider-requirement synthesis passes consume it, deleting their private lookup caches and direct
+  provider calls.
+- Acceptance baseline: `3bdd43c7` (C1c ledger closure commit).
+- Baseline production Rust LOC: 65,975.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+  - The artifact is keyed by the complete `ProviderSchemaUse`, includes base and conditional-overlay
+    uses plus concrete kind alternatives, and stores authoritative misses as well as hits.
+  - Every provider lookup happens during phase construction. Path resolution may apply distinct
+    use policy to a cloned fragment but may not call the provider or retain a memo; synthesis reads
+    the same raw fragment identity.
+  - Candidate union order, `required_in_parent`, source provenance, provider-definition identity,
+    and miss/abstention behavior remain exact. Candidate-accepts/Helm-aborts allowance and mandatory
+    base/third-level drops remain zero.
+
+- Measured results:
+  - `ProviderSchemaResolutions` is constructed once in emission-plan preparation and owns one
+    complete `BTreeMap<ProviderSchemaUse, ProviderSchemaResolution>`. It resolves base uses,
+    conditional-overlay uses, and every concrete kind alternative, retaining `None` for
+    authoritative misses.
+  - Path resolution consumes pre-lowered provider candidates and no longer owns
+    `ProviderSchemaLookupKey`, a provider handle, or a lookup memo. The direct, split-segment,
+    range-key, and ranged-member requirement passes plus omitted-member and merge-shadow projection
+    all read the same raw resolved fragments.
+  - Candidate lowering is performed once per legacy provider-use identity during phase
+    construction. The artifact preserves shared `Arc` identity where the old resolver memo did,
+    keeping provider-definition discovery and `$defs` allocation byte-exact without leaving any
+    consumer-side cache.
+  - Null rejection is a lazy derived fact on the exact resolution entry. The four synthesis passes
+    therefore share one validator result without re-entering the provider or compiling the same
+    provider schema once per pass.
+  - The counting-provider regression proves duplicate base/overlay evidence and a two-kind
+    alternative issue exactly three provider calls: primary concrete, alternative concrete, and
+    the original multi-kind use. Whole-tree search finds the only production
+    `schema_fragment_for_use` call in phase construction.
+  - All 84 schema artifacts and all 18 symbolic-IR artifacts are byte-identical to C1c. The
+    full-depth battery checks 120,837 probes across 60 charts with zero flips, zero candidate-
+    accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and 7,465/7,465 mandatory
+    third-level probes; the disclosed bounded category remains 25,718 reductions.
+
+- Deviations:
+  - The first compiler-driven migration deliberately left every old provider signature exposed and
+    was repaired call site by call site. No archive, dump, fixture, or acceptance result was
+    produced from the non-compiling state.
+  - Final1 replaced the old transformed-candidate identity grouping with semantic deduplication.
+    Ten schema artifacts changed because later provider-definition discovery observes shared `Arc`
+    identity and first-seen order. That archive and dump were rejected before acceptance probing;
+    no fixture was adopted.
+  - A follow-up order-only preflight restored first-seen provider lookup order but Harbor and
+    Jaeger still differed. It was rejected. The final design retains a construction-local
+    `CandidateKey` interning table solely while building the one phase artifact; it is not a
+    persistent parallel map or a consumer memo. This is load-bearing for exact `$defs` identity and
+    ordering.
+  - Final2 restored byte identity, but mechanism audit found that deleting both synthesis-local
+    nullability maps caused `jsonschema::validator_for` to run again in separate passes. Final2 is
+    rejected as a performance preflight even though its 84 schema and 18 IR artifacts were exact.
+    The final artifact's `OnceCell<bool>` makes that derived fact single-owner without reintroducing
+    a provider lookup cache.
+  - Final2's clean schema dump took 307.309 seconds and final3 took 167.118 seconds. The machine was
+    explicitly non-idle and load differed between runs, so these are loaded-host observations, not
+    a controlled speedup claim. The rejection and repair are grounded in the audited repeated-
+    validator mechanism; the timing is supporting evidence only.
+  - The first final3 dump invocation failed before archive extraction because the absolute
+    step-local `TMPDIR` roots had not been created. No test or dump artifact was produced. After
+    creating the roots, the single clean final3 dump was run once from the immutable archive.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and was enabled in the final full-depth run.
+  Exact schema/IR bytes and zero acceptance flips leave no fixture or individual Helm verdict to
+  adopt. Candidate-accepts/Helm-aborts and mandatory coverage drops are zero.
+
+- Producer/route coverage:
+
+  | Route | Final owner and proof |
+  | --- | --- |
+  | Base path provider candidates | Phase artifact candidate entries; counting-provider test and 84 exact schemas. |
+  | Concrete kind alternatives | Phase construction expands every finite kind once; primary/alternative call-order regression. |
+  | Conditional overlay targets | Same artifact passed to isolated path resolution; overlay and kind-partition suites. |
+  | Direct required-source synthesis | Raw fragment plus shared lazy null-rejection fact; provider requirement suites. |
+  | Split-segment/range-key synthesis | Raw artifact fragment; lexical and ranged-key provider suites. |
+  | Ranged-member synthesis | Raw artifact fragment plus shared null fact; ranged-provider and deletion probes. |
+  | Omitted members/merge shadows | Raw artifact fragments; omission and merge-shadow suites. |
+  | Misses and provenance | Stored `None` and unchanged fragment source; exact diagnostics, IR, and corpus output. |
+
+- Review dossier:
+  - Focused proof: 114/114 provider-selected tests pass, including the new exact-call-count phase
+    regression.
+  - Immutable build: C4 final3; exit 0, 90 binaries and 128 files. Final1, the order-only
+    preflight, and final2 are rejected as described above.
+  - Clean schema dump: final3 archive and absolute step-local `TMPDIR`; exit 0, 62/62 in 167.118
+    seconds on the disclosed loaded host; all 84 artifacts are byte-identical to C1c.
+  - Clean IR dump: same archive and its own step-local `TMPDIR`; exit 0, one test in 4.931 seconds;
+    all 18 artifacts are byte-identical.
+  - Full-depth proof: same final3 archive, baseline `3bdd43c7`, Helm enabled; exit 0 in 94.079
+    seconds, 60 charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero
+    mandatory drops, and 25,718 disclosed bounded reductions.
+  - Public/wire decision: none. The artifact and its derived fact are crate-private; serialized
+    schemas, symbolic IR, diagnostics, provider traits, and public APIs are unchanged.
+
+- Self-adversarial pass:
+  - The map key is the complete `ProviderSchemaUse`, so source path, resource alternatives,
+    transforms, merge/range identity, omission sets, and guard context cannot alias accidentally.
+    Concrete alternatives use complete cloned keys with the candidate list cleared.
+  - Misses occupy entries and therefore cannot cause a later consumer to retry a provider or turn
+    cache warmth into evidence. Provider ordering and diagnostics remain those of the single phase
+    traversal.
+  - Candidate interning deliberately uses the old semantic key and per-overlay grouping boundary;
+    broadening it would merge independent provider-definition origins, while removing it changes
+    serialized `$defs` identity. Both rejected preflights demonstrate that boundary.
+  - `OnceCell` caches only a deterministic projection of the already-owned fragment. It neither
+    performs a provider lookup nor creates another schema representation, and invalid or absent
+    schemas retain the old abstention (`false`).
+  - Whole-tree search finds no production provider call outside `provider_resolution.rs`, no
+    `provider_schema_cache`, and no consumer-owned provider memo.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in approximately 153 seconds; the two pre-existing ast-grep warnings in
+    `helm-schema-ast` remain informational.
+  - `task lint:fc`: exit 0; 48/48 combinations across three targets in 759.54 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,338/1,338 pass in 112.663 seconds after the loaded-
+    host build.
+  - `task test:integration`: exit 0; 564/564 pass in 785.101 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,906/1,906 pass in 807.550 seconds; 24 skipped and live network tests
+    pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 16.86 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts with the documented host shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 66,081.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +106 (65,975 to 66,081). The explicit phase artifact and focused
+  regression replace path-resolver lookup machinery and provider calls spread across synthesis and
+  overlay consumers; this ordinary performance/representation round has no E-style LOC gate.

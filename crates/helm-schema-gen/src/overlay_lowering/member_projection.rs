@@ -1,7 +1,7 @@
 use super::{
     BTreeSet, ConditionalBaseEffect, ConditionalFlavor, ConditionalGuard, ConditionalPathOverlay,
     ContractSchemaSignals, EmissionOrigin, LoweredConjunct, ProviderSchemaFragment,
-    ResolvedPathSchema, ResourceSchemaOracle, SchemaNode, Value,
+    ProviderSchemaResolutions, ResolvedPathSchema, SchemaNode, Value,
 };
 use crate::schema_node::JsonSchemaType;
 
@@ -169,7 +169,7 @@ pub(super) fn structural_collection_member_projection(schema: &Value) -> Option<
 pub(super) fn append_omitted_member_arms(
     conditionals: &mut Vec<LoweredConjunct>,
     contract_schema_signals: &ContractSchemaSignals,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
 ) {
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let mut arms: BTreeSet<(String, Vec<ConditionalGuard>, String)> = BTreeSet::new();
@@ -192,7 +192,7 @@ pub(super) fn append_omitted_member_arms(
             if provider_use.omitted_members.is_empty() {
                 continue;
             }
-            let Some(fragment) = provider.schema_fragment_for_use(provider_use) else {
+            let Some(fragment) = provider_resolutions.fragment_for_use(provider_use) else {
                 continue;
             };
             let payload = fragment.schema();
@@ -264,15 +264,15 @@ pub(super) fn append_omitted_member_arms(
 pub(super) fn append_merge_shadow_arms(
     conditionals: &mut Vec<LoweredConjunct>,
     contract_schema_signals: &ContractSchemaSignals,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
 ) {
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         for provider_use in &evidence.provider_schema_uses {
             let Some(merge) = provider_use.merge_layers.as_ref() else {
                 continue;
             };
-            let fragment = provider.schema_fragment_for_use(provider_use);
-            let payload = fragment.as_ref().map(ProviderSchemaFragment::schema);
+            let fragment = provider_resolutions.fragment_for_use(provider_use);
+            let payload = fragment.map(ProviderSchemaFragment::schema);
             let definitions = payload.and_then(|payload| {
                 ["$defs", "definitions"]
                     .iter()

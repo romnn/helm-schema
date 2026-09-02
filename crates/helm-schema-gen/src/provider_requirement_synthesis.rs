@@ -21,14 +21,16 @@
 //! makes defaulted and self-guarded paths abstain. The requirements ride the
 //! same root-anchored arm machinery as `fail` implications.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use helm_schema_core::{
     ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
-    FailValueRequirement, ProviderSchemaUse, ResourceSchemaOracle, ValueKind, ValuesPath,
+    FailValueRequirement, ProviderSchemaUse, ValueKind, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
+
+use crate::provider_resolution::ProviderSchemaResolutions;
 
 #[expect(
     clippy::too_many_lines,
@@ -38,11 +40,10 @@ pub(crate) fn synthesized_required_source_implications(
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
     subchart_defaults_doc: &YamlValue,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
 ) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
     let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
         BTreeMap::new();
-    let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let segments = value_path
@@ -67,9 +68,7 @@ pub(crate) fn synthesized_required_source_implications(
                     && use_.merge_layers.is_none()
                     && !use_.range_key
                     && use_.outer_guards.is_empty()
-                    && *null_rejected_by_use
-                        .entry(use_.clone())
-                        .or_insert_with(|| provider_use_rejects_null(provider, use_))
+                    && provider_use_rejects_null(provider_resolutions, use_)
             })
         {
             push_implication(
@@ -136,9 +135,7 @@ pub(crate) fn synthesized_required_source_implications(
                         && !use_.source_null_tolerant
                         && use_.merge_layers.is_none()
                         && !use_.range_key
-                        && *null_rejected_by_use
-                            .entry(use_.clone())
-                            .or_insert_with(|| provider_use_rejects_null(provider, use_))
+                        && provider_use_rejects_null(provider_resolutions, use_)
                 });
             if !renders_into_required_field {
                 continue;
@@ -190,11 +187,10 @@ pub(crate) fn synthesized_required_source_implications(
 pub(crate) fn synthesized_ranged_member_required_implications(
     contract_schema_signals: &ContractSchemaSignals,
     subchart_defaults_doc: &YamlValue,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
 ) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
     let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
         BTreeMap::new();
-    let mut null_rejected_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
 
     for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let segments = value_path
@@ -261,9 +257,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     && use_.merge_layers.is_none()
                     && !use_.range_key
                     && use_.split_segment.is_none()
-                    && *null_rejected_by_use
-                        .entry(use_.clone())
-                        .or_insert_with(|| provider_use_rejects_null(provider, use_))
+                    && provider_use_rejects_null(provider_resolutions, use_)
             });
             if !renders_into_required_field {
                 continue;
@@ -406,14 +400,10 @@ fn dependency_defaulted_member_keys(
 }
 
 fn provider_use_rejects_null(
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
     provider_use: &ProviderSchemaUse,
 ) -> bool {
-    let Some(fragment) = provider.schema_fragment_for_use(provider_use) else {
-        return false;
-    };
-    jsonschema::validator_for(fragment.schema())
-        .is_ok_and(|validator| !validator.is_valid(&Value::Null))
+    provider_resolutions.use_rejects_null(provider_use)
 }
 
 /// Fail implications for provider slots observed through a SPLIT SEGMENT
@@ -425,7 +415,7 @@ fn provider_use_rejects_null(
 /// string-contract arm already governs).
 pub(crate) fn synthesized_split_segment_implications(
     contract_schema_signals: &ContractSchemaSignals,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
 ) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
     let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
         BTreeMap::new();
@@ -437,9 +427,12 @@ pub(crate) fn synthesized_split_segment_implications(
             if use_.kind != ValueKind::Scalar {
                 continue;
             }
-            let Some(pattern) = provider.schema_fragment_for_use(use_).and_then(|fragment| {
-                crate::resolve_policy::split_segment_pattern(fragment.schema(), segment)
-            }) else {
+            let Some(pattern) = provider_resolutions
+                .fragment_for_use(use_)
+                .and_then(|fragment| {
+                    crate::resolve_policy::split_segment_pattern(fragment.schema(), segment)
+                })
+            else {
                 continue;
             };
             push_implication(
@@ -469,7 +462,7 @@ pub(crate) fn synthesized_split_segment_implications(
 /// always strings, so the arm is vacuous for them beyond documentation).
 pub(crate) fn synthesized_range_key_implications(
     contract_schema_signals: &ContractSchemaSignals,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
 ) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
     let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
         BTreeMap::new();
@@ -490,7 +483,7 @@ pub(crate) fn synthesized_range_key_implications(
             if !use_.range_key || use_.kind != ValueKind::Scalar {
                 continue;
             }
-            let Some(fragment) = provider.schema_fragment_for_use(use_) else {
+            let Some(fragment) = provider_resolutions.fragment_for_use(use_) else {
                 continue;
             };
             if crate::schema_node::SchemaNode::from_value(fragment.schema().clone()).runtime_types()

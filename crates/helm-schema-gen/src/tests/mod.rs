@@ -48,6 +48,7 @@ mod pattern_dialect;
 mod program_wrappers;
 mod provider_evidence;
 mod provider_requirement_synthesis;
+mod provider_resolution;
 mod range_collections;
 mod range_contracts;
 mod range_key_contracts;

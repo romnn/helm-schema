@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
-    ProviderSchemaFragment, ResourceSchemaOracle, ValuesPath,
+    ProviderSchemaFragment, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -16,6 +16,7 @@ use crate::emission_policy::{
 };
 use crate::emission_report::{EmissionReport, InsertionAbstentionCounts};
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
+use crate::provider_resolution::ProviderSchemaResolutions;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::conditional_target_schema;
 use crate::schema_node::SchemaNode;
@@ -167,7 +168,7 @@ pub(crate) fn collect_conditional_schemas(
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
     subchart_defaults_doc: &YamlValue,
-    provider: &dyn ResourceSchemaOracle,
+    provider_resolutions: &ProviderSchemaResolutions,
 ) -> (Vec<LoweredConjunct>, InsertionAbstentionCounts) {
     let mut insertion_abstentions = InsertionAbstentionCounts::default();
     let mut synthesized_implications =
@@ -175,25 +176,25 @@ pub(crate) fn collect_conditional_schemas(
             contract_schema_signals,
             values_yaml_doc,
             subchart_defaults_doc,
-            provider,
+            provider_resolutions,
         );
     for (path, split_implications) in
         crate::provider_requirement_synthesis::synthesized_split_segment_implications(
             contract_schema_signals,
-            provider,
+            provider_resolutions,
         )
         .into_iter()
         .chain(
             crate::provider_requirement_synthesis::synthesized_range_key_implications(
                 contract_schema_signals,
-                provider,
+                provider_resolutions,
             ),
         )
         .chain(
             crate::provider_requirement_synthesis::synthesized_ranged_member_required_implications(
                 contract_schema_signals,
                 subchart_defaults_doc,
-                provider,
+                provider_resolutions,
             ),
         )
     {
@@ -502,7 +503,7 @@ pub(crate) fn collect_conditional_schemas(
                 .unwrap_or_else(|| conditional_ancestor_segments(&target_segments, &outer_guards));
             let active_by_defaults = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
             let resolved_overlay =
-                resolve_overlay_target_schema(target_value_path, overlay, provider);
+                resolve_overlay_target_schema(target_value_path, overlay, provider_resolutions);
             // The range header supplies the branch's complete runtime
             // domain. Its declared sample shape cannot remain as an
             // unconditional base without deleting valid map or integer
@@ -658,8 +659,16 @@ pub(crate) fn collect_conditional_schemas(
         }
     }
 
-    append_merge_shadow_arms(&mut conditionals, contract_schema_signals, provider);
-    append_omitted_member_arms(&mut conditionals, contract_schema_signals, provider);
+    append_merge_shadow_arms(
+        &mut conditionals,
+        contract_schema_signals,
+        provider_resolutions,
+    );
+    append_omitted_member_arms(
+        &mut conditionals,
+        contract_schema_signals,
+        provider_resolutions,
+    );
     (conditionals, insertion_abstentions)
 }
 
