@@ -7240,7 +7240,7 @@
 
 ## S-D — delete the remaining mechanism-backed dead surface
 
-- Status: landed; commit pending.
+- Status: landed in `8dd6a115` (`refactor: delete dead provider and emission surfaces`).
 - Contract: behavior-bearing diagnostic ownership plus representation/API-surface deletion.
   Complete the frozen S-D work that remains after
   wave 1's already-landed IR privacy round: remove dead provider ownership/source knobs, centralize
