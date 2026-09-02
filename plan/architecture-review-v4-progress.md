@@ -8611,7 +8611,7 @@
 
 ## S-B4 — single helper-summary attribute fold
 
-- Status: landed; commit pending.
+- Status: landed in `ef92a851` (`perf(ir): fold helper summary evidence once`).
 - Contract: representation/performance-only. Replace the rendered-row and render-suppressed-read
   full-tree traversals with one synthesized-attribute fold carrying one condition stack and
   emitting both lanes.
