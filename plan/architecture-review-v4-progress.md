@@ -8352,7 +8352,7 @@
 
 ## C4 — provider resolution phase artifact
 
-- Status: landed; commit pending.
+- Status: landed in `c5ddc78d` (`perf(gen): resolve provider schemas once`).
 - Contract: representation/performance-only. Resolve every distinct provider use once into one
   immutable phase artifact before path or overlay lowering; make the path resolver and all four
   provider-requirement synthesis passes consume it, deleting their private lookup caches and direct
