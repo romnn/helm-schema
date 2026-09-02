@@ -6841,3 +6841,110 @@
   constructors, borrowed variants, manual structural traits, and compiler-driven reader matches;
   it deletes the temporary boundary canonicalizer and scattered conjunction normalization without
   meeting an E-style LOC gate. B5a is an ordinary representation round, so no LOC promise applies.
+
+## B5b — re-profile predicate work after canonical sharing
+
+- Status: complete; commit pending.
+- Contract: measurement-only. Re-run the frozen release Airflow command on the B5a tree and capture
+  symbolicated samples from the debug binary. Record wall/CPU time, host-load caveats, and the new
+  dominant stacks so B5c optimizes measured work rather than the pre-B5a profile.
+- Acceptance baseline: `4ec344bf` (prose-only successor to B5a semantic commit `ac9b54ab`).
+- Baseline production Rust LOC: 65,634.
+- Pre-registered acceptance expectations:
+  - Zero production, test, fixture, schema, diagnostic, acceptance, public-API, or wire changes.
+    This round may add only its ledger dossier and step-local profile artifacts under `target/`.
+  - The release measurement uses the pinned binary and frozen command shape:
+    `helm-schema --k8s-version 1.31.0 testdata/charts/airflow`. Host load and power state are
+    disclosed; a loaded measurement is not relabeled as the frozen idle-host baseline.
+  - The debug measurement samples the actual `target/debug/helm-schema` process so function names
+    resolve. Hot-stack conclusions require repeated stack presence, not one leaf sample.
+  - B5c proceeds only from the measured profile. If predicate equality/ordering and
+    `minimize_disjunction_by` no longer dominate, the optional boundary-only half is skipped and
+    recorded rather than forced.
+
+- Measured results:
+  - The authoritative portable release run exits 0 at 127.14 seconds wall, 126.10 seconds user,
+    and 0.66 seconds system: 126.76 seconds CPU. Its 3,744,672-byte schema is deterministic across
+    both release attempts.
+  - Against the frozen idle-host baseline (130 seconds wall, 112.7 seconds CPU), measured wall time
+    is 2.86 seconds lower (-2.2%) while CPU is 14.06 seconds higher (+12.5%). The host was on AC
+    power, but load averages were 2.92/6.19/11.64 and caches were warmed between attempts; this is
+    not evidence of a B5a regression or speedup.
+  - The successful debug profile samples every 10 milliseconds for 30 seconds and records 2,621
+    main-thread samples with a 71.4 MiB physical footprint at the sample window. The debug workload
+    exits 0 and its schema is byte-identical to the authoritative release output.
+  - Top-of-stack counts remain predicate-heavy: `PredicateNode::eq` 394 samples (15.0%),
+    `ValuesPath::encode` 365 (13.9%), SipHash writes 172 (6.6%), platform `memcmp` 113 (4.3%),
+    `minimize_disjunction_by`'s retain closure 56 (2.1%), predicate `Ord` 49 (1.9%), and direct
+    minimizer leaves 16 (0.6%). Recursive stacks are additionally dominated by
+    `PredicateBdd::collect_paths` and repeated BDD normalization.
+  - `Arc` clone/drop glue is no longer a leading leaf; the shared-node representation removed that
+    portion of the frozen profile. Equality, hashing, path encoding, BDD reconstruction, and the
+    minimizer's pair scan remain the measured work.
+
+- Deviations:
+  - The first release wrapper used `/usr/bin/time -lp`. The workload completed with 125.82 seconds
+    wall and 125.59 seconds CPU, but macOS `time -l` then failed `sysctl kern.clockrate` under the
+    sandbox and returned exit 1. Its timing is diagnostic only; the portable `time -p` rerun is the
+    authoritative measurement.
+  - The first debug `sample` call was denied process-inspection access while the owned workload kept
+    running and exited 0. Two escalated retries missed their short-lived target while permission was
+    pending. After the user permitted `/usr/bin/sample`, the final retry attached immediately and
+    produced the sole adopted profile.
+  - The frozen baseline was captured on an explicitly idle host; the current run was not. B5b
+    reports the raw curve point and host state without smoothing or substituting loaded CI timings.
+
+- Adjudication evidence:
+  - This round changes no code or fixture and generates byte-identical release/debug schemas.
+    Therefore it has zero acceptance flips and no Helm cell requiring adjudication.
+  - Helm remains pinned at 4.2.3; the B5a final battery's zero accepted-abort allowance and result
+    remain the semantic baseline.
+
+- Review dossier:
+  - B5c decision: predicate operations still dominate, and `minimize_disjunction_by` remains on the
+    hottest repeated normalization stacks. Proceed with the scheduled in-place minimizer
+    optimization; do not move call sites in that round.
+  - Optional boundary-only decision: defer. Re-profile after the in-place algorithm before paying
+    the inventory/peak-DNF/RSS/ordering cost of moving minimization boundaries. This keeps the
+    optional half conditional on evidence rather than treating predicate dominance alone as proof
+    that delayed normalization is safe.
+  - Secondary finding: `ValuesPath::encode` and BDD path reconstruction are now as material as
+    predicate equality. They belong to later measured S-B/S-C work, not the narrowly scoped B5c
+    algorithm round.
+  - Public/wire decision: none. Only ignored step-local profile artifacts and this ledger dossier
+    are added; production, tests, fixtures, public APIs, and serialized bytes are unchanged.
+
+- Self-adversarial pass:
+  - Did not compare debug wall time to the release baseline; debug exists only for symbolication.
+  - Counted hot leaves against all 2,621 samples and separated top-of-stack counts from recursive
+    stack membership. The profile supports dominance and prioritization, not precise per-function
+    CPU attribution.
+  - Verified release attempt outputs against each other and the sampled debug output byte-for-byte.
+  - Rejected both the forbidden-sysctl timing wrapper and missed sampler targets rather than
+    adopting partial tooling results.
+
+- Immutable battery:
+  - Because B5b changes no production or test byte, it reuses B5a's sealed final2 archive (90
+    binaries, 128 files) rather than rebuilding identical executables.
+  - One B5b-local clean dump passes 62/62 tests in 197.136 seconds and writes 84 artifacts; all 84
+    are byte-identical to the B5a final2 dump.
+  - The B5b-local full-depth prober passes in 118.864 seconds against `4ec344bf`, with 60 charts,
+    120,833 probes, zero flips, zero accepted-abort cells, and zero mandatory base/third-level
+    drops.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in 31.02 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 71.85 seconds; the same two warnings remain.
+  - `cargo nextest run --workspace`: exit 0, 1,328/1,328 tests in 302.527 seconds.
+  - `task test:integration`: exit 0, 565/565 tests in 1,457.691 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,897/1,897 tests in 1,476.489 seconds; 24 tests skipped by profile.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 2.91 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts, using the documented macOS shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC remains 65,634.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: 0. B5b changes only the progress ledger; profile outputs remain
+  ignored under `target/`.
