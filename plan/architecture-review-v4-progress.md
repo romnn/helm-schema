@@ -7422,7 +7422,7 @@
 
 ## S-B quick paths — remove repeated resolution, composition, and version work
 
-- Status: landed; commit pending.
+- Status: landed in `c8d4bdce` (`perf: remove repeated path and chart preparation`).
 - Contract: representation/performance-only. Complete the independent short S-B items that remain
   before C3: resolve path evidence without deep clones, derive the dependency document from the
   already-composed refill document, thread parsed dependency metadata through discovery recursion,
