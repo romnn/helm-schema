@@ -69,13 +69,16 @@ fn canonical_presence_rewrites_required_and_not_null_shapes_equivalently() -> ey
     let required = json!({ "type": "object", "required": ["value"] });
     let not_null = json!({ "not": { "type": "null" } });
     sim_assert_eq!(
-        have: canonical.canonicalize_constraint_at_path(&[], &required),
+        have: canonical.canonicalize_constraint_at_path(
+            &[],
+            &SchemaNode::from_value(required.clone()),
+        ),
         want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
     );
     sim_assert_eq!(
         have: canonical.canonicalize_constraint_at_path(
             &["value".to_string(), "member".to_string()],
-            &not_null,
+            &SchemaNode::from_value(not_null.clone()),
         ),
         want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
     );
@@ -111,7 +114,10 @@ fn canonical_required_entries_type_an_untyped_object_host() -> eyre::Result<()> 
     let mut canonical = base.clone();
     let required = json!({ "type": "object", "required": ["member"] });
     sim_assert_eq!(
-        have: canonical.canonicalize_constraint_at_path(&["value".to_string()], &required),
+        have: canonical.canonicalize_constraint_at_path(
+            &["value".to_string()],
+            &SchemaNode::from_value(required.clone()),
+        ),
         want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
     );
     let canonical = canonical.into_value();
@@ -148,7 +154,10 @@ fn canonical_empty_required_entries_still_type_an_untyped_object_host() -> eyre:
     let constraint = json!({ "type": "object", "required": [] });
 
     sim_assert_eq!(
-        have: canonical.canonicalize_constraint_at_path(&["value".to_string()], &constraint),
+        have: canonical.canonicalize_constraint_at_path(
+            &["value".to_string()],
+            &SchemaNode::from_value(constraint.clone()),
+        ),
         want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
     );
     let canonical = canonical.into_value();
@@ -192,7 +201,7 @@ fn canonical_empty_required_entries_leave_a_typed_foreign_host_untouched() {
 
     let outcome = schema.canonicalize_constraint_at_path(
         &["value".to_string()],
-        &json!({ "type": "object", "required": [] }),
+        &SchemaNode::from_value(json!({ "type": "object", "required": [] })),
     );
 
     sim_assert_eq!(
@@ -210,7 +219,7 @@ fn canonicalization_falls_back_without_mutating_a_missing_closed_root_slot() {
 
     let outcome = schema.canonicalize_constraint_at_path(
         &["missing".to_string()],
-        &json!({ "not": { "type": "null" } }),
+        &SchemaNode::from_value(json!({ "not": { "type": "null" } })),
     );
 
     sim_assert_eq!(have: outcome, want: CanonicalConstraintOutcome::NotApplicable);
@@ -225,7 +234,7 @@ fn canonicalization_proves_redundant_not_null_constraints() {
 
     let outcome = schema.canonicalize_constraint_at_path(
         &["value".to_string()],
-        &json!({ "not": { "type": "null" } }),
+        &SchemaNode::from_value(json!({ "not": { "type": "null" } })),
     );
 
     sim_assert_eq!(
@@ -295,7 +304,7 @@ fn canonical_object_conjunction_survives_missing_default_backfill() -> eyre::Res
     sim_assert_eq!(
         have: schema.canonicalize_constraint_at_path(
             &["value".to_string()],
-            &json!({ "type": "object" }),
+            &SchemaNode::from_value(json!({ "type": "object" })),
         ),
         want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
     );
@@ -339,7 +348,7 @@ fn canonical_not_null_conjunction_survives_completion_default_backfill() -> eyre
     sim_assert_eq!(
         have: schema.canonicalize_constraint_at_path(
             &["value".to_string()],
-            &json!({ "not": { "type": "null" } }),
+            &SchemaNode::from_value(json!({ "not": { "type": "null" } })),
         ),
         want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
     );
@@ -588,7 +597,7 @@ fn mixed_type_not_null_conjunction_survives_default_backfill() -> eyre::Result<(
     sim_assert_eq!(
         have: schema.canonicalize_constraint_at_path(
             &["value".to_string()],
-            &json!({ "not": { "type": "null" } }),
+            &SchemaNode::from_value(json!({ "not": { "type": "null" } })),
         ),
         want: CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted)
     );
@@ -835,7 +844,8 @@ fn rewrite_pair(
     let mut base = SchemaDocument::new_root_object();
     base.insert_path_schema(&path, base_slot);
     let mut canonical = base.clone();
-    let outcome = canonical.canonicalize_constraint_at_path(&path, constraint);
+    let outcome = canonical
+        .canonicalize_constraint_at_path(&path, &SchemaNode::from_value(constraint.clone()));
     let mut legacy = base.into_value();
     let carrier = path.iter().rev().fold(
         constraint.clone(),

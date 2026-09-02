@@ -8133,3 +8133,107 @@
 - Measured production LOC delta: +39 (65,867 to 65,906). This ordinary representation round adds
   exhaustive typed operations and focused tests while deleting the parallel raw walkers; no
   E-style LOC gate applies.
+
+## C1b — typed lowered conjunct schemas
+
+- Status: landed; commit pending.
+- Contract: representation-only. Change `LoweredConjunct.schema` from raw `serde_json::Value` to
+  `SchemaNode`, keep every producer and internal consumer typed, and materialize JSON only at the
+  provider-ingestion comparison or final emission boundary.
+- Acceptance baseline: `24d8cd21` (C1a ledger closure commit).
+- Baseline production Rust LOC: 65,906.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+  - Terminal false schemas, empty ownership markers, exact object-host recognition, provider
+    definition extraction, mandatory canonicalization, nested guarded fragments, and conditional
+    grouping preserve their exact representation and order.
+  - The carrier has no raw-schema compatibility field or dual accessor. Any changed artifact byte
+    rejects the round. Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops
+    remain zero.
+
+- Measured results:
+  - `LoweredConjunct.schema` is now a `SchemaNode`. All eight producers cross the raw path-resolver
+    boundary once, after which empty ownership markers, terminal false schemas, nested guarded
+    fragments, grouping, and mandatory canonicalization stay typed.
+  - `SchemaNode` now owns exact empty-schema and exact-object-type predicates. They exhaustively
+    distinguish `{}` from Boolean schemas, null sentinels, typed objects, untyped empty hosts, and
+    object carriers with any additional keyword.
+  - Provider-definition extraction compares against the provider's raw payload only at its
+    ingestion boundary and replaces matching conjuncts with a typed `$ref`. Final mandatory
+    canonicalization accepts a typed constraint and materializes it once inside `SchemaDocument`.
+  - All 84 schema artifacts and all 18 symbolic-IR artifacts are byte-identical to C1a. The
+    full-depth battery checks 120,837 probes over 60 charts with zero flips, zero candidate-accepts/
+    Helm-aborts cells, 112,260/112,260 mandatory base probes, and 7,465/7,465 mandatory third-level
+    probes; the disclosed bounded category remains 25,718 reductions.
+
+- Deviations:
+  - The first compiler-driven pass deliberately exposed 15 raw/typed boundary sites: eight
+    producers, three internal consumers, provider extraction, mandatory canonicalization, and its
+    private tests. Each was migrated directly; no compatibility accessor, archive, dump, or fixture
+    was produced from the rejected compile state.
+  - The canonicalization tests retain raw values only for their independent legacy-schema oracle;
+    the actual operation receives a losslessly parsed `SchemaNode`. This keeps the test's two
+    representations intentionally separate rather than weakening its equivalence proof.
+  - `SchemaDocument::canonicalize_constraint_at_path` still materializes one typed constraint for
+    the established raw canonicalization algorithm. This is the final emission boundary, not a
+    carrier or repeated per-path tree round-trip; rewriting that algorithm was not required to
+    remove `LoweredConjunct`'s raw protocol.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and enabled in the final full-depth run. Exact
+  schema/IR bytes and zero acceptance flips leave no fixture or individual Helm verdict to adopt.
+  Candidate-accepts/Helm-aborts and mandatory coverage drops remain zero.
+
+- Producer/route coverage:
+
+  | Route | Final owner and proof |
+  | --- | --- |
+  | Requirement/backprojection producers | Raw resolver result enters one typed carrier; focused requirement and canonical suites. |
+  | Overlay/member producers | Typed empty, object, whole-member, and resolved schemas; 84 exact corpus artifacts. |
+  | Nested guard/grouping consumers | Clone and compose `SchemaNode` directly; conditional/guard suites and exact output. |
+  | Provider definitions | Typed equality boundary and typed `$ref` replacement; 12 provider-definition tests. |
+  | Mandatory canonicalization | Typed carrier plus exact object/empty predicates; 29 canonical-emission tests. |
+  | Terminal clauses | Typed Boolean false node; terminal suites and 18 exact IR artifacts. |
+
+- Review dossier:
+  - Focused proof: 52/52 canonical, provider-definition, and conditional tests pass.
+  - Immutable build: C1b final1; exit 0, 90 binaries and 128 files.
+  - Clean schema dump: final1 archive and absolute step-local `TMPDIR`; exit 0, 62/62 in 155.889
+    seconds; all 84 artifacts are byte-identical to C1a.
+  - Clean IR dump: same archive and its own step-local `TMPDIR`; exit 0, one test in 4.744 seconds;
+    all 18 artifacts are byte-identical.
+  - Full-depth proof: same archive, baseline `24d8cd21`, Helm enabled; exit 0 in 89.835 seconds, 60
+    charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero mandatory drops,
+    and 25,718 disclosed bounded reductions.
+  - Public/wire decision: none. The carrier, schema tree, predicates, and canonicalization API are
+    crate-private; serialized schema/IR bytes and public APIs are unchanged.
+
+- Self-adversarial pass:
+  - Empty-schema detection mirrors exact emitted `{}` semantics and does not reuse `is_empty_slot`,
+    because the latter intentionally treats a foreign null sentinel as an empty insertion slot.
+  - Exact object-host recognition covers both generator-native and parsed typed nodes but rejects
+    `properties`, `required`, bounds, references, annotations, and unknown keywords. This preserves
+    mandatory fallback classification without a raw object inspection.
+  - Provider payload equality is checked before replacement and uses the full lossless serialized
+    node. No structural subset or hash can accidentally turn an altered candidate into a `$ref`.
+  - Whole-tree search finds no raw `Value` field or raw compatibility accessor on
+    `LoweredConjunct`. The only materializations are provider-boundary equality and final
+    canonicalization/emission.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in approximately 107 seconds; the two pre-existing ast-grep warnings remain
+    informational.
+  - `task lint:fc`: exit 0; 48/48 combinations across three targets in 469.44 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,337/1,337 pass in 109.221 seconds.
+  - `task test:integration`: exit 0; 564/564 pass in 808.657 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,905/1,905 pass in 852.519 seconds; 24 skipped and live tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 42.69 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts with the documented host shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,950.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +44 (65,906 to 65,950). The typed predicates and direct carrier
+  transitions replace raw field protocols; this ordinary representation round has no E-style LOC
+  gate.

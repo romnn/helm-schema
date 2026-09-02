@@ -529,9 +529,7 @@ pub(crate) fn prepare_conditional_hosts(
     // projection starts from the same relaxed base, whether or not it keeps
     // the presence-guarded arm carrying the exact contract.
     for conditional in conditionals {
-        if conditional.carrier.relax_untyped_host
-            && !crate::schema_model::is_empty_schema(&conditional.schema)
-        {
+        if conditional.carrier.relax_untyped_host && !conditional.schema.is_empty_schema() {
             let mut segments = conditional.carrier.ancestor_segments.clone();
             segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
             preparation.relaxed_host_paths.insert(segments);
@@ -564,7 +562,7 @@ pub(crate) fn append_selected_constraints(
         // Schema-less conditionals carry base ownership established by a
         // transform or by a separate implication that already emits the
         // complete runtime domain; they have no schema arm to append.
-        if crate::schema_model::is_empty_schema(&conditional.schema) {
+        if conditional.schema.is_empty_schema() {
             if matches!(conditional.class, EmissionClass::Mandatory) {
                 report.mandatory_outcomes.redundant += 1;
             }
@@ -728,7 +726,7 @@ fn build_scoped_target_fragment(
     let mut target_segments = conditional.carrier.ancestor_segments.clone();
     target_segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
     let mut current_anchor = target_segments;
-    let mut content = SchemaNode::foreign(conditional.schema.clone());
+    let mut content = conditional.schema.clone();
 
     for scope in conditional.nested_guard_scopes().iter().rev() {
         let relative = current_anchor.strip_prefix(scope.ancestor_segments.as_slice())?;

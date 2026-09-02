@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256};
 use crate::overlay_lowering::LoweredConjunct;
 use crate::path_resolver::ResolvedPathSchema;
 use crate::provider_schema::{ProviderSchemaCandidate, rewrite_internal_refs_for_root_definition};
+use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
 
 const DEFINITIONS_KEY: &str = "$defs";
@@ -77,13 +78,13 @@ pub(crate) fn extract_provider_definitions(
         if description_paths.has_description_at_or_below(&target_segments) {
             continue;
         }
-        if conditional.schema != *provider_schema_candidate.schema() {
+        if conditional.schema.clone().into_value() != *provider_schema_candidate.schema() {
             continue;
         }
         let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
             continue;
         };
-        conditional.schema = reference_schema(name);
+        conditional.schema = SchemaNode::reference(format!("#/{DEFINITIONS_KEY}/{name}"));
     }
 
     definitions_by_name

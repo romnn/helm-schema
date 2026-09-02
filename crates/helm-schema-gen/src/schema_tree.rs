@@ -91,9 +91,10 @@ impl SchemaDocument {
     pub(crate) fn canonicalize_constraint_at_path(
         &mut self,
         path_segments: &[String],
-        constraint: &Value,
+        constraint: &SchemaNode,
     ) -> CanonicalConstraintOutcome {
-        canonicalize_constraint_at_parts(&mut self.root, path_segments, constraint)
+        let constraint = constraint.clone().into_value();
+        canonicalize_constraint_at_parts(&mut self.root, path_segments, &constraint)
     }
 
     pub(crate) fn append_conditional(

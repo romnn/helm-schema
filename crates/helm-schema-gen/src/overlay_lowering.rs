@@ -56,7 +56,7 @@ pub(crate) struct LoweredConjunct {
     pub(crate) class: EmissionClass,
     pub(crate) origin: EmissionOrigin,
     pub(crate) carrier: ConjunctCarrier,
-    pub(crate) schema: Value,
+    pub(crate) schema: SchemaNode,
     pub(crate) provider_candidate: Option<ProviderSchemaCandidate>,
 }
 
@@ -73,7 +73,7 @@ impl LoweredConjunct {
         relative_target_segments: Vec<String>,
         guards: Vec<ConditionalGuard>,
         nested_guard_scopes: Vec<NestedGuardScope>,
-        target_schema: Value,
+        target_schema: SchemaNode,
         provider_schema_candidate: Option<ProviderSchemaCandidate>,
         base_effect: ConditionalBaseEffect,
         relax_untyped_host: bool,
@@ -114,7 +114,7 @@ impl LoweredConjunct {
                 base_effect: ConditionalBaseEffect::None,
                 relax_untyped_host: false,
             },
-            schema: Value::Bool(false),
+            schema: SchemaNode::foreign(Value::Bool(false)),
             provider_candidate: None,
         }
     }
@@ -252,7 +252,7 @@ pub(crate) fn collect_conditional_schemas(
                 Vec::new(),
                 implication.outer_guards.clone(),
                 Vec::new(),
-                target_schema,
+                SchemaNode::from_value(target_schema),
                 None,
                 ConditionalBaseEffect::None,
                 false,
@@ -456,7 +456,7 @@ pub(crate) fn collect_conditional_schemas(
                     .to_vec(),
                 implication.outer_guards.clone(),
                 Vec::new(),
-                target_schema,
+                SchemaNode::from_value(target_schema),
                 None,
                 base_effect,
                 member_host_complete_domain && all_member_hosts_presence_scoped,
@@ -537,7 +537,7 @@ pub(crate) fn collect_conditional_schemas(
                         .to_vec(),
                     outer_guards.clone(),
                     nested_guard_scopes.clone(),
-                    crate::schema_model::empty_schema(),
+                    SchemaNode::empty(),
                     None,
                     if preserve_overlay_base {
                         ConditionalBaseEffect::Preserve
@@ -619,7 +619,7 @@ pub(crate) fn collect_conditional_schemas(
                             .to_vec(),
                         outer_guards.clone(),
                         nested_guard_scopes.clone(),
-                        target_schema,
+                        SchemaNode::from_value(target_schema),
                         None,
                         if preserve_overlay_base {
                             ConditionalBaseEffect::Preserve
@@ -646,7 +646,7 @@ pub(crate) fn collect_conditional_schemas(
                     .to_vec(),
                 outer_guards,
                 nested_guard_scopes,
-                target_schema,
+                SchemaNode::from_value(target_schema),
                 provider_schema_candidate,
                 if preserve_overlay_base {
                     ConditionalBaseEffect::Preserve

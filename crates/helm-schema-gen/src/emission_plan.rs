@@ -540,9 +540,7 @@ fn canonicalize_mandatory_constraints(
         }
         let mut target_segments = conjunct.carrier.ancestor_segments.clone();
         target_segments.extend(conjunct.carrier.relative_target_segments.iter().cloned());
-        let is_object_host = conjunct.schema.as_object().is_some_and(|object| {
-            object.len() == 1 && object.get("type").and_then(Value::as_str) == Some("object")
-        });
+        let is_object_host = conjunct.schema.is_exact_object_type_schema();
         let canonical_object_host = is_object_host
             && conjunct.carrier.ancestor_segments.is_empty()
             && matches!(

@@ -238,9 +238,9 @@ pub(super) fn append_omitted_member_arms(
                 target_segments.clone(),
                 guards,
                 Vec::new(),
-                serde_json::json!({
+                SchemaNode::from_value(serde_json::json!({
                     "properties": { member: member_schema }
-                }),
+                })),
                 None,
                 ConditionalBaseEffect::None,
                 false,
@@ -367,7 +367,7 @@ pub(super) fn append_merge_shadow_arms(
                     target_segments.clone(),
                     guards,
                     Vec::new(),
-                    whole,
+                    SchemaNode::from_value(whole),
                     None,
                     base_effect,
                     false,
@@ -416,7 +416,7 @@ pub(super) fn append_merge_shadow_arms(
                     target_segments.clone(),
                     guards,
                     Vec::new(),
-                    target_schema,
+                    SchemaNode::from_value(target_schema),
                     None,
                     ConditionalBaseEffect::None,
                     false,

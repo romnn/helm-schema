@@ -795,6 +795,54 @@ impl SchemaNode {
         }
     }
 
+    pub(crate) fn is_empty_schema(&self) -> bool {
+        match self {
+            Self::Empty => true,
+            Self::Object {
+                properties,
+                typed: false,
+                all_of,
+                include_empty_properties: false,
+                required,
+                additional_properties: None,
+                min_properties: None,
+                max_properties: None,
+            } => properties.is_empty() && all_of.is_empty() && required.is_empty(),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.is_empty_schema(),
+            Self::Object { .. }
+            | Self::Array { .. }
+            | Self::Typed(TypedSchemaNode::Boolean(_))
+            | Self::Foreign(_) => false,
+        }
+    }
+
+    pub(crate) fn is_exact_object_type_schema(&self) -> bool {
+        match self {
+            Self::Object {
+                properties,
+                typed: true,
+                all_of,
+                include_empty_properties: false,
+                required,
+                additional_properties: None,
+                min_properties: None,
+                max_properties: None,
+            } => properties.is_empty() && all_of.is_empty() && required.is_empty(),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => {
+                keywords.as_ref()
+                    == &SchemaKeywords {
+                        schema_type: Some(SchemaTypeKeyword::Single(JsonSchemaType::Object)),
+                        ..SchemaKeywords::default()
+                    }
+            }
+            Self::Empty
+            | Self::Object { .. }
+            | Self::Array { .. }
+            | Self::Typed(TypedSchemaNode::Boolean(_))
+            | Self::Foreign(_) => false,
+        }
+    }
+
     pub(crate) fn into_parsed_representation(self) -> Self {
         match self {
             Self::Empty => Self::Typed(TypedSchemaNode::Keywords(Box::default())),
