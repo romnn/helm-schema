@@ -8608,3 +8608,130 @@
 
 - Measured production LOC delta: -4 (66,081 to 66,077). The repeated environment builder and its
   parallel context fields are deleted; the typed dot-identity distinction is retained explicitly.
+
+## S-B4 — single helper-summary attribute fold
+
+- Status: landed; commit pending.
+- Contract: representation/performance-only. Replace the rendered-row and render-suppressed-read
+  full-tree traversals with one synthesized-attribute fold carrying one condition stack and
+  emitting both lanes.
+- Acceptance baseline: `3c5cbb79` (S-B3 ledger closure commit).
+- Baseline production Rust LOC: 66,077.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+  - Rendered rows preserve depth-first order, per-path/kind/encoding merge behavior, conditions,
+    provenance, suppression, and encoded identity exactly.
+  - Suppressed scalar splices/taints preserve depth-first order, dependency/read shape,
+    condition/provenance construction, empty-path abstention, and dedup against already-pruned
+    interpreter reads exactly.
+  - Sibling-condition pruning still observes only rendered rows and runs before suppressed reads
+    are appended. The single traversal may collect the two lanes separately but may not interleave
+    their externally observed vector order.
+  - Any changed artifact byte or acceptance cell rejects the round. Candidate-accepts/Helm-aborts
+    allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - `summary_rows` performs one depth-first traversal with one predicate stack and returns typed
+    `SummaryRows { rendered, suppressed_reads }` synthesized attributes. The former
+    `collect_rendered` and `append_suppressed_reads` whole-tree walks are deleted.
+  - Rendered splices and taints retain their existing per-path/kind/encoding merge rule and vector
+    order. Suppressed scalar reads are collected in their own depth-first lane, then appended only
+    after sibling-condition pruning and deduplicated against the surviving interpreter reads.
+  - Mapping, sequence, scalar, splice, opaque, false-arm, inherited-suppression, site provenance,
+    condition, and empty-path branches are all handled in one exhaustive node dispatcher.
+  - All 84 schema artifacts and all 18 symbolic-IR artifacts are byte-identical to S-B3. The
+    full-depth battery checks 120,837 probes across 60 charts with zero flips, zero candidate-
+    accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and 7,465/7,465 mandatory
+    third-level probes; the disclosed bounded category remains 25,718 reductions.
+
+- Deviations:
+  - The first lint preflight found that moving suppressed-read assembly into the caller pushed
+    `eval_bound_helper_fragment` two lines over the workspace limit. Finalization moved into the
+    cohesive `finalize_summary_rows` helper; no suppression was added and no artifact was produced
+    from the rejected shape.
+  - Final1 was sealed with the then-current Rust 1.97 stable toolchain and proved byte-exact. During
+    its final cargo-fc gate, rustup advanced stable to Rust/Cargo 1.98.0: the first run transiently
+    lost the native `std`/`cargo` components mid-update, and the completed retry then reported new
+    Clippy 1.98 diagnostics in six pre-existing source sites. Final1 is rejected evidence because
+    the final gates no longer used its compiler state.
+  - The new diagnostics were migrated without suppressions in standalone commit `097ef212`
+    (`chore(lint): adopt rust 1.98 clippy idioms`): two `Result` predicates now use `is_ok_and`, and
+    four fixed-size pair walks use `as_chunks::<2>()`. The failed pre-fix cargo-fc inventory took
+    6,058.62 seconds on the loaded host. Ordinary lint then exposed and removed one irrefutable
+    `let`/`else` before the standalone commit.
+  - The final cargo-fc rerun passes 48/48 in 2,341.45 seconds. These extreme values reflect a cold
+    three-target rebuild after the compiler upgrade plus the explicitly loaded host; they are
+    infrastructure observations, not a summary-fold performance verdict.
+  - Final2 rebuilt the immutable archive under Rust 1.98. The first parallel schema/IR extraction
+    attempts failed before test execution with `ENOSPC`. Audit found the campaign's reproducible
+    `target/arch-v4-*` evidence directories had filled the volume. Old generated evidence roots
+    were removed while retaining the S-B3 comparison dumps and the immutable final2 archive; no
+    source, fixture, Git data, or external repository file was removed. Sequential clean dumps
+    then succeeded.
+  - Final2's schema dump took 183.443 seconds and its prober 310.278 seconds. The machine was
+    non-idle, so all performance numbers in this round are loaded-host observations only. The
+    performance claim is the audited deletion of one complete helper-fragment traversal.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and was enabled in the final full-depth run.
+  Exact schema/IR bytes and zero acceptance flips leave no fixture or individual Helm verdict to
+  adopt. Candidate-accepts/Helm-aborts and mandatory coverage drops are zero.
+
+- Producer/route coverage:
+
+  | Route | Final owner and proof |
+  | --- | --- |
+  | Guarded mapping/sequence descent | One summary fold and predicate stack; 18 exact IR artifacts. |
+  | Rendered scalar splices | Rendered lane with legacy merge key/order; helper projection suites. |
+  | Rendered taints/opaque nodes | Rendered lane with exact kind/provenance; fragment golden tests. |
+  | Render-suppressed scalar splices | Suppressed-read lane; block-scalar golden and helper suites. |
+  | Render-suppressed taints | Suppressed-read lane with claims-value-kind guard; exact corpus. |
+  | Sibling pruning/dedup | Rendered-only pruning followed by suppressed append; 60 focused tests. |
+
+- Review dossier:
+  - Focused proof: 60/60 fragment-expression and fragment-golden tests pass.
+  - Immutable build: S-B4 final2 under Rust 1.98; exit 0, 90 binaries and 128 files. Final1 and the
+    failed parallel extractions are rejected as described above.
+  - Clean schema dump: final2 archive and absolute step-local `TMPDIR`; exit 0, 62/62 in 183.443
+    seconds on the disclosed loaded host; all 84 artifacts are byte-identical to S-B3.
+  - Clean IR dump: same archive, sequential extraction, and its own step-local `TMPDIR`; exit 0, one
+    test in 9.359 seconds; all 18 artifacts are byte-identical.
+  - Full-depth proof: same final2 archive, baseline `3c5cbb79`, Helm enabled; exit 0 in 310.278
+    seconds, 60 charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero
+    mandatory drops, and 25,718 disclosed bounded reductions.
+  - Public/wire decision: none. `SummaryRows` and the fold remain crate-private; serialized schema,
+    symbolic IR, diagnostics, public APIs, and wire formats are unchanged. The standalone lint
+    migration is source-internal and behavior-preserving.
+
+- Self-adversarial pass:
+  - The two result lanes are deliberately not interleaved: rendered rows retain their original DFS
+    order, sibling pruning sees exactly that lane, and suppressed reads append afterward in their
+    own original DFS order.
+  - A suppressed scalar emits no rendered claim but does emit qualifying dependency reads. An
+    inherited suppression still hides rendered descendants without inventing suppressed reads for
+    nodes that were not themselves suppressed, matching the two deleted traversals.
+  - False guarded arms do not push conditions or emit either lane. True arms avoid a redundant
+    predicate, and nontrivial arms push/pop exactly once around both synthesized attributes.
+  - Whole-tree search finds one summary fragment traversal and no remaining
+    `append_suppressed_reads` or parallel condition-stack walker.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in approximately 195 seconds under Rust 1.98; the two pre-existing
+    ast-grep warnings in `helm-schema-ast` remain informational.
+  - `task lint:fc`: exit 0; 48/48 combinations across three targets in 2,341.45 seconds. The failed
+    pre-migration runs are recorded above.
+  - `cargo nextest run --workspace`: exit 0; 1,338/1,338 pass in 183.730 seconds.
+  - `task test:integration`: exit 0; 564/564 pass in 1,670.181 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,906/1,906 pass in 1,421.284 seconds; 24 skipped and live network tests
+    pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in approximately 95 seconds after the
+    Rust 1.98 release-cache rebuild.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts with the documented host shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 66,064.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: -7 attributable to S-B4 (66,071 after standalone lint commit
+  `097ef212` to 66,064). The intervening Rust 1.98 lint migration is -6 LOC (66,077 to 66,071), so
+  the total tree change from the S-B4 acceptance baseline is -13.

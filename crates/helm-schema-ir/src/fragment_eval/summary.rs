@@ -180,9 +180,8 @@ pub(crate) fn eval_bound_helper_fragment(
                     .any(|narrowed| narrowed.is_descendant_of(&read.values_path))
         })
         .collect();
-    let rendered = rendered_rows(&root);
-    prune_sibling_conditions(&mut reads, &rendered);
-    let mut summary = FragmentSummary {
+    let rendered = finalize_summary_rows(&root, &mut reads);
+    FragmentSummary {
         value: projected_value(&root),
         json_payload_truth,
         scalar_dispatch,
@@ -201,13 +200,7 @@ pub(crate) fn eval_bound_helper_fragment(
         root_set_predicates: interpreter.root_set_predicates_observed,
         root_set_value_dispatches: interpreter.root_value_dispatches_observed,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
-    };
-    // Render-suppressed splices (block-scalar bodies) influence the text
-    // without rendering a sink-typed value; value-position consumers see
-    // them as dependency reads, matching the demotion the summary walk
-    // applied at suppressing slots.
-    append_suppressed_reads(&summary.root, &mut Vec::new(), &mut summary.reads);
-    summary
+    }
 }
 
 const MAX_SCALAR_DISPATCH_STATES: usize = 128;
@@ -868,19 +861,47 @@ fn output_path(path: &helm_schema_core::ValuesPath, meta: HelperOutputMeta) -> A
     AbstractValue::OutputPath(path.clone(), meta)
 }
 
-/// Flatten the tree's rendered splice/taint rows into per-path claims.
-fn rendered_rows(root: &Guarded<AbstractFragment>) -> Vec<RenderedRow> {
-    let mut rows = Vec::new();
+#[derive(Default)]
+struct SummaryRows {
+    rendered: Vec<RenderedRow>,
+    suppressed_reads: Vec<ValueRead>,
+}
+
+/// Flatten rendered claims and render-suppressed dependency reads in one
+/// traversal while keeping the two result lanes independently ordered.
+fn summary_rows(root: &Guarded<AbstractFragment>) -> SummaryRows {
+    let mut rows = SummaryRows::default();
     let mut conditions = Vec::new();
-    collect_rendered(root, &mut conditions, false, &mut rows);
+    collect_summary_rows(root, &mut conditions, false, &mut rows);
     rows
 }
 
-fn collect_rendered(
+fn finalize_summary_rows(
+    root: &Guarded<AbstractFragment>,
+    reads: &mut Vec<ValueRead>,
+) -> Vec<RenderedRow> {
+    let SummaryRows {
+        rendered,
+        suppressed_reads,
+    } = summary_rows(root);
+    prune_sibling_conditions(reads, &rendered);
+    // Render-suppressed splices (block-scalar bodies) influence the text
+    // without rendering a sink-typed value; value-position consumers see
+    // them as dependency reads, matching the demotion the summary fold
+    // applied at suppressing slots.
+    for read in suppressed_reads {
+        if !reads.contains(&read) {
+            reads.push(read);
+        }
+    }
+    rendered
+}
+
+fn collect_summary_rows(
     guarded: &Guarded<AbstractFragment>,
     conditions: &mut Vec<PathCondition>,
     suppressed: bool,
-    rows: &mut Vec<RenderedRow>,
+    rows: &mut SummaryRows,
 ) {
     for (condition, node) in &guarded.arms {
         if *condition == Predicate::False {
@@ -890,7 +911,7 @@ fn collect_rendered(
         if pushed {
             conditions.push(condition.clone());
         }
-        collect_rendered_node(node, conditions, suppressed, rows);
+        collect_summary_node(node, conditions, suppressed, rows);
         if pushed {
             conditions.pop();
         }
@@ -923,25 +944,32 @@ fn push_rendered_row(
     });
 }
 
-fn collect_rendered_node(
+fn collect_summary_node(
     node: &AbstractFragment,
     conditions: &mut Vec<PathCondition>,
     suppressed: bool,
-    rows: &mut Vec<RenderedRow>,
+    rows: &mut SummaryRows,
 ) {
     match node {
         AbstractFragment::Mapping(mapping) => {
             for entry in &mapping.entries {
-                collect_rendered(&entry.value, conditions, suppressed, rows);
+                collect_summary_rows(&entry.value, conditions, suppressed, rows);
             }
         }
         AbstractFragment::Sequence(sequence) => {
             for item in &sequence.items {
-                collect_rendered(item, conditions, suppressed, rows);
+                collect_summary_rows(item, conditions, suppressed, rows);
             }
         }
         AbstractFragment::Scalar(scalar) => {
             let suppressed = suppressed || scalar.suppressed;
+            if scalar.suppressed {
+                collect_suppressed_scalar_reads(
+                    &scalar.parts,
+                    conditions,
+                    &mut rows.suppressed_reads,
+                );
+            }
             if suppressed {
                 return;
             }
@@ -949,7 +977,7 @@ fn collect_rendered_node(
                 match part {
                     StringPart::Text(_) => {}
                     StringPart::Splice(splice) => push_rendered_row(
-                        rows,
+                        &mut rows.rendered,
                         &splice.values_path.encode(),
                         splice.kind,
                         splice.meta.encoded,
@@ -962,7 +990,7 @@ fn collect_rendered_node(
                         let meta = scalar_taint_row_meta(taint, conditions);
                         for path in &taint.paths {
                             push_rendered_row(
-                                rows,
+                                &mut rows.rendered,
                                 &path.encode(),
                                 ValueKind::PartialScalar,
                                 false,
@@ -976,7 +1004,7 @@ fn collect_rendered_node(
         AbstractFragment::Splice(splice) => {
             if !suppressed {
                 push_rendered_row(
-                    rows,
+                    &mut rows.rendered,
                     &splice.values_path.encode(),
                     splice.kind,
                     splice.meta.encoded,
@@ -990,7 +1018,63 @@ fn collect_rendered_node(
             }
             let meta = taint_row_meta(opaque.site.as_deref(), &opaque.provenance, conditions);
             for path in &opaque.taint {
-                push_rendered_row(rows, &path.encode(), opaque.kind, false, meta.clone());
+                push_rendered_row(
+                    &mut rows.rendered,
+                    &path.encode(),
+                    opaque.kind,
+                    false,
+                    meta.clone(),
+                );
+            }
+        }
+    }
+}
+
+/// Dependency reads for splices inside render-suppressed scalars.
+fn collect_suppressed_scalar_reads(
+    parts: &[StringPart],
+    conditions: &[PathCondition],
+    reads: &mut Vec<ValueRead>,
+) {
+    for part in parts {
+        let (paths, site, provenance): (Vec<String>, Option<&SiteFacts>, &[ContractProvenance]) =
+            match part {
+                StringPart::Text(_) => continue,
+                StringPart::Splice(splice) => (
+                    vec![splice.values_path.encode()],
+                    splice.meta.site.as_deref(),
+                    &splice.meta.provenance,
+                ),
+                StringPart::Taint(taint) => {
+                    if !taint.claims_value_kind {
+                        continue;
+                    }
+                    (
+                        taint
+                            .paths
+                            .iter()
+                            .map(helm_schema_core::ValuesPath::encode)
+                            .collect(),
+                        taint.site.as_deref(),
+                        &taint.provenance,
+                    )
+                }
+            };
+        let meta = taint_row_meta(site, provenance, conditions);
+        for path in paths {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let read = ValueRead {
+                values_path: helm_schema_core::ValuesPath::parse(&path),
+                kind: ValueKind::Scalar,
+                condition: GuardDnf::from_conjunction(conditions.iter().cloned()),
+                resource: None,
+                provenance: meta.provenance.clone(),
+                dependency: true,
+            };
+            if !reads.contains(&read) {
+                reads.push(read);
             }
         }
     }
@@ -1047,93 +1131,4 @@ fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]
         }
     }
     *reads = pruned;
-}
-
-/// Dependency reads for splices inside render-suppressed scalars.
-fn append_suppressed_reads(
-    guarded: &Guarded<AbstractFragment>,
-    conditions: &mut Vec<PathCondition>,
-    reads: &mut Vec<ValueRead>,
-) {
-    for (condition, node) in &guarded.arms {
-        if *condition == Predicate::False {
-            continue;
-        }
-        let pushed = *condition != Predicate::True;
-        if pushed {
-            conditions.push(condition.clone());
-        }
-        append_suppressed_node_reads(node, conditions, reads);
-        if pushed {
-            conditions.pop();
-        }
-    }
-}
-
-fn append_suppressed_node_reads(
-    node: &AbstractFragment,
-    conditions: &mut Vec<PathCondition>,
-    reads: &mut Vec<ValueRead>,
-) {
-    match node {
-        AbstractFragment::Mapping(mapping) => {
-            for entry in &mapping.entries {
-                append_suppressed_reads(&entry.value, conditions, reads);
-            }
-        }
-        AbstractFragment::Sequence(sequence) => {
-            for item in &sequence.items {
-                append_suppressed_reads(item, conditions, reads);
-            }
-        }
-        AbstractFragment::Scalar(scalar) if scalar.suppressed => {
-            for part in &scalar.parts {
-                let (paths, site, provenance): (
-                    Vec<String>,
-                    Option<&SiteFacts>,
-                    &[ContractProvenance],
-                ) = match part {
-                    StringPart::Text(_) => continue,
-                    StringPart::Splice(splice) => (
-                        vec![splice.values_path.encode()],
-                        splice.meta.site.as_deref(),
-                        &splice.meta.provenance,
-                    ),
-                    StringPart::Taint(taint) => {
-                        if !taint.claims_value_kind {
-                            continue;
-                        }
-                        (
-                            taint
-                                .paths
-                                .iter()
-                                .map(helm_schema_core::ValuesPath::encode)
-                                .collect(),
-                            taint.site.as_deref(),
-                            &taint.provenance,
-                        )
-                    }
-                };
-                let meta = taint_row_meta(site, provenance, conditions);
-                for path in paths {
-                    if path.trim().is_empty() {
-                        continue;
-                    }
-                    let read = ValueRead {
-                        values_path: helm_schema_core::ValuesPath::parse(&path),
-                        kind: ValueKind::Scalar,
-                        condition: GuardDnf::from_conjunction(conditions.iter().cloned()),
-                        resource: None,
-                        provenance: meta.provenance.clone(),
-                        dependency: true,
-                    };
-                    if !reads.contains(&read) {
-                        reads.push(read);
-                    }
-                }
-            }
-        }
-        AbstractFragment::Scalar(_) | AbstractFragment::Splice(_) | AbstractFragment::Opaque(_) => {
-        }
-    }
 }
