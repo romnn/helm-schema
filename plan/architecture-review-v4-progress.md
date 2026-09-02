@@ -7552,7 +7552,7 @@
 
 ## S-C scope discipline — one interpreter mark and context-owned dispatch depth
 
-- Status: landed; commit pending.
+- Status: landed in `67b4ac13` (`refactor(ir): centralize interpreter scope state`).
 - Contract: representation-only. Replace manual save/truncate/decrement clusters for interpreter
   scope state with one typed mark/rewind owner, and move helper-dispatch recursion depth from thread
   global state onto `ValuePathContext`.
