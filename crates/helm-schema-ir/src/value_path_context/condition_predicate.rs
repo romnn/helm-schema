@@ -18,10 +18,6 @@ use super::ValuePathContext;
 /// recursive helpers from looping the decoder.
 const MAX_HELPER_DISPATCH_DEPTH: u8 = 2;
 
-thread_local! {
-    static HELPER_DISPATCH_DEPTH: std::cell::Cell<u8> = const { std::cell::Cell::new(0) };
-}
-
 /// An `include`/`template` call whose context argument carries the root
 /// (`.` or `$`), so the callee's `.Values.*` conditions keep their paths.
 fn helper_root_call(expr: &TemplateExpr) -> Option<&str> {
@@ -1411,16 +1407,17 @@ impl ValuePathContext<'_> {
         {
             return None;
         }
-        if HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH {
+        let dispatch_depth = self.helper_dispatch_depth.get();
+        if dispatch_depth >= MAX_HELPER_DISPATCH_DEPTH {
             return None;
         }
         let arms = crate::helper_literal_dispatch::helper_literal_dispatch(
             self.fragment_context.analysis_db,
             name,
         )?;
-        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
+        self.helper_dispatch_depth.set(dispatch_depth + 1);
         let predicate = self.literal_dispatch_arms_predicate(&arms, &|arm| arm.literal == target);
-        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
+        self.helper_dispatch_depth.set(dispatch_depth);
         let predicate = predicate?;
         Some(if negated {
             predicate.negated()
@@ -1446,7 +1443,8 @@ impl ValuePathContext<'_> {
         {
             return None;
         }
-        if HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH {
+        let dispatch_depth = self.helper_dispatch_depth.get();
+        if dispatch_depth >= MAX_HELPER_DISPATCH_DEPTH {
             return None;
         }
         let arms = crate::helper_literal_dispatch::helper_literal_dispatch(
@@ -1459,9 +1457,9 @@ impl ValuePathContext<'_> {
         {
             return None;
         }
-        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
+        self.helper_dispatch_depth.set(dispatch_depth + 1);
         let predicate = self.literal_dispatch_arms_predicate(&arms, &|arm| !arm.literal.is_empty());
-        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
+        self.helper_dispatch_depth.set(dispatch_depth);
         predicate.map(Predicate::normalize_boolean)
     }
 
@@ -1636,7 +1634,7 @@ impl ValuePathContext<'_> {
             .current_dot_binding
             .as_ref()
             .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
-            || HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH
+            || self.helper_dispatch_depth.get() >= MAX_HELPER_DISPATCH_DEPTH
         {
             return None;
         }
@@ -1644,12 +1642,13 @@ impl ValuePathContext<'_> {
             self.fragment_context.analysis_db,
             name,
         )?;
-        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
+        let dispatch_depth = self.helper_dispatch_depth.get();
+        self.helper_dispatch_depth.set(dispatch_depth + 1);
         let predicates = targets
             .into_iter()
             .map(|target| self.literal_dispatch_arms_predicate(&arms, &|arm| arm.literal == target))
             .collect::<Option<Vec<_>>>();
-        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
+        self.helper_dispatch_depth.set(dispatch_depth);
         let mut predicates = predicates?;
         predicates.retain(|predicate| {
             !matches!(predicate.kind(), helm_schema_core::PredicateKind::False)

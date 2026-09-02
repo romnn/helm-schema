@@ -7549,3 +7549,120 @@
   discovery tuple make the phase artifacts explicit while deleting repeated cloning/composition/
   parsing work. This is an ordinary performance/representation round, so no E-style LOC gate
   applies.
+
+## S-C scope discipline — one interpreter mark and context-owned dispatch depth
+
+- Status: landed; commit pending.
+- Contract: representation-only. Replace manual save/truncate/decrement clusters for interpreter
+  scope state with one typed mark/rewind owner, and move helper-dispatch recursion depth from thread
+  global state onto `ValuePathContext`.
+- Acceptance baseline: `9ac3d3ee` (S-B quick-path closure commit).
+- Baseline production Rust LOC: 65,793.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes. Any
+    changed byte or acceptance cell rejects the round before artifact adoption.
+  - `ScopeMark` captures lengths for `active_predicates`, `dot_stack`, `active_range_modes`, and
+    `alternative_capture_approximates`, plus `loop_depth`. `mark_scope()`/`rewind(mark)` replace the
+    manual control-arm, range-item, inline-if/with/range, and node-list restoration clusters;
+    `locals` remains explicitly cloned/joined because its exits are semantic dataflow.
+  - Every rewind restores exactly the caller's entry depth and truncates only post-mark stack
+    entries. Range bodies still observe incremented depth during evaluation, and loop-control
+    extraction occurs before rewind where the old code required it.
+  - `ValuePathContext` owns a `Cell<u8>` initialized for each context. All three helper-dispatch
+    recursion lanes consult/increment/decrement that cell around nested decoding; the cap remains 2
+    and no process/thread state can leak between independent contexts.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - One `ScopeMark` captures predicate, dot, range-mode, and capture-approximation stack lengths plus
+    loop depth. `Interpreter::rewind` is the sole restoration owner for control arms, individual
+    range alternatives, inline if/with/range bodies, and node-list entries.
+  - Manual entry-length variables, paired truncations, range-body decrement clusters, and the
+    per-item dot pop disappear. `SymbolicLocalState` remains explicit at each branch because its
+    outcome is joined semantic data, not stack hygiene.
+  - `ValuePathContext` now owns `Cell<u8>` dispatch depth. Literal equality, include truthiness, and
+    literal-membership helper dispatches save/increment/restore the same context cell around nested
+    decoding; the cap remains 2 and no thread-global state remains.
+  - All 394 focused IR tests pass. The final immutable archive contains 90 binaries and 128 files;
+    its clean schema dump passes 62/62 in 155.498 seconds with all 84 artifacts byte-identical to
+    S-B, and its IR dump passes in 3.178 seconds with all 18 artifacts unchanged.
+  - The full-depth battery passes in 85.886 seconds across 60 charts and 120,833 probes with zero
+    flips, zero candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and
+    7,465/7,465 mandatory third-level probes.
+
+- Deviations: none. The first implementation compiled, passed 394/394 focused tests, and passed
+  lint before the immutable archive was built.
+
+- Adjudication evidence:
+  - Helm 4.2.3 remains pinned and was used by the full-depth battery. All schema and symbolic-IR
+    bytes match `9ac3d3ee`; zero acceptance cells change, so no fixture or Helm cell requires
+    adoption.
+  - Candidate-accepts/Helm-aborts remains zero against a zero allowance. Mandatory base and
+    third-level coverage have zero drops; 25,710 disclosed bounded reductions remain outside the
+    mandatory categories.
+
+- Producer/route coverage:
+
+  | Route | Final behavior and proof |
+  | --- | --- |
+  | Structural control arms | Entry stacks and loop depth restored from one mark; control-flow IR and corpus identity. |
+  | Range alternatives/items | Per-item predicates/dot/approximation restored together; range-mode and capture suites. |
+  | Inline if/with/range | Same branch conditions and local joins with complete stack rewind; inline and scalar suites. |
+  | Node-list loop control | Remaining predicate scoped per node while loop exit is read before rewind; terminal/fail tests. |
+  | Helper literal equality | Context depth cap 2, same exact dispatch predicate; condition-predicate tests. |
+  | Include truthiness/membership | Same cap and restored depth across nested dispatch; redis/cilium corpus and IR identity. |
+
+- Review dossier:
+  - Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sc-scope-final1-build
+    cargo nextest archive --workspace --archive-file /private/tmp/arch-v4-sc-scope-final1.tar.zst`;
+    exit 0, 90 binaries and 128 files.
+  - Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sc-scope-final1-schema
+    SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sc-scope-final1.tar.zst
+    --profile integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+    exit 0, 62/62 in 155.498 seconds and 84 exact artifacts.
+  - Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sc-scope-final1-ir
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-sc-scope-final1.tar.zst --profile integration -E
+    'test(ir_corpus_fixtures_match)'`; exit 0, one test in 3.178 seconds and 18 exact artifacts.
+  - Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sc-scope-final1-prober
+    SCHEMA_ACCEPTANCE_BASELINE_REF=9ac3d3ee
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sc-scope-final1-schema
+    SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sc-scope-final1-coverage.json
+    ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-sc-scope-final1.tar.zst --profile integration -E
+    'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+    ignored-only`; exit 0 in 85.886 seconds with zero flips and zero mandatory drops.
+  - Public/wire decision: none. Both carriers and all affected functions remain crate-private;
+    serialized IR/schema formats are unchanged.
+
+- Self-adversarial pass:
+  - Kept the range-arm decrement until after loop-control extraction and arm-local evaluation; the
+    outer rewind happens only at the same next-arm/final boundary where old stacks were truncated.
+  - Rewound individual range items before reading their loop-control result, matching the former
+    pop/truncate order while also restoring approximation and loop state as one invariant.
+  - Did not fold locals into `ScopeMark`: declarations/assignments deliberately escape through
+    branch and range joins, so treating them as stack state would erase semantics.
+  - Verified each context constructor initializes a fresh dispatch cell and recursive decoder calls
+    reuse `&self`; independent analyses cannot inherit another context's depth.
+  - Confirmed no thread-local helper depth, entry-stack length variable, or manual scope truncation
+    remains in the interpreter production tree.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0 in 1.00 seconds.
+  - `task lint`: exit 0 in 34.76 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 146.38 seconds.
+  - `cargo nextest run --workspace`: exit 0, 1,333/1,333 tests in 104.153 seconds.
+  - `task test:integration`: exit 0, 563/563 tests in 743.934 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,900/1,900 tests in 789.521 seconds; 24 tests skipped by profile and
+    all live network tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 20.07 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts in 37.28 seconds, using the documented
+    macOS shims and `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,802.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +9 (65,793 to 65,802). The typed scope mark and context cell add
+  one explicit invariant each while deleting the parallel restoration/global-state protocols. This
+  is an ordinary representation round, so no E-style LOC gate applies.

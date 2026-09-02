@@ -143,6 +143,7 @@ fn condition_context_with_defines(
     let typeof_bindings = Box::leak(Box::new(HashMap::new()));
 
     ValuePathContext {
+        helper_dispatch_depth: std::cell::Cell::new(0),
         root_bindings,
         root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
         root_value_dispatches: Box::leak(Box::new(HashMap::new())),
@@ -850,6 +851,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
     let context = ValuePathContext {
+        helper_dispatch_depth: std::cell::Cell::new(0),
         root_bindings: Box::leak(Box::new(HashMap::new())),
         root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
         root_value_dispatches: Box::leak(Box::new(HashMap::new())),

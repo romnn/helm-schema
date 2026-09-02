@@ -643,6 +643,15 @@ pub(super) enum ArmSpec {
     Else,
 }
 
+#[derive(Clone, Copy)]
+pub(super) struct ScopeMark {
+    predicates: usize,
+    dots: usize,
+    range_modes: usize,
+    capture_approximates: usize,
+    loop_depth: usize,
+}
+
 pub(super) struct Interpreter<'a> {
     pub(super) source: &'a str,
     pub(super) source_path: Option<&'a str>,
@@ -756,6 +765,25 @@ pub(super) struct Interpreter<'a> {
 }
 
 impl<'a> Interpreter<'a> {
+    pub(super) fn mark_scope(&self) -> ScopeMark {
+        ScopeMark {
+            predicates: self.active_predicates.len(),
+            dots: self.dot_stack.len(),
+            range_modes: self.active_range_modes.len(),
+            capture_approximates: self.alternative_capture_approximates.len(),
+            loop_depth: self.loop_depth,
+        }
+    }
+
+    pub(super) fn rewind(&mut self, mark: ScopeMark) {
+        self.active_predicates.truncate(mark.predicates);
+        self.dot_stack.truncate(mark.dots);
+        self.active_range_modes.truncate(mark.range_modes);
+        self.alternative_capture_approximates
+            .truncate(mark.capture_approximates);
+        self.loop_depth = mark.loop_depth;
+    }
+
     /// A fresh interpreter over one parsed source: control-header facts,
     /// inline-region spans, and resource spans are collected up front; all
     /// evaluation state starts empty.
@@ -1001,6 +1029,7 @@ impl<'a> Interpreter<'a> {
                 .map(|(name, value)| (name.clone(), value.clone())),
         );
         ValuePathContext {
+            helper_dispatch_depth: std::cell::Cell::new(0),
             root_bindings: &self.root_bindings,
             root_truthy_predicates: &self.root_truthy_predicates,
             root_value_dispatches: &self.root_value_dispatches,
@@ -1581,7 +1610,7 @@ impl<'a> Interpreter<'a> {
             if remaining == Predicate::False {
                 break;
             }
-            let entry_predicates = self.active_predicates.len();
+            let entry_scope = self.mark_scope();
             self.push_predicate(remaining.clone());
             let mut next = Contributions::default();
             match view.node {
@@ -1661,7 +1690,7 @@ impl<'a> Interpreter<'a> {
                     next.extend(self.eval_node(bounded));
                 }
             }
-            self.active_predicates.truncate(entry_predicates);
+            self.rewind(entry_scope);
             let exit_condition = next.loop_control.exit_condition();
             next.guard_all(&remaining);
             out.extend(next);

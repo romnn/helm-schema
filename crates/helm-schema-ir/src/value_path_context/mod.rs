@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
@@ -41,6 +42,7 @@ pub(crate) struct RangeSubject {
 }
 
 pub(crate) struct ValuePathContext<'a> {
+    pub(crate) helper_dispatch_depth: Cell<u8>,
     pub(crate) root_bindings: &'a HashMap<String, AbstractValue>,
     pub(crate) root_truthy_predicates: &'a HashMap<String, Predicate>,
     /// Joined value alternatives for root-context fields set across

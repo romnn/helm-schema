@@ -61,9 +61,7 @@ impl Interpreter<'_> {
         let (escaped_per_branch, escaped_after) = split_escaped(region, escaped);
 
         let entry_locals = self.locals.clone();
-        let entry_predicates = self.active_predicates.len();
-        let entry_dots = self.dot_stack.len();
-        let entry_ranged = self.active_range_modes.len();
+        let entry_scope = self.mark_scope();
         // Root-context `set` state joins across if/else arms like locals:
         // each arm evaluates from the entry state (arms are mutually
         // exclusive at runtime, so one arm's mutation must not leak into a
@@ -88,9 +86,7 @@ impl Interpreter<'_> {
 
         for (index, _branch) in region.branches.iter().enumerate() {
             self.locals = entry_locals.clone();
-            self.active_predicates.truncate(entry_predicates);
-            self.dot_stack.truncate(entry_dots);
-            self.active_range_modes.truncate(entry_ranged);
+            self.rewind(entry_scope);
             if let Some(entry_root) = &entry_root {
                 self.restore_root_set_state(entry_root);
             }
@@ -227,9 +223,7 @@ impl Interpreter<'_> {
                                         .fragment_values
                                         .insert(variable.clone(), ordinal.clone());
                                 }
-                                let entry_predicates = self.active_predicates.len();
-                                let entry_capture_approximates =
-                                    self.alternative_capture_approximates.len();
+                                let item_scope = self.mark_scope();
                                 if item_index >= shared_items {
                                     self.alternative_capture_approximates.push(
                                         Predicate::approximate(
@@ -244,10 +238,7 @@ impl Interpreter<'_> {
                                 self.push_predicate(remaining.clone());
                                 self.dot_stack.push(Some(item.dot.clone()));
                                 let mut iteration = self.eval_node_list(nodes);
-                                self.dot_stack.pop();
-                                self.active_predicates.truncate(entry_predicates);
-                                self.alternative_capture_approximates
-                                    .truncate(entry_capture_approximates);
+                                self.rewind(item_scope);
                                 let break_condition = iteration.loop_control.break_condition();
                                 iteration.take_loop_control();
                                 iteration.guard_all(&remaining);
@@ -342,9 +333,7 @@ impl Interpreter<'_> {
         }
 
         self.locals = entry_locals.clone();
-        self.active_predicates.truncate(entry_predicates);
-        self.dot_stack.truncate(entry_dots);
-        self.active_range_modes.truncate(entry_ranged);
+        self.rewind(entry_scope);
         if let Some(entry_root) = &entry_root {
             self.restore_root_set_state(entry_root);
             self.join_root_set_arms(entry_root, &root_arm_states, has_unconditional_else);

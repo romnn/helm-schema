@@ -88,7 +88,7 @@ impl Interpreter<'_> {
         arm_specs.extend(else_if_pairs(action, text));
         arm_specs.push((None, children_with_field(action, "alternative")));
 
-        let entry_predicates = self.active_predicates.len();
+        let entry_scope = self.mark_scope();
         let entry_locals = self.locals.clone();
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
         let mut prior_reachability: Vec<SelectionTruthReachability> = Vec::new();
@@ -96,7 +96,7 @@ impl Interpreter<'_> {
         let mut local_arm_states = Vec::new();
         for (branch_index, (header, children)) in arm_specs.into_iter().enumerate() {
             self.locals = entry_locals.clone();
-            self.active_predicates.truncate(entry_predicates);
+            self.rewind(entry_scope);
             let mut arm_condition = Predicate::True;
             for predicate in &prior_conditions {
                 let negated = predicate.negated();
@@ -132,7 +132,7 @@ impl Interpreter<'_> {
                 prior_reachability.push(own_reachability);
             }
             if self.scalar_output_projection {
-                self.active_predicates.truncate(entry_predicates);
+                self.rewind(entry_scope);
                 arm_condition = semantic_arm_truth.when_true();
                 if arm_condition != Predicate::True {
                     self.push_predicate(arm_condition.clone());
@@ -153,7 +153,7 @@ impl Interpreter<'_> {
             self.locals.exit_local_scope();
             local_arm_states.push((semantic_arm_truth, self.locals.clone()));
         }
-        self.active_predicates.truncate(entry_predicates);
+        self.rewind(entry_scope);
         self.locals = entry_locals.clone();
         let outcomes = local_arm_states
             .iter()
@@ -173,8 +173,7 @@ impl Interpreter<'_> {
         action: tree_sitter::Node<'_>,
         text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let entry_predicates = self.active_predicates.len();
-        let entry_dots = self.dot_stack.len();
+        let entry_scope = self.mark_scope();
         let entry_locals = self.locals.clone();
         let (own, _reachability) = self.activate_with(
             control_header(text, action).as_ref(),
@@ -196,8 +195,7 @@ impl Interpreter<'_> {
             .map(|(condition, parts)| (and_conditions(body_condition.clone(), condition), parts))
             .collect::<Vec<_>>();
 
-        self.active_predicates.truncate(entry_predicates);
-        self.dot_stack.truncate(entry_dots);
+        self.rewind(entry_scope);
         self.locals = entry_locals.clone();
         let alternative_condition = own.as_ref().map_or(Predicate::True, Predicate::negated);
         if alternative_condition != Predicate::True {
@@ -219,8 +217,7 @@ impl Interpreter<'_> {
             ));
         }
 
-        self.active_predicates.truncate(entry_predicates);
-        self.dot_stack.truncate(entry_dots);
+        self.rewind(entry_scope);
         self.locals = entry_locals;
         arms
     }
@@ -239,9 +236,7 @@ impl Interpreter<'_> {
         let Some(header) = helm_schema_ast::range_header_from_source(node, text) else {
             return self.inline_region_taint(text);
         };
-        let entry_predicates = self.active_predicates.len();
-        let entry_dots = self.dot_stack.len();
-        let entry_ranged = self.active_range_modes.len();
+        let entry_scope = self.mark_scope();
         let entry_locals = self.locals.clone();
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
@@ -313,10 +308,7 @@ impl Interpreter<'_> {
         for (sub_condition, parts) in body_arms {
             arms.push((and_conditions(body_condition.clone(), sub_condition), parts));
         }
-        self.loop_depth -= 1;
-        self.dot_stack.truncate(entry_dots);
-        self.active_predicates.truncate(entry_predicates);
-        self.active_range_modes.truncate(entry_ranged);
+        self.rewind(entry_scope);
         self.locals = entry_locals;
         // A `{{ range }}…{{ else }}…{{ end }}` alternative renders when the
         // iterable is empty; like the structural range arms it decodes no
