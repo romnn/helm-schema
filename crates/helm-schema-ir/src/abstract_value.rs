@@ -75,17 +75,6 @@ pub(crate) enum AbstractValue {
     Widened(BTreeSet<ValuesPath>),
 }
 
-fn flattened_merge_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
-    let mut flat = Vec::new();
-    for layer in layers {
-        match layer {
-            AbstractValue::MergedLayers(inner) => flat.extend(flattened_merge_layers(inner)),
-            other => flat.push(other),
-        }
-    }
-    flat
-}
-
 impl AbstractValue {
     /// Number of leaf alternatives a structural consumer would copy while
     /// descending this value.
@@ -481,12 +470,13 @@ impl AbstractValue {
                     .map(Self::clear_plain_slot_string_format)
                     .collect(),
             ),
-            Self::MergedLayers(layers) => Self::MergedLayers(
+            Self::MergedLayers(layers) => Self::merged_layers(
                 layers
                     .into_iter()
                     .map(Self::clear_plain_slot_string_format)
                     .collect(),
-            ),
+            )
+            .unwrap_or(Self::Unknown),
             other => other,
         }
     }
@@ -534,11 +524,8 @@ impl AbstractValue {
                 // associative, so an inner merge's layers slot into the
                 // outer order where the inner merge stood (airflow's
                 // per-set merge over the celery-merged workers base).
-                let layers = flattened_merge_layers(layers);
-                let identities: Option<Vec<ValuesPath>> = layers
-                    .iter()
-                    .map(|layer| layer.merge_layer_identity())
-                    .collect();
+                let identities: Option<Vec<ValuesPath>> =
+                    layers.iter().map(Self::merge_layer_identity).collect();
                 if let Some(layer_paths) = identities
                     && layer_paths.len() > 1
                     && layer_paths
@@ -792,11 +779,7 @@ impl AbstractValue {
                         None => out.push(Self::Unknown),
                     }
                 }
-                match out.len() {
-                    0 => None,
-                    1 => out.pop(),
-                    _ => Some(Self::MergedLayers(out)),
-                }
+                Self::merged_layers(out)
             }
             Self::Overlay { fallback, .. } => fallback.indexed_item(),
             Self::Unknown
@@ -830,7 +813,8 @@ impl AbstractValue {
                 Self::FirstTruthy(candidates.into_iter().map(Self::into_parsed_map).collect())
             }
             Self::MergedLayers(layers) => {
-                Self::MergedLayers(layers.into_iter().map(Self::into_parsed_map).collect())
+                Self::merged_layers(layers.into_iter().map(Self::into_parsed_map).collect())
+                    .unwrap_or(Self::Unknown)
             }
             other => other,
         }
@@ -988,7 +972,8 @@ impl AbstractValue {
                     .collect(),
             ),
             Self::MergedLayers(layers) => {
-                Self::MergedLayers(layers.into_iter().map(Self::mark_json_decoded).collect())
+                Self::merged_layers(layers.into_iter().map(Self::mark_json_decoded).collect())
+                    .unwrap_or(Self::Unknown)
             }
             Self::Widened(paths) => {
                 Self::choice(paths.into_iter().map(Self::JsonDecodedPath).collect())
@@ -1022,12 +1007,13 @@ impl AbstractValue {
     pub(crate) fn without_nil_scrub_markers(self) -> Self {
         match self {
             Self::OutputPath(_, meta) if meta.nil_scrubbed => Self::Unknown,
-            Self::MergedLayers(layers) => Self::MergedLayers(
+            Self::MergedLayers(layers) => Self::merged_layers(
                 layers
                     .into_iter()
                     .map(Self::without_nil_scrub_markers)
                     .collect(),
-            ),
+            )
+            .unwrap_or(Self::Unknown),
             Self::Choice(choices) => Self::Choice(
                 choices
                     .into_iter()
@@ -1213,13 +1199,24 @@ impl AbstractValue {
         }
     }
 
-    /// Normalizing [`Self::MergedLayers`] constructor: no layers is
-    /// nothing, a single layer is that layer itself.
+    /// Normalizing [`Self::MergedLayers`] constructor: nested merges flatten
+    /// in precedence order, no layers is nothing, and one layer is itself.
     pub(crate) fn merged_layers(layers: Vec<Self>) -> Option<Self> {
-        match layers.len() {
+        fn append_flat(layers: Vec<AbstractValue>, flat: &mut Vec<AbstractValue>) {
+            for layer in layers {
+                match layer {
+                    AbstractValue::MergedLayers(nested) => append_flat(nested, flat),
+                    other => flat.push(other),
+                }
+            }
+        }
+
+        let mut flat = Vec::new();
+        append_flat(layers, &mut flat);
+        match flat.len() {
             0 => None,
-            1 => layers.into_iter().next(),
-            _ => Some(Self::MergedLayers(layers)),
+            1 => flat.into_iter().next(),
+            _ => Some(Self::MergedLayers(flat)),
         }
     }
 
@@ -1410,11 +1407,7 @@ impl AbstractValue {
                         None => out.push(Self::Unknown),
                     }
                 }
-                match out.len() {
-                    0 => None,
-                    1 => out.pop(),
-                    _ => Some(Self::MergedLayers(out)),
-                }
+                Self::merged_layers(out)
             }
             Self::Dict(map) => {
                 let (head, tail) = rest.split_first()?;

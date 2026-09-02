@@ -1,9 +1,10 @@
 //! Public semantic-contract parsing and path utility regressions.
 
 use helm_schema_core::{
-    ApiPresenceQuery, ConditionalGuard, ContractUse, ContractValuePathFacts, Guard, MergeLayer,
-    MergeLayerTransform, MergeLayersUse, ValueKind, ValuesPath, YamlPath, join_value_path,
-    split_value_path,
+    ApiPresenceQuery, ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor,
+    ConditionalPathOverlay, ContractRequirementImplication, ContractRequirementTarget, ContractUse,
+    ContractValuePathFacts, FailValueRequirement, Guard, MergeLayer, MergeLayerTransform,
+    MergeLayersUse, ValueKind, ValuesPath, YamlPath, join_value_path, split_value_path,
 };
 use test_util::prelude::sim_assert_eq;
 
@@ -69,6 +70,51 @@ fn conditional_guards_own_self_scope_classification() {
         want: (true, true, true, false),
     );
     sim_assert_eq!(have: opaque_member_presence, want: vec![true; 3]);
+}
+
+#[test]
+fn conditional_signal_constructors_canonicalize_guard_conjunctions() {
+    let truthy = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("selected"),
+    };
+    let absent = ConditionalGuard::Absent {
+        path: ValuesPath::parse("fallback"),
+    };
+    let nested = ConditionalGuard::AnyOf(vec![absent.clone(), truthy.clone(), absent.clone()]);
+    let overlay = ConditionalPathOverlay::new(
+        vec![nested.clone(), truthy.clone(), nested],
+        ConditionalOverlayEvidence::default(),
+        false,
+        ConditionalOverlayFlavor::Ordinary,
+    );
+    let implication = ContractRequirementImplication::new(
+        vec![absent.clone(), truthy.clone(), absent],
+        ContractRequirementTarget::Value,
+        vec![
+            FailValueRequirement::SchemaType("string".to_string()),
+            FailValueRequirement::SchemaType("string".to_string()),
+        ],
+    );
+
+    sim_assert_eq!(
+        have: overlay.guards,
+        want: vec![
+            truthy.clone(),
+            ConditionalGuard::AnyOf(vec![truthy.clone(), ConditionalGuard::Absent {
+                path: ValuesPath::parse("fallback"),
+            }]),
+        ],
+    );
+    sim_assert_eq!(
+        have: implication,
+        want: ContractRequirementImplication {
+            outer_guards: vec![truthy, ConditionalGuard::Absent {
+                path: ValuesPath::parse("fallback"),
+            }],
+            target: ContractRequirementTarget::Value,
+            requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
+        },
+    );
 }
 
 #[test]

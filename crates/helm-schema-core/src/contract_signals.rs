@@ -134,6 +134,39 @@ pub enum ConditionalGuard {
 }
 
 impl ConditionalGuard {
+    /// Canonicalizes a guard conjunction and every nested Boolean guard set.
+    pub fn canonicalize_conjunction(guards: &mut Vec<Self>) {
+        for guard in guards.iter_mut() {
+            guard.canonicalize_nested();
+        }
+        guards.sort();
+        guards.dedup();
+    }
+
+    fn canonicalize_nested(&mut self) {
+        match self {
+            Self::Not(inner) => inner.canonicalize_nested(),
+            Self::AllOf(nested) | Self::AnyOf(nested) => {
+                Self::canonicalize_conjunction(nested);
+            }
+            Self::Truthy { .. }
+            | Self::With { .. }
+            | Self::Eq { .. }
+            | Self::NotEq { .. }
+            | Self::Absent { .. }
+            | Self::TypeIs { .. }
+            | Self::MatchesPattern { .. }
+            | Self::IntGt { .. }
+            | Self::IntLt { .. }
+            | Self::HasKey { .. }
+            | Self::ContainsMemberEquals { .. }
+            | Self::ContainsTruthyMember { .. }
+            | Self::ContainsEquals { .. }
+            | Self::AtMostOneMember { .. }
+            | Self::MinMembers { .. } => {}
+        }
+    }
+
     /// Reports whether this guard tests the target's own Helm truthiness.
     #[must_use]
     pub fn is_self_truthy_for(&self, target: &ValuesPath) -> bool {
@@ -474,6 +507,33 @@ pub struct ConditionalPathOverlay {
     pub flavor: ConditionalOverlayFlavor,
 }
 
+impl ConditionalPathOverlay {
+    /// Creates an overlay with its guard conjunction in canonical order.
+    #[must_use]
+    pub fn new(
+        mut guards: Vec<ConditionalGuard>,
+        evidence: ConditionalOverlayEvidence,
+        preserve_base_schema: bool,
+        flavor: ConditionalOverlayFlavor,
+    ) -> Self {
+        ConditionalGuard::canonicalize_conjunction(&mut guards);
+        Self {
+            guards,
+            evidence,
+            preserve_base_schema,
+            flavor,
+        }
+    }
+
+    /// Adds one guard while preserving the canonical conjunction order.
+    pub fn insert_guard(&mut self, mut guard: ConditionalGuard) {
+        guard.canonicalize_nested();
+        if let Err(index) = self.guards.binary_search(&guard) {
+            self.guards.insert(index, guard);
+        }
+    }
+}
+
 /// Branch-local evidence for one conditional schema overlay.
 ///
 /// The target path is implicit from the enclosing [`ContractPathSchemaEvidence`]
@@ -635,6 +695,25 @@ pub struct ContractRequirementImplication {
     pub target: ContractRequirementTarget,
     /// Conjunction of requirements the affected value must satisfy.
     pub requirements: Vec<FailValueRequirement>,
+}
+
+impl ContractRequirementImplication {
+    /// Creates an implication with both conjunctions in canonical order.
+    #[must_use]
+    pub fn new(
+        mut outer_guards: Vec<ConditionalGuard>,
+        target: ContractRequirementTarget,
+        mut requirements: Vec<FailValueRequirement>,
+    ) -> Self {
+        ConditionalGuard::canonicalize_conjunction(&mut outer_guards);
+        requirements.sort();
+        requirements.dedup();
+        Self {
+            outer_guards,
+            target,
+            requirements,
+        }
+    }
 }
 
 /// Runtime value within a values-path contract that must satisfy a requirement.

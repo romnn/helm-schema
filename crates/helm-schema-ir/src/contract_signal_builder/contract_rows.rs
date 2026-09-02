@@ -978,8 +978,7 @@ pub(super) fn record_contract_use_conjunction(
             .iter()
             .filter_map(|predicate| predicate_to_guard(predicate, None))
             .collect::<Vec<_>>();
-        conditional_guards.sort();
-        conditional_guards.dedup();
+        ConditionalGuard::canonicalize_conjunction(&mut conditional_guards);
         for predicate in conditional_guards {
             for path in predicate.value_paths() {
                 let acc = path_accumulator(paths, &path);
@@ -1045,8 +1044,7 @@ pub(super) fn lowerable_range_outer_guards(
         }
         guards.push(guard);
     }
-    guards.sort();
-    guards.dedup();
+    ConditionalGuard::canonicalize_conjunction(&mut guards);
     Some(guards)
 }
 
@@ -1111,13 +1109,13 @@ pub(super) fn record_range_input_capture(
                 ..ContractValuePathFacts::default()
             });
         }
-        let implication = ContractRequirementImplication {
+        let implication = ContractRequirementImplication::new(
             outer_guards,
-            target: ContractRequirementTarget::Value,
-            requirements: vec![FailValueRequirement::Iterable {
+            ContractRequirementTarget::Value,
+            vec![FailValueRequirement::Iterable {
                 allow_integer: !destructured && !json_decoded,
             }],
-        };
+        );
         let acc = path_accumulator(paths, &path);
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {

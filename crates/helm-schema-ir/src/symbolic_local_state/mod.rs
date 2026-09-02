@@ -607,7 +607,7 @@ fn leaf_predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> boo
         helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == present_path => {
             match antecedent.kind() {
                 helm_schema_core::PredicateKind::Guard(Guard::Eq { value, .. }) => {
-                    guard_value_is_truthy(value)
+                    crate::value_path_context::guard_value_is_truthy(value)
                 }
                 helm_schema_core::PredicateKind::Guard(Guard::MatchesPattern {
                     pattern, ..
@@ -644,16 +644,4 @@ fn path_is_strict_ancestor(
     child: &helm_schema_core::ValuesPath,
 ) -> bool {
     child.is_descendant_of(parent)
-}
-
-fn guard_value_is_truthy(value: &helm_schema_core::GuardValue) -> bool {
-    match value {
-        helm_schema_core::GuardValue::String(text) => !text.is_empty(),
-        helm_schema_core::GuardValue::Bool(value) => *value,
-        helm_schema_core::GuardValue::Int(value) => *value != 0,
-        helm_schema_core::GuardValue::Float(text) => {
-            text.parse::<f64>().is_ok_and(|value| value != 0.0)
-        }
-        helm_schema_core::GuardValue::Null => false,
-    }
 }

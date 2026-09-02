@@ -380,7 +380,8 @@ fn without_values_root_identity(value: &AbstractValue) -> AbstractValue {
         )
         .unwrap_or(AbstractValue::Unknown),
         AbstractValue::MergedLayers(layers) => {
-            AbstractValue::MergedLayers(layers.iter().map(without_values_root_identity).collect())
+            AbstractValue::merged_layers(layers.iter().map(without_values_root_identity).collect())
+                .unwrap_or(AbstractValue::Unknown)
         }
         other => other.clone(),
     }

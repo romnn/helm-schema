@@ -35,12 +35,10 @@ fn kind_partitioned_overlays(overlay: ConditionalPathOverlay) -> Vec<Conditional
             .evidence
             .provider_schema_uses
             .retain(provider_use_depends_on_kind_selector);
-        partition.guards.push(ConditionalGuard::Eq {
+        partition.insert_guard(ConditionalGuard::Eq {
             path: selector.clone(),
             value: super::GuardValue::string(kind.clone()),
         });
-        partition.guards.sort();
-        partition.guards.dedup();
         partition.evidence.provider_schema_uses.retain_mut(|use_| {
             let supports_kind =
                 use_.resource.kind == kind || use_.resource.kind_candidates.contains(&kind);
@@ -425,12 +423,12 @@ impl ContractPathAccumulator {
                         _ => {}
                     }
                 }
-                ConditionalPathOverlay {
+                ConditionalPathOverlay::new(
                     guards,
-                    evidence: branch.conditional_overlay_evidence(facts, branch_hints),
-                    preserve_base_schema: has_unconditional_overlay_peer || saw_unsupported_overlay,
-                    flavor: ConditionalOverlayFlavor::Ordinary,
-                }
+                    branch.conditional_overlay_evidence(facts, branch_hints),
+                    has_unconditional_overlay_peer || saw_unsupported_overlay,
+                    ConditionalOverlayFlavor::Ordinary,
+                )
             })
             .flat_map(kind_partitioned_overlays)
             .collect();

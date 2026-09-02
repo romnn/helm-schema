@@ -145029,8 +145029,206 @@
         }
       }
     },
-    "providerShared28": {
+    "providerShared34": {
       "anyOf": [
+        {
+          "properties": {
+            "pgbouncer": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "pgbouncer"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "statsd": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "statsd"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "triggerer": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "triggerer"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "config": {
+              "properties": {
+                "metrics": {
+                  "properties": {
+                    "otel_port": {
+                      "enum": [
+                        "{{ .Values.ports.otelCollectorOtlpHttp }}"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "otel_port"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "config"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "airflowVersion": {
+              "pattern": "^v?(?:0*(?:[1-9][0-9]{1,}|[4-9])|0*3|0*(?:[1-9][0-9]{1,}|[4-9])\\.[0-9]+|0*3\\.0*(?:[1-9][0-9]{1,}|[1-9])|0*3\\.0*0|0*(?:[1-9][0-9]{1,}|[4-9])\\.[0-9]+\\.[0-9]+|0*3\\.0*(?:[1-9][0-9]{1,}|[1-9])\\.[0-9]+|0*3\\.0*0\\.0*(?:[1-9][0-9]{1,}|[1-9])|0*3\\.0*0\\.0*0)(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "airflowVersion"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "metadataSecretName": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "metadataSecretName"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "flower": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "flower"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "web": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "web"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        },
         {
           "allOf": [
             {
@@ -146627,25 +146825,6 @@
           ]
         },
         {
-          "properties": {
-            "pgbouncer": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "pgbouncer"
-          ],
-          "type": "object"
-        },
-        {
           "allOf": [
             {
               "properties": {
@@ -146825,44 +147004,6 @@
           ]
         },
         {
-          "properties": {
-            "statsd": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "statsd"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "triggerer": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "triggerer"
-          ],
-          "type": "object"
-        },
-        {
           "allOf": [
             {
               "properties": {
@@ -146896,147 +147037,6 @@
               "type": "object"
             }
           ]
-        },
-        {
-          "properties": {
-            "config": {
-              "properties": {
-                "metrics": {
-                  "properties": {
-                    "otel_port": {
-                      "enum": [
-                        "{{ .Values.ports.otelCollectorOtlpHttp }}"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "otel_port"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "metrics"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "config"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "airflowVersion": {
-              "pattern": "^v?(?:0*(?:[1-9][0-9]{1,}|[4-9])|0*3|0*(?:[1-9][0-9]{1,}|[4-9])\\.[0-9]+|0*3\\.0*(?:[1-9][0-9]{1,}|[1-9])|0*3\\.0*0|0*(?:[1-9][0-9]{1,}|[4-9])\\.[0-9]+\\.[0-9]+|0*3\\.0*(?:[1-9][0-9]{1,}|[1-9])\\.[0-9]+|0*3\\.0*0\\.0*(?:[1-9][0-9]{1,}|[1-9])|0*3\\.0*0\\.0*0)(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "airflowVersion"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "data": {
-                "properties": {
-                  "metadataSecretName": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "metadataSecretName"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "data"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "flower": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "flower"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "web": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "web"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              }
-            ]
-          }
         },
         {
           "anyOf": [
@@ -215769,6 +215769,34 @@
       "then": false
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/providerShared34"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ports": {}
+                  },
+                  "required": [
+                    "ports"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/$defs/vk"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "postgresql": {
@@ -236454,24 +236482,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/providerShared28"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ports": {
-            "description": "All ports used by chart",
-            "type": "object"
-          }
-        }
-      }
     },
     {
       "if": {
@@ -275988,6 +275998,24 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/providerShared34"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ports": {
+            "description": "All ports used by chart",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/h"
       },
       "then": {
@@ -279230,34 +279258,6 @@
           },
           {
             "$ref": "#/$defs/3G"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/providerShared28"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ports": {}
-                  },
-                  "required": [
-                    "ports"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/$defs/vk"
-              }
-            ]
           }
         ]
       },

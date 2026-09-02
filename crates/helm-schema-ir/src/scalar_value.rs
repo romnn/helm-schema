@@ -566,11 +566,9 @@ impl ScalarValue {
 
     fn truth_condition(&self) -> Option<helm_schema_core::Predicate> {
         match self {
-            Self::Literal(value) => Some(if guard_value_is_truthy(value) {
-                helm_schema_core::Predicate::True
-            } else {
-                helm_schema_core::Predicate::False
-            }),
+            Self::Literal(value) => Some(bool_predicate(
+                crate::value_path_context::guard_value_is_truthy(value),
+            )),
             Self::Identity(path) => Some(helm_schema_core::Predicate::from(
                 helm_schema_core::Guard::Truthy { path: path.clone() },
             )),
@@ -834,15 +832,11 @@ fn factored_negated(predicate: helm_schema_core::Predicate) -> helm_schema_core:
     helm_schema_core::Predicate::Not(Box::new(predicate)).normalize_boolean()
 }
 
-fn guard_value_is_truthy(value: &helm_schema_core::GuardValue) -> bool {
-    use helm_schema_core::GuardValue;
-
-    match value {
-        GuardValue::String(text) => !text.is_empty(),
-        GuardValue::Bool(value) => *value,
-        GuardValue::Int(value) => *value != 0,
-        GuardValue::Float(text) => text.parse::<f64>().is_ok_and(|value| value != 0.0),
-        GuardValue::Null => false,
+pub(crate) const fn bool_predicate(value: bool) -> helm_schema_core::Predicate {
+    if value {
+        helm_schema_core::Predicate::True
+    } else {
+        helm_schema_core::Predicate::False
     }
 }
 

@@ -1084,7 +1084,7 @@ pub(super) fn eval_merge(
         }
     }
     if let Some(layers) = merge_layer_order(function, operand_count, &values) {
-        return EvalResult::with_effects(Some(AbstractValue::MergedLayers(layers)), effects);
+        return EvalResult::with_effects(AbstractValue::merged_layers(layers), effects);
     }
     EvalResult::with_effects(AbstractValue::merge_all(values), effects)
 }

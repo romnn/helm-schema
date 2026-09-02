@@ -663,12 +663,13 @@ fn project_structured_taint_value(
                 .map(|candidate| project_structured_taint_value(candidate, outer_meta))
                 .collect(),
         ),
-        AbstractValue::MergedLayers(layers) => AbstractValue::MergedLayers(
+        AbstractValue::MergedLayers(layers) => AbstractValue::merged_layers(
             layers
                 .iter()
                 .map(|layer| project_structured_taint_value(layer, outer_meta))
                 .collect(),
-        ),
+        )
+        .unwrap_or(AbstractValue::Unknown),
         AbstractValue::Top
         | AbstractValue::Unknown
         | AbstractValue::RangeKey(_)

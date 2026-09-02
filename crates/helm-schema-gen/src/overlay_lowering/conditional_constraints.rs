@@ -61,17 +61,11 @@ pub(super) fn partition_guard_scopes(
         nested.entry(member_anchor).or_default().push(guard.clone());
     }
 
-    outer_guards.sort();
-    outer_guards.dedup();
     let mut nested_guard_scopes = nested
         .into_iter()
-        .map(|(ancestor_segments, mut guards)| {
-            guards.sort();
-            guards.dedup();
-            NestedGuardScope {
-                ancestor_segments,
-                guards,
-            }
+        .map(|(ancestor_segments, guards)| NestedGuardScope {
+            ancestor_segments,
+            guards,
         })
         .collect::<Vec<_>>();
     nested_guard_scopes.sort_by_key(|scope| scope.ancestor_segments.len());

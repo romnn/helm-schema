@@ -63,8 +63,7 @@ pub(super) fn lowerable_conditional_guard_set(
         }
         extend_lowerable_predicate(predicate, &source_expr, &mut guards)?;
     }
-    guards.sort();
-    guards.dedup();
+    ConditionalGuard::canonicalize_conjunction(&mut guards);
     Some(guards)
 }
 
@@ -244,8 +243,7 @@ pub(super) fn lowerable_conditional_guard_subset(
             guards.extend(lowered);
         }
     }
-    guards.sort();
-    guards.dedup();
+    ConditionalGuard::canonicalize_conjunction(&mut guards);
     guards
 }
 
@@ -351,8 +349,7 @@ pub(super) fn predicate_to_guard(
                 .iter()
                 .map(|predicate| predicate_to_guard(predicate, target_value_path))
                 .collect::<Option<Vec<_>>>()?;
-            guards.sort();
-            guards.dedup();
+            ConditionalGuard::canonicalize_conjunction(&mut guards);
             match guards.as_slice() {
                 [] => None,
                 [guard] => Some(guard.clone()),
@@ -375,8 +372,7 @@ pub(super) fn predicate_to_guard(
             {
                 return None;
             }
-            guards.sort();
-            guards.dedup();
+            ConditionalGuard::canonicalize_conjunction(&mut guards);
             (target_value_path.is_some() || !guards.is_empty())
                 .then_some(ConditionalGuard::AnyOf(guards))
         }
@@ -476,8 +472,7 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
             .iter()
             .map(terminal_clause_guard)
             .collect::<Option<Vec<_>>>()?;
-        guards.sort();
-        guards.dedup();
+        ConditionalGuard::canonicalize_conjunction(&mut guards);
         return match guards.as_slice() {
             [] => None,
             [guard] => Some(guard.clone()),
@@ -495,8 +490,7 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
             .iter()
             .map(terminal_clause_guard)
             .collect::<Option<Vec<_>>>()?;
-        guards.sort();
-        guards.dedup();
+        ConditionalGuard::canonicalize_conjunction(&mut guards);
         return match guards.as_slice() {
             [] => None,
             [guard] => Some(guard.clone()),
@@ -730,8 +724,7 @@ pub(super) fn guard_to_conditional_guard(
                         .iter()
                         .map(|guard| guard_to_conditional_guard(guard, target_value_path))
                         .collect::<Option<Vec<_>>>()?;
-                    guards.sort();
-                    guards.dedup();
+                    ConditionalGuard::canonicalize_conjunction(&mut guards);
                     match guards.as_slice() {
                         [] => None,
                         [guard] => Some(guard.clone()),
@@ -775,17 +768,15 @@ pub(super) fn record_member_range_requirement(
         }
         outer_guards.push(guard);
     }
-    outer_guards.sort();
-    outer_guards.dedup();
-    let implication = ContractRequirementImplication {
+    let implication = ContractRequirementImplication::new(
         outer_guards,
-        target: ContractRequirementTarget::Members {
+        ContractRequirementTarget::Members {
             allow_integer: outer_allows_integer,
         },
-        requirements: vec![FailValueRequirement::Iterable {
+        vec![FailValueRequirement::Iterable {
             allow_integer: inner_allows_integer,
         }],
-    };
+    );
     let acc = path_accumulator(paths, parent);
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {

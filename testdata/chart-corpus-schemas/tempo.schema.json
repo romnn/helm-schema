@@ -3654,6 +3654,103 @@
       }
     },
     "E": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "LoadBalancer"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "protocol": {
+                          "pattern": "TCP",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "protocol"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "protocol": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "protocol"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            },
+            {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "F": {
       "additionalProperties": false,
       "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
@@ -3719,7 +3816,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "F": {
+    "G": {
       "anyOf": [
         {
           "not": {
@@ -3880,7 +3977,7 @@
         }
       ]
     },
-    "G": {
+    "H": {
       "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
       "format": "date-time",
       "type": [
@@ -3888,14 +3985,14 @@
         "null"
       ]
     },
-    "H": {
+    "I": {
       "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
       "type": [
         "string",
         "null"
       ]
     },
-    "I": {
+    "J": {
       "properties": {
         "tempo": {
           "properties": {
@@ -3922,18 +4019,18 @@
       ],
       "type": "object"
     },
-    "J": {
+    "K": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "K": {
+    "L": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "L": {
+    "M": {
       "properties": {
         "networkPolicy": {
           "properties": {
@@ -3952,7 +4049,7 @@
       ],
       "type": "object"
     },
-    "M": {
+    "N": {
       "anyOf": [
         {
           "not": {
@@ -3980,7 +4077,7 @@
         }
       ]
     },
-    "N": {
+    "O": {
       "properties": {
         "hosts": {
           "$ref": "#/$defs/t"
@@ -3991,7 +4088,7 @@
       ],
       "type": "object"
     },
-    "O": {
+    "P": {
       "properties": {
         "type": {
           "$ref": "#/$defs/t"
@@ -4001,103 +4098,6 @@
         "type"
       ],
       "type": "object"
-    },
-    "P": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "service": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "LoadBalancer"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "protocol": {
-                          "pattern": "TCP",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "protocol"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "service": {
-                        "properties": {
-                          "protocol": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "protocol"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "service"
-                    ],
-                    "type": "object"
-                  }
-                }
-              ]
-            },
-            {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "type": {
-                      "enum": [
-                        "LoadBalancer"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
     },
     "Q": {
       "properties": {
@@ -5270,7 +5270,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/M"
+        "$ref": "#/$defs/N"
       },
       "then": false
     },
@@ -5301,9 +5301,56 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/E"
+      },
+      "then": {
         "allOf": [
           {
-            "$ref": "#/$defs/M"
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "receivers": {
+                    "additionalProperties": {},
+                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                    "properties": {
+                      "otlp": {
+                        "$ref": "#/$defs/1s"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "receivers": {
+                    "additionalProperties": {},
+                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                    "properties": {
+                      "otlp": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/N"
           },
           {
             "anyOf": [
@@ -5561,7 +5608,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/G"
           }
         ]
       },
@@ -5631,7 +5678,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/G"
           }
         ]
       },
@@ -5706,8 +5753,71 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "tempo": {
+          "additionalProperties": {},
+          "properties": {
+            "registry": {
+              "not": {
+                "type": "array"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
-        "$ref": "#/$defs/P"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/1C"
+              },
+              {
+                "$ref": "#/$defs/9"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/1C"
+              },
+              {
+                "$ref": "#/$defs/n"
+              },
+              {
+                "$ref": "#/$defs/8"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "$ref": "#/$defs/1h"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/E"
       },
       "then": {
         "allOf": [
@@ -5733,25 +5843,6 @@
                             }
                           }
                         }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "tempo": {
-                "additionalProperties": {},
-                "properties": {
-                  "receivers": {
-                    "additionalProperties": {},
-                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                    "properties": {
-                      "otlp": {
-                        "$ref": "#/$defs/1s"
                       }
                     }
                   }
@@ -5825,90 +5916,8 @@
                 }
               }
             }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "tempo": {
-                "additionalProperties": {},
-                "properties": {
-                  "receivers": {
-                    "additionalProperties": {},
-                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                    "properties": {
-                      "otlp": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "tempo": {
-          "additionalProperties": {},
-          "properties": {
-            "registry": {
-              "not": {
-                "type": "array"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/1C"
-              },
-              {
-                "$ref": "#/$defs/9"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/1C"
-              },
-              {
-                "$ref": "#/$defs/n"
-              },
-              {
-                "$ref": "#/$defs/8"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tempo": {
-            "additionalProperties": {},
-            "properties": {
-              "receivers": {
-                "additionalProperties": {},
-                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                "properties": {
-                  "otlp": {
-                    "$ref": "#/$defs/1h"
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -6004,7 +6013,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/E"
           }
         ]
       },
@@ -6116,7 +6125,7 @@
             "$ref": "#/$defs/p"
           },
           {
-            "$ref": "#/$defs/L"
+            "$ref": "#/$defs/M"
           }
         ]
       },
@@ -6175,7 +6184,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/J"
           },
           {
             "anyOf": [
@@ -6248,7 +6257,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/J"
           },
           {
             "anyOf": [
@@ -6412,7 +6421,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/E"
           }
         ]
       },
@@ -6693,7 +6702,7 @@
                                 "type": "integer"
                               },
                               {
-                                "$ref": "#/$defs/K"
+                                "$ref": "#/$defs/L"
                               }
                             ]
                           }
@@ -6747,7 +6756,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/F"
+        "$ref": "#/$defs/G"
       },
       "then": {
         "allOf": [
@@ -7244,7 +7253,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/J"
           },
           {
             "$ref": "#/$defs/Q"
@@ -7455,7 +7464,7 @@
             "$ref": "#/$defs/p"
           },
           {
-            "$ref": "#/$defs/L"
+            "$ref": "#/$defs/M"
           }
         ]
       },
@@ -7571,7 +7580,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/G"
           }
         ]
       },
@@ -7658,7 +7667,7 @@
               "tempoQuery": {
                 "properties": {
                   "ingress": {
-                    "$ref": "#/$defs/N"
+                    "$ref": "#/$defs/O"
                   }
                 },
                 "required": [
@@ -7787,7 +7796,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/M"
+            "$ref": "#/$defs/N"
           },
           {
             "$ref": "#/$defs/q"
@@ -7965,7 +7974,7 @@
             "$ref": "#/$defs/p"
           },
           {
-            "$ref": "#/$defs/L"
+            "$ref": "#/$defs/M"
           },
           {
             "$ref": "#/$defs/q"
@@ -8422,7 +8431,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/J"
+                    "$ref": "#/$defs/K"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -8662,7 +8671,7 @@
                             "$ref": "#/$defs/1U"
                           },
                           "creationTimestamp": {
-                            "$ref": "#/$defs/G"
+                            "$ref": "#/$defs/H"
                           },
                           "deletionGracePeriodSeconds": {
                             "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -8673,7 +8682,7 @@
                             ]
                           },
                           "deletionTimestamp": {
-                            "$ref": "#/$defs/G"
+                            "$ref": "#/$defs/H"
                           },
                           "finalizers": {
                             "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -8753,7 +8762,7 @@
                                   ]
                                 },
                                 "time": {
-                                  "$ref": "#/$defs/G"
+                                  "$ref": "#/$defs/H"
                                 }
                               },
                               "type": [
@@ -8947,7 +8956,7 @@
                             ]
                           },
                           "selector": {
-                            "$ref": "#/$defs/E"
+                            "$ref": "#/$defs/F"
                           },
                           "storageClassName": {
                             "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
@@ -9000,7 +9009,7 @@
                 "description": "Represents a Fibre Channel volume. Fibre Channel volumes can only be mounted as read/write once. Fibre Channel volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/I"
                   },
                   "lun": {
                     "description": "lun is Optional: FC target lun number",
@@ -9379,7 +9388,7 @@
                 "description": "Represents a Photon Controller persistent disk resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/I"
                   },
                   "pdID": {
                     "description": "pdID is the ID that identifies Photon Controller persistent disk",
@@ -9406,7 +9415,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/J"
+                    "$ref": "#/$defs/K"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -9444,7 +9453,7 @@
                           "description": "ClusterTrustBundleProjection describes how to select a set of ClusterTrustBundle objects and project their contents into the pod filesystem.",
                           "properties": {
                             "labelSelector": {
-                              "$ref": "#/$defs/E"
+                              "$ref": "#/$defs/F"
                             },
                             "name": {
                               "description": "Select a single ClusterTrustBundle by object name.  Mutually-exclusive with signerName and labelSelector.",
@@ -9837,10 +9846,10 @@
                 "description": "Represents a StorageOS persistent volume resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/I"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/J"
+                    "$ref": "#/$defs/K"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/o"
@@ -10160,10 +10169,10 @@
                                   ]
                                 },
                                 "namespaceSelector": {
-                                  "$ref": "#/$defs/E"
+                                  "$ref": "#/$defs/F"
                                 },
                                 "podSelector": {
-                                  "$ref": "#/$defs/E"
+                                  "$ref": "#/$defs/F"
                                 }
                               },
                               "type": [
@@ -10527,7 +10536,7 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/K"
+          "$ref": "#/$defs/L"
         },
         {
           "$ref": "#/$defs/4"
@@ -10552,7 +10561,7 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/K"
+          "$ref": "#/$defs/L"
         },
         {
           "$ref": "#/$defs/4"
@@ -10695,7 +10704,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/O"
+                "$ref": "#/$defs/P"
               },
               {
                 "$ref": "#/$defs/1c"
@@ -10804,7 +10813,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/O"
+                "$ref": "#/$defs/P"
               },
               {
                 "$ref": "#/$defs/1c"
@@ -10847,7 +10856,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/P"
                 }
               }
             ]
@@ -11843,7 +11852,7 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/N"
+                        "$ref": "#/$defs/O"
                       },
                       {
                         "$ref": "#/$defs/b"
@@ -12144,7 +12153,7 @@
                       },
                       {
                         "not": {
-                          "$ref": "#/$defs/N"
+                          "$ref": "#/$defs/O"
                         }
                       }
                     ]

@@ -7666,3 +7666,140 @@
 - Measured production LOC delta: +9 (65,793 to 65,802). The typed scope mark and context cell add
   one explicit invariant each while deleting the parallel restoration/global-state protocols. This
   is an ordinary representation round, so no E-style LOC gate applies.
+
+## S-C canonical forms — constructor-owned conjunctions and duplicate deletion
+
+- Status: landed; commit pending.
+- Contract: representation-only. Make `GuardScopes`, `ContractRequirementImplication`, and
+  `ConditionalPathOverlay` the canonicalization owners for their conditional-guard conjunctions;
+  recursively flatten `AbstractValue::MergedLayers` at construction; and retain one owner for
+  guard-value truthiness, Boolean predicates, and render-site identity/order.
+- Acceptance baseline: `9a4d77e2` (S-C scope-discipline closure commit).
+- Baseline production Rust LOC: 65,802.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, wire, or fixture byte changes. Every existing
+    producer already intends these vectors as sets/conjunctions, so constructor canonicalization is
+    expected to reproduce the current order exactly.
+  - If a formerly unsorted producer changes only serialized guard ordering, stop before fixture
+    adoption, prove semantic equivalence and Helm 4.2.3 behavior, and record it as the frozen plan's
+    anticipated ordering-bug correction. Any other changed cell or byte rejects the round.
+  - The three constructors sort and deduplicate every guard conjunction they accept; production
+    call sites no longer hand-maintain the same invariant. Public read access may narrow to slices
+    or accessors only where enforcement requires it, and any such Part-F API decision is recorded.
+  - `AbstractValue::merged_layers` recursively preserves precedence order while flattening nested
+    merges. Both read-time flatten helpers disappear, and every construction route uses the
+    canonical constructor.
+  - The shared guard-value truthiness and Boolean-predicate owners preserve Helm scalar semantics;
+    the render-site key becomes the sole equality/ordering source without changing row grouping.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - `ConditionalGuard::canonicalize_conjunction` exhaustively owns recursive guard-tree sorting and
+    deduplication. `GuardScopes::new`, `ContractRequirementImplication::new`, and
+    `ConditionalPathOverlay::new` apply it at their construction boundaries; the overlay insertion
+    method preserves the same invariant. Production has no direct implication/overlay struct
+    construction and no hand-written conditional-guard `sort`/`dedup` pair in the migrated lanes.
+  - `ContractRequirementImplication::new` also canonicalizes its requirement conjunction. Public
+    construction tests pin top-level and nested guard deduplication plus requirement deduplication.
+  - `AbstractValue::merged_layers` recursively flattens nested layers in precedence order. All
+    production merge creation routes and shape-changing transformations use it; the two recursive
+    read-time flatten helpers and nested-consumer compatibility arms are deleted.
+  - Guard-value truthiness now has one shared owner, Boolean-to-predicate conversion has one owner,
+    and contract normalization calls its base comparator directly instead of retaining a pure alias.
+  - The final archive contains 90 binaries and 128 files. Its clean schema dump passes 62/62 in
+    156.407 seconds: 80 artifacts remain byte-identical and four (`airflow`, `ingress-nginx`,
+    `tempo`, `traefik`) contain only the registered canonical guard-order/derived `$defs` ordering
+    rewrite. All 18 symbolic-IR artifacts remain byte-identical.
+  - The final full-depth battery checks 120,833 probes across 60 charts with zero acceptance flips,
+    zero candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and
+    7,465/7,465 mandatory third-level probes. The schema-order-prefix disclosed category records
+    25,990 bounded reductions after canonical schema ordering.
+
+- Deviations:
+  - The first lint preflight rejected two redundant method-call closures exposed by deleting the
+    flatten adapters. Both became direct method references; no suppression or archive from that
+    state was adopted.
+  - The first archive command (`final1`) failed before producing an archive because its absolute
+    `TMPDIR` had not been created, so clang could not create a temporary file. The harness was
+    corrected by explicitly creating fresh step-local directories; no code or repository setting
+    changed.
+  - The `final2` clean dump exposed the four pre-registered ordering-only fixture changes. Its
+    independent full-depth battery reported zero acceptance flips before those fixtures were
+    adopted. A self-adversarial API cleanup then made inserted nested guards canonical and routed a
+    remaining scalar Boolean spelling through the shared owner; protocol therefore discarded
+    `final2` as authoritative and rebuilt `final3`. The final3 schema dump is byte-identical to
+    final2, and its own clean full-depth battery independently repeats the zero-flip result.
+  - The current tree contains standalone conditional conjunction carriers added after the frozen
+    review's line inventory. They call the same exhaustive core canonicalizer rather than retaining
+    hand-written sort/dedup pairs; the three scheduled phase constructors remain the canonical
+    production boundaries.
+
+- Adjudication evidence:
+  - The four changed schemas move equivalent `allOf`/`anyOf` guard branches into structural order;
+    the resulting definition-number shifts follow from deterministic traversal, not from a changed
+    constraint. The generated schema fixtures were copied only from the final clean dump.
+  - Helm 4.2.3 remains pinned and enabled in the full-depth battery. It reports zero acceptance
+    flips, so there is no candidate-accepts/Helm-aborts cell to adopt or waive. Mandatory base and
+    third-level coverage have zero drops.
+
+- Producer/route coverage:
+
+  | Route | Final behavior and proof |
+  | --- | --- |
+  | Guard scopes | Outer and nested conjunctions recursively canonicalized by `GuardScopes::new`; emission suite/full schemas. |
+  | Requirement implications | Every production construction uses `new`; core public-surface test and contract suites. |
+  | Conditional overlays | Initial and inserted kind guards preserve canonical order; four adjudicated schemas and overlay suites. |
+  | Merged helper layers | Creation and shape-changing transforms flatten once in precedence order; focused constructor test and IR identity. |
+  | Guard-value/Boolean helpers | One owner each across scalar, symbolic-local, comparison, and condition lanes; 1,060 focused tests. |
+  | Render-site grouping | Comparator alias deleted with unchanged base comparator calls; normalization tests and IR identity. |
+
+- Review dossier:
+  - Focused proof: 1,060/1,060 core/IR/gen tests pass; corrected whole-workspace lint passes with
+    only the two pre-existing ast-grep multiline-string warnings.
+  - Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sc-canonical-final3-build
+    cargo nextest archive --workspace --archive-file
+    /private/tmp/arch-v4-sc-canonical-final3.tar.zst`; exit 0, 90 binaries and 128 files.
+  - Clean schema dump: final3 archive and step-local `TMPDIR`; exit 0, 62/62 in 156.407 seconds.
+    Final3 is byte-identical to the adjudicated final2 dump and to every adopted fixture; comparison
+    against `9a4d77e2` identifies only the four registered ordering rewrites.
+  - Clean IR dump: the same archive and step-local `TMPDIR`; exit 0, one test in 4.715 seconds; all
+    18 artifacts are byte-identical to `9a4d77e2`.
+  - Full-depth proof: same final3 archive, baseline `9a4d77e2`, Helm adjudication enabled; exit 0 in
+    85.440 seconds, 60 charts, 120,833 probes, zero flips, zero unallowed accepted-abort cells, zero
+    mandatory drops, and 25,990 disclosed bounded reductions.
+  - Public/wire decision: additive public constructors plus a canonical conjunction operation and
+    overlay insertion method. Existing public fields remain source-compatible; production writers
+    deliberately migrate to the constructors. No serialized wire type or spelling changes.
+
+- Self-adversarial pass:
+  - The `ConditionalGuard` canonicalizer matches every variant explicitly and recursively descends
+    through `Not`, `AllOf`, and `AnyOf`; no wildcard can hide a future condition variant.
+  - Overlay insertion canonicalizes a nested guard before binary insertion, so the mutation path
+    cannot bypass the constructor invariant. Whole-tree searches find no production direct overlay
+    or implication struct literal.
+  - Merge construction recursively flattens while iterating left-to-right, so precedence is
+    preserved. All production variant creation outside the constructor was removed; remaining
+    occurrences are destructures and two deliberate private tests.
+  - The four schema changes reproduce byte-for-byte across final2 and final3, while IR remains
+    unchanged and the full-depth result repeats. This rules out stale-binary or mixed-dump adoption.
+  - No compatibility wrapper, cached parallel vector, lint suppression, or fallback identity was
+    introduced.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0; the two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0; 48/48 feature combinations pass across three targets in 230.94 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,334/1,334 pass in 104.409 seconds.
+  - `task test:integration`: exit 0; 564/564 pass in 741.742 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0; 1,902/1,902 pass in 786.866 seconds; 24 tests skipped by profile and
+    all live network tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 24.6 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts in approximately 43.5 seconds using the
+    documented macOS shims and `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,760.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: -42 (65,802 to 65,760). This ordinary representation round
+  deletes duplicated canonicalization/read-time compatibility and helper bodies; no E-style LOC
+  gate applies.

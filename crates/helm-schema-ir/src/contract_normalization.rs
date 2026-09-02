@@ -96,7 +96,7 @@ fn canonicalize_expanded_contract_uses(uses: &mut Vec<ContractUse>) {
     for (rank, contract_use) in rows {
         if let Some((existing_rank, existing)) = semantic_rows.last_mut()
             && *existing_rank == rank
-            && contract_use_render_site_cmp(existing, &contract_use).is_eq()
+            && contract_use_base_cmp(existing, &contract_use).is_eq()
         {
             merge_contract_use_provenance(existing, contract_use.provenance);
             continue;
@@ -114,7 +114,7 @@ fn compact_contract_uses(uses: &mut Vec<ContractUse>) {
     let mut merged_sites: Vec<ContractUse> = Vec::with_capacity(uses.len());
     for contract_use in std::mem::take(uses) {
         if let Some(existing) = merged_sites.last_mut()
-            && contract_use_render_site_cmp(existing, &contract_use).is_eq()
+            && contract_use_base_cmp(existing, &contract_use).is_eq()
         {
             existing.condition.union_absorbing(contract_use.condition);
             merge_contract_use_provenance(existing, contract_use.provenance);
@@ -500,10 +500,6 @@ fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {
         }
     }
     *uses = expanded;
-}
-
-fn contract_use_render_site_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
-    contract_use_base_cmp(left, right)
 }
 
 fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {

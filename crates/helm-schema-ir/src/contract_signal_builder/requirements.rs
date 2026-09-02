@@ -662,8 +662,7 @@ pub(super) fn record_fail_conjunction(
                 .map(terminal_clause_guard)
                 .collect::<Option<Vec<_>>>();
             if let Some(mut clause) = clause {
-                clause.sort();
-                clause.dedup();
+                ConditionalGuard::canonicalize_conjunction(&mut clause);
                 if !clause.is_empty() && !terminal_clauses.contains(&clause) {
                     terminal_clauses.push(clause);
                 }
@@ -679,8 +678,6 @@ pub(super) fn record_fail_conjunction(
         };
         path
     };
-    requirements.sort();
-    requirements.dedup();
     // A test whose requirements contradict (a type-dispatch arm's own
     // partition conjunct joins the test on the same path) can never fire;
     // its arm would encode as a tautology, so it is dropped as noise.
@@ -695,11 +692,9 @@ pub(super) fn record_fail_conjunction(
     if contradictory {
         return;
     }
-    outer_guards.sort();
-    outer_guards.dedup();
-    let implication = ContractRequirementImplication {
+    let implication = ContractRequirementImplication::new(
         outer_guards,
-        target: ranged
+        ranged
             .as_deref()
             .map_or(ContractRequirementTarget::Value, |path| {
                 let mode = range_modes.mode(&helm_schema_core::ValuesPath::parse(path));
@@ -713,7 +708,7 @@ pub(super) fn record_fail_conjunction(
                 }
             }),
         requirements,
-    };
+    );
     let acc = path_accumulator(paths, &ValuesPath::parse(&target));
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
@@ -872,17 +867,13 @@ pub(super) fn record_range_key_prefix_requirement(
     if requirements.is_empty() {
         return true;
     }
-    outer_guards.sort();
-    outer_guards.dedup();
-    requirements.sort();
-    requirements.dedup();
-    let implication = ContractRequirementImplication {
+    let implication = ContractRequirementImplication::new(
         outer_guards,
-        target: ContractRequirementTarget::MembersMatchingPrefix {
+        ContractRequirementTarget::MembersMatchingPrefix {
             prefix: (*prefix).to_string(),
         },
         requirements,
-    };
+    );
     let acc = path_accumulator(paths, collection_path);
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
@@ -963,8 +954,6 @@ pub(super) fn record_range_key_matches_requirement(
             }
         }
     }
-    outer_guards.sort();
-    outer_guards.dedup();
     let requirement = if *negated {
         FailValueRequirement::MatchesPattern {
             pattern: (*pattern).to_string(),
@@ -975,11 +964,11 @@ pub(super) fn record_range_key_matches_requirement(
             pattern: (*pattern).to_string(),
         }
     };
-    let implication = ContractRequirementImplication {
+    let implication = ContractRequirementImplication::new(
         outer_guards,
-        target: ContractRequirementTarget::Keys,
-        requirements: vec![requirement],
-    };
+        ContractRequirementTarget::Keys,
+        vec![requirement],
+    );
     let acc = path_accumulator(paths, collection_path);
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
@@ -1031,8 +1020,7 @@ pub(super) fn capture_outer_guards(
     {
         return None;
     }
-    guards.sort();
-    guards.dedup();
+    ConditionalGuard::canonicalize_conjunction(&mut guards);
     Some(guards)
 }
 
@@ -1086,8 +1074,7 @@ pub(super) fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard
                 .iter()
                 .filter_map(fail_outer_guard)
                 .collect::<Vec<_>>();
-            guards.sort();
-            guards.dedup();
+            ConditionalGuard::canonicalize_conjunction(&mut guards);
             match guards.as_slice() {
                 [] => None,
                 [guard] => Some(guard.clone()),
@@ -1104,8 +1091,7 @@ pub(super) fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard
                 .iter()
                 .map(fail_outer_guard)
                 .collect::<Option<Vec<_>>>()?;
-            guards.sort();
-            guards.dedup();
+            ConditionalGuard::canonicalize_conjunction(&mut guards);
             match guards.as_slice() {
                 [] => None,
                 [guard] => Some(guard.clone()),
@@ -1236,9 +1222,6 @@ pub(super) fn record_value_requirement_capture(
                 }
                 outer_guards.push(guard);
             }
-            outer_guards.sort();
-            outer_guards.dedup();
-
             let mut target_path =
                 std::iter::repeat_n("*".to_string(), wildcard_count - 1).collect::<Vec<_>>();
             target_path.extend(
@@ -1246,14 +1229,14 @@ pub(super) fn record_value_requirement_capture(
                     .iter()
                     .filter_map(|segment| segment.literal().map(str::to_owned)),
             );
-            let implication = ContractRequirementImplication {
+            let implication = ContractRequirementImplication::new(
                 outer_guards,
-                target: ContractRequirementTarget::MembersAt {
+                ContractRequirementTarget::MembersAt {
                     target_path,
                     allow_integer: false,
                 },
-                requirements: vec![requirement],
-            };
+                vec![requirement],
+            );
             let acc = path_accumulator(paths, &collection_path);
             acc.referenced = true;
             if !acc.requirement_implications.contains(&implication) {
@@ -1337,8 +1320,6 @@ pub(super) fn record_value_requirement_capture(
         } else {
             requirement
         };
-        outer_guards.sort();
-        outer_guards.dedup();
         let allow_integer = {
             let mode = capture
                 .ranged
@@ -1346,9 +1327,9 @@ pub(super) fn record_value_requirement_capture(
             mode.member_identity && !mode.destructured && !mode.json_decoded
         };
         let target_path = helm_schema_core::split_value_path(member_suffix);
-        let implication = ContractRequirementImplication {
+        let implication = ContractRequirementImplication::new(
             outer_guards,
-            target: match member_selector {
+            match member_selector {
                 Some(guard_path) => ContractRequirementTarget::MembersAtWhereTruthy {
                     guard_path,
                     target_path,
@@ -1359,8 +1340,8 @@ pub(super) fn record_value_requirement_capture(
                     allow_integer,
                 },
             },
-            requirements: vec![requirement],
-        };
+            vec![requirement],
+        );
         let acc = path_accumulator(paths, &ValuesPath::parse(collection_path));
         if !acc.requirement_implications.contains(&implication) {
             acc.requirement_implications.push(implication);
@@ -1438,8 +1419,6 @@ pub(super) fn record_value_requirement_capture(
             alternatives.append(&mut dispatch_escapes);
             requirement = FailValueRequirement::AnyOf(alternatives);
         }
-        outer_guards.sort();
-        outer_guards.dedup();
         let allow_integer = {
             let mode = capture
                 .ranged
@@ -1468,11 +1447,7 @@ pub(super) fn record_value_requirement_capture(
         };
         (path, ContractRequirementTarget::Value, outer_guards)
     };
-    let implication = ContractRequirementImplication {
-        outer_guards,
-        target,
-        requirements: vec![requirement],
-    };
+    let implication = ContractRequirementImplication::new(outer_guards, target, vec![requirement]);
     let acc = path_accumulator(paths, &ValuesPath::parse(target_path));
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
@@ -1501,13 +1476,13 @@ pub(super) fn record_collection_item_requirements(
                 templated: false,
             });
         }
-        let implication = ContractRequirementImplication {
-            outer_guards: outer_guards.clone(),
-            target: ContractRequirementTarget::Members {
+        let implication = ContractRequirementImplication::new(
+            outer_guards.clone(),
+            ContractRequirementTarget::Members {
                 allow_integer: false,
             },
             requirements,
-        };
+        );
         let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
@@ -1572,8 +1547,7 @@ pub(super) fn record_absence_abort_clause(
     clause.push(ConditionalGuard::Absent {
         path: helm_schema_core::ValuesPath::parse(path),
     });
-    clause.sort();
-    clause.dedup();
+    ConditionalGuard::canonicalize_conjunction(&mut clause);
     if !terminal_clauses.contains(&clause) {
         terminal_clauses.push(clause);
     }
@@ -1591,11 +1565,11 @@ pub(super) fn record_index_access_requirement(
     let Some(outer_guards) = capture_outer_guards(capture) else {
         return;
     };
-    let implication = ContractRequirementImplication {
+    let implication = ContractRequirementImplication::new(
         outer_guards,
-        target: ContractRequirementTarget::Value,
-        requirements: vec![FailValueRequirement::IndexableAt(index)],
-    };
+        ContractRequirementTarget::Value,
+        vec![FailValueRequirement::IndexableAt(index)],
+    );
     let acc = path_accumulator(paths, &ValuesPath::parse(path));
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
@@ -1633,15 +1607,15 @@ pub(super) fn record_split_index_access_requirement(
         let Some(outer_guards) = outer_guards.clone() else {
             continue;
         };
-        let implication = ContractRequirementImplication {
+        let implication = ContractRequirementImplication::new(
             outer_guards,
-            target: ContractRequirementTarget::Value,
-            requirements: vec![FailValueRequirement::SplitSegmentsAtLeast {
+            ContractRequirementTarget::Value,
+            vec![FailValueRequirement::SplitSegmentsAtLeast {
                 separator: separator.to_string(),
                 segments: index + 1,
                 allow_non_string,
             }],
-        };
+        );
         let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
@@ -1725,21 +1699,19 @@ pub(super) fn record_member_relative_split_requirement(
     let [(guard_path, value)] = member_guards.as_slice() else {
         return;
     };
-    outer_guards.sort();
-    outer_guards.dedup();
-    let implication = ContractRequirementImplication {
+    let implication = ContractRequirementImplication::new(
         outer_guards,
-        target: ContractRequirementTarget::MembersWhereEquals {
+        ContractRequirementTarget::MembersWhereEquals {
             guard_path: guard_path.clone(),
             value: value.clone(),
             target_path,
         },
-        requirements: vec![FailValueRequirement::SplitSegmentsAtLeast {
+        vec![FailValueRequirement::SplitSegmentsAtLeast {
             separator: separator.to_string(),
             segments: index + 1,
             allow_non_string,
         }],
-    };
+    );
     let acc = path_accumulator(paths, &collection);
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
@@ -1771,11 +1743,11 @@ pub(super) fn record_range_key_string_requirements(
         let Some(outer_guards) = lowerable_range_outer_guards(path, &capture.conjunction) else {
             continue;
         };
-        let implication = ContractRequirementImplication {
+        let implication = ContractRequirementImplication::new(
             outer_guards,
-            target: ContractRequirementTarget::Keys,
-            requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
-        };
+            ContractRequirementTarget::Keys,
+            vec![FailValueRequirement::SchemaType("string".to_string())],
+        );
         let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
@@ -1812,14 +1784,14 @@ pub(super) fn record_range_key_plain_slot_requirements(
         let Some(outer_guards) = lowerable_range_outer_guards(path, &capture.conjunction) else {
             continue;
         };
-        let implication = ContractRequirementImplication {
+        let implication = ContractRequirementImplication::new(
             outer_guards,
-            target: ContractRequirementTarget::Keys,
-            requirements: vec![FailValueRequirement::PlainScalarSafe {
+            ContractRequirementTarget::Keys,
+            vec![FailValueRequirement::PlainScalarSafe {
                 token_initial: true,
                 templated: false,
             }],
-        };
+        );
         let acc = path_accumulator(paths, &ValuesPath::parse(path));
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
@@ -2160,11 +2132,9 @@ pub(super) fn record_member_access_capture(
             }
             outer_guards.push(guard);
         }
-        outer_guards.sort();
-        outer_guards.dedup();
-        let implication = ContractRequirementImplication {
+        let implication = ContractRequirementImplication::new(
             outer_guards,
-            target: ContractRequirementTarget::Members {
+            ContractRequirementTarget::Members {
                 allow_integer: {
                     let mode = range_modes.mode(&parent);
                     let capture_mode = capture.ranged.mode(&parent);
@@ -2174,8 +2144,8 @@ pub(super) fn record_member_access_capture(
                         && !capture_mode.json_decoded
                 },
             },
-            requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
-        };
+            vec![FailValueRequirement::SchemaType("object".to_string())],
+        );
         let acc = path_accumulator(paths, &parent);
         acc.referenced = true;
         if !acc.requirement_implications.contains(&implication) {
@@ -2265,8 +2235,7 @@ pub(super) fn lower_member_access_condition(
             }
             guards.push(guard);
         }
-        guards.sort();
-        guards.dedup();
+        ConditionalGuard::canonicalize_conjunction(&mut guards);
         guard_sets.insert(guards);
     }
     Some(factor_guard_sets(guard_sets))
@@ -2300,8 +2269,7 @@ pub(super) fn fold_member_access_arms(
     } else {
         outer_guards.push(ConditionalGuard::AnyOf(arms));
     }
-    outer_guards.sort();
-    outer_guards.dedup();
+    ConditionalGuard::canonicalize_conjunction(&mut outer_guards);
     outer_guards
 }
 
@@ -2449,14 +2417,14 @@ pub(super) fn record_member_access_implications(
         ] {
             for (handled_kinds, guard_sets) in guard_sets_by_kind {
                 let outer_guards = fold_member_access_arms(guard_sets.clone());
-                let implication = ContractRequirementImplication {
+                let implication = ContractRequirementImplication::new(
                     outer_guards,
-                    target: ContractRequirementTarget::Value,
-                    requirements: vec![FailValueRequirement::MemberHost {
+                    ContractRequirementTarget::Value,
+                    vec![FailValueRequirement::MemberHost {
                         handled_kinds: handled_kinds.clone(),
                         complete_domain,
                     }],
-                };
+                );
                 let acc = path_accumulator(paths, &path);
                 if !acc.requirement_implications.contains(&implication) {
                     acc.requirement_implications.push(implication);
@@ -2500,8 +2468,7 @@ pub(super) fn record_member_access_implications(
         // requirement.
         let mut clause = fold_member_access_arms(absent_abort_sets);
         clause.push(ConditionalGuard::Absent { path: path.clone() });
-        clause.sort();
-        clause.dedup();
+        ConditionalGuard::canonicalize_conjunction(&mut clause);
         if !terminal_clauses.contains(&clause) {
             terminal_clauses.push(clause);
         }

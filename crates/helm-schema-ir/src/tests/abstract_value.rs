@@ -353,3 +353,18 @@ fn without_widened_drops_widened_alternatives() {
         want: Some(path("image.tag"))
     );
 }
+
+#[test]
+fn merged_layers_constructor_flattens_nested_precedence_order() {
+    sim_assert_eq!(
+        have: AbstractValue::merged_layers(vec![
+            path("preferred"),
+            AbstractValue::MergedLayers(vec![path("middle"), path("fallback")]),
+        ]),
+        want: Some(AbstractValue::MergedLayers(vec![
+            path("preferred"),
+            path("middle"),
+            path("fallback"),
+        ])),
+    );
+}

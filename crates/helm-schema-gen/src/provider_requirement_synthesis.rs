@@ -79,22 +79,22 @@ pub(crate) fn synthesized_required_source_implications(
                         .iter()
                         .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
                 ),
-                ContractRequirementImplication {
-                    outer_guards: Vec::new(),
-                    target: ContractRequirementTarget::Value,
-                    requirements: vec![FailValueRequirement::HasMemberEvenDefaulted(
+                ContractRequirementImplication::new(
+                    Vec::new(),
+                    ContractRequirementTarget::Value,
+                    vec![FailValueRequirement::HasMemberEvenDefaulted(
                         leaf_segment.clone(),
                     )],
-                },
+                ),
             );
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractRequirementImplication {
-                    outer_guards: Vec::new(),
-                    target: ContractRequirementTarget::Value,
-                    requirements: vec![FailValueRequirement::NotSchemaType("null".to_string())],
-                },
+                ContractRequirementImplication::new(
+                    Vec::new(),
+                    ContractRequirementTarget::Value,
+                    vec![FailValueRequirement::NotSchemaType("null".to_string())],
+                ),
             );
         }
         for overlay in &evidence.conditional_overlays {
@@ -150,22 +150,22 @@ pub(crate) fn synthesized_required_source_implications(
                         .iter()
                         .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
                 ),
-                ContractRequirementImplication {
-                    outer_guards: overlay.guards.clone(),
-                    target: ContractRequirementTarget::Value,
-                    requirements: vec![FailValueRequirement::HasMemberEvenDefaulted(
+                ContractRequirementImplication::new(
+                    overlay.guards.clone(),
+                    ContractRequirementTarget::Value,
+                    vec![FailValueRequirement::HasMemberEvenDefaulted(
                         leaf_segment.clone(),
                     )],
-                },
+                ),
             );
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractRequirementImplication {
-                    outer_guards: overlay.guards.clone(),
-                    target: ContractRequirementTarget::Value,
-                    requirements: vec![FailValueRequirement::NotSchemaType("null".to_string())],
-                },
+                ContractRequirementImplication::new(
+                    overlay.guards.clone(),
+                    ContractRequirementTarget::Value,
+                    vec![FailValueRequirement::NotSchemaType("null".to_string())],
+                ),
             );
         }
     }
@@ -344,11 +344,11 @@ pub(crate) fn synthesized_ranged_member_required_implications(
             push_implication(
                 &mut implications,
                 collection_path.clone(),
-                ContractRequirementImplication {
+                ContractRequirementImplication::new(
                     outer_guards,
                     // An integer iterable has no members to constrain;
                     // leaving that lane open is the safe direction.
-                    target: dependency_defaulted_member_keys(
+                    dependency_defaulted_member_keys(
                         subchart_defaults_doc,
                         collection_segments,
                         field_segments,
@@ -363,7 +363,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                         },
                     ),
                     requirements,
-                },
+                ),
             );
         }
     }
@@ -445,16 +445,16 @@ pub(crate) fn synthesized_split_segment_implications(
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractRequirementImplication {
-                    outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                ContractRequirementImplication::new(
+                    vec![helm_schema_core::ConditionalGuard::Truthy {
                         path: value_path.clone(),
                     }],
-                    target: ContractRequirementTarget::Value,
-                    requirements: vec![FailValueRequirement::MatchesPattern {
+                    ContractRequirementTarget::Value,
+                    vec![FailValueRequirement::MatchesPattern {
                         pattern,
                         templated: false,
                     }],
-                },
+                ),
             );
         }
     }
@@ -522,11 +522,11 @@ pub(crate) fn synthesized_range_key_implications(
             push_implication(
                 &mut implications,
                 value_path.clone(),
-                ContractRequirementImplication {
-                    outer_guards: branch_guards.to_vec(),
-                    target: ContractRequirementTarget::Keys,
+                ContractRequirementImplication::new(
+                    branch_guards.to_vec(),
+                    ContractRequirementTarget::Keys,
                     requirements,
-                },
+                ),
             );
         }
     }

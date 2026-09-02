@@ -54,11 +54,11 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             // as a mapping, so a user null is deleted by the values
             // coalesce that runs first and reaches the check as absent —
             // hence the null-tolerant form.
-            let requires_table = ContractRequirementImplication {
-                outer_guards: Vec::new(),
-                target: ContractRequirementTarget::Value,
-                requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
-            };
+            let requires_table = ContractRequirementImplication::new(
+                Vec::new(),
+                ContractRequirementTarget::Value,
+                vec![FailValueRequirement::SchemaType("object".to_string())],
+            );
             if !acc.requirement_implications.contains(&requires_table) {
                 acc.requirement_implications.push(requires_table);
             }

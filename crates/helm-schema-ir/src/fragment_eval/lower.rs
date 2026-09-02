@@ -194,20 +194,6 @@ fn helper_meta_conditions(meta: &HelperOutputMeta) -> Vec<PathCondition> {
         .collect()
 }
 
-/// The merge layers of a possibly-nested [`AbstractValue::MergedLayers`]
-/// value, flattened in precedence order (nesting is associative: an inner
-/// merge's layers slot into the outer order where the inner merge stood).
-fn flattened_merge_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
-    let mut flat = Vec::new();
-    for layer in layers {
-        match layer {
-            AbstractValue::MergedLayers(inner) => flat.extend(flattened_merge_layers(inner)),
-            other => flat.push(other),
-        }
-    }
-    flat
-}
-
 /// Lower a hole value that stands as an entire fragment position (an entry
 /// value, a sequence item, or a standalone output line).
 #[expect(
@@ -386,15 +372,9 @@ pub(crate) fn lower_value(
             // with a selector built from `nameOverride`) supplies its OWN
             // literal keys, so keying its shadow on the referenced path
             // would scope sibling-layer members by the wrong value.
-            // Nested merges flatten in precedence order — `MergedLayers([A,
-            // MergedLayers([B, C])])` IS the ordered merge A > B > C
-            // (airflow's per-set merge layers each `sets[]` member over the
-            // celery-merged workers base) — so identity extraction and
-            // shadow positions read the flat list.
-            let layers = flattened_merge_layers(layers);
             let identities: Option<Vec<ValuesPath>> = layers
                 .iter()
-                .map(|layer| layer.merge_layer_identity())
+                .map(AbstractValue::merge_layer_identity)
                 .collect();
             let merge_layers = identities.as_ref().map(|layer_paths| {
                 layer_paths

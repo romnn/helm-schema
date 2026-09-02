@@ -8,6 +8,7 @@ use crate::function_semantics::{
     function_semantics, go_type_descriptor_spellings, go_type_schema_type,
     type_descriptor_call_subject, type_is_schema_type,
 };
+use crate::scalar_value::bool_predicate;
 use crate::{Guard, GuardValue};
 use helm_schema_core::Predicate;
 
@@ -1952,30 +1953,18 @@ impl ValuePathContext<'_> {
     /// merge being falsy. Nil-scrubbed layers may also become empty from a
     /// truthy all-null map, so the converse is deliberately not claimed.
     fn negated_merged_layers_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
-        fn collect_paths(layers: &[AbstractValue], paths: &mut Vec<String>) -> bool {
-            for layer in layers {
-                if let AbstractValue::MergedLayers(nested) = layer {
-                    if !collect_paths(nested, paths) {
-                        return false;
-                    }
-                } else if let Some(path) = layer.merge_layer_identity() {
-                    paths.push(path.encode());
-                } else {
-                    return false;
-                }
-            }
-            true
-        }
-
         let Some(AbstractValue::MergedLayers(layers)) =
             eval_expr(expr, &self.expression_eval_env()).value
         else {
             return Vec::new();
         };
-        let mut paths = Vec::new();
-        if !collect_paths(&layers, &mut paths) {
+        let Some(mut paths) = layers
+            .iter()
+            .map(|layer| layer.merge_layer_identity().map(|path| path.encode()))
+            .collect::<Option<Vec<_>>>()
+        else {
             return Vec::new();
-        }
+        };
         paths.sort();
         paths.dedup();
         paths
@@ -3254,9 +3243,6 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
                 }
                 arms.push(Predicate::truthy_path(path.encode()));
             }
-            AbstractValue::MergedLayers(nested) => {
-                arms.push(merged_layers_truthy_predicate(nested)?);
-            }
             _ => return None,
         }
     }
@@ -3516,14 +3502,6 @@ fn ancestor_chain_leaf(paths: &std::collections::BTreeSet<String>) -> Option<&st
         }
     }
     ordered.last().map(|path| path.as_str())
-}
-
-fn bool_predicate(value: bool) -> Predicate {
-    if value {
-        Predicate::True
-    } else {
-        Predicate::False
-    }
 }
 
 /// The mapping whose member count `expr` computes: `len (keys M)` or the

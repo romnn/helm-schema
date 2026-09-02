@@ -10,7 +10,7 @@ use crate::eval_effect::{
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::function_semantics::{function_semantics, type_is_schema_type};
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition, bool_predicate};
 
 use super::collections::direct_raw_identity_path;
 use super::strict_operands::{record_comparable_kind_result, record_strict_kind_result};
@@ -309,14 +309,6 @@ fn guard_value_schema_type(value: &GuardValue) -> &'static str {
         GuardValue::Int(_) => "integer",
         GuardValue::Float(_) => "number",
         GuardValue::Null => "null",
-    }
-}
-
-fn bool_predicate(value: bool) -> Predicate {
-    if value {
-        Predicate::True
-    } else {
-        Predicate::False
     }
 }
 

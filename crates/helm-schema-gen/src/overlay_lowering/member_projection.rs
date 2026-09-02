@@ -213,8 +213,7 @@ pub(super) fn append_omitted_member_arms(
                 };
                 let mut guards = branch_guards.clone();
                 guards.extend(retain_guards.iter().cloned());
-                guards.sort();
-                guards.dedup();
+                ConditionalGuard::canonicalize_conjunction(&mut guards);
                 arms.insert((
                     member.clone(),
                     guards,
@@ -353,8 +352,7 @@ pub(super) fn append_merge_shadow_arms(
                     ConditionalGuard::Not(Box::new(earlier_live))
                 }));
                 guards.extend(provider_use.outer_guards.iter().cloned());
-                guards.sort();
-                guards.dedup();
+                ConditionalGuard::canonicalize_conjunction(&mut guards);
                 let base_effect = if evidence.facts.has_unlayered_non_control_use {
                     ConditionalBaseEffect::Preserve
                 } else {
@@ -405,8 +403,7 @@ pub(super) fn append_merge_shadow_arms(
                     })
                     .collect();
                 guards.extend(provider_use.outer_guards.iter().cloned());
-                guards.sort();
-                guards.dedup();
+                ConditionalGuard::canonicalize_conjunction(&mut guards);
                 let target_schema = serde_json::json!({
                     "properties": { member: member_schema }
                 });

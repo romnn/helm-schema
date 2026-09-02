@@ -366,7 +366,11 @@ pub(crate) struct GuardScopes {
 }
 
 impl GuardScopes {
-    pub(crate) fn new(outer: Vec<ConditionalGuard>, nested: Vec<NestedGuardScope>) -> Self {
+    pub(crate) fn new(mut outer: Vec<ConditionalGuard>, mut nested: Vec<NestedGuardScope>) -> Self {
+        ConditionalGuard::canonicalize_conjunction(&mut outer);
+        for scope in &mut nested {
+            ConditionalGuard::canonicalize_conjunction(&mut scope.guards);
+        }
         Self { outer, nested }
     }
 

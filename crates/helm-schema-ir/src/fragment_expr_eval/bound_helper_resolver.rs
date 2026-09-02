@@ -227,7 +227,7 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         } else {
             overwrite_layer
         };
-        let value = AbstractValue::MergedLayers(vec![overwrite_layer, input_layer]);
+        let value = AbstractValue::merged_layers(vec![overwrite_layer, input_layer])?;
         let mut effects = Effects::default();
         effects.merge(input.effects.execution_only());
         effects.merge(overwrite.effects.execution_only());
@@ -296,7 +296,7 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
             layers.push(AbstractValue::OutputPath(path, meta));
         }
 
-        let value = AbstractValue::MergedLayers(layers);
+        let value = AbstractValue::merged_layers(layers)?;
         let payload_paths = value.paths();
         effects.yaml_serialized_paths.extend(payload_paths.clone());
         effects.derived_text_paths.extend(payload_paths);
