@@ -8240,7 +8240,7 @@
 
 ## C1c — total typed value-path schema channels
 
-- Status: landed; commit pending.
+- Status: landed in `edc332da` (`refactor(gen): type value-path schema channels`).
 - Contract: representation-only. Replace `ValuePathSchemaInputs`' raw schema fields with one total
   enum variant whose channel names carry `SchemaNode`s, so construction and exhaustive consumption
   cannot erase provider, declared-default, guard, ordinary-hint, guarded-hint, or fallback-hint
