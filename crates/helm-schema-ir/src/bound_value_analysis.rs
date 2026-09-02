@@ -63,6 +63,12 @@ impl BoundValueContext {
             .collect()
     }
 
+    pub(crate) fn get_binding_domain(&self, name: &str) -> Option<(&GetBinding, &[String])> {
+        let binding = self.get_bindings.get(name)?;
+        let domain = self.range_domains.get(&binding.key_var)?;
+        Some((binding, domain))
+    }
+
     pub(crate) fn with_predicate_constraints(&self, expr: &TemplateExpr, truthy: bool) -> Self {
         let Some(next_constraints) = predicate_domain_constraints(expr, truthy) else {
             return self.clone();

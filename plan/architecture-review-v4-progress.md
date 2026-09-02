@@ -8489,3 +8489,122 @@
 - Measured production LOC delta: +106 (65,975 to 66,081). The explicit phase artifact and focused
   regression replace path-resolver lookup machinery and provider calls spread across synthesis and
   overlay consumers; this ordinary performance/representation round has no E-style LOC gate.
+
+## S-B3 — embedded value-path evaluation environment
+
+- Status: landed; commit pending.
+- Contract: representation/performance-only. Make `ValuePathContext` own one fully prepared
+  `EvalEnv`, delete its parallel expression-environment fields and per-decode projection/cloning,
+  and route direct condition/path readers through that same environment.
+- Acceptance baseline: `714532c9` (C4 ledger closure commit).
+- Baseline production Rust LOC: 66,081.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+  - Root fields and dispatches, local fragment/scalar/default/output/truthy facts, pipeline-bound
+    identity, bound range/get domains, dot identity, and helper-call argument suppression are
+    populated once at `ValuePathContext` construction with the exact old values.
+  - Every expression decode borrows the embedded environment; no method may clone/project a fresh
+    `EvalEnv`, and no deleted field may survive beside its environment counterpart.
+  - Fragment-only state (`current_dot_fragment`, helper database/context, type/int-cast facts, and
+    truthiness abstentions) remains separate because it is not expression-environment state.
+  - Any changed artifact byte or acceptance cell rejects the round. Candidate-accepts/Helm-aborts
+    allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - `ValuePathContext` owns one fully populated `EvalEnv`. Root values and dispatches, merged local
+    fragment bindings, scalar dispatches, pipeline-bound identity, defaults, output metadata,
+    truthy reductions, and bound range/get domains are cloned once when the context is constructed.
+  - `expression_eval_env` now returns a shared reference. Every expression-effects, path,
+    condition, range-subject, and helper-fragment decoder borrows that environment; the old method
+    that rebuilt and re-cloned the environment on every call is deleted.
+  - Direct condition readers use the same environment fields. `BoundValueContext` exposes one
+    read-only binding/domain query so range-key truthiness no longer needs parallel raw map
+    references.
+  - `RootDotIdentity::{Unresolved, ExplicitRoot, Other}` preserves the distinct value-dot fact used
+    by root-field classification. Expression evaluation still uses the fragment-dot-preferred
+    `EvalEnv::dot`; neither fact is recomputed per decode.
+  - All 84 schema artifacts and all 18 symbolic-IR artifacts are byte-identical to C4. The
+    full-depth battery checks 120,837 probes across 60 charts with zero flips, zero candidate-
+    accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and 7,465/7,465 mandatory
+    third-level probes; the disclosed bounded category remains 25,718 reductions.
+
+- Deviations:
+  - The first compiler-driven pass exposed four multiline dot-identity readers and one private test
+    mutation after deleting the old fields. They were migrated before any archive or fixture was
+    produced.
+  - The first archive command set an absolute build `TMPDIR` before creating its root. `ring`'s C
+    compilation failed without producing an archive. The root was created and the immutable build
+    was rerun; no artifact from the failed invocation was adopted.
+  - Final1 collapsed the value-dot identity used by direct root-field classification into the
+    fragment-dot-preferred expression environment. Eight schema artifacts changed while all 18 IR
+    artifacts remained exact. Final1 was rejected before acceptance probing and no fixture was
+    adopted.
+  - Audit showed the two facts are genuinely distinct: expression evaluation prefers a projected
+    fragment dot, while helper/root-field classifiers ask whether the original value dot is
+    unresolved, the explicit root, or another value. Final2 records the latter as a typed
+    three-state classification. This does not restore a parallel environment field or any clone;
+    it preserves a separate semantic fact that the deleted `current_dot_binding` had carried.
+  - Final2's schema dump took 166.129 seconds. The machine was non-idle, so this and all gate times
+    are loaded-host observations rather than controlled performance verdicts; the proven mechanism
+    improvement is deletion of repeated environment construction and cloning.
+
+- Adjudication evidence: Helm 4.2.3 remains pinned and was enabled in the final full-depth run.
+  Exact schema/IR bytes and zero acceptance flips leave no fixture or individual Helm verdict to
+  adopt. Candidate-accepts/Helm-aborts and mandatory coverage drops are zero.
+
+- Producer/route coverage:
+
+  | Route | Final owner and proof |
+  | --- | --- |
+  | Condition predicate decoding | Shared `EvalEnv`; 41 focused condition tests and exact corpus. |
+  | Effects/path discovery | Shared `EvalEnv`; symbolic-IR identity and full engine suite. |
+  | Range subject evaluation | Shared environment plus bound-value artifact; range/domain suites. |
+  | Helper fragment value resolution | Environment root/local/output facts plus fragment-only dot; helper suites. |
+  | Root helper dispatch | Typed value-dot identity; rejected final1 and final2 byte identity. |
+  | Root-field absence/equality | `RootDotIdentity` plus environment root maps; focused explicit-root test. |
+
+- Review dossier:
+  - Focused proof: 41/41 value-path condition tests pass.
+  - Immutable build: S-B3 final2; exit 0, 90 binaries and 128 files. The missing-`TMPDIR` build and
+    final1 are rejected as described above.
+  - Clean schema dump: final2 archive and absolute step-local `TMPDIR`; exit 0, 62/62 in 166.129
+    seconds on the disclosed loaded host; all 84 artifacts are byte-identical to C4.
+  - Clean IR dump: same archive and its own step-local `TMPDIR`; exit 0, one test in 4.514 seconds;
+    all 18 artifacts are byte-identical.
+  - Full-depth proof: same final2 archive, baseline `714532c9`, Helm enabled; exit 0 in 103.955
+    seconds, 60 charts, 120,837 probes, zero flips, zero unallowed accepted-abort cells, zero
+    mandatory drops, and 25,718 disclosed bounded reductions.
+  - Public/wire decision: none. `ValuePathContext`, `EvalEnv`, `RootDotIdentity`, and the bound-value
+    query remain crate-private; serialized schema/IR bytes and public APIs are unchanged.
+
+- Self-adversarial pass:
+  - Whole-tree search finds one `EvalEnv::from_helper_context` in value-path context construction
+    and no environment reconstruction inside the value-path decoder. All deleted parallel map,
+    set, dispatch, and binding fields remain absent.
+  - The final typed root-dot classification is not interchangeable with `EvalEnv::dot`: final1
+    proved that their precedence differs when a fragment projection and original value dot coexist.
+    The enum makes that distinction explicit without retaining the original value object.
+  - Local and root namespaces stay separate exactly as before; fragment values shadow range-member
+    bindings before the environment is populated, while root fields enter only `root_fields`.
+  - Bound range/get data is stored only in `BoundValueContext`; its read-only query cannot bypass
+    predicate constraints or mutate the embedded environment.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0 in approximately 140 seconds; the two pre-existing ast-grep warnings in
+    `helm-schema-ast` remain informational.
+  - `task lint:fc`: exit 0; 48/48 combinations across three targets in 755.80 seconds.
+  - `cargo nextest run --workspace`: exit 0; 1,338/1,338 pass in 105.372 seconds after the loaded-
+    host build.
+  - `task test:integration`: exit 0; 564/564 pass in 993.704 seconds; 24 skipped by profile.
+  - `task test:all`: exit 0; 1,906/1,906 pass in 831.802 seconds; 24 skipped and live network tests
+    pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 20.51 seconds.
+  - downstream luup2 `check:local`: exit 0; 32/32 charts with the documented host shims and
+    `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 66,077.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: -4 (66,081 to 66,077). The repeated environment builder and its
+  parallel context fields are deleted; the typed dot-identity distinction is retained explicitly.

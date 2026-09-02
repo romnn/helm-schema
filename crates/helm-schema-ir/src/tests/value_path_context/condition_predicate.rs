@@ -5,6 +5,7 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
+use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
 use crate::{Guard, GuardValue};
@@ -126,16 +127,11 @@ fn condition_context_with_defines(
     template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     defines: DefineIndex,
 ) -> ValuePathContext<'static> {
-    let root_bindings = Box::leak(Box::new(HashMap::new()));
-    let range_domains = Box::leak(Box::new(HashMap::new()));
-    let get_bindings = Box::leak(Box::new(HashMap::new()));
-    let template_default_paths = Box::leak(Box::new(HashMap::new()));
-    let template_output_meta: &'static HashMap<
-        String,
-        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
-    > = Box::leak(Box::new(template_output_meta));
-    let template_scalar_dispatches = Box::leak(Box::new(HashMap::new()));
-    let template_truthy_reductions = Box::leak(Box::new(HashMap::new()));
+    let pipeline_bound_locals = template_bindings.keys().cloned().collect();
+    let mut eval_env = EvalEnv::from_helper_context(None, None).without_helper_call_args();
+    eval_env.locals = template_bindings;
+    eval_env.pipeline_bound_locals = pipeline_bound_locals;
+    eval_env.local_output_meta = template_output_meta;
     let template_truthiness_abstentions = Box::leak(Box::new(BTreeSet::new()));
     let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
@@ -144,24 +140,13 @@ fn condition_context_with_defines(
 
     ValuePathContext {
         helper_dispatch_depth: std::cell::Cell::new(0),
-        root_bindings,
-        root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
-        root_value_dispatches: Box::leak(Box::new(HashMap::new())),
-        root_field_semantics_on_current_dot: false,
-        pipeline_bound_bindings: template_bindings.keys().cloned().collect(),
-        template_bindings,
-        template_scalar_dispatches,
-        range_domains,
-        get_bindings,
-        template_default_paths,
-        template_output_meta,
-        template_truthy_reductions,
+        eval_env,
         template_truthiness_abstentions,
         typeof_bindings,
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
-        current_dot_binding: None,
+        root_dot_identity: RootDotIdentity::Unresolved,
     }
 }
 
@@ -215,7 +200,8 @@ fn absent_custom_root_field_is_false_until_set() {
         .next()
         .expect("parsed root-field condition");
     let mut context = condition_context(HashMap::new());
-    context.current_dot_binding = Some(AbstractValue::RootContext);
+    context.eval_env.dot = Some(AbstractValue::RootContext);
+    context.root_dot_identity = RootDotIdentity::ExplicitRoot;
 
     assert!(context.condition_lowering_is_faithful(&expr));
     sim_assert_eq!(
@@ -850,26 +836,16 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     defines.add_file_source("templates/other.yaml", "kind: ConfigMap\n");
     let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
+    let eval_env = EvalEnv::from_helper_context(None, None).without_helper_call_args();
     let context = ValuePathContext {
         helper_dispatch_depth: std::cell::Cell::new(0),
-        root_bindings: Box::leak(Box::new(HashMap::new())),
-        root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
-        root_value_dispatches: Box::leak(Box::new(HashMap::new())),
-        root_field_semantics_on_current_dot: false,
-        pipeline_bound_bindings: std::collections::HashSet::new(),
-        template_bindings: HashMap::new(),
-        template_scalar_dispatches: Box::leak(Box::new(HashMap::new())),
-        range_domains: Box::leak(Box::new(HashMap::new())),
-        get_bindings: Box::leak(Box::new(HashMap::new())),
-        template_default_paths: Box::leak(Box::new(HashMap::new())),
-        template_output_meta: Box::leak(Box::new(HashMap::new())),
-        template_truthy_reductions: Box::leak(Box::new(HashMap::new())),
+        eval_env,
         template_truthiness_abstentions: Box::leak(Box::new(BTreeSet::new())),
         typeof_bindings: Box::leak(Box::new(HashMap::new())),
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
-        current_dot_binding: None,
+        root_dot_identity: RootDotIdentity::Unresolved,
     };
 
     let wrapped = r#"{{ .Files.Get (printf "files/profile-%s.yaml" .Values.profile) }}"#;

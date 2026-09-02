@@ -2,13 +2,12 @@ use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::GetBinding;
 use crate::eval_effect::SelectionReachability;
+use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::ScalarValueDispatch;
 use crate::symbolic_local_state::IntCastSource;
-use helm_schema_core::{Predicate, ValuesPath};
+use helm_schema_core::ValuesPath;
 
 mod condition_predicate;
 mod path_resolution;
@@ -41,32 +40,20 @@ pub(crate) struct RangeSubject {
     pub(crate) member_value: Option<AbstractValue>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum RootDotIdentity {
+    Unresolved,
+    ExplicitRoot,
+    Other,
+}
+
 pub(crate) struct ValuePathContext<'a> {
     pub(crate) helper_dispatch_depth: Cell<u8>,
-    pub(crate) root_bindings: &'a HashMap<String, AbstractValue>,
-    pub(crate) root_truthy_predicates: &'a HashMap<String, Predicate>,
-    /// Joined value alternatives for root-context fields set across
-    /// complete if/else chains; root-field equalities decode through them.
-    pub(crate) root_value_dispatches: &'a HashMap<String, ScalarValueDispatch>,
-    pub(crate) root_field_semantics_on_current_dot: bool,
-    /// Fragment-value locals merged with condition-visible range member
-    /// bindings (the render lane resolves fragment values only).
-    pub(crate) template_bindings: HashMap<String, AbstractValue>,
-    /// Exact scalar values carried by locals after branch-dependent
-    /// assignments and transformations.
-    pub(crate) template_scalar_dispatches: &'a HashMap<String, ScalarValueDispatch>,
-    /// Which of `template_bindings` came from a `:=`/`=` pipeline rather than
-    /// from `range`; only those are nil-safe to navigate.
-    pub(crate) pipeline_bound_bindings: std::collections::HashSet<String>,
-    pub(crate) range_domains: &'a HashMap<String, Vec<String>>,
-    pub(crate) get_bindings: &'a HashMap<String, GetBinding>,
-    pub(crate) template_default_paths: &'a HashMap<String, BTreeSet<ValuesPath>>,
-    pub(crate) template_output_meta: &'a HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>>,
-    pub(crate) template_truthy_reductions: &'a HashMap<String, Predicate>,
+    pub(crate) eval_env: EvalEnv,
     pub(crate) template_truthiness_abstentions: &'a BTreeSet<String>,
     pub(crate) typeof_bindings: &'a HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>>,
     pub(crate) int_cast_bindings: &'a HashMap<String, IntCastSource>,
     pub(crate) fragment_context: FragmentEvalContext<'a>,
     pub(crate) current_dot_fragment: Option<AbstractValue>,
-    pub(crate) current_dot_binding: Option<AbstractValue>,
+    pub(crate) root_dot_identity: RootDotIdentity,
 }

@@ -12,7 +12,7 @@ use crate::scalar_value::bool_predicate;
 use crate::{Guard, GuardValue};
 use helm_schema_core::Predicate;
 
-use super::ValuePathContext;
+use super::{RootDotIdentity, ValuePathContext};
 
 /// Dispatch-arm headers may themselves compare helper outputs; one level
 /// covers the chart shapes seen so far, and the cap keeps mutually
@@ -165,7 +165,7 @@ fn exact_candidate(predicate: Option<Predicate>) -> Decoded {
 
 impl ValuePathContext<'_> {
     fn exact_evaluated_truth_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
-        eval_expr(expr, &self.expression_eval_env())
+        eval_expr(expr, self.expression_eval_env())
             .truth
             .predicate()
             .filter(|predicate| !predicate.contains_approximation())
@@ -250,7 +250,7 @@ impl ValuePathContext<'_> {
             return Decoded::Exact(predicate);
         }
         let path_fallback_is_available = !self.paths_for_expr(expr).is_empty();
-        let exact = eval_expr(expr, &self.expression_eval_env())
+        let exact = eval_expr(expr, self.expression_eval_env())
             .value
             .as_ref()
             .and_then(composite_truthy_lowering_is_faithful)
@@ -264,8 +264,9 @@ impl ValuePathContext<'_> {
         // not when its input identities are falsy: a truthy stand-in
         // over the flowing paths would let negation fire on states the
         // branch never reaches (bitnami `validateValues` aggregators).
-        if let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
-            self.template_truthy_reductions
+        if let Some(predicate) = self.eval_env.local_truthy_reductions.get(name).or_else(|| {
+            self.eval_env
+                .local_truthy_reductions
                 .get(name.trim_start_matches('$'))
         }) {
             let usable = !matches!(predicate.kind(), helm_schema_core::PredicateKind::False);
@@ -276,7 +277,7 @@ impl ValuePathContext<'_> {
         }
         // Layered merges decode through their own disjunction lane;
         // the all-paths conjunction below is not faithful for them.
-        if let Some(value) = eval_expr(expr, &self.expression_eval_env()).value
+        if let Some(value) = eval_expr(expr, self.expression_eval_env()).value
             && let Some(faithful) = composite_truthy_lowering_is_faithful(&value)
         {
             let usable_for_control = matches!(value, AbstractValue::MergedLayers(_))
@@ -290,10 +291,11 @@ impl ValuePathContext<'_> {
 
     fn variable_path_fallback_is_faithful(&self, expr: &TemplateExpr, name: &str) -> bool {
         let paths = self.paths_for_expr(expr);
-        let metas = self
-            .template_output_meta
-            .get(name)
-            .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
+        let metas = self.eval_env.local_output_meta.get(name).or_else(|| {
+            self.eval_env
+                .local_output_meta
+                .get(name.trim_start_matches('$'))
+        });
         !paths.is_empty()
             && !paths.iter().any(|path| {
                 metas
@@ -757,9 +759,10 @@ impl ValuePathContext<'_> {
             return None;
         };
         let binding = self
-            .template_bindings
+            .eval_env
+            .locals
             .get(name)
-            .or_else(|| self.template_bindings.get(name.trim_start_matches('$')))?;
+            .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?;
         let AbstractValue::RangeKey(path) = binding else {
             return None;
         };
@@ -783,9 +786,10 @@ impl ValuePathContext<'_> {
             return None;
         };
         let binding = self
-            .template_bindings
+            .eval_env
+            .locals
             .get(name)
-            .or_else(|| self.template_bindings.get(name.trim_start_matches('$')))?;
+            .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?;
         let AbstractValue::RangeKey(path) = binding else {
             return None;
         };
@@ -1128,8 +1132,9 @@ impl ValuePathContext<'_> {
     }
 
     fn variable_truthy_reduction(&self, name: &str) -> Option<&Predicate> {
-        self.template_truthy_reductions.get(name).or_else(|| {
-            self.template_truthy_reductions
+        self.eval_env.local_truthy_reductions.get(name).or_else(|| {
+            self.eval_env
+                .local_truthy_reductions
                 .get(name.trim_start_matches('$'))
         })
     }
@@ -1290,7 +1295,8 @@ impl ValuePathContext<'_> {
             return false;
         };
         let name = name.trim_start_matches('$');
-        self.template_output_meta
+        self.eval_env
+            .local_output_meta
             .get(name)
             .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
             .is_some_and(|meta| meta.derived_text || meta.shape_erased)
@@ -1300,7 +1306,7 @@ impl ValuePathContext<'_> {
     /// folded literal members, unrolled iteration bindings, and constant
     /// `len`/`add1` results. Values-backed reads never qualify.
     fn constant_scalar(&self, expr: &TemplateExpr) -> Option<String> {
-        let value = eval_expr(expr, &self.expression_eval_env()).value?;
+        let value = eval_expr(expr, self.expression_eval_env()).value?;
         let AbstractValue::StringSet(strings) = value else {
             return None;
         };
@@ -1364,7 +1370,7 @@ impl ValuePathContext<'_> {
                 if schema_type.is_some() {
                     self.single_resolved_values_path_expr(arg)
                 } else {
-                    eval_expr(arg, &self.expression_eval_env()).exact_input_identity()
+                    eval_expr(arg, self.expression_eval_env()).exact_input_identity()
                 }
             })
             .collect::<Option<Vec<_>>>()?
@@ -1401,11 +1407,7 @@ impl ValuePathContext<'_> {
         };
         // The dispatch helper reads `.Values.*` absolutely, so its
         // conditions keep their meaning only under a root dot.
-        if !self
-            .current_dot_binding
-            .as_ref()
-            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
-        {
+        if self.root_dot_identity == RootDotIdentity::Other {
             return None;
         }
         let dispatch_depth = self.helper_dispatch_depth.get();
@@ -1437,11 +1439,7 @@ impl ValuePathContext<'_> {
     /// truthiness would depend on the chain's trim markers.
     fn include_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
         let name = helper_root_call(expr)?;
-        if !self
-            .current_dot_binding
-            .as_ref()
-            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
-        {
+        if self.root_dot_identity == RootDotIdentity::Other {
             return None;
         }
         let dispatch_depth = self.helper_dispatch_depth.get();
@@ -1556,9 +1554,10 @@ impl ValuePathContext<'_> {
                 .collect::<Option<Vec<_>>>()?,
             TemplateExpr::Variable(name) => {
                 let AbstractValue::List(items) = self
-                    .template_bindings
+                    .eval_env
+                    .locals
                     .get(name)
-                    .or_else(|| self.template_bindings.get(name.trim_start_matches('$')))?
+                    .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?
                 else {
                     return None;
                 };
@@ -1631,10 +1630,7 @@ impl ValuePathContext<'_> {
         }
 
         let name = helper_root_call(needle)?;
-        if !self
-            .current_dot_binding
-            .as_ref()
-            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
+        if self.root_dot_identity == RootDotIdentity::Other
             || self.helper_dispatch_depth.get() >= MAX_HELPER_DISPATCH_DEPTH
         {
             return None;
@@ -1715,8 +1711,9 @@ impl ValuePathContext<'_> {
             if self.truthiness_abstains(name) {
                 return None;
             }
-            if let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
-                self.template_truthy_reductions
+            if let Some(predicate) = self.eval_env.local_truthy_reductions.get(name).or_else(|| {
+                self.eval_env
+                    .local_truthy_reductions
                     .get(name.trim_start_matches('$'))
             }) {
                 return Some(predicate.clone());
@@ -1738,7 +1735,7 @@ impl ValuePathContext<'_> {
         // expression spelling.
         if let TemplateExpr::Variable(_) = expr.deparen()
             && let Some(AbstractValue::MergedLayers(layers)) =
-                eval_expr(expr, &self.expression_eval_env()).value
+                eval_expr(expr, self.expression_eval_env()).value
         {
             return merged_layers_truthy_predicate(&layers);
         }
@@ -1753,7 +1750,7 @@ impl ValuePathContext<'_> {
             expr.deparen(),
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
         ) && let Some(AbstractValue::MergedLayers(layers)) =
-            eval_expr(expr, &self.expression_eval_env()).value
+            eval_expr(expr, self.expression_eval_env()).value
             && let Some(predicate) = merged_layers_truthy_predicate(&layers)
         {
             return Some(predicate);
@@ -1769,7 +1766,7 @@ impl ValuePathContext<'_> {
             expr.deparen(),
             TemplateExpr::Variable(_) | TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
         ) && let Some(AbstractValue::FirstTruthy(candidates)) =
-            eval_expr(expr, &self.expression_eval_env()).value
+            eval_expr(expr, self.expression_eval_env()).value
             && let Some(predicate) = first_truthy_truthy_predicate(&candidates)
         {
             return Some(predicate);
@@ -1784,12 +1781,8 @@ impl ValuePathContext<'_> {
     }
 
     fn root_field_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
-        let explicit_root = matches!(self.current_dot_binding, Some(AbstractValue::RootContext));
-        if !self
-            .current_dot_binding
-            .as_ref()
-            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
-        {
+        let explicit_root = self.root_dot_identity == RootDotIdentity::ExplicitRoot;
+        if self.root_dot_identity == RootDotIdentity::Other {
             return None;
         }
         let field = match expr.deparen() {
@@ -1802,10 +1795,10 @@ impl ValuePathContext<'_> {
         let [field] = field else {
             return None;
         };
-        if let Some(predicate) = self.root_truthy_predicates.get(field) {
+        if let Some(predicate) = self.eval_env.root_truthy_predicates.get(field) {
             return Some(predicate.clone());
         }
-        if self.root_bindings.contains_key(field) {
+        if self.eval_env.root_fields.contains_key(field) {
             return None;
         }
         // `.Values` IS the values document, so its truthiness is the
@@ -1844,7 +1837,7 @@ impl ValuePathContext<'_> {
                 _ => return None,
             },
         };
-        let dispatch = self.root_value_dispatches.get(field)?;
+        let dispatch = self.eval_env.root_value_dispatches.get(field)?;
         let selected = dispatch.condition_equals(&value).predicate()?.clone();
         Some(if negated {
             selected.negated()
@@ -1859,7 +1852,7 @@ impl ValuePathContext<'_> {
         right: &TemplateExpr,
         negated: bool,
     ) -> Option<Predicate> {
-        if !matches!(self.current_dot_binding, Some(AbstractValue::RootContext)) {
+        if self.root_dot_identity != RootDotIdentity::ExplicitRoot {
             return None;
         }
         let field = match (single_root_field(left), guard_value_literal(right)) {
@@ -1869,8 +1862,8 @@ impl ValuePathContext<'_> {
                 _ => return None,
             },
         };
-        if self.root_bindings.contains_key(field)
-            || self.root_value_dispatches.contains_key(field)
+        if self.eval_env.root_fields.contains_key(field)
+            || self.eval_env.root_value_dispatches.contains_key(field)
             || matches!(
                 field,
                 "Capabilities"
@@ -1894,22 +1887,21 @@ impl ValuePathContext<'_> {
     /// A single-segment root-context field (`.mode`) under a root (or
     /// unresolved) dot that carries a joined value dispatch.
     fn root_dispatch_field<'expr>(&self, expr: &'expr TemplateExpr) -> Option<&'expr str> {
-        if !self
-            .current_dot_binding
-            .as_ref()
-            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
-        {
+        if self.root_dot_identity == RootDotIdentity::Other {
             return None;
         }
         let field = single_root_field(expr)?;
-        self.root_value_dispatches
+        self.eval_env
+            .root_value_dispatches
             .contains_key(field)
             .then_some(field)
     }
 
     fn get_binding_truthy_predicate(&self, name: &str) -> Option<Predicate> {
-        let binding = self.get_bindings.get(name.trim_start_matches('$'))?;
-        let keys = self.range_domains.get(&binding.key_var)?;
+        let (binding, keys) = self
+            .eval_env
+            .bound_values
+            .get_binding_domain(name.trim_start_matches('$'))?;
         let predicates = keys
             .iter()
             .map(|key| {
@@ -1954,7 +1946,7 @@ impl ValuePathContext<'_> {
     /// truthy all-null map, so the converse is deliberately not claimed.
     fn negated_merged_layers_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let Some(AbstractValue::MergedLayers(layers)) =
-            eval_expr(expr, &self.expression_eval_env()).value
+            eval_expr(expr, self.expression_eval_env()).value
         else {
             return Vec::new();
         };
@@ -2548,8 +2540,9 @@ impl ValuePathContext<'_> {
             return Some(predicate);
         }
         if let TemplateExpr::Variable(name) = expr.deparen()
-            && let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
-                self.template_truthy_reductions
+            && let Some(predicate) = self.eval_env.local_truthy_reductions.get(name).or_else(|| {
+                self.eval_env
+                    .local_truthy_reductions
                     .get(name.trim_start_matches('$'))
             })
         {
@@ -2750,9 +2743,14 @@ impl ValuePathContext<'_> {
             let TemplateExpr::Variable(name) = subject.deparen() else {
                 return None;
             };
-            self.template_output_meta
+            self.eval_env
+                .local_output_meta
                 .get(name)
-                .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')))
+                .or_else(|| {
+                    self.eval_env
+                        .local_output_meta
+                        .get(name.trim_start_matches('$'))
+                })
                 .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
         };
         let comparison_for = |path: String| {
@@ -2814,10 +2812,11 @@ impl ValuePathContext<'_> {
             }
         };
         if let TemplateExpr::Variable(name) = subject.deparen() {
-            let meta = self
-                .template_output_meta
-                .get(name)
-                .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
+            let meta = self.eval_env.local_output_meta.get(name).or_else(|| {
+                self.eval_env
+                    .local_output_meta
+                    .get(name.trim_start_matches('$'))
+            });
             // A binding qualified by lexical escape tokens is not the raw
             // value for every input (a replace/split chain rewrote some
             // strings): an equality on it cannot lower to a raw-path
@@ -2928,9 +2927,10 @@ impl ValuePathContext<'_> {
                 return None;
             }
             let local_meta = match subject {
-                TemplateExpr::Variable(name) => {
-                    self.template_output_meta.get(name.trim_start_matches('$'))
-                }
+                TemplateExpr::Variable(name) => self
+                    .eval_env
+                    .local_output_meta
+                    .get(name.trim_start_matches('$')),
                 _ => None,
             };
             return Some(
@@ -2977,7 +2977,7 @@ impl ValuePathContext<'_> {
             return Some(sources);
         }
 
-        let value = eval_expr(subject, &self.expression_eval_env()).value?;
+        let value = eval_expr(subject, self.expression_eval_env()).value?;
         let value_meta = value.output_meta();
         if !value_meta.is_empty() {
             return Some(value_meta);

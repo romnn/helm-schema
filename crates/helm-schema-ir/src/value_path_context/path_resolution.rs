@@ -3,7 +3,6 @@ use std::collections::BTreeSet;
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_effect::{SelectionPolarity, SelectionReachability, SelectionTruthSource};
 use crate::eval_env::EvalEnv;
@@ -51,35 +50,15 @@ impl ValuePathContext<'_> {
     }
 
     fn expression_effects(&self, exprs: &[TemplateExpr]) -> Effects {
-        let env = self.expression_eval_env();
-        eval_exprs_effects(exprs, &env)
+        eval_exprs_effects(exprs, self.expression_eval_env())
     }
 
-    pub(super) fn expression_eval_env(&self) -> EvalEnv {
-        let current_dot = self
-            .current_dot_fragment
-            .as_ref()
-            .map(AbstractValue::to_context_value)
-            .or_else(|| self.current_dot_binding.clone());
-        let mut env = EvalEnv::from_helper_context(Some(self.root_bindings), current_dot.as_ref())
-            .without_helper_call_args();
-        // Locals and root bindings are distinct namespaces (see the hole
-        // evaluator); roots resolve through `root_fields` only.
-        env.locals = self.template_bindings.clone();
-        env.pipeline_bound_locals = self.pipeline_bound_bindings.clone();
-        env.local_default_paths = self.template_default_paths.clone();
-        env.local_output_meta = self.template_output_meta.clone();
-        env.local_scalar_dispatches = self.template_scalar_dispatches.clone();
-        env.local_truthy_reductions = self.template_truthy_reductions.clone();
-        env.root_truthy_predicates = self.root_truthy_predicates.clone();
-        env.root_value_dispatches = self.root_value_dispatches.clone();
-        env.root_field_semantics_on_current_dot = self.root_field_semantics_on_current_dot;
-        env.bound_values = BoundValueContext::new(self.range_domains, self.get_bindings);
-        env
+    pub(super) fn expression_eval_env(&self) -> &EvalEnv {
+        &self.eval_env
     }
 
     pub(crate) fn resolved_values_paths_from_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {
-        eval_expr(expr, &self.expression_eval_env())
+        eval_expr(expr, self.expression_eval_env())
             .effects
             .output_value_paths()
     }
@@ -98,9 +77,9 @@ impl ValuePathContext<'_> {
     ) -> Option<AbstractValue> {
         fragment_context_value(
             expr,
-            self.root_bindings,
-            &self.template_bindings,
-            self.template_output_meta,
+            &self.eval_env.root_fields,
+            &self.eval_env.locals,
+            &self.eval_env.local_output_meta,
             self.fragment_context,
             self.current_dot_fragment.as_ref(),
         )
@@ -119,8 +98,8 @@ impl ValuePathContext<'_> {
         let mut seen = std::collections::HashSet::new();
         let evaluated = document_result_from_expr(
             expr,
-            &env,
-            Some(self.root_bindings),
+            env,
+            Some(&self.eval_env.root_fields),
             self.current_dot_fragment.as_ref(),
             self.fragment_context,
             &mut seen,

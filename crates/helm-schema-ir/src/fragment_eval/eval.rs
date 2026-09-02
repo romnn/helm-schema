@@ -52,14 +52,16 @@ use helm_schema_syntax::{
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
+use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::{CaptureKind, FailCapture};
+use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::{NodeAction, control_headers, node_action};
 use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::symbolic_local_state::SymbolicLocalState;
-use crate::value_path_context::ValuePathContext;
+use crate::value_path_context::{RootDotIdentity, ValuePathContext};
 use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
 use helm_schema_core::{GuardDnf, Predicate};
 
@@ -1028,27 +1030,43 @@ impl<'a> Interpreter<'a> {
                 .iter()
                 .map(|(name, value)| (name.clone(), value.clone())),
         );
+        let current_dot_fragment = self.current_dot_fragment();
+        let current_value_dot = self.current_value_dot();
+        let root_dot_identity = match current_value_dot.as_ref() {
+            None => RootDotIdentity::Unresolved,
+            Some(AbstractValue::RootContext) => RootDotIdentity::ExplicitRoot,
+            Some(_) => RootDotIdentity::Other,
+        };
+        let current_dot = current_dot_fragment
+            .as_ref()
+            .map(AbstractValue::to_context_value)
+            .or(current_value_dot);
+        let mut eval_env =
+            EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref())
+                .without_helper_call_args();
+        // Locals and root bindings are distinct namespaces (see the hole
+        // evaluator); roots resolve through `root_fields` only.
+        eval_env.locals = template_bindings;
+        eval_env.pipeline_bound_locals = self.locals.fragment_values.keys().cloned().collect();
+        eval_env.local_default_paths = self.locals.default_paths.clone();
+        eval_env.local_output_meta = self.locals.output_meta.clone();
+        eval_env.local_scalar_dispatches = self.locals.scalar_dispatches.clone();
+        eval_env.local_truthy_reductions = self.locals.truthy_reductions.clone();
+        eval_env.root_truthy_predicates = self.root_truthy_predicates.clone();
+        eval_env.root_value_dispatches = self.root_value_dispatches.clone();
+        eval_env.root_field_semantics_on_current_dot =
+            self.root_value_dot.is_some() && self.dot_stack.len() <= 1;
+        eval_env.bound_values =
+            BoundValueContext::new(&self.locals.range_domains, &self.locals.get_bindings);
         ValuePathContext {
             helper_dispatch_depth: std::cell::Cell::new(0),
-            root_bindings: &self.root_bindings,
-            root_truthy_predicates: &self.root_truthy_predicates,
-            root_value_dispatches: &self.root_value_dispatches,
-            root_field_semantics_on_current_dot: self.root_value_dot.is_some()
-                && self.dot_stack.len() <= 1,
-            pipeline_bound_bindings: self.locals.fragment_values.keys().cloned().collect(),
-            template_bindings,
-            template_scalar_dispatches: &self.locals.scalar_dispatches,
-            range_domains: &self.locals.range_domains,
-            get_bindings: &self.locals.get_bindings,
-            template_default_paths: &self.locals.default_paths,
-            template_output_meta: &self.locals.output_meta,
-            template_truthy_reductions: &self.locals.truthy_reductions,
+            eval_env,
             template_truthiness_abstentions: &self.locals.truthiness_abstentions,
             typeof_bindings: &self.locals.typeof_sources,
             int_cast_bindings: &self.locals.int_cast_sources,
             fragment_context: FragmentEvalContext::new(self.db),
-            current_dot_fragment: self.current_dot_fragment(),
-            current_dot_binding: self.current_value_dot(),
+            current_dot_fragment,
+            root_dot_identity,
         }
     }
 
