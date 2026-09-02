@@ -8826,3 +8826,88 @@
 - `git diff --check`: exit 0.
 
 - Measured production LOC delta: 0.
+
+## Activation-DNF spike
+
+- Status: recorded and abandoned after two failed E-gated attempts; no production change landed.
+- Contract: representation/performance E-spike. Replace the N-way whole-`ContractIr` clone per
+  dependency activation alternative with one typed activation DNF applied in place. Preserve row
+  grouping, guard ordering, observed-fact scoping, terminal clauses, nested activation products,
+  and all emitted schema/IR bytes.
+- Acceptance baseline: `ac7e7ac2` (E4 study verdict; production equals `ef92a851`).
+- Baseline production Rust LOC: 66,064.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, public-API, wire, fixture, or acceptance changes.
+  - Contract rows conjoin their existing `GuardDnf` with the activation disjunction without
+    changing serialized disjunct order. Fail captures receive one logically equivalent activation
+    predicate. Default-source and root-overlay facts retain one alternative per activation arm so
+    final payload grouping remains byte-identical.
+  - Empty activation stays a no-op; nested dependency activation is the exact cross product;
+    condition precedence and tag fallback semantics remain unchanged.
+  - E-gates: delete the whole-graph clone/append loop; non-positive whole-tree production LOC;
+    byte-exact schema and symbolic-IR fixtures; flat-or-better corpus wall-clock. Any miss rejects
+    the attempt. At most two failed attempts are permitted before an abandonment record.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level coverage drops remain
+    zero.
+
+- Measured results:
+  - Attempt 1 replaced the N-way graph clone with one `Guard::AnyOf` attached through the existing
+    API. Six focused IR routes passed, but the engine's complete dependency-activation assertion
+    rejected the resulting single predicate node in place of the legacy four DNF rows. Production
+    Rust was 66,065 lines, +1 from baseline, so it independently failed the non-positive LOC gate.
+  - Attempt 2 preserved contract-use DNF shape by recognizing the activation disjunction at the
+    `GuardDnf` boundary while retaining one `AnyOf` for terminal and observed-fact lanes. The
+    design removed the graph clone without adding a public method, but production Rust was 66,067
+    lines, +3 from baseline. It failed the first hard adoption gate before fixture generation.
+  - Both attempts were restored with inverse patches. `git diff --exit-code ac7e7ac2 -- crates`
+    confirms the production and test trees are byte-identical to the acceptance baseline.
+
+- Deviations:
+  - Attempt 1 disproved the tempting claim that logical equivalence is sufficient. The contract
+    document deliberately serializes normalized DNF alternatives as separate rows; embedding the
+    disjunction as one predicate changes that observable structure even before schema lowering.
+  - Attempt 2 addressed that row-shape defect but still added more DNF-boundary policy than the
+    clone-loop deletion removed. Under the E-gate, a three-line growth is a failed simplification,
+    not a rounding error to work around.
+  - No immutable archive, clean dump, fixture update, corpus timing, or acceptance artifact was
+    produced from either rejected state. The first hard failed gate ends each attempt.
+- Adjudication evidence: attempt 1 failed a representation assertion and attempt 2 stopped at LOC;
+  neither produced an acceptance candidate. There are zero adopted flips and no Helm cells to
+  adjudicate.
+
+### Review dossier
+
+- Attempt 1 focused proof: 6/6 IR activation tests pass; the engine dependency-activation test
+  fails because four DNF rows become one row containing a predicate disjunction.
+- Attempt 1 E-gate: `task tokei:core` exit 0, 66,065 production Rust LOC (+1); rejected.
+- Attempt 2 E-gate: `cargo fmt --check` exit 0; `task tokei:core` exit 0, 66,067 production Rust LOC
+  (+3); rejected before fixture or timing gates.
+- Mechanism finding: one typed DNF can preserve contract-row semantics, but terminal captures and
+  activation-scoped default/overlay facts still need a second projection whose policy costs more
+  than the whole-graph loop it replaces.
+- Public/wire decision: none. No candidate API or wire representation was adopted.
+
+### Self-adversarial pass
+
+- Attempt 1 was not rescued by weakening the focused test: the test observes the same row grouping
+  serialized by the symbolic contract fixtures, so the failure is contract evidence.
+- Attempt 2 could potentially be code-golfed below baseline, but that would optimize line count
+  rather than remove the remaining semantic projection. The E-gate judges representation deletion,
+  not textual compression.
+- The clone is expensive in theory, but this round supplied no admissible byte-exact replacement
+  and no measured corpus improvement. It therefore remains until the terminal/default/overlay lanes
+  share a genuine activation-DNF owner.
+
+### Gates
+
+- Attempt 1 focused nextest: exit 100; 6/7 pass and the expected row-shape assertion rejects the
+  candidate after a 156-second loaded-host build.
+- Attempt 1 `task tokei:core`: exit 0; 66,065 lines (+1), failed E-gate.
+- Attempt 2 `cargo fmt --check`: exit 0.
+- Attempt 2 `task tokei:core`: exit 0; 66,067 lines (+3), failed E-gate.
+- Post-abandon restoration: `git diff --exit-code ac7e7ac2 -- crates`; exit 0.
+- Final `task tokei:core`: exit 0; 66,064 production Rust lines.
+- `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: 0 landed. Rejected attempts were +1 and +3.
