@@ -8136,7 +8136,7 @@
 
 ## C1b — typed lowered conjunct schemas
 
-- Status: landed; commit pending.
+- Status: landed in `4b3a7bd2` (`refactor(gen): type lowered conjunct schemas`).
 - Contract: representation-only. Change `LoweredConjunct.schema` from raw `serde_json::Value` to
   `SchemaNode`, keep every producer and internal consumer typed, and materialize JSON only at the
   provider-ingestion comparison or final emission boundary.
