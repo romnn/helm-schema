@@ -7806,7 +7806,7 @@
 
 ## C3a — immutable loaded chart corpus
 
-- Status: landed; commit pending.
+- Status: landed in `98edc212` (`refactor(engine): load chart sources once`).
 - Contract: representation-only. Classify each discovered chart tree once, read every classified
   source once, and make one immutable `LoadedChartCorpus` the source owner for define indexing,
   manifest/NOTES analysis, static CRD collection, and `.Files.Get` registration.
