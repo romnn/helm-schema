@@ -662,7 +662,7 @@ fn materialize_base_document(
         let Some(schema) = owner.schema(resolved_path) else {
             continue;
         };
-        let materialized_member_schema = schema.clone().into_value();
+        let materialized_member_schema = schema.clone();
         if owner.replaces() {
             insertion_abstentions +=
                 document.replace_values_path_schema(&resolved_path.value_path, schema);

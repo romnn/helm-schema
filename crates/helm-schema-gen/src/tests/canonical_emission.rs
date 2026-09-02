@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use color_eyre::eyre;
 use indoc::indoc;
 use serde_json::{Value, json};
@@ -7,6 +9,7 @@ use test_util::prelude::sim_assert_eq;
 use crate::schema_node::SchemaNode;
 use crate::schema_tree::{
     CanonicalConstraintApplication, CanonicalConstraintOutcome, SchemaDocument,
+    apply_values_descriptions,
 };
 
 #[test]
@@ -645,6 +648,179 @@ fn generator_type_union_constructor_is_exhaustively_equivalent() -> eyre::Result
         want: json!({ "type": ["null", "string"] })
     );
     Ok(())
+}
+
+#[test]
+fn declared_range_members_materialize_across_typed_schema_branches() -> eyre::Result<()> {
+    let mut document = SchemaDocument::new_root_object();
+    document.insert_path_schema(
+        &["container".to_string()],
+        SchemaNode::foreign(json!({
+            "anyOf": [
+                { "properties": { "maps": { "type": "object" } } },
+                { "properties": { "maps": { "additionalProperties": {} } } },
+            ],
+            "then": { "properties": { "maps": { "type": "object" } } },
+        })),
+    );
+    let declared: YamlValue = serde_yaml::from_str(indoc! {"
+        first: one
+        second: two
+    "})?;
+
+    document.materialize_declared_member_schema(
+        &["container".to_string(), "maps".to_string()],
+        &declared,
+        &SchemaNode::type_named("string"),
+    );
+
+    sim_assert_eq!(
+        have: document.into_value(),
+        want: json!({
+            "type": "object",
+            "properties": {
+                "container": {
+                    "anyOf": [
+                        {
+                            "properties": {
+                                "maps": {
+                                    "type": "object",
+                                    "properties": {
+                                        "first": { "type": "string" },
+                                        "second": { "type": "string" },
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            "properties": {
+                                "maps": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                        "first": { "type": "string" },
+                                        "second": { "type": "string" },
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                    "then": {
+                        "properties": {
+                            "maps": {
+                                "type": "object",
+                                "properties": {
+                                    "first": { "type": "string" },
+                                    "second": { "type": "string" },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            "additionalProperties": false,
+        })
+    );
+    Ok(())
+}
+
+#[test]
+fn declared_range_members_leave_typeless_empty_lanes_untouched() -> eyre::Result<()> {
+    let mut document = SchemaDocument::new_root_object();
+    document.insert_path_schema(&["container".to_string()], SchemaNode::object());
+    document.relax_host_object_type(&["container".to_string()]);
+    let declared: YamlValue = serde_yaml::from_str("first: one\n")?;
+
+    document.materialize_declared_member_schema(
+        &["container".to_string()],
+        &declared,
+        &SchemaNode::type_named("string"),
+    );
+
+    sim_assert_eq!(
+        have: document.into_value(),
+        want: json!({
+            "type": "object",
+            "properties": { "container": {} },
+            "additionalProperties": false,
+        })
+    );
+    Ok(())
+}
+
+#[test]
+fn description_trie_preserves_branch_and_exact_path_semantics() {
+    let mut schema = json!({
+        "properties": {
+            "service": {
+                "properties": {
+                    "name": {},
+                    "nested": { "properties": { "value": {} } },
+                },
+            },
+            "list": {
+                "items": { "properties": { "name": {} } },
+            },
+        },
+        "anyOf": [
+            { "properties": { "service": { "properties": { "name": {} } } } },
+        ],
+        "then": {
+            "properties": { "service": { "properties": { "nested": {
+                "properties": { "value": {} },
+            } } } },
+        },
+    });
+    let descriptions = BTreeMap::from([
+        ("list.*.name".to_string(), "item name".to_string()),
+        ("missing".to_string(), "not emitted".to_string()),
+        ("service".to_string(), "service root".to_string()),
+        ("service.name".to_string(), "service name".to_string()),
+        (
+            "service.nested.value".to_string(),
+            "nested value".to_string(),
+        ),
+        ("unused".to_string(), "   ".to_string()),
+    ]);
+
+    apply_values_descriptions(&mut schema, &descriptions);
+
+    sim_assert_eq!(
+        have: schema,
+        want: json!({
+            "properties": {
+                "service": {
+                    "description": "service root",
+                    "properties": {
+                        "name": { "description": "service name" },
+                        "nested": { "properties": {
+                            "value": { "description": "nested value" },
+                        } },
+                    },
+                },
+                "list": {
+                    "items": { "properties": {
+                        "name": { "description": "item name" },
+                    } },
+                },
+            },
+            "anyOf": [
+                { "properties": { "service": {
+                    "description": "service root",
+                    "properties": {
+                        "name": { "description": "service name" },
+                    },
+                } } },
+            ],
+            "then": {
+                "properties": { "service": {
+                    "description": "service root",
+                    "properties": { "nested": { "properties": {
+                        "value": { "description": "nested value" },
+                    } } },
+                } },
+            },
+        })
+    );
 }
 
 fn rewrite_pair(

@@ -13,6 +13,7 @@ use crate::values_yaml::{
 #[derive(Clone)]
 pub(crate) struct SchemaDocument {
     root: SchemaNode,
+    parsed_after_declared_materialization: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,6 +32,7 @@ impl SchemaDocument {
     pub(crate) fn new_root_object() -> Self {
         Self {
             root: SchemaNode::closed_object(),
+            parsed_after_declared_materialization: false,
         }
     }
 
@@ -125,7 +127,7 @@ impl SchemaDocument {
         &mut self,
         path_segments: &[String],
         declared: &YamlValue,
-        member_schema: &Value,
+        member_schema: &SchemaNode,
     ) {
         let YamlValue::Mapping(declared) = declared else {
             return;
@@ -138,12 +140,14 @@ impl SchemaDocument {
             return;
         }
 
-        let root = std::mem::replace(&mut self.root, SchemaNode::empty());
-        let mut root = root.into_value();
-        visit_schema_values_at_path_mut(&mut root, path_segments, &mut |schema| {
+        visit_schema_nodes_at_path_mut(&mut self.root, path_segments, &mut |schema| {
             materialize_declared_properties(schema, &keys, member_schema);
         });
-        self.root = SchemaNode::foreign(root);
+        if !self.parsed_after_declared_materialization {
+            let root = std::mem::replace(&mut self.root, SchemaNode::Empty);
+            self.root = root.into_parsed_representation();
+            self.parsed_after_declared_materialization = true;
+        }
     }
 
     #[tracing::instrument(skip_all)]
@@ -862,64 +866,77 @@ fn collect_missing_yaml_default_insertions(
     }
 }
 
-pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMap<String, String>) {
-    for (path, description) in descriptions {
-        if description.trim().is_empty() {
-            continue;
+#[derive(Default)]
+struct DescriptionPathTrie<'a> {
+    description: Option<&'a str>,
+    children: BTreeMap<String, Self>,
+}
+
+impl<'a> DescriptionPathTrie<'a> {
+    fn new(descriptions: &'a BTreeMap<String, String>) -> Self {
+        let mut root = Self::default();
+        for (path, description) in descriptions {
+            if description.trim().is_empty() {
+                continue;
+            }
+            let mut node = &mut root;
+            for segment in crate::split_value_path(path) {
+                node = node.children.entry(segment).or_default();
+            }
+            node.description = Some(description);
         }
-        let path_segments = crate::split_value_path(path);
-        visit_schema_values_at_path_mut(root, &path_segments, &mut |node| {
-            set_schema_description(node, description);
-        });
+        root
     }
 }
 
-fn visit_schema_values_at_path_mut(
+pub(crate) fn apply_values_descriptions(root: &mut Value, descriptions: &BTreeMap<String, String>) {
+    apply_description_trie(root, &DescriptionPathTrie::new(descriptions), true);
+}
+
+fn apply_description_trie(
     node: &mut Value,
-    path_segments: &[String],
-    visit: &mut impl FnMut(&mut Value),
-) -> bool {
-    if path_segments.is_empty() {
-        visit(node);
-        return true;
+    descriptions: &DescriptionPathTrie<'_>,
+    apply_current: bool,
+) {
+    if apply_current && let Some(description) = &descriptions.description {
+        set_schema_description(node, description);
+    }
+    if descriptions.children.is_empty() {
+        return;
     }
 
     let Some(obj) = node.as_object_mut() else {
-        return false;
+        return;
     };
 
-    let mut visited = false;
     for key in ["anyOf", "allOf", "oneOf"] {
         if let Some(Value::Array(variants)) = obj.get_mut(key) {
             for variant in variants {
-                visited |= visit_schema_values_at_path_mut(variant, path_segments, visit);
+                apply_description_trie(variant, descriptions, false);
             }
         }
     }
     for key in ["then", "else"] {
         if let Some(child) = obj.get_mut(key) {
-            visited |= visit_schema_values_at_path_mut(child, path_segments, visit);
+            apply_description_trie(child, descriptions, false);
         }
     }
 
-    let Some((head, tail)) = path_segments.split_first() else {
-        return visited;
-    };
-    if head == "*" {
-        if let Some(items) = obj.get_mut("items") {
-            visited |= visit_schema_values_at_path_mut(items, tail, visit);
+    for (segment, child_descriptions) in &descriptions.children {
+        if segment == "*" {
+            if let Some(items) = obj.get_mut("items") {
+                apply_description_trie(items, child_descriptions, true);
+            }
+            continue;
         }
-        return visited;
+        if let Some(child) = obj
+            .get_mut("properties")
+            .and_then(Value::as_object_mut)
+            .and_then(|properties| properties.get_mut(segment))
+        {
+            apply_description_trie(child, child_descriptions, true);
+        }
     }
-
-    if let Some(child) = obj
-        .get_mut("properties")
-        .and_then(Value::as_object_mut)
-        .and_then(|properties| properties.get_mut(head))
-    {
-        visited |= visit_schema_values_at_path_mut(child, tail, visit);
-    }
-    visited
 }
 
 fn set_schema_description(node: &mut Value, description: &str) {
@@ -931,32 +948,121 @@ fn set_schema_description(node: &mut Value, description: &str) {
     }
 }
 
-fn materialize_declared_properties(schema: &mut Value, keys: &[&str], member_schema: &Value) {
-    let Some(object) = schema.as_object_mut() else {
+fn visit_schema_nodes_at_path_mut(
+    node: &mut SchemaNode,
+    path_segments: &[String],
+    visit: &mut impl FnMut(&mut SchemaNode),
+) {
+    let Some((head, tail)) = path_segments.split_first() else {
+        visit(node);
         return;
     };
-    for keyword in ["anyOf", "allOf", "oneOf"] {
-        if let Some(arms) = object.get_mut(keyword).and_then(Value::as_array_mut) {
-            for arm in arms {
-                materialize_declared_properties(arm, keys, member_schema);
+
+    match node {
+        SchemaNode::Object {
+            properties, all_of, ..
+        } => {
+            for variant in all_of {
+                visit_schema_nodes_at_path_mut(variant, path_segments, visit);
+            }
+            if let Some(child) = properties.get_mut(head) {
+                visit_schema_nodes_at_path_mut(child, tail, visit);
             }
         }
+        SchemaNode::Array { items, .. } if head == "*" => {
+            if let Some(items) = items {
+                visit_schema_nodes_at_path_mut(items, tail, visit);
+            }
+        }
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
+            for variants in [
+                &mut keywords.any_of,
+                &mut keywords.all_of,
+                &mut keywords.one_of,
+            ] {
+                for variant in variants.iter_mut().flatten() {
+                    visit_schema_nodes_at_path_mut(variant, path_segments, visit);
+                }
+            }
+            for child in [&mut keywords.then_schema, &mut keywords.else_schema]
+                .into_iter()
+                .flatten()
+            {
+                visit_schema_nodes_at_path_mut(child, path_segments, visit);
+            }
+            if head == "*" {
+                if let Some(items) = &mut keywords.items {
+                    visit_schema_nodes_at_path_mut(items, tail, visit);
+                }
+            } else if let Some(child) = keywords
+                .properties
+                .as_mut()
+                .and_then(|properties| properties.get_mut(head))
+            {
+                visit_schema_nodes_at_path_mut(child, tail, visit);
+            }
+        }
+        SchemaNode::Empty
+        | SchemaNode::Array { .. }
+        | SchemaNode::Typed(TypedSchemaNode::Boolean(_))
+        | SchemaNode::Foreign(_) => {}
     }
+}
 
-    let object_lane = object.get("type").and_then(Value::as_str) == Some("object")
-        || object.contains_key("properties")
-        || object.contains_key("additionalProperties");
-    if !object_lane {
-        return;
-    }
-    let properties = object
-        .entry("properties")
-        .or_insert_with(|| Value::Object(Map::new()));
-    let Some(properties) = properties.as_object_mut() else {
-        return;
-    };
-    for key in keys {
-        properties.insert((*key).to_string(), member_schema.clone());
+fn materialize_declared_properties(
+    schema: &mut SchemaNode,
+    keys: &[&str],
+    member_schema: &SchemaNode,
+) {
+    match schema {
+        SchemaNode::Object {
+            properties,
+            typed,
+            all_of,
+            include_empty_properties,
+            additional_properties,
+            ..
+        } => {
+            for arm in all_of {
+                materialize_declared_properties(arm, keys, member_schema);
+            }
+            if !*typed
+                && !*include_empty_properties
+                && properties.is_empty()
+                && additional_properties.is_none()
+            {
+                return;
+            }
+            for key in keys {
+                properties.insert((*key).to_string(), member_schema.clone());
+            }
+        }
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => {
+            for arms in [
+                &mut keywords.any_of,
+                &mut keywords.all_of,
+                &mut keywords.one_of,
+            ] {
+                for arm in arms.iter_mut().flatten() {
+                    materialize_declared_properties(arm, keys, member_schema);
+                }
+            }
+            let object_lane = keywords.schema_type
+                == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object))
+                || keywords.properties.is_some()
+                || keywords.additional_properties.is_some();
+            if !object_lane {
+                return;
+            }
+            let properties = keywords.properties.get_or_insert_with(BTreeMap::new);
+            for key in keys {
+                properties.insert((*key).to_string(), member_schema.clone());
+            }
+        }
+        SchemaNode::Empty
+        | SchemaNode::Array { .. }
+        | SchemaNode::Typed(TypedSchemaNode::Boolean(_))
+        | SchemaNode::Foreign(_) => {}
     }
 }
 

@@ -74,6 +74,43 @@ fn lossless_schema_node_types_known_keywords_and_retains_unknown_keywords() -> e
 }
 
 #[test]
+fn parsed_representation_preserves_generated_schema_bytes() {
+    let schemas = [
+        SchemaNode::empty(),
+        SchemaNode::object(),
+        SchemaNode::untyped_member_host(),
+        SchemaNode::object()
+            .property("name", SchemaNode::type_named("string"))
+            .require("name")
+            .with_additional_properties(SchemaNode::empty())
+            .min_properties(1)
+            .max_properties(3),
+        SchemaNode::array(),
+        SchemaNode::array().items(SchemaNode::foreign(Value::Null)),
+        SchemaNode::array()
+            .items(SchemaNode::type_named("integer"))
+            .min_items(1),
+        SchemaNode::from_value(json!({
+            "allOf": [{ "type": "object" }],
+            "anyOf": [{ "type": "string" }, false],
+            "else": { "type": "null" },
+            "if": { "required": ["enabled"] },
+            "not": { "type": "number" },
+            "oneOf": [{ "const": "one" }, { "const": "two" }],
+            "then": { "properties": { "enabled": { "type": "boolean" } } },
+            "x-unknown": { "order": [3, 1, 2] },
+        })),
+    ];
+
+    for schema in schemas {
+        sim_assert_eq!(
+            have: schema.clone().into_parsed_representation().into_value(),
+            want: schema.into_value()
+        );
+    }
+}
+
+#[test]
 fn schema_node_carries_generator_provenance_in_typed_keywords() -> eyre::Result<()> {
     let truthy_reference = "#/$defs/t";
     let null_pattern = crate::resolve_policy::PLAIN_SCALAR_NULL_TOKEN_PATTERN;

@@ -661,6 +661,60 @@ impl SchemaNode {
         }
     }
 
+    pub(crate) fn into_parsed_representation(self) -> Self {
+        match self {
+            Self::Empty => Self::Typed(TypedSchemaNode::Keywords(Box::default())),
+            Self::Object {
+                properties,
+                typed,
+                all_of,
+                include_empty_properties,
+                required,
+                additional_properties,
+                min_properties,
+                max_properties,
+            } => Self::Typed(TypedSchemaNode::Keywords(Box::new(SchemaKeywords {
+                schema_type: typed.then_some(SchemaTypeKeyword::Single(JsonSchemaType::Object)),
+                properties: (include_empty_properties || !properties.is_empty()).then(|| {
+                    properties
+                        .into_iter()
+                        .map(|(key, value)| (key, value.into_parsed_representation()))
+                        .collect()
+                }),
+                required: (!required.is_empty()).then(|| required.into_iter().collect()),
+                additional_properties: additional_properties
+                    .map(|value| Box::new(value.into_parsed_representation())),
+                all_of: (!all_of.is_empty()).then(|| {
+                    all_of
+                        .into_iter()
+                        .map(Self::into_parsed_representation)
+                        .collect()
+                }),
+                min_properties,
+                max_properties,
+                ..SchemaKeywords::default()
+            }))),
+            Self::Array { items, min_items } => {
+                let items = items
+                    .filter(|items| !matches!(items.as_ref(), Self::Foreign(Value::Null)))
+                    .map(|items| Box::new(items.into_parsed_representation()));
+                Self::Typed(TypedSchemaNode::Keywords(Box::new(SchemaKeywords {
+                    schema_type: Some(SchemaTypeKeyword::Single(JsonSchemaType::Array)),
+                    items,
+                    min_items,
+                    ..SchemaKeywords::default()
+                })))
+            }
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => Self::Typed(
+                TypedSchemaNode::Keywords(Box::new(keywords.into_parsed_representation())),
+            ),
+            Self::Typed(TypedSchemaNode::Boolean(value)) => {
+                Self::Typed(TypedSchemaNode::Boolean(value))
+            }
+            Self::Foreign(value) => Self::from_value(value),
+        }
+    }
+
     pub(crate) fn into_value(self) -> Value {
         match self {
             Self::Empty => Value::Object(Map::new()),
@@ -763,6 +817,39 @@ impl TypedSchemaNode {
 }
 
 impl SchemaKeywords {
+    fn into_parsed_representation(mut self) -> Self {
+        if let Some(properties) = &mut self.properties {
+            for schema in properties.values_mut() {
+                let value = std::mem::replace(schema, SchemaNode::Empty);
+                *schema = value.into_parsed_representation();
+            }
+        }
+        for schema in [
+            &mut self.additional_properties,
+            &mut self.items,
+            &mut self.not,
+            &mut self.if_schema,
+            &mut self.then_schema,
+            &mut self.else_schema,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            let value = std::mem::replace(schema.as_mut(), SchemaNode::Empty);
+            **schema = value.into_parsed_representation();
+        }
+        for schemas in [&mut self.all_of, &mut self.any_of, &mut self.one_of]
+            .into_iter()
+            .flatten()
+        {
+            for schema in schemas {
+                let value = std::mem::replace(schema, SchemaNode::Empty);
+                *schema = value.into_parsed_representation();
+            }
+        }
+        self
+    }
+
     pub(crate) fn is_array_like(&self) -> bool {
         match &self.schema_type {
             Some(SchemaTypeKeyword::Single(JsonSchemaType::Array)) => true,

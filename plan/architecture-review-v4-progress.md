@@ -7076,3 +7076,164 @@
 - Measured production LOC delta: +25 (65,634 to 65,659). The production delta is the allocation-
   and sort-free fixed-point bookkeeping; the exhaustive reference oracle lives under `src/tests/`
   and is excluded from production LOC. No E-style LOC gate applies.
+
+## C2 — one schema materialization and one description traversal
+
+- Status: landed; commit pending.
+- Contract: representation/performance-only. Keep the schema as `SchemaNode` while materializing
+  declared ranged-map members, editing the typed tree directly instead of serializing and reparsing
+  the whole root for each ranged path. Replace the per-description root walk with one trie-guided
+  schema traversal. Preserve every emitted schema and symbolic-IR byte.
+- Acceptance baseline: `e4bc9fcc` (B5c closure commit).
+- Baseline production Rust LOC: 65,659.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, public-API, wire, or fixture byte changes.
+    Any changed byte or acceptance cell rejects the round before artifact adoption.
+  - `SchemaDocument::materialize_declared_member_schema` traverses its existing `SchemaNode` root
+    directly. It may clone the member schema into declared keys, but it must not call root
+    `into_value()` or reconstruct the root through `SchemaNode::from_value`/`foreign`.
+  - Typed traversal must preserve the legacy branch domain exactly: `anyOf`, `allOf`, and `oneOf`
+    arms are visited at the same remaining path; `then` and `else` are likewise traversed; a `*`
+    segment descends through `items`; a literal segment descends through `properties`; non-schema
+    values and absent keywords abstain.
+  - Declared-member materialization retains the legacy object-lane test and overwrite semantics:
+    object-typed schemas, schemas with `properties`, and schemas with `additionalProperties` gain
+    or replace every declared property with the exact ranged-member schema; other lanes remain
+    untouched.
+  - Non-blank values descriptions are parsed once into a prefix trie. One root traversal follows
+    only trie edges while preserving the legacy branch fanout and exact-path description overwrite;
+    blank descriptions and paths absent from the emitted schema remain no-ops.
+  - The B5c sealed dump's 221.207-second 62/62 clean corpus run is the before point. A fresh immutable
+    archive supplies one clean final-tree dump; host load is disclosed and byte identity is
+    mandatory regardless of timing direction.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops remain zero.
+    No fixture is regenerated or adopted in this representation round.
+
+- Measured results:
+  - `SchemaDocument::materialize_declared_member_schema` now edits the resident `SchemaNode` tree.
+    The per-ranged-path root `into_value()`/raw-JSON walk/`SchemaNode::foreign` cycle is deleted;
+    member schemas stay typed while being cloned into the declared property slots.
+  - The former JSON round-trip also carried a load-bearing representation transition: after the
+    first declared-member materialization, every existing generated node was represented exactly as
+    a parsed schema. The final implementation performs that transition once, directly in memory,
+    through `SchemaNode::into_parsed_representation`; it never serializes or reparses JSON. A
+    document bit prevents repeating the whole-tree conversion for later ranged paths.
+  - `apply_values_descriptions` builds one borrowed-description prefix trie and walks the schema
+    once. Combinator and conditional branches retain the same semantic path without reapplying an
+    exact-path description; property and `items` edges consume one trie segment. Blank and missing
+    paths remain no-ops.
+  - Four focused tests pin typed branch materialization, the typeless-empty-lane abstention, branch/
+    exact-path/wildcard description behavior, and byte identity of the direct parsed-representation
+    transition across generated objects, arrays, empty slots, Boolean schemas, combinators, and
+    unknown keywords.
+  - The final2 immutable archive contains 90 binaries and 128 files. Its sole clean schema dump
+    passes 62/62 tests in 155.923 seconds (158.78 seconds process wall), writes 84 artifacts, and is
+    recursively byte-identical to B5c. Against B5c's 221.207-second clean dump, the comparable
+    nextest wall time falls by 65.284 seconds, or 29.5%.
+  - The final release Airflow run exits 0 at 85.49 seconds wall, 85.06 seconds user, and 0.33 seconds
+    system: 85.39 seconds CPU. Against B5c's 92.57/90.46 point this is 7.7% less wall and 5.6% less
+    CPU; against the frozen 130/112.7 baseline it is 34.2% less wall and 24.2% less CPU. The run
+    began on AC power under load averages 9.24/9.62/9.17, so it is a loaded-host curve point rather
+    than an idle benchmark.
+  - The final IR dump passes in 3.196 seconds with all 18 artifacts unchanged. The full-depth battery
+    passes in 84.874 seconds across 60 charts and 120,833 probes with zero flips, zero
+    candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and 7,465/7,465
+    mandatory third-level probes.
+
+- Deviations:
+  - Final1 deleted both raw-JSON paths but failed the byte gate in one Airflow artifact. The schemas
+    remained acceptance-equivalent, but repeated-payload `$defs` names were permuted because the
+    old first ranged-map round-trip had converted existing generator-owned `Object` nodes into the
+    parsed keyword representation; later insertions deliberately dispatch differently at that
+    boundary. Final1's archive and 62/62 dump were rejected, no fixture was touched, and no IR or
+    prober evidence was run from that state.
+  - A corrected preflight made the representation transition once in memory and produced an Airflow
+    schema byte-identical to B5c. Its broad `test(airflow)` filter also selected twelve chart-reaudit
+    tests, so the 13/13, 239.999-second run is diagnostic only. Final2 rebuilt every authoritative
+    artifact after adding the exhaustive transition test.
+  - One focused nextest command used a literal substring expression that selected zero tests and
+    exited nonzero. The corrected regex selected and passed both intended declared-member tests;
+    neither command produced an adopted dump.
+  - The first final-tree `task lint:fc` attempt completed all 48 rows but the 32 Linux/Windows rows
+    failed before Clippy because the sandbox denied Zig's cache under `/Users/roman/.cache/zig`.
+    The exact gate was rerun with that host-cache permission and passed 48/48; no repository or
+    tool configuration changed.
+
+- Adjudication evidence:
+  - Helm 4.2.3 remains pinned and was used by the final full-depth run. All 84 schema bytes and all
+    18 symbolic-IR bytes match the acceptance baseline, and the prober reports zero acceptance
+    flips. No fixture or individual Helm cell required adoption.
+  - Candidate-accepts/Helm-aborts remains zero against a zero allowance. Mandatory base and
+    third-level coverage have zero drops; the disclosed bounded reductions total 25,710 and do not
+    enter the mandatory categories.
+
+- Producer/route coverage:
+
+  | Route | Final behavior and proof |
+  | --- | --- |
+  | Declared ranged-map members | Typed property insertion across direct, `anyOf`, `allOf`, `oneOf`, `then`, and `else` paths; focused exact-schema test plus 84-artifact corpus identity. |
+  | Parsed-representation boundary | One direct in-memory transition after the first materialization, byte-equivalent for every generated node family; exhaustive focused test and Airflow `$defs` identity. |
+  | Values descriptions | One trie-guided traversal through properties, wildcard `items`, combinators, and conditionals; focused full-schema equality and corpus identity. |
+  | Missing/blank metadata | Same abstention without path creation; focused test and values-description corpus tests. |
+  | Repeated provider payloads | Exact core membership and `$defs` naming after the preserved transition; Airflow and all 84 final artifacts are byte-identical. |
+
+- Review dossier:
+  - Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-c2-final2-build cargo
+    nextest archive --workspace --archive-file /private/tmp/arch-v4-c2-final2.tar.zst`; exit 0, 90
+    binaries and 128 files. Final1 and the Airflow-only preflight are rejected artifacts.
+  - Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-c2-final2-schema
+    SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-c2-final2.tar.zst --profile
+    integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+    exit 0, 62/62 in 155.923 seconds and 84 exact artifacts.
+  - Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-c2-final2-ir
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-c2-final2.tar.zst --profile integration -E
+    'test(ir_corpus_fixtures_match)'`; exit 0, one test in 3.196 seconds and 18 exact artifacts.
+  - Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-c2-final2-prober
+    SCHEMA_ACCEPTANCE_BASELINE_REF=e4bc9fcc
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-c2-final2-schema
+    SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-c2-final2-coverage.json
+    ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-c2-final2.tar.zst --profile integration -E
+    'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+    ignored-only`; exit 0 in 84.874 seconds with zero flips and zero mandatory drops.
+  - Public/wire decision: none. `SchemaDocument`, `SchemaNode`, its transition, and the description
+    trie are crate-private; final JSON, IR, diagnostics, and public construction remain byte-exact.
+
+- Self-adversarial pass:
+  - Rejected semantic equivalence as insufficient when final1 permuted only definition identities.
+    The Airflow delta proved the legacy representation transition was behaviorally load-bearing for
+    later grouping even though the pre/post-transition node serializations are equal.
+  - Preserved that transition without reviving the raw JSON protocol: generated fields move between
+    the two internal variants directly, unknown JSON keywords stay lossless, and a test compares
+    every converted node's complete JSON value.
+  - Corrected the initial direct materializer's assumption that every `SchemaNode::Object` is an
+    emitted object lane. A relaxed, typeless, empty object serializes as `{}` and must abstain; the
+    object-lane predicate now mirrors the exact emitted keywords and has a dedicated regression.
+  - Verified a trie node's exact-path description is not copied into same-path combinator branches;
+    only descendant trie edges fan through branches, matching the old early return at an exhausted
+    path. Overlapping parent/child descriptions and wildcard items are pinned together.
+  - Confirmed production contains no per-ranged root conversion/reparse and no per-description root
+    loop. No fixture, public API, wire format, infra configuration, or compatibility carrier changed.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0 in 1.01 seconds.
+  - `task lint`: exit 0 in 30.49 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 100.60 seconds after the disclosed sandbox-only
+    Zig-cache failure.
+  - `cargo nextest run --workspace`: exit 0, 1,333/1,333 tests in 104.138 seconds.
+  - `task test:integration`: exit 0, 565/565 tests in 741.464 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,902/1,902 tests in 788.509 seconds; 24 tests skipped by profile and
+    all live network tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 16.45 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts in 25.85 seconds on the retained-log rerun,
+    using the documented macOS shims and `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,848.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +189 (65,659 to 65,848). The direct typed transition and trie
+  replace two superlinear raw-JSON protocols and yield byte-exact output plus a 29.5% clean-corpus
+  wall-time reduction. C2 is an ordinary performance/representation round, so no E-style LOC gate
+  applies.
