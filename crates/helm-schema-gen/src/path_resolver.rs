@@ -141,34 +141,30 @@ impl<'a> PathSchemaResolver<'a> {
     }
 
     #[tracing::instrument(skip_all)]
-    pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
-        let resolved_value_paths = self
-            .schema_evidence_by_value_path
+    pub(crate) fn resolve_all(self) -> Vec<ResolvedPathSchema> {
+        let Self {
+            schema_evidence_by_value_path,
+            values_yaml_info,
+            dependency_default_paths,
+            provider,
+            mut provider_schema_cache,
+        } = self;
+        schema_evidence_by_value_path
             .iter()
             .filter(|(_, evidence)| {
                 evidence.is_referenced_value_path || !evidence.requirement_implications.is_empty()
             })
-            .map(|(value_path, _)| value_path.clone())
-            .collect::<Vec<_>>();
-        resolved_value_paths
-            .iter()
-            .filter_map(|value_path| self.resolve_path(value_path))
+            .map(|(value_path, evidence)| {
+                resolve_path_evidence(
+                    value_path,
+                    evidence,
+                    values_yaml_info.get(value_path),
+                    dependency_default_paths.contains(value_path),
+                    provider,
+                    &mut provider_schema_cache,
+                )
+            })
             .collect()
-    }
-
-    fn resolve_path(&mut self, value_path: &ValuesPath) -> Option<ResolvedPathSchema> {
-        let evidence = self
-            .schema_evidence_by_value_path
-            .get(value_path)
-            .cloned()?;
-        Some(resolve_path_evidence(
-            value_path,
-            &evidence,
-            self.values_yaml_info.get(value_path),
-            self.dependency_default_paths.contains(value_path),
-            self.provider,
-            &mut self.provider_schema_cache,
-        ))
     }
 }
 

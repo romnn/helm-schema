@@ -41,16 +41,17 @@ pub fn build_composed_values_document(
 /// null-deletion, which poisons the key through every later merge stage —
 /// the subchart default does NOT resurrect a deleted key.
 #[instrument(skip_all)]
-pub fn build_dependency_values_document(charts: &[ChartContext]) -> EngineResult<YamlValue> {
+pub fn build_dependency_values_document(
+    charts: &[ChartContext],
+    dependency_refill: &YamlValue,
+) -> EngineResult<YamlValue> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
-    let mut doc = YamlValue::Mapping(serde_yaml::Mapping::default());
-    compose_subchart_values(charts, &mut doc)?;
     let root_values_path = root.chart_dir.join("values.yaml")?;
     if root_values_path.is_file()? {
         let parent = serde_yaml::from_str::<YamlValue>(&root_values_path.read_to_string()?)?;
-        doc = subtract_declared_paths(&doc, &parent);
+        return Ok(subtract_declared_paths(dependency_refill, &parent));
     }
-    Ok(doc)
+    Ok(dependency_refill.clone())
 }
 
 /// The dependency charts' declared defaults, composed under their value

@@ -184,7 +184,7 @@ impl KubernetesJsonSchemaProvider {
         for version in self.versions.ordered() {
             for filename in &candidates {
                 for source in &self.mirrors.sources {
-                    if let Some(doc) = self.try_load_from_source(source, &version, filename) {
+                    if let Some(doc) = self.try_load_from_source(source, version, filename) {
                         return Some(LoadedK8sSchemaDoc {
                             source: source.clone(),
                             version: version.clone(),
@@ -350,7 +350,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     }
 
     fn k8s_version_chain(&self) -> Option<Vec<String>> {
-        Some(self.versions.ordered())
+        Some(self.versions.ordered().to_vec())
     }
 
     /// Scan the cache for K8s versions that hold this resource's file
@@ -370,7 +370,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         }
         let candidates = candidate_filenames_for_resource(resource);
         let configured_versions: std::collections::HashSet<String> =
-            self.versions.ordered().into_iter().collect();
+            self.versions.ordered().iter().cloned().collect();
         let configured_source_ids = self.mirrors.source_ids();
         for (source_id, source_path) in subdirs(&self.cache_dir) {
             if !configured_source_ids.contains(&source_id) {
@@ -451,7 +451,8 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         let inference_versions: std::collections::HashSet<String> = self
             .versions
             .inference_scan_versions()
-            .into_iter()
+            .iter()
+            .cloned()
             .collect();
         out.extend(scan_k8s_cache(
             &self.cache_dir,

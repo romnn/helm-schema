@@ -67,24 +67,24 @@ pub(crate) fn discover_chart_contexts_with_budget(
     load_budget: LoadBudget,
 ) -> EngineResult<Vec<ChartContext>> {
     let mut out = Vec::new();
-    discover_chart_contexts_inner(root_chart_dir, &[], &[], load_budget, &mut out)?;
+    let chart_yaml = read_chart_yaml(root_chart_dir)?;
+    discover_chart_contexts_inner(root_chart_dir, &chart_yaml, &[], &[], load_budget, &mut out)?;
     Ok(out)
 }
 
 fn discover_chart_contexts_inner(
     chart_dir: &VfsPath,
+    chart_yaml: &ChartYaml,
     parent_prefix: &[String],
     dependency_activation_chain: &[ChartDependencyActivation],
     load_budget: LoadBudget,
     out: &mut Vec<ChartContext>,
 ) -> EngineResult<()> {
-    let chart_yaml = read_chart_yaml(chart_dir)?;
-
     let is_library = chart_yaml
         .chart_type
         .as_deref()
         .is_some_and(|chart_type| chart_type.eq_ignore_ascii_case("library"));
-    let static_root_strings = chart_static_root_strings(&chart_yaml);
+    let static_root_strings = chart_static_root_strings(chart_yaml);
 
     out.push(ChartContext {
         chart_dir: chart_dir.clone(),
@@ -94,7 +94,7 @@ fn discover_chart_contexts_inner(
         dependency_activation_chain: dependency_activation_chain.to_vec(),
     });
 
-    let dependency_metadata_by_name = dependency_metadata_map(&chart_yaml, parent_prefix);
+    let dependency_metadata_by_name = dependency_metadata_map(chart_yaml, parent_prefix);
 
     let vendor_charts_dir = chart_dir.join("charts")?;
     if !vendor_charts_dir.is_dir()? {
@@ -138,12 +138,12 @@ fn discover_chart_contexts_inner(
                 path: sub_dir.as_str().to_string(),
             })?;
 
-        installed_charts.push((sub_dir, sub_name));
+        installed_charts.push((sub_dir, sub_name, sub_chart_yaml));
     }
 
     reject_duplicate_installed_dependency_names(&installed_charts, &vendor_charts_dir)?;
 
-    for (sub_dir, sub_name) in installed_charts {
+    for (sub_dir, sub_name, sub_chart_yaml) in installed_charts {
         let dependency_metadata = dependency_metadata_by_name
             .get(&sub_name)
             .cloned()
@@ -167,7 +167,14 @@ fn discover_chart_contexts_inner(
                 chain.push(activation);
             }
 
-            discover_chart_contexts_inner(&sub_dir, &prefix, &chain, load_budget, out)?;
+            discover_chart_contexts_inner(
+                &sub_dir,
+                &sub_chart_yaml,
+                &prefix,
+                &chain,
+                load_budget,
+                out,
+            )?;
         }
     }
 
@@ -460,11 +467,11 @@ fn reject_duplicate_dependency_values_keys(
 }
 
 fn reject_duplicate_installed_dependency_names(
-    installed_charts: &[(VfsPath, String)],
+    installed_charts: &[(VfsPath, String, ChartYaml)],
     charts_dir: &VfsPath,
 ) -> EngineResult<()> {
     let mut entries_by_name = BTreeMap::new();
-    for (chart_dir, name) in installed_charts {
+    for (chart_dir, name, _) in installed_charts {
         entries_by_name
             .entry(name)
             .or_insert_with(Vec::new)

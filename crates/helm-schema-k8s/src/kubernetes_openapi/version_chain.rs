@@ -1,13 +1,8 @@
 /// Configuration for the in-provider K8s version chain.
 #[derive(Debug, Clone)]
 pub struct K8sVersionChain {
-    /// User-supplied versions in their literal CLI order. The first is
-    /// the primary, the rest are explicit fallbacks.
-    pub explicit: Vec<String>,
-    /// Auto-extension policy: `None` = no auto-fallback;
-    /// `Some(n)` = append `n` minors below the smallest
-    /// explicit version, monotonically descending.
-    pub auto_fallback_window: Option<u32>,
+    explicit: Vec<String>,
+    ordered: Vec<String>,
 }
 
 impl K8sVersionChain {
@@ -20,28 +15,25 @@ impl K8sVersionChain {
     /// "explicit only" for any other shape.
     #[must_use]
     pub fn new(explicit: Vec<String>, auto_fallback_window: Option<u32>) -> Self {
-        Self {
-            explicit,
-            auto_fallback_window,
-        }
-    }
-
-    /// Materialise the ordered list of `version_dirs` to probe.
-    #[must_use]
-    pub fn ordered(&self) -> Vec<String> {
-        let mut out: Vec<String> = self.explicit.clone();
-        if let Some(window) = self.auto_fallback_window
-            && self.explicit.len() == 1
-            && let Some(primary) = self.explicit.first().and_then(|v| parse_minor(v))
+        let mut ordered = explicit.clone();
+        if let Some(window) = auto_fallback_window
+            && explicit.len() == 1
+            && let Some(primary) = explicit.first().and_then(|version| parse_minor(version))
         {
             for offset in 1..=window {
                 let Some(next_minor) = primary.1.checked_sub(offset) else {
                     break;
                 };
-                out.push(format!("v{}.{next_minor}.0", primary.0));
+                ordered.push(format!("v{}.{next_minor}.0", primary.0));
             }
         }
-        out
+        Self { explicit, ordered }
+    }
+
+    /// Returns the materialized `version_dirs` in probe order.
+    #[must_use]
+    pub fn ordered(&self) -> &[String] {
+        &self.ordered
     }
 
     /// The primary (first explicit) version, if any.
@@ -60,8 +52,8 @@ impl K8sVersionChain {
     /// version dir, producing spurious `AmbiguousApiVersion`
     /// diagnostics.
     #[must_use]
-    pub fn inference_scan_versions(&self) -> Vec<String> {
-        self.explicit.clone()
+    pub fn inference_scan_versions(&self) -> &[String] {
+        &self.explicit
     }
 }
 

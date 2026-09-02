@@ -75,21 +75,21 @@ impl PreparedSession {
         let defines = chart::build_define_index(charts, opts.include_tests)?;
         let composed_values =
             chart::build_composed_values_document(charts, opts.include_subchart_values)?;
+        // What a DELETED dependency root refills with, which the subtracted
+        // dependency document cannot say: it drops exactly the parent-declared
+        // keys the refill also drops.
+        let dependency_refill_values_yaml = if opts.include_subchart_values {
+            chart::build_dependency_refill_values_document(charts)?
+        } else {
+            serde_yaml::Value::Null
+        };
         // The dependency charts' own declared defaults: schema generation
         // distinguishes parent-owned absence (helm null-deletion, nil at
         // render) from subchart-declared absence (the subchart's default
         // fills at its own coalesce stage, even after a parent-level
         // null-deletion).
         let dependency_values_yaml = if opts.include_subchart_values {
-            chart::build_dependency_values_document(charts)?
-        } else {
-            serde_yaml::Value::Null
-        };
-        // What a DELETED dependency root refills with, which the subtracted
-        // document above cannot say: it drops exactly the parent-declared
-        // keys the refill also drops.
-        let dependency_refill_values_yaml = if opts.include_subchart_values {
-            chart::build_dependency_refill_values_document(charts)?
+            chart::build_dependency_values_document(charts, &dependency_refill_values_yaml)?
         } else {
             serde_yaml::Value::Null
         };

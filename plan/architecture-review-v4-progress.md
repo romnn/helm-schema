@@ -7419,3 +7419,133 @@
   three Boolean cache knobs, one pass enum, one wrapper, one forwarder, one report dimension, and
   one duplicate collector while adding typed cache and materialized-phase carriers. No E-style LOC
   gate applies.
+
+## S-B quick paths — remove repeated resolution, composition, and version work
+
+- Status: landed; commit pending.
+- Contract: representation/performance-only. Complete the independent short S-B items that remain
+  before C3: resolve path evidence without deep clones, derive the dependency document from the
+  already-composed refill document, thread parsed dependency metadata through discovery recursion,
+  and materialize the Kubernetes version chain once.
+- Acceptance baseline: `a408db2a` (verified S-D full-suite evidence commit).
+- Baseline production Rust LOC: 65,789.
+- Pre-registered acceptance expectations:
+  - Zero schema, symbolic-IR, diagnostic, acceptance, wire, or fixture byte changes. Any changed
+    byte or acceptance cell rejects the round before artifact adoption.
+  - `PathSchemaResolver::resolve_all` field-splits the owned resolver and resolves directly from the
+    borrowed evidence map. No `ValuesPath`, `ContractPathSchemaEvidence`, or staging path vector is
+    cloned solely to satisfy the mutable provider-cache borrow.
+  - Compose dependency refill defaults once, then derive the dependency document as
+    `refill − root-declared paths`. Null-deletion, subchart-global propagation, the
+    `include_subchart_values = false` lane, and document ordering remain exact.
+  - Parse every discovered subchart's `Chart.yaml`/`Chart.template.yaml` once and carry that parsed
+    value into recursive discovery, including multiple aliases of one installed chart. Duplicate
+    installed-name rejection and alias order remain unchanged.
+  - `K8sVersionChain::new` materializes the ordered explicit-plus-auto list once. `ordered` and
+    `inference_scan_versions` borrow stable slices; lookup, diagnostics, capability probes, and
+    explicit-only inference keep their exact order and membership.
+  - Part-F decision: `K8sVersionChain`'s `explicit` and `auto_fallback_window` fields become private,
+    and its two list accessors return slices rather than newly allocated vectors. Construction
+    remains the public policy boundary; no wire format is involved.
+  - Candidate-accepts/Helm-aborts allowance and mandatory base/third-level drops remain zero.
+
+- Measured results:
+  - `PathSchemaResolver::resolve_all` destructures its owned fields and resolves each borrowed map
+    entry directly with one mutable provider cache. The cloned evidence object, cloned path staging
+    vector, second map lookup, and private `resolve_path` adapter are deleted.
+  - Session preparation now composes dependency refill defaults once and derives the dependency
+    document by subtracting the root chart's declared paths. `compose_subchart_values` calls fall
+    from three to two; the no-subchart lane still supplies two `Null` documents.
+  - Discovery reads each root/installed chart metadata document before recursion and passes the
+    parsed `ChartYaml` by reference into the recursive call. Multiple aliases share the same parsed
+    value during their sibling loop; installed-name validation consumes the same tuple without a
+    cloned staging projection.
+  - `K8sVersionChain` stores explicit and fully ordered lists. Auto-fallback formatting occurs once
+    in `new`; lookup and inference scan borrowed slices. Public tests pin the borrowed policy view,
+    and provider diagnostics still clone only at the trait boundary that owns a `Vec<String>`.
+  - The final immutable archive contains 90 binaries and 128 files. Its clean schema dump passes
+    62/62 tests in 155.317 seconds, writes 84 artifacts, and is recursively byte-identical to S-D.
+    The IR dump passes in 3.186 seconds with all 18 artifacts unchanged.
+  - The full-depth battery passes in 87.671 seconds across 60 charts and 120,833 probes with zero
+    flips, zero candidate-accepts/Helm-aborts cells, 112,260/112,260 mandatory base probes, and
+    7,465/7,465 mandatory third-level probes.
+
+- Deviations:
+  - The first discovery lint preflight carried parsed `ChartYaml` by value. Clippy correctly
+    rejected the unnecessary ownership transfer; the final design borrows it, which also removes
+    the initially proposed per-alias clone. No archive or dump had been built.
+
+- Adjudication evidence:
+  - Helm 4.2.3 remains pinned and was used by the full-depth battery. All 84 schema and 18 IR bytes
+    match `a408db2a`, and the prober reports zero acceptance flips. No fixture or Helm cell requires
+    adoption.
+  - Candidate-accepts/Helm-aborts remains zero against a zero allowance. Mandatory base and
+    third-level coverage have zero drops; 25,710 disclosed bounded reductions remain outside the
+    mandatory categories.
+
+- Producer/route coverage:
+
+  | Route | Final behavior and proof |
+  | --- | --- |
+  | Path evidence resolution | Same ordered evidence map, one shared provider cache, no cloned evidence; focused gen suite and exact corpus. |
+  | Composed root values | Same root plus scoped subchart defaults; chart values tests and 84 exact schemas. |
+  | Dependency/refill values | Refill composed once, dependency derived by root declaration subtraction; dependency provider tests and corpus identity. |
+  | Chart discovery | One metadata parse per visited chart/alias sibling set; duplicate-name, alias, activation, and public chart tests. |
+  | K8s lookup order | Borrowed precomputed explicit-plus-auto slice; version-chain, fallback, cache, capability, and 32-chart downstream tests. |
+
+- Review dossier:
+  - Immutable build: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sbquick-final1-build cargo
+    nextest archive --workspace --archive-file /private/tmp/arch-v4-sbquick-final1.tar.zst`; exit 0,
+    90 binaries and 128 files.
+  - Clean schema dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sbquick-final1-schema
+    SCHEMA_DUMP=1 cargo nextest run --archive-file /private/tmp/arch-v4-sbquick-final1.tar.zst
+    --profile integration --no-fail-fast -E 'test(schema_fixtures_match) | binary(/chart_corpus/) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) | binary(/final_output_policy/)'`;
+    exit 0, 62/62 in 155.317 seconds and 84 exact artifacts.
+  - Clean IR dump: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sbquick-final1-ir
+    SYMBOLIC_DUMP=1 IR_DUMP=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-sbquick-final1.tar.zst --profile integration -E
+    'test(ir_corpus_fixtures_match)'`; exit 0, one test in 3.186 seconds and 18 exact artifacts.
+  - Full-depth proof: `TMPDIR=/Volumes/T7/dev/helm-schema/target/arch-v4-sbquick-final1-prober
+    SCHEMA_ACCEPTANCE_BASELINE_REF=a408db2a
+    SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/Volumes/T7/dev/helm-schema/target/arch-v4-sbquick-final1-schema
+    SCHEMA_PROBE_COVERAGE_REPORT=/Volumes/T7/dev/helm-schema/target/arch-v4-sbquick-final1-coverage.json
+    ADJUDICATE_WITH_HELM=1 cargo nextest run --archive-file
+    /private/tmp/arch-v4-sbquick-final1.tar.zst --profile integration -E
+    'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+    ignored-only`; exit 0 in 87.671 seconds with zero flips and zero mandatory drops.
+  - Part-F decision: `K8sVersionChain`'s construction fields are private and its ordered/explicit
+    views borrow slices. Callers cannot mutate a list out of sync with the precomputed chain; no
+    serialized format changes.
+
+- Self-adversarial pass:
+  - Verified dependency derivation subtracts from the refill document, not the composed root-plus-
+    dependencies document; the latter includes parent overrides and would change refill semantics.
+  - Kept root `values.yaml` parsing and the remaining two compositions in place because the C3
+    snapshot owns the parse-once close. This round does not introduce a partial file cache.
+  - Passed parsed chart metadata by reference through alias recursion and kept the parsed value in
+    the installed-chart tuple, avoiding both the old second read and a replacement clone protocol.
+  - Kept explicit versions separately from the materialized ordered list so inference scans cannot
+    accidentally include auto-fallback escape versions.
+  - Confirmed no resolve-path staging vector/evidence clone, third subchart composition, recursive
+    chart metadata reread, or per-lookup version formatting remains.
+
+- Gates on the final tree:
+  - `cargo fmt --check`: exit 0 in 1.00 seconds.
+  - `task lint`: exit 0 in 33.27 seconds; two pre-existing ast-grep warnings remain informational.
+  - `task lint:fc`: exit 0, 48/48 combinations in 134.30 seconds.
+  - `cargo nextest run --workspace`: exit 0, 1,333/1,333 tests in 104.885 seconds.
+  - `task test:integration`: exit 0, 563/563 tests in 740.960 seconds; 24 tests skipped by profile.
+  - `task test:all`: exit 0, 1,900/1,900 tests in 786.106 seconds; 24 tests skipped by profile and
+    all live network tests pass.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0 in 15.66 seconds.
+  - downstream luup2 `check:local`: exit 0, 32/32 charts in 40.47 seconds, using the documented
+    macOS shims and `/Users/roman/.cargo/bin/helm-schema`.
+  - `task tokei:core`: exit 0; production Rust LOC is 65,793.
+  - `git diff --exit-code bb61a78f -- plan/architecture-review-v4.md`: exit 0.
+  - `git diff --check`: exit 0.
+
+- Measured production LOC delta: +4 (65,789 to 65,793). The stored ordered version list and parsed
+  discovery tuple make the phase artifacts explicit while deleting repeated cloning/composition/
+  parsing work. This is an ordinary performance/representation round, so no E-style LOC gate
+  applies.

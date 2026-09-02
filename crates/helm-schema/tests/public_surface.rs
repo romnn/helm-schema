@@ -99,7 +99,8 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
         "#},
     )?;
 
-    let versions = K8sVersionChain::new(vec!["v1.35.0".to_string()], Some(1)).ordered();
+    let chain = K8sVersionChain::new(vec!["v1.35.0".to_string()], Some(1));
+    let versions = chain.ordered();
     sim_assert_eq!(have: versions, want: vec!["v1.35.0".to_string(), "v1.34.0".to_string()]);
     assert!(matches!(
         JsonOutputFormat::from_compact(false),
