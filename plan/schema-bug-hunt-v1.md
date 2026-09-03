@@ -8,8 +8,9 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 16 of 25 agent reports have landed, contributing 147
-proven findings across 38 families. One previously-open root cause is now closed
+**Status: in progress.** 20 of 25 agent reports have landed, contributing 190
+proven findings across 53 families. **Three previously-unresolved mechanisms are
+now root-caused: D5, and the quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root cause is now closed
 (F4) and three earlier claims are refuted (see "Corrections"). The remaining
 reports are appended as they arrive.
 
@@ -245,8 +246,14 @@ this is not even a coherent falsy-widening.
 
 ### F6 — the bitnami `validateValues` aggregator is unmodelled
 
-**Class:** false acceptance. **Charts:** `bitnami-postgresql`, `mariadb-galera`,
-and previously recorded for `bitnami-redis` in `plan/chart-corpus-status.md`.
+**Class:** false acceptance. **Charts:** `bitnami-postgresql`, `mariadb-galera`, `bitnami-redis`, `rabbitmq`,
+`nginx`, `postgresql-ha`, `etcd`, `fluentd`, `zookeeper`, `netbox`, `spark`.
+**The idiom appears in 30+ corpus charts.**
+
+The boundary is now pinned exactly by a minimal reproducer: an **inline** `fail`
+gets an arm, and a `fail` inside an **`include`d helper** gets an arm — but a
+`fail` gated by a `list` / `append (include …)` / `without ""` / `join` **message
+accumulator** gets nothing.
 
 The pattern is `append` → `without ""` → `join` → `if $message → fail`. None of
 it is modelled, so every validation a bitnami chart performs this way is invisible
@@ -556,9 +563,23 @@ the `range`, not the `$.` root reference.**
 **Charts:** `kube-prometheus-stack`, `phpmyadmin`, `rook-ceph`, `nacos`, and
 almost certainly every umbrella.
 
-**Scale, measured:** 425 of 924 reject arms in `kube-prometheus-stack` and 258 of
-346 in `phpmyadmin` are dead this way — and **100% of the dead arms are
-subchart-scoped paths**. Nearly half of the largest chart's reject surface is
+**Scale, measured across five independent agents:** 425 of 924 reject arms in
+`kube-prometheus-stack`, 258 of 346 in `phpmyadmin`, 20 in `metallb`, ~11 in
+`datadog`, plus 50 witnessed false-acceptance paths in `prometheus` and 16 in
+`open-webui` — and **100% of the dead arms are subchart-scoped paths**, with
+**zero** at any parent-owned path in every chart measured.
+
+**D3 and D4 are ruled out as the cause.** Renaming every colliding template file
+in `metallb` and regenerating changed nothing, and the affected charts make no
+`.Subcharts` use — the facts land in the right scope with the wrong predicate. A
+30-line reproducer settles it: a parent and a subchart with **byte-identical**
+`values.yaml` and **byte-identical** templates produce
+`REJECT IF (.grp == null OR NOT has(.grp))` at the parent and
+`REJECT IF (isObj(.kid) AND .kid.grp == null)` in the subchart.
+
+The blind spot follows the **key, not the reading template**: in `open-webui`,
+`terminals` is read by the chart's *own* `workload-manager.yaml:461` and still
+gets no arm while 12 sibling root keys do. Nearly half of the largest chart's reject surface is
 unreachable code. An independent level-1/2 sweep found 49 witnessed
 false-acceptance paths in `kube-prometheus-stack` alone, all under `grafana.`,
 `kube-state-metrics.` and `prometheus-node-exporter.`.
@@ -681,6 +702,127 @@ neither is encoded, so `mcbackup.resticHostname` and `minecraftServer.ftbModpack
 abort while validating. Compare F18: `required` is mis-handled in argument
 position as well as in reversed-argument position.
 
+### D5 — a block scalar whose body starts inside a control region — **ROOT-CAUSED**
+
+**Class:** false rejection. **Charts:** `openldap-stack-ha`, `kube-starrocks`
+(where it produces a schema that accepts *nothing*).
+
+`plan/corpus-expansion-v1.md` left D5 as a confirmed failure pattern with an open
+cause, and explicitly refuted the leading hypothesis. The real mechanism is
+neither ownership nor the adopted-control escape test: **the block scalar's
+`body` span starts *inside* the control region**, so the region's opener is
+excluded from `BlockScalar::holes`, and the region is then evaluated **twice** —
+once guarded (correctly, via `eval_block_adopted_control`) and once **unguarded**,
+which is the bogus arm.
+
+The chain:
+
+1. `parse.rs:181-190` — a column-0 `{{- if }}` fails `indent > frame.indent`, so
+   it is not swallowed as body and instead opens a control region.
+2. `parse.rs:485-486` — `extend_block_body` takes `body.start` from the **first
+   deeper line**, which for an empty block body is the guard's *consequence* line,
+   i.e. after the opener.
+3. `parse.rs:602-616` — `finish_block` collects holes by span containment, so the
+   opener (`start < body.start`) is dropped while the interior `{{- else }}` and
+   both branches' holes are kept.
+4. `holes.rs:1183` keys the guard off `control_facts.get(&hole.start)`; with the
+   opener gone every hole returns `None`, the escape at `holes.rs:1205-1207` never
+   fires, and control falls through to the unguarded arm at `holes.rs:1210-1223`.
+
+**The invariant being violated:** `block.body` must never be a strict subrange of
+a control region attached to the same entry. In the real chart,
+`body = [1806, 2339)` sits inside `control span = [1777, 2350)`.
+
+**Decisive discriminator:** with `nindent` in *both* branches the schema emits
+**four** reject arms — the two correct guarded ones **plus two unconditional
+duplicates, one per branch**. Two mutually exclusive branches cannot both yield
+unconditional terminals unless their bodies were flattened into one guard-free
+text stream. The control case (one content line before the guard) puts the opener
+back into `holes`, fires the escape, and is clean.
+
+D5 is `openldap-stack-ha`'s **only** remaining defect on defaults: exactly one arm
+fires, and setting `customAcls` makes it accept.
+
+### F39 — a provider `oneOf` is kept verbatim while its branches are rewritten
+
+**Class:** false rejection. **Systemic: 149 of 156 corpus schemas contain such
+nodes.** **Charts:** `crossplane`, `zabbix`, and by the same mechanism
+`alertmanager`, `prometheus-pushgateway`, `filebeat`.
+
+`crates/helm-schema-gen/src/scalar_preimage.rs:73-88` keeps the provider's
+`oneOf` keyword verbatim while rewriting each branch into its values-preimage.
+The preimage is **many-to-one**, so `""`, `~`, `null`, `&anchor` and comment-only
+strings match **both** arms — and `oneOf` demands exactly one. Every such value is
+rejected.
+
+Witnesses: `functionCache.sizeLimit: ""`, `postgresql.persistence.storageSize: ""`.
+Every distinct `oneOf` shape in five of seven charts in one batch overlaps.
+
+This subsumes what was recorded separately as an IntOrString problem: the
+`ServicePort.targetPort` case, where `null` matches both `[string,null]` and
+`[integer,null]` arms and the analyzer concludes the value can be neither null nor
+absent, is the same defect at a specific node.
+
+### F40 — a plain-scalar preimage is computed per hole, not over the composed scalar
+
+**Class:** false acceptance. **Charts:** `openldap-stack-ha`, `redis-ha`, `nack`.
+
+`image: {{ .repository }}:{{ .tag }}` with `tag: ""` renders `image: nginx:` and
+aborts on YAML parse; the schema accepts. The single-hole `:$` exclusion is
+demonstrably working — it is the *composition* of holes into one scalar that is
+not analysed. Six real witnesses.
+
+Closely related to F30, which is the same contract applied to the wrong *kind* of
+scalar; this is the same contract applied at the wrong *granularity*.
+
+### F41 — a value rendered into a mapping-key slot is under-constrained
+
+**Class:** false acceptance **and** false rejection. **Charts:** `zabbix`,
+`redis-ha`, and see also the `nginx` `tls.*Filename` entry.
+
+- `zabbix`: `postgresAccess.secretHostKey: ""` renders an empty mapping key and
+  aborts; the schema accepts, for all five such keys.
+- `redis-ha`: the inverse. `{{ template "redis-ha.fullname" . }}: replica`
+  (`statefulset.yaml:11,46,84,94,107`) places the value in a mapping-key slot, and
+  `metadata.labels`' **whole-map** schema is applied to `.Values.fullnameOverride`
+  itself, yielding `anyOf[falsy, map[string]string]`. `fullnameOverride: my-redis`
+  renders and is rejected, while a map is accepted and aborts. Causally isolated:
+  deleting only those five lines makes the constraint vanish.
+
+### F42 — an unmodelled call anywhere in a guard conjunct discards the branch
+
+**Class:** false acceptance. **Chart:** `redis-ha`.
+
+`auth: true` aborts at `b64enc` on a nil `redisPassword`; the schema accepts.
+Discriminators put this outside the documented runtime-`tpl` boundary: `tpl ""`
+(a literal) and `trim` also lose the branch, while `printf` emits the correct arm.
+
+This is the general form of F7: it is not about numeric conjuncts specifically,
+but about *any* undecoded call in the guard discarding its siblings' terminals.
+
+### F43 — `default <literal> .Values.X` pins `X` to the literal's type
+
+**Class:** unjustified constraint. **Chart:** `zabbix`.
+
+`zabbixServer.hostPort: "true"` renders **byte-identically** to `true` and is
+rejected as "not of type boolean".
+
+### F44 — `required` over a `dig` rooted at a `.Values` sub-path drops its terminal
+
+**Class:** false acceptance. **Chart:** `loki`.
+
+`loki.useTestSchema: true` aborts with *"Please define
+loki.storage.bucketNames.chunks"* and the schema accepts. The repro is exact:
+`dig … .Values` keeps the terminal, `dig … .Values.a` loses it.
+
+### F45 — `not (len X)` lowers to "absent or null" rather than "empty"
+
+**Class:** false acceptance. **Chart:** `x509-certificate-exporter`.
+
+The chart's own default `extraAlertGroups: []` falls in the gap, so
+`create` + `disableBuiltinAlertGroup` aborts and validates. `not` and `empty` are
+both modelled correctly; `len` is not.
+
 ### F30 — the plain-scalar YAML safety contract is applied to the wrong scalars
 
 **Class:** false rejection **and** false acceptance, from one classification bug.
@@ -799,6 +941,9 @@ except the reachable one.
 
 ### F37 — an IntOrString union makes `null` fail `oneOf`, so the value is forced mandatory
 
+**Superseded by F39**, which identifies the general mechanism and the responsible
+line. Kept here because the instances are separately witnessed.
+
 **Class:** false rejection. **Charts:** `alertmanager`, `prometheus-pushgateway`,
 and latent in `filebeat`.
 
@@ -825,6 +970,159 @@ monitoring can never be enabled.
 
 Deleting `service.yaml`, or rewriting the same `with` across multiple lines,
 fixes it.
+
+### F46 — an undecidable `.Capabilities` conjunct is *dropped* from an abort guard
+
+**Class:** false rejection. **Chart:** `datadog`.
+**This is the exact inverse policy error from F7, and it is the more dangerous
+one.**
+
+`migration-job.yaml:1-4` guards a `fail` behind
+`and (include "migration-supported" .) (or …migration.enabled …migration.preview)`,
+where `migration-supported` bottoms out in
+`$.Capabilities.APIVersions.Has "datadoghq.com/v2alpha1/DatadogAgent"`. The
+emitted arm is that guard **minus** the capability conjunct, so the `fail` becomes
+an unconditional rejection.
+
+Witness: coalesced defaults plus `datadog.operator.migration.preview: true` —
+Helm renders (exit 0), schema rejects. That locks users out of the documented
+dry-run path for the operator migration.
+
+For *branch selection*, treating an undecidable capability as "potentially live"
+is the documented, correct contract (`CLAUDE.md`). For an **abort** guard it is
+backwards: it promotes a `fail` that may never be reached into a certain
+rejection. A minimal reproducer confirms the asymmetry, and the control is
+decisive: `and (eq .Release.Name "foo") .Values.x` guarding a `fail` emits **zero**
+arms — the analyzer knows how to abstain, and the capability path specifically
+does not.
+
+### F47 — a `define` between an accumulator and its `fail` deletes the whole arm
+
+**Class:** false acceptance. **Chart:** `jupyterhub` (4 reachable `fail`s lost).
+
+`NOTES.txt:123-176` is the standard accumulate-then-`fail` breaking-change guard.
+A `define` block sitting between the accumulator writes and the `fail` that reads
+them derails the enclosing document's evaluation state, and the arm vanishes. The
+analyzer even records `rbac.enabled` and `hub.fsGid` as known properties and then
+constrains neither.
+
+The minimal reproducer's truth table isolates it exactly — the `define` body
+matters, not its presence:
+
+| `define` body | arm emitted |
+| --- | --- |
+| *(no define)* | yes |
+| `hello: world` | yes |
+| `{{ .name }}` | yes |
+| `hello: {{ "x" }}` | **gone** |
+| `hello: {{ .name }}` | **gone** |
+| `hello: {{ .Values.rbac.create }}` | **gone** |
+
+So it takes a `define` whose body is a YAML **mapping line with an interpolated
+value**. Deleting only the `define` from the real chart makes a single correct arm
+appear encoding all four conditions as a disjunction.
+
+These are exactly the guards that catch stale configuration across a major-version
+upgrade, and the idiom is very common.
+
+### F48 — a leaf contract two wildcard levels deep is dropped
+
+**Class:** false acceptance. **Charts:** `logstash`, `coredns`.
+
+`secrets[*].value.*` (consumed by `b64enc`) and
+`servers[*].plugins[*].configBlock` (consumed by `indent`) are both left open. The
+minimal repro is clean: **one** wildcard level, map or list, keeps the string
+contract; **two** lose it.
+
+### F49 — function-catalogue omissions decide whether a contract exists
+
+**Class:** false rejection and false acceptance. **Charts:** `imgproxy`
+(**quarantine defect root-caused**), `nginx-ingress-controller`.
+
+- **`imgproxy`.** `deployment.yaml:122` and `service.yaml:46,48` do
+  `mustRegexSplit ":" . -1 | mustLast | int` into a port field.
+  `crates/helm-schema-ir/src/function_semantics.rs:205,218` catalogue
+  `regexSplit` (→ `CollectionShape::StringSplit`, which builds the `SplitSegment`
+  preimage) and `last`, but **not** `mustRegexSplit` / `mustLast`. They fall
+  through to `UNKNOWN`, the split preimage is never built, and the
+  `ContainerPort.containerPort` int32 constraint lands on the raw string — so the
+  schema rejects the chart's own default `IMGPROXY_PROMETHEUS_BIND: ":8081"`,
+  which Helm renders as `port: 8081`. Causal experiment: swapping to the non-`must`
+  spellings leaves `helm template` byte-identical and drives errors 2 → 0, and
+  either missing name alone is sufficient. The table already carries nine other
+  `must*` aliases, so this is an omission rather than a policy.
+- **`nginx-ingress-controller`.** `regexFind`, `regexFindAll` and
+  `regexQuoteMeta` are missing from the string-operand kind table, while
+  `regexSplit`, `regexMatch`, `regexReplaceAll(Literal)`, `trimAll`, `hasPrefix`,
+  `contains` and `b64enc` are all present. A three-entry omission.
+
+Contrast worth recording: `tempo` handles the `regexSplit … | last` port idiom
+**correctly** — the very construct imgproxy's `must*` spellings break.
+
+### F50 — an `or`-selected alias conjoins its candidates instead of case-splitting
+
+**Class:** false rejection **and** false acceptance. **Chart:** `eck-stack`
+(**quarantine defect root-caused**), 52 occurrences.
+
+`charts/eck-kibana/templates/kibana.yaml:25-28` does
+`$esRef := or ((.Values.spec).elasticsearchRef) (.Values.elasticsearchRef)` and
+then `if not (or ($esRef).name ($esRef).secretName)` → `fail`. The emitted
+condition negates a **conjunction over all four (container × field) paths**, so it
+fires whenever the deprecated `spec.` mirror is absent — that is, for the chart's
+own defaults. The only accepting document sets all four paths, which the chart's
+`values.yaml` says is illegal.
+
+The same mechanism at positive polarity is a false *acceptance*: `if ($esRef).name → fail`
+emits an all-four conjunction that never fires. Minimal isolation pins the trigger
+to *multi-candidate alias × more than one member read*.
+
+### F51 — an `or`-selected alias path is misclassified when parenthesized
+
+**Class:** false rejection. **Chart:** `eck-stack` (second, independent cause).
+
+Measured against Helm 4.2.3: bare `hasKey .Values.spec "k"` **aborts** on a
+missing key, while parenthesized `hasKey (.Values.spec) "k"` **renders `false`** —
+Go's `evalPipeline` unwraps the zero-method interface so `validateType`
+substitutes `reflect.Zero(map)`. `direct_values_path`
+(`crates/helm-schema-ir/src/expr_eval.rs:43-49`) calls `expr.deparen()` before
+matching, erasing exactly that distinction, and a minimal pair generates identical
+conditions for the two spellings. Every legal `eck-beats` configuration is
+rejected.
+
+### F52 — Go's `and` returns its operand, not a boolean
+
+**Class:** false acceptance. **Chart:** `open-webui`.
+
+`workload-manager.yaml:6` does `ternary … (and .Values.persistence.enabled (eq …))`.
+Because `and` yields the *operand* rather than a bool, a nil operand makes
+`ternary` abort. helm-schema models `ternary`'s strictness
+(`crates/helm-schema-ir/src/comparisons.rs:37`) but not `and`'s value passthrough.
+
+### F53 — a self-truthiness gate drops the operand's *kind* contract, not just presence
+
+**Class:** false acceptance. **Chart:** `argocd-apps`.
+**Probably the broadest-reach of its batch.**
+
+`applicationsets.<name>.templatePatch` is `nindent`ed under `{{- with … }}`, so it
+must be a string, but it is emitted as `{}`. A `with`/`if` gate proves *truthy*,
+which is strictly weaker than *string* — a truthy map still aborts. The abstention
+should drop only the presence claim, not the kind.
+
+A companion instance: a truthiness gate on a **ranged member** erases that
+member's field contracts entirely. `applications.<name>.project` feeds `tpl` (a
+mandatory string) and is emitted as `{}` with no `required`; two minimal charts
+differing only by `{{- if not $v }}{{- continue }}{{- end }}` show the contract
+appearing and vanishing. The "self-truthiness gate abstains" rule is being applied
+to a gate on the operand's *container*.
+
+### F54 — a `range` target is constrained against every scalar type except string
+
+**Class:** false acceptance. **Chart:** `promtail`.
+
+`networkPolicy.k8sApi.cidrs` is excluded from `number`, `integer` and `boolean`,
+and has a dedicated absent-or-null arm — but not `string`. `len "xyz"` is 3 so the
+guard passes, and Go's `range` never iterates a string. The analyzer is clearly
+modelling "must be iterable"; the string branch is simply missing.
 
 ## Per-chart findings
 
@@ -1011,11 +1309,43 @@ verdict is a result, and is recorded so a later pass need not repeat the work.
   configurations accepted. The other ~11,000 template lines were not audited, so
   cilium is **not** claimed clean overall — and F9 above is a cilium defect.
 
+## Harness pitfalls worth inheriting
+
+Four traps cost agents real time and would cost the next engineer the same:
+
+- **Strip the chart's own shipped `values.schema.json` before running Helm.**
+  `x509-certificate-exporter` and `loki` ship one, and an early sweep produced
+  **332 bogus hits** purely from Helm enforcing the chart's schema rather than ours.
+- **Strip `templates/tests/` too.** `terraform` looks broken until you do — every
+  abort first seen there came from test templates that `--exclude-tests`
+  legitimately ignores.
+- **`helm template` is the wrong oracle for a wrongly-typed value in a typed
+  Kubernetes field.** Those rejections are correct provider constraints and must
+  be adjudicated out, not counted. One agent excluded 1,108 such cases in a single
+  chart.
+- **Coalesce through a chart copy with `templates/` removed.** Otherwise the dump
+  reports post-mutation `.Values` for charts that mutate at render time, and — far
+  worse — it can only produce documents Helm already agreed to render, which makes
+  false-acceptance hunting impossible.
+
+A path-dependency crate that dumps the `TemplatedDocument` CST with block spans
+and holes (`bughunt/scratch-19/cstdump/`) is what made the D5 root cause visible.
+It is worth keeping.
+
 ## Deliberately not reported
 
 Recorded so a later pass does not mistake these for missed bugs:
 
 - Type facets derived from a declared default — documented policy.
+- **`cert-manager` does *not* ingest its shipped `values.schema.json`** — checked
+  directly, because `CLAUDE.md` forbids it. The schema was regenerated twice, once
+  from the chart as vendored and once with `values.schema.json` deleted, and the
+  two outputs are byte-identical to each other and to the committed fixture. The
+  rule holds.
+- `range` over an integer — the tool emits an explicit
+  "input-channel-dependent integer range semantics" warning, so it is a deliberate
+  abstention.
+- `prometheus`' `vpa.yaml` emitting invalid YAML — an upstream chart bug.
 - Requiredness and typing propagated from Kubernetes provider schemas. The
   `eck-operator` `webhook.port` case was checked specifically and **is**
   correctly gated on `webhook.enabled`.
