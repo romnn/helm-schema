@@ -8,8 +8,9 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 25 of 28 launched agents have reported, contributing 232
-proven findings across 71 families. Five are still working. Two further agents
+**Status: 26 of 28 launched agents have reported**, contributing 240 proven
+findings across 73 families. Two are still running (`openebs`, and one
+long-frozen-fixture pass) plus two respawned cross-cutting agents. Five are still working. Two further agents
 completed their analysis but **could not write their reports** — their sandbox was
 read-only including the output directory — and their results were recovered from
 their transcripts; see "Recovered results" below. Two more died on content filters
@@ -189,6 +190,15 @@ literal, which is how bitnami's `common.resources.preset` enum is derived
 (`common/templates/_resources.tpl:45-48`). The enum is therefore **missing
 entirely**, and `resourcesPreset: "huge"` aborts while the schema accepts.
 
+**Isolated precisely, and it is the builtin rather than the indirection:**
+membership over a literal **list** (`has .Values.mode <list>`) *is* lowered to an
+enum and correctly rejects; membership over a literal **dict**
+(`hasKey <dict> .Values.preset`) emits **no arm mentioning the path at all** —
+proven with both branches inline against `.Values`, no helper involved. Proven
+against the shipped, otherwise-clean `bitnami-postgresql` schema. 51 template
+files call `common.resources.preset`, and 22 corpus charts expose
+`resourcesPreset` at the top level of `values.yaml` alone.
+
 Confirmed so far in `mariadb-galera`, `bitnami-postgresql`,
 `rabbitmq-cluster-operator`, `rabbitmq`, `bitnami-redis`, `nginx` and
 `postgresql-ha`. The vendored `common` library means it replicates across
@@ -201,6 +211,12 @@ compile-time `dict` literal, with no branch complexity to blame.
 ### F3 — `else if .Values.X` inside a chain with a total `else` makes `X` mandatory
 
 **Class:** false rejection. **Chart:** `rabbitmq-cluster-operator` (arms 25, 77, 87).
+
+**Did not reproduce elsewhere.** A later agent built a minimal chart for this shape
+and got the correct arm (`if not(mode=="a") and not(mode=="b") → false`), and
+netbox's `else if` chains are also fine. So the mechanism is narrower than the
+description here suggests — something else in `rabbitmq-cluster-operator` is
+required to trigger it, and that has not been isolated.
 
 Null-deleting `fullnameOverride` is rejected, though the helper's third branch
 builds the name from `.Release.Name`. Absent and `""` take the same template
@@ -217,7 +233,46 @@ Recorded as D6 in `plan/corpus-expansion-v1.md`, where it had no root cause.
 It is *not* the rendered-scalar sink: a bare `toYaml | b64enc` scalar sink
 abstains cleanly, verified directly.
 
-The actual cause needs three ingredients together:
+**A second, deeper pass replaced the initial root cause with a more precise one.**
+The narrowing is a `range $k, $v` over a derived map projecting the **sink's
+member type onto every values path that merely *influenced* the iterable**:
+
+| file:line | what |
+| --- | --- |
+| `crates/helm-schema-ir/src/fragment_eval/control.rs:979-983` | `source_paths = range_subject.influence_paths` |
+| `.../control.rs:1120-1143` | `if renders_mapping_entries { … splice_arm(path.encode(), ValueKind::Fragment) }` — the wrong-path splice |
+| `.../control.rs:1001-1002` | `renders_mapping_entries = destructured && !emits_sequence_items && has_dynamic_entries` |
+| `.../value_path_context/path_resolution.rs:107-120` | where `influence_paths` is filled |
+| `.../fragment_eval/inline_regions.rs:251` | the mirrored inline-range case |
+
+The `RangeSubject` doc comment (`value_path_context/mod.rs:26-32`) states exactly
+why `influence_paths`, `input_identity` and `member_identity` are separate — to
+stop "a transformation such as `splitList` from turning its string input into a
+collection contract". **The mapping-entry splice ignores that separation.** The
+correct source is `member_identity`/`input_identity`, which is already `None` for
+a derived dict.
+
+**This makes the family far broader than synapse.** A 20-line chart containing no
+synapse code reproduces it with the single most common idiom in Helm — a
+`checksum/config` pod annotation:
+
+```gotemplate
+annotations:
+  {{- $d := merge .Values.podAnnotations (dict "checksum/config" .Values.checksum) }}
+  {{- range $key, $value := $d }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+```
+
+`checksum` comes out as `anyOf[{const: "abc123"}, {type: object, additionalProperties: {type: string}}]`
+— pinned to its literal default, or forced to be an object of strings. The sink
+type propagates elementwise: with a `containerPort:` sink the same shape yields an
+integer constraint instead.
+
+The earlier description below is retained because its discriminator matrix is
+still correct; it identified the ingredients without identifying the mechanism.
+
+The narrowing needs three ingredients together:
 
 1. a `toYaml` operand containing the values path,
 2. a `range $k, $v :=` over the resulting dict,
@@ -273,6 +328,28 @@ The boundary is now pinned exactly by a minimal reproducer: an **inline** `fail`
 gets an arm, and a `fail` inside an **`include`d helper** gets an arm — but a
 `fail` gated by a `list` / `append (include …)` / `without ""` / `join` **message
 accumulator** gets nothing.
+
+**The exact losing step is now isolated.** A one-validator-per-chart matrix shows
+the guard survives `list`, `join` and `printf`, and is lost the moment the
+fragment passes through **`append`** or **`without`** — both of which appear in
+every Bitnami `validateValues`:
+
+| shape | schema |
+| --- | --- |
+| `list` → `append` → `without` → `join` → `if` → `fail` | **accept** |
+| `list` → `append` → `join` → `printf \| fail` | **accept** |
+| `without (list (include …)) ""` → `join` → `fail` | **accept** |
+| `$msg := include …` → `if $msg` → `fail` | reject |
+| `join "\n" (list (include …))` → `if` → `fail` | reject |
+| `printf "%s" (include …)` → `if` → `fail` | reject |
+
+Proven against the **shipped, otherwise-clean** `bitnami-redis` schema, whose
+defaults validate with zero errors: `architecture: bogus` aborts Helm via
+`NOTES.txt:202` and the schema accepts.
+
+**Methodological warning:** this bug interferes across helpers *within* one chart —
+a working `fail` capture at a shared site appears to rescue the others. Only a
+one-validator-per-chart matrix is trustworthy here.
 
 Independently corroborated in `oncall`, where five *direct* `fail`s in the same
 chart (cert-manager, grafana sidecar, ingress-nginx tag, pushgateway
@@ -1039,6 +1116,23 @@ monitoring can never be enabled.
 Deleting `service.yaml`, or rewriting the same `with` across multiple lines,
 fixes it.
 
+### D4 has a second spelling the recorded root cause does not cover
+
+`(index .Subcharts "name")` leaks exactly as `.Subcharts.<name>` does, and the
+documented locus (`crates/helm-schema-ir/src/expr_eval.rs:196-213`) is written for
+the dotted form only. **Charts whose subchart name contains a `-` are forced into
+the `index` spelling**, so it is not an exotic case.
+
+`stacks-blockchain-api` is the worked example, and its repair matrix is a clean
+adjudication: baseline 10 errors; neutralising the 7 `.Subcharts.postgresql` sites
+gives 2; neutralising the 6 `(index .Subcharts "stacks-blockchain")` sites gives 8;
+both give **0**. The chart has **no** `$.Template.BasePath` include anywhere, so
+its 64 duplicate basenames are never exercised — **100% D4, zero D3**, despite the
+structural screen flagging it. Another datapoint that the screen over-predicts.
+
+Past the repair, a top-level plus full second-level null-deletion probe (24 + 273
+targets, each helm-adjudicated) found no further disagreement — a clean negative.
+
 ### F46 — an undecidable `.Capabilities` conjunct is *dropped* from an abort guard
 
 **Class:** false rejection. **Chart:** `datadog`.
@@ -1558,6 +1652,21 @@ Probed exactly: with a guard `hasKey $v`, `type: object` is emitted. Add
 
 Live in `gitea`'s `podSecurityContext` / `containerSecurityContext`
 (`_helpers.tpl:109`, `:143`): `podSecurityContext: "x"` aborts and validates.
+
+### F68 — a builtin's Go `string` parameter aborts on nil, and the requirement is unmodelled
+
+**Class:** false acceptance. **Charts:** `synapse` (3 paths), `netbox`.
+
+`synapse`'s `deployment.yaml:1,4,7` call `required` with **swapped arguments** —
+`required <val> <msg>` instead of `required <msg> <val>` — so the secret lands in
+the `warn string` parameter slot. Null-deleting the key makes Go abort *before*
+`required` runs (`wrong type for value; expected string; got interface {}`), and
+the schema accepts.
+
+Minimal isolation: `required "msg" .Values.good` emits the arm;
+`required .Values.swapped "msg"` emits nothing. Also live in netbox's
+`contains "NodePort" .Values.service.type`. Compare F18, which is the same
+argument-order problem seen from the requirement side.
 
 ## Per-chart findings
 
