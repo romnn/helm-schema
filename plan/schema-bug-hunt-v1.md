@@ -8,8 +8,8 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 22 of 25 agent reports have landed, contributing 202
-proven findings across 58 families. **Three previously-unresolved mechanisms are
+**Status: in progress.** 23 of 25 agent reports have landed, contributing 211
+proven findings across 61 families. **Three previously-unresolved mechanisms are
 now root-caused: D5, and the quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root cause is now closed
 (F4) and three earlier claims are refuted (see "Corrections"). The remaining
 reports are appended as they arrive.
@@ -1184,6 +1184,87 @@ inside: `controller.sidecars.configAutoReload.image: null` aborts and is accepte
 Proven by injecting the **same** guard in two places in a chart copy and
 regenerating — the copy inside the helper produced no arm, the copy in the
 statefulset produced a correct one.
+
+## The synthetic controls do not control
+
+The corpus contains seven hand-built control charts, each written to pin one
+specific analyzer behavior. They have no fixture and were outside every mechanical
+gate, so nobody had looked at them. **Four of the seven are pinning wrong
+behavior, and three project tests assert it.**
+
+### `structural-helper-widening` emits nothing at all
+
+`BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT = 32`
+(`crates/helm-schema-ir/src/analysis_db.rs:1202`, applied at `:1216-1235`)
+measures the width of the **whole binding** and widens it to `Top`. The chart's
+literal `dict` has 34 leaves, so `focus` (width 1) and `guard.deep.flag` (width 1)
+are widened away together with the 32 fillers. The emitted schema is
+`{"focus": {}, "guard": {}}` — no facts whatsoever.
+
+The cliff was found by regenerating at every width: **≤32 leaves gives the fully
+correct schema** (`focus: {"type": "string"}` plus a reject arm for absent-or-null
+focus); **≥33 gives nothing**.
+
+The chart's own default values abort in Helm (`b64enc: invalid value; expected
+string`) and the schema accepts them, as do `focus: 7`, `focus: {a: 1}` and
+`guard: "str"`.
+
+**Its control test (`crates/helm-schema/tests/schema_emission_profiles.rs:281`)
+asserts that all six probes accept.** That assertion pins two documents Helm
+refuses to render, and is satisfiable by a completely empty schema — which is
+approximately what the chart now produces.
+
+### `schema-emission-local-kind` leaks in the untested direction
+
+Declared-default keys are injected into **every** conditional provider arm,
+defeating `additionalProperties: false`: `maxSurge`, a Deployment-only field, is
+admitted inside the StatefulSet arm. Root-caused by construction — renaming the
+default to `totallyBogusKey: 7` admits that key, which no Kubernetes type has, in
+**both** arms.
+
+The existing test at `:901` pins the **mirror** direction (a `Deployment` rejects
+`partition`). The direction that leaks is the untested one.
+
+### `schema-emission-temporal-wrapper` asserts a defect does not exist
+
+A 131-cell deletion battery yields **14 witnessed F23 cells**, all accepted while
+Helm aborts, all subchart-scope; `temporal.schema` and `temporal.server.image` are
+provably the dead null-only shape. `PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE = 0`
+reads as a claim that these do not exist. The battery simply never reaches that
+level.
+
+### `schema-emission-controls` carries a vacuous arm
+
+`kind == "Service" AND kind == "ConfigMap"` — proven unsatisfiable by probing its
+extracted `if` against five instances. An F24 instance inside the chart whose job
+is pinning partition composition.
+
+### `round-58-review` has no analyzer test at all
+
+Its only consumer asserts *Helm's* behavior, not the analyzer's. It exhibits F20,
+and isolates a trigger that entry did not state: **provider typing survives a bare
+`if`, survives separate documents, and survives an `else if` chain whose branches
+emit the same kind — it is lost only in a mixed-kind chain**, falling back to the
+default's JSON type. `radix: 8080` renders an ordinary `targetPort: 8080` and is
+rejected as "not of type string".
+
+### `schema-emission-unlisted-dependency` — subchart defaults are hard-typed
+
+**Class:** false rejection, and a new mechanism. A subchart's `values.yaml`
+defaults are hard-typed while root defaults are not: `vendored.enabled` is
+`{"type": "boolean"}` even though the vendored chart has no templates, is not
+declared in `Chart.yaml`, and therefore has no `condition:` either.
+`--set-string vendored.enabled=yes` renders and the schema rejects it, reproduced
+across six types; the mirror experiment shows the same unconsumed keys in the
+**root** `values.yaml` all emit `{}`.
+
+The same path bites `schema-emission-controls`, where it is worse than a type
+error: `worker.enabled` is typed `boolean`, but Helm's `condition:` handling
+**ignores** a non-bool and leaves the subchart **enabled** — so
+`--set-string worker.enabled=yes` renders an extra Deployment while the schema
+rejects the document outright.
+
+Only `schema-emission-kind-range` came back clean.
 
 ## Contaminated fixtures found by this hunt
 
