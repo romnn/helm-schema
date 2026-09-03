@@ -5,9 +5,9 @@ existing battery structurally cannot: **does helm-schema's precision generalize
 beyond the 63 charts it is tested on?**
 
 It does not. 8% of real-world charts receive a schema that rejects the chart's own
-defaults, five distinct root causes are confirmed with `file:line` (plus two more
-defect families reproduced but not yet root-caused), and two committed fixtures
-already have wrong answers frozen into them.
+defaults, **four** root causes are confirmed with `file:line`, three further defect
+families are reproduced but not root-caused, and two committed fixtures already
+have wrong answers frozen into them.
 
 ## Method
 
@@ -23,8 +23,12 @@ existing corpus, fetched at pinned versions. Per chart:
 The oracle is the crisp one: **Helm renders the defaults, our schema rejects
 them.** That is a false rejection with no interpretation required. Charts where
 Helm itself refuses its own defaults (`required`/`fail` on unset values) are
-excluded from the defect count — for those, agreement is correct behavior, and
-the repo already models that with `KNOWN_VALUES_REJECTIONS`.
+excluded from the defect count — the repo already models that case with
+`KNOWN_VALUES_REJECTIONS`. Note the limit of that exclusion: **matching verdicts
+do not establish matching reasons.** Agreement on a chart's defaults can mask an
+unrelated over-tightening, as it did on gitlab. And 13 of those 40 charts are
+*accepted* by our schema despite Helm refusing them — the false-acceptance
+direction this survey did not measure.
 
 Invocation faithfulness was checked first: the CLI with those options reproduces
 `testdata/chart-corpus-schemas/coredns.schema.json` byte-for-byte apart from the
@@ -52,7 +56,9 @@ on gitlab it produced 49 phantom errors *and* masked the genuine
 
 The survey's first pass had the same flaw. Every number below is from the
 corrected oracle: a throwaway `{{ .Values | toYaml }}` template rendered inside a
-copy of the chart, which is the only way to extract what Helm actually validates.
+copy of the chart. (That is one practical CLI technique, not the only route —
+Helm exposes `CoalesceValues` through its Go API, which is exact and avoids the
+render-time limitation noted below.)
 Re-probing moved **3 of 27** flagged charts from "reject" to "accept" — the
 correction is real and changes verdicts, but it does not explain the findings
 away.
@@ -98,12 +104,24 @@ thesis of this document in miniature — **the gap is the sample, not the gate.*
 | --- | --- |
 | Charts attempted | 349 |
 | Analyzed successfully | 338 |
-| Helm renders defaults | 298 |
-| **Schema rejects what Helm renders** | **24 (8.1% of 298)** |
+| Helm renders defaults | 305 (298 also completed analysis) |
+| **Schema rejects what Helm renders** | **24 (8.1% of the 298)** |
 | Hard failure (analyzer aborts, Helm succeeds) | 1 |
-| Timeout at 900 s | 9 |
-| Distinct root causes confirmed with `file:line` | 5 (+2 defect families recorded, not root-caused) |
+| Timeout at 900 s | 9 (6 of them render under Helm) |
+| Root causes confirmed with `file:line` | 4 (+3 families reproduced, not root-caused) |
 | Committed fixtures found already contaminated | 2 |
+
+Read the denominator carefully. 305 charts render under Helm; 298 of those also
+finished analysis, and 24 of *those* are rejected. Counting every renderable chart
+for which we cannot produce an accepting schema — adding the 6 renderable timeouts
+and the 1 abort — gives 31 of 305, or 10.2%, though that mixes correctness with
+availability.
+
+**This is not a population estimate.** Failures concentrate sharply in umbrellas
+(20 of 131 eligible umbrellas versus 4 of 167 non-umbrellas), reused dependency
+families make observations non-independent, excluding the already-curated corpus
+inflates the residual rate, and truncating at the popularity head likely deflates
+the long tail. Read it as: 8.1% of the accessible, deduplicated popularity head.
 
 Zero panics and zero nondeterminism: every re-run reproduced its schema
 byte-for-byte. The analyzer is robust; it is *wrong* more often than the existing
@@ -205,10 +223,18 @@ the collision is gone — the fix restores analysis rather than deleting it.
 *Orchestrator-verified:* the `rfind("templates/")`, the map insert, and the dead
 uniqueness guard.
 
-**This is the dominant mechanism.** 17 of the 24 confirmed rejections carry its
-structural precondition (duplicate template basenames across charts *and* a
-`Template.BasePath` include). That screen is necessary, not sufficient — but of
-the 9 charts actually adjudicated, 6 were confirmed D3.
+Two precision notes. The collision key is the **complete path after the last
+`templates/`**, not a bare basename, and the recognized call supplies an exact
+literal suffix (`expr_call_eval/mod.rs:1672`) — so a nested
+`templates/foo/bar.yaml` only collides with the same relative path.
+
+**"Dominant" is claimed only where it is earned.** Of the 9 charts actually
+adjudicated, 6 are confirmed D3 *by causal experiment* — renaming only the
+colliding file drives their errors to zero. A loose screen (some duplicate suffix
+plus some `Template.BasePath` include) matches ~17-18 of the 24, but that screen
+proves nothing on its own: it does not establish that the include's target *is*
+the duplicated path, that the wrong chart wins, or that the collision causes the
+observed rejection. **The other 15 are candidates, not instances.**
 
 ### D4 — `.Subcharts.<name>` is not a values-scope switch (false rejection)
 
@@ -239,12 +265,18 @@ Distinct from D1: it survives all three of D1's negative signatures — still
 rejects with an assignment in the branch body, with a comment, and with
 `with`/`range` instead of `if` — and needs no bare output at the container column.
 
-**Root cause honestly partial.** Localized to the block-scalar adoption path
-(`fragment_eval/eval.rs:2030-2075` → `fragment_eval/holes.rs:1260-1262`), but the
-predicate-loss line is not pinned; `activate_inline_if` does push the guard. The
-leading hypothesis — `finish_block` (`helm-schema-syntax/src/parse.rs:602-616`)
-synthesizing a zero-length body span, changing the `region.span.start <
-block.body.end` escape test at `eval.rs:2043` — is **unconfirmed**.
+**Root cause unresolved — and the leading hypothesis is refuted.** The behavior
+is confirmed and the discriminator is sharp, but adversarial review killed the
+proposed cause on two counts: `eval.rs:2038-2043` tests `control_renders_below_block`
+*before* the cited `region.span.start < block.body.end` escape arm, so an adopted
+control never reaches the hypothesized test; and `finish_block`
+(`helm-schema-syntax/src/parse.rs:602-616`) constructs its span *after* ownership
+has been decided, so it cannot retroactively change owner-stack decisions.
+
+The empty-span correlation is still worth investigating, but **do not implement
+from this hypothesis.** D5 is a confirmed failure pattern with an open cause. It
+shares the layout-recovery machinery with D1, so root-cause it before finalizing
+any shared change there.
 
 ### D6 — scalar type over-narrowing on `toYaml` passthrough (false rejection)
 
@@ -315,14 +347,20 @@ The discriminator is sharper than expected and makes the wrongness unarguable:
 Adding a legal optional field to a valid Kubernetes container flips acceptance to
 rejection. *Orchestrator-verified.*
 
-**Mechanism not attributed.** This was reported as a D1 instance at
-`templates/thanos-ruler/ruler.yaml:177` — a CST-level detector over all 2,623
-corpus templates finds 6 D1 sites across 5 corpus charts — but the witness above
-does not obviously exercise that site, and I did not confirm the link. The
-contamination is certain; its cause is open. (Separately, note that the chart is
-genuinely broken when `containers` *and* `extraEnv` are both set: Helm itself
-fails with a YAML parse error at `ruler.yaml` line 53. Do not mistake that for our
-defect.)
+**Mechanism: D1, established by control.** Adversarial review closed the
+attribution with a second witness — ThanosRuler enabled, a nonempty unrelated
+`containers`, and a *falsy* `extraEnv: 0`. Helm renders; the fixture rejects
+`extraEnv` as non-array. The fixture's condition applies the array constraint
+whenever `(extraEnv OR containers) AND enabled`, while the template applies that
+sink only inside `if extraEnv` (`ruler.yaml:175-190`) — the enclosing guard is
+gone, which is D1's exact signature. The control seals it: **indenting only the
+`fail` lines leaves `helm template` output unchanged and makes the regenerated
+schema accept.** A CST-level detector over all 2,623 corpus templates finds 6 D1
+sites across 5 corpus charts.
+
+(Separately: the chart is genuinely broken when `containers` *and* a truthy
+`extraEnv` are both set — Helm itself fails with a YAML parse error at
+`ruler.yaml` line 53. Do not mistake that for our defect.)
 
 Both fixtures will therefore flip when their causes are fixed. Those flips are
 **corrections**, and must be adjudicated as such rather than treated as
@@ -392,9 +430,17 @@ exactly the cross-chart arm count that dominates the cost.
 
 ## Corpus adoption plan
 
-**Do not adopt charts yet.** Adopting now would freeze the current wrong answers
-as expected fixtures — precisely what already happened to signoz-signoz. Fix
-first, adopt second.
+**Do not bless current schemas as correct** — adopting a generated schema as an
+expected fixture today would freeze a wrong answer, which is exactly what happened
+to signoz-signoz.
+
+That is not the same as "adopt nothing yet", and the stronger form of the rule was
+wrong. Adversarial review made the counter-case and it holds: deferring adoption
+loses evidence, and minimal witnesses erase precisely the phenomena that produced
+these defects — composition, aliases, globals, and cost. So capture inputs now and
+verdicts later: commit minimal **expected-failure** behavioral witnesses (which
+assert the bug, and flip loudly when it is fixed) alongside **quarantined
+whole-chart inputs** whose schemas are not yet pinned as correct.
 
 Order:
 
@@ -404,23 +450,53 @@ Order:
    judged against the document Helm actually validates. Do it first precisely
    because it is inert right now — landing it later, alongside adopted charts,
    would tangle a gate change with a fixture change.
-2. Fix D3, then D1 — the two with contaminated fixtures. Both fixture flips are
-   corrections and need explicit adjudication.
-3. Fix D2 and D4. Both are missing branches in an otherwise-complete dispatch,
-   and both should be exhaustively destructured so a future target shape cannot
-   be silently dropped.
-4. Finish D5's root cause; adjudicate D6; fix D7.
-5. **Then** adopt, prioritizing minimal witnesses over whole charts. A 9-file
-   parent/`a`/`z` collision witness pins D3 better than 7 MB of openebs, and the
-   gitlab reduction (`glmin4`, 6-second reproduction from unmodified upstream
-   sources) pins its leak better than the 13.5 MB chart.
-6. Adopt whole charts only where the chart itself is the phenomenon: a handful of
-   the 24 for regression breadth, plus one of the 9 timeout charts as a
-   performance fixture.
+2. **Design chart-scoped context once, for D3 and D4 together, then land the two
+   fixes separately.** They are the same missing concept — "which chart's values
+   scope does this fact belong to" — approached from a path key and from a context
+   object. Solving them independently would produce two partial answers to one
+   question.
+3. Fix D1. Its fixture flip (kube-prometheus-stack) is a correction and needs
+   explicit adjudication; the witness above is a ready-made acceptance test.
+   **Root-cause D5 before finalizing any shared layout-recovery change**, since D5
+   lives in the same machinery and its cause is still open.
+4. Fix D2 independently. It is the best-pinned of the five and touches nothing
+   else; the fix must stay flow-sensitive. Both D2 and D4 are missing branches in
+   an otherwise-complete dispatch, so exhaustively destructure the target shape
+   there — that is what would have made these compile errors instead of silence.
+5. Treat D6, D7, and the timeout family as **separate campaigns**, not tail items
+   of this one: a type-inference adjudication, a parser-tolerance fix, and an
+   availability/performance class respectively.
+6. Adopt verdicts last, as each cause is fixed: promote the quarantined inputs to
+   pinned fixtures and delete the matching expected-failure witnesses.
 
 For charts where Helm itself refuses its own defaults, follow the existing
 `KNOWN_VALUES_REJECTIONS` pattern — sonarqube is a clean example, verified to
 refuse for *exactly* Helm's two reasons.
+
+## The oracle this survey did not measure
+
+This survey measured one direction only: **we reject what Helm renders.** The
+complementary and arguably higher-value oracle is **false acceptance** — values
+our schema accepts for which Helm aborts. That is the direction where a schema
+quietly stops being useful, and nothing here touched it. There is already a
+concrete lead: 13 of the 40 charts whose defaults Helm refuses are *accepted* by
+our generated schema.
+
+A workable method at scale: build instances with Helm's Go `CoalesceValues` (which
+works even when rendering fails), generate bounded mutations over the paths the
+chart actually references — delete/null, scalar-kind swaps, map/list swaps,
+empty/nonempty collections, boolean flips, pairwise guard/sibling combinations —
+then compare our validation against `helm template --skip-schema-validation`,
+recording disagreements in both directions.
+
+## The nine timeouts are their own class
+
+Not proven non-termination — but 900 s is already a defect against a
+seconds-scale project law, and **6 of the 9 render successfully under Helm**, so
+these are charts a user would reasonably expect to work. Track them as an
+availability/performance class with phase profiling, a minimized scaling witness,
+an explicit resource budget, and a CI threshold. One giant timeout fixture is not
+a substitute for any of that.
 
 ## Open, not adjudicated
 
@@ -457,3 +533,41 @@ The technique that makes an opaque `"False schema does not allow {...}"` tractab
 extract each `{"if": …, "then": false}` arm's condition into a standalone schema
 with the full `$defs` attached, extract the relevant subtree of the coalesced
 defaults, and run the prober to find which arm actually fires.
+
+## Adversarial review
+
+This document was reviewed against the repo and the raw evidence by an
+independent cross-vendor reviewer (gpt-5.6-sol, read-only). Its corrections are
+already folded in above; recorded here so the changes are traceable.
+
+Upheld:
+
+- The coalesced-values claim, confirmed against Helm 4.2.3's own source: it calls
+  `CoalesceValues` and validates the result (`pkg/chart/common/util/values.go`),
+  with dependency defaults and globals merged in `coalesce.go`. The repo gate does
+  read only the root `values.yaml` (`values_validation.rs:43-47`, used at
+  `chart_corpus.rs:75-84`), conflicting with `CLAUDE.md`'s own stated invariant.
+- D1, D2, D3, D4 root causes — each independently re-derived, with the additional
+  observation that Helm constructs a distinct child-scoped context per
+  `.Subcharts.<name>` entry, which is precisely what D4 fails to model.
+- Both fixture-contamination claims, the kube-prometheus-stack one by direct
+  execution — and it closed the mechanism attribution I had left open.
+- The 8.1% arithmetic.
+
+Corrected:
+
+- **"Five confirmed root causes" was wrong.** D5's proposed cause is contradicted
+  by the control flow it cites. Four confirmed, one open.
+- **"D3 is the dominant mechanism" was unsupported.** Six charts have causal
+  evidence; the structural screen is too loose to establish prevalence over the
+  other 15.
+- **The denominator was mislabeled.** 305 charts render, not 298.
+- **"Agreement is correct behavior" was too strong** for the Helm-also-fails
+  charts, and 13 of them expose the unmeasured false-acceptance direction.
+- **"Fix first, adopt second" was the wrong rule** — it loses evidence. Capture
+  inputs now under quarantine; pin verdicts as causes are fixed.
+- The throwaway-template dump is one technique, not "the only way".
+
+The review also observed that its own highest-value request — the false-acceptance
+oracle — is absent from this survey entirely. That gap is now recorded above
+rather than papered over.
