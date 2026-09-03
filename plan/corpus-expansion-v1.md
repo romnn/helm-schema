@@ -9,12 +9,23 @@ defaults, **four** root causes are confirmed with `file:line`, three further def
 families are reproduced but not root-caused, and two committed fixtures already
 have wrong answers frozen into them.
 
+> **This document has been overtaken in places.** The follow-on hunt recorded in
+> `plan/schema-bug-hunt-v1.md` root-caused two of the three open families (D5 and
+> D6), split D6 into two distinct defects, replaced the D3 prevalence screen with
+> an exact audit, and raised the contaminated-fixture count from two to four.
+> Superseded passages below carry a note rather than being rewritten, so the
+> earlier reasoning stays auditable.
+
 ## Method
 
 349 charts from the Artifact Hub popularity ranking, deduplicated against the
 existing corpus, fetched at pinned versions. Per chart:
 
-1. `helm template <chart>` on chart defaults (Helm 4.2.3) — does Helm render it?
+1. `helm template <chart>` on chart defaults — does Helm render it? The survey ran
+   against Helm 4.2.3; the installed Helm was later upgraded to 4.2.4 during the
+   follow-on hunt, so figures here and there are not from an identical adjudicator.
+   It is a patch release and nothing is expected to turn on it, but nothing has
+   been re-adjudicated across the change either.
 2. Generate a schema with the corpus-canonical options (`--exclude-tests`,
    `--k8s-version v1.29.0-standalone-strict`, provider caches seeded from
    `testdata/provider-bundle`, network enabled for cache misses).
@@ -108,8 +119,8 @@ thesis of this document in miniature — **the gap is the sample, not the gate.*
 | **Schema rejects what Helm renders** | **24 (8.1% of the 298)** |
 | Hard failure (analyzer aborts, Helm succeeds) | 1 |
 | Timeout at 900 s | 9 (6 of them render under Helm) |
-| Root causes confirmed with `file:line` | 4 (+3 families reproduced, not root-caused) |
-| Committed fixtures found already contaminated | 2 |
+| Root causes confirmed with `file:line` | 4 at the time (**6 now** — see the note above) |
+| Committed fixtures found already contaminated | 2 at the time (**4 now**) |
 
 Read the denominator carefully. 305 charts render under Helm; 298 of those also
 finished analysis, and 24 of *those* are rejected. Counting every renderable chart
@@ -236,6 +247,15 @@ proves nothing on its own: it does not establish that the include's target *is*
 the duplicated path, that the wrong chart wins, or that the collision causes the
 observed rejection. **The other 15 are candidates, not instances.**
 
+> **Superseded by an exact audit.** A structural pass over 61 corpus umbrellas and
+> 207 unpacked subchart scopes now gives real numbers instead of this screen:
+> **12 D3-positive charts** (six with rename-and-regenerate causal controls),
+> **4 material D4 charts**, and **15 umbrellas with cross-chart contamination**,
+> including two that are acceptance-neutral today. The per-chart verdicts are in
+> `plan/schema-bug-hunt-v1.md`. The caution above was right — the screen does
+> over-predict, and `kube-prometheus-stack` has 14 colliding basenames with no
+> live D3 at all.
+
 ### D4 — `.Subcharts.<name>` is not a values-scope switch (false rejection)
 
 `crates/helm-schema-ir/src/expr_eval.rs:196-213` hard-wires `.Values.…` to the
@@ -264,6 +284,13 @@ an empty body, then a column-0 `{{- if .Values.customAcls }}`, yielding
 Distinct from D1: it survives all three of D1's negative signatures — still
 rejects with an assignment in the branch body, with a comment, and with
 `with`/`range` instead of `if` — and needs no bare output at the container column.
+
+> **Superseded: D5 is now root-caused.** See `plan/schema-bug-hunt-v1.md`. The
+> block scalar's `body` span starts *inside* the control region, so the region's
+> opener is excluded from `BlockScalar::holes` and the region is evaluated twice —
+> once guarded and once not. The invariant to restore is that `block.body` must
+> never be a strict subrange of a control region attached to the same entry. The
+> paragraph below records the state before that was known.
 
 **Root cause unresolved — and the leading hypothesis is refuted.** The behavior
 is confirmed and the discriminator is sharp, but adversarial review killed the
@@ -296,6 +323,17 @@ array, or boolean default.
 
 `okteto` shows the nullable variant on 8 paths: `image` is inferred
 `["null","string"]` and rejects `{"repository":"okteto/registry","tag":"1.48.0"}`.
+
+> **Superseded: D6 is now root-caused, and it is two defects rather than one.**
+> See `plan/schema-bug-hunt-v1.md`. For `synapse` the cause is a `range` over a
+> `toYaml`-produced dict emitted at a `metadata.annotations` sink, which projects
+> the annotations map schema onto the operand; the narrowing is byte-for-byte
+> `string_map_schema()` at
+> `crates/helm-schema-k8s/src/metadata_enrichment.rs:118-129`. `okteto` is a
+> **different** defect — two `$defs` that intersect to admit only `null`, which is
+> precisely the value its chart `fail`s on — and its construct is not `toYaml` at
+> all. The paragraph below records the state before that was known, including a
+> guess at the locus that turned out to be wrong.
 
 Not root-caused. The likely locus is the rendered-scalar sink treating a `toYaml`
 operand as evidence about the *input* type rather than about the rendered output —
@@ -570,8 +608,19 @@ Two facts established by the intake itself:
 
 Cost of the intake: charts 49 MB → 125 MB, fixtures 108 MB → 327 MB, provider
 bundle 11 MB → 20 MB. The fixture growth is concentrated in the same handful of
-contaminated umbrellas; if it needs to come down before the fixes land, dropping
-the six largest recovers about 100 MB without losing a distinct mechanism.
+contaminated umbrellas.
+
+**Do not drop the largest fixtures to recover space.** An earlier draft of this
+section suggested dropping the six largest to save about 100 MB; the bug hunt has
+since measured the cause and that advice is withdrawn. A D3-neutralized rebuild —
+renaming only the colliding template basenames, with `helm template` output
+verified byte-identical — takes `milvus` from 18.5 MB to 6.4 MB and `oncall` from
+16.9 MB to 6.6 MB. **D3 roughly triples these schemas**, so the space comes back
+when the defect is fixed rather than when the fixture is deleted.
+
+Dropping them would also discard the evidence: those are precisely the charts
+whose size makes the leakage measurable, and schema size is the cheapest available
+proxy metric for verifying the D3 fix. See `plan/schema-bug-hunt-v1.md`.
 
 ## Adversarial review
 
