@@ -9,7 +9,7 @@ not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
 **Status: 27 of 28 launched agents have reported**, contributing 272 proven
-findings across 76 families. One deep pass (`openebs`) and one respawned
+findings across 74 families (F0–F71, plus D4 and D5). One deep pass (`openebs`) and one respawned
 cross-cutting agent are still running. Two further agents completed their
 analysis but **could not write their reports** — their sandbox was read-only
 including the output directory — and their results were recovered from their
@@ -107,11 +107,42 @@ Reproduction tooling is committed under `plan/corpus-expansion-scripts/`; the
 agents' full reports, with complete witness files, are in
 `/Volumes/T7/dev/helm-schema-corpus-survey/bughunt/`.
 
-## Families, ordered by leverage
+## Families
 
 A "family" is a single mis-lowering that shows up across unrelated charts.
 Fixing one family fixes every instance, so these are worth far more than the
 per-chart entries that follow.
+
+**The F-numbers are arrival order, not leverage order, and they are not
+renumbered** — the agents' raw reports and this document's own cross-references
+both cite them. Read the clusters below instead. The 74 families (F0–F71 plus D4
+and D5) collapse into ten mechanisms — the first of which, guard analysis, is
+large enough to split into four — and a fix aimed at a cluster is worth far more
+than one aimed at a family.
+
+| Cluster | Families | What is actually broken |
+| --- | --- | --- |
+| **A1 — an undecidable element deletes a whole guard or region** | F7, F8, F42, F46, F56, F57, F65 | The abstract interpreter, on meeting anything it cannot decide, drops the *enclosing* construct rather than widening. Each family is a different trigger for one behaviour, and it is the single largest cluster. |
+| **A2 — the guard survives, an obligation inside it does not** | F21, F25, F29, F34, F53, F67, F70 | The region is analyzed, but a constraint escapes it, is duplicated unguarded, or is never attached. F70 is the highest-yield witness pattern in the hunt. |
+| **A3 — boolean and emptiness semantics** | F2, F45, F52, F59, F66 | Helm/Go truthiness modelled as presence-and-non-null. `{}`, `[]`, `""` and `0` fall through the gap. |
+| **A4 — `if`/`else if` chain structure** | F3, F35 | A chain's arms are not treated as mutually exclusive alternatives. |
+| **B — alternative branches merged instead of case-split** | F15, F17, F27, F50, F51, F69 | Where the chart says "either shape", the analyzer intersects rather than unions. F69 is the severe form: the admitted domain collapses to `null`. |
+| **C — `range` semantics** | F5, F16, F19, F22, F54, F58, F63 | The rangeable domain is wrong (`integer` is in it and should not be), and obligations inside a range body are lost. |
+| **D — subchart and cross-chart plumbing** | F1, F23, F62, D4, plus D3 | Facts land in the wrong scope, with the wrong predicate, or not at all. F62's airflow evidence shows a whole subchart contributing nothing. |
+| **E — reject arms that can never fire** | F24 | Coverage that looks present and is not. Read the sweep caveats before trusting any count here. |
+| **F — rendered output and YAML safety** | F12, F13, F26, F30, F40, F41, D5 | The preimage machinery is right and is applied inconsistently — 94 sinks in one cilium schema, 6 missed. |
+| **G — provider schema handling** | F0, F20, F31, F37, F39, F60 | Kubernetes/CRD schemas applied at the wrong level, collapsed, or allowed to override chart-local structure. |
+| **H — function catalogue and call lowering** | F9, F10, F14, F18, F28, F33, F36, F43, F44, F47, F49, F55, F64, F68 | Coverage gaps in the builtin catalogue decide whether a contract exists at all. Mostly mechanical, individually small, collectively large. |
+| **I — path binding and attribution** | F4, F11, F32, F38, F48, F61 | A constraint is attached to the wrong path, or the path binding is lost. |
+| **J — validation and version gates** | F6, F71 | Charts with a file dedicated to validation (`validateValues`, `requirements.yaml`) contribute zero constraints from it. |
+
+Two results should shape where effort goes before any of this is picked up.
+**Direction A is clean** — of 308 synthesised reject-arm witnesses, 305 abort
+real Helm and none is a false rejection, so auditing arms that *do* fire has a
+measured yield of zero (see "Clean verdicts"). And the corpus is dominated by
+**false acceptance**: 52 of the 74 families are wholly or partly that direction,
+against 27 for false rejection (8 families are both). The schemas
+under-constrain roughly twice as often as they over-constrain.
 
 ### F0 — an unversioned external CRD catalog overrides chart-local structural facts
 
