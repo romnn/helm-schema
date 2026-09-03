@@ -8,7 +8,7 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 9 of 25 agent reports have landed, contributing 81
+**Status: in progress.** 10 of 25 agent reports have landed, contributing 93
 proven findings. One previously-open root cause is now closed (F4) and one
 previously-recorded root cause is refuted (see "Corrections" below). The
 remaining reports are appended as they arrive.
@@ -29,6 +29,15 @@ remaining reports are appended as they arrive.
   colliding basenames returns it to 0. The foreign facts come from
   `charts/valkey/templates/scripts-configmap.yaml`. **No separate work item is
   needed for a "dropped conjunct".**
+- **`okteto` does not belong in F4.** It was grouped with `synapse` as one
+  over-narrowing family; they are different bugs. See F25.
+- **`coalesce.sh` is unsound for false-acceptance work.** It renders the chart's
+  own templates, so it dumps *post*-mutation `.Values` for charts that mutate at
+  render time, and it can only produce documents Helm already agreed to render.
+  `bughunt/scratch-b11/coalesce2.sh` strips `templates/` from a chart copy first
+  and is the correct tool. Two apparent findings evaporated when recomposed
+  properly, so any finding witnessed only through the old script deserves a
+  second look.
 - **`plan/chart-corpus-expansion.md:2460` is stale** — it records the opposite
   direction for `nats`' `env` paths. See F17.
 
@@ -176,8 +185,9 @@ its batch, and it is a chain-lowering bug rather than a guard-loss bug.
 
 ### F4 — the annotations map schema is projected onto a `toYaml` operand — **ROOT-CAUSED**
 
-**Class:** false rejection. **Charts:** `synapse` (25+ paths), `okteto` (8 paths).
+**Class:** false rejection. **Chart:** `synapse` (25+ paths).
 Recorded as D6 in `plan/corpus-expansion-v1.md`, where it had no root cause.
+(`okteto` was originally grouped here and does **not** belong — see F25.)
 **It now does, and the hypothesis recorded there was wrong.**
 
 It is *not* the rendered-scalar sink: a bare `toYaml | b64enc` scalar sink
@@ -560,6 +570,85 @@ real hole. But in `clickhouse` and `rook-ceph` the vacuous arm is the **only**
 coverage, which is what makes F22 and F23 exploitable. Worth a mechanical sweep:
 an unsatisfiable arm is detectable without any chart knowledge.
 
+### F25 — a duplicate unguarded emission contradicts the correct guarded one
+
+**Class:** false rejection **and** false acceptance from one site.
+**Chart:** `okteto` (10 sites). **Root-caused.**
+
+Two `$defs` carry `{"allOf": [{"type": ["null","object"]}, {"type": ["null","string"]}]}`
+— an intersection satisfiable **only by `null`**. They are referenced from ten
+unconditional sites. So the schema accepts *only* the one value
+`_image.tpl:28` explicitly `fail`s on, and rejects both shapes the chart
+actually accepts.
+
+Proven three ways: the chart's own defaults reject (`not of types null, string`),
+strings reject (`not of types null, object`), and `redis.image: null` is accepted
+while Helm aborts.
+
+What makes this diagnosable rather than mysterious: **the analyzer already emits
+the correct `kindIs`-guarded arms** at `/allOf/155` and `/allOf/623`. The
+unguarded `allOf` is a *duplicate* emission of the same fact with its guard
+stripped, and relaxing only those two `$defs` makes the shipped schema accept
+okteto's defaults with zero errors. The structural work succeeded; a second,
+unguarded copy overwrote its meaning.
+
+### F26 — "reaches a rendered-string position" is read as "is a string"
+
+**Class:** false rejection. **Chart:** `istiod` (20 paths). **High severity.**
+
+`NOTES.txt:26-57` builds a `tpl (print "{{" … ".Values.<path>" … "}}")` program
+per deprecated-key entry and only prints a WARNING. The actual `fail` loop is a
+*separate* `$failDeps` pass at `:57-79`. The analyzer nonetheless forces all 20
+warning paths to `null|string`.
+
+Seven witnesses render under Helm and are rejected, including
+`global.outboundTrafficPolicy: {mode: REGISTRY_ONLY}`, `global.enableTracing: true`,
+`global.certificates: [...]` and `pilot.ingress: {...}` — ordinary Istio settings,
+not exotic ones.
+
+Same underlying confusion as F4 (rendered position mistaken for input type) but
+at a different sink, and here the rendered position does not even imply an abort.
+
+### F27 — `coalesce` is modelled order-free
+
+**Class:** false acceptance. **Charts:** `base`, `istiod`.
+
+`profile: bogus` together with `global.profile: demo` aborts Helm
+("unknown profile bogus") and validates, because the 34 enum alternatives from
+both operands are flattened into a single `anyOf` — losing the fact that
+`coalesce` takes the *first* non-empty operand.
+
+Single-operand cases are handled correctly, which pins this as a precedence bug
+rather than abstention. `platform` has the same shape.
+
+### F28 — wrapping the subject in a function loses the path binding
+
+**Class:** false acceptance. **Chart:** `consul`.
+
+`_helpers.tpl:627` fails unconditionally on server-enabled installs unless
+`otlp.protocol` is `http` or `grpc`, but the comparison subject is wrapped:
+`lower(...)`. No enum is emitted, and `protocol: bogus` aborts while validating.
+
+The diagnostic is sharp: a bare `ne X "lit"` **is** decoded in the same chart
+(`adminPartitions.name`, `requestLimits.mode`). It is the function wrapper around
+the subject, not the comparison, that loses the binding. Compare F10, which is
+the same story for the *consumer* builtin rather than the subject.
+
+### F29 — a helper's guard is taken from only one of its call sites
+
+**Class:** false acceptance. **Chart:** `minecraft`.
+
+The `isResticWithRclone` reject arm carries `NOT rcloneConfigExistingSecret`,
+which is the guard at `rclone-secret.yaml:1` — but `deployment.yaml:432` reaches
+the same helper *without* that guard. Setting `rcloneConfigExistingSecret` makes
+Helm abort and the schema accept; the control case is correctly rejected.
+
+Also in `minecraft`, both of the chart's `required` calls sit in **argument
+position** inside `{{ template "minecraft.envMap" list "K" (required …) }}` and
+neither is encoded, so `mcbackup.resticHostname` and `minecraftServer.ftbModpackId`
+abort while validating. Compare F18: `required` is mis-handled in argument
+position as well as in reversed-argument position.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -587,6 +676,10 @@ Single-instance defects not yet generalized into a family.
 | `minio` | false acceptance | `image.tag: null` aborts on the unquoted `repo:{{tag}}` scalar, and the whole `image` subtree carries zero constraints — although `kubeview` gets full YAML-safety modelling for the same construct. |
 | `kubeview` | false rejection | `image.repository` carries `not {type: array}`, contradicting the `helm-double-quoted-safe` arm on the same field. No template justifies it. |
 | `nacos` | false rejection | `/allOf/195` claims an abort when the effective `image.registry` is empty, but `_images.tpl:27-31` handles that with an explicit `else`; Helm renders `image: nacos/nacos-server:v3.0.2`. Not even self-consistent — `registry: ""` takes the same branch and is accepted. |
+| `etcd` | false acceptance | `common.errors.insecureImages` unmodelled: `image.registry: myregistry.example.com` aborts at `NOTES.txt:124` and validates. "Point the chart at my mirror" is the most common bitnami override, and it is exactly the one that aborts. |
+| `okteto` | false acceptance | The `adminToken` length rule (`len == 8` or `len == 40`) is unmodelled. |
+| `base` | false rejection | `global.imagePullSecrets` typed `array` although the consuming `range` also accepts a map. |
+| `consul` | false acceptance | The ingress-gateway NodePort rule inside a `range` has no arm, though it is expressible in Draft-07. (Two further consul aborts — `bootstrapExpect < replicas`, gateway-name uniqueness — are genuinely inexpressible and are **not** counted as defects.) |
 | `headscale` | false acceptance | Unguarded `.Values` navigation in `templates/common.yaml` yields no requirements: `persistence` and `configMaps` are bare `{}`, and six nil-dereference cases are accepted. Latent and distinct from the known quarantine defect (`/allOf/55`) — observable only against a schema with that arm removed. |
 
 ## Policy question surfaced, not a bug
@@ -681,6 +774,13 @@ verdict is a result, and is recorded so a later pass need not repeat the work.
   configurations. Notably `argo-rollouts`' `toYaml`-into-ConfigMap-`data` paths
   are correctly typed `map<string, string|null>` rather than collapsed to
   `type: "string"` — the F4 failure mode, absent here.
+- **`chartmuseum`** — all 10 templates and 76 arms read; a 10-case realistic
+  battery plus a 26-case scalar/list substitution battery over every top-level
+  map key agreed in every case.
+- **`argo-workflows`** — 162 arms read, with batteries over the
+  `coalesce`/`append` namespace loop, SSO gating, `crds: null`, string
+  `extraObjects`, and an S3 repo: all agreed. Its extra
+  `controller.configMap.create` conjunct on the SSO gate is correct.
 - **`uptime-kuma`** — all 11 templates and all 13 arms read. The
   `Deployment.strategy` / `StatefulSet.updateStrategy` union is correctly *split*
   on `useDeploy` rather than intersected.
