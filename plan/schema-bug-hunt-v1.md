@@ -8,8 +8,11 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: 27 of 28 launched agents have reported**, contributing 279 proven
-findings across 76 families (F0–F73, plus D4 and D5). One deep pass (`openebs`) and one respawned
+**Status: all 28 launched agents have reported**, contributing 286 proven
+findings across 78 families (F0–F75, plus D4 and D5). **The corpus's largest
+defect, F23, is now root-caused to two swapped branches in
+`condition_encoding.rs`, and the fix deletes a condition rather than adding
+one.** One deep pass (`openebs`) and one respawned
 cross-cutting agent are still running. Two further agents completed their
 analysis but **could not write their reports** — their sandbox was read-only
 including the output directory — and their results were recovered from their
@@ -115,8 +118,8 @@ per-chart entries that follow.
 
 **The F-numbers are arrival order, not leverage order, and they are not
 renumbered** — the agents' raw reports and this document's own cross-references
-both cite them. Read the clusters below instead. The 76 families (F0–F73 plus D4
-and D5) collapse into ten mechanisms — the first of which, guard analysis, is
+both cite them. Read the clusters below instead. The 78 families (F0–F75 plus D4
+and D5) collapse into eleven mechanisms — the first of which, guard analysis, is
 large enough to split into four — and a fix aimed at a cluster is worth far more
 than one aimed at a family.
 
@@ -124,7 +127,7 @@ than one aimed at a family.
 | --- | --- | --- |
 | **A1 — an undecidable element deletes a whole guard or region** | F7, F8, F42, F46, F56, F57, F65 | The abstract interpreter, on meeting anything it cannot decide, drops the *enclosing* construct rather than widening. Each family is a different trigger for one behaviour, and it is the single largest cluster. |
 | **A2 — the guard survives, an obligation inside it does not** | F21, F25, F29, F34, F53, F67, F70 | The region is analyzed, but a constraint escapes it, is duplicated unguarded, or is never attached. F70 is the highest-yield witness pattern in the hunt. |
-| **A3 — boolean and emptiness semantics** | F2, F45, F52, F59, F66 | Helm/Go truthiness modelled as presence-and-non-null. `{}`, `[]`, `""` and `0` fall through the gap. |
+| **A3 — boolean, emptiness and comparison semantics** | F2, F45, F52, F59, F66, F75 | Helm/Go truthiness modelled as presence-and-non-null. `{}`, `[]`, `""` and `0` fall through the gap, and numeric `gt`/`lt` guards contribute nothing at all. |
 | **A4 — `if`/`else if` chain structure** | F3, F35 | A chain's arms are not treated as mutually exclusive alternatives. |
 | **B — alternative branches merged instead of case-split** | F15, F17, F27, F50, F51, F69 | Where the chart says "either shape", the analyzer intersects rather than unions. F69 is the severe form: the admitted domain collapses to `null`. |
 | **C — `range` semantics** | F5, F16, F19, F22, F54, F58, F63 | The rangeable domain is wrong (`integer` is in it and should not be), and obligations inside a range body are lost. |
@@ -134,15 +137,16 @@ than one aimed at a family.
 | **G — provider schema handling** | F0, F20, F31, F37, F39, F60 | Kubernetes/CRD schemas applied at the wrong level, collapsed, or allowed to override chart-local structure. |
 | **H — function catalogue and call lowering** | F9, F10, F14, F18, F28, F33, F36, F43, F44, F47, F49, F55, F64, F68, F72 | Coverage gaps in the builtin catalogue decide whether a contract exists at all. Mostly mechanical, individually small, collectively large. |
 | **I — path binding and attribution** | F4, F11, F32, F38, F48, F61 | A constraint is attached to the wrong path, or the path binding is lost. |
-| **J — validation and version gates** | F6, F71 | Charts with a file dedicated to validation (`validateValues`, `requirements.yaml`) contribute zero constraints from it. |
+| **J — validation and version gates** | F6, F71 | Charts with a file dedicated to validation (`validateValues`, `requirements.yaml`) contribute zero constraints from it. `openebs` adds a third witness under `mayastor.etcd`. |
+| **K — output size and installability** | F74 | Not a lowering defect: 18 of 156 schemas exceed Helm's 5 MiB limit and cannot be shipped at all, so their correctness is moot until the size is fixed. |
 
 Two results should shape where effort goes before any of this is picked up.
 **Direction A is clean** — of 308 synthesised reject-arm witnesses, 305 abort
 real Helm and none is a false rejection, so auditing arms that *do* fire has a
 measured yield of zero (see "Clean verdicts"). And the corpus is dominated by
-**false acceptance**: 52 of the 76 families are wholly or partly that direction,
-against 29 for false rejection (8 families are both). The schemas
-under-constrain roughly twice as often as they over-constrain.
+**false acceptance**: 53 of the 78 families are wholly or partly that direction,
+against 29 for false rejection (8 families are both, and F74 is neither). The
+schemas under-constrain roughly twice as often as they over-constrain.
 
 ### F0 — an unversioned external CRD catalog overrides chart-local structural facts
 
@@ -228,6 +232,11 @@ aborts whenever the key is *present*, whatever its value. The emitted arm
 `mode: null` is not a chart default, so it survives Helm coalescing, reaches the
 template, takes the `hasKey` branch, aborts the install — and the schema accepts
 it.
+
+The `dict`-literal variant has a further witness in `openebs`: under
+`mayastor.etcd`, `common.resources.preset`'s `hasKey <dict literal>` gate yields
+**no enum at all**, even though the chart's own error message prints the static
+seven-value domain.
 
 **Six further witnesses, all the same polarity error.** `kyverno`'s `mode` was
 re-derived independently, and `velero` has **five** `hasKey` deprecation guards
@@ -715,11 +724,45 @@ range, `.Values`) and `m4` (no range, `$.Values`) both emit correct arms; `m2`
 (same body inside a `range`, `$.Values`) emits **none**. **The discriminator is
 the `range`, not the `$.` root reference.**
 
-### F23 — subchart-scoped nil-deref arms are emitted null-only, so they are dead
+### F23 — subchart-scoped nil-deref arms are emitted null-only, so they are dead — **ROOT-CAUSED**
 
 **Class:** false acceptance. **This is the largest single defect in the corpus.**
 **Charts:** `kube-prometheus-stack`, `phpmyadmin`, `rook-ceph`, `nacos`, and
 almost certainly every umbrella.
+
+**The root cause is two swapped branches in
+`crates/helm-schema-gen/src/condition_encoding.rs:260-269`, and the fix is to
+delete the condition.**
+
+```rust
+let subchart_default_fills = matches!(
+    yaml_value_at_path(subchart_defaults_doc, path),
+    Some(value) if !matches!(value, YamlValue::Null));
+let deleted = if subchart_default_fills {
+    explicit_null                                   // key present AND == null
+} else {
+    SchemaNode::any_of(vec![missing, explicit_null]) // the correct three-way form
+};
+```
+
+The two arms are exactly inverted. `subchart_default_fills` is true precisely
+when the subchart supplies a non-null default — which is precisely the case where
+Helm's coalescing **deletes** a user's `null`, leaving the key **absent**. So
+`explicit_null`, which requires the key to be present *and* null, is unreachable
+**by construction** in the only branch that selects it. The `else` branch, where a
+null genuinely survives, gets the broader union that would have been correct
+either way.
+
+`any_of([missing, explicit_null])` is right in both cases, so the fix is to emit
+it unconditionally and drop `subchart_default_fills` entirely. This is a deletion,
+which is the direction `CLAUDE.md` asks refactors to go.
+
+**Quantified on `openebs`, the corpus's largest chart: 3,497 of 3,786 reject arms
+(92%) are dead**, across 961 guard paths. A sweep of 630 guard paths found **335
+proven false acceptances and zero false rejections** — of 340 values documents
+that abort Helm, the schema catches **five, or 1.5%**. The control the earlier
+analysis asked for is clean: **zero** dead arms in the root chart's own scope,
+with four root witnesses correctly rejected.
 
 **Inventory now includes:** `redmine` 15 of 376 arms unsatisfiable, `gitea` 61 of
 1,138 — of which 21 require a subchart key to be simultaneously `type: object`
@@ -1477,10 +1520,47 @@ original-versus-original already differs by a timestamped Job name.
 So the fixture bloat recorded in `plan/corpus-expansion-v1.md` (108 MB → 327 MB,
 18 schemas over Helm's 5 MiB chart-file limit) is **substantially D3-driven**, and
 should shrink sharply when D3 lands. Schema size is a usable proxy metric for the
-fix.
+fix — though **not a sufficient one**: F74 measures the same 18 schemas against
+Helm's limit and finds that a threefold D3 reduction still leaves `milvus` and
+`oncall` above it. Deduplicating identical `$defs` subtrees is the load-bearing
+fix; D3 stacks on top.
 
 The rebuild is also the enabling artifact for hunting in these charts at all:
 before it, both reject every document, so no false acceptance is observable.
+
+### The D3 ambiguity guard is dead code — verified in source
+
+`AnalysisDb::implicit_template_name`
+(`crates/helm-schema-ir/src/analysis_db.rs:274-284`) ends with
+
+```rust
+let first = matches.next()?;
+matches.next().is_none().then_some(first)   // "only if unambiguous"
+```
+
+but `implicit_template_names` is a `BTreeMap<String, String>` **keyed by the
+template's relative path** (line 42), filled by a plain
+`insert(template_relative_path, name.clone())` (line 59). Filtering that map by
+path can therefore never yield more than one entry: `matches.next()` is always
+`None`, the guard always passes, and **the ambiguity it exists to detect was
+already destroyed at insertion time by last-writer-wins.** The check must move to
+the insert, or the map must key on something that preserves collisions.
+
+### The structural screen over-predicts D3 by two orders of magnitude
+
+`openebs` was rebuilt twice: once renaming **all 209** colliding template keys,
+once renaming **only the 7 `configmap.yaml` files**. Both were verified
+render-identical to the original, and **their schemas are byte-identical to each
+other**. That result does two things at once — it proves the broad rename is
+artifact-free, and it proves `configmap.yaml` is the *only* live collision in the
+chart. The structural screen predicted 209 and one was live, a **209:1**
+over-prediction.
+
+Read alongside the earlier prevalence audit, this means collision *counts* are
+not a measure of D3 impact and should not be quoted as one. Only a
+rename-and-regenerate control settles whether a collision is live. Two further
+`openebs` details: `mayastor.etcd` is an unlisted **fourth** victim scope, and the
+chart carries exactly **34** fabricated paths.
 
 ## Recovered results
 
@@ -1964,6 +2044,54 @@ Compare F1, which is this closure biting one specific key (`global`) and blockin
 use as a dependency. F73 is the general case, and the two should be fixed
 together.
 
+### F74 — the emitted schema exceeds Helm's file-size limit, so the chart cannot be installed
+
+**Class:** blocker, and not a correctness question at all. **Status:** PROVEN.
+
+Helm refuses a `values.schema.json` larger than 5 MiB:
+
+```
+chart file "values.schema.json" is larger than the maximum file size 5242880
+```
+
+**18 of the 156 corpus schemas are over that limit**, so for those charts the
+generator's output cannot be shipped with the chart at all:
+
+| | | |
+| --- | --- | --- |
+| `openebs` 33.30 MiB | `milvus` 17.71 | `oncall` 16.09 |
+| `kube-prometheus-stack` 14.92 | `gitea` 14.65 | `nats` 11.55 |
+| `redmine` 11.03 | `stacks-blockchain-api` 9.99 | `airflow` 8.95 |
+| `netbox` 7.26 | `okteto` 6.77 | `weblate` 6.73 |
+| `dify` 6.30 | `datadog` 6.13 | `signoz-signoz` 6.13 |
+| `kyverno` 5.99 | `synapse` 5.77 | `prometheus` 5.12 |
+
+Characterised on `openebs` (33.3 MiB, 6.4× the limit): **77% is `$defs`**, of
+which 108 `providerShared*` wrappers alone are 4.8 MB; **42% is
+`description` / `x-kubernetes-*` text**; and **42% is byte-identical duplicated
+subtrees** — the Container schema inlined 44 times, one affinity block 149 times.
+Deduplicating identical subtrees brings it to 5.2 MiB; dedup plus dropping
+descriptions reaches 4.1 MiB, under the limit.
+
+**Fixing D3 is not sufficient on its own.** The measured D3 neutralization takes
+`milvus` 18.5 → 6.4 MB and `oncall` 16.9 → 6.6 MB — a threefold reduction that
+still leaves both above 5 MiB. Dedup is the load-bearing fix; D3 and description
+trimming stack on top.
+
+This belongs on the fix list beside the correctness families, because a schema
+that cannot be installed provides zero validation regardless of how correct it is.
+
+### F75 — numeric `gt` / `lt` guards produce no constraint
+
+**Class:** false acceptance. **Charts:** `openebs` (`mayastor.io_engine.cpuCount`
+must be `>= 1`), `loki` (the replica-matrix `fail`). **Status:** PROVEN.
+
+An abort guarded by a numeric comparison rather than a truthiness or equality
+test contributes nothing to the schema. Compare F34 (an `or` guard drops an
+*ordering-comparison* disjunct) and F59 (`eq`/`ne` comparability is hoisted out of
+its guard) — the three together say comparison operators are the weakest-covered
+guard shape in the analyzer.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -1994,6 +2122,7 @@ Single-instance defects not yet generalized into a family.
 | `etcd` | false acceptance | `common.errors.insecureImages` unmodelled: `image.registry: myregistry.example.com` aborts at `NOTES.txt:124` and validates. "Point the chart at my mirror" is the most common bitnami override, and it is exactly the one that aborts. |
 | `okteto` | false acceptance | The `adminToken` length rule (`len == 8` or `len == 40`) is unmodelled. |
 | `base` | false rejection | `global.imagePullSecrets` typed `array` although the consuming `range` also accepts a map. |
+| `openebs` | **false rejection** | `global.imagePullSecrets` rejects **both** documented forms — `[{name: s}]` and `[s]` — while Helm renders each; same for `mayastor.image.pullSecrets`. The Kubernetes list-of-`{name}` constraint was lowered one nesting level too deep, onto the `range`'s items. Live in the default configuration, so it blocks every private-registry install. Same path as the `base` row above, which suggests one fix covers both. |
 | `oauth2-proxy` | **false rejection** | With `redis-ha.enabled: true`, `/properties/redis-ha/allOf/17/then/.../fullnameOverride` has the accepted shape **backwards**: it permits a falsey value or an object-of-strings and rejects a non-empty string — but `charts/redis-ha/templates/_helpers.tpl:15-18` tests the value for truthiness and passes exactly that truthy string to `trunc 63`. `fullnameOverride` appears nowhere else in the subchart. Users cannot enable the bundled Redis HA chart with an ordinary `fullnameOverride`, and the chart's own `ci/redis-sentinel-{array,comma}-values.yaml` reproduce it. |
 | `kyverno` | **false rejection** | `grafana.enabled: true` makes the schema reject the grafana subchart's **own shipped default**. `#/properties/grafana/allOf/6` applies the plain-scalar preimage (`$defs/8N`, which forbids a leading `{`) to `configMapName`, whose default is `'{{ include "kyverno.fullname" . }}-grafana'` and which is consumed through `tpl`. Two sibling arms on the same path carry the `{{`-template escape hatch (`$defs/aj`); this one drops it. Compare F30/F40. |
 | `airflow` | **false rejection** | `config.triggerer` is typed `object`, so `config.triggerer: []` is rejected — but the read is rescued by `| default dict`, and Helm renders. |
@@ -2040,6 +2169,16 @@ from analysis entirely. Two consequences were measured on `kyverno`:
 Helm *renders* `templates/tests/*` and only filters them from output afterwards,
 so those roots are real contracts. Whether the generated schema should scope them
 out is a deliberate decision someone should make, not an accident to fix quietly.
+
+**Root `additionalProperties: false` (F73) is the second such question, and two
+agents reached opposite verdicts on the same facts.** One filed it as a proven
+false rejection with witnesses — including a chart's own CI values file — while
+the other declined to file it *because* it is near-universal (153 of 156 corpus
+schemas), reading that consistency as deliberate policy. Both readings fit the
+evidence, so the disagreement is recorded rather than resolved: if closing the
+root is policy, F73's witnesses are the cost of that policy and should be
+acknowledged; if it is not, F73 is the corpus's most widely distributed false
+rejection. Only a decision separates the two.
 
 ## Known-mechanism instances
 
@@ -2286,7 +2425,7 @@ clean".
 
 ## Harness pitfalls worth inheriting
 
-Six traps cost agents real time and would cost the next engineer the same. The
+Seven traps cost agents real time and would cost the next engineer the same. The
 first one invalidates results rather than merely wasting time, and was found
 late — **findings adjudicated before it was known should be re-checked**:
 
@@ -2314,6 +2453,18 @@ late — **findings adjudicated before it was known should be re-checked**:
   Kubernetes field.** Those rejections are correct provider constraints and must
   be adjudicated out, not counted. One agent excluded 1,108 such cases in a single
   chart.
+- **The prober's null model does not match Helm's, and it is the *same* fact
+  F23 has backwards.** `corpus-prober` and the repo's own
+  `crates/helm-schema-cli/tests/common/values_validation.rs` delete **every**
+  null-valued map key before validating (`drop_nulls`). Helm 4.2.4 does not: a
+  user `null` is deleted only when the key exists in the **innermost owning
+  chart's own `values.yaml`**; with no default there, it survives present-and-null
+  into the document Helm validates. Proven with a minimal two-chart fixture under
+  Helm's own validator, and one candidate finding was **retracted** as an artifact
+  of the mismatch. A purpose-built Draft-07 evaluator over the raw coalesced
+  document agreed with the prober on 30 cross-check instances, so the divergence
+  is narrow — but it is exactly the population F23 is about. Fixing the fact once
+  fixes both the emitter and the harness.
 - **Coalesce through a chart copy with `templates/` removed.** Otherwise the dump
   reports post-mutation `.Values` for charts that mutate at render time, and — far
   worse — it can only produce documents Helm already agreed to render, which makes
