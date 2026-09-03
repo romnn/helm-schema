@@ -1730,8 +1730,34 @@ out is a deliberate decision someone should make, not an accident to fix quietly
 ## Known-mechanism instances
 
 Instances of the five mechanisms already root-caused in
-`plan/corpus-expansion-v1.md` need no further diagnosis, only the fix. Two are
+`plan/corpus-expansion-v1.md` need no further diagnosis, only the fix. Several are
 recorded here because the hunt changed what we know about them.
+
+**D3 also mis-resolves *self*-includes, and that constrains the fix.** A subchart
+asking for **its own** `configmap.yaml` is looked up by the same trailing-path key,
+so it can be handed the parent's — and vice versa. This is why renaming one side
+never repairs a chart; it only flips which chart wins. In `netbox`, renaming
+valkey's file makes valkey's self-include land on netbox's (11 errors under
+`/valkey`), and renaming netbox's makes netbox's self-include land on valkey's
+(5 errors at the root). Only renaming **every** basename *and* rewriting every
+`$.Template.BasePath` string reaches 0.
+
+**So a fix must key the include target by chart identity, not by trailing path** —
+resolving the ambiguity is not enough on its own.
+
+**The abstention guard is unreachable by construction, not merely hard to reach.**
+The map is a `BTreeMap` keyed by the colliding suffix, and a `BTreeMap` cannot hold
+duplicate keys, so the second candidate has already overwritten the first before
+the uniqueness check at `analysis_db.rs:277` ever runs.
+
+**In `redmine` the entire defect is one file.** `#/properties/mariadb/allOf/192`
+conjoins mariadb's own guard with `mariadb.global.postgresql` absent-or-null —
+a path that appears **zero** times in `charts/mariadb/**`. The carrier is
+`charts/mariadb/templates/primary/statefulset.yaml:33`, which includes
+`primary/configmap.yaml`; mariadb's and postgresql's files of that name collide,
+and postgresql's body reaches an unguarded
+`.Values.global.postgresql.fullnameOverride` at its `_helpers.tpl:13`. Renaming
+that **single file** makes the schema accept redmine's defaults.
 
 **The D3 structural screen over-predicts, confirmed directly.**
 `kube-prometheus-stack` has **14 colliding template basenames across four
