@@ -8,8 +8,8 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 20 of 25 agent reports have landed, contributing 190
-proven findings across 53 families. **Three previously-unresolved mechanisms are
+**Status: in progress.** 21 of 25 agent reports have landed, contributing 196
+proven findings across 56 families. **Three previously-unresolved mechanisms are
 now root-caused: D5, and the quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root cause is now closed
 (F4) and three earlier claims are refuted (see "Corrections"). The remaining
 reports are appended as they arrive.
@@ -563,11 +563,13 @@ the `range`, not the `$.` root reference.**
 **Charts:** `kube-prometheus-stack`, `phpmyadmin`, `rook-ceph`, `nacos`, and
 almost certainly every umbrella.
 
-**Scale, measured across five independent agents:** 425 of 924 reject arms in
-`kube-prometheus-stack`, 258 of 346 in `phpmyadmin`, 20 in `metallb`, ~11 in
-`datadog`, plus 50 witnessed false-acceptance paths in `prometheus` and 16 in
-`open-webui` — and **100% of the dead arms are subchart-scoped paths**, with
-**zero** at any parent-owned path in every chart measured.
+**Scale, measured across seven independent agents:** 425 of 924 reject arms in
+`kube-prometheus-stack`, 258 of 346 in `phpmyadmin`, 47 of 374 in `argo-cd`, 31 in
+`graylog`, 20 in `metallb`, ~11 in `datadog`, 1 in `cloudnative-pg`, plus 50
+witnessed false-acceptance paths in `prometheus` and 16 in `open-webui` — and **100% of the dead arms are subchart-scoped paths**, with
+**zero** at any parent-owned path in every chart measured — and **zero dead arms
+in every chart that has no subcharts at all**, which is as clean a control as the
+corpus can provide.
 
 **D3 and D4 are ruled out as the cause.** Renaming every colliding template file
 in `metallb` and regenerating changed nothing, and the affected charts make no
@@ -1124,6 +1126,59 @@ and has a dedicated absent-or-null arm — but not `string`. `len "xyz"` is 3 so
 guard passes, and Go's `range` never iterates a string. The analyzer is clearly
 modelling "must be iterable"; the string branch is simply missing.
 
+### F55 — `mustMergeOverwrite` with a non-literal operand drops every sub-path fact
+
+**Class:** false acceptance. **Chart:** `alloy`.
+
+`$values := mustMergeOverwrite .Values.alloy (or .Values.agent dict)` — then
+`alloy.mounts`, `alloy.clustering` and `alloy.configMap` set to null all abort
+Helm with nil-pointer errors and are accepted. The schema still records
+`.Values.alloy` itself as non-nullish, so only paths *through* the alias are lost.
+
+The reproducer isolates the trigger precisely: with a **literal** `dict` as the
+second operand the schema rejects correctly; with `(or .Values.gamma dict)` it
+accepts.
+
+### F56 — a guard reading a branch-reassigned variable deletes the whole region
+
+**Class:** false acceptance. **Chart:** `alloy`.
+
+`hpa.yaml` reassigns `$autoscaling` inside an `if` and then guards on it; all four
+`required` calls underneath vanish. Witness: `controller.type: deployment` plus
+`autoscaling.horizontal.enabled: true` plus `configReloader.resources.requests: null`
+aborts with the chart's own message and is accepted.
+
+Causal: deleting only the three-line reassignment block flips the same `required`
+from accepted to correctly rejected.
+
+### F57 — a helper invoked with a positional `list` context contributes no facts
+
+**Class:** false acceptance. **Chart:** `jenkins`.
+
+`include "jenkins.configReloadContainer" (list $ …)` with `$root := index . 0`
+inside: `controller.sidecars.configAutoReload.image: null` aborts and is accepted.
+
+Proven by injecting the **same** guard in two places in a chart copy and
+regenerating — the copy inside the helper produced no arm, the copy in the
+statefulset produced a correct one.
+
+## Contaminated fixtures found by this hunt
+
+`plan/corpus-expansion-v1.md` recorded two committed fixtures carrying wrong
+answers (`signoz-signoz`, `kube-prometheus-stack`). The hunt adds two more, both
+shown wrong by witnessed false acceptances under F23:
+
+- **`prometheus.schema.json`** — 50 witnessed false-acceptance paths.
+- **`open-webui.schema.json`** — 16.
+
+That is **four** contaminated fixtures, none of which any mechanical gate found.
+
+**Sequencing note for whoever fixes D3.** `graylog`'s 31 dead subchart arms
+(and `openebs`'s) are currently masked: those charts reject every document, so the
+dead arms cannot be exercised. They become **live false acceptances the moment the
+D3 baseline rejection lifts.** F23 must therefore land together with the D3 fix,
+not after it.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -1269,6 +1324,10 @@ verdict is a result, and is recorded so a later pass need not repeat the work.
   configurations. Notably `argo-rollouts`' `toYaml`-into-ConfigMap-`data` paths
   are correctly typed `map<string, string|null>` rather than collapsed to
   `type: "string"` — the F4 failure mode, absent here.
+- **`argocd-image-updater`**, **`cloudnative-pg`**, **`argo-events`** (apart from
+  one unconstrained `rbac.rules`) — every reject arm read and justified, and every
+  fuzzer false-rejection candidate turned out to be a wrongly-typed value the
+  Kubernetes or CRD sink legitimately rejects.
 - **`reloader`** — all 14 templates read, all 26 reject arms reconciled, 856
   differential probes. Its seven `eq <flag> true` sites are all correctly typed
   `["null","boolean"]`, catching Helm's "incompatible types for comparison" abort.
@@ -1346,6 +1405,16 @@ Recorded so a later pass does not mistake these for missed bugs:
   "input-channel-dependent integer range semantics" warning, so it is a deliberate
   abstention.
 - `prometheus`' `vpa.yaml` emitting invalid YAML — an upstream chart bug.
+- `jenkins`' `awsSecurityGroupPolicies.enabled: true` being rejected — correct:
+  the `SecurityGroupPolicy` CRD declares `spec.securityGroups.groupIds` with
+  `minItems: 1` and the chart ships `[]`.
+
+Two cross-cutting screens came back **clean** and are worth recording as negative
+results: no reject-arm property name is absent from its own chart's sources
+outside the already-quarantined charts (so D3-style leakage is not silently
+widespread), and every enum-shaped values constraint checked carries an open
+`{"type": "string"}` alternative — which is F15's failure mode confirmed as
+general rather than a one-off.
 - Requiredness and typing propagated from Kubernetes provider schemas. The
   `eck-operator` `webhook.port` case was checked specifically and **is**
   correctly gated on `webhook.enabled`.
