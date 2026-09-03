@@ -140,6 +140,34 @@ than one aimed at a family.
 | **J — validation and version gates** | F6, F71 | Charts with a file dedicated to validation (`validateValues`, `requirements.yaml`) contribute zero constraints from it. `openebs` adds a third witness under `mayastor.etcd`. |
 | **K — output size and installability** | F74 | Not a lowering defect: 18 of 156 schemas exceed Helm's 5 MiB limit and cannot be shipped at all, so their correctness is moot until the size is fixed. |
 
+### Where to start
+
+Ordered by measured leverage, not by how interesting the mechanism is. Only the
+first three carry numbers strong enough to justify their position.
+
+1. **F23 — emit `any_of([missing, explicit_null])` unconditionally.** Root-caused
+   to two swapped branches, and the fix *deletes* a condition. It is the corpus's
+   largest defect by a wide margin: 92% of `openebs`'s 3,786 arms are dead, and
+   of 340 values documents that abort Helm the schema currently catches five.
+   Nothing else on this list has that ratio.
+2. **F74 — deduplicate identical `$defs` subtrees.** 18 of 156 schemas exceed
+   Helm's 5 MiB limit and cannot be shipped, so for those charts every other fix
+   on this list is unobservable. Mechanical, and 42% of `openebs` is
+   byte-identical duplication.
+3. **Cluster A1 — stop deleting a region when one element is undecidable.** Seven
+   families, one behaviour. Widening instead of dropping is the single change
+   that would retire the most families at once.
+4. **F69, F17, F50 (cluster B) — union alternatives instead of intersecting
+   them.** Small, local, and F69 alone locks out a headline feature end to end.
+5. **F5/F54 — drop `integer` from the rangeable domain.** 52 unions in three
+   charts, and Helm's own `range` settles the question without judgement.
+6. **F73** — but read the policy disagreement first; this one needs a decision
+   before it needs a patch.
+
+Two cheap gates belong in CI regardless of fix order, because both are already
+built and both found real bugs: the chart-shipped `ci/` oracle and the root-key
+null-deletion probe. See "A free oracle nobody has been running".
+
 Two results should shape where effort goes before any of this is picked up.
 **Direction A is clean** — of 308 synthesised reject-arm witnesses, 305 abort
 real Helm and none is a false rejection, so auditing arms that *do* fire has a
