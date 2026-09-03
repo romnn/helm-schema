@@ -1,0 +1,37 @@
+annotations:
+  artifacthub.io/changes: |
+    - The changelog is available at https://www.okteto.com/docs/release-notes
+apiVersion: v2
+appVersion: c4ef76033
+dependencies:
+- alias: ingress-nginx
+  condition: ingress-nginx.enabled
+  name: ingress-nginx-chart
+  repository: oci://ghcr.io/okteto
+  version: 4.16.7
+- alias: okteto-nginx
+  condition: okteto-nginx.enabled
+  name: ingress-nginx-chart
+  repository: oci://ghcr.io/okteto
+  version: 4.16.7
+- condition: reloader.enabled
+  name: reloader
+  repository: https://stakater.github.io/stakater-charts
+  version: 2.2.14
+description: Development platform for Kubernetes applications
+home: https://okteto.com
+icon: https://okteto.com/okteto-symbol-circle-inverse-1.1.png
+keywords:
+- okteto
+- development
+- team collaboration
+kubeVersion: '>=1.33.0-0'
+maintainers:
+- email: ramiro@okteto.com
+  name: Ramiro Berrelleza
+- email: pablo@okteto.com
+  name: Pablo Chico de Guzman
+- email: irespaldiza@okteto.com
+  name: Iñaki Respaldiza
+name: okteto
+version: 1.48.0

@@ -1,0 +1,177 @@
+{{- $cap := .Values.capabilities | default dict }}
+{{- if or ($cap.resize.enabled) ($cap.apiServer) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rawfile-localpv.fullname" . }}-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &selectorLabels
+      {{- include "rawfile-localpv.selectorLabels" . | nindent 6 }}
+      component: controller
+  template:
+    metadata:
+      labels: *selectorLabels
+    spec:
+      serviceAccount: {{ include "rawfile-localpv.fullname" . }}-driver
+      priorityClassName: {{ .Values.controller.priorityClassName }}
+      tolerations:
+        {{- .Values.controller.tolerations | toYaml | nindent 8 }}
+      nodeSelector:
+        {{- .Values.controller.nodeSelector | toYaml | nindent 8 }}
+      affinity:
+        {{- .Values.controller.affinity | toYaml | nindent 8 }}
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+      containers:
+        {{- if $cap.apiServer.enabled }}
+        - name: api-server
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.image "global" .Values.global "chartVersion" .Chart.AppVersion) | quote }}
+          imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.imagePullPolicy }}
+          args:
+            - api
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PROVISIONER_NAME
+              value: "{{ .Values.provisionerName }}"
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: LOG_LEVEL
+              value: {{ .Values.logLevel }}
+            - name: LOG_FORMAT
+              value: {{ .Values.logFormat }}
+            - name: GA_ENABLED
+              {{- if kindIs "bool" .Values.global.analytics.enabled }}
+              value: "{{ .Values.global.analytics.enabled }}"
+              {{- else }}
+              value: "{{ .Values.analytics.enabled }}"
+              {{- end }}
+            {{- if .Values.global.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.global.analytics.gaId | quote }}
+            {{- else if .Values.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.analytics.gaId | quote }}
+            {{- end }}
+            {{- if .Values.global.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.global.analytics.gaKey | quote }}
+            {{- else if .Values.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.analytics.gaKey | quote }}
+            {{- end }}
+            - name: NODE_DS
+              value: {{ include "rawfile-localpv.fullname" . }}-node
+            - name: INTERNAL_PORT
+              value: {{ .Values.node.internalGRPC.port | toString | quote }}
+            {{- if .Values.auth.enabled }}
+            - name: INTERNAL_SIGNATURE
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.auth.secretName }}
+                  name: {{ .Values.auth.secretName }}
+                  {{- else }}
+                  name: {{ include "rawfile-localpv.fullname" . }}-secrets
+                  {{- end }}
+                  key: internal-signature
+            {{- end }}
+        {{- end }}
+        {{- if $cap.resize.enabled }}
+        - name: csi-driver
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.image "global" .Values.global "chartVersion" .Chart.AppVersion) | quote }}
+          imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.imagePullPolicy }}
+          args:
+            - csi-driver
+            - --enable-metrics=false
+          env:
+            - name: PROVISIONER_NAME
+              value: "{{ .Values.provisionerName }}"
+            - name: CSI_DRIVER__ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: CSI_DRIVER__NODE_ID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: LOG_LEVEL
+              value: {{ .Values.logLevel }}
+            - name: LOG_FORMAT
+              value: {{ .Values.logFormat }}
+            - name: CSI_DRIVER__PLUGIN_TYPE
+              value: controller
+            - name: CSI_DRIVER__GRPC_WORKERS
+              value: {{ .Values.controller.grpcWorkers | toString | quote }}
+            - name: GA_ENABLED
+              {{- if kindIs "bool" .Values.global.analytics.enabled }}
+              value: "{{ .Values.global.analytics.enabled }}"
+              {{- else }}
+              value: "{{ .Values.analytics.enabled }}"
+              {{- end }}
+            {{- if .Values.global.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.global.analytics.gaId | quote }}
+            {{- else if .Values.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.analytics.gaId | quote }}
+            {{- end }}
+            {{- if .Values.global.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.global.analytics.gaKey | quote }}
+            {{- else if .Values.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.analytics.gaKey | quote }}
+            {{- end }}
+            {{- if .Values.global.analytics.gaDnsNameservers }}
+            - name: GA_DNS
+              value: {{ .Values.global.analytics.gaDnsNameservers | quote }}
+            {{- else if .Values.analytics.gaDnsNameservers }}
+            - name: GA_DNS
+              value: {{ .Values.analytics.gaDnsNameservers | quote }}
+            {{- end }}
+            - name: INTERNAL_PORT
+              value: {{ .Values.node.internalGRPC.port | toString | quote }}
+            - name: NODE_DS
+              value: {{ include "rawfile-localpv.fullname" . }}-node
+            {{- if .Values.auth.enabled }}
+            - name: INTERNAL_SIGNATURE
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.auth.secretName }}
+                  name: {{ .Values.auth.secretName }}
+                  {{- else }}
+                  name: {{ include "rawfile-localpv.fullname" . }}-secrets
+                  {{- end }}
+                  key: internal-signature
+            {{- end }}
+            - name: CSI_DRIVER__CAPABILITIES__SNAPSHOTS__ENABLED
+              value: "{{ .Values.capabilities.snapshots.enabled }}"
+            - name: CSI_DRIVER__CAPABILITIES__RESIZE__ENABLED
+              value: "{{ .Values.capabilities.resize.enabled }}"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            {{- include "rawfile-localpv.controller-resources" . | nindent 12 }}
+        - name: external-resizer
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.controller.externalResizer.image "csiSideCars" .Values.csiSideCars.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default .Values.controller.externalResizer.image.pullPolicy | default .Values.csiSideCars.image.pullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--handle-volume-inuse-error=false"
+            - "--timeout=30s"
+            - "--automaxprocs=true"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            {{- include "rawfile-localpv.controller-external-resizer-resources" . | nindent 12 }}
+        {{- end }}
+{{- end }}

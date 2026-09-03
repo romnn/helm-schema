@@ -1,0 +1,103 @@
+{{/* Append the hardcoded settings */}}
+{{- define "headscale.harcodedValues" -}}
+initContainers:
+  config:
+    image: alpine
+    env:
+      - name: CONFIG_DIR
+        value: {{ .Values.persistence.config.mountPath }}
+    volumeMounts:
+      {{- if .Values.persistence.config.enabled }}
+      - name: config
+        mountPath: {{ .Values.persistence.config.mountPath }}
+      {{- end }}
+    command:
+      - sh
+      - -c
+      - |
+        if [[ -f "$CONFIG_DIR/config.yaml" ]]; then
+          echo 'Config already exists' >&2
+        else
+          echo 'Writing empty config' >&2
+          mkdir -p "$CONFIG_DIR"
+          cat <<- 'EOF' >"$CONFIG_DIR/config.yaml"
+            # It's suggested to use environment variables to configure Headscale.
+            # For config reference, see https://github.com/juanfont/headscale/blob/main/config-example.yaml
+            # To configure any of these as an env:
+            #   1. Flatten object keys using "_"
+            #   2. Prefix with "HEADSCALE_"
+            #
+            # For example:
+            #   - "listen_addr" becomes "HEADSCALE_LISTEN_ADDR"
+            #   - "log.level" becomes "HEADSCALE_LOG_LEVEL"
+        EOF
+        fi
+
+env:
+  {{- with .Values.ingress.main }}
+  {{- if and .enabled .hosts }}
+  HEADSCALE_SERVER_URL: http{{ if .tls }}s{{ end }}://{{ (first .hosts).host }}
+  {{- end }}
+  {{- end }}
+
+  {{- with .Values.service.main.ports }}
+  HEADSCALE_LISTEN_ADDR: "0.0.0.0:{{ .http.port }}"
+  HEADSCALE_METRICS_LISTEN_ADDR: "0.0.0.0:{{ .metrics.port }}"
+  {{- end }}
+
+  HEADSCALE_PRIVATE_KEY_PATH: "{{ .Values.persistence.config.mountPath }}/private.key"
+  HEADSCALE_NOISE: "{}"
+  HEADSCALE_NOISE_PRIVATE_KEY_PATH: "{{ .Values.persistence.config.mountPath }}/noise_private.key"
+
+  {{- with .Values.postgresql }}
+  {{- if .enabled }}
+  HEADSCALE_DATABASE_TYPE: postgres
+  HEADSCALE_DATABASE_POSTGRES_HOST: {{ $.Release.Name }}-postgresql
+  HEADSCALE_DATABASE_POSTGRES_PORT: "5432"
+  HEADSCALE_DATABASE_POSTGRES_SSL: "false"
+  HEADSCALE_DATABASE_POSTGRES_NAME: {{ .auth.database }}
+  HEADSCALE_DATABASE_POSTGRES_USER: {{ default "postgres" .auth.username }}
+  HEADSCALE_DATABASE_POSTGRES_PASS:
+    secretKeyRef:
+      name: {{ $.Release.Name }}-postgresql
+      key: {{ if not .auth.password }}postgres-{{ end }}password
+  {{- else }}
+  HEADSCALE_DATABASE_TYPE: "sqlite3"
+  HEADSCALE_DATABASE_SQLITE_PATH: "{{ $.Values.persistence.config.mountPath }}/db.sqlite"
+  {{- end }}
+  {{- end }}
+
+  {{- if .Values.configMaps.acl.enabled }}
+  HEADSCALE_POLICY_PATH: /acl/{{ keys .Values.configMaps.acl.data | first }}
+  {{- end }}
+
+  {{- if .Values.configMaps.dns.enabled }}
+  HEADSCALE_DNS_EXTRA_RECORDS_PATH: /dns/{{ keys .Values.configMaps.dns.data | first }}
+  {{- end }}
+
+{{- if or .Values.configMaps.acl.enabled .Values.configMaps.dns.enabled }}
+persistence:
+  {{- with .Values.configMaps.acl }}
+  {{- if .enabled }}
+  acl:
+    enabled: true
+    type: configMap
+    name: {{ include "bjw-s.common.lib.chart.names.fullname" $ }}-acl
+  {{- end }}
+  {{- end }}
+
+  {{- with .Values.configMaps.dns }}
+  {{- if .enabled }}
+  dns:
+    enabled: true
+    type: configMap
+    name: {{ include "bjw-s.common.lib.chart.names.fullname" $ }}-dns
+  {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- end -}}
+{{- $_ := merge .Values (include "headscale.harcodedValues" . | fromYaml) -}}
+
+{{/* Render the templates */}}
+{{ include "bjw-s.common.loader.all" . }}

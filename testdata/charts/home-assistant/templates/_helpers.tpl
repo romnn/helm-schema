@@ -1,0 +1,141 @@
+{{/*
+Allow the release namespace to be overridden for multi-namespace deployments in combined charts
+*/}}
+{{- define "home-assistant.namespace" -}}
+  {{- if .Values.namespaceOverride -}}
+    {{- .Values.namespaceOverride -}}
+  {{- else -}}
+    {{- .Release.Namespace -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "home-assistant.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "home-assistant.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "home-assistant.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "home-assistant.standardLabels" -}}
+{{- $labels := dict -}}
+{{- $labels = mergeOverwrite $labels (include "home-assistant.selectorLabels" . | fromYaml) -}}
+{{- $labels = mergeOverwrite $labels (dict "helm.sh/chart" (include "home-assistant.chart" .)) -}}
+{{- if .Chart.AppVersion -}}
+{{- $labels = mergeOverwrite $labels (dict "app.kubernetes.io/version" .Chart.AppVersion) -}}
+{{- end -}}
+{{- $labels = mergeOverwrite $labels (dict "app.kubernetes.io/managed-by" .Release.Service) -}}
+{{- toYaml $labels -}}
+{{- end -}}
+
+{{/*
+Common labels with user overrides
+*/}}
+{{- define "home-assistant.labels" -}}
+{{- $labels := dict -}}
+{{- $labels = mergeOverwrite $labels (include "home-assistant.standardLabels" . | fromYaml) -}}
+{{- with .Values.commonLabels -}}
+{{- $labels = mergeOverwrite $labels . -}}
+{{- end -}}
+{{- toYaml $labels -}}
+{{- end -}}
+
+{{/*
+Pod labels with selector labels taking precedence
+*/}}
+{{- define "home-assistant.podLabels" -}}
+{{- $labels := dict -}}
+{{- $labels = mergeOverwrite $labels (include "home-assistant.labels" . | fromYaml) -}}
+{{- $labels = mergeOverwrite $labels (include "home-assistant.selectorLabels" . | fromYaml) -}}
+{{- toYaml $labels -}}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "home-assistant.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "home-assistant.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "home-assistant.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "home-assistant.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
+Validate ingress configuration
+*/}}
+{{- define "home-assistant.validateIngress" -}}
+{{- if and .Values.ingress.enabled .Values.ingress.external -}}
+{{- fail "ingress.enabled and ingress.external cannot both be true" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate HTTPRoute configuration
+*/}}
+{{- define "home-assistant.validateHTTPRoute" -}}
+{{- if and .Values.httpRoute.enabled (not .Values.httpRoute.parentRefs) -}}
+{{- fail "httpRoute.enabled is true but httpRoute.parentRefs is empty; set at least one parentRef so the HTTPRoute attaches to a Gateway" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate controller type
+*/}}
+{{- define "home-assistant.validateController" -}}
+{{- if not (or (eq .Values.controller.type "StatefulSet") (eq .Values.controller.type "Deployment")) -}}
+{{- fail "controller.type must be either 'StatefulSet' or 'Deployment'" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether the deployed Home Assistant version still supports the http: block in
+configuration.yaml. HA 2026.8 deprecated it (removed in 2027.2); since then the
+http settings live in /config/.storage/http and are managed from the UI.
+Returns "true" for semver image tags older than 2026.8; non-semver tags
+(latest, stable, ...) are treated as current, i.e. 2026.8+.
+*/}}
+{{- define "home-assistant.httpYamlSupported" -}}
+{{- $tag := .Values.image.tag | default .Chart.AppVersion | toString -}}
+{{- $ver := regexFind "^v?[0-9]+\\.[0-9]+(\\.[0-9]+)?" $tag -}}
+{{- if $ver -}}
+{{- $ver = trimPrefix "v" $ver -}}
+{{- if not (regexMatch "^[0-9]+\\.[0-9]+\\.[0-9]+$" $ver) -}}{{- $ver = printf "%s.0" $ver -}}{{- end -}}
+{{- if semverCompare "< 2026.8.0" $ver -}}true{{- end -}}
+{{- end -}}
+{{- end -}}

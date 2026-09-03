@@ -1,0 +1,214 @@
+{{- $extraVolumes := concat .Values.secretsExporter.extraVolumes .Values.extraVolumes }}
+{{- $extraVolumeMounts := concat .Values.secretsExporter.extraVolumeMounts .Values.extraVolumeMounts }}
+{{- if or .Values.secretsExporter.enabled .Values.cabundlesExporter.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.secretsExporter.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "x509-certificate-exporter.secretsExporterName" . }}
+  namespace: {{ include "x509-certificate-exporter.namespace" . }}
+  labels:
+    {{- include "x509-certificate-exporter.labels" . | nindent 4 }}
+    app.kubernetes.io/component: secrets
+spec:
+  selector:
+    matchLabels:
+      {{- include "x509-certificate-exporter.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: secrets
+  {{- if not (kindIs "invalid" .Values.secretsExporter.replicas) }}
+  replicas: {{ int .Values.secretsExporter.replicas }}
+  {{- end }}
+  {{- $rl := .Values.secretsExporter.revisionHistoryLimit }}
+  {{- if not (kindIs "invalid" $rl) }}
+  revisionHistoryLimit: {{ int $rl }}
+  {{- end }}
+  {{- with .Values.secretsExporter.strategy }}
+  strategy:
+    {{- toYaml . | trim | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "x509-certificate-exporter.labels" . | nindent 8 }}
+        app.kubernetes.io/component: secrets
+        {{- with .Values.podExtraLabels }}
+        {{- . | toYaml | trim | nindent 8 }}
+        {{- end }}
+        {{- with .Values.secretsExporter.podExtraLabels }}
+        {{- . | toYaml | trim | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | trim | nindent 8 }}
+        {{- end }}
+        {{- with .Values.secretsExporter.podAnnotations }}
+        {{- toYaml . | trim | nindent 8 }}
+        {{- end }}
+        {{- if .Values.webConfiguration }}
+        checksum/webconfig: {{ include (print .Template.BasePath "/webconfig.secret.yaml") . | sha256sum }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}
+      {{- with .Values.secretsExporter.affinity }}
+      affinity:
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}
+      {{- with .Values.secretsExporter.tolerations }}
+      tolerations:
+      {{- toYaml . | trim | nindent 6 }}
+      {{- end }}
+      {{- with .Values.secretsExporter.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}
+      {{- with .Values.secretsExporter.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ .Values.secretsExporter.restartPolicy }}
+      serviceAccountName: {{ include "x509-certificate-exporter.secretsExporterServiceAccountName" . }}
+      {{- with default .Values.priorityClassName .Values.secretsExporter.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        {{- with .Values.secretsExporter.securityContext }}
+        securityContext:
+          {{- toYaml . | trim | nindent 10 }}
+        {{- end }}
+        {{- with .Values.secretsExporter.resources }}
+        resources:
+          {{- . | toYaml | trim | nindent 10 }}
+        {{- end }}
+        image: {{ include "x509-certificate-exporter.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/x509-certificate-exporter
+          readOnly: true
+        {{- range $extraVolumeMounts }}
+        - {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+        {{- if or .Values.webConfiguration .Values.webConfigurationExistingSecret }}
+        - name: web-configuration
+          mountPath: /mnt/
+          readOnly: true
+        {{- end }}
+        {{- if .Values.secretsExporter.env }}
+        env:
+        {{- toYaml .Values.secretsExporter.env | trim | nindent 8 }}
+        {{- end }}
+        args:
+        - --config=/etc/x509-certificate-exporter/config.yaml
+        {{- range .Values.secretsExporter.extraArgs }}
+        - {{ . }}
+        {{- end }}
+      {{- if not .Values.rbacProxy.enabled }}
+        {{- $probePort := int (include "x509-certificate-exporter.probeListenPort" .) }}
+        ports:
+        - name: metrics
+          containerPort: {{ .Values.podListenPort }}
+        {{- if gt $probePort 0 }}
+        - name: probe
+          containerPort: {{ $probePort }}
+        {{- end }}
+        readinessProbe:
+        {{- with omit .Values.secretsExporter.readinessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          httpGet:
+            path: /healthz
+            port: {{ if gt $probePort 0 }}probe{{ else }}metrics{{ end }}
+          {{- with .Values.secretsExporter.readinessProbe.httpGet }}
+            {{ tpl (. | toYaml) $ | indent 12 | trim }}
+          {{- end }}
+        livenessProbe:
+        {{- with omit .Values.secretsExporter.livenessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          httpGet:
+            path: /healthz
+            port: {{ if gt $probePort 0 }}probe{{ else }}metrics{{ end }}
+          {{- with .Values.secretsExporter.livenessProbe.httpGet }}
+            {{ tpl (. | toYaml) $ | indent 12 | trim }}
+          {{- end }}
+      {{- else }}
+      - name: kube-rbac-proxy
+        {{- with .Values.rbacProxy.securityContext }}
+        securityContext:
+          {{- toYaml . | trim | nindent 10 }}
+        {{- end }}
+        image: {{ include "x509-certificate-exporter.rbacProxy.image" . }}
+        imagePullPolicy: {{ .Values.rbacProxy.image.pullPolicy }}
+        args:
+        - --upstream=http://127.0.0.1:{{ .Values.rbacProxy.upstreamListenPort }}
+        # Bind on every interface (including loopback) so probes,
+        # `kubectl port-forward`, and in-cluster Service routes all reach
+        # the listener. kube-rbac-proxy provides authn/authz at the
+        # request layer, so a wider socket binding is not a security risk.
+        - --secure-listen-address=:{{ .Values.podListenPort }}
+        # Explicit serving cert. Upstream is removing the proxy's built-in
+        # auto-generation (brancz/kube-rbac-proxy#187), so providing a
+        # cert is the future-proof default. Path matches the volumeMount
+        # below; the Secret is either user-provided
+        # (`rbacProxy.tls.existingSecretName`) or chart-generated.
+        - --tls-cert-file=/etc/rbac-proxy/tls/tls.crt
+        - --tls-private-key-file=/etc/rbac-proxy/tls/tls.key
+        ports:
+        - name: metrics
+          containerPort: {{ .Values.podListenPort }}
+        volumeMounts:
+        - name: rbac-proxy-tls
+          mountPath: /etc/rbac-proxy/tls
+          readOnly: true
+        readinessProbe:
+        {{- with omit .Values.secretsExporter.readinessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          # The exporter container runs its plain-HTTP probe server on
+          # this numeric port (auto-enabled by the chart whenever
+          # rbacProxy.enabled, see _helpers.tpl). The sidecar's probe
+          # targets it directly — bypasses the proxy's HTTPS+Bearer.
+          httpGet:
+            path: /healthz
+            port: {{ int (include "x509-certificate-exporter.probeListenPort" .) }}
+        livenessProbe:
+        {{- with omit .Values.secretsExporter.livenessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          httpGet:
+            path: /healthz
+            port: {{ int (include "x509-certificate-exporter.probeListenPort" .) }}
+        {{- with .Values.rbacProxy.resources }}
+        resources:
+        {{- . | toYaml | trim | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "x509-certificate-exporter.fullname" . }}-secrets
+      {{- range $extraVolumes }}
+      - {{ tpl (. | toYaml) $ | indent 8 | trim }}
+      {{- end }}
+      {{- if or .Values.webConfiguration .Values.webConfigurationExistingSecret }}
+      - name: web-configuration
+        secret:
+          secretName: "{{ default (include "x509-certificate-exporter.webConfigurationSecretName" .) .Values.webConfigurationExistingSecret }}"
+          items:
+          - key: webconfig.yaml
+            path: webconfig.yaml
+      {{- end }}
+      {{- if .Values.rbacProxy.enabled }}
+      - name: rbac-proxy-tls
+        secret:
+          secretName: "{{ default (include "x509-certificate-exporter.rbacProxy.tlsSecretName" .) .Values.rbacProxy.tls.existingSecretName }}"
+      {{- end }}
+{{- end }}

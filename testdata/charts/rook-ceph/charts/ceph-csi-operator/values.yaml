@@ -1,0 +1,76 @@
+# Controller manager configuration
+controllerManager:
+  # Manager configuration
+  manager:
+    # -- Arguments to pass to the manager container (default: ["--leader-elect"])
+    args:
+    - --leader-elect
+    # Security context for the manager container
+    containerSecurityContext:
+      # -- Disallow privilege escalation for the manager container (default: false)
+      allowPrivilegeEscalation: false
+      capabilities:
+        # -- List of capabilities to drop from the manager container (default: ["ALL"])
+        drop:
+        - ALL
+      # -- Mount root filesystem as read-only (default: true)
+      readOnlyRootFilesystem: true
+    # Environment variables for the manager container
+    env:
+      # -- Prefix for CSI service account names created by the operator (default: "ceph-csi-operator-")
+      csiServiceAccountPrefix: ceph-csi-operator-
+      # -- Namespace to watch for resources, empty for all namespaces (default: "")
+      watchNamespace: ""
+    # Container image configuration for the manager
+    image:
+      # -- Repository for the ceph-csi-operator image (default: "quay.io/cephcsi/ceph-csi-operator")
+      repository: quay.io/cephcsi/ceph-csi-operator
+      # -- Tag for the ceph-csi-operator image (default: "v1.0.4")
+      tag: v1.0.4
+    # Resource limits and requests for the manager container
+    resources:
+      limits:
+        # -- CPU limit for the manager container (default: "500m")
+        cpu: 500m
+        # -- Memory limit for the manager container (default: "128Mi")
+        memory: 128Mi
+      requests:
+        # -- CPU request for the manager container (default: "10m")
+        cpu: 10m
+        # -- Memory request for the manager container (default: "64Mi")
+        memory: 64Mi
+  # Pod-level security context for the controller manager
+  podSecurityContext:
+    # -- Run the pod as a non-root user (default: true)
+    runAsNonRoot: true
+  # -- Number of controller manager replicas (default: 1)
+  replicas: 1
+  serviceAccount:
+    # -- Annotations to add to the controller manager service account (default: {})
+    annotations: {}
+  # -- Node selector for the controller manager pod (default: {})
+  nodeSelector: {}
+  # -- Priority class name for the controller manager pod (default: "")
+  priorityClassName: ""
+  # -- Tolerations for the controller manager pod (default: [])
+  tolerations: []
+  # -- Topology spread constraints for the controller manager pod (default: [])
+  topologySpreadConstraints: []
+# -- List of image pull secret names for pulling container images (default: [])
+imagePullSecrets: []
+# Service account configuration
+serviceAccount:
+  # -- Specifies whether a service account should be created (default: true)
+  create: true
+  # -- Automatically mount a ServiceAccount's API credentials (default: true)
+  automount: true
+  # -- Annotations to add to the service account (default: {})
+  annotations: {}
+  # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: "")
+  name: ""
+# -- Kubernetes cluster domain used for DNS resolution (default: "cluster.local")
+kubernetesClusterDomain: cluster.local
+# OpenShift configuration
+openshift:
+  # -- Enable OpenShift-specific resources (SecurityContextConstraints) (default: false)
+  enabled: false

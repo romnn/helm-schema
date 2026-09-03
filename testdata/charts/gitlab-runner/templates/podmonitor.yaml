@@ -1,0 +1,55 @@
+{{- if and .Values.metrics.podMonitor.enabled .Values.metrics.enabled -}}
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "gitlab-runner.fullname" . | quote }}
+  namespace: {{ default .Release.Namespace .Values.metrics.podMonitor.namespace | quote }}
+  labels:
+    app: {{ include "gitlab-runner.fullname" . | quote }}
+    chart: {{ include "gitlab-runner.chart" . | quote }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+    {{- if .Values.metrics.podMonitor.labels }}
+      {{- toYaml .Values.metrics.podMonitor.labels | nindent 4 }}
+    {{- end }}
+  {{- with .Values.metrics.podMonitor.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  podMetricsEndpoints:
+  - port: {{ .Values.metrics.portName | quote }}
+    {{- if .Values.metrics.podMonitor.interval }}
+    interval: {{ .Values.metrics.podMonitor.interval }}
+    {{- end }}
+    {{- if .Values.metrics.podMonitor.scheme }}
+    scheme: {{ .Values.metrics.podMonitor.scheme | quote }}
+    {{- end }}
+    {{- if .Values.metrics.podMonitor.tlsConfig }}
+    tlsConfig:
+      {{- toYaml .Values.metrics.podMonitor.tlsConfig | nindent 6 }}
+    {{- end }}
+    {{- if .Values.metrics.podMonitor.metricRelabelings }}
+    metricRelabelings:
+      {{- tpl (toYaml .Values.metrics.podMonitor.metricRelabelings | nindent 6) . }}
+    {{- end }}
+    {{- if .Values.metrics.podMonitor.path }}
+    path: {{ .Values.metrics.podMonitor.path }}
+    {{- end }}
+    {{- if .Values.metrics.podMonitor.relabelings }}
+    relabelings:
+      {{- toYaml .Values.metrics.podMonitor.relabelings | nindent 6 }}
+    {{- end }}
+  {{- if .Values.metrics.podMonitor.jobLabel }}
+  jobLabel: {{ .Values.metrics.podMonitor.jobLabel }}
+  {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ $.Release.Namespace | quote }}
+  selector:
+    matchLabels:
+      app: {{ include "gitlab-runner.fullname" . | quote }}
+      release: {{ .Release.Name | quote }}
+      heritage: {{ .Release.Service | quote }}
+{{- end }}
+{{- end }}

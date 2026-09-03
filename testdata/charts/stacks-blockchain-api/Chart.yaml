@@ -1,0 +1,47 @@
+annotations:
+  artifacthub.io/images: |
+    - name: bitnami/postgresql
+      image: bitnami/postgresql:15.4.0-debian-11-r45
+      whitelisted: true
+  category: ApplicationServer
+apiVersion: v2
+appVersion: 8.13.2
+dependencies:
+- condition: stacks-blockchain.enabled
+  name: stacks-blockchain
+  repository: https://charts.hiro.so/hirosystems
+  tags:
+  - hirosystems-stacks-blockchain
+  version: 2.x.x
+- condition: postgresql.enabled
+  name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  tags:
+  - bitnami-postgresql
+  version: 12.x.x
+- name: common
+  repository: https://charts.bitnami.com/bitnami
+  tags:
+  - bitnami-common
+  version: 2.x.x
+description: API for the Stacks blockchain
+home: https://github.com/hirosystems/stacks-blockchain-api
+icon: https://raw.githubusercontent.com/hirosystems/docs/23569271aefa63e87626d2d7c598d18a4a852be5/public/home.svg
+keywords:
+- stacks
+- stx
+- blockchain
+- hiro
+- bitcoin
+- bitcoind
+- btc
+- api
+maintainers:
+- name: Hiro Systems
+  url: https://github.com/hirosystems/charts
+name: stacks-blockchain-api
+sources:
+- https://github.com/hirosystems/stacks-blockchain-api
+- https://docs.hiro.so/api
+- https://docs.hiro.so/get-started/stacks-blockchain-api
+version: 6.5.1

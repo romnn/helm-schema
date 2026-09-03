@@ -1,0 +1,73 @@
+{{- if and .Values.worker.enabled .Values.worker.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ printf "%s-worker" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: worker
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "common.names.fullname" . }}-worker
+  minReplicas: {{ .Values.worker.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.worker.autoscaling.maxReplicas }}
+  {{- if .Values.worker.autoscaling.behavior }}
+  behavior:
+    {{- if .Values.worker.autoscaling.behavior.scaleUp }}
+    scaleUp:
+      {{- if .Values.worker.autoscaling.behavior.scaleUp.stabilizationWindowSeconds }}
+      stabilizationWindowSeconds: {{ .Values.worker.autoscaling.behavior.scaleUp.stabilizationWindowSeconds }}
+      {{- end }}
+      {{- if .Values.worker.autoscaling.behavior.scaleUp.selectPolicy }}
+      selectPolicy: {{ .Values.worker.autoscaling.behavior.scaleUp.selectPolicy | quote }}
+      {{- end }}
+      {{- if .Values.worker.autoscaling.behavior.scaleUp.policies }}
+      policies:
+        {{- range .Values.worker.autoscaling.behavior.scaleUp.policies }}
+        - type: {{ .type | quote }}
+          value: {{ .value }}
+          periodSeconds: {{ .periodSeconds }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.worker.autoscaling.behavior.scaleDown }}
+    scaleDown:
+      {{- if .Values.worker.autoscaling.behavior.scaleDown.stabilizationWindowSeconds }}
+      stabilizationWindowSeconds: {{ .Values.worker.autoscaling.behavior.scaleDown.stabilizationWindowSeconds }}
+      {{- end }}
+      {{- if .Values.worker.autoscaling.behavior.scaleDown.selectPolicy }}
+      selectPolicy: {{ .Values.worker.autoscaling.behavior.scaleDown.selectPolicy | quote }}
+      {{- end }}
+      {{- if .Values.worker.autoscaling.behavior.scaleDown.policies }}
+      policies:
+        {{- range .Values.worker.autoscaling.behavior.scaleDown.policies }}
+        - type: {{ .type | quote }}
+          value: {{ .value }}
+          periodSeconds: {{ .periodSeconds }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  metrics:
+  {{- if .Values.worker.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.worker.autoscaling.targetCPUUtilizationPercentage }}
+  {{- end }}
+  {{- if .Values.worker.autoscaling.targetMemoryUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.worker.autoscaling.targetMemoryUtilizationPercentage }}
+  {{- end }}
+{{- end }}

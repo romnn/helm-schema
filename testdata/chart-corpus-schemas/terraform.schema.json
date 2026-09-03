@@ -1,0 +1,1574 @@
+{
+  "$defs": {
+    "1": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "not": {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "enabled": {
+                        "pattern": "^-$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "syncWorkspace": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "syncWorkspace"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "syncWorkspace": {
+                  "properties": {
+                    "enabled": {
+                      "pattern": "^-$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "syncWorkspace"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "2": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "not": {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "enabled": {
+                        "pattern": "^-$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "syncWorkspace": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "syncWorkspace"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "properties": {
+            "syncWorkspace": {
+              "properties": {
+                "enabled": {
+                  "pattern": "^-$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "syncWorkspace": {
+                  "properties": {
+                    "enabled": {
+                      "pattern": "^-$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "syncWorkspace"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "3": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "allOf": [
+          {
+            "not": {
+              "pattern": "[ \\t]#"
+            }
+          },
+          {
+            "not": {
+              "pattern": ":[ \\t]|:$"
+            }
+          },
+          {
+            "not": {
+              "pattern": "[\\r\\n]"
+            }
+          }
+        ],
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "4": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "5": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "6": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "7": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "8": {
+      "properties": {
+        "secretName": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "9": {
+      "properties": {
+        "CACerts": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "CACerts"
+      ],
+      "type": "object"
+    },
+    "a": {
+      "properties": {
+        "secretName": {
+          "enum": [
+            ""
+          ]
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "b": {
+      "properties": {
+        "secretName": {}
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "c": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "d": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "e": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "f": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "providerSchema1": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            }
+          ],
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "string"
+        },
+        {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ]
+    },
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "$ref": "#/$defs/1"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "additionalProperties": {},
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "properties": {
+                      "secretName": {
+                        "$ref": "#/$defs/providerSchema1"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "additionalProperties": {},
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "properties": {
+                      "secretKey": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "sensitiveVariables": {
+                    "additionalProperties": {},
+                    "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
+                    "properties": {
+                      "secretName": {
+                        "$ref": "#/$defs/providerSchema1"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/3"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/f"
+                      },
+                      {
+                        "$ref": "#/$defs/c"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/d"
+                      },
+                      {
+                        "$ref": "#/$defs/e"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
+                      }
+                    ],
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "additionalProperties": {},
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "properties": {
+                      "secretKey": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/4"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/6"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/7"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(|~|null|Null|NULL)$"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/5"
+                              }
+                            ],
+                            "description": "key is the key to project.",
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/3"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "sensitiveVariables": {
+                    "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "required": [
+                      "secretKey"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "sensitiveVariables": {
+                        "$ref": "#/$defs/8"
+                      }
+                    },
+                    "required": [
+                      "sensitiveVariables"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "sensitiveVariables": {
+                        "$ref": "#/$defs/a"
+                      }
+                    },
+                    "required": [
+                      "sensitiveVariables"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "syncWorkspace": {
+                      "properties": {
+                        "sensitiveVariables": {
+                          "$ref": "#/$defs/b"
+                        }
+                      },
+                      "required": [
+                        "sensitiveVariables"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "syncWorkspace"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "syncWorkspace": {
+                "properties": {
+                  "terraformVersion": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "terraformVersion"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "syncWorkspace"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "syncWorkspace": {
+            "additionalProperties": {},
+            "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+            "properties": {
+              "terraformVersion": {
+                "$ref": "#/$defs/helm-double-quoted-safe",
+                "description": "terraformVersion describes the version of Terraform to use for each workspace.\nIf this is not set then it will default to the latest version of Terraform\ncompiled with the operator."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "terraformRC": {
+                        "properties": {
+                          "secretKey": {
+                            "enum": [
+                              ""
+                            ]
+                          }
+                        },
+                        "required": [
+                          "secretKey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "terraformRC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "syncWorkspace": {
+                      "properties": {
+                        "terraformRC": {
+                          "properties": {
+                            "secretKey": {}
+                          },
+                          "required": [
+                            "secretKey"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "terraformRC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "syncWorkspace"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "terraformRC": {
+                        "properties": {
+                          "secretKey": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "secretKey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "terraformRC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "sensitiveVariables": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "sensitiveVariables"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "syncWorkspace": {
+                      "properties": {
+                        "sensitiveVariables": {}
+                      },
+                      "required": [
+                        "sensitiveVariables"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "syncWorkspace"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "description": "global holds values that affect multiple components of the chart.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "terraformRC": {
+                        "$ref": "#/$defs/a"
+                      }
+                    },
+                    "required": [
+                      "terraformRC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "terraformRC": {
+                        "$ref": "#/$defs/8"
+                      }
+                    },
+                    "required": [
+                      "terraformRC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "syncWorkspace": {
+                      "properties": {
+                        "terraformRC": {
+                          "$ref": "#/$defs/b"
+                        }
+                      },
+                      "required": [
+                        "terraformRC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "syncWorkspace"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "nameOverride": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/9"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "CACerts": {
+            "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "syncWorkspace": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "syncWorkspace"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "syncWorkspace": {}
+              },
+              "required": [
+                "syncWorkspace"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "syncWorkspace": {
+                "properties": {
+                  "insecure": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "insecure"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "syncWorkspace"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "syncWorkspace": {
+            "additionalProperties": {},
+            "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+            "properties": {
+              "insecure": {
+                "$ref": "#/$defs/helm-double-quoted-safe",
+                "description": "If true it disables certificate validation for all outbound HTTPS connections\nthe operator has to do. It can be used when connecting to TFE instances with\nself-signed certificates"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "terraformRC": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "terraformRC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "syncWorkspace": {
+                      "properties": {
+                        "terraformRC": {}
+                      },
+                      "required": [
+                        "terraformRC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "syncWorkspace"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/9"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "CACerts": {}
+                  },
+                  "required": [
+                    "CACerts"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "CACerts": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "CACerts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "CACerts": {
+                    "enum": [
+                      ""
+                    ]
+                  }
+                },
+                "required": [
+                  "CACerts"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/2"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "properties": {
+    "CACerts": {
+      "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem"
+    },
+    "fullnameOverride": {},
+    "global": {
+      "additionalProperties": {},
+      "description": "global holds values that affect multiple components of the chart.",
+      "properties": {
+        "enabled": {
+          "description": "enabled is the master enabled/disabled setting.\nIf true, all Terraform Kubernetes integrations will be enabled.\nIf false, no components will be installed by default and per-component\nopt-in is required, such as by setting `syncWorkspace.enabled` to true."
+        },
+        "imageK8S": {
+          "description": "imageK8S is the name (and tag) of the terraform-k8s Docker image that\nis used for functionality such as workspace sync. This can be overridden\nper component."
+        }
+      }
+    },
+    "nameOverride": {},
+    "syncWorkspace": {
+      "additionalProperties": {},
+      "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+      "properties": {
+        "enabled": {
+          "description": "True if you want to enable the workspace sync. Set to \"-\" to inherit from\nglobal.enabled."
+        },
+        "image": {},
+        "imagePullPolicy": {},
+        "insecure": {
+          "description": "If true it disables certificate validation for all outbound HTTPS connections\nthe operator has to do. It can be used when connecting to TFE instances with\nself-signed certificates"
+        },
+        "k8WatchNamespace": {
+          "description": "k8WatchNamespace is the Kubernetes namespace to watch for workspace\nchanges and sync to Terraform Cloud. If this is not set then it will default\nto the release namespace"
+        },
+        "logLevel": {},
+        "sensitiveVariables": {
+          "additionalProperties": {},
+          "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
+          "properties": {
+            "secretName": {}
+          }
+        },
+        "terraformRC": {
+          "additionalProperties": {},
+          "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+          "properties": {
+            "secretKey": {},
+            "secretName": {}
+          }
+        },
+        "terraformVersion": {
+          "description": "terraformVersion describes the version of Terraform to use for each workspace.\nIf this is not set then it will default to the latest version of Terraform\ncompiled with the operator."
+        },
+        "tfeAddress": {
+          "description": "tfeAddress denotes the address in the form of https://tfe.local for\na Terraform Enterprise instance. If this is not set then it will default\nto Terraform Cloud (https://app.terraform.io)"
+        }
+      },
+      "type": "object"
+    },
+    "tests": {
+      "description": "Control whether a test Pod manifest is generated when running helm template.\nWhen using helm install, the test Pod is not submitted to the cluster so this\nis only useful when running helm template."
+    }
+  },
+  "type": "object"
+}

@@ -1,0 +1,36 @@
+{{- if eq "true" (include "okteto.kubeAPIServerProxy.enabled" .) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+  labels:
+    app.kubernetes.io/component: "kube-apiserver-proxy"
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{- if and .Values.kubeAPIServerProxy.tls.enabled (.Capabilities.APIVersions.Has "projectcontour.io/v1") }}
+  annotations:
+    # Contour-only: BackendTLSPolicy is not enough; Contour also needs this
+    # annotation to switch the upstream cluster to TLS.
+    projectcontour.io/upstream-protocol.tls: "https"
+  {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      name: http
+      protocol: TCP
+      targetPort: http
+    {{- if .Values.kubeAPIServerProxy.tls.enabled }}
+    - port: 8443
+      name: https
+      protocol: TCP
+      targetPort: https
+    {{- end }}
+  selector:
+    app.kubernetes.io/name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+{{- end }}

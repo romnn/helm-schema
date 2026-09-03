@@ -1,0 +1,135 @@
+{{- if .Values.zabbixWeb.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "zabbix.fullname" . }}-zabbix-web
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+    {{- if .Values.zabbixWeb.extraDeploymentLabels }}
+    {{- toYaml .Values.zabbixWeb.extraDeploymentLabels | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixWeb.extraDeploymentAnnotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.zabbixWeb.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "zabbix.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      annotations:
+        {{- range $key,$value := .Values.zabbixWeb.extraPodAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      labels:
+        {{- include "zabbix.labels" . | nindent 8 }}
+        app.kubernetes.io/component: web
+        {{- if .Values.zabbixWeb.extraPodLabels }}
+        {{- toYaml .Values.zabbixWeb.extraPodLabels | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ template "zabbix.serviceAccountName" . }}
+      {{- with .Values.zabbixWeb.extraPodSpecs }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.zabbixWeb.extraInitContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.zabbixWeb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if gt (len .Values.affinity) 0 }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- else if .Values.zabbixWeb.podAntiAffinity }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/instance: {{ .Release.Name }}-zabbix-web
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: zabbix-web
+        resources:
+          {{- toYaml .Values.zabbixWeb.resources | nindent 10 }}
+        securityContext:
+          {{- toYaml .Values.zabbixWeb.securityContext | nindent 10 }}
+        {{- if .Values.zabbixWeb.image.tag }}
+        image: "{{ .Values.zabbixWeb.image.repository }}:{{ .Values.zabbixWeb.image.tag }}"
+        {{- else }}
+        image: "{{ .Values.zabbixWeb.image.repository }}:{{ .Values.zabbixImageTag }}"
+        {{- end }}
+        imagePullPolicy: {{ .Values.zabbixWeb.image.pullPolicy }}
+        env:
+          {{- include "zabbix.postgresAccess.variables" (list $ . "zabbix") | nindent 10 }}
+          {{- with .Values.zabbixWeb.extraEnv }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+        ports:
+          - name: zabbix-web
+            containerPort: {{ .Values.zabbixWeb.port }}
+            protocol: TCP
+        volumeMounts:
+        {{- if .Values.zabbixWeb.samlCertsSecretName }}
+          - name: zabbix-web-samlcerts
+            mountPath: /etc/zabbix/web/certs
+        {{- end }}
+        {{- if .Values.zabbixWeb.tlsCertsSecretName }}
+          - name: zabbix-web-tlscerts
+            mountPath: /etc/ssl/nginx
+        {{- end }}        
+        {{- with .Values.zabbixWeb.extraVolumeMounts }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.zabbixWeb.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.zabbixWeb.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.zabbixWeb.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.zabbixWeb.extraContainers }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      imagePullSecrets:
+      {{- range .Values.zabbixWeb.image.pullSecrets }}
+        - name: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      {{- if .Values.zabbixWeb.samlCertsSecretName }}
+        - name: zabbix-web-samlcerts
+          secret:
+            secretName: {{ .Values.zabbixWeb.samlCertsSecretName }}
+      {{- end }}
+      {{- if .Values.zabbixWeb.tlsCertsSecretName }}
+        - name: zabbix-web-tlscerts
+          secret:
+            secretName: {{ .Values.zabbixWeb.tlsCertsSecretName }}
+      {{- end }}
+      {{- with .Values.zabbixWeb.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

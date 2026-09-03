@@ -1,0 +1,394 @@
+{{- if .Values.zabbixServer.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-zabbix-server
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+  {{- if .Values.zabbixServer.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixServer.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.zabbixServer.service.type }}
+  {{- if and .Values.zabbixServer.service.externalTrafficPolicy (or (eq .Values.zabbixServer.service.type "NodePort") (eq .Values.zabbixServer.service.type "LoadBalancer" )) }}
+  externalTrafficPolicy: {{ .Values.zabbixServer.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and .Values.zabbixServer.service.externalIPs (eq .Values.zabbixServer.service.type "LoadBalancer") }}
+  externalIPs: {{ .Values.zabbixServer.service.externalIPs | toYaml | nindent 6 }}
+  {{- end }}
+  {{- if and .Values.zabbixServer.service.loadBalancerIP (eq .Values.zabbixServer.service.type "LoadBalancer") }}
+  loadBalancerIP: {{ .Values.zabbixServer.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and .Values.zabbixServer.service.clusterIP (eq .Values.zabbixServer.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.zabbixServer.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.zabbixServer.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.zabbixServer.service.sessionAffinity }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixServer.service.type "LoadBalancer") (not (empty .Values.zabbixServer.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{- toYaml .Values.zabbixServer.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixServer.service.type "LoadBalancer") .Values.zabbixServer.service.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.zabbixServer.service.loadBalancerClass }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.zabbixServer.service.port }}
+      name: zabbix-server
+      targetPort: 10051
+      protocol: TCP
+      {{- if and (or (eq .Values.zabbixServer.service.type "NodePort") (eq .Values.zabbixServer.service.type "LoadBalancer" )) (not (empty .Values.zabbixServer.service.nodePort)) }}
+      nodePort: {{ .Values.zabbixServer.service.nodePort }}
+      {{- end }}
+    - port: 10052
+      name: zabbix-jmx
+      targetPort: 10052
+      protocol: TCP
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+    {{- if .Values.zabbixServer.zabbixServerHA.enabled }}
+    {{ .Values.zabbixServer.zabbixServerHA.haLabelsSidecar.labelName }}: "active"
+    {{- end }}
+{{- end }}
+
+
+{{- if and .Values.zabbixAgent.enabled .Values.zabbixAgent.runAsDaemonSet }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-zabbix-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+  {{- if .Values.zabbixAgent.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixAgent.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.zabbixAgent.service.type }}
+  {{- if and .Values.zabbixAgent.service.externalTrafficPolicy (or (eq .Values.zabbixAgent.service.type "NodePort") (eq .Values.zabbixAgent.service.type "LoadBalancer" )) }}
+  externalTrafficPolicy: {{ .Values.zabbixAgent.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and .Values.zabbixAgent.service.externalIPs (eq .Values.zabbixAgent.service.type "LoadBalancer") }}
+  externalIPs: {{ .Values.zabbixAgent.service.externalIPs | toYaml | nindent 6 }}
+  {{- end }}
+  {{- if and .Values.zabbixAgent.service.loadBalancerIP (eq .Values.zabbixAgent.service.type "LoadBalancer") }}
+  loadBalancerIP: {{ .Values.zabbixAgent.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and .Values.zabbixAgent.service.clusterIP (eq .Values.zabbixAgent.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.zabbixAgent.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.zabbixAgent.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.zabbixAgent.service.sessionAffinity }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixAgent.service.type "LoadBalancer") (not (empty .Values.zabbixAgent.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{- toYaml .Values.zabbixAgent.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixAgent.service.type "LoadBalancer") .Values.zabbixAgent.service.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.zabbixAgent.service.loadBalancerClass }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.zabbixAgent.service.port }}
+      name: zabbix-agent
+      targetPort: 10050
+      protocol: TCP
+      {{- if and (or (eq .Values.zabbixAgent.service.type "NodePort") (eq .Values.zabbixAgent.service.type "LoadBalancer" )) (not (empty .Values.zabbixAgent.service.nodePort)) }}
+      nodePort: {{ .Values.zabbixAgent.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+{{- end }}
+
+
+{{- if .Values.zabbixWeb.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-zabbix-web
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+  {{- if .Values.zabbixWeb.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixWeb.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.zabbixWeb.service.type }}
+  {{- if and .Values.zabbixWeb.service.externalTrafficPolicy (or (eq .Values.zabbixWeb.service.type "NodePort") (eq .Values.zabbixWeb.service.type "LoadBalancer" )) }}
+  externalTrafficPolicy: {{ .Values.zabbixWeb.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and .Values.zabbixWeb.service.externalIPs (eq .Values.zabbixWeb.service.type "LoadBalancer") }}
+  externalIPs: {{ .Values.zabbixWeb.service.externalIPs | toYaml | nindent 6 }}
+  {{- end }}
+  {{- if and .Values.zabbixWeb.service.loadBalancerIP (eq .Values.zabbixWeb.service.type "LoadBalancer") }}
+  loadBalancerIP: {{ .Values.zabbixWeb.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and .Values.zabbixWeb.service.clusterIP (eq .Values.zabbixWeb.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.zabbixWeb.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.zabbixWeb.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.zabbixWeb.service.sessionAffinity }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixWeb.service.type "LoadBalancer") (not (empty .Values.zabbixWeb.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{- toYaml .Values.zabbixWeb.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixWeb.service.type "LoadBalancer") .Values.zabbixWeb.service.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.zabbixWeb.service.loadBalancerClass }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.zabbixWeb.service.port }}
+      name: zabbix-web
+      targetPort: {{ .Values.zabbixWeb.port }}
+      protocol: TCP
+      {{- if and (or (eq .Values.zabbixWeb.service.type "NodePort") (eq .Values.zabbixWeb.service.type "LoadBalancer" )) (not (empty .Values.zabbixWeb.service.nodePort)) }}
+      nodePort: {{ .Values.zabbixWeb.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+{{- end }}
+
+
+{{- if .Values.zabbixWebService.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-zabbix-webservice
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webservice
+  {{- if .Values.zabbixWebService.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixWebService.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.zabbixWebService.service.type }}
+  {{- if and .Values.zabbixWebService.service.clusterIP (eq .Values.zabbixWebService.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.zabbixWebService.service.clusterIP }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.zabbixWebService.service.port }}
+      name: webservice
+      targetPort: 10053
+      protocol: TCP
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: webservice
+{{- end }}
+
+
+{{- if .Values.zabbixProxy.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-zabbix-proxy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+  {{- if .Values.zabbixProxy.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixProxy.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.zabbixProxy.service.type }}
+  {{- if and .Values.zabbixProxy.service.externalTrafficPolicy (or (eq .Values.zabbixProxy.service.type "NodePort") (eq .Values.zabbixProxy.service.type "LoadBalancer" )) }}
+  externalTrafficPolicy: {{ .Values.zabbixProxy.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and .Values.zabbixProxy.service.externalIPs (eq .Values.zabbixProxy.service.type "LoadBalancer") }}
+  externalIPs: {{ .Values.zabbixProxy.service.externalIPs | toYaml | nindent 6 }}
+  {{- end }}
+  {{- if and .Values.zabbixProxy.service.loadBalancerIP (eq .Values.zabbixProxy.service.type "LoadBalancer") }}
+  loadBalancerIP: {{ .Values.zabbixProxy.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and .Values.zabbixProxy.service.clusterIP (eq .Values.zabbixProxy.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.zabbixProxy.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.zabbixProxy.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.zabbixProxy.service.sessionAffinity }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixProxy.service.type "LoadBalancer") (not (empty .Values.zabbixProxy.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{- toYaml .Values.zabbixProxy.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixProxy.service.type "LoadBalancer") .Values.zabbixProxy.service.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.zabbixProxy.service.loadBalancerClass }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.zabbixProxy.service.port }}
+      name: zabbix-proxy
+      targetPort: 10051
+      protocol: TCP
+      {{- if and (or (eq .Values.zabbixProxy.service.type "NodePort") (eq .Values.zabbixProxy.service.type "LoadBalancer" )) (not (empty .Values.zabbixProxy.service.nodePort)) }}
+      nodePort: {{ .Values.zabbixProxy.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+{{- end }}
+
+
+{{- if .Values.postgresql.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-postgresql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+  {{- if .Values.postgresql.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.postgresql.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.postgresql.service.type }}
+  {{- if and .Values.postgresql.service.clusterIP (eq .Values.postgresql.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.postgresql.service.clusterIP }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.postgresql.service.port }}
+      name: db
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+{{- end }}
+
+
+{{- if .Values.zabbixJavaGateway.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-java-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: java-gateway
+  {{- if .Values.zabbixJavaGateway.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixJavaGateway.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.zabbixJavaGateway.service.type }}
+  {{- if and .Values.zabbixJavaGateway.service.externalTrafficPolicy (or (eq .Values.zabbixJavaGateway.service.type "NodePort") (eq .Values.zabbixJavaGateway.service.type "LoadBalancer" )) }}
+  externalTrafficPolicy: {{ .Values.zabbixJavaGateway.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and .Values.zabbixJavaGateway.service.externalIPs (eq .Values.zabbixJavaGateway.service.type "LoadBalancer") }}
+  externalIPs: {{ .Values.zabbixJavaGateway.service.externalIPs | toYaml | nindent 6 }}
+  {{- end }}
+  {{- if and .Values.zabbixJavaGateway.service.loadBalancerIP (eq .Values.zabbixJavaGateway.service.type "LoadBalancer") }}
+  loadBalancerIP: {{ .Values.zabbixJavaGateway.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and .Values.zabbixJavaGateway.service.clusterIP (eq .Values.zabbixJavaGateway.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.zabbixJavaGateway.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.zabbixJavaGateway.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.zabbixJavaGateway.service.sessionAffinity }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixJavaGateway.service.type "LoadBalancer") (not (empty .Values.zabbixJavaGateway.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{- toYaml .Values.zabbixJavaGateway.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixJavaGateway.service.type "LoadBalancer") .Values.zabbixJavaGateway.service.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.zabbixJavaGateway.service.loadBalancerClass }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.zabbixJavaGateway.service.port }}
+      name: zabbix-java-gw
+      targetPort: 10052
+      protocol: TCP
+      {{- if ( and (eq .Values.zabbixJavaGateway.service.type "NodePort" ) (not (empty .Values.zabbixJavaGateway.service.nodePort)) ) }}
+      nodePort: {{ .Values.zabbixJavaGateway.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: java-gateway
+{{- end }}
+
+
+{{- if and .Values.zabbixBrowserMonitoring.enabled .Values.zabbixBrowserMonitoring.webdriver.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "zabbix.fullname" . }}-{{ .Values.zabbixBrowserMonitoring.webdriver.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webdriver
+  {{- if .Values.zabbixBrowserMonitoring.service.annotations }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixBrowserMonitoring.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.zabbixBrowserMonitoring.service.type }}
+  {{- if and .Values.zabbixBrowserMonitoring.service.externalTrafficPolicy (or (eq .Values.zabbixBrowserMonitoring.service.type "NodePort") (eq .Values.zabbixBrowserMonitoring.service.type "LoadBalancer" )) }}
+  externalTrafficPolicy: {{ .Values.zabbixBrowserMonitoring.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and .Values.zabbixBrowserMonitoring.service.externalIPs (eq .Values.zabbixBrowserMonitoring.service.type "LoadBalancer") }}
+  externalIPs: {{ .Values.zabbixBrowserMonitoring.service.externalIPs | toYaml | nindent 6 }}
+  {{- end }}
+  {{- if and .Values.zabbixBrowserMonitoring.service.loadBalancerIP (eq .Values.zabbixBrowserMonitoring.service.type "LoadBalancer") }}
+  loadBalancerIP: {{ .Values.zabbixBrowserMonitoring.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and .Values.zabbixBrowserMonitoring.service.clusterIP (eq .Values.zabbixBrowserMonitoring.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.zabbixBrowserMonitoring.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.zabbixBrowserMonitoring.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.zabbixBrowserMonitoring.service.sessionAffinity }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixBrowserMonitoring.service.type "LoadBalancer") (not (empty .Values.zabbixBrowserMonitoring.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{- toYaml .Values.zabbixBrowserMonitoring.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if and (eq .Values.zabbixBrowserMonitoring.service.type "LoadBalancer") .Values.zabbixBrowserMonitoring.service.loadBalancerClass }}
+  loadBalancerClass: {{ .Values.zabbixBrowserMonitoring.service.loadBalancerClass }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.zabbixBrowserMonitoring.service.port1 }}
+      name: zabbix-webdriver1
+      targetPort: {{ .Values.zabbixBrowserMonitoring.webdriver.port1 }}
+      protocol: TCP
+      {{- if and (or (eq .Values.zabbixBrowserMonitoring.service.type "NodePort") (eq .Values.zabbixBrowserMonitoring.service.type "LoadBalancer" )) (not (empty .Values.zabbixBrowserMonitoring.service.nodePort2)) }}
+      nodePort: {{ .Values.zabbixBrowserMonitoring.service.nodePort1 }}
+      {{- end }}
+    - port: {{ .Values.zabbixBrowserMonitoring.service.port2 }}
+      name: zabbix-webdriver2
+      targetPort: {{ .Values.zabbixBrowserMonitoring.webdriver.port2 }}
+      protocol: TCP
+      {{- if and (or (eq .Values.zabbixBrowserMonitoring.service.type "NodePort") (eq .Values.zabbixBrowserMonitoring.service.type "LoadBalancer" )) (not (empty .Values.zabbixBrowserMonitoring.service.nodePort2)) }}
+      nodePort: {{ .Values.zabbixBrowserMonitoring.service.nodePort2 }}
+      {{- end }}
+  selector:
+    {{- include "zabbix.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: webdriver
+{{- end }}

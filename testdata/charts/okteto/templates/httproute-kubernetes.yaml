@@ -1,0 +1,39 @@
+{{- if eq "true" (include "okteto.kubeAPIServerProxy.enabled" .) }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "okteto.fullname" . }}-kubernetes
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "okteto.fullname" . }}-kube-apiserver-proxy
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/component: "kube-apiserver-proxy"
+    {{- with .Values.endpoints.okteto.gatewayAPI.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.endpoints.okteto.gatewayAPI.annotations }}
+  annotations: {{ . | toJson }}
+  {{- end }}
+spec:
+  parentRefs: {{ include "okteto.controlplane.gateway.parentRefs" . }}
+  hostnames:
+    - {{ include "okteto.kubeAPIServerProxy.hostname" . | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      # kubectl watch / logs -f / exec / port-forward are long-lived. Disable the
+      # Gateway route request timeout (Envoy default 15s) so non-upgrade streams
+      # (watch, logs -f) aren't severed. Upgrade-based streams (exec, port-forward)
+      # are already exempt via this route's BackendTrafficPolicy httpUpgrade, and
+      # the proxy's own Envoy sets request_timeout:0s / stream_idle_timeout:1h.
+      timeouts:
+        request: "0s"
+      backendRefs:
+        - name: {{ include "okteto.fullname" . }}-kube-apiserver-proxy
+          port: {{ ternary 8443 8080 .Values.kubeAPIServerProxy.tls.enabled }}
+{{- end }}

@@ -1,0 +1,54 @@
+{{- if eq "true" (include "okteto.controlplane.gateway.enabled" .) -}}
+{{- $apiPaths := list "/auth" "/healthz" "/graphql" "/deploy" "/sse" "/streams" "/auth/kubetoken" "/clusterinfo" "/api" -}}
+{{- if .Values.insights.enabled -}}{{- $apiPaths = append $apiPaths "/metrics" -}}{{- end -}}
+{{/*
+  Long-lived server-streaming control-plane APIs. Their Gateway route request
+  timeout must be disabled: Envoy Gateway defaults it to 15s (a max-duration cap
+  that traffic does NOT reset), which severs SSE / stream responses mid-flight
+  despite the backend's 10s keepalive ping. ingress-nginx has no equivalent
+  max-request timeout (idle-based only), so "0s" restores parity. The other API
+  paths keep the default timeout.
+*/}}
+{{- $streamingPaths := list "/sse" "/streams" -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "okteto.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "okteto.name" . }}
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/component: "api"
+    {{- with .Values.endpoints.okteto.gatewayAPI.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations: {{ .Values.endpoints.okteto.gatewayAPI.annotations | toJson }}
+spec:
+  parentRefs: {{ include "okteto.controlplane.gateway.parentRefs" . }}
+  hostnames:
+    - {{ (include "okteto.public" .) | quote }}
+  rules:
+    {{- range $apiPaths }}
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ . }}
+      {{- if has . $streamingPaths }}
+      timeouts:
+        request: "0s"  # long-lived stream: disable Envoy's 15s route timeout (nginx parity)
+      {{- end }}
+      backendRefs:
+        - name: {{ (include "okteto.fullname" $) }}-api
+          port: {{ $.Values.api.port }}
+    {{- end }}
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ (include "okteto.fullname" .) }}-frontend
+          port: {{ .Values.frontend.port }}
+{{- end }}

@@ -1,0 +1,330 @@
+---
+# Docker image repository, tag, policy and secrets for Kubernetes to pull it.
+image:
+  repo: ghcr.io/imgproxy/imgproxy
+  tag: v3.30.0
+  pullPolicy: IfNotPresent
+  # create new image-pull-secret if enabled: true
+  pullSecrets:
+    enabled: false
+    registry: ~
+    username: ~
+    password: ~
+  # list of existing image-pull-secrets
+  addPullSecrets: []
+
+# Configure K8s resources
+resources:
+  # Settings applied to every single resource of the chart.
+  common:
+    labels: {}
+
+  deployment:
+    # https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority
+    priority:
+      # The name of the priority class to be used in both pod.PriorityClassName
+      # and the PriorityClass (when a level is above 0).
+      # 
+      # Usage scenarios:
+      # 1. level > 0: A new PriorityClass will be created with this name and assigned to pods
+      # 2. level = 0 + name provided: Use an existing PriorityClass with this name (no new PriorityClass created)
+      # 3. level = 0 + no name: No PriorityClass will be used
+      # 
+      # You can use system names like `set-cluster-critical` and `set-node-critical` as well,
+      # in this case the class won't be created and level is ignored.
+      name: ~
+
+      # If the level is above 0, then a correspoding PriorityClass will be created
+      # and assigned to the pod by the `PriorityClassName`.
+      # If level is 0 but name is provided, an existing PriorityClass with that name will be used.
+      level: 0
+
+      # This setting is supported in K8s v1.19+, otherwise it will be ignored
+      # https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#non-preempting-priority-class
+      preempting: true
+
+    annotations: {}
+
+    # How many instances of imgproxy you desire to spin up.
+    # If `maxCount > minCount` then autoscaling is configured using
+    # the `stabilizationInterval` and `cpuUtilizationAverage` settings.
+    # https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2beta2/#HorizontalPodAutoscalerSpec:
+    #
+    # This part can be skipped, in that case 1 replica will be used.
+    replicas:
+      # The default number of replicas to start from (default 1)
+      default: 1
+
+      # The minimum number of replicas (default to `default`).
+      minCount: 1
+
+      # The maximum number of replicas (default to `minCount`).
+      # Values less then `minCount` are ignored!
+      maxCount: 1
+
+      # The number of pods to be added or removed (1 by default).
+      #
+      # The setting is used if `minCount < maxCount` only.
+      stepCount: 1
+
+      # The period (1 - 1800 seconds) during which the step is applied
+      # (60 seconds by default).
+      #
+      # For example, default settings (step: 1, period: 60) means
+      # that the scaling rate is no more than 1 pod a minute.
+      #
+      # The setting is used if `minCount < maxCount` only.
+      stepSeconds: 60
+
+      # The number of seconds for which past recommendations
+      # should be considered while scaling up or scaling down (0 - 3600).
+      # This is used as the default for both directions unless overridden by 
+      # scaleUpBehavior.stabilizationInterval or scaleDownBehavior.stabilizationInterval.
+      #
+      # The setting is used if `minCount < maxCount` only (default 300 seconds).
+      stabilizationInterval: 300
+
+      # The average % of CPU utilization by imgproxy pod.
+      # The value is relative to the requested CPU utilization
+      # (resources.deployment.resources.requests.cpu).
+      #
+      # The setting MUST be set if `minCount < maxCount` only.
+      cpuUtilization: 80
+
+      # Optional: Independent scale-up behavior configuration.
+      # When specified, these settings override the shared settings above for scaling UP only.
+      # If not specified, the shared settings (stepCount, stepSeconds, stabilizationInterval) are used.
+      #
+      # All fields are optional - you can override only specific settings.
+      scaleUpBehavior:
+        # stepCount: 6                    # Number of pods to add per scaling step (overrides shared stepCount)
+        # stepSeconds: 30                 # Period between scaling steps in seconds (overrides shared stepSeconds)
+        # stabilizationInterval: 60       # Stabilization window in seconds (overrides shared stabilizationInterval)
+        # selectPolicy: Max               # Policy for selecting which recommendation to use (Min, Max, Disabled)
+
+      # Optional: Independent scale-down behavior configuration.
+      # When specified, these settings override the shared settings above for scaling DOWN only.
+      # If not specified, the shared settings (stepCount, stepSeconds, stabilizationInterval) are used.
+      #
+      # All fields are optional - you can override only specific settings.
+      scaleDownBehavior:
+        # stepCount: 1                    # Number of pods to remove per scaling step (overrides shared stepCount)
+        # stepSeconds: 300                # Period between scaling steps in seconds (overrides shared stepSeconds)  
+        # stabilizationInterval: 600      # Stabilization window in seconds (overrides shared stabilizationInterval)
+        # selectPolicy: Min               # Policy for selecting which recommendation to use (Min, Max, Disabled)
+
+    # See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+
+    # A node selector label.
+    nodeSelector: {}
+
+    # Node and inter-pod affinity configuration
+    affinity: {}
+
+    # Toleration for K8s taints
+    tolerations: []
+
+    # topologySpreadConstraints https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
+    topologySpreadConstraints: []
+    # - maxSkew: 1
+    #   topologyKey: topology.kubernetes.io/zone
+    #   whenUnsatisfiable: DoNotSchedule
+
+    # Set kubernetes specific resource limits.
+    # We claim `cpu: 1` for both limits and requests by default.
+    # To skip these defaults, set `cpu: ~` explicitly.
+    resources: {}
+    # limits:
+    #   cpu: 700m
+    #   memory: 700Mi
+    # requests:
+    #   cpu: 700m
+    #   memory: 700Mi
+
+    # Timeuouts and counters options for Readiness probe
+    readinessProbe:
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 5
+
+    # Timeuouts and counters options for Liveness probe
+    livenessProbe:
+      initialDelaySeconds: 50
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 5
+
+    # Lifecycle configuration
+    # Example:
+    #   postStart:
+    #     exec:
+    #       command: ["echo", "Hello from imgproxy"]
+    # Example:
+    #   preStop:
+    #     exec:
+    #       command: ["/bin/sleep", "30"]
+    lifecycle: {}
+
+    # The minimum number of seconds for which a newly created pod should be ready
+    # without any of its containers crashing, for it to be considered available.
+    # It is set to 0 by default.
+    minReadySeconds: ~
+
+    # A security context defines privilege and access control settings for the deployment pod.
+    # Check available settings in the documentation by link:
+    # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    securityContext:
+      {}
+      # allowPrivilegeEscalation: false
+      # runAsNonRoot: true
+    
+    # A container security context defines privilege and access control settings for the deployment container.
+    # Check available settings in the documentation by link:
+    # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    containerSecurityContext: {}
+      # capabilities:
+      #   drop:
+      #     - ALL
+      # readOnlyRootFilesystem: true
+      # allowPrivilegeEscalation: false
+      # runAsNonRoot: true
+
+    # A custom amount of time (in seconds) to terminate the app after pre-stop hook is called,
+    # or a TERM signal is received.
+    # It is set to `30` seconds by default.
+    terminationGracePeriodSeconds: ~
+
+  # List names of the custom secrets with env variables to be added
+  # from the external resources (like Vault, AWS etc.)
+  #
+  # You're up to generating those secrets in any way, either manually
+  # or via some CRD like https://github.com/external-secrets/kubernetes-external-secrets
+  # We won't make any suggestions about the content of the secrets,
+  # it will be added to the imgproxy pods as a plain lists of environment variables.
+  # These variables would overload those passed through the secret provided by the chart.
+  #
+  # Example:
+  #   externalSecrets:
+  #     - my_manual_secret
+  addSecrets: []
+
+  service:
+    annotations: {}
+    type: ClusterIP
+    loadBalancerIP: ~
+    externalTrafficPolicy: Cluster
+    port: 80
+    nodePort: ~
+    loadBalancerSourceRanges: ~
+    # - 192.168.1.1/24
+    # - 10.0.0.1/20
+
+  serviceAccount:
+    # The name of the EXISTING service account to be used.
+    # If the custom name is set we WON'T create the service account
+    # but presume that it already exists.
+    existingName: ~
+    # Add custom annotations to the Service Account
+    # in addition to those we already provided for AWS IAM role
+    # (see Values.authentication.aws).
+    # This setting is not used if the `existingName` is set because
+    # we won't generate the service account in that case.
+    annotations: {}
+    # Settings for authentication via AWS IAM role
+    # (both values should be present or absent at the same time)
+    aws:
+      # AWS account ID
+      accountId: ~
+      # The name of the IAM Role used for authentication
+      iamRoleName: ~
+
+  ingress:
+    enabled: false
+    # Add this suffix to ingress host paths. For example, use '*' for AWS load balancer
+    # This is a shortcut for the issue: https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/667
+    pathSuffix:
+    # the custom name for the ingress resource
+    className:
+    health:
+      whitelist: # 127.0.0.1/32
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: "true"
+    hosts: [~]
+    #   - example.com
+    #   - www.example.com
+    tls: []
+    #   - secretName: example-com-tls
+    #     hosts:
+    #       - example.com
+    #       - www.example.com
+
+    # Enable customization of pathType.
+    #
+    # This customization can be necessary because the default
+    # `ImplementationSpecific` path type with AWS ELB Controllers
+    # works as `Exact` type rather than `Prefix`.
+    #
+    # @see https://github.com/imgproxy/imgproxy-helm/issues/59
+    pathType: ImplementationSpecific
+
+  serviceMonitor:
+    enabled: true
+    honorLabels: true
+    interval: 0
+    namespace: ~
+    selector:
+      release: prometheus-operator
+    targetLabels:
+      - app
+      - release
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 0
+    maxUnavailable: 1
+
+  pod:
+    annotations: {}
+    labels: {}
+
+# Configure persistence layer
+persistence:
+  # If persistence is enabled
+  enabled: false
+
+  # PVC name
+  name: "imgproxy-data"
+
+  # If existing claim should be used
+  existingClaim: ~
+
+  # Volume mount path in imgproxy deployment
+  mountPath: "/images"
+
+  # Persistent volume sub path
+  subPath: ~
+
+  # Access modes for PV
+  accessModes:
+    - ReadWriteOnce
+
+  # Storage size
+  size: 10Gi
+
+  # Storage Class for PVC
+  storageClass: ~
+
+  # Create new PV from data source
+  dataSource: ~
+
+# Configure environment variables for the image proxy server
+# see https://docs.imgproxy.net/configuration
+env:
+  IMGPROXY_PROMETHEUS_BIND: ":8081"

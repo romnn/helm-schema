@@ -1,0 +1,46 @@
+{{- if .Values.buildkit.enabled }}
+{{- $buildkitName := include "okteto.buildkitname" . -}}
+{{ $replicaCount := .Values.buildkit.replicaCount -}}
+{{ $hpaMax := .Values.buildkit.hpa.max -}}
+{{ $max := max $replicaCount $hpaMax -}}
+{{ $resourceNames := list -}}
+{{- range $i := until ( int ( $max ) ) }}
+  {{ $resourceNames = append $resourceNames (printf "%s-%d" $buildkitName $i) -}}
+{{- end }}
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: okteto-buildkit-port-forward
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list", "get"]
+    resourceNames:
+    {{- range $resourceNames }}
+      - {{ . }}
+    {{- end }}
+  - apiGroups: [""]
+    resources: ["pods/portforward"]
+    verbs: ["get", "create"]
+    resourceNames:
+    {{- range $resourceNames }}
+      - {{ . }}
+    {{- end }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: okteto-buildkit-port-forward
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: okteto-buildkit-port-forward
+subjects:
+  - kind: ServiceAccount
+    name: okteto-buildkit-port-forward
+    namespace: {{ .Release.Namespace }}
+{{- end }}

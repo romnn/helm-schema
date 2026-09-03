@@ -1,0 +1,20 @@
+{{- if and .Values.useDeploy (not .Values.volume.existingClaim) }}
+{{- if and .Values.volume.enabled (not .Values.volume.existingClaim) }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "uptime-kuma.fullname" . }}-pvc
+  namespace: {{ include "uptime-kuma.namespace" . }}
+  labels:
+    {{- include "uptime-kuma.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.volume.accessMode | default "ReadWriteOnce" | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.volume.size | quote }}
+  {{- with .Values.volume.storageClassName }}
+  storageClassName: {{ . }}
+  {{- end }}
+{{- end -}}
+{{- end -}}

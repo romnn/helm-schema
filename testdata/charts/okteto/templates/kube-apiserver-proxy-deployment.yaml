@@ -1,0 +1,176 @@
+{{- if eq "true" (include "okteto.kubeAPIServerProxy.enabled" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+  labels:
+    app.kubernetes.io/component: "kube-apiserver-proxy"
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.kubeAPIServerProxy.labels }}
+{{ toYaml .Values.kubeAPIServerProxy.labels | indent 4 }}
+{{- end }}
+  {{- if or .Values.kubeAPIServerProxy.tls.enabled .Values.kubeAPIServerProxy.annotations }}
+  annotations:
+    {{- if .Values.kubeAPIServerProxy.tls.enabled }}
+    secret.reloader.stakater.com/reload: "{{ include "okteto.kubeAPIServerProxy.tlsSecret" . }}"
+    {{- end }}
+{{- if .Values.kubeAPIServerProxy.annotations }}
+{{ toYaml .Values.kubeAPIServerProxy.annotations | indent 4 }}
+{{- end }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.kubeAPIServerProxy.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+        app.kubernetes.io/component: "kube-apiserver-proxy"
+        app.kubernetes.io/part-of: "okteto"
+        app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
+{{- end }}
+{{- if .Values.kubeAPIServerProxy.podLabels }}
+{{ toYaml .Values.kubeAPIServerProxy.podLabels | indent 8 }}
+{{- end }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/kube-apiserver-proxy-configmap.yaml") . | sha256sum }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.kubeAPIServerProxy.podAnnotations }}
+{{ toYaml .Values.kubeAPIServerProxy.podAnnotations | indent 8 }}
+{{- end }}
+    spec:
+      serviceAccountName: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 32
+      priorityClassName: {{ .Values.kubeAPIServerProxy.priorityClassName | default .Values.globals.priorityClassName }}
+      affinity:
+        nodeAffinity:
+{{ include "okteto.oktetoAffinity" . | indent 10 }}
+        podAntiAffinity:
+          {{- if .Values.affinity.required }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+              topologyKey: kubernetes.io/hostname
+          {{- else }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+                topologyKey: kubernetes.io/hostname
+          {{- end }}
+      {{- include "okteto.tolerations" (dict "globalsTolerations" .Values.globals.tolerations.okteto "poolTolerations" .Values.tolerations.oktetoPool ) | nindent 6 }}
+      {{- include "okteto.nodeSelectors" (dict "poolTolerations" .Values.tolerations.oktetoPool "nodeSelectors" .Values.globals.nodeSelectors.okteto ) | nindent 6 }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+      volumes:
+        - name: envoy-conf
+          configMap:
+            name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+        - name: kube-ca
+          configMap:
+            name: kube-root-ca.crt
+        {{- if .Values.kubeAPIServerProxy.tls.enabled }}
+        - name: envoy-tls
+          secret:
+            secretName: {{ include "okteto.kubeAPIServerProxy.tlsSecret" . }}
+        {{- end }}
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: kube-apiserver-proxy
+          image: {{ include "okteto.image.kubeAPIServerProxy" . }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          args:
+            - -c
+            - /etc/envoy/envoy.yaml
+            - --log-level
+            - warn
+            - --disable-hot-restart
+            - --drain-time-s
+            - {{ .Values.kubeAPIServerProxy.drainTimeSeconds | quote }}
+            {{- with .Values.kubeAPIServerProxy.concurrency }}
+            - --concurrency
+            - {{ . | quote }}
+            {{- end }}
+          {{- if gt (int .Values.kubeAPIServerProxy.preStopSleepSeconds) 0 }}
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: {{ .Values.kubeAPIServerProxy.preStopSleepSeconds }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            {{- if .Values.kubeAPIServerProxy.tls.enabled }}
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+            {{- end }}
+          volumeMounts:
+            - name: envoy-conf
+              mountPath: /etc/envoy/envoy.yaml
+              subPath: envoy.yaml
+              readOnly: true
+            - name: kube-ca
+              mountPath: /etc/ssl/kube-ca
+              readOnly: true
+            {{- if .Values.kubeAPIServerProxy.tls.enabled }}
+            - name: envoy-tls
+              mountPath: /etc/envoy/tls
+              readOnly: true
+            {{- end }}
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /upstream-health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /ruok
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+{{ toYaml .Values.kubeAPIServerProxy.resources | indent 12 }}
+{{- end }}

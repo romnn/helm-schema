@@ -1,0 +1,264 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "weblate.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "weblate.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  strategy:
+    type: {{ .Values.updateStrategy }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "weblate.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ pick (include (print $.Template.BasePath "/configmap.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        checksum/secret: {{ pick (include (print $.Template.BasePath "/secret.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        checksum/secret-env: {{ .Values.extraSecretConfig | toYaml | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: {{ include "weblate.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ template "weblate.serviceAccountName" . }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext:
+            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: POSTGRES_DATABASE
+              value: {{ .Values.postgresql.auth.database | default (include "weblate.fullname" .) }}
+            - name: POSTGRES_HOST
+              value: "{{ .Values.postgresql.postgresqlHost | default (include "weblate.postgresql.fullname" .) }}"
+            - name: POSTGRES_PORT
+              value: {{ .Values.postgresql.service.ports.postgresql | quote }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  {{- if not .Values.existingSecret }}
+                  name: {{ include "weblate.fullname" . }}
+                  {{- else }}
+                  name: {{ .Values.existingSecret }}
+                  {{- end }}
+                  key: postgresql-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if and (not .Values.existingSecret) (not .Values.postgresql.auth.existingSecret) }}
+                  name: {{ include "weblate.fullname" . }}
+                  key: postgresql-password
+                  {{- else if and (not .Values.existingSecret) (.Values.postgresql.auth.existingSecret) }}
+                  name: {{ .Values.postgresql.auth.existingSecret }}
+                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+                  {{- else }}
+                  name: {{ .Values.existingSecret }}
+                  key: postgresql-password
+                  {{- end }}
+            - name: REDIS_HOST
+              value: "{{ .Values.redis.redisHost | default (include "weblate.redis.fullname" .) }}"
+            - name: REDIS_DB
+              value: "{{ .Values.redis.db }}"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if and (not .Values.existingSecret) (not .Values.redis.auth.existingSecret) }}
+                  name: {{ include "weblate.fullname" . }}
+                  key: redis-password
+                  {{- else if and (not .Values.existingSecret) (.Values.redis.auth.existingSecret) }}
+                  name: {{ .Values.redis.auth.existingSecret }}
+                  key: {{ .Values.redis.auth.existingSecretPasswordKey }}
+                  {{- else }}
+                  name: {{ .Values.existingSecret }}
+                  key: redis-password
+                  {{- end }}
+            - name: WEBLATE_ADMIN_EMAIL
+              value: "{{ .Values.adminEmail }}"
+            - name: WEBLATE_ADMIN_NAME
+              valueFrom:
+                secretKeyRef:
+                  {{- if not .Values.existingSecret }}
+                  name: {{ include "weblate.fullname" . }}
+                  {{- else }}
+                  name: {{ .Values.existingSecret }}
+                  {{- end }}
+                  key: admin-user
+            - name: WEBLATE_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if not .Values.existingSecret }}
+                  name: {{ include "weblate.fullname" . }}
+                  {{- else }}
+                  name: {{ .Values.existingSecret }}
+                  {{- end }}
+                  key: admin-password
+            - name: WEBLATE_SITE_TITLE
+              value: "{{ .Values.siteTitle }}"
+            - name: WEBLATE_SITE_DOMAIN
+              value: "{{ .Values.siteDomain }}"
+            - name: WEBLATE_EMAIL_HOST
+              value: "{{ .Values.emailHost }}"
+            - name: WEBLATE_EMAIL_PORT
+              value: "{{ .Values.emailPort }}"
+            - name: WEBLATE_EMAIL_USE_TLS
+              value: "{{ .Values.emailTLS }}"
+            - name: WEBLATE_EMAIL_USE_SSL
+              value: "{{ .Values.emailSSL }}"
+            - name: WEBLATE_EMAIL_HOST_USER
+              valueFrom:
+                secretKeyRef:
+                  {{- if not .Values.existingSecret }}
+                  name: {{ include "weblate.fullname" . }}
+                  {{- else }}
+                  name: {{ .Values.existingSecret }}
+                  {{- end }}
+                  key: email-user
+            - name: WEBLATE_EMAIL_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if not .Values.existingSecret }}
+                  name: {{ include "weblate.fullname" . }}
+                  {{- else }}
+                  name: {{ .Values.existingSecret }}
+                  {{- end }}
+                  key: email-password
+            - name: WEBLATE_SERVER_EMAIL
+              value: "{{ .Values.serverEmail }}"
+            - name: WEBLATE_DEFAULT_FROM_EMAIL
+              value: "{{ .Values.defaultFromEmail }}"
+            - name: WEBLATE_ALLOWED_HOSTS
+              value: "{{ .Values.allowedHosts }}"
+            - name: WEBLATE_DEBUG
+              value: "{{ .Values.debug }}"
+            {{- if (and .Values.caCertSecretName .Values.caCertSubPath )}}
+            - name: REQUESTS_CA_BUNDLE
+              value: /{{ .Values.caCertSubPath }}
+            {{- end }}
+            {{- if .Values.sitePrefix }}
+            - name: WEBLATE_URL_PREFIX
+              value: {{ .Values.sitePrefix }}
+            {{- end }}
+            {{- range $key, $value := .Values.extraConfig }}
+            - name: {{ $key | quote }}
+              value: |-
+                {{- tpl $value $ | nindent 16 }}
+            {{- end }}
+          {{- if (or .Values.extraSecretConfig .Values.externalSecretName) }}
+          envFrom:
+            {{- if .Values.extraSecretConfig }}
+            - secretRef:
+                name: {{ include "weblate.fullname" . }}-env
+            {{- end }}
+            {{- if .Values.externalSecretName }}
+            - secretRef:
+                name: {{ .Values.externalSecretName }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.sitePrefix }}/healthz/
+              port: http
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.sitePrefix }}/healthz/
+              port: http
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: {{ .Values.persistence.filestore_dir }}
+              name: weblate-data
+            - mountPath: "{{ .Values.persistence.filestore_dir }}/settings-override.py"
+              name: weblate-config
+              subPath: "settings-override.py"
+            {{- if (and .Values.caCertSecretName .Values.caCertSubPath )}}
+            - mountPath: /{{ .Values.caCertSubPath }}
+              name: ca-bundle
+              subPath: {{ .Values.caCertSubPath}}
+            {{- end }}
+            {{- if .Values.extraVolumeMounts }}
+            {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        {{- if .Values.sidecars }}
+        {{- toYaml .Values.sidecars | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: weblate-config
+          configMap:
+            name: {{ include "weblate.fullname" . }}
+            items:
+            - key: "settings-override.py"
+              path: "settings-override.py"
+        - name: weblate-data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default ( include "weblate.fullname" . ) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
+      {{- if (and .Values.caCertSecretName .Values.caCertSubPath )}}
+        - name: ca-bundle
+          secret:
+            secretName: {{ .Values.caCertSecretName }}
+      {{- end }}
+      {{- if .Values.extraVolumes }}
+        {{- toYaml .Values.extraVolumes | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

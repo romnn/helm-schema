@@ -1,0 +1,176 @@
+{{- if not .Values.useDeploy -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "uptime-kuma.fullname" . }}
+  namespace: {{ include "uptime-kuma.namespace" . }}
+  labels:
+    {{- include "uptime-kuma.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "uptime-kuma.fullname" . }}
+  replicas: 1
+  {{- with .Values.strategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "uptime-kuma.selectorLabels" . | nindent 6 }}
+      {{- if .Values.podLabels }}
+        {{- toYaml .Values.podLabels | nindent 6 }}
+      {{- end }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "uptime-kuma.selectorLabels" . | nindent 8 }}
+        {{- if .Values.podLabels }}
+          {{- toYaml .Values.podLabels | nindent 8 }}
+        {{- end }}
+    spec:
+      automountServiceAccountToken: {{ include "uptime-kuma.automountServiceAccountToken" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      enableServiceLinks: false
+      serviceAccountName: {{ include "uptime-kuma.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- end }}
+      {{- if .Values.dnsConfig }}
+      dnsConfig:
+        {{- toYaml .Values.dnsConfig | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: "UPTIME_KUMA_PORT"
+              value: {{ include "uptime-kuma.port" . | quote }}
+            {{- with .Values.podEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.externalDatabase.enabled }}
+            - name: UPTIME_KUMA_DB_TYPE
+              value: "{{ .Values.externalDatabase.type }}"
+            - name: UPTIME_KUMA_DB_HOSTNAME
+              value: "{{ .Values.externalDatabase.hostname }}"
+            - name: UPTIME_KUMA_DB_PORT
+              value: "{{ .Values.externalDatabase.port }}"
+            - name: UPTIME_KUMA_DB_NAME
+              value: "{{ .Values.externalDatabase.database }}"
+            - name: UPTIME_KUMA_DB_USERNAME
+              {{- if .Values.externalDatabase.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.externalDatabase.existingSecret }}"
+                  key: "{{ .Values.externalDatabase.existingSecretUsernameKey }}"
+              {{- else }}
+              value: "{{ .Values.externalDatabase.username }}"
+              {{- end }}
+            - name: UPTIME_KUMA_DB_PASSWORD
+              {{- if .Values.externalDatabase.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.externalDatabase.existingSecret }}"
+                  key: "{{ .Values.externalDatabase.existingSecretPasswordKey }}"
+              {{- else }}
+              value: "{{ .Values.externalDatabase.password }}"
+              {{- end }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ include "uptime-kuma.port" . }}
+              protocol: TCP
+          {{ if or .Values.volume.enabled .Values.additionalVolumeMounts -}}
+          volumeMounts:
+            {{- if .Values.volume.enabled }}
+            - mountPath: /app/data
+              name: storage
+            {{- end -}}
+            {{ with .Values.additionalVolumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.livenessProbe.enabled }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            {{- if .Values.livenessProbe.exec.command }}
+            exec:
+              command:
+                {{- toYaml .Values.livenessProbe.exec.command | nindent 16 }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          readinessProbe:
+            {{- if .Values.readinessProbe.enabled }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            {{- if .Values.readinessProbe.exec.command }}
+            exec:
+              command:
+                {{- toYaml .Values.readinessProbe.exec.command | nindent 16 }}
+            {{- else if .Values.readinessProbe.httpGet.path }}
+            httpGet:
+              path: {{ .Values.readinessProbe.httpGet.path }}
+              port: {{ .Values.readinessProbe.httpGet.port }}
+              scheme: {{ .Values.readinessProbe.httpGet.scheme }}
+              {{- if .Values.readinessProbe.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml .Values.readinessProbe.httpGet.httpHeaders | nindent 16 }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.additionalVolumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{ if .Values.volume.enabled -}}
+  volumeClaimTemplates:
+    - metadata:
+        name: storage
+      spec:
+        accessModes:
+          - {{ .Values.volume.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.volume.size }}
+        {{- with .Values.volume.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+  {{- end -}}
+{{- end -}}

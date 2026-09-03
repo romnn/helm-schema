@@ -1,0 +1,80 @@
+{{- if .Values.mongodb.community.install }}
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: {{ include "graylog.mongodb.name" . }}
+spec:
+  members: {{ .Values.mongodb.community.replicas }}
+  type: ReplicaSet
+  version: {{ .Values.mongodb.community.version | quote}}
+  security:
+    authentication:
+      modes: ["SCRAM"] # Standard password authentication
+  users:
+    - name: {{ .Values.mongodb.community.auth.user }}
+      db: graylog
+      passwordSecretRef:
+        # This secret will be created by the operator
+        name: {{ include "graylog.mongodb.name" . }}
+      roles:
+        - name: readWrite
+          db: graylog
+        # Graylog 7.2 converts cluster_events to a capped collection via collMod/convertToCapped.
+        - name: dbAdmin
+          db: graylog
+        - name: clusterMonitor
+          db: admin
+      scramCredentialsSecretName: graylog
+  additionalConnectionStringConfig:
+    authSource: "graylog"
+    connectTimeoutMS: "300000"
+  statefulSet:
+    spec:
+      template:
+        spec:
+{{- if .Values.mongodb.containers }}
+          containers:
+{{ toYaml .Values.mongodb.containers | indent 12 }}
+{{- end }}
+{{- if .Values.mongodb.initContainers }}
+          initContainers:
+{{ toYaml .Values.mongodb.initContainers | indent 12 }}
+{{- end }}
+{{- if .Values.mongodb.nodeSelector }}
+          # Assign MongoDB pods to nodes with specific labels
+          nodeSelector:
+{{ toYaml .Values.mongodb.nodeSelector | indent 12 }}
+{{- end }}
+{{- if .Values.mongodb.affinity }}
+          affinity:
+{{ toYaml .Values.mongodb.affinity | indent 12 }}
+{{- end }}
+{{- if .Values.mongodb.tolerations }}
+          tolerations:
+{{ toYaml .Values.mongodb.tolerations | indent 12 }}
+{{- end }}
+      volumeClaimTemplates:
+        - metadata:
+            name: data-volume
+          spec:
+            resources:
+              requests:
+                storage: {{ .Values.mongodb.persistence.size }}
+        {{- if .Values.mongodb.persistence.logsSize }}
+        - metadata:
+            name: logs-volume
+          spec:
+            resources:
+              requests:
+                storage: {{ .Values.mongodb.persistence.logsSize }}
+        {{- end }}
+---
+{{- $password := include "graylog.mongodb.auth.password" . }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "graylog.mongodb.name" . }}
+type: Opaque
+stringData:
+  password: {{ $password | quote }}
+{{- end }}

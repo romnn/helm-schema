@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.names.fullname" . }}-jvm-config
+  labels:
+    {{- include "common.labels.commonLabels" . | nindent 4 }}
+data:
+  additional_jvm_args: >-
+    {{ include "jira.sysprop.fluentdAppender" . }}
+    {{- range .Values.jira.additionalJvmArgs }}
+    {{ . }}
+    {{- end }}
+    -XX:ActiveProcessorCount={{ max 1 (include "flooredCPU" .Values.jira.resources.container.requests.cpu | float64  | int) }}
+    {{- if .Values.serviceAccount.eksIrsa.roleArn }}
+    -Daws.webIdentityTokenFile=/var/run/secrets/eks.amazonaws.com/serviceaccount/token
+    {{- end }}
+    {{- if or .Values.jira.additionalCertificates.secretName .Values.jira.additionalCertificates.secretList }}
+    -Djavax.net.ssl.trustStore=/var/ssl/cacerts
+    {{- end }}
+    {{- if .Values.jira.tunnel.additionalConnector.port }}
+    -Dsecure.tunnel.upstream.port={{ .Values.jira.tunnel.additionalConnector.port }}
+    {{- end }}
+  max_heap: {{ .Values.jira.resources.jvm.maxHeap }}
+  min_heap: {{ .Values.jira.resources.jvm.minHeap }}
+  reserved_code_cache: {{ .Values.jira.resources.jvm.reservedCodeCache }}

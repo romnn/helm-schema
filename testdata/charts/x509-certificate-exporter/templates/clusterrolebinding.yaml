@@ -1,0 +1,44 @@
+{{- if .Values.rbac.create }}
+{{- if or .Values.secretsExporter.enabled .Values.cabundlesExporter.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "x509-certificate-exporter.secretsExporterClusterRoleBindingName" . }}
+  labels:
+    {{- include "x509-certificate-exporter.labels" . | nindent 4 }}
+{{- with .Values.rbac.secretsExporter.clusterRoleBindingAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "x509-certificate-exporter.secretsExporterClusterRoleName" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "x509-certificate-exporter.secretsExporterServiceAccountName" . }}
+  namespace: {{ include "x509-certificate-exporter.namespace" . }}
+{{- end }}
+{{- if .Values.hostPathsExporter.daemonSets }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "x509-certificate-exporter.hostPathsExporterClusterRoleBindingName" . }}
+  labels:
+    {{- include "x509-certificate-exporter.labels" . | nindent 4 }}
+  {{- with .Values.rbac.hostPathsExporter.clusterRoleBindingAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "x509-certificate-exporter.hostPathsExporterClusterRoleName" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "x509-certificate-exporter.hostPathsExporterServiceAccountName" . }}
+  namespace: {{ include "x509-certificate-exporter.namespace" . }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,40 @@
+{{- if and .Values.endpoints.dev.gatewayAPI.enabled .Values.endpoints.dev.gatewayAPI.wildcardHTTPRoute.backendTrafficPolicy.enabled (.Capabilities.APIVersions.Has "gateway.envoyproxy.io/v1alpha1/BackendTrafficPolicy") }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ include "okteto.fullname" . }}-wildcard-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: "dev-wildcard"
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/name: "{{ include "okteto.fullname" . }}-wildcard-ingress"
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ required "endpoints.dev.gatewayAPI.wildcardHTTPRoute.name is required when its backendTrafficPolicy is enabled" .Values.endpoints.dev.gatewayAPI.wildcardHTTPRoute.name }}
+  # Disable Envoy Gateway's default 15s request timeout — this route carries
+  # long-lived user-app connections (WebSocket, SSE, long-poll, large downloads)
+  # that ingress-nginx never capped. Consolidates the former okteto-in-okteto
+  # Terraform `app-wildcard` BackendTrafficPolicy into the chart (PLAT-1562).
+  timeout:
+    http:
+      requestTimeout: "0s"
+  # The wildcard route forwards *.<subdomain> dev traffic to okteto-nginx, which
+  # tunnels arbitrary `Upgrade:` streams transparently. Envoy Gateway only tunnels
+  # the upgrade types listed here (default: websocket only, and specifying
+  # httpUpgrade replaces that default), so `websocket` is kept explicitly and
+  # `spdy/3.1` is added — user apps and okteto's legacy k8s streaming clients
+  # (kubectl <1.31 / okteto CLI <3.5.0; KEP-4006 has no server-side SPDY removal
+  # date) keep working across the Envoy edge, matching ingress-nginx parity. Envoy
+  # tunnels both opaquely (no SPDY codec/parser), so this adds ~no attack surface.
+  # Equivalent to the kube-apiserver-proxy BackendTrafficPolicy.
+  # https://github.com/kubernetes/enhancements/issues/4006
+  httpUpgrade:
+    - type: websocket
+    - type: spdy/3.1
+{{- end }}

@@ -1,0 +1,277 @@
+<!-- markdownlint-disable-next-line MD041 -->
+<p align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/enix/x509-certificate-exporter/raw/main/docs/assets/logo2-dark.webp">
+      <source media="(prefers-color-scheme: light)" srcset="https://github.com/enix/x509-certificate-exporter/raw/main/docs/assets/logo2.webp">
+      <img alt="X.509 Certificate Exporter" title="X.509 Certificate Exporter" src="https://github.com/enix/x509-certificate-exporter/raw/main/docs/assets/logo2.webp">
+    </picture>
+</p>
+
+<div align="center">
+
+[![GitHub Release][release-img]][release] [![Cosign signed][cosign-img]][cosign] [![SLSA Level 3][slsa-img]][slsa] [![OpenSSF Scorecard][ossf-img]][ossf] [![Made at ENIX][enix-img]][enix]
+
+[release]: https://github.com/enix/x509-certificate-exporter/releases/latest
+[release-img]: https://img.shields.io/github/v/release/enix/x509-certificate-exporter?sort=semver&display_name=tag&style=flat&logo=github&label=Release&color=3a6ed7
+[cosign]: https://docs.sigstore.dev
+[cosign-img]: https://img.shields.io/badge/Sigstore-cosign_signed-chartreuse
+[slsa]: https://slsa.dev/spec/v1.0/levels
+[slsa-img]: https://img.shields.io/badge/SLSA-level%203-chartreuse
+[ossf]: https://securityscorecards.dev/viewer/?uri=github.com/enix/x509-certificate-exporter
+[ossf-img]: https://img.shields.io/ossf-scorecard/github.com/enix/x509-certificate-exporter?style=flat&label=OSSF%20Scorecard
+[enix]: https://enix.io
+[enix-img]: https://img.shields.io/badge/Banana--grade-ENIX-3a6ed7?logo=gamebanana
+
+</div>
+
+A Prometheus exporter for X.509 certificates, built **for Kubernetes first**.
+It watches your cluster's TLS material as native Kubernetes resources —
+Secrets, ConfigMaps, kubeconfigs, on-disk PKI on the nodes — and turns
+expirations into actionable Prometheus series. Designed to run inside the
+cluster it observes, but equally happy as a standalone binary.
+
+---
+
+| [🚀 Quick install](#-quick-install) | [📚 Examples](#-examples--starting-points) | [🧩 Concepts](#-configuration-concepts) | [🛡️ Hardening](#%EF%B8%8F-supply-chain-verification) | [🎛️ Values](#%EF%B8%8F-values-reference) |
+| --- | --- | --- | --- | --- |
+
+> [!WARNING]
+> **Upgrading from version 3?** Start with the [v3 → v4 migration guide][v3-v4]
+> — chart distribution moved to OCI on `quay.io`, the Alpine image variant is
+> retired, and a few values keys changed shape.
+
+[v3-v4]: https://github.com/enix/x509-certificate-exporter/blob/main/docs/migration-v3-to-v4.md
+
+---
+
+## ✨ What's new in v4
+
+- **Full rewrite** around a YAML config file and a pluggable architecture — clean foundations for the project to grow on.
+- **Memory-safe Kubernetes watch** — RAM stays flat instead of spiking; on Secret-heavy clusters, memory limits drop ~10×.
+- **Richer PKCS#12 wiring** — full keystore + truststore coverage, flexible passphrase sourcing.
+- **DER consumption** — raw cert / CRL blobs as served by HTTP CRL Distribution Points are now first-class inputs.
+- **JKS / JCEKS support** — Java KeyStore and JCEKS stores.
+- **CRL freshness monitoring** — Certificate Revocation Lists are tracked alongside certs, with alerts before they go stale.
+- **Surface workload metadata** — lift watched resource labels onto emitted certificate series.
+- **Supply-chain hardened** — SLSA Build L3 provenance, cosign-signed binaries, images and chart, SBOM attestations.
+- **Multi-cluster from a single instance** — fan-in metrics from any number of clusters via distinct kubeconfigs.
+- **Per-source observability** — granular health and triage signals, not just a global error counter.
+
+## 🔍️ What it watches
+
+- **TLS Secrets** of any type — `kubernetes.io/tls`, Opaque bundles,
+  full chains — across all namespaces or a curated subset.
+- **ConfigMaps** holding cert or CRL data under any key you point at.
+- **PKCS#12** keystores and truststores, with passphrase pulled from a
+  sibling key in the same Secret, an external file, a cross-namespace
+  Secret reference, or none (`tryEmptyPassphrase`).
+- **JKS / JCEKS** keystores and truststores — magic-byte auto-detection
+  between JKS and JCEKS; passphrase from a sibling key in the same Secret,
+  a separate Secret in any namespace, an external file, or none
+  (`tryEmptyPassphrase`).
+- **Certificate Revocation Lists** — `X509 CRL` PEM blocks (intermixed
+  freely with `CERTIFICATE` blocks) and raw DER `*.crl` files
+  (`format: der`) are parsed into the dedicated `x509_crl_*` family so
+  a stale CRL pages on-call before its consumers start rejecting the
+  issuer's certs.
+- **Admission and API-discovery caBundles** — inline `caBundle` PEM
+  fields on cluster-scoped admission resources
+  (`MutatingWebhookConfiguration`, `ValidatingWebhookConfiguration`),
+  the API-aggregation layer (`APIService`), and CRDs with a
+  conversion webhook (`CustomResourceDefinition`).
+- **PEM chains** — every certificate in a multi-cert bundle becomes its own
+  series, so intermediate CAs and trust roots appear alongside leaf certs
+  with no extra configuration.
+- **Kubeconfigs** with embedded base64 certificates or PEM file references —
+  every `cluster` and `user` block exposed as its own series.
+- **Files on disk** — glob patterns (`*`, `**`, `?`), atomic symlink swaps
+  detected on the next poll (certbot renewals, kubelet projected `..data/`
+  mounts), and dual deployment: inside the exporter pod **or** as a
+  node-local DaemonSet for cluster PKI (kubelet, etcd, kube-apiserver).
+
+## 🚀 Quick install
+
+The chart ships as an OCI artifact on `quay.io` — no `helm repo add`,
+Helm 3.8+ pulls OCI refs directly. One command:
+
+```sh
+helm -n monitoring install x509-certificate-exporter \
+  oci://quay.io/enix/charts/x509-certificate-exporter
+```
+
+That's the whole install. The exporter starts watching every
+`kubernetes.io/tls` Secret in the cluster and serves metrics on `/metrics`.
+
+The chart also drops a `ServiceMonitor` and a `PrometheusRule` so a
+[prometheus-operator][po]-managed Prometheus picks the exporter up and
+ships with ready-to-use alerts — no extra wiring.
+
+[po]: https://github.com/prometheus-operator/prometheus-operator
+
+No prometheus-operator in the cluster? Skip the CRDs and let Prometheus
+discover the Pod via annotations instead. Save the snippet below as
+`values.yaml` and pass it to Helm with `--values values.yaml`:
+
+```yaml
+# values.yaml
+prometheusServiceMonitor:
+  create: false
+prometheusRules:
+  create: false
+secretsExporter:
+  podAnnotations:
+    prometheus.io/port: "9793"
+    prometheus.io/scrape: "true"
+```
+
+## 📚 Examples & starting points
+
+A curated set of ready-to-adapt `values.yaml` files lives in
+[`docs/examples/`][examples] — generic baselines (a fully tuned
+secretsExporter, a rich hostPathsExporter with role-specific
+DaemonSets) plus distribution-specific examples for kubeadm, Talos,
+RKE2, k3s, k0s and OpenShift.
+
+[examples]: https://github.com/enix/x509-certificate-exporter/blob/main/docs/examples/README.md
+
+> [!TIP]
+> The [project FAQ][faq] answers common questions, both Kubernetes-specific
+> and about the exporter in general.
+
+[faq]: https://github.com/enix/x509-certificate-exporter/blob/main/docs/faq.md
+
+## 🛡️ Supply-chain verification
+
+Curious how the chart and images are signed, or want to enforce that only
+verified releases run in your cluster? The [hardening guide][hardening]
+covers the territory:
+
+- Immutable image-digest pinning via the chart's `image.digest` value
+- cosign keyless signature verification (sigstore, Fulcio, Rekor)
+- CycloneDX SBOM attestations on container images
+- Strict certificate-identity pinning to the release workflow at a
+  given tag
+- Wiring cosign verification into CI pipelines and cluster admission
+  (sigstore/policy-controller, Kyverno)
+
+[hardening]: https://github.com/enix/x509-certificate-exporter/blob/main/docs/hardening.md
+
+## 🧩 Configuration concepts
+
+Every knob is documented in the [Values](#values) section below; this
+prose just sketches *what each block lets you do*. Ready-to-adapt
+`values.yaml` for the common shapes — including kubeadm, Talos, RKE2,
+k3s, k0s, OpenShift, and a fully tuned `hostPathsExporter` with
+role-split DaemonSets — lives in [`docs/examples/`][examples].
+
+### Watching Secrets
+
+The default install runs a single Deployment watching
+`kubernetes.io/tls` Secrets across all namespaces — disable with
+`secretsExporter.enabled: false`.
+
+### Multiple Secret types, PKCS#12 and JKS
+
+`secretsExporter.secretTypes` accepts any mix of types and keys: a
+literal `key` (regex `^<key>$` is built for you) or a `keyPatterns`
+list for full regex control, with optional `format: pkcs12` or
+`format: jks` plus a matching `pkcs12:` / `jks:` block. Both blocks
+expose the same passphrase sources: a sibling Secret key
+(`passphraseKey`), a separate Secret in any namespace
+(`passphraseSecretRef`), an external file (`passphraseFile`), or
+skipped entirely with `tryEmptyPassphrase: true` for passwordless
+keystores.
+
+### Watching ConfigMaps
+
+Set `secretsExporter.configMapKeys` to a list of data keys and
+ConfigMaps are watched alongside Secrets. Series come out under
+`configmap_namespace` / `configmap_name` / `configmap_key` instead of
+the `secret_*` set — same `subject_CN`, `not_after`, alerts.
+
+### Filtering by namespace and label
+
+Four orthogonal axes evaluated server-side: namespace name (globs
+supported), namespace label, Secret label, each with `include*` and
+`exclude*` flavours under `secretsExporter.*`. `exclude*` runs after
+`include*`. Namespace-label filters trigger Namespace watching too, so
+membership re-evaluates whenever a namespace's labels change.
+
+### Surfacing Secret labels as Prometheus labels
+
+`secretsExporter.exposeSecretLabels` lifts selected Secret labels onto
+every cert metric, prefixed with `secret_label_` —
+e.g. `x509_cert_not_after{..., secret_label_environment="prod"}`.
+
+### Metrics for node certificates (hostPath)
+
+Cluster PKI (kubelet, etcd, kube-apiserver, kubeconfigs, …) is the
+most common preventable outage source. `hostPathsExporter` deploys
+DaemonSets with hostPath mounts so each node publishes metrics for its
+own PKI. Defaults under `hostPathsExporter.*` cascade into every
+`hostPathsExporter.daemonSets` entry, which can override individually
+— spawn one DaemonSet per node role (control plane, ingress, …) with
+its own `nodeSelector` / `tolerations` / watch list. Three watch knobs:
+
+* `watchDirectories` — every PEM in a directory (no recursion)
+* `watchFiles` — explicit paths (recommended when paths are predictable)
+* `watchKubeconfFiles` — kubeconfigs with embedded or referenced PEMs
+
+Distribution-specific starter values live in [`docs/examples/`][examples].
+
+### Custom Resources for the Prometheus Operator
+
+When [prometheus-operator][po] is installed, the chart creates a
+`ServiceMonitor` (or `PodMonitor` if `podMonitor.create=true`) plus a
+`PrometheusRule`. Without the operator's CRDs, Helm fails to render
+them — disable with `prometheusServiceMonitor.create=false` and
+`prometheusRules.create=false`.
+
+The shipped alerts:
+
+| Alert | Trigger | Default severity |
+|---|---|---|
+| `SourceErrors` | `sum without (reason) (increase(x509_source_errors_total[15m])) > 5` for 5m | warning |
+| `SourceErrorsSustained` | Same expression, sustained 30m | critical |
+| `SourceDown` | `x509_source_up == 0` for 5m | critical |
+| `KubeTransportErrors` | `sum without (resource, reason) (increase(x509_kube_transport_errors_total[15m])) > 5` for 5m | warning |
+| `KubeTransportErrorsSustained` | Same expression, sustained 30m | critical |
+| `KeystorePassphraseFailures` | `increase(x509_{pkcs12,jks}_passphrase_failures_total[15m]) > 0` for 15m | warning |
+| `CertificateError` | `x509_cert_error > 0` for 15m (requires `exposePerCertificateErrorMetrics`) | warning |
+| `CertificateRenewal` | `(x509_cert_not_after - time())` below `warningDaysLeft` (28 by default) | warning |
+| `CertificateExpiration` | `(x509_cert_not_after - time())` below `criticalDaysLeft` (14 by default); also fires once past NotAfter | critical |
+| `CertificateNotYetValid` | `(x509_cert_not_before - time()) > 0` (requires `exposeNotBeforeMetric`) | warning |
+| `CertificateCollision` | `increase(x509_cert_collision_dropped_total[1h]) > 0` (only fires under `Collision=Never`) | warning |
+| `CRLNeedsRefresh` | nextUpdate within `crlWarningDaysLeft` and not yet stale | warning |
+| `CRLStale` | `x509_crl_stale > 0` | critical |
+
+`CertificateRenewal`, `CertificateExpiration`, `CRLNeedsRefresh` and
+`CRLStale` are always created — they are the exporter's core value.
+The other nine each carry a `prometheusRules.alertOn<Name>` toggle
+(default `true`). Per-alert tuning beyond thresholds and severities
+goes through `alertExprOverrides` and `alertForOverrides` —
+documented inline in `values.yaml`.
+
+> ⚠️ `SourceErrors` and `SourceDown` are the early-warning canaries
+> for misconfigurations (RBAC, missing files, malformed Secrets,
+> apiserver unreachable). Keep them on, and split your
+> `hostPathsExporter` DaemonSets along role boundaries rather than
+> disabling them.
+
+### Securing the `/metrics` endpoint
+
+v4 supports `prometheus/exporter-toolkit` natively — set
+`webConfiguration` to a [web-config][web-config] body (TLS cert/key,
+BasicAuth users) and the chart wires a Secret + volume mount +
+`--web.config.file`. Use `webConfigurationExistingSecret` to point at
+an existing Secret instead.
+
+The legacy `kube-rbac-proxy` sidecar (`rbacProxy.enabled`) is still
+available for clusters authenticating scrapes via TokenReview, but
+exporter-toolkit is the recommended path on new installs.
+
+[web-config]: https://prometheus.io/docs/prometheus/latest/configuration/https/
+
+# 🎛️ Values reference
+
+{{ template "chart.valuesTable" . }}

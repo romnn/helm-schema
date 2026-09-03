@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "weblate.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+{{ include "weblate.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  publishNotReadyAddresses: {{ .Values.service.publishNotReadyAddresses }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "weblate.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

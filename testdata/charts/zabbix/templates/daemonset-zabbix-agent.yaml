@@ -1,0 +1,167 @@
+{{- if and .Values.zabbixAgent.enabled .Values.zabbixAgent.runAsDaemonSet }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ template "zabbix.fullname" . }}-zabbix-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "zabbix.labels" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+    {{- if .Values.zabbixAgent.extraDaemonSetLabels }}
+    {{- toYaml .Values.zabbixAgent.extraDaemonSetLabels | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- range $key,$value := .Values.zabbixAgent.extraDaemonSetAnnotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "zabbix.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: agent
+  {{- if .Values.zabbixAgent.daemonSetUpdateStrategy }}
+  updateStrategy: {{ toYaml .Values.zabbixAgent.daemonSetUpdateStrategy | nindent 8 }}
+  {{- end }}
+
+  template:
+    metadata:
+      annotations:
+        {{- range $key,$value := .Values.zabbixAgent.extraPodAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      labels:
+        {{- include "zabbix.labels" . | nindent 8 }}
+        app.kubernetes.io/component: agent
+        {{- if .Values.zabbixAgent.extraPodLabels }}
+        {{- toYaml .Values.zabbixAgent.extraPodLabels | nindent 8 }}
+        {{- end }}
+    spec:
+      hostPID: {{ .Values.zabbixAgent.daemonSetHostPID }}
+      hostIPC: {{ .Values.zabbixAgent.daemonSetHostIPC }}
+      {{- if .Values.zabbixAgent.hostNetwork }}
+      hostNetwork: {{ .Values.zabbixAgent.hostNetwork }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      serviceAccountName: {{ template "zabbix.serviceAccountName" . }}
+      {{- with .Values.zabbixAgent.extraPodSpecs }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.zabbixAgent.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.zabbixAgent.extraInitContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: zabbix-agent
+          {{- if .Values.zabbixAgent.resources }}
+          resources:
+            {{- toYaml .Values.zabbixAgent.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.zabbixAgent.image.tag }}
+          image: "{{ .Values.zabbixAgent.image.repository }}:{{ .Values.zabbixAgent.image.tag }}"
+          {{- else }}
+          image: "{{ .Values.zabbixAgent.image.repository }}:{{ .Values.zabbixImageTag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.zabbixAgent.image.pullPolicy }}
+          ports:
+            - name: zabbix-agent
+              containerPort: 10050
+              protocol: TCP
+          {{- with .Values.zabbixAgent.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.zabbixAgent.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.zabbixAgent.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.zabbixAgent.securityContext | nindent 12 }}
+          env:
+            {{- if .Values.zabbixAgent.ZBX_HOSTNAMEITEM }}
+            - name: ZBX_HOSTNAMEITEM
+              value: {{ .Values.zabbixAgent.ZBX_HOSTNAMEITEM | quote }}
+            {{- else }}
+            - name: ZBX_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- end }}
+            - name: ZBX_SERVER_HOST
+              value: {{ .Values.zabbixAgent.ZBX_SERVER_HOST | quote }}
+            - name: ZBX_SERVER_PORT
+              value: {{ .Values.zabbixAgent.ZBX_SERVER_PORT | quote }}
+            - name: ZBX_PASSIVE_ALLOW
+              value: {{ .Values.zabbixAgent.ZBX_PASSIVE_ALLOW | quote }}
+            - name: ZBX_PASSIVESERVERS
+              value: {{ .Values.zabbixAgent.ZBX_PASSIVESERVERS | quote }}
+            - name: ZBX_ACTIVE_ALLOW
+              value: {{ .Values.zabbixAgent.ZBX_ACTIVE_ALLOW | quote }}
+            - name: ZBX_ACTIVESERVERS
+              value: {{ .Values.zabbixAgent.ZBX_ACTIVESERVERS | quote }}
+            - name: ZBX_DEBUGLEVEL
+              value: {{ .Values.zabbixAgent.ZBX_DEBUGLEVEL | quote }}
+            - name: ZBX_TIMEOUT
+              value: {{ .Values.zabbixAgent.ZBX_TIMEOUT | quote }}
+            - name: ZBX_LOADMODULE
+              value: {{ .Values.zabbixAgent.ZBX_LOADMODULE }}
+            {{- with .Values.zabbixAgent.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: proc
+              mountPath: /hostfs/proc
+              readOnly:  true
+            - name: sys
+              mountPath: /hostfs/sys
+              readOnly: true
+            {{- if .Values.zabbixAgent.hostRootFsMount }}
+            - name: root
+              mountPath: /hostfs/root
+              mountPropagation: HostToContainer
+              readOnly: true
+            {{- end }}
+            {{- with .Values.zabbixAgent.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.zabbixAgent.extraContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      imagePullSecrets:
+      {{- range .Values.zabbixAgent.image.pullSecrets }}
+        - name: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        {{- if .Values.zabbixAgent.hostRootFsMount }}
+        - name: root
+          hostPath:
+            path: /
+        {{- end }}
+      {{- with .Values.zabbixAgent.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

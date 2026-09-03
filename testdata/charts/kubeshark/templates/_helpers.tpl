@@ -1,0 +1,126 @@
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "kubeshark.name" -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "kubeshark.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "kubeshark.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "kubeshark.labels" -}}
+helm.sh/chart: {{ include "kubeshark.chart" . }}
+{{ include "kubeshark.selectorLabels" . }}
+app.kubernetes.io/version: {{ .Chart.Version | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.tap.labels }}
+{{ toYaml .Values.tap.labels }}
+{{- end }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "kubeshark.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "kubeshark.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "kubeshark.serviceAccountName" -}}
+{{- printf "%s-service-account" .Release.Name }}
+{{- end }}
+
+{{/*
+Set configmap and secret names based on gitops.enabled
+*/}}
+{{- define "kubeshark.configmapName" -}}
+kubeshark-config-map{{ if .Values.tap.gitops.enabled }}-default{{ end }}
+{{- end -}}
+
+{{- define "kubeshark.secretName" -}}
+kubeshark-secret{{ if .Values.tap.gitops.enabled }}-default{{ end }}
+{{- end -}}
+
+
+{{/*
+Escape double quotes in a string
+*/}}
+{{- define "kubeshark.escapeDoubleQuotes" -}}
+  {{- regexReplaceAll "\"" . "\"" -}}
+{{- end -}}
+
+{{/*
+Define debug docker tag suffix
+*/}}
+{{- define "kubeshark.dockerTagDebugVersion" -}}
+{{- .Values.tap.pprof.enabled | ternary "-debug" "" }}
+{{- end -}}
+
+{{/*
+Create docker tag default version
+*/}}
+{{- define "kubeshark.defaultVersion" -}}
+{{- $defaultVersion := (printf "v%s" .Chart.Version) -}}
+{{- if .Values.tap.docker.tagLocked }}
+  {{- $defaultVersion = regexReplaceAll "^([^.]+\\.[^.]+).*" $defaultVersion "$1" -}}
+{{- end }}
+{{- $defaultVersion }}
+{{- end -}}
+
+{{/*
+Set sentry based on internet connectivity and telemetry
+*/}}
+{{- define "sentry.enabled" -}}
+  {{- $sentryEnabledVal := .Values.tap.sentry.enabled -}}
+  {{- if not .Values.internetConnectivity -}}
+    {{- $sentryEnabledVal = false -}}
+  {{- else if not .Values.tap.telemetry.enabled -}}
+    {{- $sentryEnabledVal = false -}}
+  {{- end -}}
+  {{- $sentryEnabledVal -}}
+{{- end -}}
+
+{{/*
+Dex IdP: retrieve a secret for static client with a specific ID
+*/}}
+{{- define "getDexKubesharkStaticClientSecret" -}}
+  {{- $clientId := .clientId -}}
+  {{- range .clients }}
+    {{- if eq .id $clientId }}
+      {{- .secret }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{/*
+Single source of truth for whether the hub enforces authentication.
+Consumed by the hub ConfigMap (AUTH_ENABLED) and by the worker DaemonSet, which
+must mount an internal hub token whenever the hub requires one. Keeping the two
+in sync prevents workers from being issued no token while the hub demands one.
+*/}}
+{{- define "kubeshark.authEnabled" -}}
+{{- if and .Values.cloudLicenseEnabled (not (empty .Values.license)) -}}
+{{ (default false .Values.demoModeEnabled) | ternary true ((and .Values.tap.auth.enabled (or (eq .Values.tap.auth.type "oidc") (eq .Values.tap.auth.type "dex"))) | ternary true false) }}
+{{- else -}}
+{{ .Values.cloudLicenseEnabled | ternary "true" ((default false .Values.demoModeEnabled) | ternary "true" .Values.tap.auth.enabled) }}
+{{- end -}}
+{{- end -}}

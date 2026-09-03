@@ -1,0 +1,22 @@
+{{- if .Values.statefulset.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+  name: {{ printf "%s-headless" (include "common.names.fullname" .) }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  # 1.13 以后版本
+  publishNotReadyAddresses: true
+  ports:
+  {{- range $key, $value := .Values.service.ports }}
+    - name: {{ $key }}
+      targetPort: {{ $key }}
+      port: {{ $value.port }}
+      protocol: {{ $value.protocol }}
+  {{- end }}
+  selector: {{- include "common.labels.matchLabels" . | nindent 4 }}
+{{- end -}}

@@ -1,0 +1,1521 @@
+## Atlassian Jira Data Center Helm values
+#
+# HEADS UP!
+#
+# Data loss will occur if sections declared as 'REQUIRED' are not configured appropriately!
+# These sections are:
+# - database
+# - volumes
+#
+# Additional details on pre-provisioning these required resources can be found here:
+# https://atlassian.github.io/data-center-helm-charts/userguide/INSTALLATION/#3-configure-database
+# https://atlassian.github.io/data-center-helm-charts/userguide/INSTALLATION/#5-configure-persistent-storage
+#
+# To manage external access to the Jira instance, a Gateway API HTTPRoute or an Ingress
+# resource can be configured under the 'gateway' or 'ingress' stanza respectively.
+# This requires a pre-provisioned gateway/ingress controller to be present.
+#
+# Additional details on configuring external access can be found here:
+# https://atlassian.github.io/data-center-helm-charts/userguide/INSTALLATION/#4-configure-ingress
+#
+##
+
+
+# -- The initial number of Jira pods that should be started at deployment time.
+# Note that Jira requires manual configuration via the browser post deployment
+# after the first pod is deployed. This configuration must be completed before
+# scaling up additional pods. As such this value should always be kept as 1,
+# but can be altered once manual configuration is complete.
+#
+replicaCount: 1
+
+# -- Set a custom start ordinal number for the K8s stateful set.
+# Note that this depends on the StatefulSetStartOrdinal K8s feature gate,
+# which has entered beta state with K8s version 1.27.
+#
+ordinals:
+
+  # -- Enable only if StatefulSetStartOrdinal K8s feature gate is available.
+  #
+  enabled: false
+
+  # -- Set start ordinal to a positive integer, defaulting to 0.
+  #
+  start: 0
+
+# -- StatefulSet update strategy. When unset defaults to Rolling update.
+# See: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets
+#
+updateStrategy: {}
+  # type: OnDelete
+
+# Image configuration
+#
+image:
+
+  # -- The Jira Docker image to use
+  # https://hub.docker.com/r/atlassian/jira-software
+  #
+  repository: atlassian/jira-software
+
+  # -- Image pull policy
+  #
+  pullPolicy: IfNotPresent
+
+  # -- The docker image tag to be used - defaults to the Chart appVersion
+  #
+  tag: ""
+
+# K8s ServiceAccount configuration. Give fine-grained identity and authorization
+# to Pods
+#
+serviceAccount:
+
+  # -- Set to 'true' if a ServiceAccount should be created, or 'false' if it
+  # already exists.
+  #
+  create: true
+
+  # -- The name of the ServiceAccount to be used by the pods. If not specified, but
+  # the "serviceAccount.create" flag is set to 'true', then the ServiceAccount name
+  # will be auto-generated, otherwise the 'default' ServiceAccount will be used.
+  # https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server
+  #
+  name:
+
+  # -- For Docker images hosted in private registries, define the list of image pull
+  # secrets that should be utilized by the created ServiceAccount
+  # https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  #
+  imagePullSecrets: []
+  # - name: secretName
+
+  # -- Annotations to add to the ServiceAccount (if created)
+  #
+  annotations: {}
+
+  # Use EKS IRSA. See: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
+  #
+  eksIrsa:
+
+    # Defining a full arn of AWS role to assume will automatically annotate jira,
+    # e.g. `eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/S3Access`.
+    # "-Daws.webIdentityTokenFile=/var/run/secrets/eks.amazonaws.com/serviceaccount/token" will be automatically added to Jira JVM arguments
+    roleArn:
+
+
+# REQUIRED - Database configuration
+#
+# Jira requires a backend database. The configuration below can be used to define the
+# database to use and its connection details.
+# https://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#database-connectivity
+#
+database:
+
+  # -- The database type that should be used. If not specified, then it will need to be
+  # provided via the browser during manual configuration post deployment. Valid values
+  # include:
+   # * 'postgres72'
+   # * 'mysql57'
+   # * 'mysql8'
+   # * 'oracle10g'
+   # * 'mssql'
+   # * 'postgresaurora96'
+  # https://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#databasetype
+  #
+  type:
+
+  # -- The jdbc URL of the database. If not specified, then it will need to be provided
+  # via the browser during manual configuration post deployment. Example URLs include:
+   # * 'jdbc:postgresql://<dbhost>:5432/<dbname>'
+   # * 'jdbc:mysql://<dbhost>/<dbname>'
+   # * 'jdbc:sqlserver://<dbhost>:1433;databaseName=<dbname>'
+   # * 'jdbc:oracle:thin:@<dbhost>:1521:<SID>'
+  # https://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#databaseurl
+  #
+  url:
+
+  # -- The Java class name of the JDBC driver to be used. If not specified, then it will
+  # need to be provided via the browser during manual configuration post deployment.
+  # Valid drivers are:
+   # * 'org.postgresql.Driver'
+   # * 'com.mysql.jdbc.Driver'
+   # * 'oracle.jdbc.OracleDriver'
+   # * 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
+  # https://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#databasedriver:
+  #
+  driver:
+
+  # JDBC connection credentials
+  #
+  credentials:
+
+    # -- The name of the K8s Secret that contains the database login credentials.
+    # If the secret is specified, then the credentials will be automatically utilised on
+    # Jira startup. If the secret is not provided, then the credentials will need to be
+    # provided via the browser during manual configuration post deployment.
+    #
+    # Example of creating a database credentials K8s secret below:
+    # 'kubectl create secret generic <secret-name> --from-literal=username=<username> \
+    # --from-literal=password=<password>'
+    # https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    #
+    secretName:
+
+    # -- The key ('username') in the Secret used to store the database login username
+    #
+    usernameSecretKey: username
+
+    # -- The key ('password') in the Secret used to store the database login password
+    #
+    passwordSecretKey: password
+
+# REQUIRED - Volume configuration
+#
+# By default, the charts will configure the local-home and shared-home as ephemeral
+# volumes i.e. 'emptyDir: {}'. This is fine for evaluation purposes but for production
+# deployments this is not ideal and so local-home and shared-home should both be configured
+# appropriately.
+# https://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#volumes
+#
+volumes:
+
+  # Each pod requires its own volume for 'local-home'. This is needed for key data
+  # that help define how Jira works.
+  # https://confluence.atlassian.com/adminjiraserver/jira-application-home-directory-938847746.html
+  #
+  localHome:
+
+    # Dynamic provisioning of local-home using the K8s Storage Classes
+    #
+    # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#dynamic
+    # https://atlassian.github.io/data-center-helm-charts/examples/storage/aws/LOCAL_STORAGE/
+    #
+    persistentVolumeClaim:
+
+      # -- If 'true', then a 'PersistentVolume' and 'PersistentVolumeClaim' will be dynamically
+      # created for each pod based on the 'StorageClassName' supplied below.
+      #
+      create: false
+
+      # -- Specify the name of the 'StorageClass' that should be used for the local-home
+      # volume claim.
+      #
+      storageClassName:
+
+      # -- Specifies the standard K8s resource requests and/or limits for the local-home
+      # volume claims.
+      #
+      resources:
+        requests:
+          storage: 1Gi
+
+    # This field controls if and how PVCs are deleted during the lifecycle of a StatefulSet.
+    # Only configure the below two attributes when your Kubernetes version is 1.27+, and
+    # feature gate StatefulSetAutoDeletePVC is enabled.
+    #
+    # For each policy that you can configure, you can set the value to either Delete or Retain.
+    #
+    # https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention
+    #
+    persistentVolumeClaimRetentionPolicy:
+
+      # -- Configures the volume retention behavior that applies when the StatefulSet is deleted.
+      #
+      whenDeleted:
+
+      # -- Configures the volume retention behavior that applies when the replica count of the StatefulSet is reduced.
+      #
+      whenScaled:
+
+    # -- Static provisioning of local-home using K8s PVs and PVCs
+    #
+    # NOTE: Due to the ephemeral nature of pods this approach to provisioning volumes for
+    # pods is not recommended. Dynamic provisioning described above is the prescribed
+    # approach.
+    #
+    # When 'persistentVolumeClaim.create' is 'false', then this value can be used to define
+    # a standard K8s volume that will be used for the local-home volume(s). If not defined,
+    # then an 'emptyDir' volume is utilised. Having provisioned a 'PersistentVolume', specify
+    # the bound 'persistentVolumeClaim.claimName' for the 'customVolume' object.
+    # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#static
+    #
+    customVolume: {}
+    # persistentVolumeClaim:
+    #   claimName: "<pvc>"
+
+    # -- Specifies the path in the Jira container to which the local-home volume will be
+    # mounted.
+    #
+    mountPath: "/var/atlassian/application-data/jira"
+
+    # -- Specifies the sub-directory of the local-home volume that will be mounted in to the
+    # Jira container.
+    #
+    subPath:
+
+  # A volume for 'shared-home' is required by Jira to effectively operate in multi-node
+  # environment
+  # https://confluence.atlassian.com/adminjiraserver/set-up-a-jira-data-center-cluster-993929600.html
+  #
+  sharedHome:
+
+    # Dynamic provisioning of shared-home using the K8s Storage Class
+    #
+    # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#dynamic
+    #
+    persistentVolumeClaim:
+
+      # -- If 'true', then a 'PersistentVolumeClaim' and 'PersistentVolume' will be dynamically
+      # created for shared-home based on the 'StorageClassName' supplied below.
+      #
+      create: false
+
+      # -- Specify the access modes that should be used for the 'shared-home' volume claim.
+      # Note: 'ReadWriteOnce' (RWO) is suitable only for single-node installations.
+      # Be aware that changing the access mode of an existing PVC might be impossible, as the PVC spec is immutable.
+      # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+      #
+      accessModes:
+        - ReadWriteMany
+
+      # -- Specify the name of the 'StorageClass' that should be used for the 'shared-home'
+      #volume claim.
+      #
+      storageClassName:
+
+      # -- Specifies the standard K8s resource requests and/or limits for the shared-home
+      # volume claims.
+      #
+      resources:
+        requests:
+          storage: 1Gi
+
+    # -- Static provisioning of shared-home using K8s PVs and PVCs
+    #
+    # When 'persistentVolumeClaim.create' is 'false', then this value can be used to define
+    # a standard K8s volume that will be used for the shared-home volume. If not defined,
+    # then an 'emptyDir' volume is utilised. Having provisioned a 'PersistentVolume', specify
+    # the bound 'persistentVolumeClaim.claimName' for the 'customVolume' object.
+    # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#static
+    # https://atlassian.github.io/data-center-helm-charts/examples/storage/aws/SHARED_STORAGE/
+    #
+    customVolume: {}
+    # persistentVolumeClaim:
+    #   claimName: "<pvc>"
+
+    # -- Specifies the path in the Jira container to which the shared-home volume will be
+    # mounted.
+    #
+    mountPath: "/var/atlassian/application-data/shared-home"
+
+    # -- Specifies the sub-directory of the shared-home volume that will be mounted in to the
+    # Jira container.
+    #
+    subPath:
+
+    # Modify permissions on shared-home
+    #
+    nfsPermissionFixer:
+
+      # -- If 'true', this will alter the shared-home volume's root directory so that Jira
+      # can write to it. This is a workaround for a K8s bug affecting NFS volumes:
+      # https://github.com/kubernetes/examples/issues/260
+      #
+      enabled: true
+
+      # -- The path in the K8s initContainer where the shared-home volume will be mounted
+      #
+      mountPath: "/shared-home"
+
+      # -- Image repository for the permission fixer init container. Defaults to alpine
+      #
+      imageRepo: alpine
+
+      # -- Image tag for the permission fixer init container. Defaults to latest
+      #
+      imageTag: latest
+
+      # -- Resources requests and limits for nfsPermissionFixer init container
+      # See: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+      #
+      resources: {}
+      #  requests:
+      #    cpu: "1m"
+      #    memory: "20Mi"
+      #  limits:
+      #    cpu: "1"
+      #    memory: "1G"
+
+      # -- By default, the fixer will change the group ownership of the volume's root directory
+      # to match the Jira container's GID (2001), and then ensures the directory is
+      # group-writeable. If this is not the desired behaviour, command used can be specified
+      # here.
+      #
+      command:
+
+  # -- Defines additional volumes that should be applied to all Jira pods.
+  # Note that this will not create any corresponding volume mounts;
+  # those needs to be defined in jira.additionalVolumeMounts
+  #
+  additional: []
+
+# Ingress configuration
+#
+# Use this section when routing external traffic to Jira via a Kubernetes Ingress
+# resource (K8s Ingress API). Requires a pre-provisioned Ingress Controller.
+# If using the Gateway API instead, see the 'gateway' section below.
+# https://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#ingress
+#
+ingress:
+
+  # -- Set to 'true' if an Ingress Resource should be created. This depends on a
+  # pre-provisioned Ingress Controller being available.
+  #
+  create: false
+
+  # -- The fully-qualified hostname (FQDN) of the Jira instance. This value is used
+  # to configure the product's proxy settings and, when ingress.create is true,
+  # the Ingress resource routing rules.
+  #
+  host:
+
+  # -- Whether users access the application over HTTPS. Set to 'false' if not
+  # using TLS, e.g. when reaching the service via localhost port-forwarding.
+  #
+  https: true
+
+  # -- The base path for the application, e.g. '/jira'.
+  # Defaults to 'jira.service.contextPath'.
+  #
+  path:
+
+  # ---------------------------------------------------------------------------
+  # The options below apply only when ingress.create is true.
+  # They configure the Ingress resource itself and have no effect otherwise.
+  # ---------------------------------------------------------------------------
+
+  # -- Set to true if you want to create an OpenShift Route instead of an Ingress
+  #
+  openShiftRoute: false
+
+  # -- routeHttpHeaders defines policy for HTTP headers. Applicable to OpenShift Routes only
+  #
+  routeHttpHeaders: {}
+
+  # -- The class name used by the ingress controller if it's being used.
+  #
+  # Please follow documentation of your ingress controller. If the cluster
+  # contains multiple ingress controllers, this setting allows you to control
+  # which of them is used for Atlassian application traffic.
+  #
+  className: "nginx"
+
+  # -- Set to 'true' if the Ingress Resource is to use the K8s 'ingress-nginx'
+  # controller.
+  # https://kubernetes.github.io/ingress-nginx/
+  #
+  # This will populate the Ingress Resource with annotations that are specific to
+  # the K8s ingress-nginx controller. Set to 'false' if a different controller is
+  # to be used, in which case the appropriate annotations for that controller must
+  # be specified below under 'ingress.annotations'.
+  #
+  nginx: true
+
+  # -- The max body size to allow. Requests exceeding this size will result
+  # in an HTTP 413 error being returned to the client.
+  #
+  maxBodySize: 250m
+
+  # -- Defines a timeout for establishing a connection with a proxied server. It should
+  # be noted that this timeout cannot usually exceed 75 seconds.
+  #
+  proxyConnectTimeout: 60
+
+  # -- Defines a timeout for reading a response from the proxied server. The timeout is
+  # set only between two successive read operations, not for the transmission of the
+  # whole response. If the proxied server does not transmit anything within this time,
+  # the connection is closed.
+  #
+  proxyReadTimeout: 60
+
+  # -- Sets a timeout for transmitting a request to the proxied server. The timeout is set
+  # only between two successive write operations, not for the transmission of the whole
+  # request. If the proxied server does not receive anything within this time, the
+  # connection is closed.
+  #
+  proxySendTimeout: 60
+
+  # -- The custom annotations that should be applied to the Ingress Resource.
+  # If using an ingress-nginx controller be sure that the annotations you add
+  # here are compatible with those already defined in the 'ingess.yaml' template
+  #
+  annotations: {}
+
+  # -- The name of the K8s Secret that contains the TLS private key and corresponding
+  # certificate. When utilised, TLS termination occurs at the ingress point where
+  # traffic to the Service, and it's Pods is in plaintext.
+  #
+  # Usage is optional and depends on your use case. The Ingress Controller itself
+  # can also be configured with a TLS secret for all Ingress Resources.
+  # https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+  # https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+  #
+  tlsSecretName:
+
+  # -- Additional paths to be added to the Ingress resource to point to different backend services
+  #
+  additionalPaths: []
+    #- path: /static-content
+    #  pathType: Prefix
+    #  service: static-content-svc
+    #  portNumber: 80
+
+# Gateway API configuration
+#
+# Use this section when routing external traffic to Jira via the Kubernetes
+# Gateway API, or when using an external proxy/load balancer without creating
+# any K8s routing resource. Only one of 'ingress' or 'gateway' should be used.
+# https://gateway-api.sigs.k8s.io/
+#
+gateway:
+
+  # -- Set to 'true' if an HTTPRoute Resource should be created. This depends on a
+  # pre-provisioned Gateway API controller being available and a Gateway resource.
+  # Cannot be enabled if ingress.create is true.
+  #
+  create: false
+
+  # -- The hostnames that should be routed to Jira. At least one hostname
+  # is required when gateway.create is true. Setting hostnames activates gateway
+  # mode for product configuration even when gateway.create is false, allowing
+  # use with a pre-existing Gateway or external proxy.
+  # The first entry is used as the canonical hostname for base URL, proxy
+  # settings, and NOTES output — list the primary/public hostname first.
+  #
+  hostnames: []
+  # - jira.example.com
+  # - jira-prod.example.com
+
+  # -- Whether users access the application over HTTPS.
+  # This does not configure TLS on the Gateway or load balancer — it must match
+  # how traffic is actually routed to the application.
+  #
+  https: true
+
+  # -- The port users connect on. Defaults to 443 (https) or 80 (http).
+  # This does not change the Gateway or load balancer port — it must match
+  # the port that is actually used. Only set for non-standard ports.
+  #
+  # externalPort:
+
+  # -- The base path for routing. When empty, falls back to the product's
+  # service.contextPath (same behavior as ingress). Set explicitly to
+  # override, e.g. "/jira".
+  #
+  path:
+
+  # ---------------------------------------------------------------------------
+  # The options below apply only when gateway.create is true.
+  # They configure the HTTPRoute resource and have no effect otherwise.
+  # ---------------------------------------------------------------------------
+
+  # -- Reference to the parent Gateway resource. Supports any standard
+  # parentRef fields (name, namespace, sectionName, etc.).
+  # See: https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.ParentReference
+  #
+  parentRefs: []
+    # - name: example-gateway
+    #   namespace: example-gateway-namespace
+    #   sectionName: https
+
+  # -- Path matching type. Can be "PathPrefix", "Exact", or "RegularExpression".
+  # PathPrefix is recommended for most use cases.
+  #
+  pathType: "PathPrefix"
+
+  # -- Annotations to add to the HTTPRoute resource.
+  #
+  annotations: {}
+  # kubernetes.io/ingress.class: gateway
+  # cert-manager.io/cluster-issuer: letsencrypt
+
+  # -- Labels to add to the HTTPRoute resource.
+  #
+  labels: {}
+  # environment: production
+  # team: platform
+
+  # -- HTTP filters to apply to requests. Can be used to add/remove headers,
+  # perform redirects, or rewrite URLs.
+  # See: https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.HTTPRouteFilter
+  #
+  filters: []
+  # - type: RequestHeaderModifier
+  #   requestHeaderModifier:
+  #     add:
+  #     - name: X-Forwarded-Proto
+  #       value: https
+
+  # -- Advanced routing rules. Use this for complex routing scenarios like
+  # header-based routing, traffic splitting, or multiple backends.
+  # See: https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.HTTPRouteRule
+  #
+  additionalRules: []
+  # - matches:
+  #   - path:
+  #       type: PathPrefix
+  #       value: /api
+  #   backendRefs:
+  #   - name: jira-api
+  #     port: 8080
+
+  # -- Session affinity (sticky sessions) is required for Atlassian DC products but
+  # is not part of the standard Gateway API HTTPRoute spec. It must be configured
+  # separately through your Gateway implementation's own policy resources.
+  # See docs/docs/examples/ingress/GATEWAY_API_SESSION_AFFINITY.md for working examples.
+
+  # -- Timeout configuration for HTTPRoute rules.
+  # Note: when migrating from Ingress, these replace proxyReadTimeout and
+  # proxySendTimeout. There is no Gateway API equivalent for
+  # proxyConnectTimeout or maxBodySize — those require controller-specific
+  # policies (e.g. Envoy Gateway BackendTrafficPolicy).
+  # See: https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.HTTPRouteTimeouts
+  #
+  timeouts:
+    request: "60s"
+    backendRequest: "60s"
+
+# Jira configuration
+#
+jira:
+
+  # -- Whether the main container should acquire helm release name. The default, the container name is jira (Helm chart name)
+  #
+  useHelmReleaseNameAsContainerName: false
+
+  # K8s Service configuration
+  #
+  service:
+
+    # -- The port on which the Jira K8s Service will listen
+    #
+    port: 80
+
+    # -- The type of K8s service to use for Jira
+    #
+    type: ClusterIP
+
+    # --  Only applicable if service.type is NodePort. NodePort for Jira service
+    #
+    nodePort:
+
+    # -- Session affinity type. If you want to make sure that connections from a particular client
+    # are passed to the same pod each time, set sessionAffinity to ClientIP.
+    # See: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity
+    #
+    sessionAffinity: None
+
+    # -- Session affinity configuration
+    #
+    sessionAffinityConfig:
+
+      clientIP:
+
+        # -- Specifies the seconds of ClientIP type session sticky time.
+        # The value must be > 0 && <= 86400(for 1 day) if ServiceAffinity == "ClientIP". Default value is 10800 (for 3 hours).
+        #
+        timeoutSeconds:
+
+    # -- Use specific loadBalancerIP. Only applies to service type LoadBalancer.
+    #
+    loadBalancerIP:
+
+    # -- The Tomcat context path that Jira will use. The ATL_TOMCAT_CONTEXTPATH
+    # will be set automatically.
+    #
+    contextPath:
+
+    # -- Additional annotations to apply to the Service
+    #
+    annotations: {}
+
+  # Standard K8s field that holds pod-level security attributes and common container settings.
+  # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  # Do not populate when deploying to OpenShift, unless anyuid policy is attached to a service account.
+  #
+
+  # -- Whether to apply security context to pod.
+  #
+  securityContextEnabled: true
+
+  securityContext:
+
+    # -- The GID used by the Jira docker image
+    # GID will default to 2001 if not supplied and securityContextEnabled is set to true.
+    # This is intended to ensure that the shared-home volume is group-writeable by the GID used by the Jira container.
+    # However, this doesn't appear to work for NFS volumes due to a K8s bug: https://github.com/kubernetes/examples/issues/260
+    #
+    fsGroup: 2001
+
+    # -- fsGroupChangePolicy defines behavior for changing ownership and permission of the volume before being exposed inside a Pod.
+    # This field only applies to volume types that support fsGroup controlled ownership and permissions.
+    # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#configure-volume-permission-and-ownership-change-policy-for-pods
+    #
+    fsGroupChangePolicy: "OnRootMismatch"
+
+  # -- Standard K8s field that holds security configurations that will be applied to a container.
+  # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  #
+  containerSecurityContext: {}
+
+  # -- Boolean to define whether to set local home directory permissions on startup
+  # of Jira container. Set to 'false' to disable this behaviour.
+  #
+  setPermissions: true
+
+  # Port definitions
+  #
+  ports:
+
+    # -- The port on which the Jira container listens for HTTP traffic
+    #
+    http: 8080
+
+    # -- Ehcache port
+    #
+    ehcache: 40001
+
+    # -- Ehcache object port
+    #
+    ehcacheobject: 40011
+
+  # Confirm that Jira is available with a ReadinessProbe
+  # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes
+  #
+  readinessProbe:
+
+    # -- Whether to apply the readinessProbe check to pod.
+    #
+    enabled: true
+
+    # -- The initial delay (in seconds) for the Jira container readiness probe,
+    # after which the probe will start running.
+    #
+    initialDelaySeconds: 10
+
+    # -- How often (in seconds) the Jira container readiness probe will run
+    #
+    periodSeconds: 5
+
+    # -- Number of seconds after which the probe times out
+    #
+    timeoutSeconds: 1
+
+    # -- The number of consecutive failures of the Jira container readiness probe
+    # before the pod fails readiness checks.
+    #
+    failureThreshold: 10
+
+    # -- Custom readinessProbe to override the default /status httpGet
+    #
+    customProbe: {}
+#      tcpSocket:
+#        port: 8080
+#      periodSeconds: 5
+#      failureThreshold: 120
+
+  # Confirm that Jira is up and running with a StartupProbe
+  # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  #
+  startupProbe:
+
+    # -- Whether to apply the startupProbe check to pod.
+    #
+    enabled: false
+
+    # -- Time to wait before starting the first probe
+    #
+    initialDelaySeconds: 60
+
+    # -- How often (in seconds) the Jira container startup probe will run
+    #
+    periodSeconds: 5
+
+    # -- The number of consecutive failures of the Jira container startup probe
+    # before the pod fails startup checks.
+    #
+    failureThreshold: 120
+
+  # Ensure that the server responds with a LivenessProbe
+  # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe
+  #
+  livenessProbe:
+
+    # -- Whether to apply the livenessProbe check to pod.
+    #
+    enabled: false
+
+    # -- Time to wait before starting the first probe
+    #
+    initialDelaySeconds: 60
+
+    # -- How often (in seconds) the Jira container liveness probe will run
+    #
+    periodSeconds: 5
+
+    # -- Number of seconds after which the probe times out
+    #
+    timeoutSeconds: 1
+
+    # -- The number of consecutive failures of the Jira container liveness probe
+    # before the pod fails liveness checks.
+    #
+    failureThreshold: 12
+
+    # -- Custom livenessProbe to override the default tcpSocket probe
+    #
+    customProbe: {}
+
+  # Jira log configuration
+  #
+  accessLog:
+
+    # -- The path within the Jira container where the local-home volume should be
+    # mounted in order to capture access logs.
+    #
+    mountPath: "/opt/atlassian/jira/logs"
+
+    # -- The subdirectory within the local-home volume where access logs should be
+    # stored.
+    #
+    localHomeSubPath: "log"
+
+  # Use AWS S3 to store avatars and attachments. From Jira 9.9 onwards.
+  #
+
+  s3Storage:
+
+    avatars:
+      # -- Bucket name to store avatars. If a bucket name and region (see below) are defined, Jira will automatically
+      # use AWS S3 to store avatars. Only bucket name is required, not the full arn.
+      #
+      bucketName:
+
+      # -- AWS region where the S3 bucket is located.
+      #
+      bucketRegion:
+
+      # -- Override the default AWS API endpoint with a custom one
+      #
+      endpointOverride:
+
+    attachments:
+      # -- Bucket name to store attachments. If a bucket name and region (see below) are defined, Jira will automatically
+      # use AWS S3 to store attachments. Only bucket name is required, not the full arn.
+      # If you provide the same bucket name for both avatars and attachments, they will be stored in the same bucket
+      #
+      bucketName:
+
+      # -- AWS region where the S3 bucket is located.
+      #
+      bucketRegion:
+
+      # -- Override the default AWS API endpoint with a custom one
+      #
+      endpointOverride:
+
+    backups:
+      # -- Bucket name to store backups. If a bucket name and region (see below) are defined, Jira will automatically
+      # use AWS S3 to store backups. Only bucket name is required, not the full arn.
+      # If you provide the same bucket name for both avatars and backups, they will be stored in the same bucket
+      #
+      bucketName:
+
+      # -- AWS region where the S3 bucket is located.
+      #
+      bucketRegion:
+
+      # -- Override the default AWS API endpoint with a custom one
+      #
+      endpointOverride:
+
+  session:
+
+    # -- User session timeout. Set to 30 minutes in web.xml
+    #
+    timeout:
+
+    # -- The maximum time a user can remain logged-in with 'Remember Me'. Defaults to 1209600; two weeks, in seconds
+    #
+    autologinCookieAge:
+
+  # Data Center clustering
+  #
+  clustering:
+
+    # -- Set to 'true' if Data Center clustering should be enabled
+    # This will automatically configure cluster peer discovery between cluster nodes.
+    #
+    enabled: false
+
+  shutdown:
+
+    # -- The termination grace period for pods during shutdown. This
+    # should be set to the internal grace period, plus a small buffer
+    # to allow the JVM to fully terminate.
+    #
+    terminationGracePeriodSeconds: 30
+
+    # -- By default pods will be stopped via a [preStop hook](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/),
+    # using a script supplied by the Docker image. If any other
+    # shutdown behaviour is needed it can be achieved by overriding
+    # this value. Note that the shutdown command needs to wait for the
+    # application shutdown completely before exiting; see [the default
+    # command](https://bitbucket.org/atlassian-docker/docker-atlassian-jira/src/master/shutdown-wait.sh)
+    # for details.
+    #
+    command: "/shutdown-wait.sh"
+
+  # -- PostStart is executed immediately after a container is created.
+  # However, there is no guarantee that the hook will execute before the container ENTRYPOINT.
+  # See: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
+  #
+  postStart:
+    command:
+
+  # Pod resource requests
+  #
+  resources:
+
+    # JVM Memory / Heap Size definitions. The values below are based on the
+    # defaults defined for the Jira docker container.
+    # https://bitbucket.org/atlassian-docker/docker-atlassian-jira/src/master/#markdown-header-memory-heap-size
+    #
+    jvm:
+
+      # -- The maximum amount of heap memory that will be used by the Jira JVM
+      #
+      maxHeap: "768m"
+
+      # -- The minimum amount of heap memory that will be used by the Jira JVM
+      #
+      minHeap: "384m"
+
+      # -- The memory reserved for the Jira JVM code cache
+      #
+      reservedCodeCache: "512m"
+
+    # Specifies the standard K8s resource requests and/or limits for the Jira
+    # container. It is important that if the memory resources are specified here,
+    # they must allow for the size of the Jira JVM. That means the maximum heap
+    # size, the reserved code cache size, plus other JVM overheads, must be
+    # accommodated. Allowing for (maxHeap+codeCache)*1.5 would be an example.
+    #
+    container:
+
+      requests:
+
+        # -- Initial CPU request by Jira pod
+        #
+        cpu: "2"
+
+        # -- Initial Memory request by Jira pod
+        #
+        memory: "2G"
+
+      # limits:
+      #   cpu: "2"
+      #   memory: "2G"
+
+  # -- The Docker entrypoint.py generates application configuration on
+  # first start; not all of these files are regenerated on subsequent starts.
+  # By default, dbconfig.xml is generated only once. Set `forceConfigUpdate` to true
+  # to change this behavior.
+  #
+  forceConfigUpdate: false
+  # Specifies a list of additional arguments that can be passed to the Jira JVM, e.g.
+  # system properties.
+  #
+  additionalJvmArgs: []
+
+  # -- By default Tomcat's server.xml is generated in the container entrypoint from a template
+  # shipped with an official Jira image. However, server.xml generation may fail if container
+  # is not run as root, which is a common case if Jira is deployed to OpenShift.
+  #
+  tomcatConfig:
+
+    # -- Mount server.xml as a ConfigMap. Override configuration elements if necessary
+    #
+    generateByHelm: false
+
+    mgmtPort: "8005"
+    port: "8080"
+    maxThreads: "100"
+    minSpareThreads: "10"
+    connectionTimeout: "20000"
+    enableLookups: "false"
+    protocol: "HTTP/1.1"
+    redirectPort: "8443"
+    acceptCount: "100"
+    # secure is set based on the https setting (gateway.https or ingress.https)
+    secure:
+    # scheme is set based on the https setting (http if false, https if true)
+    scheme:
+    # proxyName is set to the configured hostname (gateway.hostnames[0] or ingress.host)
+    proxyName:
+    # proxyPort is set to the external port (defaults to 443 for https, 80 for http)
+    proxyPort:
+    maxHttpHeaderSize: "8192"
+    stuckThreadDetectionValveThreshold: "120"
+    accessLogMaxDays: "-1"
+    accessLogPattern: "%a %{jira.request.id}r %{jira.request.username}r %t &quot;%m %U%q %H&quot; %s %b %D &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{jira.request.assession.id}r&quot;"
+    requestAttributesEnabled: "false"
+
+    # -- Custom server.xml to be mounted into /opt/atlassian/jira/conf
+    #
+    customServerXml: |
+#      <?xml version='1.0' encoding='utf-8'?>
+#      <Server port="8005" shutdown="SHUTDOWN">
+#      </Server>
+
+  # -- By default seraph-config.xml is generated in the container entrypoint from a template
+  # shipped with an official Jira image. However, seraph-config.xml generation may fail if container
+  # is not run as root, which is a common case if Jira is deployed to OpenShift.
+  #
+  seraphConfig:
+
+    # -- Mount seraph-config.xml as a ConfigMap. Override configuration elements if necessary
+    #
+    generateByHelm: false
+
+    autoLoginCookieAge: "1209600"
+
+  # -- Specifies a list of additional Java libraries that should be added to the
+  # Jira container. Each item in the list should specify the name of the volume
+  # that contains the library, as well as the name of the library file within that
+  # volume's root directory. Optionally, a subDirectory field can be included to
+  # specify which directory in the volume contains the library file. Additional details:
+  # https://atlassian.github.io/data-center-helm-charts/examples/external_libraries/EXTERNAL_LIBS/
+  #
+  additionalLibraries: []
+  #  - volumeName:
+  #    subDirectory:
+  #    fileName:
+
+  # -- Specifies a list of additional Jira plugins that should be added to the
+  # Jira container. Note plugins installed via this method will appear as
+  # bundled plugins rather than user plugins. These should be specified in the same
+  # manner as the 'additionalLibraries' property. Additional details:
+  # https://atlassian.github.io/data-center-helm-charts/examples/external_libraries/EXTERNAL_LIBS/
+  #
+  # NOTE: only .jar files can be loaded using this approach. OBR's can be extracted
+  # (unzipped) to access the associated .jar
+  #
+  # An alternative to this method is to install the plugins via "Manage Apps" in the
+  # product system administration UI.
+  #
+  additionalBundledPlugins: []
+  #  - volumeName:
+  #    subDirectory:
+  #    fileName:
+
+  # -- Defines any additional volumes mounts for the Jira container. These
+  # can refer to existing volumes, or new volumes can be defined via
+  # 'volumes.additional'.
+  #
+  additionalVolumeMounts: []
+
+  # -- Additional properties to inject into jira-config.properties at container
+  # startup via ADDITIONAL_JIRA_CONFIG_* environment variables.
+  # Each entry is a "key=value" property line. Environment variable names are
+  # sorted for consistent file generation; order has no effect on runtime behavior.
+  #
+  # Requires a Jira container image version that supports ADDITIONAL_JIRA_CONFIG_*.
+  #
+  additionalConfigProperties: []
+  #  - "jira.websudo.is.disabled=true"
+  #  - "jira.lf.top.bgcolour=#003366"
+
+  # -- Additional properties requiring environment variable expansion at
+  # container startup. Values containing {VAR_NAME} placeholders will be
+  # replaced with the corresponding environment variable value.
+  # Useful for injecting secrets without hardcoding them in values.
+  #
+  additionalConfigPropertiesExpandEnv: []
+  #  - "opensearch.password={OPENSEARCH_ADMIN_PASSWORD}"
+
+  # -- Defines any additional environment variables to be passed to the Jira
+  # container. See https://hub.docker.com/r/atlassian/jira-software for
+  # supported variables.
+  #
+  additionalEnvironmentVariables: []
+
+  # -- Defines additional annotations to the Jira StateFulSet. This might be required when deploying using a GitOps approach
+  additionalAnnotations: {}
+  #  argocd.argoproj.io/sync-wave: "10"
+
+  # -- Defines any additional ports for the Jira container.
+  #
+  additionalPorts: []
+  #  - name: jmx
+  #    containerPort: 5555
+  #    protocol: TCP
+
+  # -- Defines additional volumeClaimTemplates that should be applied to the Jira pod.
+  # Note that this will not create any corresponding volume mounts;
+  # those needs to be defined in jira.additionalVolumeMounts
+  #
+  additionalVolumeClaimTemplates: []
+  #  - name: myadditionalvolumeclaim
+  #    storageClassName:
+  #    resources:
+  #      requests:
+  #        storage: 1Gi
+
+  # -- Defines topology spread constraints for Jira pods. See details:
+  # https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  #
+  topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: kubernetes.io/hostname
+  #   whenUnsatisfiable: ScheduleAnyway
+  #   labelSelector:
+  #     matchLabels:
+
+  # -- Certificates to be added to Java truststore. Provide reference to a secret that contains the certificates
+  #
+  additionalCertificates:
+    # -- Name of the Kubernetes secret with certificates in its data. All secret keys in the secret data
+    # will be treated as certificates to be added to Java truststore. If defined, this takes precedence over secretList.
+    #
+    secretName:
+    # -- A list of secrets with their respective keys holding certificates to be added to the Java truststore.
+    # It is mandatory to specify which keys from secret data need to be mounted as files to the init container.
+    #
+    secretList: []
+    #- name: self-signed-ca
+    #  keys:
+    #    - ca.crt
+    #    - intermediate.crt
+    #- name: stg-intermediate
+    #  keys:
+    #    - stg.crt
+
+    # -- Custom command to be executed in the init container to import certificates
+    #
+    customCmd:
+
+    initContainer:
+      # -- Resources allocated to the import-certs init container
+      #
+
+      resources: {}
+      # -- Custom SecurityContext for the import-certs init container
+      #
+      securityContext: {}
+
+  # -- Configure additional Tomcat connector to set up tunnel. Define the connector port and optional additional attributes.
+  # When 'tunnel.additionalConnector.port' is defined, an additional connector is added to server.xml
+  # and '-Dsecure.tunnel.upstream.port=<port_number>' is added to JVM args
+  #
+  tunnel:
+    additionalConnector:
+      port:
+      connectionTimeout: "20000"
+      maxThreads: "50"
+      minSpareThreads: "10"
+      enableLookups: "false"
+      acceptCount: "10"
+      URIEncoding: "UTF-8"
+      secure: false
+
+# Monitoring
+#
+monitoring:
+
+  # -- Expose JMX metrics with jmx_exporter https://github.com/prometheus/jmx_exporter
+  #
+  exposeJmxMetrics: false
+
+  # --  JMX exporter init container configuration
+  #
+  jmxExporterInitContainer:
+
+    # -- The location of the JMX exporter jarfile in the JMX exporter image
+    # Leave blank for default bitnami image
+    #
+    jmxJarLocation:
+
+    # -- Whether to run JMX exporter init container as root to copy JMX exporter binary to shared home volume.
+    # Set to false if running containers as root is not allowed in the cluster.
+    #
+    runAsRoot: true
+
+    # -- Custom SecurityContext for the jmx exporter init container
+    #
+    customSecurityContext: {}
+
+    # -- Resources requests and limits for the JMX exporter init container
+    # See: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    #
+    resources: {}
+    #  requests:
+    #    cpu: "1m"
+    #    memory: "20Mi"
+    #  limits:
+    #    cpu: "1"
+    #    memory: "1G"
+
+  # -- Annotations added to the jmx service
+  #
+  jmxServiceAnnotations: {}
+
+  # -- Fetch jmx_exporter jar from the image. If set to false make sure to manually copy the jar
+  # to shared home and provide an absolute path in jmxExporterCustomJarLocation
+  #
+  fetchJmxExporterJar: true
+
+  # -- Image repository with jmx_exporter jar
+  #
+  jmxExporterImageRepo: bitnamilegacy/jmx-exporter
+  jmxExporterImageTag: 0.18.0
+
+
+
+  # -- Port number on which metrics will be available
+  #
+  jmxExporterPort: 9999
+
+  # -- JMX exporter port type
+  #
+  jmxExporterPortType: ClusterIP
+
+  # -- Location of jmx_exporter jar file if mounted from a secret or manually copied to shared home
+  #
+  jmxExporterCustomJarLocation:
+
+  # -- Custom JMX config with the rules
+  #
+  jmxExporterCustomConfig: {}
+  #  rules:
+  #   - pattern: ".*"
+
+  serviceMonitor:
+
+    # -- Create ServiceMonitor to start scraping metrics. ServiceMonitor CRD needs to be created in advance.
+    #
+    create: false
+
+    # -- ServiceMonitorSelector of the prometheus instance.
+    #
+    prometheusLabelSelector: {}
+      # release: prometheus
+
+    # -- Scrape interval for the JMX service.
+    #
+    scrapeIntervalSeconds: 30
+
+    # -- How long until a scrape request times out. It cannot be greater than the scrape interval.
+    #
+    scrapeTimeoutSeconds: 20
+
+  grafana:
+
+    # -- Create ConfigMaps with Grafana dashboards
+    #
+    createDashboards: false
+
+    # -- Label selector for Grafana dashboard importer sidecar
+    #
+    dashboardLabels: {}
+      # grafana_dashboard: dc_monitoring
+
+    # -- Annotations added to Grafana dashboards ConfigMaps. See: https://github.com/kiwigrid/k8s-sidecar#usage
+    #
+    dashboardAnnotations: {}
+      # k8s-sidecar-target-directory: /tmp/dashboards/example-folder
+
+# Fluentd configuration
+#
+# Jira log collection and aggregation can be enabled using Fluentd. This config
+# assumes an existing ELK stack has been stood up and is available.
+# https://www.fluentd.org/
+#
+fluentd:
+
+  # -- Set to 'true' if the Fluentd sidecar (DaemonSet) should be added to each pod
+  #
+  enabled: false
+
+  # -- The Fluentd sidecar image repository
+  #
+  imageRepo: fluent/fluentd-kubernetes-daemonset
+
+  # -- The Fluentd sidecar image tag
+  #
+  imageTag: v1.11.5-debian-elasticsearch7-1.2
+
+  # -- Resources requests and limits for fluentd sidecar container
+  # See: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+  #
+  resources: {}
+  #  requests:
+  #    cpu: "1m"
+  #    memory: "20Mi"
+  #  limits:
+  #    cpu: "1"
+  #    memory: "1G"
+
+  # -- The command used to start Fluentd. If not supplied the default command
+  # will be used: "fluentd -c /fluentd/etc/fluent.conf -v"
+  #
+  # Note: The custom command can be free-form, however pay particular attention to
+  # the process that should ultimately be left running in the container. This process
+  # should be invoked with 'exec' so that signals are appropriately propagated to it,
+  # for instance SIGTERM. An example of how such a command may look is:
+  # "<command 1> && <command 2> && exec <primary command>"
+  command:
+
+  # -- Set to 'true' if a custom config (see 'configmap-fluentd.yaml' for default)
+  # should be used for Fluentd. If enabled this config must be supplied via the
+  # 'fluentdCustomConfig' property below. If your custom config forces fluentd to run in a server mode,
+  # add `-Datlassian.logging.cloud.enabled=true` to `jira.AdditionalJvmArgs` stanza in values file
+  #
+  customConfigFile: false
+
+  # -- Custom fluent.conf file
+  #
+  fluentdCustomConfig: {}
+  # fluent.conf: |
+    # <source>
+    #   @type tail
+    #   <parse>
+    #   @type multiline
+    #   format_firstline /\d{4}-\d{1,2}-\d{1,2}/
+    #   </parse>
+    #   path /opt/atlassian/jira/logs/access_log.*
+    #   pos_file /tmp/jiralog.pos
+    #   tag jira-access-logs
+    # </source>
+
+  # -- The port on which the Fluentd sidecar will listen
+  #
+  httpPort: 9880
+
+  # Elasticsearch config based on your ELK stack
+  #
+  elasticsearch:
+
+    # -- Set to 'true' if Fluentd should send all log events to an Elasticsearch service.
+    #
+    enabled: true
+
+    # -- The hostname of the Elasticsearch service that Fluentd should send logs to.
+    #
+    hostname: elasticsearch
+
+    # -- The prefix of the Elasticsearch index name that will be used
+    #
+    indexNamePrefix: jira
+
+  # -- Specify custom volumes to be added to Fluentd container (e.g. more log sources)
+  #
+  extraVolumes: []
+  # - name: local-home
+  #   mountPath: /opt/atlassian/jira/logs
+  #   subPath: log
+  #   readOnly: true
+
+
+# -- Custom annotations that will be applied to all Jira pods
+#
+podAnnotations: {}
+#  name: <value>
+
+# -- Custom labels that will be applied to all Jira pods
+#
+podLabels: {}
+#  name: <value>
+
+# -- Standard K8s node-selectors that will be applied to all Jira pods
+#
+nodeSelector: {}
+#  name: <value>
+
+# -- Standard K8s tolerations that will be applied to all Jira pods
+#
+tolerations: []
+# - effect: <name>
+#   operator: <operator>
+#   key: <key>
+
+# -- Standard K8s affinities that will be applied to all Jira pods
+#
+affinity: {}
+#  name: <value>
+
+# -- Standard K8s schedulerName that will be applied to all Jira pods.
+# Check Kubernetes documentation on how to configure multiple schedulers:
+# https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/#specify-schedulers-for-pods
+#
+schedulerName:
+
+# -- Priority class for the application pods. The PriorityClass with this name needs to be available in the cluster.
+# For details see https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#priorityclass
+#
+priorityClassName:
+
+# -- Share host namespaces which may include hostNetwork, hostIPC, and hostPID
+#
+hostNamespaces: {}
+
+# -- Additional container definitions that will be added to all Jira pods
+#
+additionalContainers: []
+#  - name: <name>
+#    image: <image>:<tag>
+
+# -- Additional initContainer definitions that will be added to all Jira pods
+#
+additionalInitContainers: []
+#  - name: <name>
+#    image: <image>:<tag>
+
+# -- Additional labels that should be applied to all resources
+#
+additionalLabels: {}
+#  name: <value>
+
+# -- Additional existing ConfigMaps and Secrets not managed by Helm that should be
+# mounted into service container. Configuration details below (camelCase is important!):
+  # 'name'      - References existing ConfigMap or secret name.
+  # 'type'      - 'configMap' or 'secret'
+  # 'key'       - The file name.
+  # 'mountPath' - The destination directory in a container.
+# VolumeMount and Volumes are added with this name and index position, for example;
+# custom-config-0, keystore-2
+#
+additionalFiles: []
+#  - name: custom-config
+#    type: configMap
+#    key: log4j.properties
+#    mountPath:  /var/atlassian
+#  - name: custom-config
+#    type: configMap
+#    key: web.xml
+#    mountPath: /var/atlassian
+#  - name: keystore
+#    type: secret
+#    key: keystore.jks
+#    mountPath: /var/ssl
+
+# -- Additional host aliases for each pod, equivalent to adding them to the /etc/hosts file.
+# https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+additionalHosts: []
+#  - ip: "127.0.0.1"
+#    hostnames:
+#    - "foo.local"
+#    - "bar.local"
+
+# -- PodDisruptionBudget: https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+# You can specify only one of maxUnavailable and minAvailable in a single PodDisruptionBudget. When both minAvailable and maxUnavailable are set, maxUnavailable takes precedence.
+#
+podDisruptionBudget:
+  enabled: false
+  labels: {}
+  annotations: {}
+  minAvailable:
+  maxUnavailable:
+
+# -- Create additional ConfigMaps with given names, keys and content. Ther Helm release name will be used as a prefix
+# for a ConfigMap name, fileName is used as subPath
+#
+additionalConfigMaps: []
+#  - name: extra-configmap
+#    keys:
+#      - fileName: hello.properties
+#        mountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes
+#        defaultMode:
+#        content: |
+#          foo=bar
+#          hello=world
+#      - fileName: hello.xml
+#        mountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes
+#        defaultMode:
+#        content: |
+#          <xml>
+#          </xml>
+
+atlassianAnalyticsAndSupport:
+
+  analytics:
+
+    # -- Mount ConfigMap with selected Helm chart values as a JSON
+    # which DC products will read and send analytics events to Atlassian data pipelines
+    #
+    enabled: true
+
+  helmValues:
+
+    # -- Mount ConfigMap with selected Helm chart values as a YAML file
+    # which can be optionally including to support.zip
+    #
+    enabled: true
+
+# -- Metadata and pod spec for pods started in Helm tests
+#
+testPods:
+  resources: {}
+  labels: {}
+  annotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  schedulerName:
+  image:
+    permissionsTestContainer: debian:stable-slim
+    statusTestContainer: alpine:latest
+
+openshift:
+
+  # -- When set to true, the containers will run with a restricted Security Context Constraint (SCC).
+  # See: https://docs.openshift.com/container-platform/4.14/authentication/managing-security-context-constraints.html
+  # This configuration property unsets pod's SecurityContext, nfs-fixer init container (which runs as root), and mounts server
+  # configuration files as ConfigMaps.
+  #
+  runWithRestrictedSCC: false
+
+opensearch:
+
+  # -- Deploy OpenSearch Helm chart and Configure Jira to use it as a search platform
+  #
+  enabled: false
+
+  credentials:
+    # -- Let the Helm chart create a secret with an auto generated initial admin password
+    #
+    createSecret: true
+
+    # -- Use an existing secret with the key OPENSEARCH_INITIAL_ADMIN_PASSWORD holding the initial admin password
+    #
+    existingSecretRef:
+      name:
+
+  # -- OpenSearch helm specific values, see: https://github.com/opensearch-project/helm-charts/blob/main/charts/opensearch/values.yaml
+  #
+  singleNode: true
+  resources:
+    requests:
+      cpu: 1
+      memory: 1Gi
+  persistence:
+    size: 10Gi
+  extraEnvs:
+    - name: plugins.security.ssl.http.enabled
+      value: "false"
+  envFrom:
+    - secretRef:
+         # -- If using a pre-created secret, make sure to change secret name to match opensearch.credentials.existingSecretRef.name
+         #
+         name: opensearch-initial-password

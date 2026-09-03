@@ -1,0 +1,284 @@
+global:
+  # -- Global override for image registry
+  imageRegistry: ""
+  # -- Global override for image pull policy
+  imagePullPolicy: ""
+  # -- Global image pull secrets (merged with local imagePullSecrets and not overridden)
+  # - secret
+  imagePullSecrets: []
+  analytics:
+    # -- Global override for GA analytics
+    enabled:
+    # -- Global override for DNS nameservers used to resolve the analytics endpoint
+    gaDnsNameservers:
+
+# -- Image registry for CSI Sidecars
+csiSideCars:
+  image:
+    # -- Image registry for csi sidecars
+    registry: "registry.k8s.io"
+    # -- Image pull policy for csi sidecars
+    pullPolicy: IfNotPresent
+
+# -- Name of the registered CSI Driver in the cluster
+provisionerName: "rawfile.csi.openebs.io"
+
+# -- Level of the logs (DEBUG, INFO, etc.)
+logLevel: INFO
+# -- Format of the logs (json, pretty)
+logFormat: json
+
+auth:
+  # -- Enables authentication for internal gRPC server
+  enabled: true
+  # -- Sets authentication token for internal gRPC server, will generate one if nothing provided
+  token: ""
+  # -- If managing secrets outside the chart, use this to reference the secret name; otherwise, leave empty.
+  secretName: ""
+
+image:
+  # -- Image registry for rawfile-localpv (can be overridden by global.imageRegistry)
+  registry: "docker.io"
+  # -- Image repository for rawfile-localpv
+  repository: openebs/rawfile-localpv
+  # -- Default image tag for node and controller components (uses AppVersion if empty)
+  tag:
+  # -- Default image pull policy for node and controller components
+  pullPolicy: IfNotPresent
+
+analytics:
+  # -- Enable OpenEBS analytics which help track engine traction and usage.
+  enabled: true
+  # -- Comma-separated DNS nameservers (each optionally `ip:port`) used to resolve the analytics endpoint. Leave empty to use the cluster's default resolver (CoreDNS).
+  gaDnsNameservers: "8.8.8.8:53"
+
+controller:
+  externalResizer:
+    # -- Sets compute resources for external-resizer container
+    resources: {}
+    image:
+      # -- Image registry for `csi-resizer`
+      registry: ""
+      # -- Image Repository for `csi-resizer`
+      repository: sig-storage/csi-resizer
+      # -- Image tag for `csi-resizer`
+      tag: v2.2.1
+      # -- Image pull policy for `csi-resizer`
+      pullPolicy:
+
+  # -- Sets compute resources for controller component
+  resources:
+    {}
+    # limits:
+    #   cpu: 1
+    #   memory: 100Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 100Mi
+
+  # -- priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default
+  priorityClassName: system-cluster-critical
+
+  # -- Tolerations for controller component
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  # -- nodeSelector for controller component
+  nodeSelector:
+
+  # -- Affinities for controller component
+  affinity:
+
+  # -- Number of gRPC workers for controller component
+  grpcWorkers: 10
+
+node:
+  # -- Enables hostNetwork for node component
+  hostNetwork: false
+
+  driverRegistrar:
+    # -- Sets compute resources for driver-registrar container
+    resources: {}
+    image:
+      # -- Image Registry for `csi-node-driver-registrar`
+      registry: ""
+      # -- Image Repository for `csi-node-driver-registrar`
+      repository: sig-storage/csi-node-driver-registrar
+      # -- Image Tag for `csi-node-driver-registrar`
+      tag: v2.17.0
+      # -- Image pull policy for `csi-node-driver-registrar`
+      pullPolicy:
+
+    # -- Healthcheck port for driver-registrar
+    healthzPort: 9809
+
+  externalProvisioner:
+    # -- Sets compute resources for external-provisioner container
+    resources: {}
+    image:
+      # -- Image Registry for `csi-provisioner`
+      registry: ""
+      # -- Image Repository for `csi-provisioner`
+      repository: sig-storage/csi-provisioner
+      # -- Image Tag for `csi-provisioner`
+      tag: v6.3.0
+      # -- Image pull policy for `csi-provisioner`
+      pullPolicy:
+    # -- Sets capacity poll interval for `csi-provisioner`, determining how long the external-provisioner waits before checking for storage capacity changes.
+    capacityPollInterval: "1m"
+
+  externalSnapshotter:
+    # -- Sets compute resources for external-snapshotter container
+    resources: {}
+    image:
+      # -- Image Registry for `csi-snapshotter`
+      registry: ""
+      # -- Image Repository for `csi-snapshotter`
+      repository: sig-storage/csi-snapshotter
+      # -- Image Tag for `csi-snapshotter`
+      tag: v8.6.0
+      # -- Image pull policy for `csi-snapshotter`
+      pullPolicy:
+
+  snapshotController:
+    # -- Runs the snapshot-controller container. There should only be one snapshot-controller per cluster,
+    # so disable this if the cluster already runs one. That controller must be started with
+    # `--enable-distributed-snapshotting=true`, or rawfile snapshots will never be provisioned.
+    # Requires `capabilities.snapshots.enabled`.
+    enabled: true
+    # -- Sets compute resources for snapshot-controller container
+    resources: {}
+    image:
+      # -- Image Registry for `snapshot-controller`
+      registry: ""
+      # -- Image Repository for `snapshot-controller`
+      repository: sig-storage/snapshot-controller
+      # -- Image Tag for `snapshot-controller`
+      tag: v8.6.0
+      # -- Image pull policy for `snapshot-controller`
+      pullPolicy:
+
+  # -- Default filesystem type for rawfile volumes (Currently supports `btrfs`, `xfs` and `ext4` [which is default])
+  defaultFs: ext4
+
+  # -- Default storage pool name
+  defaultPool: default
+  # -- Storage pools configuration
+  storagePools:
+    default:
+      path: /var/local/openebs/rawfile/default-pool/
+  # -- Reserved capacity outside of the storage pool, can be specified in bytes or percentage of the underlying device capacity
+  #     reservedCapacity: ""
+  # -- Reserved capacity mode. `Plain` means it's taken as-is, `subtract-from-total` means it's subtracted from underlying device capacity. Example: if reservedCapacity is 100GiB, then `plain` means the pool can grow until 100GiB is left, and `subtract-from-total` means it can grow up to 100GiB. Default: `plain`
+  #     reservedCapacityMode: "plain" | "subtract-from-total"
+
+  # -- Metadata dir path for rawfile volumes metadata and tasks store file
+  metadataDirPath: /var/local/openebs/rawfile/{{ .Release.Name }}/meta
+
+  # -- Kubelet path (Set to `/var/lib/k0s/kubelet` for k0s)
+  kubeletPath: /var/lib/kubelet
+
+  # -- Sets compute resources for node component
+  resources: {}
+  metrics:
+    enabled: false
+
+  # -- priorityClassName for node component since this part is critical for node `system-node-critical` is default
+  priorityClassName: system-node-critical
+
+  # -- Tolerations for node component
+  tolerations:
+
+  # -- nodeSelector for node component
+  nodeSelector:
+
+  # -- Affinities for node component
+  affinity:
+
+  # -- Annotations for the node DaemonSet pods
+  podAnnotations: {}
+
+  # -- Number of gRPC workers for node component
+  grpcWorkers: 10
+
+  internalGRPC:
+    # -- Port Number used for internal communication gRPC server
+    port: 4500
+    # --gRPC worker count used for internal communication
+    workers: 10
+
+# -- Sets image pull secret while pulling images from a private registry
+imagePullSecrets: []
+
+metrics:
+  # -- Completely enable or disable metrics
+  enabled: true
+  # -- Sets metrics port
+  port: 9100
+  serviceMonitor:
+    # -- Enables prometheus service monitor
+    enabled: false
+    # -- Sets prometheus target interval
+    interval: 1m
+
+storageClasses:
+  - # -- Name of the StorageClass
+    name: rawfile-localpv
+    # -- Enable or disable StorageClass
+    enabled: true
+    # -- Sets volumeBindingMode for StorageClass
+    volumeBindingMode: WaitForFirstConsumer
+    # -- Make the storage class as default
+    isDefault: false
+    # -- volumes are able to expand/resize or not?
+    allowVolumeExpansion: true
+    # -- Sets default reclaimPolicy for StorageClass volumes
+    reclaimPolicy: Delete
+    # -- Sets filesystem type for volumes (Currently supports `btrfs`, `xfs` and `ext4` [which is default])
+    fsType: ext4
+    # -- Enables thin provisioning of volumes
+    thinProvision: ""
+    # -- Sets mount options for filesystem volumes
+    mountOptions: []
+    # -- Sets format options for filesystem volumes
+    formatOptions: []
+    # -- Enables CoW on storage class (defaults to autodetect)
+    copyOnWrite: ""
+    # -- Enables FreezeFS on storage class can be used to enable snapshotting of inused volumes when CoW is disabled/not supported (False by default)
+    freezeFs: ""
+    # -- Sets storage pool used for volumes
+    storagePool: ""
+
+snapshotClasses:
+  - # -- Name of the SnapshotClass
+    name: rawfile-localpv
+    # -- Enable or disable SnapshotClass
+    enabled: true
+    # -- Sets deletion policy for snapshots created using this class (Delete or Retain)
+    deletionPolicy: Delete
+    # -- Make the snapshot class as default
+    isDefault: false
+
+crds:
+  # -- Disables the installation of all CRDs if set to false
+  enabled: true
+  csi:
+    volumeSnapshots:
+      # -- Install Volume Snapshot CRDs
+      enabled: true
+
+capabilities:
+  snapshots:
+    # -- Sets whether taking volume snapshots is enabled. Required for volume cloning. Runs externalSnapshotter and snapshotController containers.
+    enabled: true
+  resize:
+    # -- Sets whether volume resizing is enabled. If disabled, don't deploy controller component
+    enabled: true
+  apiServer:
+    # -- Sets whether API Server has been enabled or not
+    enabled: true

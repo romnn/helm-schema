@@ -1,0 +1,118 @@
+{{- if .Values.agents.ha.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}-agent-ha-node
+  labels:
+    app: agent-ha-node
+    {{ include "label_prefix" . }}/release: {{ .Release.Name }}
+    {{ include "label_prefix" . }}/version: {{ .Chart.Version }}
+spec:
+  selector:
+    matchLabels:
+      app: agent-ha-node
+      {{ include "label_prefix" . }}/release: {{ .Release.Name }}
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: agent-ha-node
+        {{ include "label_prefix" . }}/release: {{ .Release.Name }}
+        {{ include "label_prefix" . }}/version: {{ .Chart.Version }}
+        {{ include "label_prefix" . }}/logging: "true"
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        {{- include "base_init_ha_node_containers" . }}
+      imagePullSecrets:
+        {{- include "base_pull_secrets" . }}
+      {{- if $pcName := include "priority_class_with_default" (dict "template" . "localPriorityClass" .Values.agents.ha.node.priorityClassName) }}
+      priorityClassName: {{ $pcName }}
+      {{- end }}
+      nodeSelector:
+        {{- include "node_selector" (dict "template" . "localNodeSelector" .Values.agents.ha.node.nodeSelector) }}
+        {{- if .Values.csi.node.topology.nodeSelector }}
+        {{- range $key, $val := .Values.csi.node.topology.segments }}
+        {{ $key }}: {{ $val }}
+        {{- end }}
+        {{- end }}
+      {{- if $tolerations := include "tolerations" (dict "template" . "localTolerations" .Values.agents.ha.node.tolerations) }}
+      tolerations: {{ $tolerations }}
+      {{- end }}
+      containers:
+      - name: agent-ha-node
+        image: "{{ default .Values.image.registry .Values.global.imageRegistry }}/{{ .Values.image.repo }}/{{ include "image_prefix" . }}-agent-ha-node:{{ default .Values.image.tag .Values.image.repoTags.controlPlane }}"
+        imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.imagePullPolicy }}
+        securityContext:
+          privileged: true
+        env:
+        - name: RUST_LOG
+          value: {{ .Values.agents.ha.node.logLevel }}
+        {{- if default .Values.base.logging.silenceLevel .Values.agents.ha.node.logSilenceLevel }}
+        - name: RUST_LOG_SILENCE
+          value: {{ default .Values.base.logging.silenceLevel .Values.agents.ha.node.logSilenceLevel }}
+        {{- end }}
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RUST_BACKTRACE
+          value: "1"
+        args:
+        - "--node-name=$(MY_NODE_NAME)"
+        - "--csi-socket={{ default .Values.csi.node.pluginMountPath .Values.csi.node.pluginMounthPath }}/{{ .Values.csi.node.socketPath }}"
+        - "--grpc-ip=$(MY_POD_IP)"
+        - "--grpc-port={{ default 50053 .Values.agents.ha.node.port }}"
+        - "--cluster-agent=https://{{ .Release.Name }}-agent-core:50052"{{ if .Values.base.jaeger.enabled }}
+        - "--jaeger={{ include "jaeger_url" . }}"{{ end }}{{ if .Values.eventing.enabled }}
+        - "--events-url=nats://{{ .Release.Name }}-nats:4222"
+        - "--events-replicas={{ include "events_replicas" . }}"{{ end }}
+        - "--ansi-colors={{ .Values.base.logging.color }}"
+        - "--fmt-style={{ include "logFormat" . }}"
+        volumeMounts:
+        - name: device
+          mountPath: /dev
+        - name: sys
+          mountPath: /sys
+        - name: run-udev
+          mountPath: /run/udev
+        - name: plugin-dir
+          mountPath: {{ default .Values.csi.node.pluginMountPath .Values.csi.node.pluginMounthPath }}
+        resources:
+          limits:
+            cpu: {{ .Values.agents.ha.node.resources.limits.cpu | quote }}
+            memory: {{ .Values.agents.ha.node.resources.limits.memory | quote }}
+          requests:
+            cpu: {{ .Values.agents.ha.node.resources.requests.cpu | quote }}
+            memory: {{ .Values.agents.ha.node.resources.requests.memory | quote }}
+        ports:
+          - containerPort: {{ default 50053 .Values.agents.ha.node.port }}
+            protocol: TCP
+            name: ha-node
+      volumes:
+      - name: device
+        hostPath:
+          path: /dev
+          type: Directory
+      - name: sys
+        hostPath:
+          path: /sys
+          type: Directory
+      - name: run-udev
+        hostPath:
+          path: /run/udev
+          type: Directory
+      - name: plugin-dir
+        hostPath:
+          path: {{ .Values.csi.node.kubeletDir }}/plugins/io.openebs.mayastor/
+          type: DirectoryOrCreate
+{{- end }}

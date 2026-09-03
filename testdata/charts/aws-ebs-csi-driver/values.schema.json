@@ -1,0 +1,1258 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "Configurable parameters of the AWS EBS CSI Driver",
+  "properties": {
+    "global": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Allowing global parameters for sub-charting"
+    },
+    "enabled": {
+      "type": ["boolean", "null"],
+      "description": "No effect - reserved for use in sub-charting"
+    },
+    "additionalDaemonSets": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Additional DaemonSets of the node pod",
+      "default": null,
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "$ref": "#/properties/node"
+        }
+      }
+    },
+    "defaultStorageClass": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Creates a default StorageClass.",
+          "default": false
+        }
+      }
+    },
+    "helmTester": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Supply a custom image to the ebs-csi-driver-test pod in helm-tester.yaml",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "string"
+        }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "default": []
+    },
+    "volumeSnapshotClasses": {
+      "type": "array",
+      "description": "Add VolumeSnapshotClass resources",
+      "default": []
+    },
+    "awsAccessSecret": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "aws-secret"
+        },
+        "keyId": {
+          "type": "string",
+          "default": "key_id"
+        },
+        "accessKey": {
+          "type": "string",
+          "default": "access_key"
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pullPolicy": {
+          "type": "string",
+          "default": "IfNotPresent"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "containerRegistry": {
+          "type": "string"
+        }
+      }
+    },
+    "useOldCSIDriver": {
+      "type": "boolean",
+      "description": "Use old CSIDriver without an fsGroupPolicy set Intended for use with older clusters that cannot easily replace the CSIDriver objectThis parameter should always be false for new installations",
+      "default": false
+    },
+    "nodeAllocatableUpdatePeriodSeconds": {
+      "type": ["integer", "null"],
+      "description": "nodeAllocatableUpdatePeriodSeconds updates the node's max attachable volume count by directing Kubelet to periodically call NodeGetInfo at the configured interval. Kubernetes enforces a minimum update interval of 10 seconds. A value of -1 uses a automatically determined value dependent on metadata sources. This parameter is supported in Kubernetes 1.33+, the MutableCSINodeAllocatableCount feature gate must be enabled in kubelet and kube-apiserver.",
+      "default": -1
+    },
+    "nodeComponentOnly": {
+      "type": "boolean",
+      "description": "Deploy EBS CSI Driver without controller and associated resources",
+      "default": false
+    },
+    "storageClasses": {
+      "type": "array",
+      "description": "Add StorageClass resources",
+      "default": []
+    },
+    "fips": {
+      "type": "boolean",
+      "description": "Enable FIPS 140-3 mode: activates the Go Cryptographic Module (CMVP #5247) at runtime via GODEBUG=fips140=on, and instructs the AWS SDK to use FIPS endpoints via AWS_USE_FIPS_ENDPOINT. See docs/fips.md for details.",
+      "default": "false"
+    },
+    "debugLogs": {
+      "type": "boolean",
+      "description": "Set maximum verbosity for logs of each container and other recommended debugging parameters such as enabling AWS SDK debug logging",
+      "default": "false"
+    },
+    "fullnameOverride": {
+      "type": ["string", "null"],
+      "default": ""
+    },
+    "nameOverride": {
+      "type": ["string", "null"],
+      "default": ""
+    },
+    "controller": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "additionalArgs": {
+          "type": "array",
+          "description": "Additional arguments passed to the controller pod",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "affinity": {
+          "type": ["object", "null"],
+          "description": "Affinity of the controller pod",
+          "default": {
+            "affinity": {
+              "nodeAffinity": {
+                "preferredDuringSchedulingIgnoredDuringExecution": [
+                  {
+                    "weight": 1,
+                    "preference": {
+                      "matchExpressions": [
+                        {
+                          "key": "eks.amazonaws.com/compute-type",
+                          "operator": "NotIn",
+                          "values": ["fargate", "auto", "hybrid"]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "podAntiAffinity": {
+                "preferredDuringSchedulingIgnoredDuringExecution": [
+                  {
+                    "podAffinityTerm": {
+                      "labelSelector": {
+                        "matchExpressions": [
+                          {
+                            "key": "app",
+                            "operator": "In",
+                            "values": ["ebs-csi-controller"]
+                          }
+                        ]
+                      },
+                      "topologyKey": "kubernetes.io/hostname"
+                    },
+                    "weight": 100
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "batching": {
+          "type": "boolean",
+          "description": "Enable batching of API calls. Improves performance in workloads that are sensitive to EC2 rate limits.",
+          "default": true
+        },
+        "dnsConfig": {
+          "type": ["object", "null"],
+          "description": "DNS configuration for the controller pod",
+          "default": null
+        },
+        "enableMetrics": {
+          "type": "boolean",
+          "description": "Enable metrics collection for the controller pod",
+          "default": false
+        },
+        "enablePrometheusAnnotations": {
+          "type": "boolean",
+          "description": "If metrics are enabled, add prometheus.io/scrape and prometheus.io/port annotations to the metrics services",
+          "default": true
+        },
+        "extraVolumeTags": {
+          "$ref": "#/$defs/extraVolumeTags",
+          "description": "Additional tags to be added to all EBS volumes",
+          "default": {}
+        },
+        "loggingFormat": {
+          "type": "string",
+          "description": "Log format for the driver container on the controller pod",
+          "default": "text",
+          "enum": ["text", "json"]
+        },
+        "nodeSelector": {
+          "type": ["object", "null"],
+          "description": "Node selector of the controller pod",
+          "default": null
+        },
+        "deploymentAnnotations": {
+          "type": ["object", "null"],
+          "default": null
+        },
+        "podLabels": {
+          "type": ["object", "null"],
+          "default": null
+        },
+        "region": {
+          "type": ["string", "null"],
+          "description": "AWS region to use. If not specified then the region will be looked up via the AWS EC2 metadata",
+          "default": ""
+        },
+        "logLevel": {
+          "type": "integer",
+          "description": "Set the level of verbosity of the logs",
+          "default": 2
+        },
+        "securityContext": {
+          "type": "object",
+          "description": "SecurityContext on the controller pod"
+        },
+        "httpEndpoint": {
+          "type": ["string", "null"],
+          "description": "(deprecated) The TCP network address where the prometheus metrics endpoint. Will run (example: `:8080` which corresponds to port 8080 on local host). The default is empty string, which means metrics endpoint is disabled.",
+          "default": ""
+        },
+        "revisionHistoryLimit": {
+          "type": "integer",
+          "default": 10
+        },
+        "extraCreateMetadata": {
+          "type": "boolean",
+          "description": "If set, add pv/pvc metadata to plugin create and modify requests as parameters.",
+          "default": true
+        },
+        "k8sTagClusterId": {
+          "type": ["string", "null"],
+          "description": "ID of the Kubernetes cluster used for tagging provisioned EBS volumes (optional).",
+          "default": ""
+        },
+        "defaultFsType": {
+          "type": ["string", "null"],
+          "description": "The default filesystem type of the volume to provision when fstype is unspecified in the StorageClass. If the default is not set and fstype is unset in the StorageClass, then no fstype will be set",
+          "default": "ext4"
+        },
+        "envFrom": {
+          "type": "array",
+          "description": "Use envFrom to reference ConfigMaps and Secrets across all containers in the deployment",
+          "default": []
+        },
+        "env": {
+          "type": "array",
+          "default": []
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "description": "Annotations applied to the controller pod",
+          "default": null
+        },
+        "podDisruptionBudget": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enables/Disables the EBS CSI Controller Pod's PodDisruptionBudget which ensures that at least 1 controller Pod is always able to Attach/Detach/Create/Delete volumes. Warning: Disabling PodDisruptionBudget may lead to delays in stateful workloads starting due to controller pod restarts or evictions.",
+              "default": true
+            },
+            "unhealthyPodEvictionPolicy": {
+              "type": ["string", "null"],
+              "description": "Unhealthy pod eviction policy for the EBS CSI Controller Pod's PodDisruptionBudget",
+              "default": null
+            },
+            "maxUnavailable": {
+              "type": ["integer", "string", "null"],
+              "description": "Maximum number or percentage of unavailable pods for the PodDisruptionBudget. If non-null, no default value is used for both maxUnavailable and minAvailable.",
+              "default": null
+            },
+            "minAvailable": {
+              "type": ["integer", "string", "null"],
+              "description": "Minimum number or percentage of available pods for the PodDisruptionBudget. If non-null, no default value is used for both maxUnavailable and minAvailable.",
+              "default": null
+            }
+          }
+        },
+        "priorityClassName": {
+          "description": "Priority class for the controller Deployment",
+          "type": "string",
+          "default": "system-cluster-critical"
+        },
+        "replicaCount": {
+          "type": "integer",
+          "description": "Number of replicas in the controller Deployment",
+          "default": 2,
+          "minimum": 1
+        },
+        "resources": {
+          "type": ["object", "null"],
+          "description": "Resource requests/limits of the controller pod",
+          "default": {
+            "requests": {
+              "cpu": "10m",
+              "memory": "40Mi"
+            },
+            "limits": {
+              "memory": "256Mi"
+            }
+          }
+        },
+        "sdkDebugLog": {
+          "type": "boolean",
+          "description": "Enables debug logging of the AWS SDK via --aws-sdk-debug-log=true",
+          "default": false
+        },
+        "serviceAccount": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": true
+            },
+            "name": {
+              "type": "string",
+              "default": "ebs-csi-controller-sa"
+            },
+            "automountServiceAccountToken": {
+              "type": "boolean",
+              "description": "Enable if EKS IAM for SA is used",
+              "default": "true"
+            },
+            "annotations": {
+              "type": ["object", "null"],
+              "description": "Additional annotations added to the ebs-csi-controller-sa service account",
+              "default": null
+            }
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations of the controller pod",
+          "default": [
+            {
+              "key": "CriticalAddonsOnly",
+              "operator": "Exists"
+            },
+            {
+              "effect": "NoExecute",
+              "operator": "Exists",
+              "tolerationSeconds": 300
+            }
+          ],
+          "items": {
+            "type": "object"
+          }
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "description": "Topology spread constraints for the controller pod",
+          "default": [],
+          "items": {
+            "type": "object"
+          }
+        },
+        "otelTracing": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "description": "Enable opentelemetry tracing for the plugin running on the daemonset",
+          "properties": {
+            "otelServiceName": {
+              "type": "string"
+            },
+            "otelExporterEndpoint": {
+              "type": "string"
+            }
+          },
+          "default": null
+        },
+        "volumes": {
+          "type": "array",
+          "description": "Add additional volumes to be mounted onto the controller",
+          "default": []
+        },
+        "volumeMounts": {
+          "type": "array",
+          "description": "Add additional volume mounts on the controller",
+          "default": []
+        },
+        "containerSecurityContext": {
+          "type": "object",
+          "description": "SecurityContext on the controller container (see sidecars for securityContext on sidecar containers)"
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "description": "Parameters to configure the ServiceMonitor for the EBS CSI controller pods",
+          "additionalProperties": false,
+          "properties": {
+            "forceEnable": {
+              "type": "boolean",
+              "description": "Render ServiceMonitor object even when CRD is not detected",
+              "default": false
+            },
+            "labels": {
+              "type": "object",
+              "description": "Additional labels for ServiceMonitor object",
+              "default": {}
+            },
+            "interval": {
+              "type": "string",
+              "description": "Scrape interval for the ServiceMonitor object",
+              "default": "15s"
+            },
+            "relabelings": {
+              "type": "array",
+              "description": "Additional relabeling configurations for ServiceMonitor",
+              "default": [],
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "updateStrategy": {
+          "type": "object"
+        },
+        "initContainers": {
+          "type": "array",
+          "description": "Containers to be run before the controller's container starts",
+          "default": []
+        },
+        "socketDirVolume": {
+          "type": "object"
+        },
+        "nameOverride": {
+          "type": ["string", "null"],
+          "default": ""
+        },
+        "userAgentExtra": {
+          "type": "string",
+          "default": "helm"
+        },
+        "volumeModificationFeature": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable modification of volume type, iops, etc via volume-modifier-for-k8s sidecar",
+              "default": false
+            }
+          }
+        },
+        "enableNodeLocalVolumes": {
+          "type": "boolean",
+          "description": "Enable support for node-local volumes that use pre-attached EBS volumes",
+          "default": false
+        }
+      }
+    },
+    "customLabels": {
+      "type": ["object", "null"],
+      "description": "Custom labels added to Kubernetes objects",
+      "default": null
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "additionalArgs": {
+          "type": "array",
+          "description": "Additional arguments passed to the node pod",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "affinity": {
+          "type": ["object", "null"],
+          "description": "Affinity of the node pod",
+          "default": {
+            "nodeAffinity": {
+              "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                  {
+                    "matchExpressions": [
+                      {
+                        "key": "eks.amazonaws.com/compute-type",
+                        "operator": "NotIn",
+                        "values": ["fargate", "auto", "hybrid"]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "initContainers": {
+          "type": "array",
+          "description": "Containers to be run before the csi-node's container starts.",
+          "default": []
+        },
+        "logLevel": {
+          "type": "integer",
+          "description": "Set the level of verbosity of the node logs",
+          "default": 2
+        },
+        "volumes": {
+          "type": "array",
+          "description": "Add additional volumes to be mounted onto the node pods",
+          "default": []
+        },
+        "probeDirVolume": {
+          "type": "object"
+        },
+        "namespaceOverride": {
+          "type": ["string", "null"],
+          "description": "Allows you to deploy aws-ebs-csi-node daemonset to separate namespace (make sure namespace exists before deploy)",
+          "default": ""
+        },
+        "env": {
+          "type": "array",
+          "default": []
+        },
+        "enableLinux": {
+          "type": "boolean",
+          "description": "Enable the node Linux DaemonSet",
+          "default": true
+        },
+        "legacyXFS": {
+          "type": "boolean",
+          "description": "Warning: This option will be removed in a future release. It is a temporary workaround for users unable to immediately migrate off of older kernel versions. Formats XFS volumes with bigtime=0,inobtcount=0,reflink=0, for mounting onto nodes with linux kernel version <= 5.4. Note that XFS volumes formatted with this option will only have timestamp records until 2038",
+          "default": "false"
+        },
+        "enableMetrics": {
+          "type": "boolean",
+          "description": "Enable metrics collection for the node pods",
+          "default": false
+        },
+        "enablePrometheusAnnotations": {
+          "type": "boolean",
+          "description": "If metrics are enabled, add prometheus.io/scrape and prometheus.io/port annotations to the metrics services",
+          "default": true
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "description": "Parameters to configure the ServiceMonitor for the EBS CSI node pods",
+          "additionalProperties": false,
+          "properties": {
+            "forceEnable": {
+              "type": "boolean",
+              "description": "Render ServiceMonitor object even when CRD is not detected",
+              "default": false
+            },
+            "labels": {
+              "type": "object",
+              "description": "Additional labels for ServiceMonitor object",
+              "default": {}
+            },
+            "interval": {
+              "type": "string",
+              "description": "Scrape interval for the ServiceMonitor object",
+              "default": "15s"
+            },
+            "relabelings": {
+              "type": "array",
+              "description": "Additional relabeling configurations for ServiceMonitor",
+              "default": [],
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "enableWindows": {
+          "type": "boolean",
+          "description": "Enable the node Windows DaemonSet",
+          "default": true
+        },
+        "hostNetwork": {
+          "type": "boolean",
+          "description": "Run node pods on the host network",
+          "default": false
+        },
+        "kubeletPath": {
+          "type": "string",
+          "description": "Kubelet path of the node",
+          "default": "/var/lib/kubelet"
+        },
+        "loggingFormat": {
+          "type": "string",
+          "description": "Log format for the driver container on the node pod",
+          "default": "text",
+          "enum": ["text", "json"]
+        },
+        "podLabels": {
+          "type": ["object", "null"],
+          "default": null
+        },
+        "windowsHostProcess": {
+          "type": "boolean"
+        },
+        "revisionHistoryLimit": {
+          "type": "integer",
+          "default": 10
+        },
+        "nodeSelector": {
+          "type": ["object", "null"],
+          "description": "Node selector of the node pod",
+          "default": null
+        },
+        "volumeMounts": {
+          "type": "array",
+          "description": "Add additional volume mounts on the node pods",
+          "default": []
+        },
+        "podAnnotations": {
+          "type": ["object", "null"],
+          "description": "Annotations applied to the node pod",
+          "default": null
+        },
+        "securityContext": {
+          "type": "object",
+          "description": "SecurityContext on the node pod"
+        },
+        "priorityClassName": {
+          "description": "Priority class for the Node Daemonset",
+          "type": ["string", "null"],
+          "default": "system-node-critical"
+        },
+        "selinux": {
+          "type": "boolean",
+          "description": "Enable SELinux-only optimizations on the EBS CSI Driver node pods. Must only be set true if all linux nodes in the DaemonSet have SELinux enabled",
+          "default": false
+        },
+        "metadataSources": {
+          "description": "Comma separated list of metadata sources that override the default used by the EBS CSI Driver. Valid sources include 'imds', 'kubernetes', and (ALPHA) 'metadata-labeler'",
+          "type": ["string", "null"],
+          "default": null
+        },
+        "reservedVolumeAttachments": {
+          "type": ["integer", "null"],
+          "description": "The number of attachment slots to reserve for system use (and not to be used for CSI volumes)\nWhen this parameter is not specified (or set to -1), the EBS CSI Driver will attempt to determine the number of reserved slots via heuristic",
+          "default": null,
+          "minimum": -1
+        },
+        "resources": {
+          "type": ["object", "null"],
+          "description": "Resource requests/limits of the node pod",
+          "default": {
+            "requests": {
+              "cpu": "10m",
+              "memory": "40Mi"
+            },
+            "limits": {
+              "memory": "256Mi"
+            }
+          }
+        },
+        "serviceAccount": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": true
+            },
+            "name": {
+              "type": "string",
+              "default": "ebs-csi-node-sa"
+            },
+            "automountServiceAccountToken": {
+              "type": "boolean",
+              "description": "Enable if EKS IAM for SA is used",
+              "default": "true"
+            },
+            "annotations": {
+              "type": ["object", "null"],
+              "description": "Additional annotations added to the ebs-csi-node-sa service account",
+              "default": null
+            },
+            "disableMutation": {
+              "type": ["boolean", "null"],
+              "description": "Disable mutating permissions for the node service account. When enabled, some features of the EBS CSI Driver node pods will not function, such as taint removal. Primarily useful in particularly security-sensitive environments, or on multi-tenant clusters that isolate tenants by node.",
+              "default": false
+            }
+          }
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "description": "Number of seconds to wait before forcefully terminating a stopping node pod",
+          "default": 30,
+          "minimum": 0
+        },
+        "tolerateAllTaints": {
+          "type": "boolean",
+          "description": "Node pods will tolerate all taints",
+          "default": true
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations of the node pod",
+          "default": [
+            {
+              "effect": "NoExecute",
+              "operator": "Exists",
+              "tolerationSeconds": 300
+            }
+          ],
+          "items": {
+            "type": "object"
+          }
+        },
+        "volumeAttachLimit": {
+          "type": ["integer", "null"],
+          "description": "Overrides the maximum number of volumes that can be attached per node (for all nodes)",
+          "default": null,
+          "minimum": 0
+        },
+        "envFrom": {
+          "type": "array",
+          "default": []
+        },
+        "containerSecurityContext": {
+          "type": "object",
+          "description": "securityContext on the node container (see sidecars for securityContext on sidecar containers). Privileged containers always run as `Unconfined`, which means that they are not restricted by a seccomp profile."
+        },
+        "updateStrategy": {
+          "type": "object"
+        },
+        "daemonSetAnnotations": {
+          "type": ["object", "null"],
+          "default": null
+        },
+        "otelTracing": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "otelServiceName": {
+              "type": "string"
+            },
+            "otelExporterEndpoint": {
+              "type": "string"
+            }
+          },
+          "description": "Enable opentelemetry tracing for the plugin running on the daemonset",
+          "default": null
+        },
+        "dnsConfig": {
+          "type": ["object", "null"],
+          "description": "DNS configuration for the node pods",
+          "default": null
+        }
+      }
+    },
+    "proxy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "http_proxy": {
+          "type": ["string", "null"],
+          "description": "Value of HTTP_PROXY and HTTPS_PROXY environment variables",
+          "default": ""
+        },
+        "no_proxy": {
+          "type": ["string", "null"],
+          "description": "Value of NO_PROXY environment variable",
+          "default": ""
+        }
+      }
+    },
+    "sidecars": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provisioner": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the provisioner container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "env": {
+              "type": "array",
+              "default": []
+            },
+            "additionalClusterRoleRules": {
+              "type": ["array", "null"],
+              "description": "Grant additional permissions to csi-provisioner",
+              "default": []
+            },
+            "logLevel": {
+              "type": "integer",
+              "description": "Set the level of verbosity of the logs",
+              "default": 2
+            },
+            "leaderElection": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            },
+            "securityContext": {
+              "type": "object"
+            },
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "pullPolicy": {
+                  "type": "string",
+                  "default": "IfNotPresent"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string",
+                  "default": "public.ecr.aws/csi-components/csi-provisioner"
+                }
+              }
+            }
+          }
+        },
+        "attacher": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the attacher container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "env": {
+              "type": "array",
+              "default": []
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "logLevel": {
+              "type": "integer",
+              "description": "Set the level of verbosity of the logs",
+              "default": 2
+            },
+            "leaderElection": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            },
+            "securityContext": {
+              "type": "object"
+            },
+            "additionalClusterRoleRules": {
+              "type": ["array", "null"],
+              "description": "Grant additional permissions to csi-attacher",
+              "default": []
+            },
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "pullPolicy": {
+                  "type": "string",
+                  "default": "IfNotPresent"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string",
+                  "default": "public.ecr.aws/csi-components/csi-attacher"
+                }
+              }
+            }
+          }
+        },
+        "snapshotter": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "forceEnable": {
+              "type": "boolean",
+              "description": "Enables/disables the csi-snapshotter sidecar",
+              "default": true
+            },
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the snapshotter container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "additionalClusterRoleRules": {
+              "type": ["array", "null"],
+              "description": "Grant additional permissions to csi-snapshotter",
+              "default": []
+            },
+            "logLevel": {
+              "type": "integer",
+              "description": "Set the level of verbosity of the logs",
+              "default": 2
+            },
+            "env": {
+              "type": "array",
+              "default": []
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "pullPolicy": {
+                  "type": "string",
+                  "default": "IfNotPresent"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string",
+                  "default": "public.ecr.aws/csi-components/csi-snapshotter"
+                }
+              }
+            },
+            "securityContext": {
+              "type": "object"
+            }
+          }
+        },
+        "resizer": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the resizer container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "logLevel": {
+              "type": "integer",
+              "description": "Set the level of verbosity of the logs",
+              "default": 2
+            },
+            "leaderElection": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            },
+            "additionalClusterRoleRules": {
+              "type": ["array", "null"],
+              "description": "Grant additional permissions to csi-snapshotter",
+              "default": []
+            },
+            "env": {
+              "type": "array",
+              "default": []
+            },
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "pullPolicy": {
+                  "type": "string",
+                  "default": "IfNotPresent"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string",
+                  "default": "public.ecr.aws/csi-components/csi-resizer"
+                }
+              }
+            },
+            "securityContext": {
+              "type": "object"
+            }
+          }
+        },
+        "livenessProbe": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "pullPolicy": {
+                  "type": "string",
+                  "default": "IfNotPresent"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string",
+                  "default": "public.ecr.aws/csi-components/livenessprobe"
+                }
+              }
+            },
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the liveness-probe container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "securityContext": {
+              "type": "object"
+            }
+          }
+        },
+        "nodeDriverRegistrar": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the node-driver-registrar container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "healthPort": {
+              "type": "integer",
+              "description": "The port the health probe is bound to",
+              "default": 9809
+            },
+            "logLevel": {
+              "type": "integer",
+              "description": "Set the level of verbosity of the logs",
+              "default": 2
+            },
+            "env": {
+              "type": "array",
+              "default": []
+            },
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "pullPolicy": {
+                  "type": "string",
+                  "default": "IfNotPresent"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string",
+                  "default": "public.ecr.aws/csi-components/csi-node-driver-registrar"
+                }
+              }
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "securityContext": {
+              "type": "object"
+            },
+            "livenessProbe": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "metadataLabeler": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the metadataLabeler container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "ALPHA: Enable the metadata-labeler sidecar to label Kubernetes Nodes with information from the EC2 API (e.g. number of ENIs). Also requires using metadata-labeler as the node's metadata source.",
+              "default": false
+            },
+            "logLevel": {
+              "type": "integer",
+              "description": "Set the level of verbosity of the logs",
+              "default": 4
+            },
+            "env": {
+              "type": "array",
+              "default": []
+            },
+            "securityContext": {
+              "type": "object"
+            }
+          }
+        },
+        "volumemodifier": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "additionalArgs": {
+              "type": "array",
+              "description": "Additional arguments passed to the volumemodifier container",
+              "default": [],
+              "items": {
+                "type": "string"
+              }
+            },
+            "resources": {
+              "type": ["object", "null"],
+              "default": null
+            },
+            "logLevel": {
+              "type": "integer",
+              "description": "Set the level of verbosity of the logs",
+              "default": 2
+            },
+            "leaderElection": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            },
+            "env": {
+              "type": "array",
+              "default": []
+            },
+            "image": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "pullPolicy": {
+                  "type": "string",
+                  "default": "IfNotPresent"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "repository": {
+                  "type": "string",
+                  "default": "public.ecr.aws/ebs-csi-driver/volume-modifier-for-k8s"
+                }
+              }
+            },
+            "volumeMounts": {
+              "type": "array",
+              "description": "Add additional volume mounts on the volumemodifier container",
+              "default": []
+            },
+            "securityContext": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "extraVolumeTags": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "patternProperties": {
+        "^.*$": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 256
+        }
+      }
+    }
+  }
+}

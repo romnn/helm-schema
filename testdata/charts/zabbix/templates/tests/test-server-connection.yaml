@@ -1,0 +1,50 @@
+{{ if .Values.zabbixServer.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "zabbix.fullname" . }}-test-server-connection
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "zabbix.fullname" . }}-test-server-connection
+    app.kubernetes.io/name: test-server-connection
+    helm.sh/chart: {{ include "zabbix.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}-test-server-connection
+    app.kubernetes.io/managed-by: {{ .Release.Service }}-test-server-connection
+    {{- if .Values.global.commonLabels}}
+    {{- toYaml .Values.global.commonLabels | nindent 4 }}
+    {{- end }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": "hook-succeeded,hook-failed"
+spec:
+  template:
+    spec:
+      {{- with .Values.helmTestJobs.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}      
+      containers:
+      - name: test-web-connection
+        image: {{ .Values.helmTestJobs.serverConnection.image.repository }}:{{ .Values.helmTestJobs.serverConnection.image.tag }}
+        {{- if .Values.helmTestJobs.serverConnection.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.helmTestJobs.serverConnection.image.pullPolicy }}
+        {{- end }}
+        securityContext:
+          {{- toYaml .Values.helmTestJobs.serverConnection.securityContext | nindent 10 }}
+        resources:
+          {{- toYaml .Values.helmTestJobs.serverConnection.resources | nindent 10 }}
+        command: ['nc']
+        args: ['-v', '-z', '{{ template "zabbix.fullname" . }}-zabbix-server', '{{ .Values.zabbixServer.service.port }}']
+      imagePullSecrets:
+      {{- range .Values.helmTestJobs.serverConnection.image.pullSecrets }}
+        - name: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Never
+{{ end }}

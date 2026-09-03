@@ -1,0 +1,182 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "lvmlocalpv.fullname" . }}-controller
+  {{- with .Values.lvmController.annotations }}
+  annotations: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "lvmlocalpv.lvmController.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "lvmlocalpv.lvmController.matchLabels" . | nindent 6 }}
+  replicas: {{ .Values.lvmController.replicas }}
+  template:
+    metadata:
+      {{- with .Values.lvmController.podAnnotations }}
+      annotations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "lvmlocalpv.lvmController.labels" . | nindent 8 }}
+        {{- with .Values.lvmController.podLabels}}
+        {{ toYaml . | nindent 8 }}
+        {{- end}}
+        {{- with .Values.loggingLabels}}
+        {{ toYaml . | nindent 8 }}
+        {{- end}}
+    spec:
+      {{- if .Values.lvmController.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- toYaml .Values.lvmController.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution | nindent 10 }}
+      {{- end }}
+
+{{- if .Values.lvmController.priorityClass.create }}
+      priorityClassName: {{ template "lvmlocalpv.lvmController.priorityClassName" . }}
+{{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.lvmController.name }}
+      containers:
+        - name: {{ .Values.lvmController.resizer.name }}
+          image: {{ include "lvmlocalpv.common.image" (dict "imageRoot" .Values.lvmController.resizer.image "global" .Values.global) | quote }}
+          args:
+            - "--v={{ .Values.lvmController.logLevel }}"
+            - "--csi-address=$(ADDRESS)"
+            {{- if gt (int .Values.lvmController.replicas) 1 }}
+            - "--leader-election"
+            {{- end }}
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: {{ default .Values.lvmController.resizer.image.pullPolicy .Values.global.imagePullPolicy }}
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.lvmController.resources | nindent 12 }}
+        - name: {{ .Values.lvmController.snapshotter.name }}
+          image: {{ include "lvmlocalpv.common.image" (dict "imageRoot" .Values.lvmController.snapshotter.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ default .Values.lvmController.snapshotter.image.pullPolicy .Values.global.imagePullPolicy}}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            {{- if gt (int .Values.lvmController.replicas) 1 }}
+            - "--leader-election"
+            {{- end }}
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.lvmController.resources | nindent 12 }}
+        {{- if .Values.lvmController.snapshotController.enabled }}
+        - name: {{ .Values.lvmController.snapshotController.name }}
+          image: {{ include "lvmlocalpv.common.image" (dict "imageRoot" .Values.lvmController.snapshotController.image "global" .Values.global) | quote }}
+          args:
+            - "--v={{ .Values.lvmController.logLevel }}"
+            {{- if gt (int .Values.lvmController.replicas) 1 }}
+            - "--leader-election=true"
+            {{- end }}
+          imagePullPolicy: {{ default .Values.lvmController.snapshotController.image.pullPolicy .Values.global.imagePullPolicy }}
+          resources:
+            {{- toYaml .Values.lvmController.resources | nindent 12 }}
+        {{- end }}
+        - name: {{ .Values.lvmController.provisioner.name }}
+          image: {{ include "lvmlocalpv.common.image" (dict "imageRoot" .Values.lvmController.provisioner.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ default .Values.lvmController.provisioner.image.pullPolicy .Values.global.imagePullPolicy}}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v={{ .Values.lvmController.logLevel }}"
+            - "--feature-gates=Topology=true"
+            - "--strict-topology"
+            {{- if gt (int .Values.lvmController.replicas) 1 }}
+            - "--leader-election"
+            {{- end }}
+            - "--enable-capacity={{ .Values.storageCapacity }}"
+            - "--extra-create-metadata=true"
+            - "--default-fstype=ext4"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.lvmController.resources | nindent 12 }}
+        - name: {{ .Values.lvmPlugin.name }}
+          image: {{ include "lvmlocalpv.common.image" (dict "imageRoot" .Values.lvmPlugin.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ default .Values.lvmPlugin.image.pullPolicy .Values.global.imagePullPolicy }}
+          env:
+            - name: OPENEBS_CONTROLLER_DRIVER
+              value: controller
+            - name: OPENEBS_CSI_ENDPOINT
+              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: OPENEBS_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPENEBS_IO_INSTALLER_TYPE
+              value: "lvm-localpv-helm"
+            - name: OPENEBS_IO_ENABLE_ANALYTICS
+              {{- if kindIs "bool" .Values.global.analytics.enabled }}
+              value: "{{ .Values.global.analytics.enabled }}"
+              {{- else}}
+              value: "{{ .Values.analytics.enabled }}"
+              {{- end}}
+            {{- if .Values.global.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.global.analytics.gaId | quote }}
+            {{- else if .Values.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.analytics.gaId | quote }}
+            {{- end }}
+            {{- if .Values.global.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.global.analytics.gaKey | quote }}
+            {{- else if .Values.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.analytics.gaKey | quote }}
+            {{- end }}
+          args :
+            - "--endpoint=$(OPENEBS_CSI_ENDPOINT)"
+            - "--plugin=$(OPENEBS_CONTROLLER_DRIVER)"
+            - "--kube-api-qps={{ .Values.lvmController.kubeClientRateLimiter.qps }}"
+            - "--kube-api-burst={{ .Values.lvmController.kubeClientRateLimiter.burst }}"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+          resources:
+            {{- toYaml .Values.lvmController.resources | nindent 12 }}
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+      {{- if or .Values.global.imagePullSecrets .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- include "lvmlocalpv.common.pullSecrets" . | indent 6 }}
+      {{- end }}
+{{- if .Values.lvmController.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.lvmController.nodeSelector | indent 8 }}
+{{- end }}
+{{- if .Values.lvmController.securityContext }}
+      securityContext:
+{{ toYaml .Values.lvmController.securityContext | indent 8 }}
+{{- end }}
+{{- if .Values.lvmController.tolerations }}
+      tolerations:
+{{ toYaml .Values.lvmController.tolerations | indent 8 }}
+{{- end }}
+{{- if .Values.lvmController.topologySpreadConstraints }}
+      topologySpreadConstraints:
+{{ toYaml .Values.lvmController.topologySpreadConstraints | indent 8 }}
+{{- end }}

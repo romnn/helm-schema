@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-test-connection" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  containers:
+  - name: wget
+    image: "{{ .Values.test.image.repository }}:{{ .Values.test.image.tag }}"
+    imagePullPolicy: {{ .Values.test.image.pullPolicy }}
+    command: ['wget']
+    args: ['{{ include "common.names.fullname" . }}:{{ .Values.service.port }}']
+    {{- if .Values.test.resources }}
+    resources: {{ toYaml .Values.test.resources | nindent 6 }}
+    {{- else if ne .Values.test.resourcesPreset "none" }}
+    resources: {{- include "common.resources.preset" (dict "type" .Values.test.resourcesPreset) | nindent 6 }}
+    {{- end }}
+    {{- if .Values.test.securityContext.enabled }}
+    securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.test.securityContext "context" $) | nindent 6 }}
+    {{- end }}
+  restartPolicy: Never

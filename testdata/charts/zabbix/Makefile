@@ -1,0 +1,80 @@
+#---------------------------
+#---------------------------
+# VARIABLES
+#---------------------------
+#---------------------------
+
+URL=https://github.com/zabbix-community/helm-zabbix/
+HELM_IMAGE=alpine/helm:3.18.3
+HELM_DOCS_IMAGE=jnorwood/helm-docs:v1.14.2
+KNOWN_TARGETS=helm
+
+#----------------------------------------------------------------------------------------------------------
+
+
+
+
+#---------------------------
+#---------------------------
+# MAIN
+#---------------------------
+#---------------------------
+
+# References
+# https://ryanstutorials.net/bash-scripting-tutorial/bash-input.php
+# https://stackoverflow.com/questions/3743793/makefile-why-is-the-read-command-not-reading-the-user-input
+# https://stackoverflow.com/questions/60147129/interactive-input-of-a-makefile-variable
+# https://makefiletutorial.com/
+# https://stackoverflow.com/questions/589276/how-can-i-use-bash-syntax-in-makefile-targets
+# https://til.hashrocket.com/posts/k3kjqxtppx-escape-dollar-sign-on-makefiles
+# https://stackoverflow.com/questions/5618615/check-if-a-program-exists-from-a-makefile
+
+
+
+# Check requirements
+requirements:
+REQUIRED_PACKAGES := docker
+$(foreach package,$(REQUIRED_PACKAGES),\
+	$(if $(shell command -v $(package) 2> /dev/null),$(info Found `$(package)`),$(error Please install `$(package)`)))
+
+
+# Run helm subcommands
+helm:
+	make requirements
+
+	docker run --rm --name helm-exec  \
+		--user $(shell id -u):$(shell id -g) \
+		--mount type=bind,src="$(shell pwd)",dst=/helm-chart \
+		-w /helm-chart \
+		-e HELM_CACHE_HOME=/helm-chart/.helm/cache \
+		-e HELM_CONFIG_HOME=/helm-chart/.helm/config \
+		-e HELM_DATA_HOME=/helm-chart/.helm/data \
+		$(HELM_IMAGE) \
+		$(CMD)
+
+# Run linter for helm chart
+lint: ## Lint the helm chart
+	make requirements
+
+	CMD="lint ." $(MAKE) helm
+
+# Package chart into zip file
+package: ## Package the helm chart into a .tgz file under packages/
+	make requirements
+
+	CMD="package . -d packages" $(MAKE) helm
+
+# Update documentation of helm chart
+gen-docs: ## Regenerate README.md from README.md.gotmpl via helm-docs
+	make requirements
+
+	docker run --rm --name helm-docs  \
+		--user $(shell id -u):$(shell id -g) \
+		--mount type=bind,src="$(shell pwd)",dst=/helm-chart \
+		-w /helm-chart \
+		$(HELM_DOCS_IMAGE) \
+		helm-docs
+
+# Show this help message
+help: ## Show this help message
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'

@@ -1,0 +1,27 @@
+{{- if .Values.apiReader.pdb.create }}
+apiVersion: {{ include "common.capabilities.policy.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "common.names.fullname" . }}-ro
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: stacks-blockchain-api
+    hiro.so/stacks-blockchain-api-role: ro
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.apiReader.pdb.minAvailable }}
+  minAvailable: {{ .Values.apiReader.pdb.minAvailable }}
+  {{- end  }}
+  {{- if .Values.apiReader.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.apiReader.pdb.maxUnavailable }}
+  {{- end  }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: stacks-blockchain-api
+      hiro.so/stacks-blockchain-api-role: ro
+{{- end }}

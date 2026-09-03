@@ -1,0 +1,37 @@
+{{- if and .Values.endpoints.dev.gatewayAPI.enabled .Values.endpoints.dev.gatewayAPI.defaultBackendHTTPRoute.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "okteto.fullname" . }}-default-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: default-backend
+    app.kubernetes.io/part-of: "okteto"
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- with .Values.endpoints.okteto.gatewayAPI.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.endpoints.okteto.gatewayAPI.annotations }}
+  annotations: {{ . | toJson }}
+  {{- end }}
+spec:
+  parentRefs:
+    - name: {{ .Values.endpoints.dev.gatewayAPI.gateway.name }}
+      namespace: {{ .Values.endpoints.dev.gatewayAPI.gateway.namespace }}
+      {{- if .Values.endpoints.dev.gatewayAPI.gateway.section }}
+      sectionName: {{ .Values.endpoints.dev.gatewayAPI.gateway.section }}
+      {{- end }}
+  hostnames:
+    - "*.{{ .Values.endpoints.dev.gatewayAPI.subdomain | default .Values.subdomain }}"
+  rules:
+    - backendRefs:
+        - name: {{ include "okteto.defaultBackendName" . }}
+          namespace: {{ .Release.Namespace }}
+          port: 80
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+{{- end }}

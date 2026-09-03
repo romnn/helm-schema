@@ -1,0 +1,273 @@
+{{- with .Values.hostPathsExporter.daemonSets }}
+{{- range $dsName, $dsDef := . }}
+{{- $extraVolumes := concat (dig "extraVolumes" $.Values.hostPathsExporter.extraVolumes $dsDef) $.Values.extraVolumes }}
+{{- $extraVolumeMounts := concat (dig "extraVolumeMounts" $.Values.hostPathsExporter.extraVolumeMounts $dsDef) $.Values.extraVolumeMounts }}
+{{- $extraEnvs := concat (default (list) $.Values.hostPathsExporter.env) (default (list) $dsDef.env) }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  {{- with (dig "annotations" $.Values.hostPathsExporter.annotations $dsDef) }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ printf "%s-%s" (include "x509-certificate-exporter.fullname" $) $dsName }}
+  namespace: {{ include "x509-certificate-exporter.namespace" $ }}
+  labels:
+    {{- include "x509-certificate-exporter.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ printf "host-%s" $dsName }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "x509-certificate-exporter.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ printf "host-%s" $dsName }}
+  {{- $rl := $.Values.hostPathsExporter.revisionHistoryLimit }}
+  {{- if not (kindIs "invalid" $dsDef.revisionHistoryLimit) }}
+  {{- $rl = $dsDef.revisionHistoryLimit }}
+  {{- end }}
+  {{- if not (kindIs "invalid" $rl) }}
+  revisionHistoryLimit: {{ int $rl }}
+  {{- end }}
+  {{- with (dig "updateStrategy" $.Values.hostPathsExporter.updateStrategy $dsDef) }}
+  updateStrategy:
+    {{- . | toYaml | trim | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "x509-certificate-exporter.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ printf "host-%s" $dsName }}
+        {{- with $.Values.podExtraLabels }}
+        {{- . | toYaml | trim | nindent 8 }}
+        {{- end }}
+        {{- with (dig "podExtraLabels" $.Values.hostPathsExporter.podExtraLabels $dsDef) }}
+        {{- . | toYaml | trim | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- with mustMerge (dig "podAnnotations" $.Values.hostPathsExporter.podAnnotations $dsDef) $.Values.podAnnotations }}
+        {{- toYaml . | trim | nindent 8 }}
+        {{- end }}
+        {{- if $.Values.webConfiguration }}
+        checksum/webconfig: {{ include (print $.Template.BasePath "/webconfig.secret.yaml") $ | sha256sum }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "x509-certificate-exporter.hostPathsExporterServiceAccountName" $ }}
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- . | toYaml | trim | nindent 8 }}
+      {{- end }}
+      {{- with (dig "affinity" $.Values.hostPathsExporter.affinity $dsDef) }}
+      affinity:
+        {{- . | toYaml | trim | nindent 8 }}
+      {{- end }}
+      {{- with (dig "tolerations" $.Values.hostPathsExporter.tolerations $dsDef) }}
+      tolerations:
+      {{- . | toYaml | trim | nindent 6 }}
+      {{- end }}
+      {{- with (dig "podSecurityContext" $.Values.hostPathsExporter.podSecurityContext $dsDef) }}
+      securityContext:
+        {{- . | toYaml | trim | nindent 8 }}
+      {{- end }}
+      {{- with (dig "nodeSelector" $.Values.hostPathsExporter.nodeSelector $dsDef) }}
+      nodeSelector:
+        {{- . | toYaml | trim | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ dig "restartPolicy" $.Values.hostPathsExporter.restartPolicy $dsDef }}
+      {{- with default $.Values.priorityClassName (dig "priorityClassName" $.Values.hostPathsExporter.priorityClassName $dsDef) }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      containers:
+      - name: {{ $.Chart.Name }}
+        {{- with (dig "securityContext" $.Values.hostPathsExporter.securityContext $dsDef) }}
+        securityContext:
+          {{- . | toYaml | trim | nindent 10 }}
+        {{- end }}
+        {{- with (dig "resources" $.Values.hostPathsExporter.resources $dsDef) }}
+        resources:
+          {{- . | toYaml | trim | nindent 10 }}
+        {{- end }}
+        image: {{ include "x509-certificate-exporter.image" $ }}
+        imagePullPolicy: {{ $.Values.image.pullPolicy }}
+        {{- if $extraEnvs }}
+        env:
+        {{- toYaml $extraEnvs | trim | nindent 8 }}
+        {{- end }}
+        args:
+        - --config=/etc/x509-certificate-exporter/config.yaml
+        volumeMounts:
+        - name: config
+          mountPath: /etc/x509-certificate-exporter
+          readOnly: true
+        {{- $watchDirPrefixes := list }}
+        {{- range $entry := dig "watchDirectories" $.Values.hostPathsExporter.watchDirectories $dsDef }}
+        {{- $watchDirPrefixes = append $watchDirPrefixes (include "x509-certificate-exporter.watchDirStaticPrefix" $entry) }}
+        {{- end }}
+        {{- range $prefix := $watchDirPrefixes | uniq }}
+        - name: dir-{{ $prefix | sha1sum }}
+          mountPath: {{ printf "/mnt/watch/dir-%s/%s" ($prefix | sha1sum) $prefix | clean }}
+          readOnly: true
+        {{- end }}
+        {{- range dig "watchSpecificExtensionDirectories" $.Values.hostPathsExporter.watchSpecificExtensionDirectories $dsDef }}
+        - name: dir-{{ .directory| clean | sha1sum }}
+          mountPath: {{ printf "/mnt/watch/dir-%s/%s" (.directory | clean | sha1sum) (.directory | clean) | clean }}
+          readOnly: true
+        {{- end }}
+        {{- range dig "watchFiles" $.Values.hostPathsExporter.watchFiles $dsDef }}
+        - name: file-{{ . | clean | sha1sum }}
+          mountPath: {{ printf "/mnt/watch/file-%s/%s" (. | clean | sha1sum) (. | clean | dir) | clean }}
+          readOnly: true
+        {{- end }}
+        {{- range dig "watchKubeconfFiles" $.Values.hostPathsExporter.watchKubeconfFiles $dsDef }}
+        - name: kube-{{ . | clean | sha1sum }}
+          mountPath: {{ printf "/mnt/watch/kube-%s/%s" (. | clean | sha1sum) (. | clean | dir) | clean }}
+          readOnly: true
+        {{- end }}
+        {{- if or $.Values.webConfiguration $.Values.webConfigurationExistingSecret }}
+        - name: web-configuration
+          mountPath: /mnt/
+          readOnly: true
+        {{- end }}
+        {{- range $extraVolumeMounts }}
+        - {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+      {{- if not $.Values.rbacProxy.enabled }}
+        {{- $probePort := int (include "x509-certificate-exporter.probeListenPort" $) }}
+        ports:
+        - name: metrics
+          containerPort: {{ $.Values.podListenPort }}
+        {{- if gt $probePort 0 }}
+        - name: probe
+          containerPort: {{ $probePort }}
+        {{- end }}
+        readinessProbe:
+        {{- with omit $.Values.hostPathsExporter.readinessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          httpGet:
+            path: /healthz
+            port: {{ if gt $probePort 0 }}probe{{ else }}metrics{{ end }}
+          {{- with $.Values.hostPathsExporter.readinessProbe.httpGet }}
+            {{ tpl (. | toYaml) $ | indent 12 | trim }}
+          {{- end }}
+        livenessProbe:
+        {{- with omit $.Values.hostPathsExporter.livenessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          httpGet:
+            path: /healthz
+            port: {{ if gt $probePort 0 }}probe{{ else }}metrics{{ end }}
+          {{- with $.Values.hostPathsExporter.livenessProbe.httpGet }}
+            {{ tpl (. | toYaml) $ | indent 12 | trim }}
+          {{- end }}
+      {{- else }}
+      - name: kube-rbac-proxy
+        {{- with $.Values.rbacProxy.securityContext }}
+        securityContext:
+          {{- toYaml . | trim | nindent 10 }}
+        {{- end }}
+        image: {{ include "x509-certificate-exporter.rbacProxy.image" $ }}
+        imagePullPolicy: {{ $.Values.rbacProxy.image.pullPolicy }}
+        args:
+        - --upstream=http://127.0.0.1:{{ $.Values.rbacProxy.upstreamListenPort }}
+        # Bind on every interface (including loopback) so probes,
+        # `kubectl port-forward`, and in-cluster Service routes all reach
+        # the listener. kube-rbac-proxy provides authn/authz at the
+        # request layer, so a wider socket binding is not a security risk.
+        - --secure-listen-address=:{{ $.Values.podListenPort }}
+        # Explicit serving cert — see deployment.yaml for the rationale.
+        - --tls-cert-file=/etc/rbac-proxy/tls/tls.crt
+        - --tls-private-key-file=/etc/rbac-proxy/tls/tls.key
+        ports:
+        - name: metrics
+          containerPort: {{ $.Values.podListenPort }}
+        volumeMounts:
+        - name: rbac-proxy-tls
+          mountPath: /etc/rbac-proxy/tls
+          readOnly: true
+        readinessProbe:
+        {{- with omit $.Values.hostPathsExporter.readinessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          # The exporter container runs its plain-HTTP probe server on
+          # this numeric port (auto-enabled by the chart whenever
+          # rbacProxy.enabled, see _helpers.tpl). The sidecar's probe
+          # targets it directly — bypasses the proxy's HTTPS+Bearer.
+          httpGet:
+            path: /healthz
+            port: {{ int (include "x509-certificate-exporter.probeListenPort" $) }}
+        livenessProbe:
+        {{- with omit $.Values.hostPathsExporter.livenessProbe "httpGet" }}
+          {{ tpl (. | toYaml) $ | indent 10 | trim }}
+        {{- end }}
+          httpGet:
+            path: /healthz
+            port: {{ int (include "x509-certificate-exporter.probeListenPort" $) }}
+        {{- with $.Values.rbacProxy.resources }}
+        resources:
+        {{- . | toYaml | trim | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      hostNetwork: {{ $.Values.hostNetwork }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ printf "%s-%s" (include "x509-certificate-exporter.fullname" $) $dsName }}
+      {{- $hostPathType := $.Values.hostPathsExporter.hostPathVolumeType }}
+      {{- if hasKey $dsDef "hostPathVolumeType" }}
+        {{- $hostPathType = $dsDef.hostPathVolumeType }}
+      {{- end }}
+      {{- $watchDirPrefixes := list }}
+      {{- range $entry := dig "watchDirectories" $.Values.hostPathsExporter.watchDirectories $dsDef }}
+      {{- $watchDirPrefixes = append $watchDirPrefixes (include "x509-certificate-exporter.watchDirStaticPrefix" $entry) }}
+      {{- end }}
+      {{- range $prefix := $watchDirPrefixes | uniq }}
+      - name: dir-{{ $prefix | sha1sum }}
+        hostPath:
+          path: {{ $prefix }}
+          {{- if $hostPathType }}
+          type: {{ $hostPathType | quote }}
+          {{- end }}
+      {{- end }}
+      {{- range dig "watchSpecificExtensionDirectories" $.Values.hostPathsExporter.watchSpecificExtensionDirectories $dsDef }}
+      - name: dir-{{ .directory | clean | sha1sum }}
+        hostPath:
+          path: {{ .directory | clean }}
+          {{- if $hostPathType }}
+          type: {{ $hostPathType | quote }}
+          {{- end }}
+      {{- end }}
+      {{- range dig "watchFiles" $.Values.hostPathsExporter.watchFiles $dsDef }}
+      - name: file-{{ . | clean | sha1sum }}
+        hostPath:
+          path: {{ . | clean | dir }}
+          {{- if $hostPathType }}
+          type: {{ $hostPathType | quote }}
+          {{- end }}
+      {{- end }}
+      {{- range dig "watchKubeconfFiles" $.Values.hostPathsExporter.watchKubeconfFiles $dsDef }}
+      - name: kube-{{ . | clean | sha1sum }}
+        hostPath:
+          path: {{ . | clean | dir }}
+          {{- if $hostPathType }}
+          type: {{ $hostPathType | quote }}
+          {{- end }}
+      {{- end }}
+      {{- if or $.Values.webConfiguration $.Values.webConfigurationExistingSecret }}
+      - name: web-configuration
+        secret:
+          secretName: "{{ default (include "x509-certificate-exporter.webConfigurationSecretName" $) $.Values.webConfigurationExistingSecret }}"
+          items:
+          - key: webconfig.yaml
+            path: webconfig.yaml
+      {{- end }}
+      {{- if $.Values.rbacProxy.enabled }}
+      - name: rbac-proxy-tls
+        secret:
+          secretName: "{{ default (include "x509-certificate-exporter.rbacProxy.tlsSecretName" $) $.Values.rbacProxy.tls.existingSecretName }}"
+      {{- end }}
+      {{- range $extraVolumes }}
+      - {{ tpl (. | toYaml) $ | indent 8 | trim }}
+      {{- end }}
+{{- end }}
+{{- end }}

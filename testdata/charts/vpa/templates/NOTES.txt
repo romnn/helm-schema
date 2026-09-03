@@ -1,0 +1,20 @@
+Congratulations on installing the Vertical Pod Autoscaler!
+
+Components Installed:
+{{- if .Values.recommender.enabled }}
+  - recommender
+{{- end }}
+{{- if .Values.updater.enabled }}
+  - updater
+{{- end }}
+{{- if .Values.admissionController.enabled }}
+  - admission-controller
+{{- end }}
+
+To verify functionality, you can try running 'helm -n {{ .Release.Namespace}} test {{ .Release.Name }}'
+
+{{- if not (include "vpa.webhook.upgradable" .) }}
+
+Warning: The mutatingwebhookconfiguration '{{ include "vpa.fullname" . }}-webhook-config' is not managed by this Helm release.
+It is highly encouraged in this case, to verify the webhook's configuration by running all Helm tests.
+{{- end }}

@@ -1,0 +1,77 @@
+# Available parameters and their default values for the Terraform chart.
+
+# global holds values that affect multiple components of the chart.
+global:
+  # enabled is the master enabled/disabled setting.
+  # If true, all Terraform Kubernetes integrations will be enabled.
+  # If false, no components will be installed by default and per-component
+  # opt-in is required, such as by setting `syncWorkspace.enabled` to true.
+  enabled: true
+
+  # imageK8S is the name (and tag) of the terraform-k8s Docker image that
+  # is used for functionality such as workspace sync. This can be overridden
+  # per component.
+  imageK8S: "hashicorp/terraform-k8s:1.1.2"
+
+# syncWorkspace will run the workspace sync process to sync K8S Workspaces with
+# Terraform Cloud workspaces.
+#
+# This process will deploy a Workspace Custom Resource Definition and
+# Terraform Cloud Workspace Operator to the Kubernetes cluster. It requires
+# a Kubernetes secret for Terraform Cloud access and sensitive variables.
+syncWorkspace:
+  # True if you want to enable the workspace sync. Set to "-" to inherit from
+  # global.enabled.
+  enabled: "-"
+  image: null
+
+  # If true it disables certificate validation for all outbound HTTPS connections
+  # the operator has to do. It can be used when connecting to TFE instances with
+  # self-signed certificates
+  insecure: false
+
+  # k8WatchNamespace is the Kubernetes namespace to watch for workspace
+  # changes and sync to Terraform Cloud. If this is not set then it will default
+  # to the release namespace
+  k8WatchNamespace: null
+
+  # terraformVersion describes the version of Terraform to use for each workspace.
+  # If this is not set then it will default to the latest version of Terraform
+  # compiled with the operator.
+  terraformVersion: latest
+  # tfeAddress denotes the address in the form of https://tfe.local for
+  # a Terraform Enterprise instance. If this is not set then it will default
+  # to Terraform Cloud (https://app.terraform.io)
+  tfeAddress: null
+
+  # WARNING: logLevel not supported by terraform-k8s:1.0.0 version, or earlier.
+  # Uncomment to configure log verbosity level. One of "debug", "info", or "error".
+  # Defaults to "debug".
+  # logLevel: error
+
+  # Name and key of Kubernetes secret containing the Terraform CLI Configuration
+  # Must have Terraform Cloud Team API Token 
+  terraformRC:
+    secretName: terraformrc
+    secretKey: credentials
+
+  # Name of Kubernetes secret containing keys and values of sensitive variables 
+  sensitiveVariables:
+    secretName: workspacesecrets
+
+# Control whether a test Pod manifest is generated when running helm template.
+# When using helm install, the test Pod is not submitted to the cluster so this
+# is only useful when running helm template.
+tests:
+  enabled: true
+  organization: tf-operator
+  # moduleSource defaults to this repository.
+  # moduleSource: git::https://github.com/hashicorp/terraform-helm.git//test/module
+
+# If the TFE instance the operator talks to is using a private CA then CACerts
+# can be used to install a custom CA bundle in the operator's container that 
+# will allow it to communicate with TFE.
+#
+# CACerts can be set like this:
+# helm install <other parameters> --set-file CACerts=/path/to/certs.pem
+CACerts: ""

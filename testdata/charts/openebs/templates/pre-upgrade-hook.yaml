@@ -1,0 +1,116 @@
+{{- if and .Values.preUpgradeHook.enabled .Values.engines.local.hostpath.enabled }}
+{{- if .Release.IsUpgrade }}
+{{- if include "hostpath_is_v3" . }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openebs-pre-upgrade-hook
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-2"
+    {{- with .Values.preUpgradeHook.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openebs-pre-upgrade-hook
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-2"
+    {{- with .Values.preUpgradeHook.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+rules:
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "patch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["delete", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openebs-pre-upgrade-hook
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    {{- with .Values.preUpgradeHook.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+subjects:
+- kind: ServiceAccount
+  name: openebs-pre-upgrade-hook
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: openebs-pre-upgrade-hook
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "openebs-pre-upgrade-hook"
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "0"
+    {{- with .Values.preUpgradeHook.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      name: "openebs-pre-upgrade-hook"
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        {{- with .Values.preUpgradeHook.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "openebs-pre-upgrade-hook"
+      {{- with .Values.preUpgradeHook.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      restartPolicy: Never
+      containers:
+      - name: pre-upgrade-job
+        image: {{ include "openebs.common.image" (dict "imageRoot" .Values.preUpgradeHook.image "global" .Values.global) }}
+        imagePullPolicy: {{ default .Values.preUpgradeHook.image.pullPolicy .Values.global.imagePullPolicy }}
+        command:
+        - "/bin/sh"
+        - "-c"
+        args:
+        - "(kubectl annotate --overwrite crd volumesnapshots.snapshot.storage.k8s.io volumesnapshotclasses.snapshot.storage.k8s.io volumesnapshotcontents.snapshot.storage.k8s.io helm.sh/resource-policy=keep || true) && (kubectl -n {{ .Release.Namespace }} delete deploy -l openebs.io/component-name=openebs-localpv-provisioner --ignore-not-found)"
+      {{- if or .Values.global.imagePullSecrets .Values.preUpgradeHook.imagePullSecrets }}
+      imagePullSecrets:
+      {{- include "openebs.common.pullSecrets" (dict "images" (list .Values.preUpgradeHook) "global" .Values.global) | indent 6 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

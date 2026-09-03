@@ -1,0 +1,42 @@
+{{- if eq (include "okteto.privateEndpoints.enabled" .) "true" }}
+{{- if eq "true" (include "okteto.controlplane.ingress.enabled" .) }}
+{{- $privateEndpointsURL := include "okteto.privateEndpoints" . -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "okteto.fullname" . }}-private-endpoints
+  labels:
+    app.kubernetes.io/name: {{ include "okteto.fullname" . }}-private-endpoints
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/component: "private-endpoints"
+    {{- with (include "okteto.controlplane.ingress.labels" . | fromJson) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{- with (include "okteto.controlplane.ingress.annotations" . | fromJson) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ include "okteto.controlplane.ingressClass" . }}
+  tls:
+  - hosts:
+    - {{ $privateEndpointsURL }}
+    secretName: {{ include "okteto.tlsSecret" . }}
+  rules:
+    - host: {{ $privateEndpointsURL }}
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "okteto.fullname" . }}-private-endpoints
+                port:
+                  number: {{ .Values.privateEndpoints.port }}
+{{- end }}
+{{- end }}

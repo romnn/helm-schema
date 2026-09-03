@@ -2,6 +2,27 @@
 
 crates/helm-schema-template-grammar/grammars/** linguist-vendored=true
 
+# Third-party Helm charts, fetched verbatim from their upstream repositories and
+# committed as analyzer test input.
+# Their contents, including every comment, are upstream artifacts that must not
+# be edited to suit this repository's conventions.
+# Editing them destroys the fidelity that makes them evidence about real charts,
+# and `values.yaml` comments additionally feed the generated schema's
+# `description` annotations, so a reworded comment silently changes fixture
+# output.
+testdata/charts/** linguist-vendored=true
+
+# Upstream Kubernetes and CRD JSON schemas, vendored so chart analysis is
+# offline and deterministic.
+testdata/provider-bundle/** linguist-vendored=true
+
+# Whole-chart schemas emitted by the generator and pinned as fixtures
+# (regenerate with the `SCHEMA_DUMP=1` flow documented in
+# `crates/helm-schema-cli/tests/chart_corpus.rs`).
+testdata/chart-corpus-schemas/** linguist-generated=true
+testdata/emission-profile-schemas/** linguist-generated=true
+testdata/final-output-schemas/** linguist-generated=true
+
 # Generated documentation schema snippets — the committed output of running
 # helm-schema on docs/examples (regenerate with `task docs:schemas`).
 docs/assets/schemas/** linguist-generated=true

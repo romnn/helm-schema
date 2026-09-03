@@ -1,0 +1,1787 @@
+{
+  "$defs": {
+    "1": {
+      "anyOf": [
+        {
+          "properties": {
+            "global": {
+              "properties": {
+                "resourceScope": {
+                  "enum": [
+                    "cluster"
+                  ]
+                }
+              },
+              "required": [
+                "resourceScope"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "global": {
+              "properties": {
+                "resourceScope": {
+                  "enum": [
+                    "all"
+                  ]
+                }
+              },
+              "required": [
+                "resourceScope"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {}
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "2": {
+      "not": {
+        "properties": {
+          "defaultRevision": {
+            "enum": [
+              ""
+            ]
+          }
+        },
+        "required": [
+          "defaultRevision"
+        ],
+        "type": "object"
+      }
+    },
+    "3": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "allOf": [
+          {
+            "not": {
+              "pattern": "[ \\t]#"
+            }
+          },
+          {
+            "not": {
+              "pattern": ":[ \\t]|:$"
+            }
+          },
+          {
+            "not": {
+              "pattern": "[\\r\\n]"
+            }
+          }
+        ],
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "4": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "5": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "6": {
+      "properties": {
+        "base": {
+          "properties": {
+            "validationCABundle": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "validationCABundle"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "base"
+      ],
+      "type": "object"
+    },
+    "7": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-k3s"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "8": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "openshift"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "9": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "microk8s"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "A": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.30"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "B": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-openshift"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "C": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-microk8s"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "D": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-minikube"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "E": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-gke"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "F": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-k3d"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "G": {
+      "properties": {
+        "global": {
+          "properties": {
+            "resourceScope": {
+              "enum": [
+                "all"
+              ]
+            }
+          },
+          "required": [
+            "resourceScope"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "H": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "resourceScope": {}
+            },
+            "required": [
+              "resourceScope"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
+    },
+    "a": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "minikube"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "b": {
+      "properties": {
+        "platform": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "c": {
+      "properties": {
+        "global": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "d": {
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "e": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "ambient"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "f": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "preview"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "g": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "remote"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "h": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "stable"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "i": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "gke"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "j": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "k3d"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "k": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "k3s"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "l": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "demo"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "m": {
+      "properties": {
+        "global": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "n": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "o": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "p": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "q": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "r": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "s": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    },
+    "u": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "v": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.25"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "w": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.26"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "x": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.27"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "y": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.28"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "z": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.29"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "base": {
+                    "properties": {
+                      "enableCRDTemplates": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "enableCRDTemplates"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "base"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "base": {
+                      "properties": {
+                        "enableCRDTemplates": {}
+                      },
+                      "required": [
+                        "enableCRDTemplates"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "base"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "base": {
+            "additionalProperties": {},
+            "properties": {
+              "excludedCRDs": {
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/1"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "experimental": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "base": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "defaultRevision": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "base": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "base"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "defaultRevision": {
+                    "not": {
+                      "enum": [
+                        ""
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "defaultRevision"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "defaultRevision": {}
+                  },
+                  "required": [
+                    "defaultRevision"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/6"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "base": {
+            "additionalProperties": {},
+            "properties": {
+              "validationCABundle": {
+                "$ref": "#/$defs/helm-double-quoted-safe"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/2"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "base": {
+            "additionalProperties": {},
+            "properties": {
+              "validationURL": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/3"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/r"
+                      },
+                      {
+                        "$ref": "#/$defs/n"
+                      },
+                      {
+                        "$ref": "#/$defs/u"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/p"
+                      },
+                      {
+                        "$ref": "#/$defs/q"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
+                      }
+                    ],
+                    "description": "`url` gives the location of the webhook, in standard URL form (`scheme://host:port/path`). Exactly one of `url` or `service` must be specified.\n\nThe `host` should not refer to a service running in the cluster; use the `service` field instead. The host might be resolved via external DNS in some apiservers (e.g., `kube-apiserver` cannot resolve in-cluster DNS as that would be a layering violation). `host` may also be an IP address.\n\nPlease note that using `localhost` or `127.0.0.1` as a `host` is risky unless you take great care to run this webhook on all hosts which run an apiserver which might need to make calls to this webhook. Such installs are likely to be non-portable, i.e., not easy to turn up in a new cluster.\n\nThe scheme must be \"https\"; the URL must begin with \"https://\".\n\nA path is optional, and if present may be any string permissible in a URL. You may use the path to pass an arbitrary string to the webhook, for example, a cluster identifier.\n\nAttempting to use a user or basic auth e.g. \"user:password@\" is not allowed. Fragments (\"#...\") and query parameters (\"?...\") are not allowed, either.",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/o"
+                  },
+                  {
+                    "description": "`url` gives the location of the webhook, in standard URL form (`scheme://host:port/path`). Exactly one of `url` or `service` must be specified.\n\nThe `host` should not refer to a service running in the cluster; use the `service` field instead. The host might be resolved via external DNS in some apiservers (e.g., `kube-apiserver` cannot resolve in-cluster DNS as that would be a layering violation). `host` may also be an IP address.\n\nPlease note that using `localhost` or `127.0.0.1` as a `host` is risky unless you take great care to run this webhook on all hosts which run an apiserver which might need to make calls to this webhook. Such installs are likely to be non-portable, i.e., not easy to turn up in a new cluster.\n\nThe scheme must be \"https\"; the URL must begin with \"https://\".\n\nA path is optional, and if present may be any string permissible in a URL. You may use the path to pass an arbitrary string to the webhook, for example, a cluster identifier.\n\nAttempting to use a user or basic auth e.g. \"user:password@\" is not allowed. Fragments (\"#...\") and query parameters (\"?...\") are not allowed, either.",
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "$ref": "#/$defs/b"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/b"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/i"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/9"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/a"
+                },
+                {
+                  "$ref": "#/$defs/i"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/j"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/k"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/a"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/8"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/k"
+                },
+                {
+                  "$ref": "#/$defs/j"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "global": {
+          "additionalProperties": {},
+          "properties": {
+            "resourceScope": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "compatibilityVersion": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "compatibilityVersion"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.29"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.28"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.25"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.26"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.30"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "compatibilityVersion": {
+                      "enum": [
+                        "1.27"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatibilityVersion"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "experimental": {
+                "properties": {
+                  "stableValidationPolicy": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "stableValidationPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "experimental"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/2"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "defaultRevision": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "defaults": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "defaults"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/6"
+            }
+          },
+          {
+            "$ref": "#/$defs/2"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "base": {
+            "additionalProperties": {},
+            "properties": {
+              "validationFailurePolicy": {
+                "anyOf": [
+                  {
+                    "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/3"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/r"
+                      },
+                      {
+                        "$ref": "#/$defs/n"
+                      },
+                      {
+                        "$ref": "#/$defs/u"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/p"
+                      },
+                      {
+                        "$ref": "#/$defs/q"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
+                      }
+                    ],
+                    "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/o"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/1"
+          },
+          {
+            "properties": {
+              "experimental": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "experimental"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/v"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/C"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/7"
+                },
+                {
+                  "$ref": "#/$defs/C"
+                },
+                {
+                  "$ref": "#/$defs/E"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/A"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/x"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/h"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/z"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/g"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/v"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/f"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/y"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/y"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/e"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/B"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/x"
+                },
+                {
+                  "$ref": "#/$defs/B"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/E"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/7"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/w"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/D"
+                },
+                {
+                  "$ref": "#/$defs/l"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/F"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/F"
+                },
+                {
+                  "$ref": "#/$defs/A"
+                },
+                {
+                  "$ref": "#/$defs/h"
+                },
+                {
+                  "$ref": "#/$defs/f"
+                },
+                {
+                  "$ref": "#/$defs/w"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/D"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/e"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/l"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/z"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/d"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "$ref": "#/$defs/d"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/m"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/m"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/G"
+              },
+              {
+                "$ref": "#/$defs/H"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "_internal_defaults_do_not_set": {
+                  "$ref": "#/$defs/c"
+                }
+              },
+              "required": [
+                "_internal_defaults_do_not_set"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/c"
+            }
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "properties": {
+    "_internal_defaults_do_not_set": {
+      "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`."
+    },
+    "base": {
+      "additionalProperties": {},
+      "properties": {
+        "enableCRDTemplates": {},
+        "excludedCRDs": {},
+        "validationCABundle": {},
+        "validationFailurePolicy": {},
+        "validationURL": {}
+      }
+    },
+    "compatibilityVersion": {},
+    "defaultRevision": {},
+    "defaults": {},
+    "experimental": {
+      "additionalProperties": {},
+      "properties": {
+        "stableValidationPolicy": {}
+      }
+    },
+    "global": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enableReaderRBAC": {},
+                "imagePullSecrets": {
+                  "items": {},
+                  "type": "array"
+                },
+                "istioNamespace": {},
+                "platform": {},
+                "profile": {},
+                "readerServiceAccount": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "name": {}
+                  },
+                  "type": "object"
+                },
+                "resourceScope": {}
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      ]
+    },
+    "platform": {},
+    "profile": {}
+  },
+  "type": "object"
+}

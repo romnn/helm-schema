@@ -1,0 +1,26 @@
+{{- if and .Values.kubeAPIServerProxy.backendTrafficPolicy.enabled (eq "true" (include "okteto.kubeAPIServerProxy.enabled" .)) (.Capabilities.APIVersions.Has "gateway.envoyproxy.io/v1alpha1/BackendTrafficPolicy") }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ include "okteto.fullname" . }}-kubernetes
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: "kube-apiserver-proxy"
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/name: "{{ include "okteto.fullname" . }}-kube-apiserver-proxy"
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ include "okteto.fullname" . }}-kubernetes
+  # `spdy/3.1` is deprecated but kept alongside `websocket` for older clients
+  # (kubectl <1.31 / okteto CLI <3.5.0); no server-side removal date yet (KEP-4006).
+  # https://github.com/kubernetes/enhancements/issues/4006
+  httpUpgrade:
+    - type: websocket
+    - type: spdy/3.1
+{{- end }}

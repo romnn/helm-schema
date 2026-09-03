@@ -1,0 +1,325 @@
+# Default values for weblate.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: weblate/weblate
+  tag: 2026.8.1.0@sha256:44cd8cc84c41079fa9559d7f3cb7e9b80990f2b1ef975868423e322a507edc1b
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+updateStrategy: Recreate
+revisionHistoryLimit: 10
+
+# labels -- custom labels
+labels: {}
+
+# adminEmail -- Email of Admin Account
+adminEmail: ''
+# adminUser -- Name of Admin Account
+adminUser: ''
+# adminPassword -- Password of Admin Account
+adminPassword: ''
+
+# existingSecret -- Name of existing secret,
+# Make sure it contains the keys postgresql-user, postgresql-password, redis-password, email-user, email-password, admin-user, admin-password
+# Also note to set the existingSecret values for the Redis and Postgresql subcharts
+existingSecret: ''
+
+# siteTile -- Site title
+siteTitle: Weblate
+# siteDomain -- Site domain
+siteDomain: chart-example.local
+# sitePrefix -- Site Prefix (ex: /weblate)
+sitePrefix: ''
+
+# emailHost -- Host for sending emails
+emailHost: chart-example.local
+# emailPort -- Port for sending emails
+emailPort: 587
+# emailTLS -- Use TLS when sending emails
+emailTLS: true
+# emailSSL -- Use SSL when sending emails
+emailSSL: false
+# emailUser -- User name for sending emails
+emailUser: ''
+# emailPassword -- Password for sending emails
+emailPassword: ''
+
+# serverEmail -- Sender for outgoing emails
+serverEmail: ''
+# defaultFromEmail -- From email for outgoing emails
+defaultFromEmail: ''
+# allowedHosts -- Hosts that are allowed to connect
+allowedHosts: '*'
+
+# debug -- Enable debugging
+debug: '0'
+
+# caCertSecretName -- Secret containing a custom CA cert bundle to be mounted. See https://docs.weblate.org/en/latest/admin/install.html?highlight=certificates#using-custom-certificate-authority
+caCertSecretName: ''
+# caCertSubPath -- Name of the CA cert bundle in the secret, e.g. ca-certificates.crt or ca-bundle.crt
+caCertSubPath: ''
+
+# extraVolumes -- Additional volumes to be added to the deployment. Values will be evaluated as templates. Requires setting `extraVolumeMounts`
+extraVolumes: []
+# extraVolumeMounts -- Additional volume mounts to be added to the container. Values will be evaluated as templates. Normally used with `extraVolumes`
+extraVolumeMounts: []
+
+# extraConfig -- Additional (environment) configs. Values will be evaluated as templates. See https://docs.weblate.org/en/latest/admin/install/docker.html#docker-environment
+extraConfig: {}
+
+# extraSecretConfig -- Same as `extraConfig`, but created as secrets. Values will be evaluated as Helm templates
+extraSecretConfig: {}
+
+# initContainers -- List of init containers to add to the pod. Values will be evaluated as Helm templates
+initContainers: []
+# sidecars -- List of additional containers to add to the pod. Values will be evaluated as Helm templates
+sidecars: []
+
+# externalSecretName -- An external secret, in the same namespace, that will be use to set additional
+# (environment) configs.
+externalSecretName: ''
+
+# configOverride -- Config override. See https://docs.weblate.org/en/latest/admin/install/docker.html#custom-configuration-files
+configOverride: ''
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext:
+  enabled: true
+  fsGroup: 1000
+
+podAnnotations: {}
+  # vault.security.banzaicloud.io/vault-role: "vault"
+  # vault.security.banzaicloud.io/vault-addr: "https://vault.vault.svc.cluster.local:8200"
+  # vault.security.banzaicloud.io/vault-skip-verify: "true"
+  # vault.security.banzaicloud.io/vault-path: "kubernetes"
+
+podLabels: {}
+
+containerSecurityContext:
+  enabled: false
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+secretAnnotations: {}
+  # vault.security.banzaicloud.io/vault-role: "vault"
+  # vault.security.banzaicloud.io/vault-addr: "https://vault.vault.svc.cluster.local:8200"
+  # vault.security.banzaicloud.io/vault-skip-verify: "true"
+  # vault.security.banzaicloud.io/vault-path: "kubernetes"
+
+service:
+  type: ClusterIP
+  port: 80
+  # Service annotations, use key:value pairs
+  annotations: {}
+    # my.annotation: "svc-annotation"
+  publishNotReadyAddresses: false
+
+ingress:
+  enabled: false
+  ingressClassName: ''
+  # Ingres annotations
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  # Host names
+  hosts:
+  - host: chart-example.local
+    paths:
+    - path: /
+      pathType: Prefix
+
+  # TLS configuration
+  tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+## Gateway API configuration
+## Requires the Gateway API CRDs to be installed in the cluster
+gatewayApi:
+  # gatewayApi.enabled -- Enable Gateway API resources (Gateway and HTTPRoute)
+  enabled: false
+
+  gateway:
+    # gatewayApi.gateway.create -- Create a Gateway resource
+    create: false
+    # gatewayApi.gateway.gatewayClassName -- Name of the GatewayClass to use
+    gatewayClassName: ''
+    # gatewayApi.gateway.annotations -- Gateway annotations
+    annotations: {}
+    # gatewayApi.gateway.labels -- Additional Gateway labels
+    labels: {}
+    # gatewayApi.gateway.listeners -- Gateway listeners configuration
+    listeners: {}
+    # gatewayApi.gateway.addresses -- Gateway addresses for requesting specific IPs or hostnames
+    addresses: []
+    # gatewayApi.gateway.infrastructure -- Provider-specific infrastructure configuration
+    infrastructure: {}
+
+  httpRoute:
+    # gatewayApi.httpRoute.create -- Create an HTTPRoute resource
+    create: false
+    # gatewayApi.httpRoute.annotations -- HTTPRoute annotations
+    annotations: {}
+    # gatewayApi.httpRoute.labels -- Additional HTTPRoute labels
+    labels: {}
+    # gatewayApi.httpRoute.hostnames -- Hostnames the HTTPRoute should match
+    hostnames: []
+    # gatewayApi.httpRoute.parentRefs -- Parent references for the HTTPRoute. If empty and gateway.create is true, defaults to the created Gateway
+    parentRefs: []
+    # gatewayApi.httpRoute.rules -- HTTPRoute rules. If empty, a default rule routing all traffic to the Weblate service is created
+    rules: []
+    # gatewayApi.httpRoute.timeouts -- Timeouts applied to the default generated rule. Ignored when custom rules are specified
+    timeouts: {}
+
+  tlsRoute:
+    # gatewayApi.tlsRoute.create -- Create a TLSRoute resource
+    create: false
+    # gatewayApi.tlsRoute.annotations -- TLSRoute annotations
+    annotations: {}
+    # gatewayApi.tlsRoute.labels -- Additional TLSRoute labels
+    labels: {}
+    # gatewayApi.tlsRoute.hostnames -- SNI hostnames the TLSRoute should match
+    hostnames: []
+    # gatewayApi.tlsRoute.parentRefs -- Parent references for the TLSRoute. If empty and gateway.create is true, defaults to the created Gateway
+    parentRefs: []
+    # gatewayApi.tlsRoute.rules -- TLSRoute rules. If empty, a default rule routing all traffic to the Weblate service is created
+    rules: []
+
+persistence:
+  enabled: true
+
+  # persistence.existingClaim -- Use an existing volume claim
+  existingClaim: ''
+
+  # storageClass: "-"
+
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+  filestore_dir: /app/data
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Can be removed when running Weblate service without probes configured
+livenessProbe:
+  initialDelaySeconds: 300
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 10
+  successThreshold: 1
+
+# Can be removed when running Weblate service without probes configured
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 2
+  successThreshold: 1
+
+## If you need to specify additional Kubernetes resources
+extraObjects: []
+  # - apiVersion: velero.io/v1
+  #   kind: Schedule
+  #   metadata:
+  #     name: weblate-backup
+  #   spec:
+  #     schedule: "0 2 * * *"
+  #     template:
+  #       includedNamespaces:
+  #         - weblate
+
+## Create Pod disruption budget
+pdb:
+  create: false
+## Minimum available instances
+#  minAvailable: ""
+## Maximum unavailable instances
+#  maxUnavailable: ""
+
+## Topology spread constraints rely on node labels to identify the topology domain(s) that each Node is in
+topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: failure-domain.beta.kubernetes.io/zone
+  #   whenUnsatisfiable: DoNotSchedule
+  #   labelSelector:
+  #     matchLabels:
+  #       app.kubernetes.io/instance: weblate
+
+postgresql:
+  global:
+    security:
+      # required to allow bitnamilegacy repository
+      allowInsecureImages: true
+  image:
+    repository: bitnamilegacy/postgresql
+  auth:
+  # PostgreSQL user should be a superuser to
+  # be able to install pg_trgm extension. Alternatively you can install it
+  # manually prior starting Weblate.
+    userName: ''
+    enablePostgresUser: true
+    postgresPassword: weblate
+    database: weblate
+    existingSecret: ''
+    secretKeys:
+      userPasswordKey: postgresql-password
+  service:
+    ports:
+      postgresql: 5432
+  enabled: true
+  # postgresql.postgresqlHost -- External postgres database endpoint, to be
+  # used if `postgresql.enabled == false`
+  # @default -- `None`
+  postgresqlHost:
+
+redis:
+  global:
+    security:
+      # required to allow bitnamilegacy repository
+      allowInsecureImages: true
+  image:
+    repository: bitnamilegacy/redis
+  architecture: standalone
+  auth:
+    enabled: true
+    password: weblate
+    existingSecret: ''
+    existingSecretPasswordKey: redis-password
+  db: 1
+  enabled: true
+  # redis.redisHost -- External redis database endpoint, to be
+  # used if `redis.enabled == false`
+  # @default -- `None`
+  redisHost:

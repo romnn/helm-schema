@@ -1,0 +1,18 @@
+{{- if and .Values.addons.codeserver.enabled  -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "home-assistant.fullname" . }}-codeserver
+  namespace: {{ include "home-assistant.namespace" . }}
+  labels:
+    {{- include "home-assistant.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.addons.codeserver.service.type }}
+  ports:
+    - port: {{ .Values.addons.codeserver.service.port }}
+      targetPort: codeserver
+      protocol: TCP
+      name: codeserver
+  selector:
+    {{- include "home-assistant.selectorLabels" . | nindent 4 }}
+{{- end }}

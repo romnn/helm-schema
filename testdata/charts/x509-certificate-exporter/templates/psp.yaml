@@ -1,0 +1,84 @@
+{{- if .Values.psp.create }}
+{{- if or .Values.secretsExporter.enabled .Values.cabundlesExporter.enabled }}
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ include "x509-certificate-exporter.secretsExporterName" . }}
+  labels:
+    {{- include "x509-certificate-exporter.labels" . | nindent 4 }}
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+  - ALL
+  volumes:
+  - 'secret'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+    - min: 1
+      max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+    - min: 1
+      max: 65535
+  readOnlyRootFilesystem: true
+{{- end }}
+{{- with .Values.hostPathsExporter.daemonSets }}
+{{- range $dsName, $dsDef := . }}
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ printf "%s-%s" (include "x509-certificate-exporter.fullname" $) $dsName }}
+  labels:
+    {{- include "x509-certificate-exporter.labels" $ | nindent 4 }}
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+  - ALL
+  volumes:
+  - 'hostPath'
+  - 'secret'
+  allowedHostPaths:
+  {{- $watchDirPrefixes := list }}
+  {{- range $entry := dig "watchDirectories" $.Values.hostPathsExporter.watchDirectories $dsDef }}
+  {{- $watchDirPrefixes = append $watchDirPrefixes (include "x509-certificate-exporter.watchDirStaticPrefix" $entry) }}
+  {{- end }}
+  {{- range $prefix := $watchDirPrefixes | uniq }}
+  - pathPrefix: "{{ $prefix }}"
+    readOnly: true
+  {{- end }}
+  {{- range dig "watchFiles" $.Values.hostPathsExporter.watchFiles $dsDef }}
+  - pathPrefix: "{{ . | clean | dir }}"
+    readOnly: true
+  {{- end }}
+  {{- range dig "watchKubeconfFiles" $.Values.hostPathsExporter.watchKubeconfFiles $dsDef }}
+  - pathPrefix: "{{ . | clean | dir }}"
+    readOnly: true
+  {{- end }}
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: true
+{{- end }}
+{{- end }}
+{{- end }}

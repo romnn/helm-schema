@@ -1,0 +1,4591 @@
+{
+  "$defs": {
+    "1": {
+      "properties": {
+        "csi": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/t"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "2": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "3": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "4": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "5": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "6": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "7": {
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
+    },
+    "8": {
+      "properties": {
+        "tag": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "tag"
+      ],
+      "type": "object"
+    },
+    "9": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "installCsiOperator": {}
+                },
+                "required": [
+                  "installCsiOperator"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "csi": {
+              "properties": {
+                "installCsiOperator": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "installCsiOperator"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "csi"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "csi": {
+              "properties": {
+                "installCsiOperator": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "installCsiOperator"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "csi"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "A": {
+      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+      "items": {
+        "additionalProperties": false,
+        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+        "properties": {
+          "name": {
+            "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-map-keys": [
+        "name"
+      ],
+      "x-kubernetes-list-type": "map"
+    },
+    "B": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "ceph-csi-operator": {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {}
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "ceph-csi-operator": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "create": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ceph-csi-operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "C": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "D": {
+      "properties": {
+        "ceph-csi-operator": {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ceph-csi-operator"
+      ],
+      "type": "object"
+    },
+    "E": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "provisioner": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "provisioner"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "F": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "snapshotter": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "snapshotter"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "G": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "csiAddons": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "csiAddons"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "H": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "registrar": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "registrar"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "I": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "attacher": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "attacher"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "J": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "cephcsi": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "cephcsi"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "K": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "resizer": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "resizer"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "L": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "M": {
+      "additionalProperties": false,
+      "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+      "properties": {
+        "name": {
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "N": {
+      "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "O": {
+      "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "P": {
+      "properties": {
+        "ceph-csi-operator": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ceph-csi-operator"
+      ],
+      "type": "object"
+    },
+    "Q": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "R": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "a": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "allOf": [
+          {
+            "not": {
+              "pattern": "[ \\t]#"
+            }
+          },
+          {
+            "not": {
+              "pattern": ":[ \\t]|:$"
+            }
+          },
+          {
+            "not": {
+              "pattern": "[\\r\\n]"
+            }
+          }
+        ],
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "b": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "c": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "d": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "e": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "f": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "g": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "h": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "i": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "j": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "k": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "l": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "m": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "n": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "o": {
+      "additionalProperties": false,
+      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+      "properties": {
+        "gmsaCredentialSpec": {
+          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gmsaCredentialSpecName": {
+          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostProcess": {
+          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "runAsUserName": {
+          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "p": {
+      "additionalProperties": false,
+      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+      "properties": {
+        "localhostProfile": {
+          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-unions": [
+        {
+          "discriminator": "type",
+          "fields-to-discriminateBy": {
+            "localhostProfile": "LocalhostProfile"
+          }
+        }
+      ]
+    },
+    "q": {
+      "additionalProperties": false,
+      "description": "SELinuxOptions are the labels to be applied to the container",
+      "properties": {
+        "level": {
+          "description": "Level is SELinux level label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role is a SELinux role label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "Type is a SELinux type label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User is a SELinux user label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "r": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "installCsiOperator": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "installCsiOperator"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "s": {
+      "properties": {
+        "monitoring": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "monitoring"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    },
+    "u": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "installCsiOperator": {}
+                },
+                "required": [
+                  "installCsiOperator"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "csi": {
+              "properties": {
+                "installCsiOperator": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "installCsiOperator"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "csi"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "v": {
+      "additionalProperties": false,
+      "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+      "properties": {
+        "effect": {
+          "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "key": {
+          "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "operator": {
+          "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tolerationSeconds": {
+          "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+          "format": "int64",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "value": {
+          "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "w": {
+      "description": "Added capabilities",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "x": {
+      "properties": {
+        "image": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "y": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "z": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        }
+      ],
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/E"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "provisioner": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/I"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "attacher": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/s"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "csi": {
+                    "properties": {
+                      "serviceMonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "csi"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "serviceMonitor": {}
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/J"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "cephcsi": {
+                    "$ref": "#/$defs/7"
+                  }
+                },
+                "required": [
+                  "cephcsi"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "cephcsi": {
+                    "$ref": "#/$defs/8"
+                  }
+                },
+                "required": [
+                  "cephcsi"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "cephcsi": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Ceph CSI image repository"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "cephcsi": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Ceph CSI image tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "scaleDownOperator": {
+          "description": "If true, scale down the rook operator.\nThis is useful for administrative actions where the rook operator must be scaled down, while using gitops style tooling\nto deploy your helm charts.",
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/D"
+              },
+              {
+                "$ref": "#/$defs/r"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/D"
+              },
+              {
+                "$ref": "#/$defs/u"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ceph-csi-operator": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/K"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "resizer": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "ceph-csi-operator": {
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "registrar": {
+                    "$ref": "#/$defs/8"
+                  }
+                },
+                "required": [
+                  "registrar"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "registrar": {
+                    "$ref": "#/$defs/7"
+                  }
+                },
+                "required": [
+                  "registrar"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/H"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "registrar": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Registrar image tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "registrar": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Kubernetes CSI registrar image repository"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/9"
+          },
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "openshift": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "openshift"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/x"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/9"
+          },
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "rbacAggregate": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbacAggregate"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "rbacAggregate": {}
+              },
+              "required": [
+                "rbacAggregate"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "library": {
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "csi": {}
+              },
+              "required": [
+                "csi"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "csi": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "snapshotter": {
+                    "$ref": "#/$defs/8"
+                  }
+                },
+                "required": [
+                  "snapshotter"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "snapshotter": {
+                    "$ref": "#/$defs/7"
+                  }
+                },
+                "required": [
+                  "snapshotter"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/F"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "snapshotter": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Snapshotter image tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "snapshotter": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Kubernetes CSI snapshotter image repository"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/9"
+          },
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "controllerManager": {
+                        "properties": {
+                          "manager": {
+                            "properties": {
+                              "env": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "env"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "manager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controllerManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/s"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/H"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "registrar": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/9"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "topologySpreadConstraints": {
+                        "description": "Topology spread constraints for the controller manager pod (default: [])",
+                        "items": {
+                          "additionalProperties": false,
+                          "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
+                          "properties": {
+                            "labelSelector": {
+                              "additionalProperties": false,
+                              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+                              "properties": {
+                                "matchExpressions": {
+                                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                                    "properties": {
+                                      "key": {
+                                        "description": "key is the label key that the selector applies to.",
+                                        "type": "string"
+                                      },
+                                      "operator": {
+                                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                                        "type": "string"
+                                      },
+                                      "values": {
+                                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                                        "items": {
+                                          "$ref": "#/$defs/3"
+                                        },
+                                        "type": [
+                                          "array",
+                                          "null"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "key",
+                                      "operator"
+                                    ],
+                                    "type": [
+                                      "object",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ]
+                                },
+                                "matchLabels": {
+                                  "additionalProperties": {
+                                    "$ref": "#/$defs/3"
+                                  },
+                                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "x-kubernetes-map-type": "atomic"
+                            },
+                            "matchLabelKeys": {
+                              "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
+                              "items": {
+                                "$ref": "#/$defs/3"
+                              },
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "x-kubernetes-list-type": "atomic"
+                            },
+                            "maxSkew": {
+                              "description": "MaxSkew describes the degree to which pods may be unevenly distributed. When `whenUnsatisfiable=DoNotSchedule`, it is the maximum permitted difference between the number of matching pods in the target topology and the global minimum. The global minimum is the minimum number of matching pods in an eligible domain or zero if the number of eligible domains is less than MinDomains. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 2/2/1: In this case, the global minimum is 1. | zone1 | zone2 | zone3 | |  P P  |  P P  |   P   | - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2; scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2) violate MaxSkew(1). - if MaxSkew is 2, incoming pod can be scheduled onto any zone. When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence to topologies that satisfy it. It's a required field. Default value is 1 and 0 is not allowed.",
+                              "format": "int32",
+                              "type": "integer"
+                            },
+                            "minDomains": {
+                              "description": "MinDomains indicates a minimum number of eligible domains. When the number of eligible domains with matching topology keys is less than minDomains, Pod Topology Spread treats \"global minimum\" as 0, and then the calculation of Skew is performed. And when the number of eligible domains with matching topology keys equals or greater than minDomains, this value has no effect on scheduling. As a result, when the number of eligible domains is less than minDomains, scheduler won't schedule more than maxSkew Pods to those domains. If value is nil, the constraint behaves as if MinDomains is equal to 1. Valid values are integers greater than 0. When value is not nil, WhenUnsatisfiable must be DoNotSchedule.\n\nFor example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same labelSelector spread as 2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P P  |  P P  | The number of domains is less than 5(MinDomains), so \"global minimum\" is treated as 0. In this situation, new pod with the same labelSelector cannot be scheduled, because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones, it will violate MaxSkew.\n\nThis is a beta field and requires the MinDomainsInPodTopologySpread feature gate to be enabled (enabled by default).",
+                              "format": "int32",
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "nodeAffinityPolicy": {
+                              "description": "NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.\n\nIf this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "nodeTaintsPolicy": {
+                              "description": "NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included.\n\nIf this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "topologyKey": {
+                              "description": "TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology. We consider each <key, value> as a \"bucket\", and try to put balanced number of pods into each bucket. We define a domain as a particular instance of a topology. Also, we define an eligible domain as a domain whose nodes meet the requirements of nodeAffinityPolicy and nodeTaintsPolicy. e.g. If TopologyKey is \"kubernetes.io/hostname\", each Node is a domain of that topology. And, if TopologyKey is \"topology.kubernetes.io/zone\", each zone is a domain of that topology. It's a required field.",
+                              "type": "string"
+                            },
+                            "whenUnsatisfiable": {
+                              "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy the spread constraint. - DoNotSchedule (default) tells the scheduler not to schedule it. - ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod if and only if every possible node assignment for that pod would violate \"MaxSkew\" on some topology. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 3/1/1: | zone1 | zone2 | zone3 | | P P P |   P   |   P   | If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler won't make it *more* imbalanced. It's a required field.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "maxSkew",
+                            "topologyKey",
+                            "whenUnsatisfiable"
+                          ],
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "x-kubernetes-list-map-keys": [
+                          "topologyKey",
+                          "whenUnsatisfiable"
+                        ],
+                        "x-kubernetes-list-type": "map",
+                        "x-kubernetes-patch-merge-key": "topologyKey",
+                        "x-kubernetes-patch-strategy": "merge"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "manager": {
+                        "additionalProperties": {},
+                        "description": "Manager configuration",
+                        "properties": {
+                          "env": {
+                            "description": "Environment variables for the manager container",
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "manager": {
+                        "additionalProperties": {},
+                        "description": "Manager configuration",
+                        "properties": {
+                          "image": {
+                            "additionalProperties": {},
+                            "description": "Container image configuration for the manager",
+                            "properties": {
+                              "repository": {
+                                "description": "Repository for the ceph-csi-operator image (default: \"quay.io/cephcsi/ceph-csi-operator\")",
+                                "not": {
+                                  "type": "array"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "priorityClassName": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/k"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/j"
+                              },
+                              {
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
+                                "$ref": "#/$defs/l"
+                              }
+                            ],
+                            "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
+                          },
+                          {
+                            "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Priority class name for the controller manager pod (default: \"\")"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "openshift": {
+                    "description": "OpenShift configuration",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "manager": {
+                        "description": "Manager configuration",
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "imagePullSecrets": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/2"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
+                            "items": {
+                              "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+                              "type": [
+                                "null"
+                              ],
+                              "x-kubernetes-map-type": "atomic"
+                            },
+                            "type": "array",
+                            "x-kubernetes-patch-merge-key": "name",
+                            "x-kubernetes-patch-strategy": "merge"
+                          },
+                          {
+                            "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
+                            "items": {
+                              "$ref": "#/$defs/M"
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "description": "List of image pull secret names for pulling container images (default: [])"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "nodeSelector": {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/3"
+                        },
+                        "description": "Node selector for the controller manager pod (default: {})",
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "x-kubernetes-map-type": "atomic"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "manager": {
+                        "additionalProperties": {},
+                        "description": "Manager configuration",
+                        "properties": {
+                          "resources": {
+                            "additionalProperties": false,
+                            "description": "Resource limits and requests for the manager container",
+                            "properties": {
+                              "claims": {
+                                "$ref": "#/$defs/A"
+                              },
+                              "limits": {
+                                "additionalProperties": {
+                                  "$ref": "#/$defs/m"
+                                },
+                                "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "requests": {
+                                "additionalProperties": {
+                                  "$ref": "#/$defs/m"
+                                },
+                                "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "type": [
+                              "object",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "tolerations": {
+                        "description": "Tolerations for the controller manager pod (default: [])",
+                        "items": {
+                          "$ref": "#/$defs/v"
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "nameOverride": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/b"
+                      },
+                      {
+                        "$ref": "#/$defs/2"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/a"
+                      },
+                      {
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/4"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "podSecurityContext": {
+                        "additionalProperties": false,
+                        "description": "Pod-level security context for the controller manager",
+                        "properties": {
+                          "fsGroup": {
+                            "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
+                            "format": "int64",
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "fsGroupChangePolicy": {
+                            "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside Pod. This field will only apply to volume types which support fsGroup based ownership(and permissions). It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir. Valid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used. Note that this field cannot be set when spec.os.name is windows.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "runAsGroup": {
+                            "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+                            "format": "int64",
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "runAsNonRoot": {
+                            "description": "Run the pod as a non-root user (default: true)",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "runAsUser": {
+                            "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+                            "format": "int64",
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "seLinuxOptions": {
+                            "$ref": "#/$defs/q"
+                          },
+                          "seccompProfile": {
+                            "$ref": "#/$defs/p"
+                          },
+                          "supplementalGroups": {
+                            "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
+                            "items": {
+                              "format": "int64",
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "sysctls": {
+                            "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported sysctls (by the container runtime) might fail to launch. Note that this field cannot be set when spec.os.name is windows.",
+                            "items": {
+                              "additionalProperties": false,
+                              "description": "Sysctl defines a kernel parameter to be set",
+                              "properties": {
+                                "name": {
+                                  "description": "Name of a property to set",
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "description": "Value of a property to set",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "value"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ]
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "windowsOptions": {
+                            "$ref": "#/$defs/o"
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "manager": {
+                        "additionalProperties": {},
+                        "description": "Manager configuration",
+                        "properties": {
+                          "image": {
+                            "description": "Container image configuration for the manager",
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "manager": {
+                        "additionalProperties": {},
+                        "description": "Manager configuration",
+                        "properties": {
+                          "containerSecurityContext": {
+                            "additionalProperties": false,
+                            "description": "Security context for the manager container",
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "description": "Disallow privilege escalation for the manager container (default: false)",
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              },
+                              "capabilities": {
+                                "additionalProperties": false,
+                                "description": "Adds and removes POSIX capabilities from running containers.",
+                                "properties": {
+                                  "add": {
+                                    "$ref": "#/$defs/w"
+                                  },
+                                  "drop": {
+                                    "description": "List of capabilities to drop from the manager container (default: [\"ALL\"])",
+                                    "items": {
+                                      "$ref": "#/$defs/3"
+                                    },
+                                    "type": [
+                                      "array",
+                                      "null"
+                                    ]
+                                  }
+                                },
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "privileged": {
+                                "$ref": "#/$defs/O"
+                              },
+                              "procMount": {
+                                "$ref": "#/$defs/N"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "description": "Mount root filesystem as read-only (default: true)",
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              },
+                              "runAsGroup": {
+                                "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                                "format": "int64",
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "runAsNonRoot": {
+                                "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              },
+                              "runAsUser": {
+                                "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                                "format": "int64",
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "seLinuxOptions": {
+                                "$ref": "#/$defs/q"
+                              },
+                              "seccompProfile": {
+                                "$ref": "#/$defs/p"
+                              },
+                              "windowsOptions": {
+                                "$ref": "#/$defs/o"
+                              }
+                            },
+                            "type": [
+                              "object",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "manager": {
+                        "additionalProperties": {},
+                        "description": "Manager configuration",
+                        "properties": {
+                          "args": {
+                            "description": "Arguments to pass to the manager container (default: [\"--leader-elect\"])",
+                            "items": {
+                              "$ref": "#/$defs/3"
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "additionalProperties": {},
+                    "description": "Controller manager configuration",
+                    "properties": {
+                      "replicas": {
+                        "anyOf": [
+                          {
+                            "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+                            "format": "int32",
+                            "type": "integer"
+                          },
+                          {
+                            "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+                            "format": "int32",
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "$ref": "#/$defs/L"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
+                          }
+                        ],
+                        "description": "Number of controller manager replicas (default: 1)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceAccount": {
+                    "description": "Service account configuration",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "controllerManager": {
+                    "description": "Controller manager configuration",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceAccount": {
+                    "additionalProperties": {},
+                    "description": "Service account configuration",
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/k"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/j"
+                              },
+                              {
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
+                                "$ref": "#/$defs/l"
+                              }
+                            ],
+                            "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                            "type": "string"
+                          }
+                        ],
+                        "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/F"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "snapshotter": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/G"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "csiAddons": {
+                    "$ref": "#/$defs/8"
+                  }
+                },
+                "required": [
+                  "csiAddons"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "csiAddons": {
+                    "$ref": "#/$defs/7"
+                  }
+                },
+                "required": [
+                  "csiAddons"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "csiAddons": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "CSIAddons sidecar image tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "csiAddons": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "CSIAddons sidecar image repository"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "attacher": {
+                    "$ref": "#/$defs/8"
+                  }
+                },
+                "required": [
+                  "attacher"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "attacher": {
+                    "$ref": "#/$defs/7"
+                  }
+                },
+                "required": [
+                  "attacher"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/I"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "attacher": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Kubernetes CSI Attacher image repository"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "attacher": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Attacher image tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "discover": {
+            "$ref": "#/$defs/R"
+          }
+        },
+        "required": [
+          "discover"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "discover": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "provisioner": {
+                    "$ref": "#/$defs/7"
+                  }
+                },
+                "required": [
+                  "provisioner"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/E"
+          },
+          {
+            "$ref": "#/$defs/1"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "provisioner": {
+                    "$ref": "#/$defs/8"
+                  }
+                },
+                "required": [
+                  "provisioner"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "provisioner": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Provisioner image tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "provisioner": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Kubernetes CSI provisioner image repository"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/K"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "resizer": {
+                    "$ref": "#/$defs/7"
+                  }
+                },
+                "required": [
+                  "resizer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "resizer": {
+                    "$ref": "#/$defs/8"
+                  }
+                },
+                "required": [
+                  "resizer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "resizer": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Kubernetes CSI resizer image repository"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "resizer": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Resizer image tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "monitoring": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "monitoring": {}
+              },
+              "required": [
+                "monitoring"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "scaleDownOperator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "scaleDownOperator"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "scaleDownOperator": {}
+              },
+              "required": [
+                "scaleDownOperator"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/J"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "cephcsi": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "tag": {
+              "$ref": "#/$defs/helm-double-quoted-safe",
+              "description": "Image tag"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/helm-double-quoted-safe",
+              "description": "Image"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/u"
+              },
+              {
+                "$ref": "#/$defs/B"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/r"
+              },
+              {
+                "$ref": "#/$defs/B"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceAccount": {
+                    "additionalProperties": {},
+                    "description": "Service account configuration",
+                    "properties": {
+                      "automount": {
+                        "anyOf": [
+                          {
+                            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+                            "type": "string"
+                          },
+                          {
+                            "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
+                          }
+                        ],
+                        "description": "Automatically mount a ServiceAccount's API credentials (default: true)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceAccount": {
+                    "additionalProperties": {},
+                    "description": "Service account configuration",
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "$ref": "#/$defs/C"
+                          }
+                        ],
+                        "description": "Annotations to add to the service account (default: {})"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ceph-csi-operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceAccount": {
+                    "additionalProperties": {},
+                    "description": "Service account configuration",
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/k"
+                              },
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/j"
+                              },
+                              {
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
+                                "$ref": "#/$defs/l"
+                              }
+                            ],
+                            "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
+                          }
+                        ],
+                        "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/u"
+              },
+              {
+                "$ref": "#/$defs/P"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/r"
+              },
+              {
+                "$ref": "#/$defs/P"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ceph-csi-operator": {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/9"
+          },
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "controllerManager": {
+                        "properties": {
+                          "manager": {
+                            "$ref": "#/$defs/x"
+                          }
+                        },
+                        "required": [
+                          "manager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controllerManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "controllerManager": {
+                        "properties": {
+                          "manager": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "manager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controllerManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/9"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/9"
+          },
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "controllerManager": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "controllerManager"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/G"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "csiAddons": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "serviceMonitor": {
+                    "$ref": "#/$defs/Q"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/s"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "namespace": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/b"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/a"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/z"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        ],
+                        "description": "Namespace in which to deploy the ServiceMonitor"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "interval": {
+                        "description": "Interval at which metrics should be scraped",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "$ref": "#/$defs/y"
+                          }
+                        ],
+                        "description": "Additional labels for the ServiceMonitor"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "interval": {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/e"
+                          },
+                          {
+                            "$ref": "#/$defs/k"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/j"
+                          },
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/l"
+                          }
+                        ],
+                        "description": "Interval at which metrics should be scraped",
+                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "csi": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "required": [
+                      "interval"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "allowLoopDevices": {
+      "description": "If true, loop devices are allowed to be used for osds in test clusters"
+    },
+    "annotations": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "$ref": "#/$defs/n"
+        },
+        {
+          "$ref": "#/$defs/C"
+        }
+      ],
+      "description": "Pod annotations"
+    },
+    "ceph-csi-operator": {
+      "additionalProperties": {},
+      "properties": {
+        "controllerManager": {
+          "additionalProperties": {},
+          "description": "Controller manager configuration",
+          "properties": {
+            "manager": {
+              "additionalProperties": {},
+              "description": "Manager configuration",
+              "properties": {
+                "args": {
+                  "description": "Arguments to pass to the manager container (default: [\"--leader-elect\"])"
+                },
+                "containerSecurityContext": {
+                  "description": "Security context for the manager container"
+                },
+                "env": {
+                  "additionalProperties": {},
+                  "description": "Environment variables for the manager container",
+                  "properties": {
+                    "csiServiceAccountPrefix": {
+                      "description": "Prefix for CSI service account names created by the operator (default: \"ceph-csi-operator-\")"
+                    },
+                    "watchNamespace": {
+                      "description": "Namespace to watch for resources, empty for all namespaces (default: \"\")"
+                    }
+                  }
+                },
+                "image": {
+                  "additionalProperties": {},
+                  "description": "Container image configuration for the manager",
+                  "properties": {
+                    "repository": {
+                      "description": "Repository for the ceph-csi-operator image (default: \"quay.io/cephcsi/ceph-csi-operator\")"
+                    },
+                    "tag": {
+                      "description": "Tag for the ceph-csi-operator image (default: \"v1.0.4\")"
+                    }
+                  }
+                },
+                "resources": {
+                  "description": "Resource limits and requests for the manager container"
+                }
+              }
+            },
+            "nodeSelector": {
+              "description": "Node selector for the controller manager pod (default: {})"
+            },
+            "podSecurityContext": {
+              "description": "Pod-level security context for the controller manager"
+            },
+            "priorityClassName": {
+              "description": "Priority class name for the controller manager pod (default: \"\")"
+            },
+            "replicas": {
+              "description": "Number of controller manager replicas (default: 1)"
+            },
+            "tolerations": {
+              "description": "Tolerations for the controller manager pod (default: [])"
+            },
+            "topologySpreadConstraints": {
+              "description": "Topology spread constraints for the controller manager pod (default: [])"
+            }
+          }
+        },
+        "fullnameOverride": {},
+        "global": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "imagePullSecrets": {
+          "description": "List of image pull secret names for pulling container images (default: [])"
+        },
+        "kubernetesClusterDomain": {
+          "description": "Kubernetes cluster domain used for DNS resolution (default: \"cluster.local\")"
+        },
+        "nameOverride": {},
+        "openshift": {
+          "additionalProperties": {},
+          "description": "OpenShift configuration",
+          "properties": {
+            "enabled": {
+              "description": "Enable OpenShift-specific resources (SecurityContextConstraints) (default: false)"
+            }
+          }
+        },
+        "serviceAccount": {
+          "additionalProperties": {},
+          "description": "Service account configuration",
+          "properties": {
+            "annotations": {
+              "description": "Annotations to add to the service account (default: {})"
+            },
+            "automount": {
+              "description": "Automatically mount a ServiceAccount's API credentials (default: true)"
+            },
+            "create": {
+              "description": "Specifies whether a service account should be created (default: true)"
+            },
+            "name": {
+              "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
+            }
+          }
+        }
+      },
+      "type": "object"
+    },
+    "cephCommandsTimeoutSeconds": {
+      "description": "The timeout for ceph commands in seconds"
+    },
+    "containerSecurityContext": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "additionalProperties": false,
+          "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "capabilities": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "Adds and removes POSIX capabilities from running containers.",
+                  "properties": {
+                    "add": {
+                      "$ref": "#/$defs/w"
+                    },
+                    "drop": {
+                      "anyOf": [
+                        {
+                          "description": "Removed capabilities",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "privileged": {
+              "$ref": "#/$defs/O"
+            },
+            "procMount": {
+              "$ref": "#/$defs/N"
+            },
+            "readOnlyRootFilesystem": {
+              "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runAsGroup": {
+              "anyOf": [
+                {
+                  "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                  "format": "int64",
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "runAsNonRoot": {
+              "anyOf": [
+                {
+                  "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                  "format": "int64",
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "seLinuxOptions": {
+              "$ref": "#/$defs/q"
+            },
+            "seccompProfile": {
+              "$ref": "#/$defs/p"
+            },
+            "windowsOptions": {
+              "$ref": "#/$defs/o"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Set the container security context for the operator"
+    },
+    "crds": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "Whether the helm chart should create and update the CRDs. If false, the CRDs must be\nmanaged independently with deploy/examples/crds.yaml.\n**WARNING** Only set during first deployment. If later disabled the cluster may be DESTROYED.\nIf the CRDs are deleted in this case, see\n[the disaster recovery guide](https://rook.io/docs/rook/latest/Troubleshooting/disaster-recovery/#restoring-crds-after-deletion)\nto restore them."
+        }
+      },
+      "type": "object"
+    },
+    "csi": {
+      "additionalProperties": {},
+      "properties": {
+        "attacher": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "description": "Kubernetes CSI Attacher image repository"
+            },
+            "tag": {
+              "description": "Attacher image tag"
+            }
+          }
+        },
+        "cephcsi": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "description": "Ceph CSI image repository"
+            },
+            "tag": {
+              "description": "Ceph CSI image tag"
+            }
+          }
+        },
+        "csiAddons": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "description": "CSIAddons sidecar image repository"
+            },
+            "tag": {
+              "description": "CSIAddons sidecar image tag"
+            }
+          }
+        },
+        "installCsiOperator": {
+          "description": "When true, install the ceph-csi-operator subchart (see Chart.yaml `condition`).",
+          "type": "boolean"
+        },
+        "provisioner": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "description": "Kubernetes CSI provisioner image repository"
+            },
+            "tag": {
+              "description": "Provisioner image tag"
+            }
+          }
+        },
+        "registrar": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "description": "Kubernetes CSI registrar image repository"
+            },
+            "tag": {
+              "description": "Registrar image tag"
+            }
+          }
+        },
+        "resizer": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "description": "Kubernetes CSI resizer image repository"
+            },
+            "tag": {
+              "description": "Resizer image tag"
+            }
+          }
+        },
+        "serviceMonitor": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "Enable ServiceMonitor for CSI metrics"
+            },
+            "interval": {
+              "description": "Interval at which metrics should be scraped"
+            },
+            "labels": {
+              "description": "Additional labels for the ServiceMonitor"
+            },
+            "namespace": {
+              "description": "Namespace in which to deploy the ServiceMonitor"
+            }
+          }
+        },
+        "snapshotter": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "description": "Kubernetes CSI snapshotter image repository"
+            },
+            "tag": {
+              "description": "Snapshotter image tag"
+            }
+          }
+        }
+      },
+      "type": "object"
+    },
+    "currentNamespaceOnly": {
+      "description": "Whether the operator should watch cluster CRD in its own namespace or not"
+    },
+    "customHostnameLabel": {
+      "description": "Custom label to identify node hostname. If not set `kubernetes.io/hostname` will be used"
+    },
+    "deleteUnusedCrushRules": {
+      "description": "If true, delete unused generated CRUSH rules after the mgr starts"
+    },
+    "disableDeviceHotplug": {
+      "description": "Disable automatic orchestration when new devices are discovered."
+    },
+    "discover": {
+      "additionalProperties": {},
+      "properties": {
+        "nodeAffinity": {
+          "description": "The node labels for affinity of `discover-agent` [^1]\nkey1=value1,value2; key2=value3\nor\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: storage-node\noperator: Exists"
+        },
+        "podLabels": {
+          "description": "Labels to add to the discover pods\n\"key1=value1,key2=value2\""
+        },
+        "priorityClassName": {},
+        "resources": {
+          "description": "Add resources to discover daemon pods\nresources: |\n'{\"resources\":{\"requests\":{\"memory\":\"128Mi\",\"cpu\":\"100m\"},\"limits\":{\"memory\":\"512Mi\"}}}'"
+        },
+        "toleration": {
+          "description": "Toleration for the discover pods.\nOptions: `NoSchedule`, `PreferNoSchedule` or `NoExecute`"
+        },
+        "tolerationKey": {
+          "description": "The specific key of the taint to tolerate"
+        },
+        "tolerations": {
+          "description": "Array of tolerations in YAML format which will be added to discover deployment\n- key: key\noperator: Exists\neffect: NoSchedule"
+        }
+      }
+    },
+    "discoverDaemonUdev": {
+      "description": "Blacklist certain disks according to the regex provided."
+    },
+    "discoveryDaemonInterval": {
+      "description": "Set the discovery daemon device discovery interval (default to 60m)"
+    },
+    "enableDiscoveryDaemon": {
+      "description": "Enable discovery daemon"
+    },
+    "enableOBCWatchOperatorNamespace": {
+      "description": "Whether the OBC provisioner should watch on the operator namespace or not, if not the namespace of the cluster will be used"
+    },
+    "enforceHostNetwork": {
+      "description": "Whether to create all Rook pods to run on the host network, for example in environments where a CNI is not enabled"
+    },
+    "global": {},
+    "hostpathRequiresPrivileged": {
+      "description": "Runs Ceph Pods as privileged to be able to write to `hostPaths` in OpenShift with SELinux restrictions."
+    },
+    "image": {
+      "additionalProperties": {},
+      "properties": {
+        "pullPolicy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/b"
+            },
+            {
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/5"
+            },
+            {
+              "$ref": "#/$defs/a"
+            },
+            {
+              "$ref": "#/$defs/6"
+            },
+            {
+              "$ref": "#/$defs/4"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/e"
+                },
+                {
+                  "$ref": "#/$defs/k"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                },
+                {
+                  "$ref": "#/$defs/h"
+                },
+                {
+                  "$ref": "#/$defs/i"
+                },
+                {
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/j"
+                },
+                {
+                  "$ref": "#/$defs/f"
+                },
+                {
+                  "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/l"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
+            }
+          ],
+          "description": "Image pull policy"
+        },
+        "repository": {
+          "description": "Image"
+        },
+        "tag": {
+          "description": "Image tag"
+        }
+      },
+      "type": "object"
+    },
+    "imagePullSecrets": {
+      "anyOf": [
+        {
+          "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
+          "items": {
+            "$ref": "#/$defs/M"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "imagePullSecrets option allow to pull docker images from private docker registry. Option will be passed to all service accounts.\n- name: my-registry-secret"
+    },
+    "library": {
+      "additionalProperties": {},
+      "properties": {
+        "global": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "logLevel": {
+      "description": "Global log level for the operator.\nOptions: `ERROR`, `WARNING`, `INFO`, `DEBUG`"
+    },
+    "monRunAsRoot": {
+      "description": "If true, ceph mon pods will be run as root"
+    },
+    "monitoring": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "Enable monitoring. Requires Prometheus to be pre-installed.\nEnabling will also create RBAC rules to allow Operator to create ServiceMonitors"
+        }
+      },
+      "type": "object"
+    },
+    "nodeSelector": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/3"
+          },
+          "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        },
+        {
+          "$ref": "#/$defs/n"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Kubernetes [`nodeSelector`](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector) to add to the Deployment.\nConstraint rook-ceph-operator Deployment to nodes with label `disktype: ssd`.\nFor more info, see https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector\ndisktype: ssd"
+    },
+    "obcAllowAdditionalConfigFields": {
+      "description": "Many OBC additional config fields may be risky for administrators to allow users control over.\nThe safe and default-allowed fields are 'maxObjects' and 'maxSize'.\nOther fields should be considered risky. To allow all additional configs, use this value:\n\"maxObjects,maxSize,bucketMaxObjects,bucketMaxSize,bucketPolicy,bucketLifecycle,bucketOwner\""
+    },
+    "obcProvisionerNamePrefix": {
+      "description": "Specify the prefix for the OBC provisioner in place of the cluster namespace"
+    },
+    "operatorMetricsBindAddress": {},
+    "operatorNamespace": {},
+    "operatorPodLabels": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/3"
+              },
+              "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/y"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/n"
+        }
+      ],
+      "description": "Custom pod labels for the operator"
+    },
+    "priorityClassName": {
+      "description": "Set the priority class for the rook operator deployment if desired"
+    },
+    "rbacAggregate": {
+      "additionalProperties": {},
+      "properties": {
+        "enableOBCs": {
+          "description": "If true, create a ClusterRole aggregated to [user facing roles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles) for objectbucketclaims"
+        }
+      },
+      "type": "object"
+    },
+    "rbacEnable": {
+      "description": "If true, create & use RBAC resources"
+    },
+    "reconcileConcurrentClusters": {
+      "description": "Number of clusters the operator reconciles concurrently"
+    },
+    "resources": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "additionalProperties": false,
+          "description": "ResourceRequirements describes the compute resource requirements.",
+          "properties": {
+            "claims": {
+              "$ref": "#/$defs/A"
+            },
+            "limits": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/m"
+                  },
+                  "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "properties": {
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "requests": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/m"
+                  },
+                  "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Pod resource requests & limits"
+    },
+    "revisionHistoryLimit": {
+      "description": "The revision history limit for all pods created by Rook. If blank, the K8s default is 10."
+    },
+    "scaleDownOperator": {
+      "description": "If true, scale down the rook operator.\nThis is useful for administrative actions where the rook operator must be scaled down, while using gitops style tooling\nto deploy your helm charts."
+    },
+    "tolerations": {
+      "anyOf": [
+        {
+          "description": "If specified, the pod's tolerations.",
+          "items": {
+            "$ref": "#/$defs/v"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "List of Kubernetes [`tolerations`](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) to add to the Deployment."
+    },
+    "unreachableNodeTolerationSeconds": {
+      "anyOf": [
+        {
+          "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+          "format": "int64",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/L"
+        },
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+          "format": "int64",
+          "type": "integer"
+        }
+      ],
+      "description": "Delay to use for the `node.kubernetes.io/unreachable` pod failure toleration to override\nthe Kubernetes default of 5 minutes"
+    },
+    "useOperatorHostNetwork": {
+      "description": "If true, run rook operator on the host network"
+    }
+  },
+  "type": "object"
+}

@@ -1,0 +1,282 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "rawfile-localpv.fullname" . }}-node
+spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: "100%"
+  selector:
+    matchLabels: &selectorLabels
+      {{- include "rawfile-localpv.selectorLabels" . | nindent 6 }}
+      component: node
+  template:
+    metadata:
+      labels: *selectorLabels
+      {{- with .Values.node.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccount: {{ include "rawfile-localpv.fullname" . }}-driver
+      priorityClassName: {{ .Values.node.priorityClassName }}
+      {{- if .Values.node.hostNetwork }}
+      hostNetwork: true
+      {{- end }}
+      tolerations:
+        {{- .Values.node.tolerations | toYaml | nindent 8 }}
+      nodeSelector:
+        {{- .Values.node.nodeSelector | toYaml | nindent 8 }}
+      affinity:
+        {{- .Values.node.affinity | toYaml | nindent 8 }}
+      volumes:
+        - name: registration-dir
+          hostPath:
+            path: {{ include "rawfile-localpv.node-kubelet-path" . }}plugins_registry
+            type: Directory
+        - name: socket-dir
+          hostPath:
+            path: {{ include "rawfile-localpv.node-kubelet-path" . }}plugins/rawfile-localpv
+            type: DirectoryOrCreate
+        - name: mountpoint-dir
+          hostPath:
+            path: {{ include "rawfile-localpv.node-kubelet-path" . }}
+            type: DirectoryOrCreate
+        - name: metadata-dir
+          hostPath:
+            path: {{ include "rawfile-localpv.metadata-dir-path" . }}
+            type: DirectoryOrCreate
+        - name: device
+          hostPath:
+            path: /dev
+            type: Directory
+        {{- include "rawfile-localpv.pool-volumes" . | nindent 8 }}
+      containers:
+        - name: csi-driver
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.image "global" .Values.global "chartVersion" .Chart.AppVersion) | quote }}
+          imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+          env:
+            - name: PROVISIONER_NAME
+              value: "{{ .Values.provisionerName }}"
+            - name: CSI_DRIVER__ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: CSI_DRIVER__NODE_ID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: CSI_DRIVER__ENABLE_METRICS
+              value: {{ .Values.metrics.enabled | toString | quote }}
+            - name: CSI_DRIVER__METRICS_PORT
+              value: {{ .Values.metrics.port | toString | quote }}
+            - name: CSI_DRIVER__METADATA_DIR
+              value: {{ include "rawfile-localpv.metadata-dir-path" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: LOG_LEVEL
+              value: {{ .Values.logLevel }}
+            - name: LOG_FORMAT
+              value: {{ .Values.logFormat }}
+            - name: CSI_DRIVER__PLUGIN_TYPE
+              value: node
+            - name: CSI_DRIVER__GRPC_WORKERS
+              value: {{ .Values.node.grpcWorkers | toString | quote }}
+            - name: GA_ENABLED
+              {{- if kindIs "bool" .Values.global.analytics.enabled }}
+              value: "{{ .Values.global.analytics.enabled }}"
+              {{- else }}
+              value: "{{ .Values.analytics.enabled }}"
+              {{- end }}
+            {{- if .Values.global.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.global.analytics.gaId | quote }}
+            {{- else if .Values.analytics.gaId }}
+            - name: GA_ID
+              value: {{ .Values.analytics.gaId | quote }}
+            {{- end }}
+            {{- if .Values.global.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.global.analytics.gaKey | quote }}
+            {{- else if .Values.analytics.gaKey }}
+            - name: GA_KEY
+              value: {{ .Values.analytics.gaKey | quote }}
+            {{- end }}
+            {{- if .Values.global.analytics.gaDnsNameservers }}
+            - name: GA_DNS
+              value: {{ .Values.global.analytics.gaDnsNameservers | quote }}
+            {{- else if .Values.analytics.gaDnsNameservers }}
+            - name: GA_DNS
+              value: {{ .Values.analytics.gaDnsNameservers | quote }}
+            {{- end }}
+            - name: CSI_DRIVER__INTERNAL_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: INTERNAL_PORT
+              value: {{ .Values.node.internalGRPC.port | toString | quote }}
+            - name: CSI_DRIVER__INTERNAL_GRPC_WORKERS
+              value: {{ .Values.node.internalGRPC.workers | toString | quote }}
+            - name: NODE_DS
+              value: {{ include "rawfile-localpv.fullname" . }}-node
+            {{- if .Values.auth.enabled }}
+            - name: INTERNAL_SIGNATURE
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.auth.secretName }}
+                  name: {{ .Values.auth.secretName }}
+                  {{- else }}
+                  name: {{ include "rawfile-localpv.fullname" . }}-secrets
+                  {{- end }}
+                  key: internal-signature
+            {{- end }}
+            - name: CSI_DRIVER__DEFAULT_FS
+              value: {{ .Values.node.defaultFs }}
+            - name: CSI_DRIVER__DEFAULT_POOL
+            {{- if .Values.node.defaultPool }}
+              value: {{ .Values.node.defaultPool }}
+            {{- else if not .Values.node.storagePools }}
+              value: "data-dir"
+            {{- end }}
+            - name: CSI_DRIVER__STORAGE_POOLS
+              value: |
+                {
+                  {{- $keys := keys .Values.node.storagePools | sortAlpha }}
+                  {{- range $i, $name := $keys }}
+                  "{{ $name }}": {
+                    "path": "{{ tpl (index $.Values.node.storagePools $name).path . }}"
+                    {{- with (index $.Values.node.storagePools $name).reservedCapacity }}
+                    , "reserved_capacity": "{{ . | toString }}"
+                    {{- end }}
+                    {{- with (index $.Values.node.storagePools $name).reservedCapacityMode }}
+                    , "reserved_capacity_mode": "{{ . | toString }}"
+                    {{- end }}
+                    {{- with (index $.Values.node.storagePools $name) }}
+                    {{- if hasKey . "accountVolumesFreeSpace" }}
+                    , "account_volumes_free_space": {{ .accountVolumesFreeSpace }}
+                    {{- end }}
+                    {{- end }}
+                  }{{ if lt (add1 $i) (len $keys) }},{{ end }}
+                  {{- end }}
+                }
+            - name: CSI_DRIVER__CAPABILITIES__SNAPSHOTS__ENABLED
+              value: "{{ .Values.capabilities.snapshots.enabled }}"
+            - name: CSI_DRIVER__CAPABILITIES__RESIZE__ENABLED
+              value: "{{ .Values.capabilities.resize.enabled }}"
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: mountpoint-dir
+              mountPath: {{ include "rawfile-localpv.node-kubelet-path" . }}
+              mountPropagation: "Bidirectional"
+            - name: metadata-dir
+              mountPath: {{ include "rawfile-localpv.metadata-dir-path" . }}
+            - name: device
+              mountPath: /dev
+            {{- include "rawfile-localpv.pool-volume-mounts" . | nindent 12 }}
+          resources:
+            {{- include "rawfile-localpv.controller-resources" . | nindent 12 }}
+        - name: node-driver-registrar
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.node.driverRegistrar.image "csiSideCars" .Values.csiSideCars.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default .Values.node.driverRegistrar.image.pullPolicy | default .Values.csiSideCars.image.pullPolicy }}
+          args:
+            - --csi-address=$(ADDRESS)
+            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+            - --health-port={{ .Values.node.driverRegistrar.healthzPort }}
+            - --automaxprocs=true
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: {{ include "rawfile-localpv.node-kubelet-path" . }}plugins/rawfile-localpv/csi.sock
+          ports:
+            - containerPort: {{ .Values.node.driverRegistrar.healthzPort }}
+              name: healthz
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+          resources:
+            {{- include "rawfile-localpv.node-driver-registrar-resources" . | nindent 12 }}
+        - name: external-provisioner
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.node.externalProvisioner.image "csiSideCars" .Values.csiSideCars.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default .Values.node.externalProvisioner.image.pullPolicy | default .Values.csiSideCars.image.pullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--feature-gates=Topology=true"
+            - "--strict-topology"
+            - "--immediate-topology=false"
+            - "--timeout=120s"
+            - "--enable-capacity=true"
+            - "--capacity-for-immediate-binding=true"
+            - "--capacity-ownerref-level=1" # DaemonSet
+            - "--node-deployment=true"
+            - "--extra-create-metadata=true"
+            - "--capacity-poll-interval={{ .Values.node.externalProvisioner.capacityPollInterval }}"
+            - "--automaxprocs=true"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            {{- include "rawfile-localpv.node-external-provisioner-resources" . | nindent 12 }}
+        {{- if .Values.capabilities.snapshots.enabled }}
+        - name: external-snapshotter
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.node.externalSnapshotter.image "csiSideCars" .Values.csiSideCars.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default .Values.node.externalSnapshotter.image.pullPolicy | default .Values.csiSideCars.image.pullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--node-deployment=true"
+            - "--extra-create-metadata=true"
+            - "--automaxprocs=true"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            {{- include "rawfile-localpv.node-external-snapshotter-resources" . | nindent 12 }}
+        {{- end }}
+        {{- if and .Values.capabilities.snapshots.enabled .Values.node.snapshotController.enabled }}
+        - name: snapshot-controller
+          args:
+            - "--v=2"
+            - "--enable-distributed-snapshotting=true"
+            # runs as Daemonset, but only one should be active per cluster
+            - "--leader-election=true"
+          resources:
+            {{- include "rawfile-localpv.node-snapshot-controller-resources" . | nindent 12 }}
+          image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.node.snapshotController.image "csiSideCars" .Values.csiSideCars.image "global" .Values.global) | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default .Values.node.snapshotController.image.pullPolicy | default .Values.csiSideCars.image.pullPolicy }}
+        {{- end }}

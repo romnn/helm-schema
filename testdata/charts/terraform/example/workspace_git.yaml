@@ -1,0 +1,53 @@
+---
+apiVersion: app.terraform.io/v1alpha1
+kind: Workspace
+metadata:
+  name: salutations
+spec:
+  # Optional field for SSH Key ID. To get the id you need to list the keys using the API: https://www.terraform.io/docs/cloud/api/ssh-keys.html#list-ssh-keys.
+  # sshKeyID: sshkey-D4fmNfDCWAoBJopq
+  organization: hashicorp-team-demo
+  secretsMountPath: "/tmp/secrets"
+  module:
+    source: "git::https://github.com/joatmon08/queues.git"
+  outputs:
+    - key: queue_urls
+      moduleOutputName: queue_urls
+    - key: json_string
+      moduleOutputName: json_string
+  variables:
+    - key: application
+      value: goodbye
+      sensitive: false
+      environmentVariable: false
+    - key: environment
+      value: preprod
+      sensitive: false
+      environmentVariable: false
+    - key: some_list
+      value: '["hello","queues"]'
+      hcl: true
+      sensitive: false
+      environmentVariable: false
+    - key: some_object
+      value: '{hello={name= "test"}}'
+      hcl: true
+      sensitive: false
+      environmentVariable: false
+    - key: AWS_DEFAULT_REGION
+      valueFrom:
+        configMapKeyRef:
+          name: aws-configuration
+          key: region
+      sensitive: false
+      environmentVariable: true
+    - key: AWS_ACCESS_KEY_ID
+      sensitive: true
+      environmentVariable: true
+    - key: AWS_SECRET_ACCESS_KEY
+      sensitive: true
+      environmentVariable: true
+    - key: CONFIRM_DESTROY
+      value: "1"
+      sensitive: false
+      environmentVariable: true

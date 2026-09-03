@@ -1,0 +1,109 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "kubeshark.labels" . | nindent 4 }}
+  {{- if .Values.tap.annotations }}
+  annotations:
+    {{- toYaml .Values.tap.annotations | nindent 4 }}
+  {{- end }}
+  name: kubeshark-cluster-role-{{ .Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups:
+      - ""
+      - extensions
+      - apps
+    resources:
+      - nodes
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+    verbs:
+      - list
+      - get
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+    - networking.k8s.io
+    resources:
+    - networkpolicies
+    verbs:
+    - get
+    - list
+    - watch
+    - create
+    - update
+    - delete
+  - apiGroups:
+    - authentication.k8s.io
+    resources:
+    - tokenreviews
+    verbs:
+    - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    {{- include "kubeshark.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.tap.annotations }}
+    {{- toYaml .Values.tap.annotations | nindent 4 }}
+  {{- end }}
+  name: kubeshark-self-config-role
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups:
+      - ""
+      - v1
+    resourceNames:
+      - kubeshark-secret
+      - kubeshark-config-map
+      - kubeshark-secret-default
+      - kubeshark-config-map-default
+    resources:
+      - secrets
+      - configmaps
+    verbs:
+      - create
+      - get
+      - watch
+      - list
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+      - v1
+    resources:
+      - secrets
+      - configmaps
+      - pods/log
+    verbs:
+      - create
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - create
+      - get
+      - list
+      - delete
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - "*"

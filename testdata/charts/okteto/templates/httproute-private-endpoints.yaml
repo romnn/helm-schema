@@ -1,0 +1,32 @@
+{{- if eq (include "okteto.privateEndpoints.enabled" .) "true" }}
+{{- if eq "true" (include "okteto.controlplane.gateway.enabled" .) }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "okteto.fullname" . }}-private-endpoints
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "okteto.fullname" . }}-private-endpoints
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/component: "private-endpoints"
+    {{- with .Values.endpoints.okteto.gatewayAPI.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations: {{ .Values.endpoints.okteto.gatewayAPI.annotations | toJson }}
+spec:
+  parentRefs: {{ include "okteto.controlplane.gateway.parentRefs" . }}
+  hostnames:
+    - {{ (include "okteto.privateEndpoints" .) | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ include "okteto.fullname" . }}-private-endpoints
+          port: {{ .Values.privateEndpoints.port }}
+{{- end }}
+{{- end }}

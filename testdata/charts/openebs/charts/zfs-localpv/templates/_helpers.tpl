@@ -1,0 +1,211 @@
+{{/* vim: set filetype=mustache: */}}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "zfslocalpv.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified localpv provisioner name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "zfslocalpv.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "zfslocalpv.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+
+{{/*
+Create the name of the service account for controller
+*/}}
+{{- define "zfslocalpv.zfsController.serviceAccountName" -}}
+{{- if .Values.serviceAccount.zfsController.create }}
+{{- default (include "zfslocalpv.fullname" .) .Values.serviceAccount.zfsController.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.zfsController.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "zfslocalpv.zfsNode.serviceAccountName" -}}
+{{- if .Values.serviceAccount.zfsNode.create }}
+{{- default (include "zfslocalpv.fullname" .) .Values.serviceAccount.zfsNode.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.zfsNode.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Define meta labels for openebs zfs-localpv components
+*/}}
+{{- define "zfslocalpv.common.metaLabels" -}}
+{{- if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels -}}
+chart: {{ template "zfslocalpv.chart" . }}
+heritage: {{ .Release.Service }}
+{{ end -}}
+openebs.io/version: {{ .Chart.AppVersion | quote }}
+role: {{ .Values.role | quote }}
+{{- end -}}
+
+{{/*
+Create match labels for openebs zfs-localpv controller
+*/}}
+{{- define "zfslocalpv.zfsController.matchLabels" -}}
+app: {{ .Values.zfsController.componentName | quote }}
+{{ if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels -}}
+release: {{ .Release.Name }}
+{{ end -}}
+component: {{ .Values.zfsController.componentName | quote }}
+{{- end -}}
+
+{{/*
+Create component labels for zfslocalpv controller
+*/}}
+{{- define "zfslocalpv.zfsController.componentLabels" -}}
+openebs.io/component-name: {{ .Values.zfsController.componentName | quote }}
+{{- end -}}
+
+
+{{/*
+Create labels for openebs zfs-localpv controller
+*/}}
+{{- define "zfslocalpv.zfsController.labels" -}}
+{{ include "zfslocalpv.common.metaLabels" . }}
+{{ include "zfslocalpv.zfsController.matchLabels" . }}
+{{ include "zfslocalpv.zfsController.componentLabels" . }}
+{{- end -}}
+
+{{/*
+Create match labels for openebs zfs-localpv node daemon
+*/}}
+{{- define "zfslocalpv.zfsNode.matchLabels" -}}
+name: {{ .Values.zfsNode.componentName | quote }}{{ if or (not (hasKey .Values "enableHelmMetaLabels")) .Values.enableHelmMetaLabels }}
+release: {{ .Release.Name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create component labels openebs zfs-localpv node daemon
+*/}}
+{{- define "zfslocalpv.zfsNode.componentLabels" -}}
+app: {{ .Values.zfsNode.componentName | quote }}
+openebs.io/component-name: {{ .Values.zfsNode.componentName | quote }}
+{{- end -}}
+
+
+{{/*
+Create labels for openebs zfs-localpv node daemon
+*/}}
+{{- define "zfslocalpv.zfsNode.labels" -}}
+{{ include "zfslocalpv.common.metaLabels" . }}
+{{ include "zfslocalpv.zfsNode.matchLabels" . }}
+{{ include "zfslocalpv.zfsNode.componentLabels" . }}
+{{- end -}}
+
+{{/*
+Create the name of the priority class for csi node plugin
+*/}}
+{{- define "zfslocalpv.zfsNode.priorityClassName" -}}
+{{- if .Values.zfsNode.priorityClass.create }}
+{{- printf "%s-%s" .Release.Name .Values.zfsNode.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s" .Values.zfsNode.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create the name of the priority class for csi controller plugin
+*/}}
+{{- define "zfslocalpv.zfsController.priorityClassName" -}}
+{{- if .Values.zfsController.priorityClass.create }}
+{{- printf "%s-%s" .Release.Name .Values.zfsController.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s" .Values.zfsController.priorityClass.name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Enable zfsController containers leader election if replicas > 1
+*/}}
+{{- define "zfslocalpv.zfsController.leaderElection" -}}
+{{- with .Values.zfsController.replicas | int }}
+{{- if gt . 1 }}
+- "--leader-election"
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Ensure that the path to kubelet ends with a slash
+*/}}
+{{- define "zfslocalpv.zfsNode.kubeletDir" -}}
+{{- printf "%s/" (default .Values.zfsNode.kubeletDir .Values.global.kubeletDir | trimSuffix "/") -}}
+{{- end }}
+
+{{/*
+Creates the image URL ie registry/repository:tag
+*/}}
+{{- define "zfslocalpv.common.image" -}}
+{{- $registryName := default .imageRoot.registry ((.global).imageRegistry) | trimSuffix "/" -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $termination := .imageRoot.tag | toString -}}
+{{- if $registryName }}
+    {{- printf "%s/%s:%s" $registryName $repositoryName $termination -}}
+{{- else -}}
+    {{- printf "%s:%s"  $repositoryName $termination -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Concatenates imagepullsecrets and handles different formats (example - secret or - name: secret)
+*/}}
+{{- define "zfslocalpv.common.pullSecrets" -}}
+{{- $names := list -}}
+{{- with .Values.global.imagePullSecrets -}}
+  {{- range . -}}
+    {{- if kindIs "map" . }}
+      {{- if and (hasKey . "name") (not (empty .name)) -}}
+        {{ $names = append $names .name }}
+      {{- end -}}
+    {{- else if not (empty .) -}}
+      {{ $names = append $names . -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+{{- with .Values.imagePullSecrets -}}
+  {{- range . }}
+    {{- if kindIs "map" . -}}
+      {{- if and (hasKey . "name") (not (empty .name)) -}}
+        {{- $names = append $names .name }}
+      {{- end -}}
+    {{- else if not (empty .) -}}
+      {{- $names = append $names . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $names = uniq $names -}}
+{{- if $names -}}
+{{- range $names }}
+- name: {{ . }}
+{{- end -}}
+{{- end -}}
+{{- end -}}

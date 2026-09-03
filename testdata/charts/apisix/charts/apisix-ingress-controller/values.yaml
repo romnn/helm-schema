@@ -1,0 +1,202 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# -- Default values for apisix-ingress-controller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+#
+nameOverride: ""
+
+fullnameOverride: ""
+
+# -- Override default labels assigned to Apache APISIX ingress controller resource
+labelsOverride: {}
+# labelsOverride:
+#   app.kubernetes.io/name: "{{ .Release.Name }}"
+#   app.kubernetes.io/instance: '{{ include "apisix-ingress-controller.name" . }}'
+
+# -- See https://kubernetes.io/docs/tasks/run-application/configure-pdb/ for more details
+podDisruptionBudget:
+  # -- Enable or disable podDisruptionBudget
+  enabled: false
+  # -- Set the `minAvailable` of podDisruptionBudget. You can specify only one of `maxUnavailable` and `minAvailable` in a single PodDisruptionBudget.
+  # See [Specifying a Disruption Budget for your Application](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)
+  # for more details
+  minAvailable: 90%
+  # -- Set the maxUnavailable of podDisruptionBudget
+  maxUnavailable: 1
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+
+deployment:
+  # -- Add annotations to Apache APISIX ingress controller resource
+  annotations: {}
+  podAnnotations: {}
+  replicas: 1
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  imagePullSecrets: []
+
+  # -- Set security context for the pod
+  # fsGroup: 2000 ensures containers can share Unix socket files via a common group.
+  podSecurityContext:
+    fsGroup: 2000
+
+  # -- Topology Spread Constraints for pod assignment spread across your cluster among failure-domains
+  # ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  topologySpreadConstraints: []
+  image:
+    repository: apache/apisix-ingress-controller
+    pullPolicy: IfNotPresent
+    tag: "2.2.0"
+  # -- Set pod resource requests & limits
+  resources: {}
+
+  # -- Set adc sidecar container configuration
+  adcContainer:
+    image:
+      repository: ghcr.io/api7/adc
+      tag: "0.27.1"
+    config:
+      logLevel: "info"
+
+config:
+  logLevel: "info"
+  controllerName: apisix.apache.org/apisix-ingress-controller
+  leaderElection:
+    id: "apisix-ingress-controller-leader"
+    leaseDuration: "15s"
+    renewDeadline: "10s"
+    retryPeriod: "2s"
+    disable: false
+  metricsAddr: ":8080"
+  enableHTTP2: false
+  probeAddr: ":8081"
+  secureMetrics: false
+  execADCTimeout: "15s"
+  disableGatewayAPI: false
+  listenerPortMatchMode: "auto"
+  provider:
+    type: "apisix"
+    syncPeriod: "1m"
+    initSyncDelay: "20m"
+  kubernetes:
+    ingressClass: apisix
+    defaultIngressClass: false
+
+# Admission webhook configuration
+webhook:
+  # -- Enable or disable admission webhook
+  enabled: true
+  # -- The port for the webhook server to listen on
+  port: 9443
+  # -- Failure policy for the webhook (Fail or Ignore)
+  failurePolicy: Ignore
+  # -- Timeout in seconds for the webhook
+  timeoutSeconds: 10
+  certificate:
+    # -- Set to true if you want to provide your own certificate
+    provided: false
+    # -- Secret name containing the certificate (required if provided is true)
+    # secretName: "my-webhook-cert"
+    # -- CA bundle in base64 format (required if provided is true)
+    # caBundle: ""
+
+# The GatewayProxy resource configures gateway proxy instances including networking,
+# provider connection, global plugins, and plugin metadata.
+gatewayProxy:
+  # -- Controls whether to create a default GatewayProxy custom resource.
+  createDefault: false
+
+  # -- Configuration for the GatewayProxy provider connection
+  provider:
+    # -- Specifies the provider type for the GatewayProxy.
+    type: ControlPlane
+
+    # -- ControlPlane provider specific configuration
+    # Either `endpoints` or `service` must be specified, but not both.
+    controlPlane:
+      # -- List of APISIX control plane Admin API endpoints.
+      # example: ["http://apisix-admin.default.svc.cluster.local:9180"]
+      endpoints: []
+
+      # -- Alternatively, reference a Kubernetes Service for the APISIX Admin API.
+      service:
+        name: ""
+        port: 9180
+
+      # -- Authentication configuration for control plane connection
+      auth:
+        # -- Authentication type. Only `AdminKey` is currently supported.
+        # @default -- `AdminKey`
+        type: AdminKey
+
+        # -- AdminKey authentication configuration.
+        # Either `value` or `valueFrom` must be specified, but not both.
+        adminKey:
+          # -- The admin key value for authentication.
+          value: "edd1c9f034335f136f87ad84b625c8f1"
+
+          # -- Reference to admin key stored in a Kubernetes Secret
+          valueFrom: {}
+            # secretKeyRef:
+            #   name: apisix-admin-secret
+            #   key: admin-key
+
+    # -- List of global plugins to be enabled on the GatewayProxy.
+    plugins: []
+      # - name: cors
+      #   enabled: true
+      #   config:
+      #     allow_origins: "*"
+      #     allow_methods: "GET,POST,PUT,DELETE"
+      # - name: ip-restriction
+      #   enabled: false
+      #   config:
+      #     whitelist:
+      #       - 10.0.0.0/8
+      #       - 192.168.0.0/16
+
+    # -- Global plugin metadata shared by all instances of the same plugin.
+    pluginMetadata: {}
+      # prometheus:
+      #   disable: false
+      #   export_uri: /apisix/prometheus/metrics
+
+apisix:
+  adminService:
+    namespace: apisix-ingress
+    name: apisix-admin
+    port: 9180
+
+serviceMonitor:
+  # -- Enable or disable ServiceMonitor
+  enabled: false
+  # -- @param serviceMonitor.namespace Namespace in which to create the ServiceMonitor
+  namespace: "monitoring"
+  # -- @param serviceMonitor.interval Interval at which metrics should be scraped
+  interval: 15s
+  # -- @param serviceMonitor.labels ServiceMonitor extra labels
+  labels: {}
+  # -- @param serviceMonitor.annotations ServiceMonitor annotations
+  annotations: {}
+  # -- @param serviceMonitor.metricRelabelings MetricRelabelConfigs to apply to samples before ingestion.
+  # ref: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs
+  metricRelabelings: {}

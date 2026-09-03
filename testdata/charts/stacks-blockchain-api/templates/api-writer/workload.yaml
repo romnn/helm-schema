@@ -1,0 +1,576 @@
+{{- if .Values.apiWriter.enabled }}
+{{- if eq .Values.apiWriter.workloadType "Deployment" }}
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+{{- else }}
+apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
+kind: StatefulSet
+{{- end }}
+metadata:
+  name: {{ template "common.names.fullname" . }}-rw
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: stacks-blockchain-api
+    hiro.so/stacks-blockchain-api-role: rw
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  {{- if ne .Values.apiWriter.workloadType "Deployment" }}
+  podManagementPolicy: {{ .Values.podManagementPolicy | quote }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: stacks-blockchain-api
+      hiro.so/stacks-blockchain-api-role: rw
+  {{- if ne .Values.apiWriter.workloadType "Deployment" }}
+  serviceName: {{ template "common.names.fullname" . }}
+  {{- end }}
+  {{- if .Values.apiWriter.updateStrategy }}
+  {{- if eq .Values.apiWriter.workloadType "Deployment" }}
+  strategy: {{- toYaml .Values.apiWriter.updateStrategy | nindent 4 }}
+  {{- else }}
+  updateStrategy: {{- toYaml .Values.apiWriter.updateStrategy | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  template:
+    metadata:
+      {{- if .Values.apiWriter.podAnnotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: stacks-blockchain-api
+        hiro.so/stacks-blockchain-api-role: rw
+        {{- if .Values.apiWriter.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ template "stacksBlockchainApi.serviceAccountName" . }}
+      {{- include "stacksBlockchainApi.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.apiWriter.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.apiWriter.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.apiWriter.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.apiWriter.podAffinityPreset "component" "stacks-blockchain-api" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.apiWriter.podAntiAffinityPreset "component" "stacks-blockchain-api" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.apiWriter.nodeAffinityPreset.type "key" .Values.apiWriter.nodeAffinityPreset.key "values" .Values.apiWriter.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.apiWriter.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.apiWriter.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.apiWriter.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.apiWriter.priorityClassName }}
+      priorityClassName: {{ .Values.apiWriter.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.apiWriter.schedulerName }}
+      schedulerName: {{ .Values.apiWriter.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.apiWriter.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.apiWriter.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.apiWriter.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.apiWriter.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.apiWriter.terminationGracePeriodSeconds }}
+      {{- end }}
+      initContainers:
+        {{- if .Values.apiWriter.config.bns.enabled }}
+        - name: download-bns-data
+          image: alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: EXPORT_DATA_URL
+              value: https://storage.googleapis.com/blockstack-v1-migration-data/export-data.tar.gz
+            - name: EXPORT_DATA_FILE
+              value: export-data.tar.gz
+            - name: BNS_DATA_DIR
+              value: {{ .Values.apiWriter.persistence.bns.mountPath }}
+          volumeMounts:
+            - name: bns-data
+              mountPath: {{ .Values.apiWriter.persistence.bns.mountPath }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -z "$(ls -A "${BNS_DATA_DIR}" | grep -v "lost+found")" ]; then
+                echo "Downloading BNS data"
+                wget ${EXPORT_DATA_URL} -O ${BNS_DATA_DIR}/${EXPORT_DATA_FILE}
+                tar zxvf ${BNS_DATA_DIR}/${EXPORT_DATA_FILE} -C ${BNS_DATA_DIR}
+              else
+                echo "Previous data found. Exiting."
+              fi
+          {{- if .Values.apiWriter.initContainerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.apiWriter.initContainerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.apiWriter.resources }}
+          resources: {{- toYaml .Values.apiWriter.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.apiWriter.config.exportEvents.enabled }}
+        - name: export-events
+          image: {{ template "stacksBlockchainApi.image" . }}
+          imagePullPolicy: {{ .Values.apiWriter.pullPolicy | quote }}
+          env:
+            - name: STACKS_EXPORT_EVENTS_FILE
+              value: {{ .Values.apiWriter.persistence.data.mountPath }}/stacks-node-events.tsv
+            - name: PG_HOST
+              value: {{ include "stacksBlockchainApi.postgresql.host" . }}
+            - name: PG_PORT
+              value: {{ include "stacksBlockchainApi.postgresql.port" . | quote }}
+            - name: PG_USER
+              value: {{ include "stacksBlockchainApi.postgresql.username" . }}
+            - name: PG_DATABASE
+              value: {{ include "stacksBlockchainApi.postgresql.database" . }}
+            - name: PG_SCHEMA
+              value: {{ include "stacksBlockchainApi.postgresql.database" . }}
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: {{ include "stacksBlockchainApi.postgresql.passwordSecretKey" . }}
+                  name: {{ include "stacksBlockchainApi.postgresql.passwordSecretName" . }}
+            - name: PG_CONNECTION_POOL_MAX
+              value: {{ .Values.apiWriter.config.pgConnectionPoolMax | quote }}
+            - name: DATA_DIR
+              value: {{ .Values.apiWriter.persistence.data.mountPath }}
+          command:
+            - sh
+            - -c
+            - |
+              node ./lib/index.js export-events --file ${STACKS_EXPORT_EVENTS_FILE} --overwrite-file
+          {{- if .Values.apiWriter.initContainerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.apiWriter.initContainerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.apiWriter.resources }}
+          resources: {{- toYaml .Values.apiWriter.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.apiWriter.persistence.data.mountPath }}
+              {{- if .Values.apiWriter.persistence.data.subPath }}
+              subPath: {{ .Values.apiWriter.persistence.data.subPath }}
+              {{- end }}
+        {{- end }}
+        {{- if and (.Values.apiWriter.config.exportEvents.enabled) (.Values.apiWriter.config.exportEvents.compressEventsData) }}
+        - name: compress-events-data
+          image: google/cloud-sdk:alpine
+          env:
+            - name: STACKS_EXPORT_EVENTS_PATH
+              value: {{.Values.apiWriter.persistence.data.mountPath}}
+            - name: STACKS_EXPORT_EVENTS_FILE
+              value: {{ .Values.apiWriter.persistence.data.mountPath }}/stacks-node-events.tsv
+          command:
+            - sh
+            - -c
+            - |
+              echo "Installing pigz and tar"
+              apk add pigz tar
+              tar -I pigz -cvf ${STACKS_EXPORT_EVENTS_PATH}/stacks-node-events.tsv.gz ${STACKS_EXPORT_EVENTS_FILE}
+          {{- if .Values.apiWriter.resources}}
+          resources: {{- toYaml .Values.apiWriter.resources | nindent 12}}
+          {{- end}}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.apiWriter.persistence.data.mountPath }}
+        {{- end }}
+        {{- if and (.Values.apiWriter.config.dataArchiveUrl) (eq .Values.apiWriter.config.exportEvents.enabled false) }}
+        - name: download-archive-data
+          image: {{ template "stacksBlockchainApiEventReplay.image" . }}
+          imagePullPolicy: {{ .Values.apiWriter.pullPolicy | quote }}
+          env:
+            - name: ARCHIVE_URL
+              value: {{ .Values.apiWriter.config.dataArchiveUrl | quote }}
+            - name: DATA_DIR
+              value: {{ .Values.apiWriter.persistence.data.mountPath }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -z "$(ls -A "${DATA_DIR}" | grep -v "lost+found")" ]; then
+                echo "Downloading archive"
+                wget ${ARCHIVE_URL} -O ${DATA_DIR}/stacks-node-events.tsv.gz
+                cp -r parquet_generator ${DATA_DIR}
+                cd ${DATA_DIR}
+                python3 -m parquet_generator --tsv-file ${DATA_DIR}/stacks-node-events.tsv.gz
+              else
+                echo "Previous data found. Exiting."
+              fi
+          {{- if .Values.apiWriter.initContainerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.apiWriter.initContainerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.apiWriter.resources }}
+          resources: {{- toYaml .Values.apiWriter.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.apiWriter.persistence.data.mountPath }}
+              {{- if .Values.apiWriter.persistence.data.subPath }}
+              subPath: {{ .Values.apiWriter.persistence.data.subPath }}
+              {{- end }}
+            - name: bns-data
+              mountPath: {{ .Values.apiWriter.persistence.bns.mountPath }}
+        {{- end }}
+        {{- if .Values.apiWriter.volumePermissions.enabled }}
+        - name: volume-permissions
+          image: {{ include "stacksBlockchainApi.volumePermissions.image" . }}
+          imagePullPolicy: {{ .Values.apiWriter.volumePermissions.image.pullPolicy | quote }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              if [[ "$(stat {{ .Values.apiWriter.persistence.data.mountPath }} -c %u:%g)" != "{{ .Values.apiWriter.containerSecurityContext.runAsUser }}:{{ .Values.apiWriter.podSecurityContext.fsGroup }}" ]]; then
+                chown -R {{ .Values.apiWriter.containerSecurityContext.runAsUser }}:{{ .Values.apiWriter.podSecurityContext.fsGroup }} {{ .Values.apiWriter.persistence.data.mountPath }}
+                chown -R {{ .Values.apiWriter.containerSecurityContext.runAsUser }}:{{ .Values.apiWriter.podSecurityContext.fsGroup }} {{ .Values.apiWriter.persistence.bns.mountPath }}
+              fi
+          {{- if .Values.apiWriter.volumePermissions.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.apiWriter.volumePermissions.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.apiWriter.volumePermissions.resources }}
+          resources: {{- toYaml .Values.apiWriter.volumePermissions.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.apiWriter.persistence.data.mountPath }}
+              {{- if .Values.apiWriter.persistence.data.subPath }}
+              subPath: {{ .Values.apiWriter.persistence.data.subPath }}
+              {{- end }}
+            - name: bns-data
+              mountPath: {{ .Values.apiWriter.persistence.bns.mountPath }}
+        {{- end }}
+        {{- if .Values.apiWriter.config.replayEvents.enabled }}
+        - name: replay-events
+          image: {{ template "stacksBlockchainApi.image" . }}
+          imagePullPolicy: {{ .Values.apiWriter.pullPolicy | quote }}
+          env:
+            - name: --max-old-space-size
+              value: {{ .Values.apiWriter.config.replayEvents.maxOldSize }}
+            - name: STACKS_API_LOG_LEVEL
+              value: {{ ternary "debug" "info" (or .Values.apiWriter.image.debug .Values.diagnosticMode.enabled) | quote }}
+            - name: STACKS_CHAIN_ID
+              {{- if eq .Values.blockchainNetwork "mainnet" }}
+              value: "0x00000001"
+              {{- else if eq .Values.blockchainNetwork "testnet" }}
+              value: "0x80000000"
+              {{- else }}
+              value: {{ default "0x80000000" .Values.blockchainNetwork | quote }}
+              {{- end }}
+            - name: STACKS_EVENTS_DIR
+              value: {{ .Values.apiWriter.persistence.data.mountPath }}/events
+            - name: PG_DATABASE
+              value: {{ include "stacksBlockchainApi.postgresql.database" . }}
+            - name: PG_SCHEMA
+              value: {{ include "stacksBlockchainApi.postgresql.database" . }}
+            - name: PG_PRIMARY_HOST
+              value: {{ include "stacksBlockchainApi.postgresql.primary_host" . }}
+            - name: PG_HOST
+              value: {{ include "stacksBlockchainApi.postgresql.host" . }}
+            - name: PG_PORT
+              value: {{ include "stacksBlockchainApi.postgresql.port" . | quote }}
+            - name: PG_USER
+              value: {{ include "stacksBlockchainApi.postgresql.username" . }}
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: {{ include "stacksBlockchainApi.postgresql.passwordSecretKey" . }}
+                  name: {{ include "stacksBlockchainApi.postgresql.passwordSecretName" . }}
+            - name: PG_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PG_CONNECTION_POOL_MAX
+              value: {{ default "50" .Values.apiWriter.config.pgConnectionPoolMax | quote }}
+            - name: NODE_OPTIONS
+              value: {{ printf "--max-old-space-size=%d" (int .Values.apiWriter.config.replayEvents.maxOldSize) | quote }}
+            {{- if .Values.apiWriter.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.apiWriter.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.apiWriter.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          command:
+          - node
+          args:
+          - "./lib/index.js"
+          - "from-parquet-events"
+          - {{ printf "--workers=%d" (int .Values.apiWriter.config.replayEvents.workers) | quote }}
+          {{- if .Values.apiWriter.initContainerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.apiWriter.initContainerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.apiWriter.config.replayEvents.resources }}
+          resources: {{- toYaml .Values.apiWriter.config.replayEvents.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.apiWriter.persistence.data.mountPath }}
+              {{- if .Values.apiWriter.persistence.data.subPath }}
+              subPath: {{ .Values.apiWriter.persistence.data.subPath }}
+              {{- end }}
+            - name: bns-data
+              mountPath: {{ .Values.apiWriter.persistence.bns.mountPath }}
+        {{- end }}
+        {{- if .Values.apiWriter.initContainers }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.initContainers "context" $) | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: stacks-blockchain-api
+          image: {{ template "stacksBlockchainApi.image" . }}
+          imagePullPolicy: {{ .Values.apiWriter.image.pullPolicy }}
+          {{- if .Values.apiWriter.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.apiWriter.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.apiWriter.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.apiWriter.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if .Values.apiWriter.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+            - name: STACKS_API_LOG_LEVEL
+              value: {{ ternary "debug" "info" (or .Values.apiWriter.image.debug .Values.diagnosticMode.enabled) | quote }}
+            - name: STACKS_CHAIN_ID
+              {{- if eq .Values.blockchainNetwork "mainnet" }}
+              value: "0x00000001"
+              {{- else if eq .Values.blockchainNetwork "testnet" }}
+              value: "0x80000000"
+              {{- else }}
+              value: {{ default "0x80000000" .Values.blockchainNetwork | quote }}
+              {{- end }}
+            - name: STACKS_CORE_EVENT_PORT
+              value: {{ default "3700" .Values.apiWriter.containerPorts.socket | quote }}
+            - name: STACKS_CORE_EVENT_HOST
+              value: {{  default "0.0.0.0" .Values.apiWriter.config.bindAddress | quote }}
+            - name: STACKS_BLOCKCHAIN_API_PORT
+              value: {{ default "3999" .Values.apiWriter.containerPorts.api | quote }}
+            - name: STACKS_BLOCKCHAIN_API_HOST
+              value: {{ default "0.0.0.0" .Values.apiWriter.config.bindAddress | quote }}
+            - name: STACKS_PROFILER_PORT
+              value: {{ default "9119" .Values.apiWriter.containerPorts.profiler | quote }}
+            {{- if (index .Values "stacks-blockchain").enabled }}
+            - name: STACKS_CORE_RPC_HOST
+              value: {{ include "stacksBlockchain.service.name" (index .Subcharts "stacks-blockchain") }}
+            - name: STACKS_CORE_RPC_PORT
+              value: {{ include "stacksBlockchain.service.ports.rpc" (index .Subcharts "stacks-blockchain") | quote }}
+            {{- end }}
+            - name: STACKS_API_ENABLE_FT_METADATA
+              value: {{ ternary "1" "0" .Values.apiWriter.config.enableFtMetadata | quote }}
+            - name: STACKS_API_ENABLE_NFT_METADATA
+              value: {{ ternary "1" "0" .Values.apiWriter.config.enableNftMetadata | quote }}
+            - name: STACKS_ADDRESS_CACHE_SIZE
+              value: {{ default "50000" .Values.apiWriter.config.stacksAddressCacheSize | quote }}
+            - name: PG_DATABASE
+              value: {{ include "stacksBlockchainApi.postgresql.database" . }}
+            - name: PG_SCHEMA
+              value: {{ include "stacksBlockchainApi.postgresql.database" . }}
+            - name: PG_PRIMARY_HOST
+              value: {{ include "stacksBlockchainApi.postgresql.primary_host" . }}
+            - name: PG_HOST
+              value: {{ include "stacksBlockchainApi.postgresql.host" . }}
+            - name: PG_PORT
+              value: {{ include "stacksBlockchainApi.postgresql.port" . | quote }}
+            - name: PG_USER
+              value: {{ include "stacksBlockchainApi.postgresql.username" . }}
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: {{ include "stacksBlockchainApi.postgresql.passwordSecretKey" . }}
+                  name: {{ include "stacksBlockchainApi.postgresql.passwordSecretName" . }}
+            - name: PG_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PG_CONNECTION_POOL_MAX
+              value: {{ default "50" .Values.apiWriter.config.pgConnectionPoolMax | quote }}
+            {{- if .Values.cdn.enabled }}
+            - name: PG_IDENT_INDEX_TYPE
+              value: hash
+            - name: IMGIX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: {{ default "token" .Values.cdn.tokenSecretKey }}
+                  name: {{ include "stacksBlockchainApi.cdn.secretName" . }}
+            - name: IMGIX_DOMAIN
+              value: {{ .Values.cdn.domain }}
+            - name: STACKS_API_IMAGE_CACHE_PROCESSOR
+              value: {{ .Values.apiWriter.config.imageCacheProcessorScript }}
+            {{- end }}
+            - name: NODE_ENV
+              value: production
+            {{- if .Values.apiWriter.config.bns.enabled }}
+            - name: BNS_IMPORT_DIR
+              value: {{ .Values.apiWriter.persistence.bns.mountPath }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.apiWriter.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.apiWriter.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- if .Values.apiWriter.resources }}
+          resources: {{- toYaml .Values.apiWriter.resources | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http-api
+              containerPort: {{ .Values.apiWriter.containerPorts.api }}
+            - name: tcp-socket
+              containerPort: {{ .Values.apiWriter.containerPorts.socket }}
+            - name: tcp-profiler
+              containerPort: {{ .Values.apiWriter.containerPorts.profiler }}
+              {{- if .Values.metrics.enabled }}
+            - name: tcp-metrics
+              containerPort: {{ .Values.apiWriter.containerPorts.metrics }}
+              {{- end }}
+          {{- if not .Values.diagnosticMode.enabled }}
+          {{- if .Values.apiWriter.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.apiWriter.livenessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /
+              port: http-api
+          {{- else if .Values.apiWriter.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.apiWriter.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.apiWriter.readinessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /
+              port: http-api
+          {{- else if .Values.apiWriter.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.apiWriter.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.apiWriter.startupProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /
+              port: http-api
+          {{- else if .Values.apiWriter.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.customStartupProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.apiWriter.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.apiWriter.persistence.data.mountPath }}
+              {{- if .Values.apiWriter.persistence.data.subPath }}
+              subPath: {{ .Values.apiWriter.persistence.data.subPath }}
+              {{- end }}
+              readOnly: false
+            - name: bns-data
+              mountPath: {{ .Values.apiWriter.persistence.bns.mountPath }}
+          {{- if .Values.apiWriter.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+        {{- if .Values.apiWriter.sidecars }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.apiWriter.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.apiWriter.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
+        - name: data
+        {{- if and .Values.apiWriter.persistence.data.enabled .Values.apiWriter.persistence.data.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ tpl .Values.apiWriter.persistence.data.existingClaim . }}
+        {{- else if and .Values.apiWriter.persistence.data.enabled (eq .Values.apiWriter.workloadType "Deployment") }}
+          persistentVolumeClaim:
+            claimName: data-{{ template "common.names.fullname" . }}
+        {{- else if not .Values.apiWriter.persistence.data.enabled }}
+          emptyDir: {}
+        {{- end }}
+        - name: bns-data
+        {{- if and .Values.apiWriter.persistence.bns.enabled .Values.apiWriter.persistence.bns.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ tpl .Values.apiWriter.persistence.bns.existingClaim . }}
+        {{- else if and .Values.apiWriter.persistence.bns.enabled (eq .Values.apiWriter.workloadType "Deployment") }}
+          persistentVolumeClaim:
+            claimName: bns-data-{{ template "common.names.fullname" . }}
+        {{- else if not .Values.apiWriter.persistence.bns.enabled }}
+          emptyDir: {}
+        {{- end }}
+  {{- if and (ne .Values.apiWriter.workloadType "Deployment") (or (and .Values.apiWriter.persistence.data.enabled (not .Values.apiWriter.persistence.data.existingClaim)) (and .Values.apiWriter.persistence.bns.enabled (not .Values.apiWriter.persistence.bns.existingClaim))) }}
+  volumeClaimTemplates:
+    {{- if and .Values.apiWriter.persistence.data.enabled (not .Values.apiWriter.persistence.data.existingClaim) }}
+    - metadata:
+        name: data
+        annotations:
+          {{- if .Values.apiWriter.persistence.data.annotations }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.persistence.data.annotations "context" $) | nindent 10 }}
+          {{- end }}
+          {{- if .Values.commonAnnotations }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 10 }}
+          {{- end }}
+        {{- if .Values.commonLabels }}
+        labels: {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+        {{- range .Values.apiWriter.persistence.data.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.apiWriter.persistence.data.size | quote }}
+        {{- if .Values.apiWriter.persistence.data.selector }}
+        selector: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.persistence.data.selector "context" $) | nindent 10 }}
+        {{- end }}
+        {{- if .Values.apiWriter.persistence.data.dataSource }}
+        dataSource: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.persistence.data.dataSource "context" $) | nindent 10 }}
+        {{- end }}
+        {{- include "common.storage.class" (dict "persistence" .Values.apiWriter.persistence.data "global" .Values.global) | nindent 8 }}
+    {{- end }}
+    {{- if and .Values.apiWriter.persistence.bns.enabled (not .Values.apiWriter.persistence.bns.existingClaim) }}
+    - metadata:
+        name: bns-data
+        annotations:
+          {{- if .Values.apiWriter.persistence.bns.annotations }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.persistence.bns.annotations "context" $) | nindent 10 }}
+          {{- end }}
+          {{- if .Values.commonAnnotations }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 10 }}
+          {{- end }}
+        {{- if .Values.commonLabels }}
+        labels: {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+        {{- range .Values.apiWriter.persistence.bns.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.apiWriter.persistence.bns.size | quote }}
+        {{- if .Values.apiWriter.persistence.bns.selector }}
+        selector: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.persistence.bns.selector "context" $) | nindent 10 }}
+        {{- end }}
+        {{- if .Values.apiWriter.persistence.bns.dataSource }}
+        dataSource: {{- include "common.tplvalues.render" (dict "value" .Values.apiWriter.persistence.bns.dataSource "context" $) | nindent 10 }}
+        {{- end }}
+        {{- include "common.storage.class" (dict "persistence" .Values.apiWriter.persistence.bns "global" .Values.global) | nindent 8 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

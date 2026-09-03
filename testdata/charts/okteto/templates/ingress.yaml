@@ -1,0 +1,47 @@
+{{- if eq "true" (include "okteto.controlplane.ingress.enabled" .) -}}
+{{- $publicUrl := include "okteto.public" . -}}
+{{- $fullname := include "okteto.fullname" . -}}
+{{- $apiPaths := list "/auth" "/healthz" "/graphql" "/deploy" "/sse" "/streams" "/auth/kubetoken" "/clusterinfo" "/api" -}}
+{{- if .Values.insights.enabled -}}{{- $apiPaths = append $apiPaths "/metrics" -}}{{- end -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "okteto.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "okteto.name" . }}
+    helm.sh/chart: {{ include "okteto.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: "okteto"
+    app.kubernetes.io/component: "api"
+    {{- with (include "okteto.controlplane.ingress.labels" . | fromJson) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations: {{ include "okteto.controlplane.ingress.annotations" . }}
+spec:
+  ingressClassName: {{ include "okteto.controlplane.ingressClass" . }}
+  tls:
+  - hosts:
+    - {{ $publicUrl }}
+    secretName: {{ include "okteto.ingress.tlsSecret" . }}
+  rules:
+    - host: {{ $publicUrl }}
+      http:
+        paths:
+          {{- range $apiPaths }}
+          - path: {{ . }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullname }}-api
+                port:
+                  number: {{ $.Values.api.port }}
+          {{- end }}
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullname }}-frontend
+                port:
+                  number: {{ $.Values.frontend.port }}
+{{- end }}

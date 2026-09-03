@@ -1,0 +1,888 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+global:
+  # e.g.
+  # imagePullSecrets:
+  #   - my-registry-secrets
+  #   - other-registry-secrets
+  # -- Global Docker registry secret names as an array
+  imagePullSecrets: []
+
+image:
+  # -- Apache APISIX image repository
+  repository: apache/apisix
+  # -- Apache APISIX image pull policy
+  pullPolicy: IfNotPresent
+  # -- Apache APISIX image tag
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: 3.18.0-ubuntu
+
+# -- set false to use `Deployment`, set true to use `DaemonSet`
+useDaemonSet: false
+# -- if useDaemonSet is true or autoscaling.enabled is true, replicaCount not become effective
+replicaCount: 1
+
+# -- Set [priorityClassName](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for Apache APISIX pods
+priorityClassName: ""
+# -- Annotations to add to each pod
+podAnnotations: {}
+# -- Set the securityContext for Apache APISIX pods
+podSecurityContext: {}
+  # fsGroup: 2000
+# -- Set the securityContext for Apache APISIX container
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# -- See https://kubernetes.io/docs/tasks/run-application/configure-pdb/ for more details
+podDisruptionBudget:
+  # -- Enable or disable podDisruptionBudget
+  enabled: false
+  # -- Set the `minAvailable` of podDisruptionBudget. You can specify only one of `maxUnavailable` and `minAvailable` in a single PodDisruptionBudget.
+  # See [Specifying a Disruption Budget for your Application](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)
+  # for more details
+  minAvailable: 90%
+  # -- Set the maxUnavailable of podDisruptionBudget
+  maxUnavailable: 1
+
+# -- Set pod resource requests & limits
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# -- Use the host's network namespace
+hostNetwork: false
+
+# -- Node labels for Apache APISIX pod assignment
+nodeSelector: {}
+# -- List of node taints to tolerate
+tolerations: []
+# -- Set affinity for Apache APISIX deploy
+affinity: {}
+# -- Topology Spread Constraints for pod assignment spread across your cluster among failure-domains
+# ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+topologySpreadConstraints: []
+
+# -- timezone is the timezone where apisix uses.
+# For example: "UTC" or "Asia/Shanghai"
+# This value will be set on apisix container's environment variable TZ.
+# You may need to set the timezone to be consistent with your local time zone,
+# otherwise the apisix's logs may used to retrieve event maybe in wrong timezone.
+timezone: ""
+
+# -- extraEnvVars An array to add extra env vars
+# e.g:
+# extraEnvVars:
+#   - name: FOO
+#     value: "bar"
+#   - name: FOO2
+#     valueFrom:
+#       secretKeyRef:
+#         name: SECRET_NAME
+#         key: KEY
+extraEnvVars: []
+
+# -- Update strategy of the workload (Deployment or DaemonSet), e.g. `type: RollingUpdate`
+updateStrategy: {}
+  # type: RollingUpdate
+
+# -- Additional Kubernetes resources to deploy with the release.
+extraDeploy: []
+
+# -- Additional `volume`, See [Kubernetes Volumes](https://kubernetes.io/docs/concepts/storage/volumes/) for the detail.
+extraVolumes: []
+# - name: extras
+#   emptyDir: {}
+
+# -- Additional `volumeMounts` for the APISIX container, See [Kubernetes Volumes](https://kubernetes.io/docs/concepts/storage/volumes/) for the detail.
+extraVolumeMounts: []
+# - name: extras
+#   mountPath: /usr/share/extras
+#   readOnly: true
+
+# -- Additional `initContainers`, See [Kubernetes initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) for the detail.
+extraInitContainers: []
+# - name: init-myservice
+#   image: busybox:1.28
+#   command: ['sh', '-c', "until nslookup myservice.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done"]
+
+# -- Additional `containers`, See [Kubernetes containers](https://kubernetes.io/docs/concepts/containers/) for the detail.
+extraContainers: []
+
+initContainer:
+  # -- Init container image
+  image: busybox
+  # -- Init container tag
+  tag: 1.28
+
+autoscaling:
+  # -- Enable HorizontalPodAutoscaler for APISIX (only when useDaemonSet is false)
+  enabled: false
+  # -- HPA version, the value is "v2" or "v2beta1", default "v2"
+  version: v2
+  # -- Minimum number of APISIX replicas
+  minReplicas: 1
+  # -- Maximum number of APISIX replicas
+  maxReplicas: 100
+  # -- Target average CPU utilization percentage that triggers scaling
+  targetCPUUtilizationPercentage: 80
+  # -- Target average memory utilization percentage that triggers scaling
+  targetMemoryUtilizationPercentage: 80
+
+# -- String to partially override the chart fullname
+nameOverride: ""
+# -- String to fully override the chart fullname
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Whether a ServiceAccount should be created for the APISIX pods
+  create: false
+  # -- Annotations to add to the ServiceAccount
+  annotations: {}
+  # -- Name of the ServiceAccount to use. If not set and create is true, a name is generated from the chart fullname
+  name: ""
+
+rbac:
+  # -- Whether RBAC resources (ClusterRole and ClusterRoleBinding) should be created
+  create: false
+
+service:
+  # -- Apache APISIX service type for user access itself
+  type: NodePort
+  # -- Setting how the Service route external traffic.
+  # If you want to keep the client source IP, you can set this to Local,
+  # ref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+  externalTrafficPolicy: Cluster
+  # type: LoadBalancer
+  # annotations:
+  #   service.beta.kubernetes.io/aws-load-balancer-type: nlb
+  # -- IPs for which nodes in the cluster will also accept traffic for the service
+  externalIPs: []
+  # -- Apache APISIX service settings for http
+  http:
+    # -- Enable plain HTTP listeners
+    enabled: true
+    # -- Kubernetes service port for HTTP traffic
+    servicePort: 80
+    # -- Container port APISIX listens on for HTTP traffic
+    containerPort: 9080
+    # -- Support multiple http ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L24)
+    additionalContainerPorts: []
+      # - port: 9081
+      #   enable_http2: true          # If not set, the default value is `false`.
+      # - ip: 127.0.0.2               # Specific IP, If not set, the default value is `0.0.0.0`.
+      #   port: 9082
+      #   enable_http2: true
+  # -- Apache APISIX service settings for tls
+  tls:
+    # -- Kubernetes service port for HTTPS traffic
+    servicePort: 443
+    # nodePort: 4443
+
+  # -- Apache APISIX service settings for stream. L4 proxy (TCP/UDP)
+  stream:
+    # -- Enable the stream (L4 proxy) subsystem
+    enabled: false
+    # -- TCP proxy port list, element format: port number, or a map with `addr` and optional `tls`
+    tcp: []
+    # -- UDP proxy port list
+    udp: []
+  #  - secretName: apisix-tls
+  #    hosts:
+  #      - chart-example.local
+  # -- Override default labels assigned to Apache APISIX gateway resources
+  labelsOverride: {}
+  # labelsOverride:
+  #   app.kubernetes.io/name: "{{ .Release.Name }}"
+  #   app.kubernetes.io/instance: '{{ include "apisix.name" . }}'
+
+# -- Using ingress access Apache APISIX service
+ingress:
+  # -- Enable an Ingress resource in front of the APISIX service
+  enabled: false
+  # -- (number) Service port to send traffic. Defaults to `service.http.servicePort`.
+  servicePort:
+  # -- Ingress annotations
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  # -- Ingress host and path rules
+  hosts:
+    - host: apisix.local
+      paths: []
+  # -- Ingress TLS settings
+  tls: []
+
+control:
+  # -- Enable Control API
+  enabled: true
+  service:
+    # -- Control annotations
+    annotations: {}
+    # -- Control service type
+    type: ClusterIP
+    # loadBalancerIP: a.b.c.d
+    # loadBalancerSourceRanges:
+    #   - "143.231.0.0/16"
+    # -- IPs for which nodes in the cluster will also accept traffic for the servic
+    externalIPs: []
+
+    # -- NodePort (only if control.service.type is NodePort)
+    # nodePort: 32000
+
+    # -- which ip to listen on for Apache APISIX Control API
+    ip: "127.0.0.1"
+    # -- which port to use for Apache APISIX Control API
+    port: 9090
+    # -- Service port to use for Apache APISIX Control API
+    servicePort: 9090
+  # -- Using ingress access Apache APISIX Control service
+  ingress:
+    # -- Enable an Ingress resource in front of the Control API service
+    enabled: false
+    # -- Ingress annotations
+    annotations:
+      {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    # -- Ingress Class Name
+    # className: "nginx"
+    # -- Ingress host and path rules
+    hosts:
+      - host: apisix-control.local
+        paths:
+          - "/*"
+    # -- Ingress TLS settings
+    tls: []
+  #  - secretName: apisix-tls
+  #    hosts:
+  #      - chart-example.local
+
+# -- Observability configuration.
+metrics:
+  serviceMonitor:
+    # -- Enable or disable Apache APISIX serviceMonitor
+    enabled: false
+    # -- namespace where the serviceMonitor is deployed, by default, it is the same as the namespace of the apisix
+    namespace: ""
+    # -- name of the serviceMonitor, by default, it is the same as the apisix fullname
+    name: ""
+    # -- interval at which metrics should be scraped
+    interval: 15s
+    # -- @param serviceMonitor.labels ServiceMonitor extra labels
+    labels: {}
+    # -- @param serviceMonitor.annotations ServiceMonitor annotations
+    annotations: {}
+
+apisix:
+  # -- Enable nginx IPv6 resolver
+  enableIPv6: true
+  # -- Enable HTTP/2 on the HTTP listeners
+  enableHTTP2: true
+
+  # -- Whether the APISIX version number should be shown in Server header
+  enableServerTokens: true
+
+  # -- When true, the upstream status is always written to the `X-APISIX-Upstream-Status` response header; when false, it is written only for 5xx responses
+  showUpstreamStatusInResponseHeader: false
+
+  # -- PROXY Protocol configuration.
+  proxyProtocol:
+    # -- (int) The HTTP port that accepts the PROXY Protocol. It differs from `service.http` ports and `apisix.admin` port:
+    # this port only accepts HTTP requests carrying the PROXY Protocol, while the other ports only accept plain HTTP
+    # requests. If you enable the PROXY Protocol, you must use this port to receive HTTP requests with it.
+    # When set, the port is also exposed on the gateway Service.
+    listenHttpPort:
+    # -- (int) The nodePort of the PROXY Protocol HTTP port, only used if service.type is NodePort.
+    # If not set, a random port will be assigned by Kubernetes.
+    listenHttpNodePort:
+    # -- (int) The HTTPS port that accepts the PROXY Protocol.
+    # When set, the port is also exposed on the gateway Service.
+    listenHttpsPort:
+    # -- (int) The nodePort of the PROXY Protocol HTTPS port, only used if service.type is NodePort.
+    # If not set, a random port will be assigned by Kubernetes.
+    listenHttpsNodePort:
+    # -- Accept the PROXY Protocol on every service.stream.tcp port.
+    enableTcpPP: false
+    # -- Send the PROXY Protocol to the upstream server on every service.stream.tcp port.
+    enableTcpPPToUpstream: false
+
+  # -- Proxy caching configuration used by the proxy-cache plugin.
+  proxyCache:
+    # -- The default caching time in disk if the upstream does not specify the cache time
+    cacheTtl: 10s
+    # -- The parameters of a cache. The `memory_size` field stores the cache index for the
+    # disk strategy and the cache content for the memory strategy; `disk_size`, `disk_path`
+    # and `cache_levels` only apply to the disk strategy.
+    zones:
+      - name: disk_cache_one
+        memory_size: 50m
+        disk_size: 1G
+        disk_path: "/tmp/disk_cache_one"
+        cache_levels: "1:2"
+      - name: memory_cache
+        memory_size: 50m
+
+  graphql:
+    # -- The maximum size in bytes of GraphQL queries APISIX parses when matching routes by GraphQL attributes (default 1MiB)
+    maxSize: 1048576
+
+  # -- Delete the '/' at the end of the URI
+  deleteURITailSlash: false
+
+  # -- The URI normalization in servlet is a little different from the RFC's.
+  # See https://github.com/jakartaee/servlet/blob/master/spec/src/main/asciidoc/servlet-spec-body.adoc#352-uri-path-canonicalization,
+  # which is used under Tomcat.
+  # Turn this option on if you want to be compatible with servlet when matching URI path.
+  normalizeURILikeServlet: false
+
+  # -- fine tune the parameters of LRU cache for some features like secret
+  lru:
+    secret:
+      # -- TTL in seconds for cached secret values
+      ttl: 300
+      # -- Maximum number of cached secret values
+      count: 512
+      # -- TTL in seconds for cached negative (failed lookup) results
+      neg_ttl: 60
+      # -- Maximum number of cached negative (failed lookup) results
+      neg_count: 512
+
+  # -- Enable comprehensive request lifecycle tracing (SSL/SNI, rewrite, access, header_filter, body_filter, and log).
+  # When disabled, OpenTelemetry collects only a single span per request.
+  tracing: false
+
+  # -- Use Pod metadata.uid as the APISIX id.
+  setIDFromPodUID: false
+
+  # -- Whether to add a custom lua module
+  luaModuleHook:
+    # -- Enable loading a custom lua module hook
+    enabled: false
+    # -- extend lua_package_path to load third party code
+    luaPath: ""
+    # -- the hook module which will be used to inject third party code into APISIX
+    # use the lua require style like: "module.say_hello"
+    hookPoint: ""
+    # -- configmap that stores the codes
+    configMapRef:
+      # -- Name of the ConfigMap where the lua module codes store
+      name: ""
+      # mounts decides how to mount the codes to the container.
+      mounts:
+        # -- Name of the ConfigMap key, for setting the mapping relationship between ConfigMap key and the lua module code path.
+        - key: ""
+        # -- Filepath of the plugin code, for setting the mapping relationship between ConfigMap key and the lua module code path.
+          path: ""
+
+  ssl:
+    # -- Enable HTTPS listeners
+    enabled: false
+    # -- Container port APISIX listens on for HTTPS traffic
+    containerPort: 9443
+    # -- Support multiple https ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L99)
+    additionalContainerPorts: []
+      # - ip: 127.0.0.3           # Specific IP, If not set, the default value is `0.0.0.0`.
+      #   port: 9445
+      #   enable_http3: true
+    # -- Specifies the name of Secret contains trusted CA certificates in the PEM format used to verify the certificate when APISIX needs to do SSL/TLS handshaking with external services (e.g. etcd)
+    existingCASecret: ""
+    # -- Filename be used in the apisix.ssl.existingCASecret
+    certCAFilename: ""
+    # -- Enable HTTP/3 (QUIC) on the HTTPS listeners
+    enableHTTP3: false
+    # -- TLS protocols allowed to use.
+    sslProtocols: "TLSv1.2 TLSv1.3"
+    # -- TLS ciphers allowed to use.
+    sslCiphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA"
+    # -- Enable or disable TLS session tickets. Disabled by default because session tickets
+    # defeat Perfect Forward Secrecy (see https://github.com/mozilla/server-side-tls/issues/135)
+    sslSessionTickets: false
+    # -- Define SNI to fallback if none is presented by client
+    fallbackSNI: ""
+
+  router:
+    # -- Defines how apisix handles routing:
+    # - radixtree_uri: match route by uri(base on radixtree)
+    # - radixtree_host_uri: match route by host + uri(base on radixtree)
+    # - radixtree_uri_with_parameter: match route by uri with parameters
+    http: radixtree_host_uri
+
+  fullCustomConfig:
+    # -- Enable full customized config.yaml
+    enabled: false
+    # -- If apisix.fullCustomConfig.enabled is true, full customized config.yaml.
+    # Please note that other settings about APISIX config will be ignored
+    config: {}
+
+  deployment:
+    # -- Apache APISIX deployment mode
+    # Optional: traditional, decoupled, standalone
+    #
+    # ref: https://apisix.apache.org/docs/apisix/deployment-modes/
+    mode: traditional
+
+    # -- Deployment role
+    # Optional: traditional, data_plane, control_plane
+    #
+    # ref: https://apisix.apache.org/docs/apisix/deployment-modes/
+    role: "traditional"
+    role_traditional:
+      # -- Config provider for the traditional role. enum: etcd, yaml
+      config_provider: "etcd"
+
+    # -- Standalone rules configuration
+    #
+    # ref: https://apisix.apache.org/docs/apisix/deployment-modes/#standalone
+    standalone:
+      # -- Rules which are set to the default apisix.yaml configmap.
+      # If apisix.delpoyment.standalone.existingConfigMap is empty, these are used.
+      config: |
+        routes:
+        -
+          uri: /hi
+          upstream:
+            nodes:
+              "127.0.0.1:1980": 1
+            type: roundrobin
+      # -- Specifies the name of the ConfigMap that contains the rule configurations.
+      # The configuration must be set to the key named `apisix.yaml` in the configmap.
+      existingConfigMap: ""
+
+  admin:
+    # -- Enable Admin API
+    enabled: true
+    # -- Enable Embedded Admin UI
+    enable_admin_ui: true
+    # -- admin service type
+    type: ClusterIP
+    # loadBalancerIP: a.b.c.d
+    # loadBalancerSourceRanges:
+    #   - "143.231.0.0/16"
+    # -- IPs for which nodes in the cluster will also accept traffic for the servic
+    externalIPs: []
+    # -- which ip to listen on for Apache APISIX admin API. Set to `"[::]"` when on IPv6 single stack
+    ip: 0.0.0.0
+    # -- which port to use for Apache APISIX admin API
+    port: 9180
+    # -- Service port to use for Apache APISIX admin API
+    servicePort: 9180
+    # -- Admin API support CORS response headers
+    cors: true
+    # -- Admin API credentials
+    credentials:
+      # -- Apache APISIX admin API admin role credentials
+      admin: edd1c9f034335f136f87ad84b625c8f1
+      # -- Apache APISIX admin API viewer role credentials
+      viewer: 4054f7cf07e344346cd3f287985e76a2
+
+      # -- The APISIX Helm chart supports storing user credentials in a secret.
+      # The secret needs to contain two keys, admin and viewer, with their respective values set.
+      secretName: ""
+      # -- Name of the admin role key in the secret, overrides the default key name "admin"
+      secretAdminKey: ""
+      # -- Name of the viewer role key in the secret, overrides the default key name "viewer"
+      secretViewerKey: ""
+
+    allow:
+      # -- The client IP CIDR allowed to access Apache APISIX Admin API service.
+      ipList:
+        - 127.0.0.1/24
+    # -- Using ingress access Apache APISIX admin service
+    ingress:
+      # -- Enable an Ingress resource in front of the Admin API service
+      enabled: false
+      # -- Ingress annotations
+      annotations:
+        {}
+        # kubernetes.io/ingress.class: nginx
+        # kubernetes.io/tls-acme: "true"
+      # -- Ingress host and path rules
+      hosts:
+        - host: apisix-admin.local
+          paths:
+            - "/apisix"
+      # -- Ingress TLS settings
+      tls: []
+    #  - secretName: apisix-tls
+    #    hosts:
+    #      - chart-example.local
+
+  nginx:
+    # -- The number of files a worker process can open, should be larger than apisix.nginx.workerConnections
+    workerRlimitNofile: "20480"
+    # -- The maximum number of connections that each worker process can open
+    workerConnections: "10620"
+    # -- The number of nginx worker processes. `auto` means the number of CPU cores
+    workerProcesses: auto
+    # -- Bind nginx worker processes to CPUs
+    enableCPUAffinity: true
+    # -- Timeout for a graceful shutdown of worker processes
+    workerShutdownTimeout: "240s"
+    # -- Maximum number of pending timers. Increase it if you see "too many pending timers" error
+    maxPendingTimers: 16384
+    # -- Maximum number of running timers. Increase it if you see "lua_max_running_timers are not enough" error
+    maxRunningTimers: 4096
+    # -- Timeout during which a keep-alive client connection will stay open on the server side.
+    keepaliveTimeout: 60s
+    # -- List of environment variable names allowed to be accessed within nginx (rendered as nginx `env` directives)
+    envs: []
+    # -- Nginx HTTP subsystem configurations
+    http:
+      # -- timeout for reading client request header, then 408 (Request Time-out) error is returned to the client
+      clientHeaderTimeout: "60s"
+      # -- timeout for reading client request body, then 408 (Request Time-out) error is returned to the client
+      clientBodyTimeout: "60s"
+      # -- timeout for transmitting a response to the client, then the connection is closed
+      sendTimeout: "10s"
+      # -- The maximum allowed size of the client request body.
+      # If exceeded, the 413 (Request Entity Too Large) error is returned to the client.
+      # Note that unlike Nginx, we don't limit the body size by default (0 means no limit).
+      clientMaxBodySize: 0
+      # -- Enable the use of underscores in client request header fields
+      underscoresInHeaders: "on"
+      # -- The request header used to determine the client's real IP address,
+      # see [real_ip_header](http://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_header)
+      realIpHeader: "X-Real-IP"
+      # -- Whether to search for the real IP recursively when the header set in apisix.nginx.http.realIpHeader contains multiple addresses,
+      # see [real_ip_recursive](http://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_recursive)
+      realIpRecursive: "off"
+      # -- Trusted addresses from which the real IP header is honored,
+      # see [set_real_ip_from](http://nginx.org/en/docs/http/ngx_http_realip_module.html#set_real_ip_from)
+      realIpFrom:
+        - 127.0.0.1
+        - "unix:"
+      # -- Enables or disables passing of the server name through TLS Server Name Indication extension (SNI, RFC 6066)
+      # when establishing a connection with the proxied HTTPS server
+      proxySslServerName: true
+      # -- Keepalive settings for connections from APISIX to upstream servers
+      upstream:
+        # -- Maximum number of idle keepalive connections to upstream servers that are preserved in the cache of each worker process.
+        # When this number is exceeded, the least recently used connections are closed
+        keepalive: 320
+        # -- Maximum number of requests that can be served through one keepalive connection.
+        # After the maximum number of requests is made, the connection is closed
+        keepaliveRequests: 1000
+        # -- Timeout during which an idle keepalive connection to an upstream server will stay open
+        keepaliveTimeout: 60s
+      # -- The charset added to the "Content-Type" response header field,
+      # see [charset](http://nginx.org/en/docs/http/ngx_http_charset_module.html#charset)
+      charset: utf-8
+      # -- The maximum size of the nginx variables hash table
+      variablesHashMaxSize: 2048
+    # access log and error log configuration
+    logs:
+      # -- Enable access log or not, default true
+      enableAccessLog: true
+      # -- Access log path
+      accessLog: "/dev/stdout"
+      # -- Access log format
+      accessLogFormat: '$remote_addr - $remote_user [$time_local] $http_host \"$request\" $status $body_bytes_sent $request_time \"$http_referer\" \"$http_user_agent\" $upstream_addr $upstream_status $upstream_response_time \"$upstream_scheme://$upstream_host$upstream_uri\"'
+      # -- Allows setting json or default characters escaping in variables
+      accessLogFormatEscape: default
+      # -- Error log path
+      errorLog: "/dev/stderr"
+      # -- Error log level
+      errorLogLevel: "warn"
+      # -- Stream (L4 proxy) access log configuration
+      stream:
+        # -- Enable stream access log or not, default false
+        enableAccessLog: false
+        # -- Stream access log path
+        accessLog: "logs/access_stream.log"
+        # -- Stream access log format
+        accessLogFormat: '$remote_addr [$time_local] $protocol $status $bytes_sent $bytes_received $session_time'
+        # -- Allows setting json or default characters escaping in variables for stream
+        accessLogFormatEscape: default
+    # -- Custom nginx configuration snippets injected into the generated nginx.conf.
+    # As arbitrary configuration can be added here, it is your responsibility to make sure
+    # the snippets don't conflict with the configuration generated by APISIX.
+    configurationSnippet:
+      # -- Snippet added to the nginx `main` (top-level) block
+      main: |
+
+      # -- Snippet added to the beginning of the nginx `http` block
+      httpStart: |
+
+      # -- Snippet added to the end of the nginx `http` block
+      httpEnd: |
+
+      # -- Snippet added to the nginx `server` block that proxies regular traffic
+      httpSrv: |
+
+      # -- Snippet added to the nginx `server` block that serves the Admin API
+      httpAdmin: |
+
+      # -- Snippet added to the nginx `stream` block
+      stream: |
+
+    # -- Add custom [lua_shared_dict](https://github.com/openresty/lua-nginx-module?tab=readme-ov-file#lua_shared_dict) settings,
+    # click [here](https://github.com/apache/apisix-helm-chart/blob/master/charts/apisix/values.yaml#L27-L30) to learn the format of a shared dict
+    customLuaSharedDicts: []
+      # - name: foo
+      #   size: 10k
+      # - name: bar
+      #   size: 1m
+
+    # -- Override default [lua_shared_dict](https://github.com/apache/apisix/blob/master/conf/config.yaml.example#L250-L276) settings,
+    # click [here](https://github.com/apache/apisix-helm-chart/blob/master/charts/apisix/values.yaml#L27-L30) to learn the format of a shared dict
+    luaSharedDicts: []
+      # - name: prometheus-metrics
+      #   size: 20m
+
+    # -- Override default meta-level [lua_shared_dict](https://github.com/apache/apisix/blob/master/conf/config.yaml.example) settings,
+    # meta-level shared dicts are shared across both HTTP and stream subsystems.
+    # Since APISIX 3.16.0, `upstream-healthcheck` is a meta-level shared dict.
+    # click [here](https://github.com/apache/apisix-helm-chart/blob/master/charts/apisix/values.yaml#L27-L30) to learn the format of a shared dict
+    metaLuaSharedDicts: []
+      # - name: upstream-healthcheck
+      #   size: 10m
+
+  discovery:
+    # -- Enable or disable Apache APISIX integration service discovery
+    enabled: false
+    # -- Service discovery registry. Refer to [configuration under discovery](https://github.com/apache/apisix/blob/master/conf/config.yaml.example#L307) for example.
+    # Also see [example of using external service discovery](https://apisix.apache.org/docs/ingress-controller/1.8.0/tutorials/external-service-discovery/).
+    registry: {}
+      # Integration service discovery registry. E.g eureka\dns\nacos\consul_kv
+      # reference:
+      # https://apisix.apache.org/docs/apisix/discovery/#configuration-for-eureka
+      # https://apisix.apache.org/docs/apisix/discovery/dns/#service-discovery-via-dns
+      # https://apisix.apache.org/docs/apisix/discovery/consul_kv/#configuration-for-consul-kv
+      # https://apisix.apache.org/docs/apisix/discovery/nacos/#configuration-for-nacos
+      # https://apisix.apache.org/docs/apisix/discovery/kubernetes/#configuration
+      #
+      # an eureka example:
+      # ```
+      # eureka:
+      #   host:
+      #     - "http://${username}:${password}@${eureka_host1}:${eureka_port1}"
+      #     - "http://${username}:${password}@${eureka_host2}:${eureka_port2}"
+      #   prefix: "/eureka/"
+      #   fetch_interval: 30
+      #   weight: 100
+      #   timeout:
+      #     connect: 2000
+      #     send: 2000
+      #     read: 5000
+      # ```
+      #
+      # the minimal Kubernetes example:
+      # ```
+      # kubernetes: {}
+      # ```
+      #
+      # The prerequisites for the above minimal Kubernetes example:
+      #  1. [Optional] Set `.serviceAccount.create` to `true` to create a dedicated ServiceAccount.
+      #     It is recommended to do so, otherwise the default ServiceAccount "default" will be used.
+      #  2. [Required] Set `.rbac.create` to `true` to create and bind the necessary RBAC resources.
+      #     This grants the ServiceAccount in use to List-Watch Kubernetes Endpoints resources.
+      #  3. [Required] Include the following environment variables in `.nginx.envs` to pass them into
+      #     nginx worker processes (https://nginx.org/en/docs/ngx_core_module.html#env):
+      #      - KUBERNETES_SERVICE_HOST
+      #      - KUBERNETES_SERVICE_PORT
+      #     This is for allowing the default `host` and `port` of `.discovery.registry.kubernetes.service`.
+
+  dns:
+    # -- Nameservers used by APISIX to resolve upstream domain names.
+    # When empty (default), nameservers are read from `/etc/resolv.conf`,
+    # which is usually what you want inside Kubernetes
+    resolvers: []
+      # - 127.0.0.1
+      # - 8.8.8.8
+    # -- Override the TTL in seconds of valid DNS records
+    validity: 30
+    # -- DNS resolver timeout in seconds
+    timeout: 5
+    # -- Honor the `search` option in `/etc/resolv.conf` when resolving domain names
+    enableResolvSearchOpt: true
+
+  vault:
+    # -- Enable or disable the vault integration
+    enabled: false
+    # -- The host address where the vault server is running.
+    host: ""
+    # -- HTTP timeout for each request.
+    timeout: 10
+    # -- The generated token from vault instance that can grant access to read data from the vault.
+    token: ""
+    # -- Prefix allows you to better enforcement of policies.
+    prefix: ""
+
+  prometheus:
+    # -- Enable Prometheus metrics. ref: https://apisix.apache.org/docs/apisix/plugins/prometheus/
+    enabled: false
+    # -- path of the metrics endpoint
+    path: /apisix/prometheus/metrics
+    # -- prefix of the metrics
+    metricPrefix: apisix_
+    # -- container port where the metrics are exposed
+    containerPort: 9091
+
+  # -- Customize the list of APISIX plugins to enable. By default, APISIX's [default plugins](https://github.com/apache/apisix/blob/master/apisix/cli/config.lua#L196) are automatically used.
+  plugins: []
+  # -- Customize the list of APISIX stream_plugins to enable. By default, APISIX's [default stream_plugins](https://github.com/apache/apisix/blob/master/apisix/cli/config.lua#L294) are automatically used.
+  stream_plugins: []
+
+  # -- Set APISIX plugin attributes. By default, APISIX's [plugin_attr](https://github.com/apache/apisix/blob/master/apisix/cli/config.lua#L295) are automatically used.
+  # See [configuration example](https://github.com/apache/apisix/blob/master/conf/config.yaml.example#L591).
+  pluginAttrs: {}
+
+  extPlugin:
+    # -- Enable External Plugins. See [external plugin](https://apisix.apache.org/docs/apisix/next/external-plugin/)
+    enabled: false
+    # -- the command and its arguements to run as a subprocess
+    cmd: ["/path/to/apisix-plugin-runner/runner", "run"]
+
+  wasm:
+    # -- Enable Wasm Plugins. See [wasm plugin](https://apisix.apache.org/docs/apisix/next/wasm/)
+    enabled: false
+    # -- List of Wasm plugins, each item with `name`, `priority` and `file` (path or URL of the wasm binary)
+    plugins: []
+
+  # -- customPlugins allows you to mount your own HTTP plugins.
+  customPlugins:
+    # -- Whether to configure some custom plugins
+    enabled: false
+    # -- the lua_path that tells APISIX where it can find plugins,
+    # note the last ';' is required.
+    luaPath: "/opts/custom_plugins/?.lua"
+    plugins:
+      # -- plugin name.
+      - name: "plugin-name"
+        # -- plugin attrs
+        attrs: {}
+        # -- plugin codes can be saved inside configmap object.
+        configMap:
+          # -- name of configmap.
+          name: "configmap-name"
+          # -- since keys in configmap is flat, mountPath allows to define the mount
+          # path, so that plugin codes can be mounted hierarchically.
+          mounts:
+            - key: "the-file-name"
+              path: "mount-path"
+
+  status:
+    # -- The IP address on which the status endpoint (`/status`, `/status/ready`) listens
+    ip: "0.0.0.0"
+    # -- The port on which the status endpoint listens
+    port: 7085
+
+  # -- When configured, APISIX will trust the `X-Forwarded-*` Headers passed in requests from the IP/CIDR in the list.
+  trustedAddresses:
+    - 127.0.0.1
+
+# -- external etcd configuration. If etcd.enabled is false, these configuration will be used.
+externalEtcd:
+  # -- if etcd.enabled is false, use external etcd, support multiple address, if your etcd cluster enables TLS, please use https scheme, e.g. https://127.0.0.1:2379.
+  host:
+    # host or ip e.g. http://172.20.128.89:2379
+    - http://etcd.host:2379
+  # -- if etcd.enabled is false, user for external etcd. Set empty to disable authentication
+  user: root
+  # -- if etcd.enabled is true, use etcd.auth.rbac.rootPassword instead.
+  # -- if etcd.enabled is false and externalEtcd.existingSecret is not empty, the password should store in the corresponding secret
+  # -- if etcd.enabled is false and externalEtcd.existingSecret is empty, externalEtcd.password is the passsword for external etcd.
+  password: ""
+  # -- if externalEtcd.existingSecret is the name of secret containing the external etcd password
+  existingSecret: ""
+  # -- externalEtcd.secretPasswordKey Key inside the secret containing the external etcd password
+  secretPasswordKey: "etcd-root-password"
+
+# -- etcd configuration
+# use the FQDN address or the IP of the etcd
+etcd:
+  # -- install built-in etcd by default, set false if do not want to install built-in etcd together,
+  # this etcd is based on bitnamilegacy/etcd helm chart and latest bitnami docker image, only for development and testing purposes,
+  # if you want to use etcd in production, we recommend you to install etcd by yourself and use `externalEtcd` to connect it.
+  enabled: true
+  # -- docker image for built-in etcd
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/etcd
+    # -- `bitnamilegacy/etcd` only provide `latest` tag now, ref: https://github.com/bitnami/containers/issues/83267,
+    # you can switch `etcd.image.repository` to `bitnamilegacy/etcd` to use old versioned tags.
+    tag: latest
+
+  # -- apisix configurations prefix
+  prefix: "/apisix"
+  # -- Set the timeout value in seconds for subsequent socket operations from apisix to etcd cluster
+  timeout: 30
+  # -- Set the timeout value in seconds for watching etcd
+  watchTimeout: 50
+  # -- The number of retries to etcd during startup
+  startupRetry: 2
+
+  # -- if etcd.enabled is true, set more values of bitnamilegacy/etcd helm chart
+  auth:
+    rbac:
+      # -- No authentication by default. Switch to enable RBAC authentication
+      create: false
+      # -- root password for etcd. Requires etcd.auth.rbac.create to be true.
+      rootPassword: ""
+    tls:
+      # -- enable etcd client certificate
+      enabled: false
+      # -- name of the secret contains etcd client cert
+      existingSecret: ""
+      # -- etcd client cert filename using in etcd.auth.tls.existingSecret
+      certFilename: ""
+      # -- etcd client cert key filename using in etcd.auth.tls.existingSecret
+      certKeyFilename: ""
+      # -- whether to verify the etcd endpoint certificate when setup a TLS connection to etcd
+      verify: true
+      # -- specify the TLS Server Name Indication extension, the ETCD endpoint hostname will be used when this setting is unset.
+      sni: ""
+
+  # -- ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  # -- added for backward compatibility with old kubernetes versions, as seccompProfile is not supported in kubernetes < 1.19
+  containerSecurityContext:
+    enabled: false
+
+  service:
+    # -- etcd client service port
+    port: 2379
+
+  # -- Number of etcd replicas, only used when etcd.enabled is true
+  replicaCount: 3
+  # -- Auto compaction retention for mvcc key value store, only used when etcd.enabled is true
+  autoCompactionRetention: "1h"
+  # -- Auto compaction mode (periodic or revision), only used when etcd.enabled is true
+  autoCompactionMode: "periodic"
+
+# -- Ingress controller configuration
+ingress-controller:
+  # -- Enable the apisix-ingress-controller sub-chart
+  enabled: false
+  webhook:
+    # Specifies whether to enable the validation webhook.
+    # Note: This feature relies on the '/apisix/admin/configs/validate' endpoint.
+    # It requires APISIX version 3.17.0 or later to function correctly.
+    # Ensure your cluster's APISIX deployment meets this version requirement before enabling.
+    enabled: false

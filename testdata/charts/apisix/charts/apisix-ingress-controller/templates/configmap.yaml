@@ -1,0 +1,50 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-ingress-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yaml: |
+    log_level: {{ .Values.config.logLevel | default "info" }}
+    controller_name: {{ .Values.config.controllerName | default "apisix.apache.org/apisix-ingress-controller" }}
+    leader_election_id: {{ .Values.config.leaderElection.id | default "apisix-ingress-controller-leader" }}
+    leader_election:
+      leaseDuration: {{ .Values.config.leaderElection.leaseDuration | default "15s" }}
+      renewDeadline: {{ .Values.config.leaderElection.renewDeadline | default "10s" }}
+      retryPeriod: {{ .Values.config.leaderElection.retryPeriod | default "2s" }}
+      disable: {{ .Values.config.leaderElection.disable | default false }}
+    metrics_addr: {{ .Values.config.metricsAddr | default ":8080" }}
+    enable_http2: {{ .Values.config.enableHTTP2 | default false }}
+    probe_addr: {{ .Values.config.probeAddr | default ":8081" }}
+    secure_metrics: {{ .Values.config.secureMetrics | default false }}
+    exec_adc_timeout: {{ .Values.config.execADCTimeout | default "15s" }}
+    disable_gateway_api: {{ .Values.config.disableGatewayAPI | default false }}
+    listener_port_match_mode: {{ .Values.config.listenerPortMatchMode | default "auto" }}
+    provider:
+      type: {{ .Values.config.provider.type | default "apisix" }}
+      sync_period: {{ .Values.config.provider.syncPeriod | default "1s" }}
+      init_sync_delay: {{ .Values.config.provider.initSyncDelay | default "20m" }}
+    {{- if .Values.webhook.enabled }}
+    webhook:
+      enable: true
+      port: {{ .Values.webhook.port }}
+      tls_cert_file: "tls.crt"
+      tls_key_file: "tls.key"
+      tls_cert_dir: "/certs"
+    {{- end }}

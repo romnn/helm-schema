@@ -1,0 +1,16 @@
+{{- $vals := .Values }}
+{{- range $class := .Values.snapshotClasses }}
+{{- if $class.enabled }}
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: {{ $class.name }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    {{- if $class.isDefault }}snapshot.storage.kubernetes.io/is-default-class: "true"{{ end }}
+driver: {{ $vals.provisionerName }}
+deletionPolicy: {{ $class.deletionPolicy }}
+---
+{{- end }}
+{{- end }}

@@ -1,0 +1,288 @@
+suite: test statefulset
+templates:
+  - statefulset.yaml
+tests:
+  - it: should create statefulset when useDeploy is false
+    set:
+      useDeploy: false
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-uptime-kuma
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: should not create statefulset when useDeploy is true
+    set:
+      useDeploy: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should set correct image
+    set:
+      useDeploy: false
+      image:
+        repository: louislam/uptime-kuma
+        tag: "1.23.16-debian"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "louislam/uptime-kuma:1.23.16-debian"
+
+  - it: should set database environment variables when external database is enabled
+    set:
+      useDeploy: false
+      externalDatabase:
+        enabled: true
+        hostname: "mysql.example.com"
+        port: 3306
+        database: uptime_kuma
+        username: kuma_user
+        password: "kuma_pass"
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].env
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="UPTIME_KUMA_DB_TYPE")].value
+          pattern: mariadb
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="UPTIME_KUMA_DB_HOSTNAME")].value
+          pattern: mysql.example.com
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="UPTIME_KUMA_DB_PORT")].value
+          pattern: "3306"
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="UPTIME_KUMA_DB_NAME")].value
+          pattern: uptime_kuma
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="UPTIME_KUMA_DB_USERNAME")].value
+          pattern: kuma_user
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="UPTIME_KUMA_DB_PASSWORD")].value
+          pattern: kuma_pass
+
+  - it: should configure all external database environment variables when enabled
+    set:
+      useDeploy: false
+      externalDatabase:
+        enabled: true
+        hostname: "external-db.example.com"
+        port: 3306
+        database: uptime_kuma
+        username: uptime_kuma
+        password: "secret"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_TYPE
+            value: "mariadb"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_HOSTNAME
+            value: "external-db.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_PORT
+            value: "3306"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_NAME
+            value: "uptime_kuma"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_USERNAME
+            value: "uptime_kuma"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_PASSWORD
+            value: "secret"
+
+  - it: should use existing secret for external database credentials
+    set:
+      useDeploy: false
+      externalDatabase:
+        enabled: true
+        hostname: "mysql.example.com"
+        database: kuma_db
+        existingSecret: "db-credentials"
+        existingSecretPasswordKey: "db-password"
+        existingSecretUsernameKey: "db-user"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: "db-credentials"
+                key: "db-user"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UPTIME_KUMA_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "db-credentials"
+                key: "db-password"
+
+  - it: should configure volume claim template when volume is enabled
+    set:
+      useDeploy: false
+      volume:
+        enabled: true
+        size: 4Gi
+        accessMode: ReadWriteOnce
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: storage
+            mountPath: /app/data
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: storage
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
+          value: 4Gi
+
+  - it: should configure service name
+    set:
+      useDeploy: false
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: RELEASE-NAME-uptime-kuma
+
+  - it: should set resource limits and requests
+    set:
+      useDeploy: false
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 128Mi
+
+  - it: should always set UPTIME_KUMA_PORT environment variable
+    set:
+      useDeploy: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "UPTIME_KUMA_PORT"
+            value: "3001"
+
+  - it: should configure strategy when specified
+    set:
+      useDeploy: false
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          partition: 0
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: RollingUpdate
+      - equal:
+          path: spec.updateStrategy.rollingUpdate.partition
+          value: 0
+
+  - it: should configure configurable liveness probe parameters
+    set:
+      useDeploy: false
+      livenessProbe:
+        enabled: true
+        initialDelaySeconds: 60
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+        successThreshold: 1
+        exec:
+          command:
+            - extra/healthcheck
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 60
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 10
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 6
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.successThreshold
+          value: 1
+      - contains:
+          path: spec.template.spec.containers[0].livenessProbe.exec.command
+          content: extra/healthcheck
+
+  - it: should configure configurable readiness probe parameters
+    set:
+      useDeploy: false
+      readinessProbe:
+        enabled: true
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        timeoutSeconds: 3
+        failureThreshold: 3
+        successThreshold: 1
+        httpGet:
+          path: /
+          port: 3001
+          scheme: HTTP
+          httpHeaders:
+            - name: Host
+              value: example.com
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.initialDelaySeconds
+          value: 30
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.periodSeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.timeoutSeconds
+          value: 3
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 3
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.successThreshold
+          value: 1
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 3001
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.scheme
+          value: HTTP
+      - contains:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.httpHeaders
+          content:
+            name: Host
+            value: example.com
