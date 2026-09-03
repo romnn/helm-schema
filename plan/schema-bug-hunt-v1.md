@@ -8,9 +8,9 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: 27 of 28 launched agents have reported**, contributing 266 proven
-findings across 75 families. One deep pass (`openebs`) and two respawned
-cross-cutting agents are still running. Two further agents completed their
+**Status: 27 of 28 launched agents have reported**, contributing 272 proven
+findings across 76 families. One deep pass (`openebs`) and one respawned
+cross-cutting agent are still running. Two further agents completed their
 analysis but **could not write their reports** — their sandbox was read-only
 including the output directory — and their results were recovered from their
 transcripts; see "Recovered results" below. Two more had their *closing message*
@@ -1814,6 +1814,46 @@ Related but distinct: F7 (an `and` guard with an undecidable conjunct loses the
 whole guard) and F34 (an `or` guard drops an ordering-comparison disjunct). Those
 lose a guard; F70 keeps the guard and loses an obligation *inside* it.
 
+### F71 — a `semverCompare` gate over a helper-derived version is omitted entirely
+
+**Class:** false acceptance. **Charts:** `traefik` (5 findings, 8 witnesses),
+`datadog`. **Status:** PROVEN, 9 separately demonstrated disagreements.
+
+Version-compatibility gates are not modelled when the version being compared is
+reached through a local variable or a helper expansion rather than read directly
+from `.Values`. The two shapes:
+
+```gotemplate
+{{- $version := (include "get-agent-version" .) }}                 {{/* datadog  */}}
+{{- if not (semverCompare "^6.36.0-0 || ^7.36.0-0" $version) }}{{ fail … }}{{ end }}
+
+{{- $version := include "traefik.proxyVersion" $ }}                {{/* traefik  */}}
+{{- if semverCompare (printf "<%s" $min) $version }}{{ fail … }}{{ end }}
+```
+
+`datadog` accepts `agents.image.tag: 7.35.0`, below the chart's own supported 7.x
+floor — the schema node carries only the field's description. `traefik` is the
+more instructive case: its `templates/requirements.yaml` is a **dedicated
+compatibility-gate file**, and *none* of it is modelled. Five separate gates are
+open — the chart-wide `traefik.io/proxy-min-version: v3.6.0` floor, Kubernetes
+Ingress NGINX on an unsupported proxy, the v3.7 feature gates, cross-provider
+namespaces before v3.7.1, and two v3.7.3 gates (`kubernetesGateway.qps`/`burst`
+and access-log `queryParameters.defaultMode`). Several of the affected nodes
+carry a `description` that *names* the required version while imposing no
+constraint, and none is coupled to `#/properties/image/properties/tag`, which is
+the open schema `{}`.
+
+The generalization worth acting on: a chart with a `requirements.yaml` /
+`validate.yaml` whose whole purpose is version gating will currently contribute
+**zero** constraints if its version flows through a helper. Compare F6 (the
+bitnami `validateValues` aggregator is unmodelled) — same "the chart has a
+dedicated validation file and we model none of it" outcome, reached by a
+different route.
+
+Gates whose version is read straight from `.Values` *are* modelled: the two
+`cilium` image-version guards and the `vault` Kubernetes-version guard were all
+found correct. The defect is specifically the indirection.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -2012,6 +2052,14 @@ were real.
   the matching provider constraints — the flagship capability, working.
 - **`harbor`** — 224 arms plus every `required "…"` site read; null and type
   sweeps found zero disagreements.
+
+**Weaker than the above, and recorded as such:** the version-gate pass (F71)
+exercised the stop conditions it could reach in `aws-load-balancer-controller`,
+`karpenter`, `loki`, `jenkins`, `external-dns`, `alloy`, `base`, `cilium` and
+`vault` without finding a false acceptance. That is *not* a whole-chart proof —
+it means no disagreement among the conditions actually exercised, and `cilium`
+in particular is defective on other axes (F69, F70). Do not read these as clean
+charts; read them as clean *gates*.
 - **`dex`** — 45 arms; null-depth-3 and boolean-flip sweeps found zero.
 - **`jaeger`** — 74 arms; the `httproute.parentRefs` `fail` correctly encoded.
 - **`opensearch`** — 79 arms; the `securityContext` / `sysctl` / `fsGroup`
