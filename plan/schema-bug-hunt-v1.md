@@ -8,22 +8,35 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: 26 of 28 launched agents have reported**, contributing 240 proven
-findings across 73 families. Two are still running (`openebs`, and one
-long-frozen-fixture pass) plus two respawned cross-cutting agents. Five are still working. Two further agents
-completed their analysis but **could not write their reports** — their sandbox was
-read-only including the output directory — and their results were recovered from
-their transcripts; see "Recovered results" below. Two more died on content filters
-and produced nothing.
+**Status: 27 of 28 launched agents have reported**, contributing 266 proven
+findings across 75 families. One deep pass (`openebs`) and two respawned
+cross-cutting agents are still running. Two further agents completed their
+analysis but **could not write their reports** — their sandbox was read-only
+including the output directory — and their results were recovered from their
+transcripts; see "Recovered results" below. Two more had their *closing message*
+blocked by a provider content filter after 24 and 136 completed tool turns: the
+analysis was done and the findings were recovered from their transcripts, so
+this was a delivery failure, not a refusal and not a loss.
 
-**Adjudicator version.** This document previously said Helm 4.2.3 throughout. The
-installed Helm was upgraded to **4.2.4** partway through the run, so early agents
-adjudicated against 4.2.3 and later ones against 4.2.4. It is a patch release and
-no finding is expected to depend on the difference, but no finding has been
-re-adjudicated across it either. **Three previously-unresolved mechanisms are
-now root-caused: D5, and the quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root cause is now closed
-(F4) and three earlier claims are refuted (see "Corrections"). The remaining
-reports are appended as they arrive.
+**Three previously-unresolved mechanisms are now root-caused: D5, and the
+quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root
+cause is now closed (F4) and three earlier claims are refuted (see
+"Corrections").
+
+**Two adjudication caveats apply to findings recorded before they were known.**
+
+- **Kubernetes version.** The corpus is generated at
+  `v1.29.0-standalone-strict`, and that version also drives
+  `.Capabilities.KubeVersion` during analysis, while bare `helm template`
+  defaults to 1.36 here. Adjudicating unpinned yields errors in *both*
+  directions, and at least one filed bug was withdrawn once pinned. Only the
+  final frozen-cohort pass is known to have used `--kube-version 1.29.0`
+  throughout. See "Harness pitfalls worth inheriting".
+- **Helm version.** This document previously said Helm 4.2.3 throughout. The
+  installed Helm was upgraded to **4.2.4** partway through the run, so early
+  agents adjudicated against 4.2.3 and later ones against 4.2.4. It is a patch
+  release and no finding is expected to depend on the difference, but none has
+  been re-adjudicated across it either.
 
 ## Corrections to earlier documents
 
@@ -314,6 +327,12 @@ alternative, but its only consumer is `{{- range .Values.extraObjects }}`. `0` a
 `-1` are accepted while `5`, `false` and `""` are correctly rejected — and `-1` is
 Helm-**truthy**, so it was never a coherent falsy-widening. Five further witnesses
 in `vault` and `argo-cd`.
+
+Independently reconfirmed on the frozen cohort with Helm's own `range` as the
+oracle: `integer` is in the rangeable domain, and `airflow` / `cilium` / `kyverno`
+carry **52 `array`+`integer` unions** between them, with witnesses in two separate
+templates. Helm 4.2.3 cannot `range` an int at all, so dropping `integer` from
+that domain is mechanical and settles all 52.
 
 Note this is distinct from the deliberate, warned-about abstention on
 *input-channel-dependent* integer range semantics; that one the tool announces.
@@ -735,8 +754,47 @@ being truthy — for example `/allOf/127` in clickhouse requires
 Most are harmless because a second, correct arm catches the same case — 20 were
 checked individually in `minio` / `traefik` / `nginx-ingress` and only one was a
 real hole. But in `clickhouse` and `rook-ceph` the vacuous arm is the **only**
-coverage, which is what makes F22 and F23 exploitable. Worth a mechanical sweep:
-an unsatisfiable arm is detectable without any chart knowledge.
+coverage, which is what makes F22 and F23 exploitable. A further 15 were found in
+the frozen cohort (`cilium` 4, `airflow` 11), and one of cilium's four hides a
+live `set`-on-non-map abort in the flowlog configmap.
+
+**The mechanical sweep was run corpus-wide. It is harder to make sound than this
+section assumed, and the numbers above do not reconcile.**
+
+A sweep over all 26,703 reject arms in all 156 fixtures, counting only the
+contradiction "one path is pinned `enum: [null]` while the same path is asserted
+non-null inside the same *conjunctive* scope", proves **512 arms dead across 22
+charts (1.9%)**. That is a sound lower bound, not the total.
+
+Two traps make the naive version wrong in opposite directions, and both were hit
+before the number above was trusted:
+
+- **`properties` and `required` are vacuously true for a non-object instance.**
+  Reading "`X` is null **and** `X.child` is constrained" as a contradiction is
+  *unsound* on its face — `X: null` satisfies `{"required": ["child"]}`. It
+  happens to be nearly right for this generator only because it always emits
+  `properties` together with `type: "object"`, and it is the `type` that
+  contradicts. A sweep must key on the `type`/`enum`, never on `properties`.
+  Scoring the unsound way inflates the count from 512 to 18,514.
+- **`anyOf` is a disjunction, so the check needs real DNF.** `clickhouse`'s
+  `/allOf/127` is dead, but the null-pin sits inside
+  `anyOf: [{livenessProbe: null}, not {livenessProbe present}]` — *both*
+  disjuncts contradict the sibling `$defs/5V`, one on `type: object`, the other
+  on its top-level `required`. A conjunctive-only scan misses it entirely. A DNF
+  checker written against the emitted shapes was tried and left **81% of arms
+  undecided**, which is worse than useless as an inventory.
+
+**Consequently the per-chart figures quoted in F23 and above this paragraph
+should not be treated as an inventory.** They were produced by different agents
+under different criteria and disagree with the sound sweep by an order of
+magnitude in both directions — `grafana` 84 claimed vs 1 proven, `phpmyadmin`
+258 vs 0, `kube-prometheus-stack` 425 vs 1, against `gitea` 61 vs 28 and
+`redmine` 15 vs 4. The disagreement is *unreconciled*, not resolved: the sound
+sweep only proves lower bounds, so a high claim is not thereby refuted. Whoever
+fixes this family should re-measure with one criterion before trusting any count
+— and the most reliable method in the hunt was not static analysis at all but
+**witness synthesis** (see "Direction A is clean" under "Clean verdicts"),
+which decides satisfiability by construction.
 
 ### F25 — the analyzer computes the correct guard, then emits an unguarded duplicate
 
@@ -1598,6 +1656,15 @@ battery cases, including correctly *accepting* deletions that a guard makes safe
 "Delete the subchart configuration I do not use" is ordinary practice, which makes
 this a common path rather than a corner.
 
+**`airflow` shows the failure at whole-subchart scale, and it is a plumbing gap
+rather than a per-site miss.** Its vendored `postgresql` subchart contributes
+essentially no template facts: **34 `postgresql.*` nil-deref aborts are
+accepted**, while the *identical* shape in the parent chart (`workers.keda: null`,
+`statsd.cache: null`) is correctly rejected by arms. That asymmetry — same
+mechanism, same values document, facts on one side and none on the other — is
+what makes it structural. **D3 is ruled out** as the cause: airflow's only
+colliding template basename is `NOTES.txt`.
+
 ### F63 — a `range`-derived item shape omits `type: "object"`
 
 **Class:** false acceptance. **Charts:** `milvus` (8 sites), `oncall` (20 sites),
@@ -1668,6 +1735,85 @@ Minimal isolation: `required "msg" .Values.good` emits the arm;
 `contains "NodePort" .Values.service.type`. Compare F18, which is the same
 argument-order problem seen from the requirement side.
 
+### F69 — `kindIs` dispatch arms are intersected, so the admitted domain collapses to `null`
+
+**Class:** false rejection **and** false acceptance, from one root cause.
+**Charts:** `cilium` (headline severity). **Status:** PROVEN.
+
+This is the highest-severity single defect found in the frozen cohort, and it is
+one wrong join. `cilium`'s `#/allOf/200` emits, under
+`truthy(clustermesh.config.enabled)`:
+
+```jsonc
+"clusters": { "allOf": [ { "type": ["null","object"] },
+                         { "type": ["array","null"] } ] }
+```
+
+The two arms come from `templates/clustermesh-config/_helpers.tpl:47-66`, which
+dispatches on `kindIs "map"` / `kindIs "slice"` and `fail`s in its `else`. They
+are **alternatives**, so their types belong under `anyOf`; conjoining them
+intersects to `null` **and nothing else**. That inverts the chart exactly: the
+chart's own default `clusters: []`, `{}`, the documented list form and the
+documented "recommended" map form are **all rejected while Helm renders**, and
+`clusters: null` — the one value `kindOf` reports as `invalid`, i.e. the `fail`
+branch — is **accepted**. Cilium's own shipped schema accepts all four.
+
+The entire `clustermesh.config` feature is unconfigurable through this schema.
+
+Compare F17 (a `kindIs` dispatch *loses* an arm) and F50 (an `or`-selected alias
+conjoins its candidates instead of case-splitting): F69 is the same
+conjoin-instead-of-union error at the `kindIs` dispatch site, and the shape will
+appear wherever a chart dispatches on `kindIs`. A detector for it is cheap —
+`contradict.py` in the reproduction directory found it by scanning for
+conjoined type sets whose intersection is empty or `null`-only.
+
+### F70 — an `or` guard is satisfied by one operand while the *other* reaches a typed parameter as `null`
+
+**Class:** false acceptance. **Charts:** `airflow` (~60 sites), `cilium` (C5, C6).
+**Status:** PROVEN in both directions. **This is the most productive witness
+pattern in the hunt, and mutation batteries structurally cannot find it** — it
+needs two keys in opposite states, so any single-path sweep misses all of it.
+
+`airflow` has ~60 sites of the shape (e.g.
+`templates/scheduler/scheduler-serviceaccount.yaml:37-39`):
+
+```gotemplate
+{{- if or .Values.labels .Values.scheduler.labels }}
+  {{- mustMerge .Values.scheduler.labels .Values.labels | toYaml | nindent 4 }}
+{{- end }}
+```
+
+`mustMerge` is `func(map[string]interface{}, ...map[string]interface{})`. The
+guard is an **`or`**, so *either* operand opens the region — and the other
+operand, if `null`, then reaches the typed parameter. Both directions abort:
+
+```yaml
+labels: {team: data}          # → aborts at <.Values.scheduler.labels>
+scheduler: {labels: null}
+```
+```yaml
+labels: null                  # → aborts at <.Values.labels>
+scheduler: {labels: {a: b}}
+```
+
+Both are accepted by the schema.
+
+**The analyzer has the type and is missing only the null-exclusion, and only in
+the two-key state.** The controls prove it: `scheduler: {labels: null}` *alone*
+renders and is correctly accepted, and `scheduler: {labels: "oops"}` with root
+`labels` set is correctly rejected. So the fix is not "type this path" — it is
+that an `or` guard must record, per disjunct, what the *other* disjuncts leave
+unconstrained inside the region it opens.
+
+`cilium` shows the same shape at two more sprig sinks: `serviceAccounts.operator.
+annotations: null` with an EKS IAM role reaches `set` on a nil map, and
+`tls.ca.cert` / `tls.ca.key` reach `buildCustomCert`, which needs two strings and
+carries no type at all.
+
+Related but distinct: F7 (an `and` guard with an undecidable conjunct loses the
+whole guard) and F34 (an `or` guard drops an ordering-comparison disjunct). Those
+lose a guard; F70 keeps the guard and loses an obligation *inside* it.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -1698,6 +1844,23 @@ Single-instance defects not yet generalized into a family.
 | `etcd` | false acceptance | `common.errors.insecureImages` unmodelled: `image.registry: myregistry.example.com` aborts at `NOTES.txt:124` and validates. "Point the chart at my mirror" is the most common bitnami override, and it is exactly the one that aborts. |
 | `okteto` | false acceptance | The `adminToken` length rule (`len == 8` or `len == 40`) is unmodelled. |
 | `base` | false rejection | `global.imagePullSecrets` typed `array` although the consuming `range` also accepts a map. |
+| `kyverno` | **false rejection** | `grafana.enabled: true` makes the schema reject the grafana subchart's **own shipped default**. `#/properties/grafana/allOf/6` applies the plain-scalar preimage (`$defs/8N`, which forbids a leading `{`) to `configMapName`, whose default is `'{{ include "kyverno.fullname" . }}-grafana'` and which is consumed through `tpl`. Two sibling arms on the same path carry the `{{`-template escape hatch (`$defs/aj`); this one drops it. Compare F30/F40. |
+| `airflow` | **false rejection** | `config.triggerer` is typed `object`, so `config.triggerer: []` is rejected — but the read is rescued by `| default dict`, and Helm renders. |
+| `cilium` | false acceptance | `templates/cilium-secrets-namespace.yaml` contributes **zero** values facts: its document body sits inside a `range` over a locally built dict. `secretsNamespaceLabels` / `secretsNamespaceAnnotations` appear once each in a 4 MB schema, as bare descriptions, while `commonLabels` in the *same* `labels:` position is correctly typed. Compare F22, F57. |
+| `cilium` | false acceptance | `gke.enabled: null` reaches `ternary`'s `bool` parameter. |
+| `cilium` | false acceptance | `clustermesh.maxConnectedClusters` as a map aborts in `validate.yaml`; unconstrained. |
+| `cilium` | false acceptance | The plain-scalar preimage is applied at **94** sinks in this one schema and missed at **six** unquoted ones — the machinery exists and the extension is mechanical. Same family as F30; `airflow` A9 is the same miss. |
+| `kyverno` | false acceptance | `features.<key>` may not be a scalar — 14 keys, no constraint. |
+| `kyverno` | false acceptance | `config.webhooks` accepts every shape; the chart accepts one. |
+| `kyverno` | false acceptance | `imagePullSecrets` as a map — the natural mistake — is unconstrained. |
+| `kyverno` | false acceptance | `<component>.sigstoreVolume.emptyDir: null` renders an **unparseable** Deployment. Compare F13. |
+| `kyverno` | false acceptance | `crds.global` / `crds.global.templating` deletion unmodelled. |
+| `airflow` | false acceptance | `registry.connection` without `host` — an absent-path blind spot: `registry.connection.host` does not exist in the defaults at all. |
+| `airflow` | false acceptance | Ingress `hosts` entries without `name`. |
+| `airflow` | false acceptance | `<section>.serviceAccount.automountServiceAccountToken: false` with no token volume. |
+| `airflow` | false acceptance | `workers.celery.*` sub-maps: the `workersMergeValues` recursion is unguarded. |
+| `airflow` | false acceptance | `<section>.serviceAccount.annotations` as a list. |
+| `airflow` | false acceptance | `nameOverride` / `fullnameOverride` untyped; `<x>.persistence.storageClassName` untyped. |
 | `consul` | false acceptance | The ingress-gateway NodePort rule inside a `range` has no arm, though it is expressible in Draft-07. (Two further consul aborts — `bootstrapExpect < replicas`, gateway-name uniqueness — are genuinely inexpressible and are **not** counted as defects.) |
 | `weblate` | false acceptance | **Mechanism unknown.** The bundled `postgresql`'s entire nil-dereference abort surface is missing: standalone `bitnami-postgresql` rejects deleting `ldap`, `metrics`, `audit`, `containerPorts`, `backup` and more, while the same subchart under weblate accepts all of them. D3 was hypothesised and **disproved** — renaming every `.tpl` to a path-unique name (semantics-preserving, Helm renders identically) leaves `/properties/postgresql` unchanged at 423 arms, still accepting all seven witnesses. |
 | `vault` | false acceptance | `/allOf/39` is unsatisfiable: its `if` requires `injector.serviceAccount.annotations` present-and-truthy *and* `injector.serviceAccount` absent-or-null. Causally confirmed — deleting only the opaque conjunct `(ne .mode "dev")` from the guard makes the generator emit the correct arm and the witness flips to reject. |
@@ -1809,6 +1972,38 @@ quarantined chart with a total-rejection arm.
 Charts read in full with no defect found beyond the families above. A clean
 verdict is a result, and is recorded so a later pass need not repeat the work.
 
+### Direction A is clean: the reject-arm machinery, where it fires, is right
+
+The strongest positive result in the hunt, and the one that should shape where
+fix effort goes. For each `{"if": …, "then": false}` arm in `airflow`, `cilium`
+and `kyverno` (1,828 arms), an instance satisfying the `if` was synthesised and
+verified against the arm extracted standalone with its transitive `$defs`, then
+put to real Helm at `--kube-version 1.29.0`:
+
+| chart | arms | witnesses synthesised | witness aborts Helm | false rejections |
+| --- | --- | --- | --- | --- |
+| `cilium` | 444 | 128 | 125 | **0** |
+| `kyverno` | 636 | 60 | 60 | **0** |
+| `airflow` | 748 | 120 | 120 | **0** |
+
+**305 of 308 adjudicated witnesses abort Helm; zero are false rejections.** All
+three genuine false rejections in those charts (F69, and the `kyverno` and
+`airflow` entries in "Per-chart findings") fire through a `then` **type**
+constraint, never through a reject arm.
+
+The damage is therefore concentrated on the other side of the ledger: arms that
+never fire (F24), arms never emitted at all (F22, F23, F62), and wrong type
+lowering (F69, F20, F43). Effort spent auditing the arms that *do* fire has a
+measured yield of zero.
+
+Two methodological notes. This is also the satisfiability oracle F24 wants —
+synthesis decides by construction what static analysis of these schemas could
+not. And the "helm renders + schema rejects" column of a mutation battery is
+**not** a bug count: across 14,325 mutation and 2,793 absent-path jobs on these
+three charts it held 1,788 hits, of which the large majority are the project's
+declared-shape typing policy or provider-required-leaf claims, and exactly three
+were real.
+
 - **`grafana`** — strongest in its batch. All 14 sidecar `watchMethod` `fail`
   sites encoded, the whole `assertNoLeakedSecrets` scan encoded as patterns,
   `grafana.ini.paths` / `unified_storage` / route-dependent `server.domain` all
@@ -1916,8 +2111,20 @@ what turned F24 from a sample into an inventory.
 
 ## Harness pitfalls worth inheriting
 
-Four traps cost agents real time and would cost the next engineer the same:
+Six traps cost agents real time and would cost the next engineer the same. The
+first one invalidates results rather than merely wasting time, and was found
+late — **findings adjudicated before it was known should be re-checked**:
 
+- **Pin the adjudicator to `--kube-version 1.29.0`.** The corpus schemas are
+  generated at `v1.29.0-standalone-strict`, and that version also drives
+  `.Capabilities.KubeVersion` during analysis, while bare `helm template`
+  defaults to 1.36 on this machine. An unpinned oracle produces false positives
+  *and* false negatives in both directions. The witness: cilium rejects
+  `podSecurityContext: null`, which looks like a false rejection at 1.36, but at
+  1.29 the `semverCompare "<1.30.0"` branch at
+  `templates/cilium-agent/daemonset.yaml:97-99` is live, `unset` runs on a nil
+  map, and Helm aborts — the schema is **right**. Filed as a bug by an unpinned
+  run; withdrawn by a pinned one.
 - **Strip the chart's own shipped `values.schema.json` before running Helm.**
   `x509-certificate-exporter` and `loki` ship one, and an early sweep produced
   **332 bogus hits** purely from Helm enforcing the chart's schema rather than ours.
