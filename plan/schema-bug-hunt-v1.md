@@ -8,8 +8,8 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: 27 of 28 launched agents have reported**, contributing 272 proven
-findings across 74 families (F0–F71, plus D4 and D5). One deep pass (`openebs`) and one respawned
+**Status: 27 of 28 launched agents have reported**, contributing 279 proven
+findings across 76 families (F0–F73, plus D4 and D5). One deep pass (`openebs`) and one respawned
 cross-cutting agent are still running. Two further agents completed their
 analysis but **could not write their reports** — their sandbox was read-only
 including the output directory — and their results were recovered from their
@@ -115,7 +115,7 @@ per-chart entries that follow.
 
 **The F-numbers are arrival order, not leverage order, and they are not
 renumbered** — the agents' raw reports and this document's own cross-references
-both cite them. Read the clusters below instead. The 74 families (F0–F71 plus D4
+both cite them. Read the clusters below instead. The 76 families (F0–F73 plus D4
 and D5) collapse into ten mechanisms — the first of which, guard analysis, is
 large enough to split into four — and a fix aimed at a cluster is worth far more
 than one aimed at a family.
@@ -128,11 +128,11 @@ than one aimed at a family.
 | **A4 — `if`/`else if` chain structure** | F3, F35 | A chain's arms are not treated as mutually exclusive alternatives. |
 | **B — alternative branches merged instead of case-split** | F15, F17, F27, F50, F51, F69 | Where the chart says "either shape", the analyzer intersects rather than unions. F69 is the severe form: the admitted domain collapses to `null`. |
 | **C — `range` semantics** | F5, F16, F19, F22, F54, F58, F63 | The rangeable domain is wrong (`integer` is in it and should not be), and obligations inside a range body are lost. |
-| **D — subchart and cross-chart plumbing** | F1, F23, F62, D4, plus D3 | Facts land in the wrong scope, with the wrong predicate, or not at all. F62's airflow evidence shows a whole subchart contributing nothing. |
+| **D — subchart plumbing and root closure** | F1, F23, F62, F73, D4, plus D3 | Facts land in the wrong scope, with the wrong predicate, or not at all. F62's airflow evidence shows a whole subchart contributing nothing, and F73's unjustified root closure is present in 53 of 56 long-standing schemas. |
 | **E — reject arms that can never fire** | F24 | Coverage that looks present and is not. Read the sweep caveats before trusting any count here. |
 | **F — rendered output and YAML safety** | F12, F13, F26, F30, F40, F41, D5 | The preimage machinery is right and is applied inconsistently — 94 sinks in one cilium schema, 6 missed. |
 | **G — provider schema handling** | F0, F20, F31, F37, F39, F60 | Kubernetes/CRD schemas applied at the wrong level, collapsed, or allowed to override chart-local structure. |
-| **H — function catalogue and call lowering** | F9, F10, F14, F18, F28, F33, F36, F43, F44, F47, F49, F55, F64, F68 | Coverage gaps in the builtin catalogue decide whether a contract exists at all. Mostly mechanical, individually small, collectively large. |
+| **H — function catalogue and call lowering** | F9, F10, F14, F18, F28, F33, F36, F43, F44, F47, F49, F55, F64, F68, F72 | Coverage gaps in the builtin catalogue decide whether a contract exists at all. Mostly mechanical, individually small, collectively large. |
 | **I — path binding and attribution** | F4, F11, F32, F38, F48, F61 | A constraint is attached to the wrong path, or the path binding is lost. |
 | **J — validation and version gates** | F6, F71 | Charts with a file dedicated to validation (`validateValues`, `requirements.yaml`) contribute zero constraints from it. |
 
@@ -140,8 +140,8 @@ Two results should shape where effort goes before any of this is picked up.
 **Direction A is clean** — of 308 synthesised reject-arm witnesses, 305 abort
 real Helm and none is a false rejection, so auditing arms that *do* fire has a
 measured yield of zero (see "Clean verdicts"). And the corpus is dominated by
-**false acceptance**: 52 of the 74 families are wholly or partly that direction,
-against 27 for false rejection (8 families are both). The schemas
+**false acceptance**: 52 of the 76 families are wholly or partly that direction,
+against 29 for false rejection (8 families are both). The schemas
 under-constrain roughly twice as often as they over-constrain.
 
 ### F0 — an unversioned external CRD catalog overrides chart-local structural facts
@@ -228,6 +228,13 @@ aborts whenever the key is *present*, whatever its value. The emitted arm
 `mode: null` is not a chart default, so it survives Helm coalescing, reaches the
 template, takes the `hasKey` branch, aborts the install — and the schema accepts
 it.
+
+**Six further witnesses, all the same polarity error.** `kyverno`'s `mode` was
+re-derived independently, and `velero` has **five** `hasKey` deprecation guards
+that all miss a present-null key. An automated probe over 949 root-key
+null-deletions across 54 charts found 22 documents that abort Helm while the
+schema accepts; six reduce to this family. A present null is not a chart default,
+so it survives coalescing — which is exactly the case the arm fails to cover.
 
 The same builtin also fails to reduce `hasKey $presets .type` over a `dict`
 literal, which is how bitnami's `common.resources.preset` enum is derived
@@ -1885,6 +1892,64 @@ Gates whose version is read straight from `.Values` *are* modelled: the two
 `cilium` image-version guards and the `vault` Kubernetes-version guard were all
 found correct. The defect is specifically the indirection.
 
+### F72 — a `toYaml` operand is modelled as a nil-navigation abort, so the key becomes mandatory
+
+**Class:** false rejection. **Charts:** `traefik` (4 arms). **Status:** PROVEN.
+
+`traefik`'s `_podtemplate.tpl:95-103` passes the probe whole to `toYaml` and
+never selects a member from it:
+
+```gotemplate
+livenessProbe:
+  httpGet:
+    ...
+  {{- toYaml .Values.livenessProbe | nindent 10 }}
+```
+
+A missing `.Values.livenessProbe` is nil, and `toYaml nil` **does not stop
+Helm**. The analyzer nonetheless emits `{"if": …probe absent-or-null, "then":
+false}` — `/allOf/177` for `deployment.kind == "Deployment"` and `/allOf/132` for
+`DaemonSet`, with the same pair again for `readinessProbe`. All four are false
+rejections: both witnesses render at `--kube-version v1.29.0` with exit 0 and
+empty stderr, and the prober rejects both.
+
+A user cannot delete the default probes, in either supported workload kind.
+
+The distinguishing test is whether a *member* is selected from the value. It is
+not, here — so "reaches `toYaml`" was read as "is navigated". Compare F4, which
+is the same operand mis-analyzed in the other dimension: there the annotations
+*map schema* was projected onto a `toYaml` operand, here the *requiredness* is.
+Both point at how `toYaml` operands are lowered.
+
+### F73 — the root object is closed with no template-derived reason
+
+**Class:** false rejection. **Charts:** `datadog`, `dict-config` witnessed; **the
+shape is present in 53 of the 56 long-standing pinned schemas.** **Status:**
+PROVEN.
+
+Root `additionalProperties: false` is emitted without any template operation that
+makes an unknown root key fatal. Helm accepts and ignores extra root keys, so
+every harmless forward-compatible, tool-owned, or migration-leftover key is
+refused.
+
+The `datadog` witness is the chart's **own** `ci/security-agent-compliance-values.yaml`:
+it sets a root `securityAgent`, the chart reads security-agent settings only
+under `.Values.datadog.securityAgent`, and no template touches the root key.
+Helm renders 801,881 bytes, exit 0; the prober reports
+`Additional properties are not allowed ('securityAgent' was unexpected)`.
+`dict-config` is the minimal form — a two-property chart that refuses
+`arbitrary: true` while Helm renders it.
+
+Two reasons this ranks high despite each instance looking small. It is the one
+defect witnessed by a chart's own CI suite, which is as close to an author
+assertion of "this is valid" as the corpus offers. And at 53 of 56 schemas it is
+the most widely *distributed* shape found in the hunt — though only the two
+charts above are witnessed, so the count is a distribution, not a defect count.
+
+Compare F1, which is this closure biting one specific key (`global`) and blocking
+use as a dependency. F73 is the general case, and the two should be fixed
+together.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -1915,6 +1980,7 @@ Single-instance defects not yet generalized into a family.
 | `etcd` | false acceptance | `common.errors.insecureImages` unmodelled: `image.registry: myregistry.example.com` aborts at `NOTES.txt:124` and validates. "Point the chart at my mirror" is the most common bitnami override, and it is exactly the one that aborts. |
 | `okteto` | false acceptance | The `adminToken` length rule (`len == 8` or `len == 40`) is unmodelled. |
 | `base` | false rejection | `global.imagePullSecrets` typed `array` although the consuming `range` also accepts a map. |
+| `oauth2-proxy` | **false rejection** | With `redis-ha.enabled: true`, `/properties/redis-ha/allOf/17/then/.../fullnameOverride` has the accepted shape **backwards**: it permits a falsey value or an object-of-strings and rejects a non-empty string — but `charts/redis-ha/templates/_helpers.tpl:15-18` tests the value for truthiness and passes exactly that truthy string to `trunc 63`. `fullnameOverride` appears nowhere else in the subchart. Users cannot enable the bundled Redis HA chart with an ordinary `fullnameOverride`, and the chart's own `ci/redis-sentinel-{array,comma}-values.yaml` reproduce it. |
 | `kyverno` | **false rejection** | `grafana.enabled: true` makes the schema reject the grafana subchart's **own shipped default**. `#/properties/grafana/allOf/6` applies the plain-scalar preimage (`$defs/8N`, which forbids a leading `{`) to `configMapName`, whose default is `'{{ include "kyverno.fullname" . }}-grafana'` and which is consumed through `tpl`. Two sibling arms on the same path carry the `{{`-template escape hatch (`$defs/aj`); this one drops it. Compare F30/F40. |
 | `airflow` | **false rejection** | `config.triggerer` is typed `object`, so `config.triggerer: []` is rejected — but the read is rescued by `| default dict`, and Helm renders. |
 | `cilium` | false acceptance | `templates/cilium-secrets-namespace.yaml` contributes **zero** values facts: its document body sits inside a `range` over a locally built dict. `secretsNamespaceLabels` / `secretsNamespaceAnnotations` appear once each in a 4 MB schema, as bare descriptions, while `commonLabels` in the *same* `labels:` position is correctly typed. Compare F22, F57. |
@@ -2178,15 +2244,27 @@ certify as valid. They are an **author-certified false-rejection oracle**, they
 cost nothing to run, and they appear never to have been run against the generated
 schemas.
 
-On the four charts where it was tried, all 70 `ci/` files rendered and validated,
-so it is not a bug source *there* — but it is exactly the kind of cheap,
-high-signal gate the project lacks, and it generalises across the whole corpus.
+**It has now been run, and it produced bugs.** An early pass over four charts
+found all 70 of their `ci/` files rendering and validating. A later pass over
+**125 root-chart `ci/` files across 11 charts** found 119 clean, one rejected by
+both Helm and the schema (correctly), and **five that Helm renders and the schema
+refuses** — reducing to F73's `datadog` witness, the `oauth2-proxy` finding in two
+variants, and two `tpl`-driven cases outside the brief. A gate that costs nothing
+to run and catches a false rejection witnessed by the chart's own authors belongs
+in CI.
 
-Pair it with the second reusable oracle this hunt produced: a **structural
-satisfiability check over every `{"if": …, "then": false}` arm**. Partitioning
-arms into live and dead immediately points at the aborts the dead ones were
-supposed to cover — three findings came straight out of that partition, and it is
-what turned F24 from a sample into an inventory.
+The companion probe is **root-key null-deletion**: 949 probes across 54 charts
+whose root reject arms mention those keys, yielding 22 documents that abort Helm
+while the schema accepts (six of them F2) and four the reverse. Also mechanical,
+also cheap.
+
+**A structural satisfiability check over `{"if": …, "then": false}` arms is the
+weaker third option, and an earlier version of this section overstated it.** It
+did point at three findings, but it did *not* turn F24 into an inventory: run
+corpus-wide it proves only a lower bound, and the sound and unsound versions
+differ by 36x. See F24 for the two traps. Where satisfiability genuinely needs
+deciding, **witness synthesis** is the method that worked — see "Direction A is
+clean".
 
 ## Harness pitfalls worth inheriting
 
