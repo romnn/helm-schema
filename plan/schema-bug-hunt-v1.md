@@ -1915,6 +1915,12 @@ empty stderr, and the prober rejects both.
 
 A user cannot delete the default probes, in either supported workload kind.
 
+*Re-verified against the committed fixtures, independently of the agent's
+transcript:* `/allOf/177` resolves to `deployment.enabled` truthy ∧
+`deployment.kind == "Deployment"` ∧ `livenessProbe` absent-or-null → `then:
+false`, and `/allOf/132` is the same with `DaemonSet`; `_podtemplate.tpl:94,103`
+pass both probes whole to `toYaml` with no member selected.
+
 The distinguishing test is whether a *member* is selected from the value. It is
 not, here — so "reaches `toYaml`" was read as "is navigated". Compare F4, which
 is the same operand mis-analyzed in the other dimension: there the annotations
@@ -1939,6 +1945,12 @@ Helm renders 801,881 bytes, exit 0; the prober reports
 `Additional properties are not allowed ('securityAgent' was unexpected)`.
 `dict-config` is the minimal form — a two-property chart that refuses
 `arbitrary: true` while Helm renders it.
+
+*Re-verified against the committed fixtures:* `datadog.schema.json` has root
+`additionalProperties: false`, no root `securityAgent` property, and a root
+`datadog` property (which is where the chart really reads those settings);
+`testdata/charts/datadog/ci/security-agent-compliance-values.yaml` is present in
+the vendored chart.
 
 Two reasons this ranks high despite each instance looking small. It is the one
 defect witnessed by a chart's own CI suite, which is as close to an author
