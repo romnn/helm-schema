@@ -8,8 +8,8 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 24 of 28 launched agents have reported, contributing 227
-proven findings across 66 families. Five are still working. Two further agents
+**Status: in progress.** 25 of 28 launched agents have reported, contributing 232
+proven findings across 71 families. Five are still working. Two further agents
 completed their analysis but **could not write their reports** — their sandbox was
 read-only including the output directory — and their results were recovered from
 their transcripts; see "Recovered results" below. Two more died on content filters
@@ -587,6 +587,12 @@ the `range`, not the `$.` root reference.**
 **Charts:** `kube-prometheus-stack`, `phpmyadmin`, `rook-ceph`, `nacos`, and
 almost certainly every umbrella.
 
+**Inventory now includes:** `redmine` 15 of 376 arms unsatisfiable, `gitea` 61 of
+1,138 — of which 21 require a subchart key to be simultaneously `type: object`
+and `enum: [null]`. In `redmine`, `#/allOf/47` requires `readinessProbe` to be
+null-or-absent *and* `readinessProbe.enabled` truthy, while `#/allOf/39` is the
+same arm minus that conjunct and is the one that actually works.
+
 **Scale, measured across seven independent agents:** 425 of 924 reject arms in
 `kube-prometheus-stack`, 258 of 346 in `phpmyadmin`, 47 of 374 in `argo-cd`, 31 in
 `graylog`, 20 in `metallb`, ~11 in `datadog`, 1 in `cloudnative-pg`, plus 50
@@ -594,6 +600,12 @@ witnessed false-acceptance paths in `prometheus` and 16 in `open-webui` — and 
 **zero** at any parent-owned path in every chart measured — and **zero dead arms
 in every chart that has no subcharts at all**, which is as clean a control as the
 corpus can provide.
+
+**Helm's null semantics, pinned precisely** — this is what the fix must encode:
+a key that **has a default** can never be null in the coalesced document, because
+coalescing deletes it; a key **without** a default keeps its null; and a subchart
+root can be **neither null nor absent**. The current predicate is wrong for the
+first case, which is why subchart arms die.
 
 **D3 and D4 are ruled out as the cause.** Renaming every colliding template file
 in `metallb` and regenerating changed nothing, and the affected charts make no
@@ -1216,6 +1228,44 @@ Proven by injecting the **same** guard in two places in a chart copy and
 regenerating — the copy inside the helper produced no arm, the copy in the
 statefulset produced a correct one.
 
+## The performance cliff is one line
+
+`redmine` takes ~400 s to analyze, against a stated project law of seconds. That
+is now localized, and it is not distributed cost:
+
+| Subject | CPU |
+| --- | ---: |
+| `redmine` whole chart | 400.4 s |
+| its bundled `charts/postgresql` **alone** | **361.4 s** |
+| its bundled `charts/mariadb` alone | 4.9 s |
+| `redmine` with `charts/` emptied | 2.6 s |
+
+So ~90% of the run is one bundled bitnami/postgresql subchart, measured
+standalone. (Wall-clock is meaningless here — load average exceeded 100 from
+sibling agents — so these are CPU figures.)
+
+Two independent `sample(1)` profiles of the debug build agree on where it goes:
+`ValuesPath::encode` is **16.6% top-of-stack**, the allocator ~30%, and **99.7% of
+`encode` calls come from `<ValuesPath as Ord>::cmp` — 4,776 of 10,108 inclusive
+samples, about 47% of the run.**
+
+The line is `crates/helm-schema-core/src/value_path.rs:244-248`:
+
+```rust
+self.encode().cmp(&other.encode())
+```
+
+Every comparison heap-allocates **two `String`s**, and `Segment::cmp` at `:30-32`
+does the same per segment. `ValuesPath` sits inside `Guard`/`Predicate`, which key
+four `BTreeMap`s in `predicate_bdd.rs:24-30` — so this is on the hottest path in
+the analyzer.
+
+The fix is to compare segments without materializing strings, **preserving the
+escaped ordering** rather than falling back to a naive `segments.cmp`. `Hash`
+already uses `segments`, so hash/eq consistency is unaffected.
+
+This belongs in `plan/performance-review-v1.md` as a concrete, measured hotspot.
+
 ## D3 roughly triples schema size
 
 The question of where 33 MB of schema goes now has a measured answer. A
@@ -1265,6 +1315,7 @@ unpacked subchart scopes** gives:
 | `milvus` | D3 | Causal: two rename controls take 33 to 0; rendered object multiset identical |
 | `netbox` | D3 + D4 | Causal: rename takes 16 to 5; rename plus D4 repair takes it to 0 |
 | `openebs` | D3 | Causal: four leaked `zfs`/`zfsNode` arms; rename takes 4 to 0 |
+| `redmine` | D3 | Causal: renaming **one file** (`charts/mariadb/templates/primary/configmap.yaml`) makes the schema accept redmine's defaults; postgresql-mentioning arms 2 → 0 |
 | `spinnaker` | D3 | Causal: rename takes 5 to 0; rendered multiset identical |
 | `weblate` | D3 | Causal: rename takes 10 to 0; rendered multiset identical |
 | `dify` | D3 | Helm renders, schema rejects 3 at `/redis`; copying leaked `sandbox` in makes it accept with byte-identical Helm output |
@@ -1472,6 +1523,41 @@ single key on a default-enabled feature.
 
 The sibling `fail` on `database.type` in the **same file** *is* modelled exactly,
 so this is inconsistent capability rather than deliberate policy.
+
+### F65 — a pipeline operand in a comparison drops the entire guarded region
+
+**Class:** false acceptance. **Chart:** `gitea`.
+**The discriminator is a single character of syntax.**
+
+`gt (int .Values.X) 1` emits the correct arm. `gt (.Values.X | int) 1` emits
+**nothing** — and `gitea`'s `config.yaml:30` uses the pipe form, so all **four**
+`fail`s in its multi-replica region are invisible.
+
+Witnesses: `replicaCount: 2` alone, then with the `bleve` issue indexer, then with
+`GIT_GC_REPOS.ENABLED` — Helm aborts on each, the schema accepts each. The
+reproducer is self-contained: it aborts on its **own defaults** while its schema
+accepts them.
+
+### F66 — `not (keys X)` is modelled as "X null or absent", missing `{}`
+
+**Class:** false acceptance. **Chart:** `gitea`.
+
+`clientSettingsPolicy.yaml:3` — `body` defaults to `{}`, Helm aborts, the schema
+accepts. The identical `backendTLSPolicy` case is *masked* by a CRD provider
+constraint rather than modelled, so it is the same gap hidden by luck.
+
+### F67 — a local `set $v …` erases an obligation that `$v` established
+
+**Class:** false acceptance. **Chart:** `gitea`.
+**Distinct from D2, and the opposite sign.** D2 *mints a bogus arm* from
+`set .Values`; this *deletes a correct one* from `set $local`.
+
+Probed exactly: with a guard `hasKey $v`, `type: object` is emitted. Add
+`set $v …` **anywhere** — inside or after the `if` — and the obligation is gone.
+`set` on a *different* variable keeps it.
+
+Live in `gitea`'s `podSecurityContext` / `containerSecurityContext`
+(`_helpers.tpl:109`, `:143`): `podSecurityContext: "x"` aborts and validates.
 
 ## Per-chart findings
 
