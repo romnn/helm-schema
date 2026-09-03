@@ -8,8 +8,18 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 24 of 25 agent reports have landed, contributing 220
-proven findings across 63 families. **Three previously-unresolved mechanisms are
+**Status: in progress.** 23 of 28 launched agents have reported, contributing 220
+proven findings across 63 families. Five are still working. Two further agents
+completed their analysis but **could not write their reports** — their sandbox was
+read-only including the output directory — and their results were recovered from
+their transcripts; see "Recovered results" below. Two more died on content filters
+and produced nothing.
+
+**Adjudicator version.** This document previously said Helm 4.2.3 throughout. The
+installed Helm was upgraded to **4.2.4** partway through the run, so early agents
+adjudicated against 4.2.3 and later ones against 4.2.4. It is a patch release and
+no finding is expected to depend on the difference, but no finding has been
+re-adjudicated across it either. **Three previously-unresolved mechanisms are
 now root-caused: D5, and the quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root cause is now closed
 (F4) and three earlier claims are refuted (see "Corrections"). The remaining
 reports are appended as they arrive.
@@ -71,7 +81,8 @@ Every finding below is proven with a witness, not asserted:
 
 1. Build a values document, starting from the chart's real **coalesced** defaults
    (root values + every subchart's defaults under its key + propagated globals).
-2. Run `helm template` with it — Helm 4.2.3 is the adjudicator.
+2. Run `helm template` with it — Helm 4.x is the adjudicator (see the version
+   note above).
 3. Validate the same document against the generated schema.
 4. A bug is **Helm renders + schema rejects** (false rejection) or **Helm aborts
    + schema accepts** (false acceptance).
@@ -1199,6 +1210,55 @@ inside: `controller.sidecars.configAutoReload.image: null` aborts and is accepte
 Proven by injecting the **same** guard in two places in a chart copy and
 regenerating — the copy inside the helper produced no arm, the copy in the
 statefulset produced a correct one.
+
+## Recovered results
+
+Two cross-cutting agents finished their work and were unable to save it. Their
+findings are recovered from their transcripts and preserved in
+`bughunt/report-codex-3-recovered.md`.
+
+### The definitive D3/D4 prevalence audit
+
+This supersedes the hedged estimate in `plan/corpus-expansion-v1.md`, which could
+only say that a loose structural screen matched ~17 of 24 charts while just six
+had causal evidence. An exact structural pass over **61 corpus umbrellas and 207
+unpacked subchart scopes** gives:
+
+- **15 unique umbrellas with cross-chart contamination**
+- **12 D3-positive charts**, six of them backed by rename-and-regenerate controls
+- **4 material D4 charts**, one overlapping D3
+
+| Chart | Mechanism | Result |
+| --- | --- | --- |
+| `graylog` | D3 | Causal: rename control takes 12 errors to 0 |
+| `milvus` | D3 | Causal: two rename controls take 33 to 0; rendered object multiset identical |
+| `netbox` | D3 + D4 | Causal: rename takes 16 to 5; rename plus D4 repair takes it to 0 |
+| `openebs` | D3 | Causal: four leaked `zfs`/`zfsNode` arms; rename takes 4 to 0 |
+| `spinnaker` | D3 | Causal: rename takes 5 to 0; rendered multiset identical |
+| `weblate` | D3 | Causal: rename takes 10 to 0; rendered multiset identical |
+| `dify` | D3 | Helm renders, schema rejects 3 at `/redis`; copying leaked `sandbox` in makes it accept with byte-identical Helm output |
+| `gitea` | D3 | Helm renders, schema rejects 8 at `/valkey-cluster` |
+| `oncall` | D3 | Helm renders, schema rejects 9 at `/rabbitmq`; copying parent secret inputs into that scope takes 9 to 0 |
+| `signoz-signoz` | D3 | Pre-existing fixture contamination, zero source hits |
+| `okteto` | D4 | Constructed false rejection via `controller: ignored` |
+| `stacks-blockchain-api` | D4 | Helm renders, schema rejects 10; wrongly-rooted PostgreSQL values reduce it to 2 |
+| `yourls` | D4 | Helm renders, schema rejects 1; supplying root `auth` flips it to accept |
+| `apisix` | D3 | **UNWITNESSED**, acceptance-neutral: leaked nodes are open |
+| `synapse` | D3 | **UNWITNESSED**, acceptance-neutral: leaked nodes are open |
+
+The two acceptance-neutral entries matter: they are wrong schemas that produce no
+validation error today, and become visible defects the moment those paths acquire
+a constraint.
+
+### Independent corroboration of the F4/F25 split
+
+A second agent, working the type-narrowing family from a different angle, reached
+the same conclusion recorded in the Corrections section: `synapse` and `okteto`
+are **two mechanisms, not one**. It confirmed that okteto's construct is not
+`toYaml` at all (`_image.tpl:8`), and placed the two likely seams in
+`helm-schema-ir/src/serialization.rs` and `collections.rs` respectively. It
+explicitly declined to name a faulty line without instrumentation, which is the
+right call.
 
 ## The synthetic controls do not control
 
