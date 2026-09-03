@@ -1923,9 +1923,9 @@ Both point at how `toYaml` operands are lowered.
 
 ### F73 — the root object is closed with no template-derived reason
 
-**Class:** false rejection. **Charts:** `datadog`, `dict-config` witnessed; **the
-shape is present in 53 of the 56 long-standing pinned schemas.** **Status:**
-PROVEN.
+**Class:** false rejection. **Charts:** `datadog`, `dict-config` witnessed;
+**the shape is present in 153 of the 156 corpus schemas** — every one except
+`airflow`, `grafana` and `nats`. **Status:** PROVEN.
 
 Root `additionalProperties: false` is emitted without any template operation that
 makes an unknown root key fatal. Helm accepts and ignores extra root keys, so
@@ -1945,6 +1945,8 @@ defect witnessed by a chart's own CI suite, which is as close to an author
 assertion of "this is valid" as the corpus offers. And at 53 of 56 schemas it is
 the most widely *distributed* shape found in the hunt — though only the two
 charts above are witnessed, so the count is a distribution, not a defect count.
+Worth knowing which way the exception runs: the three schemas that leave the root
+open are the anomaly to explain, not the 153 that close it.
 
 Compare F1, which is this closure biting one specific key (`global`) and blocking
 use as a dependency. F73 is the general case, and the two should be fixed
@@ -2244,10 +2246,14 @@ certify as valid. They are an **author-certified false-rejection oracle**, they
 cost nothing to run, and they appear never to have been run against the generated
 schemas.
 
-**It has now been run, and it produced bugs.** An early pass over four charts
-found all 70 of their `ci/` files rendering and validating. A later pass over
-**125 root-chart `ci/` files across 11 charts** found 119 clean, one rejected by
-both Helm and the schema (correctly), and **five that Helm renders and the schema
+**It has now been run to exhaustion, and it produced bugs.** An early pass over
+four charts found all 70 of their `ci/` files rendering and validating. A later
+pass covered **125 root-chart `ci/` files across 11 charts — which is every `ci/`
+file the corpus contains** (`datadog` 61, `oauth2-proxy` 26, `ingress-nginx` 14,
+`grafana` 9, `promtail` 5, `metrics-server` 4, `jaeger` 2, and one each in
+`velero`, `nfs-subdir-external-provisioner`, `fluent-bit` and
+`aws-load-balancer-controller`). It found 119 clean, one rejected by both Helm
+and the schema (correctly), and **five that Helm renders and the schema
 refuses** — reducing to F73's `datadog` witness, the `oauth2-proxy` finding in two
 variants, and two `tpl`-driven cases outside the brief. A gate that costs nothing
 to run and catches a false rejection witnessed by the chart's own authors belongs
