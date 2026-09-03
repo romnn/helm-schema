@@ -8,8 +8,8 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 23 of 25 agent reports have landed, contributing 211
-proven findings across 61 families. **Three previously-unresolved mechanisms are
+**Status: in progress.** 24 of 25 agent reports have landed, contributing 220
+proven findings across 63 families. **Three previously-unresolved mechanisms are
 now root-caused: D5, and the quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root cause is now closed
 (F4) and three earlier claims are refuted (see "Corrections"). The remaining
 reports are appended as they arrive.
@@ -238,11 +238,19 @@ F13, where a plain string in a `metadata.labels` sink is accepted.
 (`extraObjects`, `extraVolumes`, `extraSecretMounts`, …), `opensearch`
 (`secretMounts`).
 
+**Root cause found:** the analyzer models `range <int>` with **Go 1.22
+range-over-int** semantics, under which `0` and negatives mean "zero iterations"
+and therefore bypass the item schema entirely. Helm's `text/template` rejects
+**all** integers. That explains the symptom exactly.
+
 `jaeger.extraObjects` carries `{"maximum": 0, "type": "integer"}` as an
-alternative, but its only consumer is `{{- range .Values.extraObjects }}`, and
-Go's `text/template` errors on *any* integer. `0` and `-1` are accepted while
-`5`, `false` and `""` are correctly rejected. Note `-1` is Helm-**truthy**, so
-this is not even a coherent falsy-widening.
+alternative, but its only consumer is `{{- range .Values.extraObjects }}`. `0` and
+`-1` are accepted while `5`, `false` and `""` are correctly rejected — and `-1` is
+Helm-**truthy**, so it was never a coherent falsy-widening. Five further witnesses
+in `vault` and `argo-cd`.
+
+Note this is distinct from the deliberate, warned-about abstention on
+*input-channel-dependent* integer range semantics; that one the tool announces.
 
 ### F6 — the bitnami `validateValues` aggregator is unmodelled
 
@@ -604,8 +612,15 @@ subchart path gets null-only. Verified against Helm's own coalesced dump —
 
 ### F24 — vacuous reject arms: the intended constraint is silently absent
 
-**Class:** false acceptance. **Charts:** `clickhouse`, `rook-ceph`,
-`nginx-ingress`, `minio`, `traefik`, `redmine`. **~30 arms.**
+**Class:** false acceptance. **Charts:** `grafana`, `argo-cd`, `vault`,
+`clickhouse`, `rook-ceph`, `nginx-ingress`, `minio`, `traefik`, `redmine`,
+`open-webui`, `schema-emission-controls`.
+
+**Now inventoried by structural satisfiability rather than sampled:**
+`grafana` **84 of 234 arms (36%)**, `argo-cd` 9 of 220, `vault` 3 of 69.
+Grafana's 84 are all one shape (`assertNoLeakedSecrets`) and are pure dead weight
+— it encodes that abort correctly at the leaf via `pattern`, including non-string
+spellings, and correctly stops enforcing it when the flag is off.
 
 An arm that can never fire looks like coverage and provides none. The recurring
 shape conjoins a path being absent-or-null with a *property of that same path*
@@ -1302,6 +1317,34 @@ under Helm — Go's `and` short-circuits before the comparison — and is reject
 Also `prometheusOperator` flavor, `thanosService(.External).type`, and
 `thanosRulerSpec.podAntiAffinity`. An instance of the F25 signature.
 
+### F60 — a provider constraint lands on the values field that *names* a key
+
+**Class:** false rejection. **Chart:** `vault`. **High severity.**
+
+`_helpers.tpl:197` emits `{{ .type }}:` as the **key name** of a volume member.
+The provider constraint for the resulting Kubernetes `Volume` was then attached to
+the values field that supplies that key name, so
+`$defs/providerShared10.properties.type` demands a full `Volume` object.
+
+Both spellings the chart's own `eq` comparisons accept — `type: secret` and
+`type: configMap` — render a perfectly valid StatefulSet volume and are rejected.
+**The documented way to mount TLS into Vault is unusable under the generated
+schema.**
+
+Diagnosable in isolation: `providerShared10` is the only `providerShared*`
+definition across four large charts whose property name is not a plausible values
+key, so the misattribution stands out structurally.
+
+### F61 — a constraint is attributed to a path that is never read
+
+**Class:** unjustified constraint. **Chart:** `datadog`.
+
+`datadog.clusterChecks.shareProcessNamespace` is typed `boolean` with **zero**
+template reads, while the four paths actually emitted into
+`PodSpec.shareProcessNamespace` (`agents.`, `clusterAgent.`,
+`clusterChecksRunner.`, `otelAgentGateway.`) carry no constraint at all. The
+attribution is exactly inverted.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -1504,6 +1547,23 @@ verdict is a result, and is recorded so a later pass need not repeat the work.
   integer-as-string coercion in the numeric bounds, and 5 legitimate
   configurations accepted. The other ~11,000 template lines were not audited, so
   cilium is **not** claimed clean overall — and F9 above is a cilium defect.
+
+## A free oracle nobody has been running
+
+Charts ship their own `ci/` values files — configurations the chart's authors
+certify as valid. They are an **author-certified false-rejection oracle**, they
+cost nothing to run, and they appear never to have been run against the generated
+schemas.
+
+On the four charts where it was tried, all 70 `ci/` files rendered and validated,
+so it is not a bug source *there* — but it is exactly the kind of cheap,
+high-signal gate the project lacks, and it generalises across the whole corpus.
+
+Pair it with the second reusable oracle this hunt produced: a **structural
+satisfiability check over every `{"if": …, "then": false}` arm**. Partitioning
+arms into live and dead immediately points at the aborts the dead ones were
+supposed to cover — three findings came straight out of that partition, and it is
+what turned F24 from a sample into an inventory.
 
 ## Harness pitfalls worth inheriting
 
