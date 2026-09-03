@@ -508,9 +508,12 @@ a substitute for any of that.
   `templates/configmap.yaml` — D3-shaped but *duplicating* rather than
   *displacing*, and asymmetric. Audit should start at
   `manifest_contract.rs:25-32`, where per-chart `values_prefix` scoping is applied.
-- **A dropped `and`-conjunct** in gitea's `valkey-cluster`: the emitted condition
-  is `update-cluster.yaml:6`'s inner disjunction verbatim, minus its leading
-  `and .Values.cluster.update.addNodes`. Possibly D1; not confirmed.
+- ~~**A dropped `and`-conjunct** in gitea's `valkey-cluster`.~~ **Refuted** by the
+  bug hunt; see the Corrections section of `plan/schema-bug-hunt-v1.md`. The
+  condition is not `update-cluster.yaml:6` minus a conjunct — it is the exact
+  normalisation of `valkey-cluster.createStatefulSet` (`_helpers.tpl:155-162`),
+  which legitimately has no `addNodes`. The real cause is D3, proven by three
+  regenerations. No separate work item is needed.
 - **15 of the 24 confirmed rejections were never individually adjudicated** —
   only screened structurally. Their mechanism attribution is a hypothesis.
 
