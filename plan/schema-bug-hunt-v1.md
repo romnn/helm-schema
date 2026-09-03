@@ -8,10 +8,10 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 10 of 25 agent reports have landed, contributing 93
-proven findings. One previously-open root cause is now closed (F4) and one
-previously-recorded root cause is refuted (see "Corrections" below). The
-remaining reports are appended as they arrive.
+**Status: in progress.** 16 of 25 agent reports have landed, contributing 147
+proven findings across 38 families. One previously-open root cause is now closed
+(F4) and three earlier claims are refuted (see "Corrections"). The remaining
+reports are appended as they arrive.
 
 ## Corrections to earlier documents
 
@@ -38,6 +38,14 @@ remaining reports are appended as they arrive.
   and is the correct tool. Two apparent findings evaporated when recomposed
   properly, so any finding witnessed only through the old script deserves a
   second look.
+- **The D2 coverage-gap reasoning in `plan/corpus-expansion-v1.md` is wrong for
+  `falco`.** It says none of the six charts using `set` on `.Values` navigates
+  through a `set`-created key. `falco` does: `_helpers.tpl:399` creates
+  `.Values.falco.metrics` and `:401-414` navigate through it fourteen times. No
+  D2 damage results *there* only because `/properties/falco` is emitted wide open,
+  leaving no member path for a bogus arm. D2 does bite one level away, through the
+  `set`-written `falcoctl.config.artifact.install.refs`. The conclusion stands;
+  the reasoning does not.
 - **`plan/chart-corpus-expansion.md:2460` is stale** — it records the opposite
   direction for `nats`' `env` paths. See F17.
 
@@ -109,8 +117,12 @@ heuristics must "never silently override a precise structural result").
 
 **Class:** false rejection. **Severity: highest found so far.**
 **Charts:** `harbor`, `dex`, `zalando-postgres-operator-ui`, `kubeview`,
-`cluster-autoscaler`, `aws-load-balancer-controller`, `nginx-ingress`.
-Confirmed independently by two agents.
+`cluster-autoscaler`, `aws-load-balancer-controller`, `nginx-ingress`, `common`,
+`karpenter`, `zalando-postgres-operator`. **Ten charts, confirmed independently
+by three agents.**
+
+`common` is the worst case: it is a `type: library` chart, so being unusable as a
+dependency is **100% of its real uses**.
 
 Helm injects `global` into every subchart's coalesced values **unconditionally**,
 then validates each chart's own `values.schema.json` against that document. These
@@ -540,7 +552,20 @@ the `range`, not the `$.` root reference.**
 
 ### F23 — subchart-scoped nil-deref arms are emitted null-only, so they are dead
 
-**Class:** false acceptance. **Charts:** `rook-ceph` (7 witnesses), `nacos`.
+**Class:** false acceptance. **This is the largest single defect in the corpus.**
+**Charts:** `kube-prometheus-stack`, `phpmyadmin`, `rook-ceph`, `nacos`, and
+almost certainly every umbrella.
+
+**Scale, measured:** 425 of 924 reject arms in `kube-prometheus-stack` and 258 of
+346 in `phpmyadmin` are dead this way — and **100% of the dead arms are
+subchart-scoped paths**. Nearly half of the largest chart's reject surface is
+unreachable code. An independent level-1/2 sweep found 49 witnessed
+false-acceptance paths in `kube-prometheus-stack` alone, all under `grafana.`,
+`kube-state-metrics.` and `prometheus-node-exporter.`.
+
+`kube-prometheus-stack`'s `/allOf/192` contains both the correct three-way shape
+and the dead null-only shape side by side, which makes the difference easy to
+read.
 
 `/allOf/36` encodes its precondition as
 `{"properties": {"controllerManager": {"enum": [null]}}, "required": ["controllerManager"]}`
@@ -636,7 +661,14 @@ the same story for the *consumer* builtin rather than the subject.
 
 ### F29 — a helper's guard is taken from only one of its call sites
 
-**Class:** false acceptance. **Chart:** `minecraft`.
+**Class:** false acceptance. **Charts:** `minecraft`,
+`aws-node-termination-handler`, `keycloakx`.
+
+The `aws-node-termination-handler` instance is the starkest: the emitted `probes`
+arm requires `enableSqsTerminationDraining` **truthy**, which is the exact
+*inverse* of the DaemonSet site that runs by default. So plain `probes: null`
+aborts Helm and the schema accepts. `keycloakx` shows the same shape on
+`http.relativePath`, where only the `test.enabled` site's guard survives.
 
 The `isResticWithRclone` reject arm carries `NOT rcloneConfigExistingSecret`,
 which is the guard at `rclone-secret.yaml:1` — but `deployment.yaml:432` reaches
@@ -648,6 +680,151 @@ position** inside `{{ template "minecraft.envMap" list "K" (required …) }}` an
 neither is encoded, so `mcbackup.resticHostname` and `minecraftServer.ftbModpackId`
 abort while validating. Compare F18: `required` is mis-handled in argument
 position as well as in reversed-argument position.
+
+### F30 — the plain-scalar YAML safety contract is applied to the wrong scalars
+
+**Class:** false rejection **and** false acceptance, from one classification bug.
+**Charts:** `kubeshark`, `vpa`.
+**This one explains why a defaults-based oracle is blind to it.**
+
+The contract forbidding booleans, numbers and `"true"`/`"false"` in a *bare* YAML
+scalar is applied by classifying the emission site, and that classification is
+wrong in both directions:
+
+- **Applied where it should not be.** In `kubeshark`, when a **quoted** scalar's
+  template body spans multiple source lines, an interpolation on its own line is
+  classified as bare, so the plain-scalar contract lands on the input.
+  `cloudLicenseEnabled: false` renders under Helm and is rejected. A 12-line
+  repro isolates the trigger to the **line span**: single-line is correct,
+  multi-line is wrong for both single- and double-quoted scalars.
+- **Not applied where it should be.** In `vpa`, the same contract is skipped
+  through a `printf "%s:%s"`-composed *unquoted* `image:` scalar, so
+  `certGen.image.tag: ""` renders a document Helm's own YAML loader rejects, and
+  the schema accepts it.
+
+**Why no gate caught the first half:** the declared-default widening unions
+`{"const": <default>}` back in, so the chart's own defaults still validate. The
+net effect is that the key is silently **pinned to its shipped default** — every
+other legal value is rejected, and a defaults-anchored oracle cannot see it by
+construction.
+
+### F31 — a provider array schema lands on the wrong level, or not at all
+
+**Class:** false rejection and false acceptance. **Charts:** `kubeshark`,
+`external-secrets`.
+
+`kubeshark` attaches the provider `Capabilities.add` array schema to the **items**
+of the ranged list rather than to the list, so
+`tap.securityContext.privileged: false` rejects the chart's own
+`[NET_RAW, NET_ADMIN]` default. `external-secrets` emits four
+`topologySpreadConstraints` paths as open `{}` where the template does
+`range $constraint := .` and reads `$constraint.labelSelector`; `["not-a-map"]`
+aborts and validates.
+
+The contrast pins it: `opentelemetry-operator` places the same value with a single
+`toYaml` and **does** receive the provider item schema. Iterating the collection
+is what loses it.
+
+### F32 — Helm built-in context roots leak into a values path
+
+**Class:** false acceptance. **Chart:** `falco`.
+
+`.Values.services` items are emitted as
+`{Chart: {AppVersion, Name, Version}, Release: {Name}}` — Helm's built-in context
+roots attached to a values path — while the real member `name` is missing
+entirely and bare scalars are accepted.
+
+### F33 — `append` over a nil list is not modelled
+
+**Class:** false acceptance. **Chart:** `falco`.
+
+`append` over a nil `.Values` list panics in Helm, but only `range`-iterability is
+modelled for the path, so `falco.plugins: null` aborts and validates.
+
+### F34 — an `or` guard drops an ordering-comparison disjunct
+
+**Class:** false acceptance. **Charts:** `trino`, `alertmanager`.
+**Flagged by its agent as the highest-leverage single fix.**
+
+`{{- if or .Values.server.keda.enabled (gt (int .Values.server.workers) 0) }}`
+is emitted as just `server.keda.enabled` — the `gt` disjunct is treated as
+constant **false**. Dropping a disjunct *strengthens* the guard, so **19 of
+trino's 107 reject arms** are gated on `keda.enabled` (default `false`) and are
+dead.
+
+Eight witnesses: `worker.jvm`, `deployment`, `startupProbe`, `livenessProbe`,
+`readinessProbe`, `config` set to null all abort Helm with nil-dereferences and
+are accepted. The chart's own `fail` at `deployment-worker.yaml:225` likewise —
+and it flips to *reject* the moment keda is enabled, which proves the spurious
+conjunct directly.
+
+A minimal-chart matrix isolates it precisely: `eq` inside `or` is fine, `gt`
+alone is fine, `gt` inside `and` is fine. **Only an ordering comparison inside
+`or`** is dropped — order-independent, also `lt`, with or without `int`.
+
+Same bug in `alertmanager` (`or (gt (int .Values.replicaCount) 1) (.Values.additionalPeers)`),
+where the `additionalPeers` route correctly rejects and the `gt` route does not.
+
+### F35 — an `else if` chain emitting the same key loses the `else if` condition
+
+**Class:** false rejection. **Chart:** `trino`.
+
+`/allOf/34` says "reject if `accessControl` truthy AND `accessControl.properties`
+falsy", dropping the `else if eq .Values.accessControl.type "properties"`
+conjunct. `accessControl: {type: configmap}` renders and is rejected — the
+chart's **documented file-based access-control mode is unusable**. Same for
+`resourceGroups` and `sessionProperties`.
+
+Six regenerated variants pin the trigger to two co-required conditions: the `else
+if` must be *chained*, and both arms must emit the *same* mapping key. A plain
+`if`, an `else { if }`, distinct key names, or two sibling `if`s all produce the
+correct arm.
+
+### F36 — a recovered type is emitted without the matching `required`
+
+**Class:** false acceptance. **Charts:** `fluentd`, `vault` (3 paths), and this
+is the shared shape behind several entries elsewhere.
+
+The generator recovers the type a strictly-typed builtin demands and emits it
+under `properties` — often widening the union with `"null"` — but **without a
+matching `required`**. Because Helm's null-deletion makes *absent* the state a
+user actually reaches by writing `key: null`, the constraint covers every case
+except the reachable one.
+
+- `vault`'s `typeOf $config != "string"` fail emits `type: ["null","string"]` with
+  no `required`; `server.standalone.config`, `server.ha.config` and
+  `server.ha.raft.config` set to null all abort and all validate.
+- `fluentd`'s `diagnosticMode.enabled` is typed `boolean` in the `then` but never
+  required, and `or false nil | ternary` aborts on absent.
+
+### F37 — an IntOrString union makes `null` fail `oneOf`, so the value is forced mandatory
+
+**Class:** false rejection. **Charts:** `alertmanager`, `prometheus-pushgateway`,
+and latent in `filebeat`.
+
+The upstream `ServicePort.targetPort` is
+`oneOf[{type: [string,null]}, {type: [integer,null]}]`. `null` matches **both**
+arms, so `oneOf` fails — and the analyzer concludes the source value can be
+neither null nor absent. The result is a root `required: ["containerPortName"]`
+in alertmanager and `required: ["targetPort"]` in pushgateway, both rejecting
+manifests Kubernetes accepts.
+
+`filebeat`'s `required: ["maxUnavailable"]` is sound only by the same accident,
+so it will move if IntOrString handling is ever revisited.
+
+### F38 — a single-line `with` resolves the sink to the enclosing item
+
+**Class:** false rejection. **Chart:** `nats-kafka`.
+
+`{{ with .Values...httpPort }}port: {{ . }}{{ end }}` written on one line
+(`service.yaml:14`) makes the key's Kubernetes sink resolve to the enclosing
+`ports[]` **item** (a `ServicePort` object) rather than `ports[].port`. The only
+scalar fitting an object slot is `null`, so **every truthy `httpPort` /
+`httpsPort` value is rejected** while Helm renders a perfectly valid Service —
+monitoring can never be enabled.
+
+Deleting `service.yaml`, or rewriting the same `with` across multiple lines,
+fixes it.
 
 ## Per-chart findings
 
@@ -680,6 +857,17 @@ Single-instance defects not yet generalized into a family.
 | `okteto` | false acceptance | The `adminToken` length rule (`len == 8` or `len == 40`) is unmodelled. |
 | `base` | false rejection | `global.imagePullSecrets` typed `array` although the consuming `range` also accepts a map. |
 | `consul` | false acceptance | The ingress-gateway NodePort rule inside a `range` has no arm, though it is expressible in Draft-07. (Two further consul aborts — `bootstrapExpect < replicas`, gateway-name uniqueness — are genuinely inexpressible and are **not** counted as defects.) |
+| `weblate` | false acceptance | **Mechanism unknown.** The bundled `postgresql`'s entire nil-dereference abort surface is missing: standalone `bitnami-postgresql` rejects deleting `ldap`, `metrics`, `audit`, `containerPorts`, `backup` and more, while the same subchart under weblate accepts all of them. D3 was hypothesised and **disproved** — renaming every `.tpl` to a path-unique name (semantics-preserving, Helm renders identically) leaves `/properties/postgresql` unchanged at 423 arms, still accepting all seven witnesses. |
+| `vault` | false acceptance | `/allOf/39` is unsatisfiable: its `if` requires `injector.serviceAccount.annotations` present-and-truthy *and* `injector.serviceAccount` absent-or-null. Causally confirmed — deleting only the opaque conjunct `(ne .mode "dev")` from the guard makes the generator emit the correct arm and the witness flips to reject. |
+| `gitlab-runner` | false acceptance | `sessionServer: null` aborts: `and` short-circuits to nil and `include` stringifies it as `<no value>`, which is truthy, so the guard fires exactly when it should not. |
+| `pihole` | false acceptance | `podDnsConfig.nameservers` is unconstrained, but `toYaml \| nindent 8` at the key's own column is legal YAML only for block sequence items; `[]` and absent both render a sibling node and abort. |
+| `elasticsearch` | false acceptance | `readinessProbe: null` renders invalid YAML. |
+| `descheduler` | false acceptance | The `replicas > 1 without leaderElection` `fail` (a numeric guard) is unmodelled. |
+| `ingress-nginx` | false acceptance | `controller.hostPort` dereferenced inside a `range` body is unguarded. |
+| `redis-cluster` | false rejection | `tags.<dependency-tag>` typed `boolean` although Helm only warns. |
+| `signoz-signoz` | false rejection | `#/properties/clickhouse/allOf/30` rejects `zookeeper.auth.client.enabled: true` with users *and* passwords supplied. The arm keeps the outer `createSecret` guard but drops every inner condition of `common.secrets.passwords.manage`, including an `else if` branch containing no `fail` at all. Breaks the whole authenticated-ZooKeeper surface. |
+| `mariadb` | false rejection | Five arms reject `<component>.fips` being null-deleted, dropping the `global.defaultFips` fallback conjunct from `_fips.tpl:38-40`. Control: `global.defaultFips: ""` **is** correctly rejected, so it is one dropped conjunct rather than missing analysis. Same family as the `nginx` `fips` entry above. |
+| `mariadb` | false acceptance | `architecture` has no enum; `--set architecture=cluster` aborts. |
 | `headscale` | false acceptance | Unguarded `.Values` navigation in `templates/common.yaml` yields no requirements: `persistence` and `configMaps` are bare `{}`, and six nil-dereference cases are accepted. Latent and distinct from the known quarantine defect (`/allOf/55`) — observable only against a schema with that arm removed. |
 
 ## Policy question surfaced, not a bug
@@ -702,6 +890,15 @@ out is a deliberate decision someone should make, not an accident to fix quietly
 Instances of the five mechanisms already root-caused in
 `plan/corpus-expansion-v1.md` need no further diagnosis, only the fix. Two are
 recorded here because the hunt changed what we know about them.
+
+**`signoz-signoz`'s D3 contamination is bounded, and has a fourth member.** A full
+per-scope audit found leakage confined to `clickhouse.zookeeper`, which carries
+`tls.certificatesSecret` (from postgresql's `_helpers.tpl:392,404`) in addition to
+the previously known `externalSecrets{,.secretStoreRef.*}`, `primary.name` and
+`readReplicas.name`. `signoz-otel-gateway.postgresql` has **zero** orphans, so
+there is no leakage the other way, and every other scope's orphans are legitimate
+Kubernetes-provider or `global.*`/`tags.*` keys. Colliding basenames are
+`_helpers.tpl` (4-way), `secrets.yaml` and `serviceaccount.yaml` (3-way).
 
 **`kube-starrocks` is far worse than its quarantine entry says: its schema
 accepts nothing at all.** `root.allOf[8]` is literally `false`, so every values
@@ -774,6 +971,27 @@ verdict is a result, and is recorded so a later pass need not repeat the work.
   configurations. Notably `argo-rollouts`' `toYaml`-into-ConfigMap-`data` paths
   are correctly typed `map<string, string|null>` rather than collapsed to
   `type: "string"` — the F4 failure mode, absent here.
+- **`reloader`** — all 14 templates read, all 26 reject arms reconciled, 856
+  differential probes. Its seven `eq <flag> true` sites are all correctly typed
+  `["null","boolean"]`, catching Helm's "incompatible types for comparison" abort.
+- **`jira`**, **`kube-state-metrics`**, **`zalando-postgres-operator`**,
+  **`influxdb`** — 91/91, 35/35, 9/9 and 68/68 arms adjudicated sound
+  respectively. `zalando`'s `configTarget` CRD closures match
+  `crds/operatorconfigurations.yaml` exactly, and `influxdb`'s `validateValues`
+  deliberately only prints rather than failing, which the schema correctly omits.
+- **`karpenter`** — rejects its own defaults for **exactly** `settings.clusterName`
+  and nothing else; setting only that key flips the coalesced defaults to accept.
+  The arms match `deployment.yaml:151` precisely, including the empty-string case.
+- **`velero`** — all twelve `NOTES.txt` breaking-change fails correctly rejected.
+- **`aws-for-fluent-bit`**, **`nats-account-server`**,
+  **`opentelemetry-operator`**, **`prometheus-node-exporter`**,
+  **`nfs-server-provisioner`**.
+- **`vpa`** — clean apart from the F30 `printf` half.
+- **`falco`** — its list-accumulating `removedConfigGuard` `fail` and its
+  `driver.kind` `fail` are modelled exactly. Its `falco-talon` and
+  `k8s-metacollector` subcharts contribute **zero** arms (D3: all 11 template
+  basenames collide), with `falcosidekick`'s unique `deployment-ui.yaml` as the
+  control — and that one **is** modelled correctly.
 - **`chartmuseum`** — all 10 templates and 76 arms read; a 10-case realistic
   battery plus a 26-case scalar/list substitution battery over every top-level
   map key agreed in every case.
