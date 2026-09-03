@@ -8,8 +8,8 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 21 of 25 agent reports have landed, contributing 196
-proven findings across 56 families. **Three previously-unresolved mechanisms are
+**Status: in progress.** 22 of 25 agent reports have landed, contributing 202
+proven findings across 58 families. **Three previously-unresolved mechanisms are
 now root-caused: D5, and the quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root cause is now closed
 (F4) and three earlier claims are refuted (see "Corrections"). The remaining
 reports are appended as they arrive.
@@ -618,10 +618,33 @@ real hole. But in `clickhouse` and `rook-ceph` the vacuous arm is the **only**
 coverage, which is what makes F22 and F23 exploitable. Worth a mechanical sweep:
 an unsatisfiable arm is detectable without any chart knowledge.
 
-### F25 — a duplicate unguarded emission contradicts the correct guarded one
+### F25 — the analyzer computes the correct guard, then emits an unguarded duplicate
 
 **Class:** false rejection **and** false acceptance from one site.
-**Chart:** `okteto` (10 sites). **Root-caused.**
+**Charts:** `okteto` (10 sites), `kube-prometheus-stack` (4 distinct mechanisms,
+31 witnessed paths), and probably more.
+
+**This is the most valuable single result of the hunt, because it is mechanically
+detectable.** The schema holds *both* a correctly-guarded arm *and* an
+unconditional duplicate of the same constraint under `properties`. The analyzer
+does the structural work correctly and then discards the guard in a second
+emission that overrides it.
+
+A detector needs no chart knowledge: **find any constraint that appears both
+inside a guard arm and unconditionally on the same path.** Running that across all
+156 corpus schemas would quantify the family in one pass and very likely subsume
+several entries in this document.
+
+In `kube-prometheus-stack` the signature covers four separate reported mechanisms
+at once — `$.Values` facts inside a `range` body emitted with no guard,
+`eq`/`ne` comparability hoisted out of its guard, unconditional constraints on
+default-off features (VPA sub-keys, `thanosIngress.servicePort`,
+`servicePerReplica.port`), and subchart `condition:` flags. **31 distinct value
+paths** have a proven "Helm renders, schema rejects, and the value never reaches
+any manifest" witness — that last clause is what localises an unjustified
+constraint precisely.
+
+The `okteto` instance, root-caused:
 
 Two `$defs` carry `{"allOf": [{"type": ["null","object"]}, {"type": ["null","string"]}]}`
 — an intersection satisfiable **only by `null`**. They are referenced from ten
@@ -1179,6 +1202,25 @@ dead arms cannot be exercised. They become **live false acceptances the moment t
 D3 baseline rejection lifts.** F23 must therefore land together with the D3 fix,
 not after it.
 
+### F58 — a nested `range` drops the inner range's item constraints
+
+**Class:** false acceptance. **Chart:** `kube-prometheus-stack`, 6 sites.
+
+`alertmanager.ingress.paths: [1]` with `hosts` set aborts Helm at
+`ingress.yaml:38` (`tpl $p` wants a string) and is accepted. The proof is an
+asymmetry *inside one file*: with `hosts` unset, the else-branch's **identical**
+`range` is modelled and correctly rejects. Same at `prometheus`, `thanosRuler`,
+`thanosIngress` and both `ingressperreplica.yaml` sites.
+
+### F59 — `eq`/`ne` comparability is hoisted out of its guard
+
+**Class:** false rejection. **Chart:** `kube-prometheus-stack`.
+
+`prometheus.networkPolicy.flavor: [a]` with `networkPolicy` **disabled** renders
+under Helm — Go's `and` short-circuits before the comparison — and is rejected.
+Also `prometheusOperator` flavor, `thanosService(.External).type`, and
+`thanosRulerSpec.podAntiAffinity`. An instance of the F25 signature.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -1243,6 +1285,20 @@ out is a deliberate decision someone should make, not an accident to fix quietly
 Instances of the five mechanisms already root-caused in
 `plan/corpus-expansion-v1.md` need no further diagnosis, only the fix. Two are
 recorded here because the hunt changed what we know about them.
+
+**The D3 structural screen over-predicts, confirmed directly.**
+`kube-prometheus-stack` has **14 colliding template basenames across four
+subcharts and no live D3 at all**: every subchart's `servicemonitor.yaml` facts
+are present and correctly scoped, and no `properties.<subchart>.*` leaf is absent
+from that subchart's own source. This is the cleanest available evidence for the
+caution already recorded in `plan/corpus-expansion-v1.md` — a duplicate basename
+plus a `Template.BasePath` include is a *screen*, not a diagnosis.
+
+**D1 is rarer than the site count suggests.** In `kube-prometheus-stack` exactly
+**one** D1 site is live — the already-known `templates/thanos-ruler/ruler.yaml:181`.
+Every other candidate matching the CST shape sits in a `define` body
+(`_helpers.tpl:85`, `:347`, four subchart label helpers), and each was probed:
+their evicted branches carry no rejectable `.Values` fact, so they are inert.
 
 **`signoz-signoz`'s D3 contamination is bounded, and has a fourth member.** A full
 per-scope audit found leakage confined to `clickhouse.zookeeper`, which carries
