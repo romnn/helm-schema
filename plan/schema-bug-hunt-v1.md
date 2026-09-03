@@ -8,8 +8,8 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: in progress.** 23 of 28 launched agents have reported, contributing 220
-proven findings across 63 families. Five are still working. Two further agents
+**Status: in progress.** 24 of 28 launched agents have reported, contributing 227
+proven findings across 66 families. Five are still working. Two further agents
 completed their analysis but **could not write their reports** — their sandbox was
 read-only including the output directory — and their results were recovered from
 their transcripts; see "Recovered results" below. Two more died on content filters
@@ -273,6 +273,11 @@ The boundary is now pinned exactly by a minimal reproducer: an **inline** `fail`
 gets an arm, and a `fail` inside an **`include`d helper** gets an arm — but a
 `fail` gated by a `list` / `append (include …)` / `without ""` / `join` **message
 accumulator** gets nothing.
+
+Independently corroborated in `oncall`, where five *direct* `fail`s in the same
+chart (cert-manager, grafana sidecar, ingress-nginx tag, pushgateway
+networkpolicy, node-exporter `image.sha`) are **all** caught while the
+accumulate-then-fail ones are not. The gap is the indirection, not the guards.
 
 The pattern is `append` → `without ""` → `join` → `if $message → fail`. None of
 it is modelled, so every validation a bitnami chart performs this way is invisible
@@ -1211,6 +1216,32 @@ Proven by injecting the **same** guard in two places in a chart copy and
 regenerating — the copy inside the helper produced no arm, the copy in the
 statefulset produced a correct one.
 
+## D3 roughly triples schema size
+
+The question of where 33 MB of schema goes now has a measured answer. A
+**D3-neutralized rebuild** — renaming only the colliding template basenames, with
+the `include (print $.Template.BasePath "/x.yaml")` references rewritten to match
+— gives:
+
+| Chart | Colliding keys | Files renamed | Schema before | Schema after | Defaults |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `milvus` | 40 | 134 | 18.5 MB | **6.4 MB** | reject-33 → **accept** |
+| `oncall` | 53 | 223 | 16.9 MB | **6.6 MB** | reject-9 → **accept** |
+
+Fidelity was established properly rather than assumed: `helm template` output is
+**byte-identical** between the original and the rebuild (documents sorted,
+`randAlphaNum` secrets and `checksum/*` annotations masked), on chart defaults
+*and* on non-default overlays. The check is stricter than it needs to be —
+original-versus-original already differs by a timestamped Job name.
+
+So the fixture bloat recorded in `plan/corpus-expansion-v1.md` (108 MB → 327 MB,
+18 schemas over Helm's 5 MiB chart-file limit) is **substantially D3-driven**, and
+should shrink sharply when D3 lands. Schema size is a usable proxy metric for the
+fix.
+
+The rebuild is also the enabling artifact for hunting in these charts at all:
+before it, both reject every document, so no false acceptance is observable.
+
 ## Recovered results
 
 Two cross-cutting agents finished their work and were unable to save it. Their
@@ -1404,6 +1435,43 @@ template reads, while the four paths actually emitted into
 `PodSpec.shareProcessNamespace` (`agents.`, `clusterAgent.`,
 `clusterChecksRunner.`, `otelAgentGateway.`) carry no constraint at all. The
 attribution is exactly inverted.
+
+### F62 — subchart-namespace nil-dereference obligations are not emitted at all
+
+**Class:** false acceptance. **Charts:** `milvus`, `oncall` — 12 witnesses across
+6 subcharts.
+
+**Distinct from F23.** There the obligation is emitted with a predicate that can
+never match; here it is not emitted at all. `redis: {metrics: null}`,
+`minio: {tls: null}`, `mariadb: {primary: null}` and nine more each abort Helm
+with `nil pointer evaluating interface {}.<field>`, and the schema accepts all
+twelve.
+
+The control is clean: the **parent's** namespace is handled correctly in all 20+
+battery cases, including correctly *accepting* deletions that a guard makes safe.
+
+"Delete the subchart configuration I do not use" is ordinary practice, which makes
+this a common path rather than a corner.
+
+### F63 — a `range`-derived item shape omits `type: "object"`
+
+**Class:** false acceptance. **Charts:** `milvus` (8 sites), `oncall` (20 sites),
+found by mechanical scan.
+
+`{"items": {"properties": {"hosts": {}, "secretName": {}}}}` is vacuous for a
+scalar member, because `properties` constrains nothing unless the instance is an
+object. `ingress.tls: ["a"]` passes validation and Helm aborts on `.hosts`.
+
+### F64 — an accumulate-then-`fail` chain through a formatter is unmodelled
+
+**Class:** false acceptance. **Chart:** `oncall`.
+
+The SMTP `tls`+`ssl` guard is `default → toString → title → quote` compared
+against `"\"True\""`, and it is not modelled; `oncall: {smtp: {ssl: true}}` is a
+single key on a default-enabled feature.
+
+The sibling `fail` on `database.type` in the **same file** *is* modelled exactly,
+so this is inconsistent capability rather than deliberate policy.
 
 ## Per-chart findings
 
@@ -1635,6 +1703,10 @@ Four traps cost agents real time and would cost the next engineer the same:
 - **Strip `templates/tests/` too.** `terraform` looks broken until you do — every
   abort first seen there came from test templates that `--exclude-tests`
   legitimately ignores.
+- **Filter Kubernetes-sink rejections before mining a mutation battery.** In one
+  931-mutation run, roughly 120 apparent "false rejections" were all legitimate
+  provider constraints. Mining such a battery without that filter produces mostly
+  noise.
 - **`helm template` is the wrong oracle for a wrongly-typed value in a typed
   Kubernetes field.** Those rejections are correct provider constraints and must
   be adjudicated out, not counted. One agent excluded 1,108 such cases in a single
