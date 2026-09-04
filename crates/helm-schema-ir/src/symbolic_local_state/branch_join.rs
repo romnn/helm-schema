@@ -126,7 +126,7 @@ pub(super) fn joined_scalar_dispatch_arms(
         let mut complete = outcomes
             .iter()
             .all(|(condition, _)| condition.predicate().is_some());
-        for (condition, state) in &outcomes {
+        'outcomes: for (condition, state) in &outcomes {
             let outer_condition = condition.when_true();
             if outer_condition == Predicate::False {
                 continue;
@@ -143,6 +143,9 @@ pub(super) fn joined_scalar_dispatch_arms(
                     memo,
                 ) {
                     dispatch_arms.push((condition, value.clone()));
+                    if dispatch_arms.len() > MAX_JOINED_SCALAR_ARMS {
+                        break 'outcomes;
+                    }
                 }
             }
         }

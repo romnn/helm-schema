@@ -4,10 +4,61 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::TruthCondition;
+use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition};
 use crate::symbolic_local_state::SymbolicLocalState;
-use helm_schema_core::{Predicate, ValuesPath};
+use helm_schema_core::{GuardValue, Predicate, PredicateMemo, ValuesPath};
 use test_util::prelude::sim_assert_eq;
+
+fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
+    let mut state = SymbolicLocalState::default();
+    state.scalar_dispatches.insert(
+        "value".to_string(),
+        ScalarValueDispatch {
+            arms: (0..count)
+                .map(|index| {
+                    (
+                        Predicate::True,
+                        ScalarValue::Literal(GuardValue::String(index.to_string())),
+                    )
+                })
+                .collect(),
+            complete: true,
+        },
+    );
+    state
+}
+
+#[test]
+fn scalar_dispatch_join_keeps_128_arms_and_discards_129() {
+    let memo = PredicateMemo::default();
+    let entry = SymbolicLocalState::default();
+    let mut at_cap = SymbolicLocalState::default();
+    at_cap.join_scalar_dispatch_arms(
+        &entry,
+        &[(
+            TruthCondition::exact(Predicate::True),
+            state_with_scalar_arm_count(128),
+        )],
+        true,
+        &memo,
+    );
+    sim_assert_eq!(
+        have: at_cap.scalar_dispatches.get("value").map(|dispatch| dispatch.arms.len()),
+        want: Some(128)
+    );
+
+    let mut over_cap = SymbolicLocalState::default();
+    over_cap.join_scalar_dispatch_arms(
+        &entry,
+        &[(
+            TruthCondition::exact(Predicate::True),
+            state_with_scalar_arm_count(129),
+        )],
+        true,
+        &memo,
+    );
+    sim_assert_eq!(have: over_cap.scalar_dispatches.is_empty(), want: true);
+}
 
 #[test]
 fn snapshot_restore_replaces_all_local_state_maps() {
