@@ -1053,6 +1053,72 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
 
+## Round A3a — stop oversized scalar joins at the discard boundary
+
+- Status: pre-registered; implementation not started.
+- Contract: while constructing one variable's joined scalar dispatch, stop after the 129th
+  feasible arm because the existing 128-arm cap unconditionally discards that entire dispatch.
+  Preserve the cap value, feasibility test, completion state for retained joins, variable set,
+  predicate/value order, all semantics, diagnostics, statuses, fixtures, and wire bytes. Do not
+  add A3's unchanged-variable semantic shortcut in this round.
+- Acceptance baseline: `9911ff51` for executable/schema identity and `7ab80b9d` for the completed
+  E1 ledger state.
+- Baseline production Rust LOC: 67,362.
+- Pre-registered acceptance expectations:
+  - A focused cap test proves a 129-arm feasible join is still discarded while a 128-arm join is
+    retained unchanged.
+  - All ten reference outputs, all 156 schema fixtures, all 18 IR fixtures, stdout, JSON
+    diagnostics, statuses, and the full-depth battery remain byte-identical with zero flips.
+  - Five randomized interleaved pairs on the isolated kube-prometheus-stack
+    `kubernetes-apps.yaml` chart record CPU and load. A3a lands on byte identity unless the paired
+    CPU range shows a reproducible regression; no minimum gain is invented because the frozen item
+    has none.
+- Performance baseline: E1's isolated-chart predecessor is measured afresh against A3a. The
+  round-wide E1 curve is 0.15, 0.09, 0.22, 0.35, 2.53, 1.27, 2.01, 11.23, 12.63, and 18.83 s CPU
+  median in reference-chart order.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; A3a is representation-only and requires byte identity and zero
+  acceptance flips.
+- Public/wire decision: pre-registered as none. The short-circuit changes only dead work after the
+  result has become unconditionally over-cap.
+
+### Review dossier
+
+- Planned implementation: label the existing outcome loop and break it immediately after a
+  feasible push makes `dispatch_arms.len() > MAX_JOINED_SCALAR_ARMS`; retain the existing final cap
+  check as the result decision.
+- Planned performance and byte evidence: preserved E1 versus A3a binaries under the round-0 cache,
+  with the ten reference charts plus five isolated-chart pairs and separate timing diagnostics.
+- Planned semantic evidence: the full-depth Helm-adjudicated battery must remain at zero flips; A3
+  counters and semantic adjudication remain explicitly out of scope until the next round.
+
+### Self-adversarial pass
+
+- Breaking on the 128th arm would incorrectly retain or discard a boundary case. The loop stops
+  only after the 129th feasible arm has been appended.
+- Infeasible conjunctions do not count toward the cap. The check belongs inside the successful
+  `Some(condition)` arm, after the push.
+- A break may leave `complete` stale, but only for the over-cap dispatch that the unchanged final
+  guard discards. Retained joins traverse every outcome exactly as before.
+- The optimization must be per variable. Reaching the cap for one variable cannot skip later
+  variables whose joined dispatch remains bounded.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 decision and, if required, install plus `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
+
 ## Round E1 — linear structural metadata for emission deduplication
 
 - Status: landed in `9911ff51`.
