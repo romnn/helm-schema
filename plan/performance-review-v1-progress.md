@@ -1053,6 +1053,82 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
 
+## Round A3 — preserve scalar dispatches unchanged across every outcome
+
+- Status: pre-registered; counter instrumentation not started.
+- Contract: first measure, without changing results, the joined-variable count, variables whose
+  entry dispatch is identical in every outcome, and joins discarded by the 128-arm cap. Only after
+  recording those counts, preserve an entry dispatch directly when every outcome carries that
+  exact dispatch. Retain existing behavior for changed/missing/partial outcomes and every other
+  local-state fact. This round may change schema acceptance only through that shortcut; it may not
+  alter parser, cache, provider, fixture, corpus, cap, or diagnostic policy.
+- Acceptance baseline: `33d46316` for executable/schema comparison and `1d9db805` for the completed
+  A3a ledger state.
+- Baseline production Rust LOC: 67,365.
+- Pre-registered acceptance expectations:
+  - Counter instrumentation is tracing-only, session-local to one invocation, removed before the
+    shortcut build, and reports per chart: joined variables, unchanged variables across every
+    outcome, and capped joins.
+  - Schema bytes are expected to change on cilium, argo-cd, datadog, and airflow. The other six
+    reference charts are expected to remain byte-identical; diagnostics and statuses must remain
+    identical for all ten.
+  - Old/new `ScalarValueDispatch` differential tests cover unchanged dispatches, changed and
+    missing outcomes, nested reassignment, incomplete (`Partial`) dispatches, and the 128/129 cap.
+  - The full-depth battery adjudicates every flip against Helm 4.2.3. Every flip must be either a
+    strict precision gain or an acceptance-equivalent re-spelling, with zero
+    candidate-accepts/Helm-aborts cells. Any other flip stops the campaign for user direction.
+  - Five randomized interleaved pairs on kube-prometheus-stack and the isolated
+    `kubernetes-apps.yaml` chart record CPU and load. Reject only if unchanged variables are under
+    20% of joined variables and kube-prometheus-stack's paired gain is under 15%, subject to the
+    semantic rejection rules above.
+- Performance baseline: the A3a ten-chart curve is 0.16, 0.09, 0.21, 0.34, 2.48, 1.22, 1.93,
+  10.60, 11.36, and 16.40 s CPU median in reference-chart order. The isolated chart is 2.13 s.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; this is the campaign's semantic round.
+- Public/wire decision: pre-registered as an adjudicated schema re-spelling/precision change only.
+  No CLI, serialized IR, cache, or diagnostic contract may change.
+
+### Review dossier
+
+- Planned counter: tracing events aggregate ordinary local counts without a global/thread-local
+  accumulator or test-order-sensitive reset. Counter code and events are removed before building
+  the semantic candidate.
+- Planned byte gate: preserved A3a and A3 binaries on all ten charts under the round-0 private
+  cache, capturing schema, stdout, JSON diagnostics, and status separately.
+- Planned adjudication: one clean candidate dump/battery using `SCHEMA_ACCEPTANCE_BASELINE_REF`
+  against `33d46316`, Helm 4.2.3 enabled, and per-flip direction/verdict retained in the ledger.
+
+### Self-adversarial pass
+
+- Equality must include the entire `ScalarValueDispatch`, including `complete`, arm predicates,
+  values, and arm order. Comparing only values or truth conditions is unsound.
+- A synthetic implicit-else outcome is semantically real: unchanged means the entry dispatch is
+  present and equal there too, not merely in the authored arms.
+- Partial dispatches are precisely where recomputing the product can be stricter than preserving
+  the original. Every resulting acceptance flip needs Helm adjudication; `TIGHTEN` alone is not a
+  verdict.
+- Cap behavior changes intentionally when an unchanged entry would otherwise be discarded. The
+  candidate must never use cache state, digest identity, or an approximate predicate to justify
+  preservation.
+- A large speedup cannot excuse one false acceptance or false rejection. Semantic adjudication is
+  an independent hard gate.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 install plus `check:local` because A3 changes schema semantics.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
+
 ## Round A3a — stop oversized scalar joins at the discard boundary
 
 - Status: landed in `33d46316`.
