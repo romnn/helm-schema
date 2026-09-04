@@ -11,8 +11,8 @@
 - Starting tree: clean `main` at `1d20fb66`. While round 0 was being measured, the concurrent bug
   hunt landed documentation-only commits through `9abc724f`; executable inputs and all ten
   reference chart trees are byte-identical across that range, and a rebuild at `9abc724f`
-  reproduced the measured binary byte-for-byte. `9abc724f` is therefore the acceptance baseline
-  for the first implementation round.
+  reproduced the measured binary byte-for-byte. The separately authorized baseline repairs landed
+  in `6ceaf9bc` and `8fbcc732`; `8fbcc732` is therefore the acceptance baseline for C1.
 - Starting production Rust LOC: 66,064 (`task tokei:core`).
 - Corpus state: 163 chart directories, 156 schema artifacts, and 18 symbolic-IR artifacts. The
   authoritative battery remains
@@ -61,8 +61,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round 0 — current-tree re-baseline
 
-- Status: blocked before the first commit by two reproducible pre-existing integration-gate
-  failures; round-0 measurements are complete and retained.
+- Status: landed in `6988a949`; two reproducible pre-existing integration-gate failures initially
+  blocked closure and were resolved by the separately authorized prerequisite below.
 - Contract: measurement and campaign-prose infrastructure only. Build and preserve the exact
   starting binary, establish one private cache snapshot, prove online/offline identity on all ten
   reference charts, re-measure the decision baseline, and record current corpus/LOC/tool state.
@@ -185,3 +185,132 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0 after recording the blocker.
 
 - Measured production LOC delta: 0 (66,064 to 66,064).
+
+## Baseline prerequisite — restore the expanded corpus gates
+
+- Status: landed as `6ceaf9bc` (`test(corpus): match local dependency constraints`) and
+  `8fbcc732` (`fix(k8s): preserve third-party capability uncertainty`).
+- Contract: repair only the two pre-existing failures that blocked round 0. Keep corpus integrity
+  strict, preserve structural ambiguity for third-party capability queries, and update a fixture
+  only after full-depth acceptance adjudication. Do not begin a frozen performance item.
+- Acceptance baseline: `9abc724f`; the round-0 ledger-only commit `6988a949` changes no executable
+  input.
+- Baseline production Rust LOC: 66,064.
+- Pre-registered acceptance expectations:
+  - Existing unpacked dependencies satisfy exact lock versions or Helm-compatible version
+    requirements, including Helm's optional leading `v`; missing or out-of-range dependencies
+    still fail.
+  - The Kubernetes bundle abstains for third-party resource-qualified capability queries because
+    absence from the built-in bundle cannot prove a CRD is absent from a cluster.
+  - The temporal-wrapper lean fixture returns to byte identity without regeneration.
+  - Any corpus fixture change is accepted only with zero candidate-accepts/Helm-aborts cells.
+  - The ten reference charts remain byte-identical on schema, stdout, JSON diagnostics, and exit
+    status.
+- Performance baseline: not a performance round. The round-0 decision table remains authoritative.
+- Measured results:
+  - `Chart.lock` preserves `0.1.x` for openldap's two local dependencies while their vendored
+    charts identify versions 0.1.0 and 0.1.2. Two other dependencies use `v0.6.0` and `v1.8.0`
+    locks against unprefixed vendored versions. Exact version parsing remains exact; only entries
+    that are not concrete versions are interpreted as semver requirements.
+  - `build_capability_probe` now reuses the existing built-in group classifier before constructing
+    a resource-qualified Kubernetes probe. `autoscaling.k8s.io/v1/VerticalPodAutoscaler` therefore
+    abstains instead of promoting a Kubernetes negative-cache record into evidence about an
+    installed CRD.
+  - The temporal-wrapper lean schema again matches its existing fixture. The corpus has one byte
+    change, oncall, because it embeds the same Prometheus VPA helper and its expansion-era fixture
+    had captured the false negative capability answer.
+  - The candidate release binary is 16,061,440 bytes with SHA-256
+    `73ec9a2fc51f4fd8796e4dc4e2b492d61888ebfcebe3b8be732376790e64313e`.
+  - All ten reference charts are byte-identical to round 0 on schema, stdout, JSON diagnostics,
+    and exit status; every exit is 0.
+- Deviations:
+  - After local version requirements were handled, the integrity test exposed the two leading-`v`
+    lock spellings. Both dependencies were already vendored at the correct concrete versions; the
+    matcher was extended rather than weakening or quarantining the gate.
+  - A focused candidate generation first appeared to suggest refreshing the temporal lean fixture.
+    Source tracing instead showed that the expanded provider bundle's negative-cache record had
+    exposed a cache-law defect for third-party capabilities. No lean fixture was changed.
+  - The first full repaired-tree integration run identified oncall as the sole corpus byte change
+    and exited 201 before fixture adoption. A clean single-chart dump from the final build replaced
+    only that fixture after the battery reported zero flips.
+  - The instructed Linux luup2 taskfile path does not exist on this macOS host and exited 100. The
+    checkout is `/Volumes/T7/branches/luup2`. Its first run there exited 201 because BSD `xargs`
+    lacks `-a`; the documented repository-external `xargs`/`flock` shims then ran the unchanged
+    downstream tree successfully.
+- Adjudication evidence:
+  - Helm v4.2.3 was verified immediately before adjudication.
+  - The round-74 full-depth battery compared oncall at `9abc724f` with the clean candidate dump:
+    one chart, 1,947 probes, zero acceptance flips, and zero candidate-accepts/Helm-aborts cells.
+    The oncall fixture change is therefore an acceptance-preserving re-spelling under the complete
+    bounded battery.
+  - Schema fixtures are exact after adopting the one clean oncall dump; all 18 IR artifacts remain
+    byte-identical.
+- Public/wire decision: none. The capability query type and provider trait are unchanged. The
+  existing built-in/third-party group classifier now also guards the concrete Kubernetes probe
+  boundary.
+
+### Review dossier
+
+- Focused oracle proof: `cargo nextest run -p helm-schema-k8s -E
+  'test(third_party_resource_qualified_probe_abstains)'`; exit 0, one test passes.
+- Focused blocker proof: `cargo nextest run --workspace --profile integration -E
+  'test(unpacked_dependency_with_wrong_version_is_not_vendored) |
+  test(corpus_charts_vendor_every_locked_dependency) |
+  test(lean_profile_schemas_match_their_separate_fixture_lane)'`; exit 0, three tests pass.
+- Candidate build: `cargo build -p helm-schema-cli --release`; exit 0, followed immediately by
+  copying `target/release/helm-schema` to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-prerequisite`.
+- Ten-chart byte gate: the candidate and preserved round-0 binary use
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s` and
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, with
+  `--compact --offline --k8s-version v1.35.0 --diag-format json`; all 40 channel comparisons pass.
+- Clean oncall dump: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/prerequisite-dump
+  SCHEMA_DUMP=1 cargo nextest run -p helm-schema-cli --profile integration --test chart_corpus -E
+  'test(oncall)'`; exit 0. The generated artifact SHA-256 is
+  `d626f561c94e038f1a1f625df8eec2ba21a7529615c68f4e0fbd042f76ce5160`.
+- Acceptance battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/prerequisite-adjudication
+  SCHEMA_ACCEPTANCE_BASELINE_REF=9abc724f
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=/private/tmp/helm-schema-performance-v1.LSEe9Y/prerequisite-dump
+  SCHEMA_ACCEPTANCE_CHART=oncall
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/prerequisite-adjudication/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 1,947 probes and zero flips.
+
+### Self-adversarial pass
+
+- A permissive semver parser could turn an exact lock into a range. The matcher first parses a
+  concrete version and requires equality; it falls back to `VersionReq` only when the lock is not a
+  concrete version.
+- Stripping `v` indiscriminately could accept malformed versions. Both normalized strings still
+  have to parse as semver, and the exact/range relation is checked afterward.
+- Asking the CRD catalog whether a capability exists would make a public catalog stand in for the
+  target cluster. The correction instead preserves `None`, so typed branch analysis keeps the
+  chart's exact alternatives without claiming cluster state.
+- A fixture-order change can conceal a semantic change. The full-depth battery checked 1,947
+  coalesced oncall probes and found zero flips; no schema-only assertion was used as adjudication.
+- The architecture stays on the right hill: the existing built-in classifier owns the distinction,
+  and no new capability list, provider facade, or cache representation was introduced.
+
+### Gates on the final tree
+
+- `cargo fmt --check`: exit 0; 0.857 s.
+- `task lint`: exit 0; whole-workspace Clippy and three AST-grep policy tests pass. The two existing
+  escaped-newline findings remain informational.
+- `task lint:fc`: exit 0; 48 feature combinations for 13 packages across three targets pass in
+  51.65 s with zero errors or warnings.
+- `cargo nextest run --workspace`: exit 0; 1,339/1,339 tests pass in 104.726 s.
+- `task test:integration`: exit 0; 665/665 tests pass in 951.994 s, with 24 profile skips.
+- `task test:all`: exit 0; 2,008/2,008 tests pass in 1,065.080 s, with 24 profile skips and live
+  network tests included.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; release build and replacement complete
+  in 49.64 s.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`: exit 0; 32/32 charts pass.
+- `task tokei:core`: exit 0; 66,067 production Rust LOC.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0.
+- `git diff --check`: exit 0.
+
+- Measured production LOC delta: +3 (66,064 to 66,067).
