@@ -317,7 +317,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round C1 — key condition fragments by selected values document
 
-- Status: pre-registered; implementation not started.
+- Status: landed in `7cee5c6c`.
 - Contract: make `ConditionFragmentCache` include the identity of the exact guarded root-values
   document selected by `RootValuesDocuments::condition_context`. Do not change guard lowering,
   document selection, absence semantics, ordering, public API, or wire formats.
@@ -335,24 +335,86 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
     document identities cannot reuse each other's condition fragment.
   - Empty-cache online, warm-online, and warm-offline schema, stdout, JSON diagnostics, and status
     must agree for all ten reference charts.
-- Performance baseline: round-0 table; C1 has no speed target and will not be claimed as a
-  performance gain.
-- Measured results: pending.
-- Deviations: none at pre-registration.
-- Adjudication evidence: pending; Helm v4.2.3 remains mandatory if any acceptance flip appears.
-- Public/wire decision: pre-registered as none; the cache and selected-document identity remain
-  crate-private emission details.
+- Performance baseline: paired against the preserved `8fbcc732` executable. CPU medians and
+  ranges for A are: coredns 0.33 s (0.33–0.35), metrics-server 0.17 s (0.16–0.17), istiod
+  0.57 s (0.57–0.57), cert-manager 0.68 s (0.68–0.70), argo-cd 5.70 s (5.67–5.78), grafana
+  4.69 s (4.33–4.83), cilium 8.44 s (8.39–8.46), datadog 62.77 s (62.61–65.66), airflow
+  90.30 s (90.06–90.77), and kube-prometheus-stack 121.95 s (118.68–122.36).
+- Measured results:
+  - The selected guarded document is now returned with its stable index from the same
+    `condition_context` selection. The base document is `None`; guarded documents are
+    `Some(index)`. Both condition-fragment cache call paths include that identity in their key.
+  - A private regression primes the cache from the base document, requests the same ancestor and
+    guard from a distinct guarded document, and proves the cached result equals an uncached
+    construction while differing from the base fragment.
+  - The candidate release binary is 16,061,440 bytes with SHA-256
+    `4d36dbb79dbc066e7f16ba2995a1cdbe41d371c555d0edc9b8d55400e9151c13`.
+  - All ten reference charts are byte-identical to the acceptance executable on schema, stdout,
+    JSON diagnostics, and exit status. The empty-cache-online, warm-online, and warm-offline
+    triple is also exact on all four channels for every chart.
+  - All 156 schema artifacts and all 18 IR artifacts remain byte-identical. The 160-chart battery
+    ran 284,869 coalesced probes and found zero acceptance flips.
+  - Candidate B CPU medians and ranges are: coredns 0.33 s (0.33–0.34), metrics-server 0.17 s
+    (0.16–0.18), istiod 0.57 s (0.57–0.58), cert-manager 0.68 s (0.68–0.69), argo-cd 5.71 s
+    (5.67–5.82), grafana 4.65 s (4.38–5.03), cilium 8.48 s (8.44–8.99), datadog 63.10 s
+    (62.68–65.01), airflow 90.24 s (90.22–90.36), and kube-prometheus-stack 122.02 s
+    (120.69–122.33).
+  - Median paired gains, with paired ranges, are: coredns 0.000% (-3.030%–+2.941%),
+    metrics-server -5.882% (-6.250%–+5.882%), istiod 0.000% (-1.754%–0.000%), cert-manager
+    0.000% (-1.471%–+1.429%), argo-cd -0.175% (-0.692%–0.000%), grafana -1.155%
+    (-7.249%–+3.727%), cilium -0.596% (-6.517%–-0.236%), datadog -0.064%
+    (-3.833%–+1.997%), airflow +0.089% (-0.333%–+0.584%), and kube-prometheus-stack -0.057%
+    (-1.694%–+0.025%). Every paired interval except cilium crosses or touches zero; no gain is
+    claimed. C1 is adopted because it repairs a cache-law violation and its frozen criterion says
+    correctness fixes are never rejected for flat timing.
+- Deviations:
+  - The first `task lint` attempt exited 201 because the new regression used `assert!(left !=
+    right)`, which Clippy correctly identified as a manual equality assertion. The test was changed
+    to return `eyre::Result` and use `eyre::ensure!`; the final lint rerun completed the whole
+    workspace successfully. No suppression was added.
+  - The full battery completed before that test-only assertion spelling changed. The release
+    executable, production code, fixture inputs, and candidate bytes were unchanged, so the
+    284,869-probe result remains evidence for the exact candidate later gated in full.
+  - The host became loaded during the final integration gates and selected A/B pairs: retained
+    load1 ranges are 2.36–2.48 for coredns, 2.36 for metrics-server, 2.36–2.41 for istiod,
+    2.41–2.54 for cert-manager, 2.25–2.94 for argo-cd, 2.72–3.31 for grafana, 3.61–4.52 for
+    cilium, 1.97–4.27 for datadog, 3.62–6.19 for airflow, and 2.44–4.19 for
+    kube-prometheus-stack. The loaded samples remain disclosed, but flat/cross-zero results are
+    not promoted into speed claims.
+- Adjudication evidence: Helm v4.2.3. There are no schema byte changes and no acceptance flips;
+  the battery's candidate-accepts/Helm-aborts cell is zero. Cache-state identity is 10/10 charts
+  across empty online, warm online, and warm offline on all four captured channels.
+- Public/wire decision: none. The cache key and selected-document identity are crate-private
+  emission details; schema and diagnostic wire bytes are unchanged.
 
 ### Review dossier
 
-- Planned implementation proof: focused generator tests for document-key separation, followed by a
-  release candidate copied immediately out of `target/`.
-- Planned byte gate: preserved `8fbcc732` binary versus candidate on the ten reference charts, with
-  schema, stdout, JSON diagnostics, and status captured separately under the round-0 private cache.
-- Planned cache-law gate: a new empty private snapshot warmed online, then repeated warm online and
-  warm offline, all four channels compared per chart.
-- Planned artifact gate: exact schema and IR fixture tests; if a fixture differs, one clean dump and
-  the round-74 full-depth battery against `8fbcc732` before adoption.
+- Focused proof: `cargo nextest run -p helm-schema-gen -E
+  'test(condition_cache_separates_selected_values_documents)'`; exit 0, one test passes.
+- Candidate build: `cargo build -p helm-schema-cli --release`; exit 0, followed immediately by
+  copying `target/release/helm-schema` to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-c1`.
+- Ten-chart byte gate: preserved `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-prerequisite`
+  and the C1 candidate use the round-0 K8s and CRD snapshot with `--compact --offline
+  --k8s-version v1.35.0 --diag-format json`; schema, stdout, stderr, and status comparisons all
+  pass under `/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/byte-gate`.
+- Cache-law gate: for each reference chart, begin with distinct empty K8s and CRD directories,
+  invoke the candidate online twice and offline once, and compare all four channels. Artifacts are
+  under `/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/cache-law`; every comparison passes.
+- Acceptance battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/battery
+  SCHEMA_ACCEPTANCE_BASELINE_REF=acd226a4
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/battery/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, 160 charts, 284,869 probes, zero flips.
+- Timing environment: both preserved binaries use
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s` and
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, with
+  `--compact --offline --k8s-version v1.35.0 --diag-format json`. Randomized AB/BA pairs and each
+  pre-invocation load record are under `/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/measure`.
+  Five pairs were retained for coredns, metrics-server, istiod, cert-manager, and datadog; three
+  for the remaining charts.
 
 ### Self-adversarial pass
 
@@ -366,19 +428,32 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   separately could drift under ties.
 - C1 is a correctness prerequisite, so a flat timing result cannot reject it and a speed movement
   cannot excuse a byte change.
+- The guarded-vector index is stable only within one immutable `RootValuesDocuments`; the cache is
+  created and consumed inside one emission pass over that exact owner, so the identity cannot
+  cross owners.
+- Small timing granularity makes several paired percentages look larger than their absolute
+  movement. Decisions use CPU seconds, paired intervals, and the frozen correctness exception,
+  not the percentage label alone.
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Pending: `task lint`.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending if schema semantics change: `cargo install --path ./crates/helm-schema-cli/` and downstream
-  luup2 `check:local`.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; the final `cargo fmt --all` plus check sequence took 1.555 s (the
+  check duration was not retained separately).
+- `task lint`: first attempt exit 201 for the manual-equality test assertion described above;
+  final attempt exit 0, with the whole workspace compiling under Clippy and all three AST-grep
+  policies passing. The two existing escaped-newline findings remain informational.
+- `task lint:fc`: exit 0; 48 feature combinations pass in 51.29 s.
+- `cargo nextest run --workspace`: exit 0; 1,340/1,340 tests pass in 104.204 s.
+- `task test:integration`: exit 0; 665/665 tests pass in 1,185.723 s, with 24 profile skips.
+- `task test:all`: exit 0; 2,009/2,009 tests pass in 1,102.885 s, with 24 profile skips and live
+  network tests included.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; exact candidate installed in 16.74 s.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`: exit 0; 32/32 charts
+  pass in 53.44 s.
+- `task tokei:core`: exit 0; 66,079 production Rust LOC in 0.848 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0.
+- `git diff --check`: exit 0.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +12 (66,067 to 66,079).
