@@ -1055,7 +1055,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A3a — stop oversized scalar joins at the discard boundary
 
-- Status: pre-registered; implementation not started.
+- Status: landed in `33d46316`.
 - Contract: while constructing one variable's joined scalar dispatch, stop after the 129th
   feasible arm because the existing 128-arm cap unconditionally discards that entire dispatch.
   Preserve the cap value, feasibility test, completion state for retained joins, variable set,
@@ -1076,22 +1076,73 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Performance baseline: E1's isolated-chart predecessor is measured afresh against A3a. The
   round-wide E1 curve is 0.15, 0.09, 0.22, 0.35, 2.53, 1.27, 2.01, 11.23, 12.63, and 18.83 s CPU
   median in reference-chart order.
-- Measured results: pending.
-- Deviations: none at pre-registration.
-- Adjudication evidence: pending; A3a is representation-only and requires byte identity and zero
-  acceptance flips.
-- Public/wire decision: pre-registered as none. The short-circuit changes only dead work after the
-  result has become unconditionally over-cap.
+- Measured results: five randomized isolated-chart pairs put E1 at 2.60 s CPU median
+  (2.60--2.62) and A3a at 2.13 s (2.11--2.13). The median paired gain is 18.70%, with an
+  18.08--18.85% range at load1 3.20--3.53. All four output channels are exact.
+
+| Chart | n | E1 CPU s median (min--max) | A3a CPU s median (min--max) | Gain median (range) | load1 |
+|---|---:|---:|---:|---:|---:|
+| coredns | 5 | 0.17 (0.16--0.17) | 0.16 (0.16--0.17) | not proven; 5.88% (-6.25--5.88%) | 3.09--3.88 |
+| metrics-server | 5 | 0.09 (0.09--0.09) | 0.09 (0.09--0.10) | not proven; 0.00% (-11.11--0.00%) | 3.88 |
+| istiod | 5 | 0.22 (0.21--0.22) | 0.21 (0.21--0.21) | 4.55% (0.00--4.55%) | 3.88 |
+| cert-manager | 5 | 0.35 (0.34--0.35) | 0.34 (0.34--0.35) | not proven; 2.86% (-2.94--2.86%) | 3.88--3.89 |
+| argo-cd | 8 | 2.48 (2.45--2.51) | 2.48 (2.46--2.53) | not proven; -0.61% (-2.02--1.99%) | 2.65--4.07 |
+| grafana | 3 | 1.26 (1.25--1.27) | 1.22 (1.22--1.24) | 2.40% (2.36--3.17%) | 3.82--3.98 |
+| cilium | 3 | 1.95 (1.94--1.95) | 1.93 (1.92--1.95) | 1.03% (0.00--1.03%) | 3.63--3.84 |
+| datadog | 5 | 10.73 (10.71--10.75) | 10.60 (10.54--10.63) | 1.21% (0.93--1.59%) | 2.25--3.63 |
+| airflow | 5 | 12.34 (12.30--12.57) | 11.36 (11.33--11.43) | 8.02% (7.56--9.07%) | 2.19--3.90 |
+| kube-prometheus-stack | 5 | 18.60 (18.57--18.77) | 16.40 (16.35--16.47) | 11.95% (11.40--12.68%) | 2.64--7.54 |
+
+  The expanded Argo sample makes its tiny median regression non-reproducible: the paired range
+  crosses zero. A3a therefore satisfies the pre-registered no-proven-regression rule while
+  materially improving the two cap-heavy large charts.
+- Deviations:
+  - The frozen plan described A3a only as dead-work avoidance and assigned no expected gain. The
+    isolated join-heavy chart improves 18.70%, showing that many capped products continued doing
+    substantial work after their result was already doomed.
+  - The final `test:all` gate ran during severe external contention and took 588.906 s. It is kept
+    as correctness evidence only; the decision measurement preceded it under load1 3.20--3.53.
+  - A concurrent `luup5` Rust build then drove load1 to 23.20, so the ten-chart curve was not run
+    in that state. Measurement began only after load1 decayed to 3.66.
+  - Argo CD's initial three pairs were all 0.40--2.02% slower. Because that was small enough to be
+    binary-layout noise but would have fired the pre-registered no-regression rule, five additional
+    pairs were taken without changing either binary. The complete eight-pair range crosses zero
+    (-2.02--1.99%) and the medians both round to 2.48 s, so no reproducible regression remains.
+- Adjudication evidence: Helm v4.2.3. All ten reference charts are exact for schema, stdout, JSON
+  diagnostics, and status. Schema and IR artifact paths differ by zero files from `9911ff51`; the
+  battery covers 160 charts and 284,869 composed probes with zero flips, hence zero
+  candidate-accepts/Helm-aborts cells.
+- Public/wire decision: none. The short-circuit changes only dead work after the result has become
+  unconditionally over-cap. The cap, retained-arm order, and final decision remain unchanged.
 
 ### Review dossier
 
-- Planned implementation: label the existing outcome loop and break it immediately after a
-  feasible push makes `dispatch_arms.len() > MAX_JOINED_SCALAR_ARMS`; retain the existing final cap
-  check as the result decision.
-- Planned performance and byte evidence: preserved E1 versus A3a binaries under the round-0 cache,
-  with the ten reference charts plus five isolated-chart pairs and separate timing diagnostics.
-- Planned semantic evidence: the full-depth Helm-adjudicated battery must remain at zero flips; A3
-  counters and semantic adjudication remain explicitly out of scope until the next round.
+- Boundary test: `cargo nextest run -p helm-schema-ir
+  scalar_dispatch_join_keeps_128_arms_and_discards_129`; exit 0, one test passes after a 41.55 s
+  rebuild. The test exercises the public state join path and pins both sides of the boundary.
+- Final binary: `cargo build --release -p helm-schema-cli`; exit 0 in 21.19 s, copied immediately to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a3a`, SHA-256
+  `2bc6607a5505c89e238b1b7840ed6f90c81e16282712ae82b2a8cf8ea776b094`, 16,298,192 bytes.
+- Ten-chart byte gate: preserved `helm-schema-e1` versus `helm-schema-a3a`, with
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s`,
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, and
+  `--compact --offline --k8s-version v1.35.0 --diag-format json`; every channel is exact under
+  `a3a/byte`.
+- Isolated performance evidence is under `a3a/measure`. Odd pairs run candidate then baseline and
+  even pairs baseline then candidate; each invocation records UTC start, load1, `/usr/bin/time -p`,
+  and separate schema/stdout/diagnostic/status channels.
+- The final ten-chart curve is under `a3a/measure-final` with the same environment and alternating
+  order. Small and large charts use five pairs, mid charts use three, and Argo CD uses eight because
+  the initial three showed the tiny one-direction result adjudicated above. Every pair is exact.
+- Artifact gate: `git diff --exit-code 9911ff51 -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`; exit 0, covering 156 schema and 18 IR artifacts.
+- Corpus battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a3a/battery
+  SCHEMA_ACCEPTANCE_BASELINE_REF=9911ff51
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/a3a/battery/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 146.884 s with zero flips.
 
 ### Self-adversarial pass
 
@@ -1103,21 +1154,32 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   guard discards. Retained joins traverse every outcome exactly as before.
 - The optimization must be per variable. Reaching the cap for one variable cannot skip later
   variables whose joined dispatch remains bounded.
+- The 18.70% isolated gain could be an artifact of changing feasible-arm semantics, so the test
+  pins both cap boundaries and all ten chart bytes plus 284,869 acceptance probes remain exact.
+- A ten-chart curve taken beside the observed external build would repeat the loaded-host failure
+  mode. Delaying only that measurement is preferable to presenting contaminated numbers.
+- Kube-prometheus-stack load rose to 7.54 during two middle pairs, but all five paired gains remain
+  in the narrow 11.40--12.68% band; the conclusion rests on paired CPU, not absolute comparison to
+  E1's older window.
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Pending: `task lint`.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending: downstream luup2 decision and, if required, install plus `check:local`.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; 0.955 s.
+- `task lint`: exit 0; 13.071 s. Whole-workspace Clippy and all three AST-grep policies pass.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass in 67.93 s.
+- `cargo nextest run --workspace`: exit 0; 1,346/1,346 tests pass in 15.592 s after a 34.25 s
+  rebuild.
+- `task test:integration`: exit 0; 669/669 tests pass in 287.506 s, with 24 profile skips.
+- `task test:all`: exit 0; 2,019/2,019 tests pass in 588.906 s, with 24 profile skips and live
+  network tests included. External contention makes the duration non-comparable.
+- Downstream luup2: not triggered because A3a is representation-only and every schema,
+  diagnostic, stdout, status, fixture, and acceptance channel is exact; the campaign's installed
+  C1 gate remains 32/32 green.
+- `task tokei:core`: exit 0; 67,365 production Rust LOC in 1.035 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.001 s.
+- `git diff --check`: exit 0; under 0.001 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +3 (67,362 to 67,365).
 
 ## Round E1 — linear structural metadata for emission deduplication
 
