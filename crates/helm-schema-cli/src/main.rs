@@ -2,7 +2,7 @@
 
 use clap::Parser;
 
-#[cfg(target_env = "musl")]
+#[cfg(not(target_os = "windows"))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
