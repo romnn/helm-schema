@@ -59,6 +59,7 @@ impl RootValuesDocuments {
         guards: &[helm_schema_core::ConditionalGuard],
         dependency_roots: &'a BTreeSet<Vec<String>>,
     ) -> (
+        Option<usize>,
         &'a YamlValue,
         crate::condition_encoding::AbsenceDefaults<'a>,
     ) {
@@ -71,7 +72,8 @@ impl RootValuesDocuments {
         let guarded = self
             .guarded
             .iter()
-            .filter(|documents| {
+            .enumerate()
+            .filter(|(_, documents)| {
                 predicate.exactly_implies(&helm_schema_core::Predicate::all(
                     documents
                         .guards
@@ -80,15 +82,17 @@ impl RootValuesDocuments {
                         .collect(),
                 ))
             })
-            .max_by_key(|documents| documents.guards.len());
-        let (composed, subchart_defaults, dependency_refill) = guarded.map_or(
+            .max_by_key(|(_, documents)| documents.guards.len());
+        let (values_document, composed, subchart_defaults, dependency_refill) = guarded.map_or(
             (
+                None,
                 &self.composed,
                 &self.subchart_defaults,
                 &self.dependency_refill,
             ),
-            |documents| {
+            |(index, documents)| {
                 (
+                    Some(index),
                     &documents.composed,
                     &documents.subchart_defaults,
                     &documents.dependency_refill,
@@ -96,6 +100,7 @@ impl RootValuesDocuments {
             },
         );
         (
+            values_document,
             composed,
             crate::condition_encoding::AbsenceDefaults {
                 deeper_stage: subchart_defaults,

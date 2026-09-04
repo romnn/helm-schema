@@ -242,7 +242,7 @@ pub(crate) fn append_terminal_clauses(
     // reach. One clause per root states it.
     let mut deleted_roots = BTreeSet::new();
     for guards in clauses {
-        let (_, absence) = documents.condition_context(guards, dependency_roots);
+        let (_, _, absence) = documents.condition_context(guards, dependency_roots);
         if let Some(root) =
             crate::condition_encoding::deleted_dependency_root_terminates(guards, absence)
         {
@@ -257,7 +257,7 @@ pub(crate) fn append_terminal_clauses(
         root_schema.append_conditional(&[], condition, SchemaNode::foreign(Value::Bool(false)));
     }
     for guards in clauses {
-        let (values_yaml_doc, absence) = documents.condition_context(guards, dependency_roots);
+        let (_, values_yaml_doc, absence) = documents.condition_context(guards, dependency_roots);
         let shared_ancestor = shared_guard_ancestor_segments(guards);
         let all_vacuous = guards.iter().all(guard_holds_vacuously);
         // Keep present values attributed to their nearest shared object.
@@ -395,7 +395,8 @@ fn append_values_default_source_absence_clauses(
                 .filter(|guard| *guard != &ConditionalGuard::Absent { path: path.clone() })
                 .cloned()
                 .collect::<Vec<_>>();
-            let (values_yaml_doc, absence) = documents.condition_context(guards, dependency_roots);
+            let (_, values_yaml_doc, absence) =
+                documents.condition_context(guards, dependency_roots);
             let mut conditions = build_condition_clauses(
                 &remaining_guards,
                 &[],
@@ -588,7 +589,8 @@ pub(crate) fn append_selected_constraints(
     }
     let mut by_content: BTreeMap<(Vec<String>, String), ContentGroup> = BTreeMap::new();
     for ((ancestor_segments, guards), group) in grouped {
-        let (values_yaml_doc, absence) = documents.condition_context(&guards, dependency_roots);
+        let (values_document, values_yaml_doc, absence) =
+            documents.condition_context(&guards, dependency_roots);
         let mut merged: Option<(Value, usize, usize)> = None;
         let mut separate = Vec::new();
         for conditional in group {
@@ -597,6 +599,7 @@ pub(crate) fn append_selected_constraints(
                 &conditional,
                 values_yaml_doc,
                 absence,
+                values_document,
                 &mut condition_cache,
             ) else {
                 report.mandatory_outcomes.fallback += mandatory;
@@ -668,11 +671,12 @@ pub(crate) fn append_selected_constraints(
             helm_schema_core::GuardDnf::normalize_conditional_guard_disjunction(group.guard_sets)
                 .into_iter()
                 .map(|guards| {
-                    let (values_yaml_doc, absence) =
+                    let (values_document, values_yaml_doc, absence) =
                         documents.condition_context(&guards, dependency_roots);
                     SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
                         &guards,
                         &ancestor_segments,
+                        values_document,
                         values_yaml_doc,
                         absence,
                         &mut condition_cache,
@@ -725,6 +729,7 @@ fn build_scoped_target_fragment(
     conditional: &LoweredConjunct,
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
+    values_document: Option<usize>,
     condition_cache: &mut crate::condition_encoding::ConditionFragmentCache,
 ) -> Option<Value> {
     let mut target_segments = conditional.carrier.ancestor_segments.clone();
@@ -744,6 +749,7 @@ fn build_scoped_target_fragment(
             SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
                 &scope.guards,
                 &scope.ancestor_segments,
+                values_document,
                 values_yaml_doc,
                 absence,
                 condition_cache,

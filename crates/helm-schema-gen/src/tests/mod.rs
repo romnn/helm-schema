@@ -25,6 +25,7 @@ mod bound_helpers;
 mod canonical_emission;
 mod chart_local_crd_contracts;
 mod completed_token_contracts;
+mod condition_encoding;
 mod default_hint_extraction;
 mod emission_profiles;
 mod empty_collections;

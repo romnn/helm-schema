@@ -56,11 +56,12 @@ pub(crate) fn build_condition_clauses(
 /// activation and branch guards across hundreds of arms, and rebuilding each
 /// structural encoding dominates arm emission.
 pub(crate) type ConditionFragmentCache =
-    std::collections::BTreeMap<(Vec<String>, ConditionalGuard), Option<SchemaNode>>;
+    std::collections::BTreeMap<(Option<usize>, Vec<String>, ConditionalGuard), Option<SchemaNode>>;
 
 pub(crate) fn build_condition_clauses_cached(
     guards: &[ConditionalGuard],
     ancestor_segments: &[String],
+    values_document: Option<usize>,
     values_yaml_doc: &YamlValue,
     absence: AbsenceDefaults<'_>,
     cache: &mut ConditionFragmentCache,
@@ -69,7 +70,7 @@ pub(crate) fn build_condition_clauses_cached(
         .iter()
         .filter_map(|guard| {
             cache
-                .entry((ancestor_segments.to_vec(), guard.clone()))
+                .entry((values_document, ancestor_segments.to_vec(), guard.clone()))
                 .or_insert_with(|| {
                     build_single_condition_fragment(
                         guard,
