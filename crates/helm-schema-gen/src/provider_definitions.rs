@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use helm_schema_core::{ProviderOrigin, ProviderSchemaSource};
+use helm_schema_json_schema_walk::SchemaMetadataIndex;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
@@ -178,21 +179,17 @@ struct RepeatedPayload {
 }
 
 pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap<String, Value> {
-    // Serializing every subtree's canonical form is O(size x depth); count
-    // candidates with a bottom-up structural hash plus an exact canonical
-    // byte length instead, and materialize the true canonical string only
-    // for the handful of repeated large cores (naming stays sorted by that
-    // string, so the emitted definitions are unchanged).
-    let mut counts = std::collections::HashMap::<u64, usize>::new();
-    visit_repeated_core_hashes(schema, &mut |core_hash, core_len| {
-        if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES {
-            *counts.entry(core_hash).or_insert(0) += 1;
+    let metadata = SchemaMetadataIndex::new(schema);
+    let mut counts = std::collections::HashMap::<(u128, usize), usize>::new();
+    visit_repeated_core_hashes(schema, &metadata, &mut |fingerprint| {
+        if fingerprint.1 >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES {
+            *counts.entry(fingerprint).or_insert(0) += 1;
         }
     });
     counts.retain(|_, uses| *uses > 1);
 
     let mut payloads = BTreeMap::<String, RepeatedPayload>::new();
-    collect_selected_schema_cores(schema, &counts, &mut payloads);
+    collect_selected_schema_cores(schema, &metadata, &counts, &mut payloads);
 
     let selected = payloads
         .into_iter()
@@ -209,7 +206,7 @@ pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap
         })
         .collect::<BTreeMap<_, _>>();
     let mut used = BTreeSet::new();
-    replace_repeated_schema_cores(schema, &counts, &selected, &mut used);
+    replace_repeated_schema_cores(schema, &metadata, &counts, &selected, &mut used);
 
     selected
         .into_values()
@@ -217,95 +214,28 @@ pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap
         .collect()
 }
 
-/// Bottom-up structural hash and exact canonical-serialization byte length.
-///
-/// Equal canonical strings imply equal hashes and lengths; only leaves are
-/// serialized, so the whole document costs one linear pass.
-fn canonical_hash_len(value: &Value) -> (u64, usize) {
-    use std::hash::{Hash, Hasher};
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    let len = match value {
-        Value::Object(object) => {
-            let mut keys: Vec<_> = object.keys().collect();
-            keys.sort();
-            let mut len = 2 + keys.len().saturating_sub(1);
-            0u8.hash(&mut hasher);
-            for key in keys {
-                let Some(child) = object.get(key) else {
-                    continue;
-                };
-                let (child_hash, child_len) = canonical_hash_len(child);
-                key.hash(&mut hasher);
-                child_hash.hash(&mut hasher);
-                len += json_string_len(key) + 1 + child_len;
-            }
-            len
-        }
-        Value::Array(items) => {
-            let mut len = 2 + items.len().saturating_sub(1);
-            1u8.hash(&mut hasher);
-            for item in items {
-                let (child_hash, child_len) = canonical_hash_len(item);
-                child_hash.hash(&mut hasher);
-                len += child_len;
-            }
-            len
-        }
-        scalar => {
-            let text = serde_json::to_string(scalar).unwrap_or_default();
-            2u8.hash(&mut hasher);
-            text.hash(&mut hasher);
-            text.len()
-        }
-    };
-    (hasher.finish(), len)
+fn core_fingerprint(
+    object: &Map<String, Value>,
+    metadata: &SchemaMetadataIndex,
+) -> Option<(u128, usize)> {
+    metadata
+        .object_excluding(object, is_schema_decoration)
+        .map(|metadata| (metadata.digest(), metadata.byte_len()))
 }
 
-/// Hash and length of one object's CORE (its non-decoration entries), reusing
-/// the full-value hashes of the retained children.
-fn core_hash_len(object: &Map<String, Value>) -> (u64, usize) {
-    use std::hash::{Hash, Hasher};
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    0u8.hash(&mut hasher);
-    let mut keys: Vec<_> = object
-        .keys()
-        .filter(|key| !is_schema_decoration(key))
-        .collect();
-    keys.sort();
-    let mut len = 2 + keys.len().saturating_sub(1);
-    for key in keys {
-        let Some(child) = object.get(key) else {
-            continue;
-        };
-        let (child_hash, child_len) = canonical_hash_len(child);
-        key.hash(&mut hasher);
-        child_hash.hash(&mut hasher);
-        len += json_string_len(key) + 1 + child_len;
-    }
-    (hasher.finish(), len)
-}
-
-/// Exact `serde_json` string-encoding length (quotes plus escapes).
-fn json_string_len(text: &str) -> usize {
-    let mut len = 2;
-    for byte in text.bytes() {
-        len += match byte {
-            b'"' | b'\\' | 0x08 | 0x09 | 0x0a | 0x0c | 0x0d => 2,
-            0x00..=0x1f => 6,
-            _ => 1,
-        };
-    }
-    len
-}
-
-fn visit_repeated_core_hashes(schema: &Value, record: &mut impl FnMut(u64, usize)) {
+fn visit_repeated_core_hashes(
+    schema: &Value,
+    metadata: &SchemaMetadataIndex,
+    record: &mut impl FnMut((u128, usize)),
+) {
     let Value::Object(object) = schema else {
         return;
     };
-    let (core_hash, core_len) = core_hash_len(object);
-    record(core_hash, core_len);
+    if let Some(fingerprint) = core_fingerprint(object, metadata) {
+        record(fingerprint);
+    }
     visit_schema_children(object, |child| {
-        visit_repeated_core_hashes(child, record);
+        visit_repeated_core_hashes(child, metadata, record);
     });
 }
 
@@ -313,14 +243,17 @@ fn visit_repeated_core_hashes(schema: &Value, record: &mut impl FnMut(u64, usize
 /// candidates; the canonical-string map keeps the original naming order.
 fn collect_selected_schema_cores(
     schema: &Value,
-    counts: &std::collections::HashMap<u64, usize>,
+    metadata: &SchemaMetadataIndex,
+    counts: &std::collections::HashMap<(u128, usize), usize>,
     payloads: &mut BTreeMap<String, RepeatedPayload>,
 ) {
     let Value::Object(object) = schema else {
         return;
     };
-    let (core_hash, core_len) = core_hash_len(object);
-    if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES && counts.contains_key(&core_hash) {
+    if let Some(fingerprint) = core_fingerprint(object, metadata)
+        && fingerprint.1 >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES
+        && counts.contains_key(&fingerprint)
+    {
         let core = schema_core(object);
         let key = helm_schema_json_schema_walk::canonical_json_string(&core);
         let payload = payloads.entry(key).or_insert_with(|| RepeatedPayload {
@@ -330,22 +263,23 @@ fn collect_selected_schema_cores(
         payload.uses += 1;
     }
     visit_schema_children(object, |child| {
-        collect_selected_schema_cores(child, counts, payloads);
+        collect_selected_schema_cores(child, metadata, counts, payloads);
     });
 }
 
 fn replace_repeated_schema_cores(
     schema: &mut Value,
-    counts: &std::collections::HashMap<u64, usize>,
+    metadata: &SchemaMetadataIndex,
+    counts: &std::collections::HashMap<(u128, usize), usize>,
     selected: &BTreeMap<String, (String, Value)>,
     used: &mut BTreeSet<String>,
 ) {
     let Value::Object(object) = schema else {
         return;
     };
-    let (core_hash, core_len) = core_hash_len(object);
-    if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES
-        && counts.contains_key(&core_hash)
+    if let Some(fingerprint) = core_fingerprint(object, metadata)
+        && fingerprint.1 >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES
+        && counts.contains_key(&fingerprint)
         && let core = schema_core(object)
         && let key = helm_schema_json_schema_walk::canonical_json_string(&core)
         && let Some((name, _)) = selected.get(&key)
@@ -360,7 +294,7 @@ fn replace_repeated_schema_cores(
         return;
     }
     visit_schema_children_mut(object, |child| {
-        replace_repeated_schema_cores(child, counts, selected, used);
+        replace_repeated_schema_cores(child, metadata, counts, selected, used);
     });
 }
 

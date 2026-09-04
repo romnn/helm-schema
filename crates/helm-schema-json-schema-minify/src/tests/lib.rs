@@ -478,3 +478,38 @@ fn logical_normal_form_keeps_duplicate_one_of_arms() {
         want: Some(1)
     );
 }
+
+#[test]
+fn digest_collisions_still_require_exact_canonical_identity() {
+    let first = json!({ "const": "a".repeat(200) });
+    let second = json!({ "const": "b".repeat(200) });
+    let first_canonical = helm_schema_json_schema_walk::canonical_json_string(&first);
+    let second_canonical = helm_schema_json_schema_walk::canonical_json_string(&second);
+    sim_assert_eq!(have: first_canonical.len(), want: second_canonical.len());
+    let fingerprint = CandidateFingerprint {
+        digest: 0,
+        byte_len: first_canonical.len(),
+    };
+    let candidates = HashMap::from([(
+        fingerprint,
+        vec![
+            ExactCandidate {
+                schema: first.clone(),
+                canonical: first_canonical,
+                occurrences: 3,
+            },
+            ExactCandidate {
+                schema: second.clone(),
+                canonical: second_canonical,
+                occurrences: 3,
+            },
+        ],
+    )]);
+
+    let planned = plan_definitions(BTreeSet::new(), candidates);
+    let first_name = planned.definition_name(fingerprint, &first);
+    let second_name = planned.definition_name(fingerprint, &second);
+    sim_assert_eq!(have: first_name.is_some(), want: true);
+    sim_assert_eq!(have: second_name.is_some(), want: true);
+    sim_assert_eq!(have: first_name == second_name, want: false);
+}

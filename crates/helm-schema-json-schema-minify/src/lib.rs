@@ -4,9 +4,9 @@
 //! JSON Schema document, finds repeated schema subtrees, and rewrites repeated
 //! occurrences to internal `$defs` / `$ref` entries.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use helm_schema_json_schema_walk::{visit_subschemas, visit_subschemas_mut};
+use helm_schema_json_schema_walk::{SchemaMetadataIndex, visit_subschemas, visit_subschemas_mut};
 use serde_json::{Map, Value};
 
 const DEFINITIONS_KEY: &str = "$defs";
@@ -26,23 +26,29 @@ pub fn minimize_schema(mut schema: Value) -> Value {
 
     let existing_definitions = remove_definitions(&mut schema);
     normalize_logical_schema(&mut schema);
-    if !existing_definitions.is_empty() {
-        insert_definitions(&mut schema, existing_definitions);
-    }
-
-    let mut candidate_schema = schema.clone();
-    remove_definitions(&mut candidate_schema);
-    let mut candidates = BTreeMap::new();
-    collect_candidates(&candidate_schema, true, &mut candidates);
-    let planned = plan_definitions(&schema, candidates);
+    let metadata = SchemaMetadataIndex::new(&schema);
+    let mut fingerprint_counts = HashMap::new();
+    collect_candidate_fingerprints(&schema, &metadata, true, &mut fingerprint_counts);
+    fingerprint_counts.retain(|_, occurrences| *occurrences > 1);
+    let mut candidates = HashMap::new();
+    collect_exact_candidates(
+        &schema,
+        &metadata,
+        true,
+        &fingerprint_counts,
+        &mut candidates,
+    );
+    let existing_names = existing_definitions.keys().cloned().collect();
+    let planned = plan_definitions(existing_names, candidates);
     if planned.is_empty() {
+        if !existing_definitions.is_empty() {
+            insert_definitions(&mut schema, existing_definitions);
+        }
         return schema;
     }
 
-    let mut schema = schema;
-    let existing_definitions = remove_definitions(&mut schema);
     let mut definitions = BTreeMap::new();
-    rewrite_schema(&mut schema, true, &planned, &mut definitions);
+    rewrite_schema(&mut schema, &metadata, true, &planned, &mut definitions);
     insert_definitions(&mut schema, existing_definitions);
 
     if !definitions.is_empty() {
@@ -73,45 +79,135 @@ fn can_insert_generated_definitions(schema: &Value) -> bool {
     }
 }
 
-fn collect_candidates(schema: &Value, is_root: bool, candidates: &mut BTreeMap<String, usize>) {
-    if !is_root && let Some(canonical) = candidate_fingerprint(schema) {
-        *candidates.entry(canonical).or_insert(0) += 1;
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+struct CandidateFingerprint {
+    digest: u128,
+    byte_len: usize,
+}
+
+#[derive(Debug)]
+struct ExactCandidate {
+    schema: Value,
+    canonical: String,
+    occurrences: usize,
+}
+
+#[derive(Debug)]
+struct PlannedDefinition {
+    schema: Value,
+    name: String,
+}
+
+#[derive(Debug, Default)]
+struct PlannedDefinitions {
+    by_fingerprint: HashMap<CandidateFingerprint, Vec<PlannedDefinition>>,
+}
+
+impl PlannedDefinitions {
+    fn is_empty(&self) -> bool {
+        self.by_fingerprint.is_empty()
+    }
+
+    fn definition_name(
+        &self,
+        fingerprint: CandidateFingerprint,
+        schema: &Value,
+    ) -> Option<&String> {
+        self.by_fingerprint
+            .get(&fingerprint)?
+            .iter()
+            .find(|definition| definition.schema == *schema)
+            .map(|definition| &definition.name)
+    }
+}
+
+fn collect_candidate_fingerprints(
+    schema: &Value,
+    metadata: &SchemaMetadataIndex,
+    is_root: bool,
+    candidates: &mut HashMap<CandidateFingerprint, usize>,
+) {
+    if !is_root && let Some(fingerprint) = candidate_fingerprint(schema, metadata) {
+        *candidates.entry(fingerprint).or_insert(0) += 1;
     }
 
     visit_subschemas(schema, &mut |subschema| {
-        collect_candidates(subschema, false, candidates);
+        collect_candidate_fingerprints(subschema, metadata, false, candidates);
+    });
+}
+
+fn collect_exact_candidates(
+    schema: &Value,
+    metadata: &SchemaMetadataIndex,
+    is_root: bool,
+    selected: &HashMap<CandidateFingerprint, usize>,
+    candidates: &mut HashMap<CandidateFingerprint, Vec<ExactCandidate>>,
+) {
+    if !is_root
+        && let Some(fingerprint) = candidate_fingerprint(schema, metadata)
+        && selected.contains_key(&fingerprint)
+    {
+        let bucket = candidates.entry(fingerprint).or_default();
+        if let Some(candidate) = bucket
+            .iter_mut()
+            .find(|candidate| candidate.schema == *schema)
+        {
+            candidate.occurrences += 1;
+        } else {
+            bucket.push(ExactCandidate {
+                schema: schema.clone(),
+                canonical: helm_schema_json_schema_walk::canonical_json_string(schema),
+                occurrences: 1,
+            });
+        }
+    }
+
+    visit_subschemas(schema, &mut |subschema| {
+        collect_exact_candidates(subschema, metadata, false, selected, candidates);
     });
 }
 
 fn plan_definitions(
-    schema: &Value,
-    candidates: BTreeMap<String, usize>,
-) -> BTreeMap<String, String> {
-    let mut existing_names = existing_definition_names(schema);
-    let mut repeated: Vec<(String, usize)> = candidates
+    mut existing_names: BTreeSet<String>,
+    candidates: HashMap<CandidateFingerprint, Vec<ExactCandidate>>,
+) -> PlannedDefinitions {
+    let mut repeated: Vec<(CandidateFingerprint, ExactCandidate)> = candidates
         .into_iter()
-        .filter(|(_, occurrences)| *occurrences > 1)
+        .flat_map(|(fingerprint, candidates)| {
+            candidates
+                .into_iter()
+                .filter(|candidate| candidate.occurrences > 1)
+                .map(move |candidate| (fingerprint, candidate))
+        })
         .collect();
     // Largest subtree first (the canonical string is the subtree, so its
     // length is the subtree's byte size), then most occurrences.
-    repeated.sort_by(|(left_canonical, left), (right_canonical, right)| {
-        right_canonical
+    repeated.sort_by(|(_, left), (_, right)| {
+        right
+            .canonical
             .len()
-            .cmp(&left_canonical.len())
-            .then_with(|| right.cmp(left))
-            .then_with(|| left_canonical.cmp(right_canonical))
+            .cmp(&left.canonical.len())
+            .then_with(|| right.occurrences.cmp(&left.occurrences))
+            .then_with(|| left.canonical.cmp(&right.canonical))
     });
 
-    let mut planned = BTreeMap::new();
+    let mut planned = PlannedDefinitions::default();
     let mut next_id = 1usize;
-    for (canonical, occurrences) in repeated {
+    for (fingerprint, candidate) in repeated {
         let (name, following_id) = next_definition_name(&existing_names, next_id);
-        if estimated_savings(canonical.len(), occurrences, &name) <= 0 {
+        if estimated_savings(candidate.canonical.len(), candidate.occurrences, &name) <= 0 {
             continue;
         }
         existing_names.insert(name.clone());
         next_id = following_id;
-        planned.insert(canonical, name);
+        planned
+            .by_fingerprint
+            .entry(fingerprint)
+            .or_default()
+            .push(PlannedDefinition {
+                schema: candidate.schema,
+                name,
+            });
     }
     planned
 }
@@ -158,13 +254,15 @@ fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> i12
 
 fn rewrite_schema(
     schema: &mut Value,
+    metadata: &SchemaMetadataIndex,
     is_root: bool,
-    planned: &BTreeMap<String, String>,
+    planned: &PlannedDefinitions,
     definitions: &mut BTreeMap<String, Value>,
 ) {
     if !is_root
-        && let Some(canonical) = candidate_fingerprint(schema)
-        && let Some(definition_name) = planned.get(&canonical)
+        && let Some(fingerprint) = candidate_fingerprint(schema, metadata)
+        && planned.by_fingerprint.contains_key(&fingerprint)
+        && let Some(definition_name) = planned.definition_name(fingerprint, schema)
     {
         definitions
             .entry(definition_name.clone())
@@ -174,7 +272,7 @@ fn rewrite_schema(
     }
 
     visit_subschemas_mut(schema, &mut |subschema| {
-        rewrite_schema(subschema, false, planned, definitions);
+        rewrite_schema(subschema, metadata, false, planned, definitions);
     });
 }
 
@@ -266,11 +364,22 @@ fn insert_definitions(schema: &mut Value, definitions: BTreeMap<String, Value>) 
     }
 }
 
-fn candidate_fingerprint(schema: &Value) -> Option<String> {
-    if !matches!(schema, Value::Object(_)) || contains_unsafe_reference_scope_keyword(schema) {
+fn candidate_fingerprint(
+    schema: &Value,
+    metadata: &SchemaMetadataIndex,
+) -> Option<CandidateFingerprint> {
+    if !matches!(schema, Value::Object(_)) {
         return None;
     }
-    Some(helm_schema_json_schema_walk::canonical_json_string(schema))
+    let metadata = metadata.get(schema)?;
+    if metadata.contains_unsafe_reference_scope_keyword() {
+        return None;
+    }
+    let canonical = metadata.canonical();
+    Some(CandidateFingerprint {
+        digest: canonical.digest(),
+        byte_len: canonical.byte_len(),
+    })
 }
 
 fn normalize_logical_schema(schema: &mut Value) {
@@ -370,41 +479,6 @@ fn logical_sort_digest(value: &Value) -> u128 {
     let mut hash = 0x6c62_272e_07bb_0142_62b8_2175_6295_c58d;
     update(&mut hash, value);
     hash
-}
-
-fn contains_unsafe_reference_scope_keyword(value: &Value) -> bool {
-    let Value::Object(object) = value else {
-        return false;
-    };
-    if let Some(reference) = object.get("$ref")
-        && !reference
-            .as_str()
-            .is_some_and(|reference| reference.starts_with(DEFINITION_REF_PREFIX))
-    {
-        return true;
-    }
-    if object.keys().any(|key| {
-        matches!(
-            key.as_str(),
-            "$id"
-                | "id"
-                | "$anchor"
-                | "$dynamicRef"
-                | "$dynamicAnchor"
-                | "$recursiveRef"
-                | "$recursiveAnchor"
-                | "$defs"
-                | "definitions"
-        )
-    }) {
-        return true;
-    }
-
-    let mut contains_scope = false;
-    visit_subschemas(value, &mut |subschema| {
-        contains_scope |= contains_unsafe_reference_scope_keyword(subschema);
-    });
-    contains_scope
 }
 
 fn existing_definition_names(schema: &Value) -> BTreeSet<String> {

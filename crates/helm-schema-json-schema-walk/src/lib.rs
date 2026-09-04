@@ -1,7 +1,301 @@
 #![doc = "Shared JSON Schema child traversal utilities."]
 
-use serde_json::Value;
+use serde_json::{Map, Value};
+use std::collections::HashMap;
 use std::convert::Infallible;
+
+const DIGEST_OFFSET: u128 = 0x6c62_272e_07bb_0142_62b8_2175_6295_c58d;
+const DIGEST_PRIME: u128 = 0x0000_0000_0100_0000_0000_0000_0000_013b;
+
+/// Canonical structural metadata for one JSON value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CanonicalJsonMetadata {
+    digest: u128,
+    byte_len: usize,
+}
+
+impl CanonicalJsonMetadata {
+    /// A deterministic structural digest suitable for prefiltering exact comparisons.
+    #[must_use]
+    pub fn digest(self) -> u128 {
+        self.digest
+    }
+
+    /// The exact byte length of [`canonical_json_string`] for the same value.
+    #[must_use]
+    pub fn byte_len(self) -> usize {
+        self.byte_len
+    }
+}
+
+/// Canonical metadata plus JSON Schema reference-scope safety.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SchemaValueMetadata {
+    canonical: CanonicalJsonMetadata,
+    contains_unsafe_reference_scope_keyword: bool,
+}
+
+impl SchemaValueMetadata {
+    /// Canonical structural metadata for this value.
+    #[must_use]
+    pub fn canonical(self) -> CanonicalJsonMetadata {
+        self.canonical
+    }
+
+    /// Whether this schema subtree contains a keyword that makes moving it unsafe.
+    #[must_use]
+    pub fn contains_unsafe_reference_scope_keyword(self) -> bool {
+        self.contains_unsafe_reference_scope_keyword
+    }
+}
+
+/// A transient post-order metadata index for one immutable schema document.
+pub struct SchemaMetadataIndex {
+    values: HashMap<usize, SchemaValueMetadata>,
+}
+
+impl SchemaMetadataIndex {
+    /// Indexes every JSON value while interpreting `schema` as a schema root.
+    #[must_use]
+    pub fn new(schema: &Value) -> Self {
+        let mut values = HashMap::new();
+        index_value(schema, SchemaTraversalContext::Schema, &mut values);
+        Self { values }
+    }
+
+    /// Returns metadata for a value in the indexed document.
+    #[must_use]
+    pub fn get(&self, value: &Value) -> Option<SchemaValueMetadata> {
+        self.values.get(&value_address(value)).copied()
+    }
+
+    /// Computes canonical metadata for an object after excluding selected keys.
+    ///
+    /// Child metadata comes from the index, so retained subtrees are not revisited.
+    #[must_use]
+    pub fn object_excluding(
+        &self,
+        object: &Map<String, Value>,
+        excluded: fn(&str) -> bool,
+    ) -> Option<CanonicalJsonMetadata> {
+        let mut entries = object
+            .iter()
+            .filter(|(key, _)| !excluded(key))
+            .map(|(key, value)| {
+                self.get(value)
+                    .map(|metadata| (key.as_str(), metadata.canonical))
+            })
+            .collect::<Option<Vec<_>>>()?;
+        entries.sort_by_key(|(key, _)| *key);
+        Some(object_metadata(&entries))
+    }
+}
+
+fn value_address(value: &Value) -> usize {
+    std::ptr::from_ref(value).addr()
+}
+
+fn index_value(
+    value: &Value,
+    context: SchemaTraversalContext,
+    values: &mut HashMap<usize, SchemaValueMetadata>,
+) -> SchemaValueMetadata {
+    let metadata = match value {
+        Value::Object(object) => {
+            let follows_schema_children = matches!(
+                context,
+                SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray
+            ) && !object.contains_key("$ref");
+            let mut keys = object.keys().collect::<Vec<_>>();
+            keys.sort();
+            let children = keys
+                .into_iter()
+                .filter_map(|key| {
+                    let value = object.get(key)?;
+                    let child_context = match context {
+                        SchemaTraversalContext::SchemaMapValues => SchemaTraversalContext::Schema,
+                        SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray
+                            if follows_schema_children =>
+                        {
+                            schema_child_context_for_keyword(key)
+                        }
+                        SchemaTraversalContext::Data
+                        | SchemaTraversalContext::Ref
+                        | SchemaTraversalContext::Schema
+                        | SchemaTraversalContext::SchemaArray => SchemaTraversalContext::Data,
+                    };
+                    let child = index_value(value, child_context, values);
+                    Some((key.as_str(), child))
+                })
+                .collect::<Vec<_>>();
+            let canonical_children = children
+                .iter()
+                .map(|(key, metadata)| (*key, metadata.canonical))
+                .collect::<Vec<_>>();
+            let own_scope = matches!(
+                context,
+                SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray
+            ) && object_has_unsafe_reference_scope_keyword(object);
+            let propagates_child_scope = match context {
+                SchemaTraversalContext::Data | SchemaTraversalContext::Ref => false,
+                SchemaTraversalContext::SchemaMapValues => true,
+                SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
+                    follows_schema_children
+                }
+            };
+            let child_scope = propagates_child_scope
+                && children
+                    .iter()
+                    .any(|(_, metadata)| metadata.contains_unsafe_reference_scope_keyword);
+            SchemaValueMetadata {
+                canonical: object_metadata(&canonical_children),
+                contains_unsafe_reference_scope_keyword: own_scope || child_scope,
+            }
+        }
+        Value::Array(items) => {
+            let child_context = match context {
+                SchemaTraversalContext::Data | SchemaTraversalContext::Ref => {
+                    SchemaTraversalContext::Data
+                }
+                SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray => {
+                    SchemaTraversalContext::Schema
+                }
+                SchemaTraversalContext::SchemaMapValues => SchemaTraversalContext::SchemaMapValues,
+            };
+            let children = items
+                .iter()
+                .map(|item| index_value(item, child_context, values))
+                .collect::<Vec<_>>();
+            SchemaValueMetadata {
+                canonical: array_metadata(
+                    &children
+                        .iter()
+                        .map(|metadata| metadata.canonical)
+                        .collect::<Vec<_>>(),
+                ),
+                contains_unsafe_reference_scope_keyword: !matches!(
+                    context,
+                    SchemaTraversalContext::Data | SchemaTraversalContext::Ref
+                ) && children
+                    .iter()
+                    .any(|metadata| metadata.contains_unsafe_reference_scope_keyword),
+            }
+        }
+        scalar => SchemaValueMetadata {
+            canonical: scalar_metadata(scalar),
+            contains_unsafe_reference_scope_keyword: false,
+        },
+    };
+    values.insert(value_address(value), metadata);
+    metadata
+}
+
+fn object_metadata(entries: &[(&str, CanonicalJsonMetadata)]) -> CanonicalJsonMetadata {
+    let mut digest = DIGEST_OFFSET;
+    update_digest(&mut digest, &[5]);
+    update_digest_len(&mut digest, entries.len());
+    let mut byte_len = 2 + entries.len().saturating_sub(1);
+    for (key, child) in entries {
+        update_digest_sized(&mut digest, key.as_bytes());
+        update_digest(&mut digest, &child.digest.to_be_bytes());
+        byte_len += json_string_len(key) + 1 + child.byte_len;
+    }
+    CanonicalJsonMetadata { digest, byte_len }
+}
+
+fn array_metadata(children: &[CanonicalJsonMetadata]) -> CanonicalJsonMetadata {
+    let mut digest = DIGEST_OFFSET;
+    update_digest(&mut digest, &[4]);
+    update_digest_len(&mut digest, children.len());
+    let mut byte_len = 2 + children.len().saturating_sub(1);
+    for child in children {
+        update_digest(&mut digest, &child.digest.to_be_bytes());
+        byte_len += child.byte_len;
+    }
+    CanonicalJsonMetadata { digest, byte_len }
+}
+
+fn scalar_metadata(value: &Value) -> CanonicalJsonMetadata {
+    let mut digest = DIGEST_OFFSET;
+    let byte_len = match value {
+        Value::Null => {
+            update_digest(&mut digest, &[0]);
+            4
+        }
+        Value::Bool(value) => {
+            update_digest(&mut digest, &[1, u8::from(*value)]);
+            if *value { 4 } else { 5 }
+        }
+        Value::Number(value) => {
+            let value = value.to_string();
+            update_digest(&mut digest, &[2]);
+            update_digest_sized(&mut digest, value.as_bytes());
+            value.len()
+        }
+        Value::String(value) => {
+            update_digest(&mut digest, &[3]);
+            update_digest_sized(&mut digest, value.as_bytes());
+            json_string_len(value)
+        }
+        Value::Array(_) | Value::Object(_) => 0,
+    };
+    CanonicalJsonMetadata { digest, byte_len }
+}
+
+fn update_digest_len(digest: &mut u128, len: usize) {
+    update_digest(
+        digest,
+        &u64::try_from(len).unwrap_or(u64::MAX).to_be_bytes(),
+    );
+}
+
+fn update_digest_sized(digest: &mut u128, bytes: &[u8]) {
+    update_digest_len(digest, bytes.len());
+    update_digest(digest, bytes);
+}
+
+fn update_digest(digest: &mut u128, bytes: &[u8]) {
+    for byte in bytes {
+        *digest ^= u128::from(*byte);
+        *digest = digest.wrapping_mul(DIGEST_PRIME);
+    }
+}
+
+fn json_string_len(value: &str) -> usize {
+    let mut len = 2;
+    for byte in value.bytes() {
+        len += match byte {
+            b'"' | b'\\' | 0x08 | 0x09 | 0x0a | 0x0c | 0x0d => 2,
+            0x00..=0x1f => 6,
+            _ => 1,
+        };
+    }
+    len
+}
+
+fn object_has_unsafe_reference_scope_keyword(object: &Map<String, Value>) -> bool {
+    if let Some(reference) = object.get("$ref")
+        && !reference
+            .as_str()
+            .is_some_and(|reference| reference.starts_with("#/$defs/"))
+    {
+        return true;
+    }
+    object.keys().any(|key| {
+        matches!(
+            key.as_str(),
+            "$id"
+                | "id"
+                | "$anchor"
+                | "$dynamicRef"
+                | "$dynamicAnchor"
+                | "$recursiveRef"
+                | "$recursiveAnchor"
+                | "$defs"
+                | "definitions"
+        )
+    })
+}
 
 /// Serializes a JSON value after recursively sorting every object's keys.
 #[must_use]
