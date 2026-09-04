@@ -657,3 +657,83 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0.
 
 - Measured production LOC delta: +75 (66,079 to 66,154).
+
+## Round A2 — per-run predicate BDD memo
+
+- Status: pre-registered; implementation not started.
+- Contract: memoize `predicate_bdd::normalize` and `exact_implies` for one analysis session using
+  full structural predicate keys. Clear both maps at the session boundary, never evict, and release
+  every interior-mutability borrow before a miss computes recursively. Do not change BDD caps,
+  normalization choices, approximation handling, predicate equality/order/hash semantics, public
+  schema APIs, or wire formats.
+- Acceptance baseline: `0926805c` for executable/schema identity and `f6a139bb` for the completed
+  A1 ledger state.
+- Baseline production Rust LOC: 66,154.
+- Pre-registered acceptance expectations:
+  - Memoized and deliberately unmemoized normalization/implication results agree over generated
+    exact predicates, approximate predicates with and without sound subsets, and formulas that
+    reach each BDD/normal-form abstention cap.
+  - Two complete analysis sessions in one process emit identical schema and diagnostics, proving
+    that session reset neither leaks nor changes semantics.
+  - Keys contain the complete `Predicate` or complete predicate pair, never only a 64-bit hash;
+    misses compute with no live `RefCell` borrow, and the maps have no eviction policy.
+  - All ten reference outputs, all 156 schema fixtures, all 18 IR fixtures, diagnostics, stdout,
+    and statuses remain byte-identical, with zero corpus acceptance flips.
+  - Empty-cache online, warm-online, and warm-offline schema, stdout, JSON diagnostics, and status
+    agree for all ten charts even though the new memo is process-local rather than persistent.
+  - Kube-prometheus-stack peak RSS may not exceed 1.5× its paired A1 baseline. Reject A2 if it
+    does, if any fixture byte differs, or if paired gains are below 20% on datadog and below 10%
+    on kube-prometheus-stack.
+- Performance baseline: the final A1 row is coredns 0.29 s, metrics-server 0.15 s, istiod 0.45 s,
+  cert-manager 0.57 s, argo-cd 4.59 s, grafana 3.14 s, cilium 5.29 s, datadog 36.29 s, airflow
+  40.40 s, and kube-prometheus-stack 45.61 s CPU median. Fresh randomized A/B pairs against the
+  preserved A1 binary decide A2.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; representation-only acceptance requires byte identity and zero
+  flips.
+- Public/wire decision: pre-registered as none. Memo ownership and reset remain internal analysis
+  mechanics.
+
+### Review dossier
+
+- Planned tests: generated memoized/unmemoized differential cases including approximation and cap
+  abstention, plus a public two-session same-process output/diagnostic identity regression.
+- Planned byte gate: preserved
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a1` versus the copied A2 release
+  binary under the round-0 private cache, all four channels on all ten charts.
+- Planned memo/cache-law gate: ten distinct empty private K8s/CRD cache pairs, then empty online,
+  warm online, and warm offline candidate invocations with all four channels compared.
+- Planned resource gate: paired `/usr/bin/time -l` A1/A2 kube-prometheus-stack runs record maximum
+  resident set size alongside the ordinary CPU curve.
+- Planned performance gate: randomized interleaved pairs with per-invocation load records; five
+  pairs on datadog and at least the frozen repeat count on every other chart.
+
+### Self-adversarial pass
+
+- Holding a `RefCell` borrow while computing a normalization miss would panic when structural
+  simplification calls implication recursively. Lookup, compute, and insertion must be three
+  separate borrow scopes.
+- A thread-local that is never cleared is a cross-session global cache and violates both the
+  memory bound and the per-run contract even if its values are pure.
+- Hash-only keys are invalid despite the existing cached structural hash; collisions must still be
+  resolved by full structural equality.
+- Approximation and cap-abstaining results are part of the pure function's result space. Caching
+  only successful exact BDD reductions could hide a semantic or memory asymmetry.
+- CPU gains can buy excessive retained memory. The RSS rejection criterion is independent of the
+  speed result and is measured on the exact copied binaries.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 decision and, if required, install plus `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
