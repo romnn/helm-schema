@@ -660,7 +660,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A2 — per-run predicate BDD memo
 
-- Status: pre-registered; implementation not started.
+- Status: landed in `39b44aaf`.
 - Contract: memoize `predicate_bdd::normalize` and `exact_implies` for one analysis session using
   full structural predicate keys. Clear both maps at the session boundary, never evict, and release
   every interior-mutability borrow before a miss computes recursively. Do not change BDD caps,
@@ -688,26 +688,100 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   cert-manager 0.57 s, argo-cd 4.59 s, grafana 3.14 s, cilium 5.29 s, datadog 36.29 s, airflow
   40.40 s, and kube-prometheus-stack 45.61 s CPU median. Fresh randomized A/B pairs against the
   preserved A1 binary decide A2.
-- Measured results: pending.
-- Deviations: none at pre-registration.
-- Adjudication evidence: pending; representation-only acceptance requires byte identity and zero
-  flips.
-- Public/wire decision: pre-registered as none. Memo ownership and reset remain internal analysis
-  mechanics.
+- Performance baseline and measured results (five randomized interleaved pairs per chart; CPU is
+  user time, and the range on gain is the range of the five paired deltas):
+
+  | Chart | A1 CPU s median (min–max) | A2 CPU s median (min–max) | Paired gain median (min–max) | load1 range |
+  |---|---:|---:|---:|---:|
+  | coredns | 0.28 (0.28–0.29) | 0.24 (0.24–0.24) | 14.29% (14.29–17.24%) | 6.77–6.77 |
+  | metrics-server | 0.15 (0.15–0.16) | 0.14 (0.14–0.14) | 6.67% (6.67–12.50%) | 6.63–6.63 |
+  | istiod | 0.44 (0.44–0.44) | 0.36 (0.36–0.37) | 18.18% (15.91–18.18%) | 6.50–6.63 |
+  | cert-manager | 0.57 (0.57–0.58) | 0.51 (0.51–0.52) | 10.53% (8.77–12.07%) | 6.38–6.50 |
+  | argo-cd | 4.46 (4.42–4.49) | 3.76 (3.71–3.76) | 16.06% (15.51–16.59%) | 5.27–6.38 |
+  | grafana | 2.77 (2.77–2.80) | 2.04 (2.04–2.07) | 26.35% (26.07–26.88%) | 4.97–5.43 |
+  | cilium | 5.22 (5.17–5.24) | 3.17 (3.15–3.18) | 39.08% (38.68–39.89%) | 4.18–4.97 |
+  | datadog | 35.94 (35.77–35.98) | 17.84 (17.82–17.88) | 50.36% (50.07–50.42%) | 4.15–5.39 |
+  | airflow | 40.04 (39.87–40.09) | 19.84 (19.75–19.91) | 50.46% (50.11–50.67%) | 3.04–5.46 |
+  | kube-prometheus-stack | 44.90 (44.80–45.52) | 38.33 (38.10–38.68) | 14.62% (14.56–15.14%) | 3.00–16.95 |
+
+  Every paired range is strictly positive. Datadog clears the frozen 20% threshold by 30.36
+  points and kube-prometheus-stack clears its 10% threshold by 4.62 points. The plan's expected
+  55–70% datadog gain does not fully reproduce on the expanded tree, while its 10–25%
+  kube-prometheus-stack expectation does.
+- Peak RSS on the exact final binaries, measured by `/usr/bin/time -lp` on
+  kube-prometheus-stack, is 1,825,865,728 bytes for A1 and 2,055,782,400 bytes for A2: 1.126×,
+  below the independent 1.5× rejection limit. Peak memory footprint is 1,597,900,720 versus
+  1,676,675,352 bytes (1.049×).
+- Corroborating suite wall time also falls: `task test:integration` ran 667 tests in 396.773 s
+  versus A1's 666 in 508.844 s (22.0% faster), and `task test:all` ran 2,013 tests in 391.247 s
+  versus A1's 2,010 in 540.974 s (27.7% faster). These are not randomized paired benchmarks and
+  do not drive the decision, but they measure the practical feedback-loop improvement.
+- Deviations:
+  - The first implementation spike used a reset-at-session-start thread-local because the frozen
+    design allowed it. It was removed before preserving a binary or taking a decision measurement:
+    the user correctly identified that hidden shared state makes concurrent library sessions
+    compete and makes tests order-dependent and reset-dependent. The landed design instead gives
+    `IrAnalysisDb` the analysis memo, contract finalization a local phase memo, and
+    `LoweredEmissionPlan` the generation memo. Lifetime, reset, and isolation are ordinary
+    ownership; no global or thread-local state exists.
+  - A compiler-driven attempt to require the memo at every existing semantic helper produced 98
+    test call-site errors. The final API keeps test-facing pure adapters only where tests actually
+    need them and gives production hot paths explicit `_with_memo` operations. This is more
+    plumbing than the frozen S estimate anticipated; production Rust grows by 777 LOC.
+  - The user's later decision rule would permit a modest reproducible non-regression because the
+    ownership model is independently valuable. It does not alter this round's outcome: the frozen
+    performance thresholds are both exceeded.
+  - The first `/usr/bin/time -lp` attempt ran inside the sandbox. macOS could not read
+    `kern.clockrate`, the wrapper returned 1 despite both child schemas completing, and its stderr
+    polluted the diagnostic channel. Those runs under `a2/measure` are invalidated. RSS was rerun
+    outside the sandbox and ordinary CPU timing used `/usr/bin/time -p`.
+  - A complete provisional curve under `a2/measure-valid` was invalidated after lint-driven
+    extraction changed the executable. The final release was rebuilt and copied immediately, and
+    all decision numbers above come only from `a2/measure-final` against that exact copy.
+- Adjudication evidence: Helm v4.2.3. The final ten-chart byte gate is exact for schema, stdout,
+  JSON diagnostics, and status. Schema and IR artifact paths differ by zero files from `0926805c`.
+  The final corpus battery checks 160 charts and 284,869 composed probes with zero flips, hence
+  zero candidate-accepts/Helm-aborts cells.
+- Public/wire decision: none. Memo state does not participate in semantic equality or emitted
+  ordering, is never serialized, and is dropped with its owner. Pure `Predicate` operations remain
+  available; hot analysis and emission paths opt into the owned memo explicitly.
 
 ### Review dossier
 
-- Planned tests: generated memoized/unmemoized differential cases including approximation and cap
-  abstention, plus a public two-session same-process output/diagnostic identity regression.
-- Planned byte gate: preserved
-  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a1` versus the copied A2 release
-  binary under the round-0 private cache, all four channels on all ten charts.
-- Planned memo/cache-law gate: ten distinct empty private K8s/CRD cache pairs, then empty online,
-  warm online, and warm offline candidate invocations with all four channels compared.
-- Planned resource gate: paired `/usr/bin/time -l` A1/A2 kube-prometheus-stack runs record maximum
-  resident set size alongside the ordinary CPU curve.
-- Planned performance gate: randomized interleaved pairs with per-invocation load records; five
-  pairs on datadog and at least the frozen repeat count on every other chart.
+- Differential tests: `cargo nextest run -p helm-schema-core predicate_bdd`; exit 0, two tests
+  pass. The generated set includes exact formulas, approximations with sound subsets, the
+  256-normal-form-path abstention, and the 4,096-BDD-node abstention; a second identical lookup
+  proves neither memo map grows on a hit.
+- Session isolation: `cargo nextest run -p helm-schema --profile integration --test public_surface
+  -E 'test(successive_sessions_keep_schema_and_diagnostics_identical)' --no-capture`; exit 0. Two
+  separately owned public sessions in one process produce identical schema and diagnostic vectors.
+- Final binary: `cargo build --release -p helm-schema-cli`; exit 0 in 22.17 s, copied immediately
+  to `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a2`, SHA-256
+  `3c6f0027988f641b21b5e04ed353387d059a41c05403946c6c8cba545bc38172`, 16,194,176 bytes.
+- Final ten-chart byte gate: preserved `helm-schema-a1` versus `helm-schema-a2`, with
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s`,
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, and
+  `--compact --offline --k8s-version v1.35.0 --diag-format json`; all four channels are exact under
+  `a2/byte-final`.
+- Artifact gate: `git diff --exit-code 0926805c -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`; exit 0, covering 156 schema and 18 IR artifacts.
+- Corpus battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a2/battery-final
+  SCHEMA_ACCEPTANCE_BASELINE_REF=0926805c
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/a2/battery-final/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 197.142 s with 160 charts, 284,869 probes,
+  and zero flips.
+- Cache-law evidence is under `a2/cache-law-final`: each chart has its own initially empty K8s/CRD
+  pair and empty-online, warm-online, and warm-offline invocations of the exact final binary. All
+  ten charts are byte-identical across schema, stdout, JSON diagnostics, and status for all three
+  cache states; every child status is 0.
+- Final randomized interleaved pairs and per-invocation UTC start/load records are under
+  `a2/measure-final`. Each of all ten charts has five pairs in BA/AB/BA/AB/BA order. The earlier
+  `a2/measure-valid` directory is explicitly provisional and not decision evidence.
+- Final unsandboxed resource pair is under `a2/rss-final`; both child statuses are 0 and all four
+  output channels remain exact.
 
 ### Self-adversarial pass
 
@@ -722,18 +796,31 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   only successful exact BDD reductions could hide a semantic or memory asymmetry.
 - CPU gains can buy excessive retained memory. The RSS rejection criterion is independent of the
   speed result and is measured on the exact copied binaries.
+- Explicit ownership can still be the wrong trade if passing the memo obscures phase boundaries.
+  Here the owners coincide with existing phase objects (`IrAnalysisDb`, contract finalization, and
+  `LoweredEmissionPlan`), while leaf operations receive a plain shared reference; no cache reset,
+  hidden singleton, or semantic wrapper was added.
+- The final kube-prometheus-stack window briefly recorded load1 16.95. That would invalidate an
+  unpaired absolute comparison, but its five paired gains are 14.56–15.14% and its A/B CPU ranges
+  remain narrow. The decision rests on within-pair deltas, not comparison to round 0 or A1's older
+  host window.
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Pending: `task lint`.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending: downstream luup2 decision and, if required, install plus `check:local`.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; 1.000 s.
+- `task lint`: exit 0; 11.854 s. Whole-workspace Clippy and all three AST-grep policies pass;
+  the two existing escaped-newline findings remain informational.
+- `task lint:fc`: exit 0; 48 feature combinations for 13 packages across three targets pass in
+  90.34 s with zero errors or warnings.
+- `cargo nextest run --workspace`: exit 0; 1,342/1,342 tests pass in 22.628 s after a 1m05s build.
+- `task test:integration`: exit 0; 667/667 tests pass in 396.773 s, with 24 profile skips.
+- `task test:all`: exit 0; 2,013/2,013 tests pass in 391.247 s, with 24 profile skips and live
+  network tests included.
+- Downstream luup2: not triggered because A2 is representation-only and every schema, diagnostic,
+  stdout, status, fixture, and acceptance channel is exact; the campaign's installed C1 gate
+  remains 32/32 green.
+- `task tokei:core`: exit 0; 66,931 production Rust LOC in 0.763 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.001 s.
+- `git diff --check`: exit 0; under 0.001 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +777 (66,154 to 66,931).
