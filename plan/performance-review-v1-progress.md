@@ -1053,6 +1053,82 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
 
+## Round E1 — linear structural metadata for emission deduplication
+
+- Status: pre-registered; implementation not started.
+- Contract: add one shared post-order JSON metadata primitive that computes structural digest,
+  exact canonical byte length, and unsafe reference-scope state once per node; use it to prefilter
+  minifier candidates, logical-arm ordering, and provider-core candidates. Canonical strings and
+  full structural equality remain the final collision checks. Preserve definition selection,
+  savings thresholds, naming/ranking order, caps, schema semantics, diagnostics, statuses,
+  fixtures, and wire bytes.
+- Acceptance baseline: `a34859c0` for executable/schema identity and `81531769` for the completed
+  B1 ledger state.
+- Baseline production Rust LOC: 67,062.
+- Pre-registered acceptance expectations:
+  - A forced-digest-collision test proves unequal canonical values remain separate and cannot be
+    substituted or deduplicated by hash alone.
+  - Metadata canonical lengths equal actual canonical serialization byte lengths across nested
+    objects, arrays, escaped strings, numbers, booleans, and null; unsafe-scope propagation follows
+    JSON Schema positions and ignores ordinary data payloads.
+  - All ten reference outputs, all 156 schema fixtures, all 18 IR fixtures, stdout, JSON
+    diagnostics, statuses, and the full-depth battery remain byte-identical with zero flips.
+  - Fresh Perfetto traces on airflow and kube-prometheus-stack compare exact preserved binaries.
+    Reject E1 if either `minimize_schema` or `extract_repeated_provider_payloads` fails to drop by
+    at least 50% on both charts.
+  - The ten-chart curve uses randomized interleaved A/B pairs under one private cache. Large-chart
+    decisions use at least five pairs; no paired range crossing zero is reported as a gain.
+- Performance baseline: fresh traces and randomized pairs will establish the B2 side because B2
+  was directly measured only on grafana and datadog. The round-0 large-chart medians were 63.06 s
+  datadog, 88.45 s airflow, and 119.77 s kube-prometheus-stack; these are historical context, not
+  substitutes for same-window B2 measurements.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; E1 is representation-only and requires byte identity and zero
+  acceptance flips.
+- Public/wire decision: pre-registered as none. The metadata index is transient phase-local state,
+  never a global cache, serialized representation, or semantic oracle.
+
+### Review dossier
+
+- Planned implementation seam: `helm-schema-json-schema-walk` owns canonical structural metadata;
+  the minifier and generator consume that single definition rather than maintaining separate
+  recursive digest/length walks.
+- Planned collision evidence: exercise the digest-bucket path with an injected equal digest for
+  distinct canonical subtrees, then assert exact canonical comparison preserves both identities.
+- Planned phase evidence: emit `--trace-output` files under
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/e1/trace` for B2 and E1 on airflow and
+  kube-prometheus-stack, using the same cache and output flags.
+
+### Self-adversarial pass
+
+- A digest is only a prefilter. Any digest-only candidate count, replacement, duplicate removal,
+  or definition lookup would make collisions correctness-relevant and violates the contract.
+- Canonical byte length must count serialized UTF-8 and escapes exactly; using character counts or
+  approximate punctuation can alter the savings threshold and therefore fixture bytes.
+- Unsafe reference-scope state must traverse schema children, not arbitrary JSON data. Treating an
+  annotation/example containing `$id` as a schema keyword would silently suppress valid sharing.
+- A transient node-address index is valid only while the document's container structure is stable.
+  Any mutation pass must consult a complete index before replacing the current node and must never
+  use stale entries as evidence after moving children.
+- Post-order rewriting would change whether definitions contain separately deduplicated children.
+  The existing pre-order replacement behavior and naming order must remain exact.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 decision and, if required, install plus `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
+
 ## Round B1 — release-profile LTO and codegen units
 
 - Status: rejected and restored; neither release-profile option met the frozen criterion, so no
