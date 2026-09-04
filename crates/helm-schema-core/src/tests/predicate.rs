@@ -1,9 +1,63 @@
 use super::{Conjunction, Predicate};
 use crate::{Guard, GuardValue, ValuesPath};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use test_util::prelude::sim_assert_eq;
 
 fn path(value: &str) -> ValuesPath {
     ValuesPath::parse(value)
+}
+
+fn recursive_contains_approximation(predicate: &Predicate) -> bool {
+    match predicate.kind() {
+        super::PredicateKind::Approximate { .. } => true,
+        super::PredicateKind::Not(inner) => recursive_contains_approximation(inner),
+        super::PredicateKind::And(predicates) | super::PredicateKind::Or(predicates) => {
+            predicates.iter().any(recursive_contains_approximation)
+        }
+        super::PredicateKind::True
+        | super::PredicateKind::False
+        | super::PredicateKind::Guard(_) => false,
+    }
+}
+
+fn predicate_hash(predicate: &Predicate) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    predicate.hash(&mut hasher);
+    hasher.finish()
+}
+
+#[test]
+fn cached_predicate_metadata_matches_structural_oracles() {
+    let exact = Predicate::And(vec![
+        Predicate::truthy_path("alpha"),
+        Predicate::Not(Box::new(Predicate::truthy_path("beta"))),
+    ]);
+    let approximate = Predicate::Approximate(
+        "opaque".to_string(),
+        [path("gamma")].into_iter().collect(),
+        crate::ApproximationRole::Control,
+        Some(Box::new(Predicate::truthy_path("alpha"))),
+    );
+    let predicates = [
+        Predicate::True,
+        Predicate::False,
+        exact.clone(),
+        Predicate::Not(Box::new(approximate.clone())),
+        Predicate::Or(vec![exact.clone(), approximate]),
+    ];
+    for predicate in predicates {
+        sim_assert_eq!(
+            have: predicate.contains_approximation(),
+            want: recursive_contains_approximation(&predicate)
+        );
+    }
+
+    let rebuilt = Predicate::And(vec![
+        Predicate::truthy_path("alpha"),
+        Predicate::Not(Box::new(Predicate::truthy_path("beta"))),
+    ]);
+    sim_assert_eq!(have: exact.clone(), want: rebuilt.clone());
+    sim_assert_eq!(have: predicate_hash(&exact), want: predicate_hash(&rebuilt));
 }
 
 #[test]

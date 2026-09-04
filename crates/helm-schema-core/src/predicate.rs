@@ -67,9 +67,10 @@ enum PredicateStorage {
 struct PredicateNode {
     kind: PredicateNodeKind,
     structural_hash: u64,
+    contains_approximation: bool,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq)]
 enum PredicateNodeKind {
     Approximate {
         marker: String,
@@ -86,10 +87,61 @@ enum PredicateNodeKind {
 impl PredicateNode {
     fn new(kind: PredicateNodeKind) -> Self {
         let mut hasher = DefaultHasher::new();
-        kind.hash(&mut hasher);
+        hash_predicate_node(&kind, &mut hasher);
+        let contains_approximation = match &kind {
+            PredicateNodeKind::Approximate { .. } => true,
+            PredicateNodeKind::Guard(_) => false,
+            PredicateNodeKind::Not(predicate) => predicate.contains_approximation(),
+            PredicateNodeKind::And(predicates) | PredicateNodeKind::Or(predicates) => {
+                predicates.iter().any(Predicate::contains_approximation)
+            }
+        };
         Self {
             kind,
             structural_hash: hasher.finish(),
+            contains_approximation,
+        }
+    }
+}
+
+fn hash_predicate_node(kind: &PredicateNodeKind, hasher: &mut DefaultHasher) {
+    match kind {
+        PredicateNodeKind::Approximate {
+            marker,
+            paths,
+            role,
+            sound_subset,
+        } => {
+            2_u8.hash(hasher);
+            marker.hash(hasher);
+            paths.hash(hasher);
+            role.hash(hasher);
+            sound_subset
+                .as_ref()
+                .map(Predicate::structural_hash)
+                .hash(hasher);
+        }
+        PredicateNodeKind::Guard(guard) => {
+            3_u8.hash(hasher);
+            guard.hash(hasher);
+        }
+        PredicateNodeKind::Not(predicate) => {
+            4_u8.hash(hasher);
+            predicate.structural_hash().hash(hasher);
+        }
+        PredicateNodeKind::And(predicates) => {
+            5_u8.hash(hasher);
+            predicates.len().hash(hasher);
+            for predicate in predicates {
+                predicate.structural_hash().hash(hasher);
+            }
+        }
+        PredicateNodeKind::Or(predicates) => {
+            6_u8.hash(hasher);
+            predicates.len().hash(hasher);
+            for predicate in predicates {
+                predicate.structural_hash().hash(hasher);
+            }
         }
     }
 }
@@ -191,6 +243,14 @@ impl Predicate {
     fn shared(kind: PredicateNodeKind) -> Self {
         Self(PredicateStorage::Shared(Arc::new(PredicateNode::new(kind))))
     }
+
+    fn structural_hash(&self) -> u64 {
+        match &self.0 {
+            PredicateStorage::True => 0,
+            PredicateStorage::False => 1,
+            PredicateStorage::Shared(node) => node.structural_hash,
+        }
+    }
 }
 
 impl fmt::Debug for Predicate {
@@ -283,26 +343,7 @@ impl Ord for Predicate {
 
 impl Hash for Predicate {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        predicate_kind_rank(self.kind()).hash(state);
-        match self.kind() {
-            PredicateKind::True | PredicateKind::False => {}
-            PredicateKind::Approximate {
-                marker,
-                paths,
-                role,
-                sound_subset,
-            } => {
-                marker.hash(state);
-                paths.hash(state);
-                role.hash(state);
-                sound_subset.hash(state);
-            }
-            PredicateKind::Guard(guard) => guard.hash(state),
-            PredicateKind::Not(inner) => inner.hash(state),
-            PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
-                predicates.hash(state);
-            }
-        }
+        self.structural_hash().hash(state);
     }
 }
 
@@ -634,13 +675,9 @@ impl Predicate {
     /// Whether this predicate contains a condition that could not be lowered exactly.
     #[must_use]
     pub fn contains_approximation(&self) -> bool {
-        match self.kind() {
-            PredicateKind::Approximate { .. } => true,
-            PredicateKind::Not(inner) => inner.contains_approximation(),
-            PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
-                predicates.iter().any(Self::contains_approximation)
-            }
-            PredicateKind::True | PredicateKind::False | PredicateKind::Guard(_) => false,
+        match &self.0 {
+            PredicateStorage::True | PredicateStorage::False => false,
+            PredicateStorage::Shared(node) => node.contains_approximation,
         }
     }
 

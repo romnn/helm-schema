@@ -61,9 +61,9 @@ struct BddNode {
     when_true: usize,
 }
 
-struct PredicateBdd {
-    atoms: Vec<Guard>,
-    atom_indices: BTreeMap<Guard, usize>,
+struct PredicateBdd<'a> {
+    atoms: Vec<GuardAtom<'a>>,
+    atom_indices: BTreeMap<GuardAtom<'a>, usize>,
     nodes: Vec<BddNode>,
     unique_nodes: BTreeMap<BddNode, usize>,
     apply_cache: BTreeMap<(BooleanOp, usize, usize), usize>,
@@ -90,11 +90,14 @@ fn normalize_with_memo(predicate: Predicate, memo: Option<&PredicateMemo>) -> Pr
     let Some(root) = bdd.build(&predicate) else {
         return predicate;
     };
+    let true_paths = bdd.paths_to(root, TRUE);
+    let false_paths = bdd.paths_to(root, FALSE);
+    drop(bdd);
     let mut candidates = vec![predicate];
-    if let Some(paths) = bdd.paths_to(root, TRUE) {
+    if let Some(paths) = true_paths {
         candidates.push(predicate_from_dnf(&GuardDnf::from_disjunction(paths)));
     }
-    if let Some(paths) = bdd.paths_to(root, FALSE) {
+    if let Some(paths) = false_paths {
         candidates.push(predicate_from_false_paths(paths));
     }
     candidates
@@ -211,14 +214,14 @@ fn memo_sizes(memo: &PredicateMemo) -> (usize, usize) {
     )
 }
 
-impl PredicateBdd {
-    fn for_predicate(predicate: &Predicate) -> Option<Self> {
+impl<'a> PredicateBdd<'a> {
+    fn for_predicate(predicate: &'a Predicate) -> Option<Self> {
         let mut atoms = BTreeSet::new();
         collect_atoms(predicate, &mut atoms)?;
         let atoms = atoms.into_iter().collect::<Vec<_>>();
         let atom_indices = atoms
             .iter()
-            .cloned()
+            .copied()
             .enumerate()
             .map(|(index, atom)| (atom, index))
             .collect();
@@ -232,15 +235,15 @@ impl PredicateBdd {
         })
     }
 
-    fn build(&mut self, predicate: &Predicate) -> Option<usize> {
+    fn build(&mut self, predicate: &'a Predicate) -> Option<usize> {
         match predicate.kind() {
             PredicateKind::True => Some(TRUE),
             PredicateKind::False => Some(FALSE),
             PredicateKind::Guard(guard) => {
-                let (atom, positive) = canonical_guard(guard);
+                let atom = GuardAtom::new(guard);
                 let variable = *self.atom_indices.get(&atom)?;
                 let node = self.make_node(variable, FALSE, TRUE)?;
-                if positive {
+                if atom.is_positive() {
                     Some(node)
                 } else {
                     self.negated(node)
@@ -388,7 +391,7 @@ impl PredicateBdd {
             return Some(());
         }
         let node = self.node(node)?;
-        let atom = Predicate::from(self.atoms.get(node.variable)?.clone());
+        let atom = Predicate::from(self.atoms.get(node.variable)?.to_guard());
         current.push(atom.negated());
         self.collect_paths(node.when_false, target, current, paths, literal_count)?;
         current.pop();
@@ -399,11 +402,11 @@ impl PredicateBdd {
     }
 }
 
-fn collect_atoms(predicate: &Predicate, atoms: &mut BTreeSet<Guard>) -> Option<()> {
+fn collect_atoms<'a>(predicate: &'a Predicate, atoms: &mut BTreeSet<GuardAtom<'a>>) -> Option<()> {
     match predicate.kind() {
         PredicateKind::True | PredicateKind::False => Some(()),
         PredicateKind::Guard(guard) => {
-            atoms.insert(canonical_guard(guard).0);
+            atoms.insert(GuardAtom::new(guard));
             Some(())
         }
         PredicateKind::Not(inner) => collect_atoms(inner, atoms),
@@ -417,24 +420,126 @@ fn collect_atoms(predicate: &Predicate, atoms: &mut BTreeSet<Guard>) -> Option<(
     }
 }
 
-fn canonical_guard(guard: &Guard) -> (Guard, bool) {
-    match guard {
-        Guard::Not { path } => (Guard::Truthy { path: path.clone() }, false),
-        Guard::NotEq { path, value } => (
-            Guard::Eq {
+#[derive(Clone, Copy)]
+enum GuardAtom<'a> {
+    Truthy(&'a crate::ValuesPath, bool),
+    Eq(&'a crate::ValuesPath, &'a crate::GuardValue, bool),
+    TypeIs(&'a crate::ValuesPath, &'a str, bool),
+    Other(&'a Guard),
+}
+
+impl<'a> GuardAtom<'a> {
+    fn new(guard: &'a Guard) -> Self {
+        match guard {
+            Guard::Truthy { path } => Self::Truthy(path, true),
+            Guard::Not { path } => Self::Truthy(path, false),
+            Guard::Eq { path, value } => Self::Eq(path, value, true),
+            Guard::NotEq { path, value } => Self::Eq(path, value, false),
+            Guard::TypeIs { path, schema_type } => Self::TypeIs(path, schema_type, true),
+            Guard::NotTypeIs { path, schema_type } => Self::TypeIs(path, schema_type, false),
+            _ => Self::Other(guard),
+        }
+    }
+
+    fn is_positive(self) -> bool {
+        match self {
+            Self::Truthy(_, positive) | Self::Eq(_, _, positive) | Self::TypeIs(_, _, positive) => {
+                positive
+            }
+            Self::Other(_) => true,
+        }
+    }
+
+    fn to_guard(self) -> Guard {
+        match self {
+            Self::Truthy(path, _) => Guard::Truthy { path: path.clone() },
+            Self::Eq(path, value, _) => Guard::Eq {
                 path: path.clone(),
                 value: value.clone(),
             },
-            false,
-        ),
-        Guard::NotTypeIs { path, schema_type } => (
-            Guard::TypeIs {
+            Self::TypeIs(path, schema_type, _) => Guard::TypeIs {
                 path: path.clone(),
-                schema_type: schema_type.clone(),
+                schema_type: schema_type.to_string(),
             },
-            false,
-        ),
-        guard => (guard.clone(), true),
+            Self::Other(guard) => guard.clone(),
+        }
+    }
+
+    fn rank(self) -> u8 {
+        match self {
+            Self::Truthy(_, _) => 0,
+            Self::Eq(_, _, _) => 2,
+            Self::TypeIs(_, _, _) => 15,
+            Self::Other(guard) => guard_rank(guard),
+        }
+    }
+}
+
+impl PartialEq for GuardAtom<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other).is_eq()
+    }
+}
+
+impl Eq for GuardAtom<'_> {}
+
+impl PartialOrd for GuardAtom<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for GuardAtom<'_> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.rank()
+            .cmp(&other.rank())
+            .then_with(|| match (*self, *other) {
+                (Self::Truthy(left, _), Self::Truthy(right, _)) => left.cmp(right),
+                (Self::Eq(left_path, left_value, _), Self::Eq(right_path, right_value, _)) => {
+                    left_path
+                        .cmp(right_path)
+                        .then_with(|| left_value.cmp(right_value))
+                }
+                (
+                    Self::TypeIs(left_path, left_type, _),
+                    Self::TypeIs(right_path, right_type, _),
+                ) => left_path
+                    .cmp(right_path)
+                    .then_with(|| left_type.cmp(right_type)),
+                (Self::Other(left), Self::Other(right)) => left.cmp(right),
+                _ => std::cmp::Ordering::Equal,
+            })
+    }
+}
+
+fn guard_rank(guard: &Guard) -> u8 {
+    match guard {
+        Guard::Truthy { .. } => 0,
+        Guard::Not { .. } => 1,
+        Guard::Eq { .. } => 2,
+        Guard::NotEq { .. } => 3,
+        Guard::Absent { .. } => 4,
+        Guard::MatchesPattern { .. } => 5,
+        Guard::NotMatchesPattern { .. } => 6,
+        Guard::RangeKeyPrefix { .. } => 7,
+        Guard::RangeKeyEquals { .. } => 8,
+        Guard::RangeKeyMatches { .. } => 9,
+        Guard::Or { .. } => 10,
+        Guard::AnyOf { .. } => 11,
+        Guard::Range { .. } => 12,
+        Guard::With { .. } => 13,
+        Guard::Default { .. } => 14,
+        Guard::TypeIs { .. } => 15,
+        Guard::NotTypeIs { .. } => 16,
+        Guard::IntGt { .. } => 17,
+        Guard::IntLt { .. } => 18,
+        Guard::AtMostOneMember { .. } => 19,
+        Guard::MinMembers { .. } => 20,
+        Guard::HasKey { .. } => 21,
+        Guard::NotHasKey { .. } => 22,
+        Guard::ContainsEquals { .. } => 23,
+        Guard::ContainsMemberEquals { .. } => 24,
+        Guard::ContainsTruthyMember { .. } => 25,
     }
 }
 

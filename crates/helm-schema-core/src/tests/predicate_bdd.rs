@@ -3,7 +3,8 @@ use std::collections::BTreeSet;
 use test_util::prelude::sim_assert_eq;
 
 use super::{
-    PredicateBdd, PredicateMemo, TRUE, exact_implies_uncached, memo_sizes, normalize_uncached,
+    FALSE, PredicateBdd, PredicateMemo, TRUE, exact_implies_uncached, memo_sizes,
+    normalize_uncached,
 };
 use crate::{ApproximationRole, Guard, Predicate, ValuesPath};
 
@@ -91,4 +92,28 @@ fn generated_predicates_reach_bounded_bdd_abstentions() {
     let built =
         PredicateBdd::for_predicate(&bdd_node_cap).and_then(|mut bdd| bdd.build(&bdd_node_cap));
     assert!(built.is_none());
+}
+
+#[test]
+fn borrowed_atoms_canonicalize_negative_guards_without_cloning_keys() {
+    let path = ValuesPath::from_segments(["selected"]);
+    let positive = Predicate::from(Guard::Truthy { path: path.clone() });
+    let negative = Predicate::from(Guard::Not { path });
+    let predicate = Predicate::And(vec![positive.clone(), negative.clone()]);
+    let bdd = PredicateBdd::for_predicate(&predicate);
+    sim_assert_eq!(have: bdd.is_some(), want: true);
+    let Some(mut bdd) = bdd else {
+        return;
+    };
+
+    sim_assert_eq!(have: bdd.atoms.len(), want: 1);
+    sim_assert_eq!(
+        have: bdd.atoms[0].to_guard(),
+        want: Guard::Truthy {
+            path: ValuesPath::from_segments(["selected"]),
+        }
+    );
+    sim_assert_eq!(have: bdd.build(&positive), want: Some(2));
+    sim_assert_eq!(have: bdd.build(&negative), want: Some(3));
+    sim_assert_eq!(have: bdd.build(&predicate), want: Some(FALSE));
 }
