@@ -17,17 +17,17 @@ rather than a precise figure. The family count is exact.
 One agent (`batch-14`) had its report file write blocked by the harness and
 delivered inline instead; its report was recovered from the session transcript
 and is committed with the others, and three of its nine findings (F76, and the
-`datadog` witnesses now in F75 and F68) were folded only on a later re-scan. **The corpus's largest
-defect, F23, is now root-caused to two swapped branches in
+`datadog` witnesses now in F75 and F68) were folded only on a later re-scan.
+
+**The corpus's largest defect, F23, is root-caused to two swapped branches in
 `condition_encoding.rs`, and the fix deletes a condition rather than adding
-one.** One deep pass (`openebs`) and one respawned
-cross-cutting agent are still running. Two further agents completed their
-analysis but **could not write their reports** — their sandbox was read-only
-including the output directory — and their results were recovered from their
-transcripts; see "Recovered results" below. Two more had their *closing message*
-blocked by a provider content filter after 24 and 136 completed tool turns: the
-analysis was done and the findings were recovered from their transcripts, so
-this was a delivery failure, not a refusal and not a loss.
+one.**
+
+Four agents could not deliver through the normal path, and all four were
+recovered, so no analysis was lost: two had a read-only sandbox that included
+their output directory, and two had their *closing message* blocked by a provider
+content filter after 24 and 136 completed tool turns — a delivery failure, not a
+refusal. See "Recovered results".
 
 **Three previously-unresolved mechanisms are now root-caused: D5, and the
 quarantined defects in `imgproxy` and `eck-stack`.** One previously-open root
