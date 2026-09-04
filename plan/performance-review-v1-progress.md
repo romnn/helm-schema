@@ -314,3 +314,71 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0.
 
 - Measured production LOC delta: +3 (66,064 to 66,067).
+
+## Round C1 — key condition fragments by selected values document
+
+- Status: pre-registered; implementation not started.
+- Contract: make `ConditionFragmentCache` include the identity of the exact guarded root-values
+  document selected by `RootValuesDocuments::condition_context`. Do not change guard lowering,
+  document selection, absence semantics, ordering, public API, or wire formats.
+- Acceptance baseline: `acd226a4` for prose identity and `8fbcc732` for executable/schema identity.
+- Baseline production Rust LOC: 66,067.
+- Pre-registered acceptance expectations:
+  - Most likely outcome: all ten reference charts, all 156 schema artifacts, all 18 IR artifacts,
+    diagnostics, stdout, and exit statuses remain byte-identical because guarded values-default
+    sources are rare and the collision is latent.
+  - If schema bytes change, every change must be attributable to two guard sets previously sharing
+    `(ancestor, guard)` while selecting different values documents. Such changes are correctness
+    fixes, not performance wins, and require the full-depth Helm 4.2.3 battery with zero
+    candidate-accepts/Helm-aborts cells before adoption.
+  - A focused regression must prove that identical ancestor/guard pairs under distinct selected
+    document identities cannot reuse each other's condition fragment.
+  - Empty-cache online, warm-online, and warm-offline schema, stdout, JSON diagnostics, and status
+    must agree for all ten reference charts.
+- Performance baseline: round-0 table; C1 has no speed target and will not be claimed as a
+  performance gain.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; Helm v4.2.3 remains mandatory if any acceptance flip appears.
+- Public/wire decision: pre-registered as none; the cache and selected-document identity remain
+  crate-private emission details.
+
+### Review dossier
+
+- Planned implementation proof: focused generator tests for document-key separation, followed by a
+  release candidate copied immediately out of `target/`.
+- Planned byte gate: preserved `8fbcc732` binary versus candidate on the ten reference charts, with
+  schema, stdout, JSON diagnostics, and status captured separately under the round-0 private cache.
+- Planned cache-law gate: a new empty private snapshot warmed online, then repeated warm online and
+  warm offline, all four channels compared per chart.
+- Planned artifact gate: exact schema and IR fixture tests; if a fixture differs, one clean dump and
+  the round-74 full-depth battery against `8fbcc732` before adoption.
+
+### Self-adversarial pass
+
+- A hash or document contents would be the wrong identity: mutable construction and equality cost
+  are unnecessary. The stable index in the immutable `guarded` vector, with `None` for base
+  documents, names exactly the selected input.
+- Passing the identity only at one cache call site would leave the other reuse path under-keyed.
+  Every `build_condition_clauses_cached` call must receive the identity returned with the exact
+  document and `AbsenceDefaults` it uses.
+- The index must come from the same selection operation as the document references; recomputing it
+  separately could drift under ties.
+- C1 is a correctness prerequisite, so a flat timing result cannot reject it and a speed movement
+  cannot excuse a byte change.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending if schema semantics change: `cargo install --path ./crates/helm-schema-cli/` and downstream
+  luup2 `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
