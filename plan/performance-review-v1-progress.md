@@ -457,3 +457,85 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0.
 
 - Measured production LOC delta: +12 (66,067 to 66,079).
+
+## Round A1 — allocation-free `ValuesPath` and `Segment` ordering
+
+- Status: pre-registered; implementation not started.
+- Contract: replace comparison-time encoded `String` allocation with a lazy byte stream that is
+  exactly equivalent to the current `encode()`/`encode_component()` order. Preserve derived
+  segment equality, hashing, constructors, path syntax, public signatures, emitted ordering, and
+  every wire byte. Measure the frozen cached-spelling variant independently and adopt it only if
+  it beats the lazy candidate by at least 5% on the isolated `kubernetes-apps.yaml` chart.
+- Acceptance baseline: `7cee5c6c` for executable/schema identity and `5cea0a47` for the complete C1
+  ledger state.
+- Baseline production Rust LOC: 66,079.
+- Pre-registered acceptance expectations:
+  - Property tests must prove `ValuesPath::cmp(a, b) == a.encode().cmp(&b.encode())` and that
+    comparison equality agrees with structural equality over the root, prefixes, `EachMember`,
+    literal `*`, ASCII punctuation including `.`, `\\`, `-`, `/`, and space, and multi-byte UTF-8.
+  - The corresponding `Segment` property must match `encode_component()` exactly across the same
+    literal and wildcard domain.
+  - The lazy variant must keep all ten reference schemas, stdout, JSON diagnostics, statuses, all
+    156 schema artifacts, and all 18 IR artifacts byte-identical, with zero corpus acceptance
+    flips.
+  - The frozen 6–25% hypothesis is not assumed to survive the expanded tree. Reject A1 if the
+    paired gain is below 5% on both grafana and cilium, even if microbenchmarks or other charts
+    improve.
+  - The cached-spelling variant is rejected unless its paired gain over the lazy variant is at
+    least 5% on the isolated Kubernetes applications template. A rejected variant is fully
+    restored before final A1 gates.
+- Performance baseline: the landed C1 candidate medians are coredns 0.33 s, metrics-server
+  0.17 s, istiod 0.57 s, cert-manager 0.68 s, argo-cd 5.71 s, grafana 4.65 s, cilium 8.48 s,
+  datadog 63.10 s, airflow 90.24 s, and kube-prometheus-stack 122.02 s. Final decisions use fresh
+  interleaved pairs against the preserved C1 executable, not these unpaired row values.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; representation-only acceptance requires zero corpus flips and
+  byte identity rather than semantic adjudication.
+- Public/wire decision: pre-registered as none. Ordering and encoding remain the existing public
+  semantics; only comparison mechanics may change.
+
+### Review dossier
+
+- Planned implementation proof: extend `crates/helm-schema-core/tests/value_path.rs` with generated
+  path and segment comparisons covering every frozen escape case, then run focused core tests.
+- Planned candidate sequence: build and preserve the lazy release binary; create the isolated
+  Kubernetes applications chart; build and preserve a cached-spelling spike; pair lazy versus
+  cached on that chart; restore the losing representation before the ten-chart byte and decision
+  gates.
+- Planned byte gate: preserved
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-c1` versus the final A1 candidate
+  under the round-0 private cache, with schema, stdout, JSON stderr, and status captured separately
+  for all ten charts.
+- Planned performance gate: randomized, interleaved A/B pairs from the same cache snapshot and
+  minutes, five pairs on every large chart and at least the frozen repeat count elsewhere, with
+  load1 captured immediately before each invocation.
+
+### Self-adversarial pass
+
+- Segment-wise order is not encoded-path order. The comparator must emit separator and escape
+  bytes lazily, not compare the stored segment vector or rely on derived ordering.
+- `Segment` cannot reuse path-component encoding blindly because its legacy comparator uses
+  `encode_component()`, whose treatment of `.` differs from a component embedded in a path.
+- UTF-8 continuation bytes cannot alias the ASCII separator or escape bytes, but property cases
+  still include multi-byte text so this assumption is exercised rather than merely asserted.
+- A cached spelling can make comparison faster while making clones, construction, or memory
+  traffic worse. Only an end-to-end isolated-chart pair can authorize that representation.
+- Output identity is sensitive to `BTreeMap` iteration order; a comparator that merely appears
+  reasonable but differs on one punctuation edge case must be rejected even if fixtures happen
+  not to contain that case.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 decision and, if required, install plus `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
