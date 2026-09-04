@@ -375,6 +375,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   - The full battery completed before that test-only assertion spelling changed. The release
     executable, production code, fixture inputs, and candidate bytes were unchanged, so the
     284,869-probe result remains evidence for the exact candidate later gated in full.
+  - The first committed dossier named the byte artifacts as `c1/byte-gate`; the actual retained
+    directory is `c1/byte`. This ledger correction changes no evidence or repository artifact.
   - The host became loaded during the final integration gates and selected A/B pairs: retained
     load1 ranges are 2.36–2.48 for coredns, 2.36 for metrics-server, 2.36–2.41 for istiod,
     2.41–2.54 for cert-manager, 2.25–2.94 for argo-cd, 2.72–3.31 for grafana, 3.61–4.52 for
@@ -397,7 +399,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Ten-chart byte gate: preserved `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-prerequisite`
   and the C1 candidate use the round-0 K8s and CRD snapshot with `--compact --offline
   --k8s-version v1.35.0 --diag-format json`; schema, stdout, stderr, and status comparisons all
-  pass under `/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/byte-gate`.
+  pass under `/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/byte`.
 - Cache-law gate: for each reference chart, begin with distinct empty K8s and CRD directories,
   invoke the candidate online twice and offline once, and compare all four channels. Artifacts are
   under `/private/tmp/helm-schema-performance-v1.LSEe9Y/c1/cache-law`; every comparison passes.
@@ -460,7 +462,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A1 — allocation-free `ValuesPath` and `Segment` ordering
 
-- Status: pre-registered; implementation not started.
+- Status: implementation and byte/adjudication gates complete; final timing is blocked by
+  recurring external compiler activity, so no implementation commit or adoption decision exists.
 - Contract: replace comparison-time encoded `String` allocation with a lazy byte stream that is
   exactly equivalent to the current `encode()`/`encode_component()` order. Preserve derived
   segment equality, hashing, constructors, path syntax, public signatures, emitted ordering, and
@@ -488,28 +491,84 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   0.17 s, istiod 0.57 s, cert-manager 0.68 s, argo-cd 5.71 s, grafana 4.65 s, cilium 8.48 s,
   datadog 63.10 s, airflow 90.24 s, and kube-prometheus-stack 122.02 s. Final decisions use fresh
   interleaved pairs against the preserved C1 executable, not these unpaired row values.
-- Measured results: pending.
-- Deviations: none at pre-registration.
-- Adjudication evidence: pending; representation-only acceptance requires zero corpus flips and
-  byte identity rather than semantic adjudication.
+- Measured results:
+  - A lazy byte-stream comparator passes the generated path and segment ordering properties. Its
+    preserved release binary is 16,078,064 bytes with SHA-256
+    `27e9dd3a32c82eba1c11331f4e24613086af43f9482944ea64d43578c84d8797` and is byte-exact to C1
+    on all ten reference charts across schema, stdout, JSON diagnostics, and status.
+  - The frozen cached-spelling alternative stores a `Box<str>` maintained by every path
+    constructor and mutation. Its provisional five-pair isolated-chart comparison reports lazy
+    18.19 s CPU median (17.51–19.43) versus cached 9.67 s (9.41–9.81), with paired gains
+    46.90% median (46.07%–50.23%). Every load1 was above 4 (6.58–10.46), so this is strong
+    directional evidence but not yet the final retained variant decision.
+  - The exact final cached candidate is 16,177,136 bytes with SHA-256
+    `ff96f5453c5be509e930abeda0b68551ab76090c76dd7c810cebf95c1d37af38`. It is byte-exact to C1
+    on all ten reference charts and to the lazy variant on the isolated chart, across all four
+    channels.
+  - The full-depth round-74 battery checks 160 charts and 284,869 coalesced probes with zero
+    acceptance flips. Final schema/IR fixture and full verification gates remain pending until a
+    valid decision measurement selects the final representation.
+- Deviations:
+  - The first focused nextest filter used the default profile, which excludes the integration-test
+    binary, and exited 4 with zero tests. Rerunning with `--profile integration --test value_path`
+    passed all six tests.
+  - The first early `task lint` exited 201 because `[b'\\', b'*']` triggered
+    `clippy::byte_char_slices`. Re-spelling it as `b"\\*"` made the next whole-workspace lint pass;
+    no suppression was added.
+  - The first battery attempt exited 101 before testing because its declared `TMPDIR` did not yet
+    exist and clang could not create a temporary `ring` object. After creating that exact
+    directory, the unchanged command passed in 217.853 s.
+  - The first final timing wrapper produced one coredns invocation, then exited 2 because BSD awk
+    treats `system` as a built-in rather than a writable variable. The fresh wrapper uses
+    `sys_time`; the single sample under `a1/measure` is invalid.
+  - A restarted whole-table window produced 52 invocations through the third grafana pair. A
+    process snapshot then found an unrelated `cargo test` and multiple active `rustc` processes;
+    grafana candidate CPU had simultaneously risen from about 2.9 s to 4.6–4.9 s. The command was
+    interrupted with exit 130 and every sample under `a1/measure-final` was invalidated.
+  - A five-pair grafana-only retry completed, but the immediate post-window snapshot found newly
+    launched Clippy drivers. A three-pair cilium retry likewise overlapped an unrelated `cargo`
+    check and `task lint:fc`. Both complete windows are invalid; none of their favorable pairs is
+    used for acceptance.
+  - More than two honest decision windows have therefore failed the non-negotiable
+    no-concurrent-build condition for reasons outside this tree. External compilers continued to
+    launch after cooldown periods, reaching load1 27.16. Autonomy stop condition 4 applies until
+    the host can provide a compiler-free timing window.
+  - While locating dossier lines, a shell diagnostic used Markdown backticks inside a
+    double-quoted pattern and unintentionally launched `task lint`. Its output is not a gate and it
+    further delayed host cooldown; no result from that interval is retained.
+- Adjudication evidence: Helm v4.2.3. The representation-only full-depth battery reports zero
+  flips, hence zero candidate-accepts/Helm-aborts cells; no schema semantics are proposed.
 - Public/wire decision: pre-registered as none. Ordering and encoding remain the existing public
   semantics; only comparison mechanics may change.
 
 ### Review dossier
 
-- Planned implementation proof: extend `crates/helm-schema-core/tests/value_path.rs` with generated
-  path and segment comparisons covering every frozen escape case, then run focused core tests.
-- Planned candidate sequence: build and preserve the lazy release binary; create the isolated
-  Kubernetes applications chart; build and preserve a cached-spelling spike; pair lazy versus
-  cached on that chart; restore the losing representation before the ten-chart byte and decision
-  gates.
-- Planned byte gate: preserved
-  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-c1` versus the final A1 candidate
-  under the round-0 private cache, with schema, stdout, JSON stderr, and status captured separately
-  for all ten charts.
-- Planned performance gate: randomized, interleaved A/B pairs from the same cache snapshot and
-  minutes, five pairs on every large chart and at least the frozen repeat count elsewhere, with
-  load1 captured immediately before each invocation.
+- Property proof: `cargo nextest run -p helm-schema-core --profile integration --test value_path`;
+  exit 0, all six tests pass, including generated all-pairs comparisons for the root and every
+  one- and two-segment path over the frozen punctuation/UTF-8/wildcard domain.
+- Lazy build: `cargo build -p helm-schema-cli --release`; exit 0 in 37.33 s, followed immediately
+  by the preserved `helm-schema-a1-lazy` copy named above.
+- Isolated chart: `/private/tmp/helm-schema-performance-v1.LSEe9Y/a1/kubernetes-apps-chart`
+  contains the parent `Chart.yaml`, `Chart.lock`, and `values.yaml`, plus only `_helpers.tpl` and
+  `templates/prometheus/rules-1.14/kubernetes-apps.yaml`; there is no `charts/` directory.
+- Variant artifacts: lazy/cached isolated byte outputs are under `a1/variant-byte`; five randomized
+  pairs and their per-invocation load records are under `a1/variant-measure`.
+- Final build: `cargo build -p helm-schema-cli --release`; exit 0 in 29.16 s, followed immediately
+  by the preserved `helm-schema-a1` copy named above.
+- Ten-chart byte gate: preserved `helm-schema-c1` versus `helm-schema-a1`, using the round-0 private
+  K8s/CRD cache and `--compact --offline --k8s-version v1.35.0 --diag-format json`; all comparisons
+  pass under `/private/tmp/helm-schema-performance-v1.LSEe9Y/a1/byte`.
+- Battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a1/battery
+  SCHEMA_ACCEPTANCE_BASELINE_REF=7cee5c6c
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/a1/battery/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 217.853 s.
+- Invalid timing evidence is retained under `a1/measure`, `a1/measure-final`,
+  `a1/measure-valid/grafana`, and `a1/measure-retained/cilium`. The process evidence includes
+  external Cargo parents 58027, 72045, 2031, 19838, 65788, 66101, 57971, and 88097, spanning other
+  workspaces and rust-analyzer.
 
 ### Self-adversarial pass
 
@@ -524,11 +583,15 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Output identity is sensitive to `BTreeMap` iteration order; a comparator that merely appears
   reasonable but differs on one punctuation edge case must be rejected even if fixtures happen
   not to contain that case.
+- The large provisional cached-spelling win could still be exaggerated by loaded-host cache and
+  thermal behavior. It does not authorize a commit until a compiler-free isolated variant window
+  and the final C1-versus-A1 ten-chart curve both reproduce it.
 
 ### Gates on the final tree
 
 - Pending: `cargo fmt --check`.
-- Pending: `task lint`.
+- Early `task lint`: first attempt exit 201 for the byte-slice spelling; second and final-code
+  early attempt exit 0. This is not the required final-tree gate.
 - Pending: `task lint:fc`.
 - Pending: `cargo nextest run --workspace`.
 - Pending: `task test:integration`.
