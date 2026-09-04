@@ -939,3 +939,65 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0; under 0.001 s.
 
 - Measured production LOC delta: +131 (66,931 to 67,062).
+
+## Round B2 — `mimalloc` on every CLI target
+
+- Status: pre-registered; implementation not started.
+- Contract: make the CLI's existing `mimalloc` dependency and global allocator declaration apply
+  on macOS and the other supported non-musl targets, rather than only musl. Change no library
+  ownership, allocation site, schema semantics, diagnostic, status, fixture, corpus input, or wire
+  representation.
+- Acceptance baseline: `30a5903f` for executable/schema identity and `85c67c0b` for the completed
+  A2b ledger state.
+- Baseline production Rust LOC: 67,062.
+- Pre-registered acceptance expectations:
+  - All ten reference outputs, all 156 schema fixtures, all 18 IR fixtures, stdout, JSON
+    diagnostics, statuses, and the full-depth battery remain byte-identical with zero flips.
+  - Five randomized interleaved A/B pairs each on grafana and datadog use the same private cache,
+    exact preserved binaries, and per-invocation load records. Each chart must show at least 5%
+    median paired CPU gain and a paired range wholly above zero; otherwise restore the spike.
+  - Record release build time and executable size even though they are not B2 rejection criteria.
+- Performance baseline: the preserved A2b binary is the direct A side. The latest round-wide A2
+  medians were 2.04 s for grafana and 17.84 s for datadog; A2b's isolated predicate-heavy chart
+  result does not substitute for fresh allocator pairs on either chart.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; B2 is representation-only and requires byte identity and zero
+  acceptance flips.
+- Public/wire decision: pre-registered as none. The allocator is process-local implementation
+  policy for the CLI binary and does not add shared semantic cache state to any library session.
+
+### Review dossier
+
+- Planned implementation: move `mimalloc` into ordinary CLI dependencies and remove only the
+  target-environment condition from the existing global allocator declaration.
+- Planned byte and artifact gates: A2b versus B2 on all ten charts under the round-0 private cache
+  and `git diff --exit-code 30a5903f -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`.
+- Planned performance gate: five randomized interleaved pairs on grafana and datadog, with no
+  concurrent builds and exact output-channel comparison inside every pair.
+
+### Self-adversarial pass
+
+- An allocator can change timing without changing Rust-level semantics, but undefined behavior can
+  become layout-sensitive. The full workspace, corpus battery, artifacts, and byte channels remain
+  mandatory despite the one-line source change.
+- Faster median CPU with any negative paired sample is not a stable gain under the campaign rule.
+  Both named charts must clear the threshold on paired CPU, not wall time.
+- The CLI allocator choice must not leak into the libraries as global cache or analysis state;
+  concurrent library sessions remain isolated by ordinary ownership.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 decision and, if required, install plus `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
