@@ -9,7 +9,7 @@ not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
 **Status: all 28 launched agents have reported**, contributing 286 proven
-findings across 78 families (F0–F75, plus D4 and D5). **The corpus's largest
+findings across 79 families (F0–F76, plus D4 and D5). **The corpus's largest
 defect, F23, is now root-caused to two swapped branches in
 `condition_encoding.rs`, and the fix deletes a condition rather than adding
 one.** One deep pass (`openebs`) and one respawned
@@ -106,9 +106,81 @@ Every finding below is proven with a witness, not asserted:
 
 Findings that could not be witnessed are labeled `UNWITNESSED` and kept separate.
 
-Reproduction tooling is committed under `plan/corpus-expansion-scripts/`; the
-agents' full reports, with complete witness files, are in
-`/Volumes/T7/dev/helm-schema-corpus-survey/bughunt/`.
+Reproduction tooling is committed under `plan/corpus-expansion-scripts/`. **The
+agents' full reports are committed under `plan/schema-bug-hunt-reports/`** (32
+files) — this document summarises them, and each one carries the complete witness
+documents, exact command lines and file:line citations behind its findings. When
+a finding here is too compressed to act on, the report is the source.
+
+The much larger scratch trees the agents built (mutation corpora, coalesced
+bases, per-witness JSON — roughly 7.7 GB) live outside the repo under
+`/Volumes/T7/dev/helm-schema-corpus-survey/bughunt/scratch-*/` and are **not**
+durable. Everything needed to re-derive them is in the reports.
+
+## For the implementor
+
+Read this before validating any finding — the adjudicator setup is not optional,
+and getting it wrong produces confident errors in both directions.
+
+**Setting up the oracle.** A finding is a disagreement between Helm and the
+generated schema, so both sides must be reproduced exactly:
+
+1. **Pin `--kube-version 1.29.0`.** The corpus is generated at
+   `v1.29.0-standalone-strict`, and that version also drives
+   `.Capabilities.KubeVersion` during analysis. Bare `helm template` defaults to
+   1.36 here. This is not a detail: an unpinned run produced a false-rejection
+   filing that a pinned run withdrew.
+2. **Remove the chart's own shipped `values.schema.json`** from the copy under
+   test, or Helm enforces the chart author's schema instead of ours. One early
+   sweep produced 332 bogus hits from this alone.
+3. **Remove `templates/tests/`** to match the corpus's `include_tests: false`.
+4. **Validate the coalesced document, not the values file.** Helm validates root
+   values + every subchart's defaults under its key + propagated globals, *after*
+   coalescing. Coalesce through a chart copy with `templates/` removed, or the
+   dump reports post-mutation `.Values` for charts that mutate at render time.
+5. **Know the null rule.** A user `null` is deleted only when the key exists in
+   the **innermost owning chart's own `values.yaml`**; with no default there it
+   survives present-and-null. The repo's own `values_validation.rs` does not model
+   this — see "Harness pitfalls".
+
+**What counts as validated.** Two directions, and they are not symmetric:
+
+- *False rejection* — Helm renders, schema rejects. Check the chart's own `ci/`
+  files first; a rejection of one of those is author-certified.
+- *False acceptance* — Helm aborts, schema accepts. Harder to find, and where
+  most of this corpus's defects are.
+
+Before filing a fix as complete, confirm the witness flips **and** that no
+existing corpus fixture regresses. Two whole classes of apparent bug are not
+bugs: a wrongly-typed value in a typed Kubernetes field is a legitimate provider
+constraint (one agent excluded 1,108 of these in a single chart), and the
+project's declared-shape typing policy deliberately gives a leaf the type its
+`values.yaml` default declares.
+
+**Gates.** `CLAUDE.md` owns the list; the ones that bite here are `task lint` (a
+clippy failure in one crate aborts every dependent crate, so it is not green
+until the whole workspace compiles), and
+`cargo nextest run -P integration -p helm-schema-cli -E 'binary(chart_corpus)'`
+— the corpus cases exist **only** in the `integration` profile, so a default-profile
+run is vacuously green. Regenerate fixtures with one clean dump run after the
+final build; never mix dump batches from different code states.
+
+**Do not trust these numbers without re-measuring.** They are recorded honestly
+but are known-soft:
+
+- The per-chart dead-arm counts in F23 and F24 were produced by different agents
+  under different criteria and disagree by an order of magnitude. F24 explains the
+  two traps.
+- F73's "153 of 156" is a distribution, not a defect count — only two charts are
+  witnessed, and whether it is a bug at all is an open policy question.
+- Every finding adjudicated before the `--kube-version` correction was found
+  (i.e. all but the final frozen-cohort pass) may be affected in either direction.
+
+**One structural caution.** Several families are the same behaviour behind
+different triggers — cluster A1 is seven families and one bug. Fixing them
+one-by-one risks seven local patches where one change to how the interpreter
+handles an undecidable element would do. Read the cluster table before picking up
+an individual F-number.
 
 ## Families
 
@@ -118,7 +190,7 @@ per-chart entries that follow.
 
 **The F-numbers are arrival order, not leverage order, and they are not
 renumbered** — the agents' raw reports and this document's own cross-references
-both cite them. Read the clusters below instead. The 78 families (F0–F75 plus D4
+both cite them. Read the clusters below instead. The 79 families (F0–F76 plus D4
 and D5) collapse into eleven mechanisms — the first of which, guard analysis, is
 large enough to split into four — and a fix aimed at a cluster is worth far more
 than one aimed at a family.
@@ -136,7 +208,7 @@ than one aimed at a family.
 | **F — rendered output and YAML safety** | F12, F13, F26, F30, F40, F41, D5 | The preimage machinery is right and is applied inconsistently — 94 sinks in one cilium schema, 6 missed. |
 | **G — provider schema handling** | F0, F20, F31, F37, F39, F60 | Kubernetes/CRD schemas applied at the wrong level, collapsed, or allowed to override chart-local structure. |
 | **H — function catalogue and call lowering** | F9, F10, F14, F18, F28, F33, F36, F43, F44, F47, F49, F55, F64, F68, F72 | Coverage gaps in the builtin catalogue decide whether a contract exists at all. Mostly mechanical, individually small, collectively large. |
-| **I — path binding and attribution** | F4, F11, F32, F38, F48, F61 | A constraint is attached to the wrong path, or the path binding is lost. |
+| **I — path binding and attribution** | F4, F11, F32, F38, F48, F61, F76 | A constraint is attached to the wrong path, or the path binding is lost. |
 | **J — validation and version gates** | F6, F71 | Charts with a file dedicated to validation (`validateValues`, `requirements.yaml`) contribute zero constraints from it. `openebs` adds a third witness under `mayastor.etcd`. |
 | **K — output size and installability** | F74 | Not a lowering defect: 18 of 156 schemas exceed Helm's 5 MiB limit and cannot be shipped at all, so their correctness is moot until the size is fixed. |
 
@@ -172,8 +244,8 @@ Two results should shape where effort goes before any of this is picked up.
 **Direction A is clean** — of 308 synthesised reject-arm witnesses, 305 abort
 real Helm and none is a false rejection, so auditing arms that *do* fire has a
 measured yield of zero (see "Clean verdicts"). And the corpus is dominated by
-**false acceptance**: 53 of the 78 families are wholly or partly that direction,
-against 29 for false rejection (8 families are both, and F74 is neither). The
+**false acceptance**: 54 of the 79 families are wholly or partly that direction,
+against 30 for false rejection (9 families are both, and F74 is neither). The
 schemas under-constrain roughly twice as often as they over-constrain.
 
 ### F0 — an unversioned external CRD catalog overrides chart-local structural facts
@@ -836,6 +908,14 @@ read.
 with **no `not {required}` disjunct**. Helm's coalescing *deletes* null keys, so
 the key is absent rather than null and the arm can never fire.
 
+**A second spelling exists and is easy to miss when grepping for the nil-deref
+shape.** In `oncall`, `/allOf/31` (and `#/$defs/mh`, used by `/allOf/355`) encodes
+"`postgresql.auth.secretKeys.adminPasswordKey` is falsy" as a disjunction over
+`{"enum": [null]}` and `{"enum": [""]}`, each with `required: ["adminPasswordKey"]`
+— and **no absent branch**. It is the same root cause reaching a *falsiness*
+test rather than a nil dereference, and it produces a real miss. A fix keyed only
+to nil-dereference sites would leave it in place.
+
 Root-scope arms in the same schema (`/allOf/10`) correctly carry both disjuncts,
 and a 20-line repro shows the split cleanly: the root path gets both, the
 subchart path gets null-only. Verified against Helm's own coalesced dump —
@@ -1077,12 +1157,23 @@ absent, is the same defect at a specific node.
 
 ### F40 — a plain-scalar preimage is computed per hole, not over the composed scalar
 
-**Class:** false acceptance. **Charts:** `openldap-stack-ha`, `redis-ha`, `nack`.
+**Class:** false acceptance. **Charts:** `openldap-stack-ha`, `redis-ha`, `nack`,
+`jupyterhub` (8 sites).
 
 `image: {{ .repository }}:{{ .tag }}` with `tag: ""` renders `image: nginx:` and
 aborts on YAML parse; the schema accepts. The single-hole `:$` exclusion is
 demonstrably working — it is the *composition* of holes into one scalar that is
 not analysed. Six real witnesses.
+
+`jupyterhub` shows the breadth: `hub/deployment.yaml:97` is
+`image: {{ .Values.hub.image.name }}:{{ .Values.hub.image.tag }}`, both halves
+carry **no constraint of any kind**, and `hub.image.tag: ""` (or `null`) renders
+`image: quay.io/jupyterhub/k8s-hub:` and aborts with `mapping values are not
+allowed in this context`. The same unconstrained pair recurs at `proxy.chp.image`,
+`prePuller.hook.image`, `prePuller.pause.image`, `scheduling.userPlaceholder.image`,
+`scheduling.userScheduler.image`, `singleuser.image` and
+`singleuser.networkTools.image` — seven more, all confirmed. `--set hub.image.tag=`
+is an ordinary thing to do.
 
 Closely related to F30, which is the same contract applied to the wrong *kind* of
 scalar; this is the same contract applied at the wrong *granularity*.
@@ -1165,7 +1256,7 @@ construction.
 ### F31 — a provider array schema lands on the wrong level, or not at all
 
 **Class:** false rejection and false acceptance. **Charts:** `kubeshark`,
-`external-secrets`.
+`external-secrets`, `argo-events`.
 
 `kubeshark` attaches the provider `Capabilities.add` array schema to the **items**
 of the ranged list rather than to the list, so
@@ -1174,6 +1265,19 @@ of the ranged list rather than to the list, so
 `topologySpreadConstraints` paths as open `{}` where the template does
 `range $constraint := .` and reads `$constraint.labelSelector`; `["not-a-map"]`
 aborts and validates.
+
+`argo-events` is the "not at all" end of the family: `controller.rbac.rules` is
+spliced into a ClusterRole's `rules:` sequence by
+`{{- with .Values.controller.rbac.rules }}{{- toYaml . | nindent 0 }}{{- end }}`
+(`templates/argo-events-controller/rbac.yaml:28-30`), so the value flows into a
+Kubernetes array of `PolicyRule` — and its only appearance in the whole schema is
+`{"description": "Additional user rules for event controller's rbac"}`. No type,
+no `items`, nothing. The same batch propagates provider constraints correctly for
+`service.port`, `containerPorts.health` and `seccompProfile.type`, so the
+machinery is present and this sink is simply missed. The reporting agent flagged
+a possible D1 relationship (the emitting action is a bare `toYaml | nindent 0` at
+the container's own column) but did **not** confirm eviction causally, so that
+link is an observation rather than an established one.
 
 The contrast pins it: `opentelemetry-operator` places the same value with a single
 `toYaml` and **does** receive the provider item schema. Iterating the collection
@@ -1881,6 +1985,24 @@ Minimal isolation: `required "msg" .Values.good` emits the arm;
 `contains "NodePort" .Values.service.type`. Compare F18, which is the same
 argument-order problem seen from the requirement side.
 
+**The family is broader than nil: *any* non-string aborts, and `type: string`
+would express the requirement exactly.** `datadog`'s `NOTES.txt:672` calls
+`dir` — `func(string) string` — on four socket-path values, and compares two more
+with `ne`:
+
+```gotemplate
+{{- if (and (eq (dir .Values.datadog.dogstatsd.socketPath) (dir .Values.datadog.apm.socketPath))
+            (ne .Values.datadog.dogstatsd.hostSocketPath .Values.datadog.apm.hostSocketPath)) }}
+```
+
+`datadog.dogstatsd.socketPath` carries a `description` and nothing else;
+`datadog.apm` has no `properties` at all. `socketPath: 7` aborts with
+`wrong type for value; expected string; got float64` and validates. A non-string
+also makes `ne` raise `incompatible types for comparison`. A sweep found **33
+further instances** across the four socket-path fields plus
+`eq .Values.clusterAgent.admissionController.failurePolicy "Fail"` at
+`NOTES.txt:570`. Both aborts are on the chart's default path.
+
 ### F69 — `kindIs` dispatch arms are intersected, so the admitted domain collapses to `null`
 
 **Class:** false rejection **and** false acceptance, from one root cause.
@@ -2115,10 +2237,73 @@ that cannot be installed provides zero validation regardless of how correct it i
 must be `>= 1`), `loki` (the replica-matrix `fail`). **Status:** PROVEN.
 
 An abort guarded by a numeric comparison rather than a truthiness or equality
-test contributes nothing to the schema. Compare F34 (an `or` guard drops an
+test contributes nothing to the schema.
+
+**`datadog` gives the sharpest form of the evidence: two `fail`s sit side by side
+in one `define`, under identical guards, and only one is lowered.**
+`_helpers.tpl:193-202` has `{{- if (gt $length 80) }}{{- fail "…80 characters or
+less." }}` and `{{- if not (regexMatch "…" $clusterName) }}{{- fail … }}`. The
+`regexMatch` became a `pattern` on `datadog.clusterName`; the length predicate
+produced **nothing** — the schema has seven `maxLength` occurrences in total and
+all seven are provider-derived. A 90-character all-lowercase name satisfies the
+regex, violates only the length rule, aborts Helm at
+`cluster-agent-deployment.yaml:188:14`, and validates. The control is clean:
+`clusterName: "UPPERCASE"` is rejected by the `pattern`, so the guard context is
+right and only the numeric predicate is missing.
+
+This matters for the fix because `maxLength` expresses `gt (len x) 80` **exactly**
+— the lowering is not blocked by expressiveness, it simply is not attempted.
+
+Compare F34 (an `or` guard drops an
 *ordering-comparison* disjunct) and F59 (`eq`/`ne` comparability is hoisted out of
 its guard) — the three together say comparison operators are the weakest-covered
 guard shape in the analyzer.
+
+### F76 — a constraint from an unconditional statement is conjoined with a later branch condition, inverted
+
+**Class:** false rejection **and** false acceptance, from one inverted condition.
+**Chart:** `surveyor`. **Status:** PROVEN.
+
+```gotemplate
+{{- define "surveyor.image" -}}
+{{- $image := printf "%s:%s" .repository .tag }}   {{/* unconditional */}}
+{{- if .registry }}
+{{- $image = printf "%s/%s" .registry $image }}
+{{- end }}
+{{- $image -}}
+{{- end }}
+```
+
+The emitted arm (`/properties/image/allOf/0`) is
+
+```
+REJECT IF (image.repository absent OR == null) AND image.registry is truthy
+```
+
+which is **exactly inverted**. The hazard is that `printf "%s"` of a non-string
+renders Go's error marker `%!s(<nil>)`, and `%` is a YAML reserved indicator — so
+the scalar only breaks the document when `.repository` lands in **leading**
+position, i.e. when `.registry` is **falsy**. When `.registry` is truthy the
+registry is prepended and the same value renders fine.
+
+Both directions witness from one arm:
+
+| values (plus defaults) | Helm | schema |
+| --- | --- | --- |
+| `image: {repository: null, registry: docker.io, tag: "0.9.7"}` | **renders** `image: docker.io/%!s(<nil>):0.9.7` | **rejects** |
+| `image: {repository: null, tag: "0.9.7"}` | **aborts** — YAML parse error, `found character that cannot start any token` | **accepts** |
+
+The deeper error is structural rather than a flipped polarity: the `printf` is
+**unconditional** and runs *before* the `if .registry`, so conjoining any
+constraint derived from it with `registry` truthiness is wrong on its face,
+whichever way the polarity points. A fix that only flips the condition would still
+be modelling the wrong scope.
+
+`image.repository` additionally carries no type constraint at all, so bool, int
+and list all render `%!s(...)` and break the document.
+
+Compare F21, which is a constraint *escaping* the guard arm its siblings sit
+inside; F76 is a constraint being pulled *into* a guard it was never under.
 
 ## Per-chart findings
 
@@ -2330,6 +2515,43 @@ were real.
   the matching provider constraints — the flagship capability, working.
 - **`harbor`** — 224 arms plus every `required "…"` site read; null and type
   sweeps found zero disagreements.
+- **`cert-manager`** — 3,914 mutations across three bases, 0 false acceptances.
+  All 47 reject arms read as correct nil-dereference guards, **each carrying the
+  absent-or-null disjunct** — which makes it a useful positive control for F23.
+  All 1,108 "Helm renders / schema rejects" cases resolve to provider constraints
+  on rendered Kubernetes fields.
+- **`trivy-operator`** — 3,939 mutations, 0 false acceptances; all four
+  `required "…"` sites correctly encoded, empty strings rejected and `0` correctly
+  not.
+- **`metallb` (parent scope only)** — the `speaker.frr`/`frrk8s` mutual
+  exclusions, the memberlist/nodeSelector rule, the serviceMonitor/podMonitor
+  exclusion and both `required "…"` calls each have a matching arm that rejects
+  its witness. Its **subchart** scope is F23-defective (20 dead arms), so this
+  chart is a clean parent and a broken child in one fixture.
+- **`datadog` (abort surface only)** — 8 of the 9 `fail` conditions probed by hand
+  are correctly encoded: both APM/namespace exclusions,
+  workload-autoscaling-without-remote-config, both APM/cluster-agent
+  combinations, the CSI injection mode, the cluster-agent PDB min/max exclusion
+  and the `registryMigrationMode` enum. Only the length rule slipped (F75).
+  Datadog is nonetheless defective on several other axes (F73, F75, F68, F23).
+
+**`cert-manager` also gives a direct verification of a `CLAUDE.md` invariant.**
+Its schema was regenerated twice with the pinned binary — once from the chart as
+vendored, once with the chart's shipped `values.schema.json` deleted — and the two
+outputs are **byte-identical to each other and to the committed fixture**. The
+rule that a shipped `values.schema.json` is never ingested as inference evidence
+holds in practice, not just in policy. (`cert-manager` is also the only corpus
+chart with no `Chart.yaml`; adjudicating it with `helm template` requires
+synthesising one from `Chart.template.yaml`.)
+
+**One clean verdict was later contradicted, and the reason is worth keeping.**
+`dict-config` was audited exhaustively by one agent — 5 files, 27 mutations × 3
+bases, plus a full read of its 705-line schema — and reported clean. A later pass
+found F73 in it: root `additionalProperties: false` refuses `arbitrary: true`
+while Helm renders. Both are honest. Mutating *declared* paths, however
+exhaustively, cannot find a defect that only appears when an **undeclared** key is
+added. "Exhaustive over the value space" is not "exhaustive over the key space",
+and no clean verdict in this document should be read as the latter.
 
 **Weaker than the above, and recorded as such:** the version-gate pass (F71)
 exercised the stop conditions it could reach in `aws-load-balancer-controller`,
