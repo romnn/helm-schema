@@ -1,5 +1,6 @@
 //! Structural and wire compatibility tests for the values-path carrier.
 
+use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
 use helm_schema_core::{Segment, ValuesPath};
@@ -112,14 +113,43 @@ fn literal_star_and_each_member_are_distinct() -> serde_json::Result<()> {
 
 #[test]
 fn ordering_matches_legacy_encoded_strings() {
-    let paths = [
-        ValuesPath::from_segments(["a", "z"]),
-        ValuesPath::from_segments(["a.b"]),
-        ValuesPath::from_segments([r"a\b"]),
-        ValuesPath::parse("a.*"),
-        ValuesPath::from_segments(["a"]),
-        ValuesPath::from_segments(["z"]),
+    let segments = [
+        Segment::Literal("a".to_string()),
+        Segment::Literal("b".to_string()),
+        Segment::Literal("a.b".to_string()),
+        Segment::Literal(r"a\b".to_string()),
+        Segment::Literal("*".to_string()),
+        Segment::Literal("-".to_string()),
+        Segment::Literal("/".to_string()),
+        Segment::Literal(" ".to_string()),
+        Segment::Literal("a*b".to_string()),
+        Segment::Literal("é".to_string()),
+        Segment::Literal("東京".to_string()),
+        Segment::EachMember,
     ];
+    let mut paths = vec![ValuesPath::default()];
+    for first in &segments {
+        paths.push(ValuesPath::from_segments([first]));
+        for second in &segments {
+            paths.push(ValuesPath::from_segments([first, second]));
+        }
+    }
+    let encoded = paths.iter().map(ValuesPath::encode).collect::<Vec<_>>();
+
+    for (left_index, left) in paths.iter().enumerate() {
+        for (right_index, right) in paths.iter().enumerate() {
+            let comparison = left.cmp(right);
+            sim_assert_eq!(
+                have: comparison,
+                want: encoded[left_index].cmp(&encoded[right_index])
+            );
+            sim_assert_eq!(
+                have: comparison == Ordering::Equal,
+                want: left == right
+            );
+        }
+    }
+
     let have = paths.iter().cloned().collect::<BTreeSet<_>>();
     let have = have.iter().map(ValuesPath::encode).collect::<Vec<_>>();
     let want = paths
@@ -129,4 +159,38 @@ fn ordering_matches_legacy_encoded_strings() {
         .into_iter()
         .collect::<Vec<_>>();
     sim_assert_eq!(have: have, want: want);
+}
+
+#[test]
+fn segment_ordering_matches_legacy_encoded_components() {
+    let segments = [
+        Segment::Literal("a".to_string()),
+        Segment::Literal("a.b".to_string()),
+        Segment::Literal(r"a\b".to_string()),
+        Segment::Literal("*".to_string()),
+        Segment::Literal("-".to_string()),
+        Segment::Literal("/".to_string()),
+        Segment::Literal(" ".to_string()),
+        Segment::Literal("é".to_string()),
+        Segment::Literal("東京".to_string()),
+        Segment::EachMember,
+    ];
+    let encoded = segments
+        .iter()
+        .map(Segment::encode_component)
+        .collect::<Vec<_>>();
+
+    for (left_index, left) in segments.iter().enumerate() {
+        for (right_index, right) in segments.iter().enumerate() {
+            let comparison = left.cmp(right);
+            sim_assert_eq!(
+                have: comparison,
+                want: encoded[left_index].cmp(&encoded[right_index])
+            );
+            sim_assert_eq!(
+                have: comparison == Ordering::Equal,
+                want: left == right
+            );
+        }
+    }
 }

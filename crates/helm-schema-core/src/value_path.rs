@@ -10,6 +10,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[derive(Clone, Debug, Default, Eq)]
 pub struct ValuesPath {
     segments: Vec<Segment>,
+    encoded: Box<str>,
 }
 
 /// One structural component of a [`ValuesPath`].
@@ -29,7 +30,7 @@ impl PartialOrd for Segment {
 
 impl Ord for Segment {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.encode_component().cmp(&other.encode_component())
+        EncodedSegmentBytes::new(self).cmp(EncodedSegmentBytes::new(other))
     }
 }
 
@@ -128,7 +129,8 @@ impl ValuesPath {
             }
         }
         push_parsed_segment(&mut segments, &mut segment, &mut escaped_star);
-        Self { segments }
+        let encoded = encode_segments(&segments).into_boxed_str();
+        Self { segments, encoded }
     }
 
     /// Constructs a path from literal structural segments.
@@ -138,13 +140,13 @@ impl ValuesPath {
         I: IntoIterator<Item = S>,
         S: Into<Segment>,
     {
-        Self {
-            segments: segments
-                .into_iter()
-                .map(Into::into)
-                .filter(|segment| !matches!(segment, Segment::Literal(value) if value.is_empty()))
-                .collect(),
-        }
+        let segments = segments
+            .into_iter()
+            .map(Into::into)
+            .filter(|segment| !matches!(segment, Segment::Literal(value) if value.is_empty()))
+            .collect::<Vec<_>>();
+        let encoded = encode_segments(&segments).into_boxed_str();
+        Self { segments, encoded }
     }
 
     /// Iterates structural segments from root to leaf.
@@ -156,33 +158,17 @@ impl ValuesPath {
     /// Encodes the path in the stable escaped-dot wire spelling.
     #[must_use]
     pub fn encode(&self) -> String {
-        let mut encoded = String::new();
-        for (index, segment) in self.segments.iter().enumerate() {
-            if index != 0 {
-                encoded.push('.');
-            }
-            match segment {
-                Segment::EachMember => encoded.push('*'),
-                Segment::Literal(value) if value == "*" => encoded.push_str(r"\*"),
-                Segment::Literal(value) => {
-                    for character in value.chars() {
-                        if matches!(character, '.' | '\\') {
-                            encoded.push('\\');
-                        }
-                        encoded.push(character);
-                    }
-                }
-            }
-        }
-        encoded
+        self.encoded.to_string()
     }
 
     /// Returns the strict structural parent, if this path is non-root.
     #[must_use]
     pub fn parent(&self) -> Option<Self> {
         let (_, parent) = self.segments.split_last()?;
+        let encoded = encode_segments(parent).into_boxed_str();
         Some(Self {
             segments: parent.to_vec(),
+            encoded,
         })
     }
 
@@ -191,12 +177,14 @@ impl ValuesPath {
         let segment = segment.into();
         if !segment.is_empty() {
             self.segments.push(Segment::Literal(segment));
+            self.encoded = encode_segments(&self.segments).into_boxed_str();
         }
     }
 
     /// Appends the structural marker for every ranged member.
     pub fn push_each_member(&mut self) {
         self.segments.push(Segment::EachMember);
+        self.encoded = encode_segments(&self.segments).into_boxed_str();
     }
 
     /// Reports whether this path is a strict descendant of `ancestor`.
@@ -229,6 +217,28 @@ fn push_parsed_segment(segments: &mut Vec<Segment>, segment: &mut String, escape
     *escaped_star = false;
 }
 
+fn encode_segments(segments: &[Segment]) -> String {
+    let mut encoded = String::new();
+    for (index, segment) in segments.iter().enumerate() {
+        if index != 0 {
+            encoded.push('.');
+        }
+        match segment {
+            Segment::EachMember => encoded.push('*'),
+            Segment::Literal(value) if value == "*" => encoded.push_str(r"\*"),
+            Segment::Literal(value) => {
+                for character in value.chars() {
+                    if matches!(character, '.' | '\\') {
+                        encoded.push('\\');
+                    }
+                    encoded.push(character);
+                }
+            }
+        }
+    }
+    encoded
+}
+
 impl PartialEq for ValuesPath {
     fn eq(&self, other: &Self) -> bool {
         self.segments == other.segments
@@ -243,7 +253,72 @@ impl PartialOrd for ValuesPath {
 
 impl Ord for ValuesPath {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.encode().cmp(&other.encode())
+        self.encoded.cmp(&other.encoded)
+    }
+}
+
+enum EncodedSegmentBytes<'a> {
+    EachMember(bool),
+    LiteralStar(u8),
+    Literal {
+        bytes: &'a [u8],
+        index: usize,
+        escape_pending: bool,
+    },
+}
+
+impl<'a> EncodedSegmentBytes<'a> {
+    fn new(segment: &'a Segment) -> Self {
+        match segment {
+            Segment::EachMember => Self::EachMember(false),
+            Segment::Literal(value) if value == "*" => Self::LiteralStar(0),
+            Segment::Literal(value) => Self::Literal {
+                bytes: value.as_bytes(),
+                index: 0,
+                escape_pending: false,
+            },
+        }
+    }
+}
+
+impl Iterator for EncodedSegmentBytes<'_> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::EachMember(emitted) => {
+                if *emitted {
+                    None
+                } else {
+                    *emitted = true;
+                    Some(b'*')
+                }
+            }
+            Self::LiteralStar(index) => {
+                let byte = b"\\*".get(usize::from(*index)).copied();
+                *index += u8::from(byte.is_some());
+                byte
+            }
+            Self::Literal {
+                bytes,
+                index,
+                escape_pending,
+            } => {
+                let byte = *bytes.get(*index)?;
+                if *escape_pending {
+                    *escape_pending = false;
+                    *index += 1;
+                    return Some(byte);
+                }
+                if byte == b'\\' {
+                    *escape_pending = true;
+                    Some(b'\\')
+                } else {
+                    *index += 1;
+                    Some(byte)
+                }
+            }
+        }
     }
 }
 
