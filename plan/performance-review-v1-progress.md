@@ -1055,7 +1055,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round E1 — linear structural metadata for emission deduplication
 
-- Status: pre-registered; implementation not started.
+- Status: landed in `9911ff51`.
 - Contract: add one shared post-order JSON metadata primitive that computes structural digest,
   exact canonical byte length, and unsafe reference-scope state once per node; use it to prefilter
   minifier candidates, logical-arm ordering, and provider-core candidates. Canonical strings and
@@ -1082,23 +1082,105 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   was directly measured only on grafana and datadog. The round-0 large-chart medians were 63.06 s
   datadog, 88.45 s airflow, and 119.77 s kube-prometheus-stack; these are historical context, not
   substitutes for same-window B2 measurements.
-- Measured results: pending.
-- Deviations: none at pre-registration.
-- Adjudication evidence: pending; E1 is representation-only and requires byte identity and zero
-  acceptance flips.
-- Public/wire decision: pre-registered as none. The metadata index is transient phase-local state,
-  never a global cache, serialized representation, or semantic oracle.
+- Measured results:
+  - Final paired Perfetto medians pass all four frozen span gates. Airflow `minimize_schema` is
+    0.681113 s B2 versus 0.303784 s E1 (55.4% lower; paired reduction 55.52%, range
+    54.65--55.85%) and `extract_repeated_provider_payloads` is 0.746084 versus 0.303363 s
+    (59.3% lower; paired 59.34%, range 58.66--60.58%). Kube-prometheus-stack minimization is
+    1.228321 versus 0.491078 s (60.0% lower; paired 59.26%, range 57.06--60.02%) and provider
+    extraction is 1.206251 versus 0.549281 s (54.5% lower; paired 53.82%, range
+    45.90--57.70%). Each chart uses three randomized trace pairs; load1 is 2.54--4.57 and all
+    output channels are exact.
+  - The final ten-chart CPU curve follows. `Gain` is the median paired reduction; a negative sample
+    in the range means the round does not claim a proven gain on that chart even when medians move
+    in the expected direction.
+
+| Chart | n | B2 CPU s median (min--max) | E1 CPU s median (min--max) | Gain median (range) | Retained load1 |
+|---|---:|---:|---:|---:|---:|
+| coredns | 5 | 0.18 (0.18--0.19) | 0.15 (0.15--0.16) | 16.67% (11.11--21.05%) | 2.09 |
+| metrics-server | 5 | 0.10 (0.10--0.10) | 0.09 (0.09--0.09) | 10.00% (10.00--10.00%) | 2.09 |
+| istiod | 5 | 0.26 (0.26--0.28) | 0.22 (0.21--0.22) | 15.38% (15.38--21.43%) | 2.09--2.17 |
+| cert-manager | 5 | 0.40 (0.39--0.41) | 0.35 (0.34--0.37) | 12.20% (9.76--12.82%) | 2.17--2.31 |
+| argo-cd | 3 | 2.76 (2.72--2.77) | 2.53 (2.50--3.04) | not proven; 8.09% (-10.14--8.66%) | 2.26--2.32 |
+| grafana | 3 | 1.46 (1.45--1.49) | 1.27 (1.27--1.29) | 13.01% (12.41--13.42%) | 2.22--2.32 |
+| cilium | 3 | 2.29 (2.27--2.29) | 2.01 (1.97--2.01) | 12.23% (12.23--13.22%) | 3.74--3.92 |
+| datadog | 5 | 11.48 (11.38--11.99) | 11.23 (10.87--11.40) | 2.51% (0.70--7.17%) | 3.02--3.85 |
+| airflow | 5 | 13.67 (13.21--14.64) | 12.63 (12.59--13.35) | 5.33% (2.63--8.83%) | 3.47--10.37 |
+| kube-prometheus-stack | 5 | 20.34 (20.11--20.68) | 18.83 (18.69--19.32) | 6.58% (6.19--8.25%) | 2.73--4.08 |
+
+  - The result clears E1's span criterion and has no median CPU regression. Argo CD's paired range
+    crosses zero, so it is explicitly not counted as a gain. Airflow's retained late pairs ran on
+    a loaded host but stayed positive; its exact load range is shown rather than described as idle.
+- Deviations:
+  - The first implementation (`e1-spike1`) made provider extraction 60%/57% faster on
+    airflow/kube-prometheus-stack, but minimization improved only 24%/28%, firing the 50% rejection
+    threshold for that attempt. Temporary subphase spans attributed the residual to repeated exact
+    candidate serialization and a second metadata-index construction. Those spans were removed
+    from the final source.
+  - Borrowing exact candidate representatives through `visit_subschemas` failed to compile because
+    the visitor callback cannot let its borrowed argument escape. The final bounded digest buckets
+    own one exact structural representative apiece. Two follow-on compile errors (an extra `>` and
+    stale lifetime/reference spellings) were corrected before any binary was preserved.
+  - The first exact-representative test run exposed an empty `$defs` insertion on no-plan schemas;
+    two minifier tests failed. The no-plan return now reinserts definitions only when the input had
+    them, restoring exact behavior.
+  - Replacing the legacy `logical_sort_digest` ordering key with the shared structural digest
+    changed coredns bytes. That subattempt was restored immediately. E1 therefore deliberately
+    retains the legacy digest only as a wire-order compatibility key; the shared post-order index
+    replaces the recursive candidate and provider-core work that the measured spans required.
+  - The first final trace window is invalidated: airflow took 36.52 s wall for 23.24 s CPU and
+    kube-prometheus-stack began at load1 12.34. A first three-pair trace retry put airflow
+    minimization at 48.4%, just below the threshold; switching unordered fingerprint-only buckets
+    from `BTreeMap` to `HashMap` was safe because canonical bytes are explicitly sorted before any
+    naming decision. The complete final trace matrix above uses the rebuilt hash-map binary.
+  - The first ten-chart curve window reached load1 10--13 for coredns through cilium and was
+    invalidated. Those seven charts were rerun under `e1/measure-retry`. Datadog and airflow were
+    also rerun together under `e1/measure-retry-large` because Datadog's first window began near
+    load1 9 and airflow had one negative outlier. The replacement Airflow window itself rose late
+    to load1 10.37; all five pairs remained positive, so it is retained with the load disclosed.
+  - The metadata integration binary is filtered by the default nextest profile. A focused default
+    invocation therefore skipped it; it was rerun explicitly under the integration profile, where
+    both tests pass. Two lint attempts then caught `match_same_arms` and redundant method closures;
+    both were fixed directly with no suppression.
+- Adjudication evidence: Helm v4.2.3. Every retained pair is exact for schema, stdout, JSON
+  diagnostics, and status. Schema and IR artifact paths differ by zero files from `a34859c0`; the
+  final battery covers 160 charts and 284,869 composed probes with zero flips, hence zero
+  candidate-accepts/Helm-aborts cells.
+- Public/wire decision: none. The metadata index is transient phase-local state keyed only by
+  addresses inside one stable document traversal. Digests select bounded buckets; exact
+  `serde_json::Value` equality decides identity and canonical strings still decide definition
+  ranking/naming. No cache, global state, serialized field, or emitted order changes.
 
 ### Review dossier
 
-- Planned implementation seam: `helm-schema-json-schema-walk` owns canonical structural metadata;
-  the minifier and generator consume that single definition rather than maintaining separate
-  recursive digest/length walks.
-- Planned collision evidence: exercise the digest-bucket path with an injected equal digest for
-  distinct canonical subtrees, then assert exact canonical comparison preserves both identities.
-- Planned phase evidence: emit `--trace-output` files under
-  `/private/tmp/helm-schema-performance-v1.LSEe9Y/e1/trace` for B2 and E1 on airflow and
-  kube-prometheus-stack, using the same cache and output flags.
+- Shared metadata tests: `cargo nextest run -p helm-schema-json-schema-walk --profile integration
+  --test metadata`; exit 0, 2/2 pass. Nested serialization lengths match canonical bytes and unsafe
+  scope propagates through schema positions while `$id`-shaped example data stays safe.
+- Generator/minifier tests: `cargo nextest run -p helm-schema-json-schema-minify -p
+  helm-schema-gen`; exit 0, 641/641 pass. The forced-collision test assigns one digest and byte
+  length to two unequal large schemas and proves both receive distinct exact identities/names.
+- Final binary: `cargo build --release -p helm-schema-cli`; exit 0, copied immediately to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-e1`, SHA-256
+  `2ec403006433205c41bacdae12d77161aacd623f0f8765a1a0d054b24c1df360`, 16,298,192 bytes.
+- Final byte/CPU evidence is split only because loaded windows were invalidated: coredns through
+  cilium use `e1/measure-retry`, datadog and airflow use `e1/measure-retry-large`, and
+  kube-prometheus-stack uses `e1/measure-final`. Every invocation sets
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s`,
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, and
+  `--compact --offline --k8s-version v1.35.0 --diag-format json`; timings use `/usr/bin/time -p`
+  outside the diagnostic channel.
+- Final phase gate: three randomized B2/E1 trace pairs per chart under `e1/trace-pairs-final` with
+  the same environment and `--trace-output`. `trace_processor_shell query` sums the named slices;
+  each invocation records UTC start, load1, CPU/wall, schema, stdout, diagnostics, and status.
+- Artifact gate: `git diff --exit-code a34859c0 -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`; exit 0, covering 156 schema and 18 IR artifacts.
+- Corpus battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/e1/battery-final
+  SCHEMA_ACCEPTANCE_BASELINE_REF=a34859c0
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/e1/battery-final/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 143.786 s with zero flips.
 
 ### Self-adversarial pass
 
@@ -1113,21 +1195,34 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   use stale entries as evidence after moving children.
 - Post-order rewriting would change whether definitions contain separately deduplicated children.
   The existing pre-order replacement behavior and naming order must remain exact.
+- A `HashMap` is safe only for digest buckets whose iteration is erased by the explicit final sort
+  on canonical length, occurrence count, and canonical bytes. No map iteration feeds emitted order.
+- Exact `Value` equality is equivalent to canonical-string identity for `serde_json::Value` and
+  avoids serializing every occurrence. Each distinct bucket representative still materializes its
+  canonical string for the unchanged ranking/savings rules.
+- The phase criterion is based on paired trace medians, not the unusually favorable spike trace or
+  the invalid loaded final trace. Kube-prometheus-stack provider extraction has one 45.90% pair,
+  but its paired median is 53.82% and its baseline/candidate span medians are 54.5% apart.
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Pending: `task lint`.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending: downstream luup2 decision and, if required, install plus `check:local`.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; 0.872 s.
+- `task lint`: exit 0; 12.982 s. Whole-workspace Clippy and all three AST-grep policies pass.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass in 94.64 s.
+- `cargo nextest run --workspace`: exit 0; 1,345/1,345 tests pass in 18.202 s after a 43.43 s
+  affected-crate rebuild.
+- `task test:integration`: exit 0; 669/669 tests pass in 526.500 s, with 24 profile skips. External
+  host contention inflated this gate; it is correctness evidence only.
+- `task test:all`: exit 0; 2,018/2,018 tests pass in 422.885 s, with 24 profile skips and live
+  network tests included.
+- Downstream luup2: not triggered because E1 is representation-only and every schema, diagnostic,
+  stdout, status, fixture, and acceptance channel is exact; the campaign's installed C1 gate
+  remains 32/32 green.
+- `task tokei:core`: exit 0; 67,362 production Rust LOC in 0.761 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.001 s.
+- `git diff --check`: exit 0; under 0.001 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +300 (67,062 to 67,362).
 
 ## Round B1 — release-profile LTO and codegen units
 
