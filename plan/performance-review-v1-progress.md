@@ -824,3 +824,76 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0; under 0.001 s.
 
 - Measured production LOC delta: +777 (66,154 to 66,931).
+
+## Round A2b — cached predicate metadata and borrowed BDD atoms
+
+- Status: pre-registered; implementation not started.
+- Contract: fold each predicate node's cached structural hash from its variant rank and child
+  cached hashes rather than recursively hashing whole subtrees; cache whether the node contains an
+  approximation; and let BDD atom collection/indexing borrow guards instead of deep-cloning them.
+  Keep structural `Eq`, `Ord`, and public `Hash` behavior consistent, retain every BDD and
+  normal-form cap, retain full-key A2 memo collision checking, and change no predicate choice,
+  schema semantics, diagnostic, status, artifact, or wire representation.
+- Acceptance baseline: `39b44aaf` for executable/schema identity and `d252d448` for the completed
+  A2 ledger state.
+- Baseline production Rust LOC: 66,931.
+- Pre-registered acceptance expectations:
+  - Hash equality is preserved for structurally equal predicates, and generated structural-order
+    cases continue to compare and hash consistently after child hashes are folded.
+  - Cached approximation flags agree with an explicit recursive walk over generated exact and
+    approximate formulas, including nested negation and conjunction/disjunction shapes.
+  - Borrowed BDD atoms produce the identical canonical guard order and identical bounded
+    normalize/implication results as A2.
+  - All ten reference outputs, all 156 schema fixtures, all 18 IR fixtures, stdout, JSON
+    diagnostics, statuses, and the full-depth battery remain byte-identical with zero flips.
+  - Reject if the paired CPU gain on the isolated kube-prometheus-stack
+    `kubernetes-apps.yaml` chart is under 3%; a range crossing zero is not a gain.
+- Performance baseline: fresh randomized interleaved pairs will compare the preserved
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a2` binary with A2b on the
+  isolated chart under `a1/kubernetes-apps-chart`. The ten-chart A2 curve is the round-wide
+  reference: 0.24, 0.14, 0.36, 0.51, 3.76, 2.04, 3.17, 17.84, 19.84, and 38.33 s CPU median.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; A2b is representation-only and requires byte identity and zero
+  acceptance flips.
+- Public/wire decision: pre-registered as none. Cached metadata remains private and derived only
+  from immutable structural predicate content.
+
+### Review dossier
+
+- Planned property tests: structural equality implies equal hashes; cached approximation state
+  matches a recursive oracle; borrowed-atom BDD results match the A2 public predicate operations
+  on generated formulas including both cap-abstention cases.
+- Planned byte and artifact gates: A2 versus A2b on the ten reference charts under the round-0
+  private cache and `git diff --exit-code 39b44aaf -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`.
+- Planned performance gate: at least five randomized interleaved A/B pairs on the isolated
+  kube-prometheus-stack single-template chart, with per-invocation load records and no concurrent
+  builds.
+
+### Self-adversarial pass
+
+- Folding child hashes is valid only if the variant rank, list length/boundaries, and child order
+  remain distinguishable exactly as `Hash` requires; cached hashes are not substitutes for
+  structural equality in any map.
+- Borrowed guards must outlive the BDD build and preserve the existing `BTreeSet` structural order;
+  pointer identity or hash iteration order must not affect atom numbering.
+- Caching approximation on a node must include approximate descendants beneath every variant,
+  especially `Not`; a stale false flag could let opaque predicates enter exact BDD reasoning.
+- The A2 memo can amplify a hashing regression because every lookup hashes full predicate keys.
+  Only the post-A2 isolated paired measurement decides whether A2b earns its representation cost.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 decision and, if required, install plus `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
