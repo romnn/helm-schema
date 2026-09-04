@@ -827,7 +827,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A2b — cached predicate metadata and borrowed BDD atoms
 
-- Status: pre-registered; implementation not started.
+- Status: landed in `30a5903f`.
 - Contract: fold each predicate node's cached structural hash from its variant rank and child
   cached hashes rather than recursively hashing whole subtrees; cache whether the node contains an
   approximation; and let BDD atom collection/indexing borrow guards instead of deep-cloning them.
@@ -852,24 +852,56 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a2` binary with A2b on the
   isolated chart under `a1/kubernetes-apps-chart`. The ten-chart A2 curve is the round-wide
   reference: 0.24, 0.14, 0.36, 0.51, 3.76, 2.04, 3.17, 17.84, 19.84, and 38.33 s CPU median.
-- Measured results: pending.
-- Deviations: none at pre-registration.
-- Adjudication evidence: pending; A2b is representation-only and requires byte identity and zero
-  acceptance flips.
-- Public/wire decision: pre-registered as none. Cached metadata remains private and derived only
-  from immutable structural predicate content.
+- Measured results: five randomized interleaved pairs on the isolated normalization-heavy
+  kube-prometheus-stack chart put A2 at 6.35 s CPU median (6.27--6.88) and A2b at 3.26 s
+  (3.14--3.47). Every pair is positive: the median paired gain is 49.06%, with a 45.98--49.92%
+  range, at load1 4.00--5.71. This clears the pre-registered 3% threshold by a wide margin. The
+  unpaired full-suite corroboration moved `test:integration` from A2's 396.773 s to 371.333 s
+  (6.4% lower) and `test:all` from 391.247 s to 363.095 s (7.2% lower); compilation, harness,
+  network, and small-test costs are outside the optimized path, so those suite figures are not
+  treated as controlled A/B evidence.
+- Deviations:
+  - The frozen plan expected A2b to recover 10--20% of post-A1/A2 normalization time. The isolated
+    end-to-end gain is 49.06%; the plan materially underestimated repeated recursive hashing and
+    guard cloning after A2 made memo lookup frequent.
+  - No measurement was invalidated and no implementation attempt was restored. The final release
+    binary was copied before any byte gate or decision run, and no source changed afterward.
+- Adjudication evidence: Helm v4.2.3. All ten reference charts are exact for schema, stdout, JSON
+  diagnostics, and status. The artifact paths differ by zero files from `39b44aaf`; the battery
+  covers 160 charts and 284,869 composed probes with zero flips, hence zero
+  candidate-accepts/Helm-aborts cells.
+- Public/wire decision: none. Cached metadata remains private and derived only from immutable
+  structural predicate content. BDD atoms borrow guards only during one normalization call and
+  clone a positive canonical guard solely when rebuilding a selected normal form.
 
 ### Review dossier
 
-- Planned property tests: structural equality implies equal hashes; cached approximation state
-  matches a recursive oracle; borrowed-atom BDD results match the A2 public predicate operations
-  on generated formulas including both cap-abstention cases.
-- Planned byte and artifact gates: A2 versus A2b on the ten reference charts under the round-0
-  private cache and `git diff --exit-code 39b44aaf -- testdata/chart-corpus-schemas
-  crates/helm-schema-ir/tests/fixtures`.
-- Planned performance gate: at least five randomized interleaved A/B pairs on the isolated
-  kube-prometheus-stack single-template chart, with per-invocation load records and no concurrent
-  builds.
+- Focused tests: `cargo nextest run -p helm-schema-core predicate`; exit 0, 46/46 tests pass in
+  0.088 s. The added oracles prove cached approximation state matches a recursive walk, rebuilt
+  equal predicates hash equally, negative and positive guards share one borrowed BDD atom, and
+  the existing generated exact/approximate/cap cases remain unchanged.
+- Final binary: `cargo build --release -p helm-schema-cli`; exit 0, copied immediately to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a2b`, SHA-256
+  `2ef76927ca085a98d69e51650f169ec74a56ec100f7687f047935654136c90c1`, 16,161,232 bytes.
+- Final ten-chart byte gate: preserved `helm-schema-a2` versus `helm-schema-a2b`, with
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s`,
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, and
+  `--compact --offline --k8s-version v1.35.0 --diag-format json`; all four channels are exact under
+  `a2b/byte`.
+- Artifact gate: `git diff --exit-code 39b44aaf -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`; exit 0, covering 156 schema and 18 IR artifacts.
+- Corpus battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a2b/battery
+  SCHEMA_ACCEPTANCE_BASELINE_REF=39b44aaf
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/a2b/battery/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 145.620 s with 160 charts, 284,869 probes,
+  and zero flips.
+- Final randomized interleaved pairs are under `a2b/measure`; A is the preserved A2 binary and B
+  is the exact final A2b binary. The five pair orders are randomized, every invocation records UTC
+  start and load1 beside `/usr/bin/time -p` output, and every pair's schema, stdout, JSON
+  diagnostics, and status are exact.
 
 ### Self-adversarial pass
 
@@ -882,18 +914,28 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   especially `Not`; a stale false flag could let opaque predicates enter exact BDD reasoning.
 - The A2 memo can amplify a hashing regression because every lookup hashes full predicate keys.
   Only the post-A2 isolated paired measurement decides whether A2b earns its representation cost.
+- Caching only child hashes intentionally permits additional structural-hash collisions. Full
+  structural equality remains the collision resolver for predicates and memo keys; neither the
+  cached hash nor borrowed atom identity can decide semantic equality.
+- The suite reductions are directionally useful but were not run as randomized A/B pairs and can
+  be affected by host load or network timing. The adoption decision therefore uses only the
+  isolated five-pair CPU result.
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Pending: `task lint`.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending: downstream luup2 decision and, if required, install plus `check:local`.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; 0.859 s.
+- `task lint`: exit 0; 10.586 s. Whole-workspace Clippy and all three AST-grep policies pass.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass in 84.41 s.
+- `cargo nextest run --workspace`: exit 0; 1,344/1,344 tests pass in 17.298 s after a 1m11s
+  build.
+- `task test:integration`: exit 0; 667/667 tests pass in 371.333 s, with 24 profile skips.
+- `task test:all`: exit 0; 2,015/2,015 tests pass in 363.095 s, with 24 profile skips and live
+  network tests included.
+- Downstream luup2: not triggered because A2b is representation-only and every schema,
+  diagnostic, stdout, status, fixture, and acceptance channel is exact; the campaign's installed
+  C1 gate remains 32/32 green.
+- `task tokei:core`: exit 0; 67,062 production Rust LOC in 0.697 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.001 s.
+- `git diff --check`: exit 0; under 0.001 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +131 (66,931 to 67,062).
