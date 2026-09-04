@@ -8,8 +8,16 @@ This document describes each bug with enough context to reproduce it. It does
 not prescribe fixes — root-causing to a line and designing the repair is
 deliberately left to a later pass.
 
-**Status: all 28 launched agents have reported**, contributing 286 proven
-findings across 79 families (F0–F76, plus D4 and D5). **The corpus's largest
+**Status: all 28 launched agents delivered results**, contributing roughly 290
+proven findings across 79 families (F0–F76, plus D4 and D5). That count is the
+sum of the agents' own proven-finding tallies: instances of one family in
+different charts are counted separately, and it should be read as a magnitude
+rather than a precise figure. The family count is exact.
+
+One agent (`batch-14`) had its report file write blocked by the harness and
+delivered inline instead; its report was recovered from the session transcript
+and is committed with the others, and three of its nine findings (F76, and the
+`datadog` witnesses now in F75 and F68) were folded only on a later re-scan. **The corpus's largest
 defect, F23, is now root-caused to two swapped branches in
 `condition_encoding.rs`, and the fix deletes a condition rather than adding
 one.** One deep pass (`openebs`) and one respawned
@@ -175,6 +183,22 @@ but are known-soft:
   witnessed, and whether it is a bug at all is an open policy question.
 - Every finding adjudicated before the `--kube-version` correction was found
   (i.e. all but the final frozen-cohort pass) may be affected in either direction.
+
+**Know which fixtures are blessed before you read a fixture diff.** The 156
+corpus fixtures are not equally trustworthy, and three rosters in
+`crates/helm-schema-cli/tests/chart_corpus.rs` say so:
+
+| Roster | Size | Meaning |
+| --- | ---: | --- |
+| `UNADJUDICATED_INTAKE` | 100 | Vendored in one batch from the Artifact Hub popularity ranking and pinned for **drift detection only**. Never blessed as correct. A change here is not automatically a regression — but it is also not automatically an improvement. |
+| `QUARANTINED_FALSE_REJECTIONS` | 24 | Charts whose shipped `values.yaml` is rejected by a schema that should have accepted it. The test **asserts the rejection still happens**, so fixing one of these makes its test fail *by design* — that is the signal the bug is fixed, and the entry should then be removed from the roster. |
+| `KNOWN_VALUES_REJECTIONS` | 4 | Charts whose own defaults Helm legitimately refuses. These are correct rejections. |
+
+So only 56 of the 156 fixtures are the long-frozen, adjudicated set, and most of
+this document's evidence comes from the other 100. When a fix changes output,
+the question is not "did a fixture move" but "which roster is it in, and does the
+new output match what Helm actually does" — which puts you back on the
+adjudicator setup above.
 
 **One structural caution.** Several families are the same behaviour behind
 different triggers — cluster A1 is seven families and one bug. Fixing them
