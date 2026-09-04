@@ -259,10 +259,12 @@ impl Interpreter<'_> {
         crate::eval_effect::SelectionTruthReachability,
     ) {
         let hole = self.eval_hole_exprs_for_condition(expr);
-        let truth_reachability = crate::eval_effect::SelectionTruthReachability::from_condition(
-            &hole.truth,
-            hole.truth_reachability.truth_source(),
-        );
+        let truth_reachability =
+            crate::eval_effect::SelectionTruthReachability::from_condition_with_memo(
+                &hole.truth,
+                hole.truth_reachability.truth_source(),
+                self.db.predicate_memo().as_ref(),
+            );
         let mut effects = hole.effects;
         effects.bound_output_paths.clear();
         let strict_paths: std::collections::BTreeSet<String> = effects
@@ -372,8 +374,10 @@ impl Interpreter<'_> {
             );
             if exprs.len() == 1 {
                 truth = result.truth.clone();
-                truth_reachability =
-                    result.output_reachability(crate::eval_effect::SelectionPolarity::Truthy);
+                truth_reachability = result.output_reachability_with_memo(
+                    crate::eval_effect::SelectionPolarity::Truthy,
+                    env.predicate_memo.as_ref(),
+                );
                 json_payload_truth = result.json_payload_truth.clone();
                 scalar_dispatch = result.scalar_dispatch.clone();
             }
@@ -392,7 +396,8 @@ impl Interpreter<'_> {
 
     pub(super) fn hole_eval_env(&self, current_dot: Option<&AbstractValue>) -> EvalEnv {
         let mut env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot)
-            .without_helper_call_args();
+            .without_helper_call_args()
+            .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
         // roots stay in `root_fields` so a helper-arg key never shadows a
         // same-named body local. Range VALUE variables resolve to member

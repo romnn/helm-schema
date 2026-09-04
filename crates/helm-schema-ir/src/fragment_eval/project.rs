@@ -12,7 +12,9 @@
 
 use crate::contract::ContractIr;
 use crate::{ContractProvenance, ContractUse, Guard, ValueKind, YamlPath};
-use helm_schema_core::{GuardDnf, Predicate, dynamic_mapping_value_path, sequence_item_path};
+use helm_schema_core::{
+    GuardDnf, Predicate, PredicateMemo, dynamic_mapping_value_path, sequence_item_path,
+};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, SiteFacts, Splice, StringPart,
@@ -21,7 +23,10 @@ use super::eval::EvaluatedDocument;
 
 /// Project an evaluated document into the contract graph.
 #[must_use]
-pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> ContractIr {
+pub(crate) fn contract_ir_from_document(
+    document: &EvaluatedDocument,
+    predicate_memo: &PredicateMemo,
+) -> ContractIr {
     let mut contract = ContractIr::default();
     let mut conditions = Vec::new();
     walk_guarded(
@@ -31,6 +36,7 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
         &mut contract,
         &std::collections::BTreeSet::new(),
         &[],
+        predicate_memo,
     );
     for read in &document.reads {
         if read.condition.is_never() {
@@ -61,6 +67,7 @@ fn walk_guarded(
     contract: &mut ContractIr,
     member_sibling_keys: &std::collections::BTreeSet<String>,
     structural_sibling_conditions: &[Predicate],
+    predicate_memo: &PredicateMemo,
 ) {
     // Sibling MAPPING arms of the same guarded position contribute literal
     // keys to the object a member-level splice completes (`- name: tmp`
@@ -94,8 +101,10 @@ fn walk_guarded(
                     }
                     sibling_conditions.extend(entry.value.arms.iter().map(
                         |(value_condition, _)| {
-                            Predicate::all(vec![sibling_condition.clone(), value_condition.clone()])
-                                .normalize_boolean()
+                            predicate_memo.normalize(Predicate::all(vec![
+                                sibling_condition.clone(),
+                                value_condition.clone(),
+                            ]))
                         },
                     ));
                 }
@@ -103,8 +112,10 @@ fn walk_guarded(
             AbstractFragment::Sequence(sequence) => {
                 for item in &sequence.items {
                     sibling_conditions.extend(item.arms.iter().map(|(item_condition, _)| {
-                        Predicate::all(vec![sibling_condition.clone(), item_condition.clone()])
-                            .normalize_boolean()
+                        predicate_memo.normalize(Predicate::all(vec![
+                            sibling_condition.clone(),
+                            item_condition.clone(),
+                        ]))
                     }));
                 }
             }
@@ -141,6 +152,7 @@ fn walk_guarded(
             contract,
             &sibling_keys,
             &minimal_sibling_conditions,
+            predicate_memo,
         );
         if pushed {
             conditions.pop();
@@ -181,6 +193,7 @@ fn walk_node(
     contract: &mut ContractIr,
     member_sibling_keys: &std::collections::BTreeSet<String>,
     structural_sibling_conditions: &[Predicate],
+    predicate_memo: &PredicateMemo,
 ) {
     let no_siblings = std::collections::BTreeSet::new();
     match node {
@@ -229,6 +242,7 @@ fn walk_node(
                             contract,
                             &no_siblings,
                             &[],
+                            predicate_memo,
                         );
                     }
                     EntryKey::Literal(_) => {
@@ -239,6 +253,7 @@ fn walk_node(
                             contract,
                             &literal_keys,
                             &literal_key_conditions,
+                            predicate_memo,
                         );
                     }
                     EntryKey::Dynamic(_) => {
@@ -256,6 +271,7 @@ fn walk_node(
                             contract,
                             &no_siblings,
                             &[],
+                            predicate_memo,
                         );
                     }
                 }
@@ -264,7 +280,15 @@ fn walk_node(
         AbstractFragment::Sequence(sequence) => {
             let item_path = sequence_item_path(path);
             for item in &sequence.items {
-                walk_guarded(item, &item_path, conditions, contract, &no_siblings, &[]);
+                walk_guarded(
+                    item,
+                    &item_path,
+                    conditions,
+                    contract,
+                    &no_siblings,
+                    &[],
+                    predicate_memo,
+                );
             }
         }
         AbstractFragment::Scalar(scalar) => {
@@ -295,14 +319,13 @@ fn walk_node(
                     // this identity.
                     let mut conjunctions = std::collections::BTreeSet::new();
                     for sibling_condition in structural_sibling_conditions {
-                        let condition = Predicate::all(
+                        let condition = predicate_memo.normalize(Predicate::all(
                             conditions
                                 .iter()
                                 .cloned()
                                 .chain(std::iter::once(sibling_condition.clone()))
                                 .collect(),
-                        )
-                        .normalize_boolean();
+                        ));
                         let conjunction = match condition.kind() {
                             helm_schema_core::PredicateKind::False => continue,
                             helm_schema_core::PredicateKind::True => Vec::new(),

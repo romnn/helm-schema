@@ -27,9 +27,10 @@ pub(super) fn eval_default(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    let memo = env.predicate_memo.as_ref();
     let primary_dispatch = primary.scalar_dispatch.clone();
-    let fallback_reachability = default_primary_selection(&primary);
-    let primary_reachability = fallback_reachability.complement();
+    let fallback_reachability = default_primary_selection_with_memo(&primary, memo);
+    let primary_reachability = fallback_reachability.complement_with_memo(memo);
     let primary_paths = identity_value_paths(primary.value.as_ref());
     let exact_primary_identity = primary.exact_input_identity();
     primary.selection_reachability = Some(primary_reachability.clone());
@@ -148,6 +149,7 @@ pub(super) fn eval_default(
         primary_dispatch,
         fallback_dispatch,
         fallback_args,
+        memo,
     )
 }
 
@@ -167,22 +169,24 @@ fn finish_default_dispatch(
     primary_dispatch: Option<ScalarValueDispatch>,
     fallback_dispatch: Option<ScalarValueDispatch>,
     fallback_args: &[TemplateExpr],
+    memo: &helm_schema_core::PredicateMemo,
 ) -> EvalResult {
     if fallback_reachability.is_always()
         && let Some(fallback) = fallback_dispatch
     {
-        return result.with_scalar_dispatch(fallback);
+        return result.with_scalar_dispatch_with_memo(fallback, memo);
     }
     if fallback_reachability.is_never()
         && let Some(primary) = primary_dispatch
     {
-        return result.with_scalar_dispatch(primary);
+        return result.with_scalar_dispatch_with_memo(primary, memo);
     }
     if let (Some(primary), Some(fallback), [_]) =
         (primary_dispatch, fallback_dispatch, fallback_args)
-        && let Some(dispatch) = ScalarValueDispatch::select_default(&primary, &fallback)
+        && let Some(dispatch) =
+            ScalarValueDispatch::select_default_with_memo(&primary, &fallback, memo)
     {
-        return result.with_scalar_dispatch(dispatch);
+        return result.with_scalar_dispatch_with_memo(dispatch, memo);
     }
     result
 }
@@ -213,7 +217,15 @@ fn apply_default_primary_formatter_reachability(
     }
 }
 
+#[cfg(test)]
 pub(crate) fn default_primary_selection(result: &EvalResult) -> SelectionReachability {
+    default_primary_selection_with_memo(result, &helm_schema_core::PredicateMemo::new())
+}
+
+fn default_primary_selection_with_memo(
+    result: &EvalResult,
+    memo: &helm_schema_core::PredicateMemo,
+) -> SelectionReachability {
     if let Some(dispatch) = result.scalar_dispatch.as_ref()
         && (dispatch.has_printf_string_identity()
             || result.value.as_ref().is_some_and(|value| {
@@ -223,7 +235,11 @@ pub(crate) fn default_primary_selection(result: &EvalResult) -> SelectionReachab
                     .any(|path| result.effects.derived_text_paths.contains(path))
             }))
     {
-        return SelectionReachability::from((dispatch, SelectionPolarity::Falsy));
+        return SelectionReachability::from_dispatch_with_memo(
+            dispatch,
+            SelectionPolarity::Falsy,
+            memo,
+        );
     }
     let Some(value) = result.value.as_ref() else {
         return SelectionReachability::approximate(None, SelectionTruthSource::RawInput);
@@ -325,8 +341,12 @@ pub(super) fn eval_coalesce(
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         candidate_truths.push(result.truth.clone());
         default_paths.extend(identity_value_paths(result.value.as_ref()));
-        let reachability = empty_fold_candidate_reachability(&result)
-            .unwrap_or_else(|| result.output_reachability(SelectionPolarity::Truthy));
+        let reachability = empty_fold_candidate_reachability(&result, env).unwrap_or_else(|| {
+            result.output_reachability_with_memo(
+                SelectionPolarity::Truthy,
+                env.predicate_memo.as_ref(),
+            )
+        });
         candidate_dispatches.push(result.scalar_dispatch.clone());
         candidates.push((result, reachability));
     }
@@ -345,7 +365,7 @@ pub(super) fn eval_coalesce(
         );
         previous_falsy.push(
             reachability
-                .complement()
+                .complement_with_memo(env.predicate_memo.as_ref())
                 .output_selection_predicate("coalesce prior candidate selection", involved_paths),
         );
         effects.merge(result.effects);
@@ -381,9 +401,10 @@ pub(super) fn eval_coalesce(
         }
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
-    result.set_truth_condition(
-        TruthCondition::any(candidate_truths),
+    result.set_truth_condition_with_memo(
+        TruthCondition::any_with_memo(candidate_truths, env.predicate_memo.as_ref()),
         SelectionTruthSource::RawInput,
+        env.predicate_memo.as_ref(),
     );
     if let Some(dispatch) = candidate_dispatches
         .into_iter()
@@ -392,17 +413,24 @@ pub(super) fn eval_coalesce(
             let mut dispatches = dispatches.into_iter().rev();
             let mut selected = dispatches.next()?;
             for primary in dispatches {
-                selected = ScalarValueDispatch::select_default(&primary, &selected)?;
+                selected = ScalarValueDispatch::select_default_with_memo(
+                    &primary,
+                    &selected,
+                    env.predicate_memo.as_ref(),
+                )?;
             }
             Some(selected)
         })
     {
-        result = result.with_scalar_dispatch(dispatch);
+        result = result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref());
     }
     result
 }
 
-fn empty_fold_candidate_reachability(result: &EvalResult) -> Option<SelectionReachability> {
+fn empty_fold_candidate_reachability(
+    result: &EvalResult,
+    env: &EvalEnv,
+) -> Option<SelectionReachability> {
     let rescues = empty_rescue_paths(result.value.as_ref()?, &result.effects)?;
     let [(path, spellings)] = rescues.as_slice() else {
         return None;
@@ -418,8 +446,8 @@ fn empty_fold_candidate_reachability(result: &EvalResult) -> Option<SelectionRea
                 })
             })
             .collect(),
-    )
-    .normalize_boolean();
+    );
+    let falsy = env.predicate_memo.normalize(falsy);
     Some(SelectionReachability::exact(
         falsy.negated(),
         SelectionTruthSource::RenderedScalar,

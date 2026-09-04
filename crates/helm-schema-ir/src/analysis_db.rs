@@ -142,6 +142,7 @@ pub(crate) struct IrAnalysisDb {
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
     custom_merge_helpers: RefCell<HashMap<String, Option<CustomMergeHelper>>>,
     nil_scrub_helpers: RefCell<HashMap<String, bool>>,
+    predicate_memo: Rc<helm_schema_core::PredicateMemo>,
     /// Exact immutable Helm root fields, represented separately from values.
     static_root_fields: HashMap<String, AbstractValue>,
 }
@@ -258,8 +259,13 @@ impl IrAnalysisDb {
             bound_helper_calls: RefCell::new(BTreeMap::new()),
             custom_merge_helpers: RefCell::new(HashMap::new()),
             nil_scrub_helpers: RefCell::new(HashMap::new()),
+            predicate_memo: Rc::new(helm_schema_core::PredicateMemo::new()),
             static_root_fields: static_root_fields(static_root_strings),
         }
+    }
+
+    pub(crate) fn predicate_memo(&self) -> &Rc<helm_schema_core::PredicateMemo> {
+        &self.predicate_memo
     }
 
     pub(crate) fn static_root_fields(&self) -> &HashMap<String, AbstractValue> {

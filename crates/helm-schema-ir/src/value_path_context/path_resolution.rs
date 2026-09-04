@@ -104,7 +104,8 @@ impl ValuePathContext<'_> {
             self.fragment_context,
             &mut seen,
         );
-        let evaluated_truth_reachability = evaluated.output_reachability(SelectionPolarity::Truthy);
+        let evaluated_truth_reachability = evaluated
+            .output_reachability_with_memo(SelectionPolarity::Truthy, env.predicate_memo.as_ref());
         let mut influence_paths = evaluated
             .effects
             .output_value_paths()
@@ -129,11 +130,12 @@ impl ValuePathContext<'_> {
             (crate::scalar_value::TruthCondition::Unknown, Some(false)) => {
                 SelectionReachability::never(SelectionTruthSource::RawInput)
             }
-            _ => SelectionReachability::from((
+            _ => SelectionReachability::from_condition_with_memo(
                 &evaluated.truth,
                 SelectionPolarity::Truthy,
                 truth_source,
-            )),
+                env.predicate_memo.as_ref(),
+            ),
         };
         let input_identity = value
             .as_ref()

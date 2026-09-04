@@ -320,7 +320,7 @@ pub(super) fn eval_index(
     let value = AbstractValue::choice(values);
     match value {
         Some(value) => {
-            let mut result = EvalResult::from_value(value);
+            let mut result = EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
             result.effects.merge(effects);
             result
         }

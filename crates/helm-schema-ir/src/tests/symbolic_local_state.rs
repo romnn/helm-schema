@@ -413,7 +413,11 @@ fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
             .collect(),
     );
 
-    branch.conjoin_changed_truthy_reductions(&entry, &condition);
+    branch.conjoin_changed_truthy_reductions(
+        &entry,
+        &condition,
+        &helm_schema_core::PredicateMemo::new(),
+    );
     sim_assert_eq!(have: branch.truthy_reductions.get("message"), want: None);
     assert!(branch.truthiness_abstentions.contains("message"));
 
@@ -442,6 +446,7 @@ fn exact_if_join_conditions_an_untouched_entry_truthy_reduction() {
             stopped,
         )],
         false,
+        &helm_schema_core::PredicateMemo::new(),
     );
 
     sim_assert_eq!(

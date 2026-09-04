@@ -20,7 +20,7 @@ use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_core::{Predicate, ValuesPath};
 
 use super::domain::{
-    AbstractFragment, AbstractString, Guarded, PathCondition, StringPart, and_conditions,
+    AbstractFragment, AbstractString, Guarded, PathCondition, StringPart, and_conditions_with_memo,
     stamp_fragment_sites, stamp_part_sites,
 };
 use super::eval::Interpreter;
@@ -212,6 +212,7 @@ fn hole_is_control_fragment(text: &str) -> bool {
 fn combine_scalar_arms(
     base: Vec<(PathCondition, Vec<StringPart>)>,
     segment: Vec<(PathCondition, Vec<StringPart>)>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> Vec<(PathCondition, Vec<StringPart>)> {
     if segment.is_empty() {
         return base;
@@ -233,7 +234,11 @@ fn combine_scalar_arms(
             let mut parts = base_parts.clone();
             parts.extend(segment_parts.iter().cloned());
             out.push((
-                and_conditions(base_condition.clone(), segment_condition.clone()),
+                and_conditions_with_memo(
+                    base_condition.clone(),
+                    segment_condition.clone(),
+                    predicate_memo,
+                ),
                 parts,
             ));
         }
@@ -675,10 +680,6 @@ impl Interpreter<'_> {
 
     /// Evaluate a hole rendered inside a partial scalar: guarded arms of
     /// string parts.
-    #[expect(
-        clippy::too_many_lines,
-        reason = "hole evaluation must restore site state across every early return and keep lowering inputs synchronized"
-    )]
     pub(super) fn eval_hole_parts(&mut self, span: Span) -> Vec<(PathCondition, Vec<StringPart>)> {
         let text = self.text(span);
         if hole_is_control_fragment(text) {
@@ -769,14 +770,13 @@ impl Interpreter<'_> {
             arms.push((Predicate::True, plain_parts));
         }
         if !defaulted.is_empty() && !arms.is_empty() {
-            let covered = Predicate::Or(
+            let covered = self.db.predicate_memo().normalize(Predicate::Or(
                 arms.iter()
                     .map(|(condition, _)| condition.clone())
                     .collect(),
-            )
-            .normalize_boolean();
+            ));
             if !covered.contains_approximation() {
-                let fallback = covered.negated().normalize_boolean();
+                let fallback = self.db.predicate_memo().normalize(covered.negated());
                 if fallback != Predicate::False {
                     // An unattributed fallback still renders. Its empty part
                     // arm keeps neighboring scalar segments live when the
@@ -842,7 +842,7 @@ impl Interpreter<'_> {
                 Segment::Hole(span) => self.eval_hole_parts(span),
                 Segment::Region(span) => self.eval_inline_region(span),
             };
-            arms = combine_scalar_arms(arms, segment_arms);
+            arms = combine_scalar_arms(arms, segment_arms, self.db.predicate_memo().as_ref());
         }
         self.record_completed_token_contracts(&arms);
         scalar_arms_to_fragment(arms, false)
@@ -1178,7 +1178,7 @@ impl Interpreter<'_> {
                     Predicate::True,
                     vec![StringPart::Text([text.to_string()].into_iter().collect())],
                 )];
-                arms = combine_scalar_arms(arms, text_arm);
+                arms = combine_scalar_arms(arms, text_arm, self.db.predicate_memo().as_ref());
             }
             match self.body_facts.control_facts.get(&hole.start) {
                 Some(facts) if facts.region_end <= block.body.end => {
@@ -1187,7 +1187,8 @@ impl Interpreter<'_> {
                         end: facts.region_end,
                     };
                     let region_arms = self.eval_inline_region(region);
-                    arms = combine_scalar_arms(arms, region_arms);
+                    arms =
+                        combine_scalar_arms(arms, region_arms, self.db.predicate_memo().as_ref());
                     cursor = region.end;
                     continue;
                 }
@@ -1218,7 +1219,8 @@ impl Interpreter<'_> {
                         self.eval_suppressed_fragment_hole(*hole);
                     } else {
                         let hole_arms = self.eval_hole_parts(*hole);
-                        arms = combine_scalar_arms(arms, hole_arms);
+                        arms =
+                            combine_scalar_arms(arms, hole_arms, self.db.predicate_memo().as_ref());
                     }
                 }
             }
@@ -1232,7 +1234,7 @@ impl Interpreter<'_> {
                 Predicate::True,
                 vec![StringPart::Text([text.to_string()].into_iter().collect())],
             )];
-            arms = combine_scalar_arms(arms, text_arm);
+            arms = combine_scalar_arms(arms, text_arm, self.db.predicate_memo().as_ref());
         }
         scalar_arms_to_fragment(arms, true)
     }

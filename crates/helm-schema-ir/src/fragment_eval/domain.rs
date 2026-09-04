@@ -11,7 +11,7 @@ use std::collections::BTreeSet;
 use std::rc::Rc;
 
 use crate::{ContractProvenance, ResourceRef, ValueKind};
-use helm_schema_core::{Predicate, ValuesPath};
+use helm_schema_core::{Predicate, PredicateMemo, ValuesPath};
 
 /// Render-site facts resolved at evaluation time: the manifest resource
 /// whose span contains the site, that resource span's path prefix (List
@@ -75,12 +75,13 @@ impl<T> Guarded<T> {
     /// Conjoin `condition` onto every arm (used when a control region
     /// dissolves into the surrounding container: each contribution keeps its
     /// own arm conditions and gains the region branch condition).
-    pub fn guard_all(&mut self, condition: &PathCondition) {
+    pub fn guard_all(&mut self, condition: &PathCondition, memo: &PredicateMemo) {
         if condition.is_trivial() && *condition == Predicate::True {
             return;
         }
         for (arm_condition, _) in &mut self.arms {
-            *arm_condition = and_conditions(condition.clone(), arm_condition.clone());
+            *arm_condition =
+                and_conditions_with_memo(condition.clone(), arm_condition.clone(), memo);
         }
     }
 
@@ -94,7 +95,11 @@ impl<T> Guarded<T> {
 /// [`Predicate::True`] as identity. Operand order is preserved (outer
 /// condition first) so lowered guard stacks read root-to-leaf.
 #[must_use]
-pub(crate) fn and_conditions(outer: PathCondition, inner: PathCondition) -> PathCondition {
+pub(crate) fn and_conditions_with_memo(
+    outer: PathCondition,
+    inner: PathCondition,
+    memo: &PredicateMemo,
+) -> PathCondition {
     let mut parts = Vec::new();
     for condition in [outer, inner] {
         match condition.kind() {
@@ -113,7 +118,7 @@ pub(crate) fn and_conditions(outer: PathCondition, inner: PathCondition) -> Path
             }
         }
     }
-    Predicate::all(parts).normalize_boolean()
+    memo.normalize(Predicate::all(parts))
 }
 
 /// One node of the abstract rendered document.

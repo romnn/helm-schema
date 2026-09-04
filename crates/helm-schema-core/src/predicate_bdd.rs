@@ -1,4 +1,5 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::cell::RefCell;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::{Guard, GuardDnf, Predicate, PredicateKind};
 
@@ -7,6 +8,45 @@ const TRUE: usize = 1;
 const MAX_BDD_NODES: usize = 4_096;
 const MAX_NORMAL_FORM_PATHS: usize = 256;
 const MAX_NORMAL_FORM_LITERALS: usize = 8_192;
+
+/// Per-analysis cache for bounded Boolean predicate operations.
+#[derive(Debug, Default)]
+pub struct PredicateMemo {
+    normalized: RefCell<HashMap<Predicate, Predicate>>,
+    implications: RefCell<HashMap<(Predicate, Predicate), bool>>,
+}
+
+impl PredicateMemo {
+    /// Creates an empty cache owned by one analysis run.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Canonicalizes a predicate and reuses an identical result from this run.
+    #[must_use]
+    pub fn normalize(&self, predicate: Predicate) -> Predicate {
+        if let Some(cached) = self.normalized.borrow().get(&predicate).cloned() {
+            return cached;
+        }
+        let key = predicate.clone();
+        let normalized = normalize_with_memo(predicate, Some(self));
+        self.normalized.borrow_mut().insert(key, normalized.clone());
+        normalized
+    }
+
+    /// Reports exact entailment and reuses an identical result from this run.
+    #[must_use]
+    pub fn exactly_implies(&self, antecedent: &Predicate, consequent: &Predicate) -> bool {
+        let key = (antecedent.clone(), consequent.clone());
+        if let Some(cached) = self.implications.borrow().get(&key) {
+            return *cached;
+        }
+        let implies = exact_implies_uncached(antecedent, consequent);
+        self.implications.borrow_mut().insert(key, implies);
+        implies
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum BooleanOp {
@@ -31,7 +71,16 @@ struct PredicateBdd {
 }
 
 pub(crate) fn normalize(predicate: Predicate) -> Predicate {
-    let predicate = simplify_structure(predicate);
+    normalize_with_memo(predicate, None)
+}
+
+#[cfg(test)]
+fn normalize_uncached(predicate: Predicate) -> Predicate {
+    normalize_with_memo(predicate, None)
+}
+
+fn normalize_with_memo(predicate: Predicate, memo: Option<&PredicateMemo>) -> Predicate {
+    let predicate = simplify_structure(predicate, memo);
     if predicate.contains_approximation() {
         return predicate;
     }
@@ -54,10 +103,10 @@ pub(crate) fn normalize(predicate: Predicate) -> Predicate {
         .unwrap_or(Predicate::False)
 }
 
-fn simplify_structure(predicate: Predicate) -> Predicate {
+fn simplify_structure(predicate: Predicate, memo: Option<&PredicateMemo>) -> Predicate {
     match predicate.kind() {
         PredicateKind::Not(inner) => {
-            let inner = simplify_structure(inner.clone());
+            let inner = simplify_structure(inner.clone(), memo);
             match inner.kind() {
                 PredicateKind::True => Predicate::False,
                 PredicateKind::False => Predicate::True,
@@ -67,7 +116,11 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
         }
         PredicateKind::And(predicates) => {
             let mut factors = BTreeSet::new();
-            for predicate in predicates.iter().cloned().map(simplify_structure) {
+            for predicate in predicates
+                .iter()
+                .cloned()
+                .map(|predicate| simplify_structure(predicate, memo))
+            {
                 match predicate.kind() {
                     PredicateKind::False => return Predicate::False,
                     PredicateKind::True => {}
@@ -95,7 +148,10 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
                 // The subset implies the opaque runtime condition. When the
                 // other exact conjuncts already imply that subset, the
                 // runtime condition is known true and contributes nothing.
-                !exact_implies(&exact, sound_subset)
+                !memo.map_or_else(
+                    || exact_implies_uncached(&exact, sound_subset),
+                    |memo| memo.exactly_implies(&exact, sound_subset),
+                )
             });
             match factors.len() {
                 0 => Predicate::True,
@@ -105,7 +161,11 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
         }
         PredicateKind::Or(predicates) => {
             let mut alternatives = BTreeSet::new();
-            for predicate in predicates.iter().cloned().map(simplify_structure) {
+            for predicate in predicates
+                .iter()
+                .cloned()
+                .map(|predicate| simplify_structure(predicate, memo))
+            {
                 match predicate.kind() {
                     PredicateKind::True => return Predicate::True,
                     PredicateKind::False => {}
@@ -126,6 +186,10 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
 }
 
 pub(crate) fn exact_implies(antecedent: &Predicate, consequent: &Predicate) -> bool {
+    exact_implies_uncached(antecedent, consequent)
+}
+
+fn exact_implies_uncached(antecedent: &Predicate, consequent: &Predicate) -> bool {
     if antecedent.contains_approximation() || consequent.contains_approximation() {
         return false;
     }
@@ -137,6 +201,14 @@ pub(crate) fn exact_implies(antecedent: &Predicate, consequent: &Predicate) -> b
         return false;
     };
     bdd.build(&counterexample) == Some(FALSE)
+}
+
+#[cfg(test)]
+fn memo_sizes(memo: &PredicateMemo) -> (usize, usize) {
+    (
+        memo.normalized.borrow().len(),
+        memo.implications.borrow().len(),
+    )
 }
 
 impl PredicateBdd {
@@ -419,3 +491,7 @@ fn predicate_size(predicate: &Predicate) -> usize {
         | PredicateKind::Guard(_) => 1,
     }
 }
+
+#[cfg(test)]
+#[path = "tests/predicate_bdd.rs"]
+mod tests;

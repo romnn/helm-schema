@@ -40,6 +40,7 @@ pub use output_path::{
 };
 pub use pattern_dialect::{escape_regex_literal, normalize_schema_pattern_dialects};
 pub use predicate::{ApproximationRole, Conjunction, Predicate, PredicateKind};
+pub use predicate_bdd::PredicateMemo;
 pub use provenance::{ContractProvenance, SourceSpan};
 pub use provider_origin::ProviderOrigin;
 pub use provider_schema_fragment::{

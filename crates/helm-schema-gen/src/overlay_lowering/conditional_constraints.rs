@@ -226,6 +226,7 @@ pub(crate) fn append_terminal_clauses(
     guarded_values_default_sources: &BTreeSet<helm_schema_core::GuardedValuesDefaultSource>,
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     append_values_default_source_absence_clauses(
         root_schema,
@@ -234,6 +235,7 @@ pub(crate) fn append_terminal_clauses(
         guarded_values_default_sources,
         documents,
         dependency_roots,
+        predicate_memo,
     );
     // A deleted dependency values root is not the document minus a key:
     // helm recreates the table from the SUBCHART's own values, so a clause
@@ -242,7 +244,7 @@ pub(crate) fn append_terminal_clauses(
     // reach. One clause per root states it.
     let mut deleted_roots = BTreeSet::new();
     for guards in clauses {
-        let (_, _, absence) = documents.condition_context(guards, dependency_roots);
+        let (_, _, absence) = documents.condition_context(guards, dependency_roots, predicate_memo);
         if let Some(root) =
             crate::condition_encoding::deleted_dependency_root_terminates(guards, absence)
         {
@@ -257,7 +259,8 @@ pub(crate) fn append_terminal_clauses(
         root_schema.append_conditional(&[], condition, SchemaNode::foreign(Value::Bool(false)));
     }
     for guards in clauses {
-        let (_, values_yaml_doc, absence) = documents.condition_context(guards, dependency_roots);
+        let (_, values_yaml_doc, absence) =
+            documents.condition_context(guards, dependency_roots, predicate_memo);
         let shared_ancestor = shared_guard_ancestor_segments(guards);
         let all_vacuous = guards.iter().all(guard_holds_vacuously);
         // Keep present values attributed to their nearest shared object.
@@ -335,6 +338,7 @@ fn append_values_default_source_absence_clauses(
     guarded_values_default_sources: &BTreeSet<helm_schema_core::GuardedValuesDefaultSource>,
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     for guards in clauses {
         let [ConditionalGuard::Absent { path }] = guards.as_slice() else {
@@ -370,7 +374,7 @@ fn append_values_default_source_absence_clauses(
                     .map(ConditionalGuard::predicate)
                     .collect(),
             );
-            if !guard_predicate.exactly_implies(&activation) {
+            if !predicate_memo.exactly_implies(&guard_predicate, &activation) {
                 continue;
             }
             let Some(ConditionalGuard::Absent { path }) = guards.iter().find(|guard| {
@@ -396,7 +400,7 @@ fn append_values_default_source_absence_clauses(
                 .cloned()
                 .collect::<Vec<_>>();
             let (_, values_yaml_doc, absence) =
-                documents.condition_context(guards, dependency_roots);
+                documents.condition_context(guards, dependency_roots, predicate_memo);
             let mut conditions = build_condition_clauses(
                 &remaining_guards,
                 &[],
@@ -554,6 +558,7 @@ pub(crate) fn append_selected_constraints(
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
     report: &mut EmissionReport,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     let mut condition_cache = crate::condition_encoding::ConditionFragmentCache::new();
     // Conditionals sharing one guard set and scope conjoin into one if/then:
@@ -590,7 +595,7 @@ pub(crate) fn append_selected_constraints(
     let mut by_content: BTreeMap<(Vec<String>, String), ContentGroup> = BTreeMap::new();
     for ((ancestor_segments, guards), group) in grouped {
         let (values_document, values_yaml_doc, absence) =
-            documents.condition_context(&guards, dependency_roots);
+            documents.condition_context(&guards, dependency_roots, predicate_memo);
         let mut merged: Option<(Value, usize, usize)> = None;
         let mut separate = Vec::new();
         for conditional in group {
@@ -672,7 +677,7 @@ pub(crate) fn append_selected_constraints(
                 .into_iter()
                 .map(|guards| {
                     let (values_document, values_yaml_doc, absence) =
-                        documents.condition_context(&guards, dependency_roots);
+                        documents.condition_context(&guards, dependency_roots, predicate_memo);
                     SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
                         &guards,
                         &ancestor_segments,

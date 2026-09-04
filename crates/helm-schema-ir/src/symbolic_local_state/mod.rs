@@ -5,7 +5,7 @@ use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
-use helm_schema_core::{Guard, Predicate};
+use helm_schema_core::{Guard, Predicate, PredicateMemo};
 
 mod branch_join;
 
@@ -120,8 +120,10 @@ impl SymbolicLocalState {
         entry: &Self,
         arms: &[(TruthCondition, Self)],
         has_unconditional_else: bool,
+        memo: &PredicateMemo,
     ) {
-        if let Some(joined) = joined_scalar_dispatch_arms(entry, arms, has_unconditional_else) {
+        if let Some(joined) = joined_scalar_dispatch_arms(entry, arms, has_unconditional_else, memo)
+        {
             self.scalar_dispatches = joined;
         }
     }
@@ -135,8 +137,11 @@ impl SymbolicLocalState {
         entry: &Self,
         arms: &[(TruthCondition, Self)],
         has_unconditional_else: bool,
+        memo: &PredicateMemo,
     ) {
-        if let Some(joined) = joined_truthy_reduction_arms(entry, arms, has_unconditional_else) {
+        if let Some(joined) =
+            joined_truthy_reduction_arms(entry, arms, has_unconditional_else, memo)
+        {
             self.truthy_reductions.extend(joined);
         }
     }
@@ -155,6 +160,7 @@ impl SymbolicLocalState {
         &mut self,
         entry: &Self,
         condition: &Predicate,
+        memo: &PredicateMemo,
     ) {
         const MAX_STAMPED_GUARDS: usize = 6;
         if matches!(condition.kind(), helm_schema_core::PredicateKind::True)
@@ -196,7 +202,7 @@ impl SymbolicLocalState {
             let changed = entry_reduction
                 .and_then(|entry| changed_truthy_reduction(entry, reduction))
                 .unwrap_or_else(|| reduction.clone());
-            if predicate_implies(&changed, condition) {
+            if predicate_implies(&changed, condition, memo) {
                 return true;
             }
             let stamped =
@@ -555,8 +561,8 @@ fn union_truthy_reductions(left: &Predicate, right: &Predicate) -> Predicate {
     }
 }
 
-fn predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> bool {
-    if antecedent.exactly_implies(consequent) {
+fn predicate_implies(antecedent: &Predicate, consequent: &Predicate, memo: &PredicateMemo) -> bool {
+    if memo.exactly_implies(antecedent, consequent) {
         return true;
     }
     if let (
@@ -567,23 +573,23 @@ fn predicate_implies(antecedent: &Predicate, consequent: &Predicate) -> bool {
         return antecedents.iter().all(|antecedent| {
             consequents
                 .iter()
-                .any(|consequent| predicate_implies(antecedent, consequent))
+                .any(|consequent| predicate_implies(antecedent, consequent, memo))
         });
     }
     match consequent.kind() {
         helm_schema_core::PredicateKind::And(predicates) => predicates
             .iter()
-            .all(|predicate| predicate_implies(antecedent, predicate)),
+            .all(|predicate| predicate_implies(antecedent, predicate, memo)),
         helm_schema_core::PredicateKind::Or(predicates) => predicates
             .iter()
-            .any(|predicate| predicate_implies(antecedent, predicate)),
+            .any(|predicate| predicate_implies(antecedent, predicate, memo)),
         _ => match antecedent.kind() {
             helm_schema_core::PredicateKind::Or(predicates) => predicates
                 .iter()
-                .all(|predicate| predicate_implies(predicate, consequent)),
+                .all(|predicate| predicate_implies(predicate, consequent, memo)),
             helm_schema_core::PredicateKind::And(predicates) => predicates
                 .iter()
-                .any(|predicate| predicate_implies(predicate, consequent)),
+                .any(|predicate| predicate_implies(predicate, consequent, memo)),
             _ => leaf_predicate_implies(antecedent, consequent),
         },
     }

@@ -16,12 +16,14 @@ use crate::bound_value_analysis::parse_literal_list_range_expr;
 use crate::eval_effect::{SelectionReachability, SelectionTruthReachability, SelectionTruthSource};
 use crate::helper_meta::merge_rendered_row_meta;
 use crate::node_eval::{NodeAction, control_header, else_if_pairs, node_action};
-use crate::scalar_value::{TruthCondition, any_predicates, conjoin_predicates};
+use crate::scalar_value::{TruthCondition, any_predicates_with_memo, conjoin_predicates_with_memo};
 use crate::{Guard, ValueKind};
 use helm_schema_ast::children_with_field;
 use helm_schema_core::{Predicate, ValuesPath};
 
-use super::domain::{PathCondition, StringPart, TaintPart, and_conditions, stamp_part_sites};
+use super::domain::{
+    PathCondition, StringPart, TaintPart, and_conditions_with_memo, stamp_part_sites,
+};
 use super::eval::Interpreter;
 use super::hole_effects::RenderedDemotion;
 use super::holes::expr_contains_fail_call;
@@ -80,6 +82,7 @@ impl Interpreter<'_> {
         if action.kind() == "with_action" {
             return self.eval_inline_with(action, text);
         }
+        let predicate_memo = std::rc::Rc::clone(self.db.predicate_memo());
 
         let mut arm_specs = vec![(
             control_header(text, action),
@@ -101,32 +104,23 @@ impl Interpreter<'_> {
             for predicate in &prior_conditions {
                 let negated = predicate.negated();
                 self.push_predicate(negated.clone());
-                arm_condition = and_conditions(arm_condition, negated);
+                arm_condition =
+                    and_conditions_with_memo(arm_condition, negated, predicate_memo.as_ref());
             }
             let activated =
                 self.activate_inline_if(header.as_ref(), action.start_byte(), branch_index);
-            let (own, own_reachability) = activated.map_or_else(
-                || {
-                    (
-                        None,
-                        SelectionTruthReachability::exact(
-                            Predicate::True,
-                            SelectionTruthSource::RawInput,
-                        ),
-                    )
-                },
-                |(condition, truth)| (Some(condition), truth),
-            );
+            let (own, own_reachability) = activated
+                .map(|(condition, truth)| (Some(condition), truth))
+                .unwrap_or_else(|| (None, unconditional_truth(predicate_memo.as_ref())));
             if let Some(own) = own {
-                arm_condition = and_conditions(arm_condition, own.clone());
+                arm_condition =
+                    and_conditions_with_memo(arm_condition, own.clone(), predicate_memo.as_ref());
                 prior_conditions.push(own);
             }
-            let semantic_arm_truth = TruthCondition::all(
-                prior_reachability
-                    .iter()
-                    .map(SelectionTruthReachability::truth_condition)
-                    .map(|truth| truth.negated())
-                    .chain(std::iter::once(own_reachability.truth_condition())),
+            let semantic_arm_truth = inline_arm_truth(
+                &prior_reachability,
+                &own_reachability,
+                predicate_memo.as_ref(),
             );
             if header.is_some() {
                 prior_reachability.push(own_reachability);
@@ -148,7 +142,14 @@ impl Interpreter<'_> {
                 self.inline_body_arms(&children, text)
             };
             for (sub_condition, parts) in body_arms {
-                arms.push((and_conditions(arm_condition.clone(), sub_condition), parts));
+                arms.push((
+                    and_conditions_with_memo(
+                        arm_condition.clone(),
+                        sub_condition,
+                        predicate_memo.as_ref(),
+                    ),
+                    parts,
+                ));
             }
             self.locals.exit_local_scope();
             local_arm_states.push((semantic_arm_truth, self.locals.clone()));
@@ -160,8 +161,12 @@ impl Interpreter<'_> {
             .map(|(_, state)| state.clone())
             .collect::<Vec<_>>();
         self.locals.join_branch_outcomes(&entry_locals, &outcomes);
-        self.locals
-            .join_scalar_dispatch_arms(&entry_locals, &local_arm_states, true);
+        self.locals.join_scalar_dispatch_arms(
+            &entry_locals,
+            &local_arm_states,
+            true,
+            predicate_memo.as_ref(),
+        );
         if arms.len() > MAX_SCALAR_ARM_FANOUT {
             return over_cap_scalar_taint(arms);
         }
@@ -192,7 +197,16 @@ impl Interpreter<'_> {
         };
         let mut arms = body_arms
             .into_iter()
-            .map(|(condition, parts)| (and_conditions(body_condition.clone(), condition), parts))
+            .map(|(condition, parts)| {
+                (
+                    and_conditions_with_memo(
+                        body_condition.clone(),
+                        condition,
+                        self.db.predicate_memo().as_ref(),
+                    ),
+                    parts,
+                )
+            })
             .collect::<Vec<_>>();
 
         self.rewind(entry_scope);
@@ -212,7 +226,11 @@ impl Interpreter<'_> {
         };
         for (condition, parts) in alternative_arms {
             arms.push((
-                and_conditions(alternative_condition.clone(), condition),
+                and_conditions_with_memo(
+                    alternative_condition.clone(),
+                    condition,
+                    self.db.predicate_memo().as_ref(),
+                ),
                 parts,
             ));
         }
@@ -306,7 +324,14 @@ impl Interpreter<'_> {
             self.inline_body_arms(&body, text)
         };
         for (sub_condition, parts) in body_arms {
-            arms.push((and_conditions(body_condition.clone(), sub_condition), parts));
+            arms.push((
+                and_conditions_with_memo(
+                    body_condition.clone(),
+                    sub_condition,
+                    self.db.predicate_memo().as_ref(),
+                ),
+                parts,
+            ));
         }
         self.rewind(entry_scope);
         self.locals = entry_locals;
@@ -529,9 +554,11 @@ impl Interpreter<'_> {
             let mut next = Vec::new();
             for (state_condition, state_parts) in &states {
                 for (alternative_condition, alternative_parts) in &alternatives {
-                    let Some(condition) =
-                        conjoin_predicates(state_condition.clone(), alternative_condition.clone())
-                    else {
+                    let Some(condition) = conjoin_predicates_with_memo(
+                        state_condition.clone(),
+                        alternative_condition.clone(),
+                        self.db.predicate_memo().as_ref(),
+                    ) else {
                         continue;
                     };
                     let mut parts = state_parts.clone();
@@ -542,7 +569,7 @@ impl Interpreter<'_> {
                     }
                 }
             }
-            states = merge_scalar_part_arms(next);
+            states = merge_scalar_part_arms(next, self.db.predicate_memo().as_ref());
             if states.is_empty() {
                 return None;
             }
@@ -592,8 +619,10 @@ impl Interpreter<'_> {
             let dedup_subset = self.first_iteration_dedup_sound_subset(header.expr());
             let dedup_subset = (!dedup_subset.is_empty())
                 .then(|| Predicate::all(dedup_subset.into_iter().map(Predicate::from).collect()));
-            let positive_subset =
-                any_predicates(evaluated_subset.into_iter().chain(dedup_subset).collect());
+            let positive_subset = any_predicates_with_memo(
+                evaluated_subset.into_iter().chain(dedup_subset).collect(),
+                self.db.predicate_memo().as_ref(),
+            );
             paths.extend(
                 positive_subset
                     .value_paths()
@@ -619,12 +648,12 @@ impl Interpreter<'_> {
         if guards.as_ref().is_none_or(Vec::is_empty) {
             self.push_predicate(predicate.clone());
         }
-        let semantic_truth = if evaluated_truth.when_true().exact_predicate().is_none() && faithful
-        {
-            SelectionTruthReachability::exact(predicate.clone(), SelectionTruthSource::RawInput)
-        } else {
-            evaluated_truth
-        };
+        let semantic_truth = super::control::semantic_truth_reachability(
+            evaluated_truth,
+            &predicate,
+            faithful,
+            self.db.predicate_memo().as_ref(),
+        );
         Some((predicate, semantic_truth))
     }
 
@@ -756,6 +785,33 @@ impl Interpreter<'_> {
     }
 }
 
+fn inline_arm_truth(
+    prior: &[SelectionTruthReachability],
+    own: &SelectionTruthReachability,
+    predicate_memo: &helm_schema_core::PredicateMemo,
+) -> TruthCondition {
+    TruthCondition::all_with_memo(
+        prior
+            .iter()
+            .map(|reachability| reachability.truth_condition_with_memo(predicate_memo))
+            .map(|truth| truth.negated_with_memo(predicate_memo))
+            .chain(std::iter::once(
+                own.truth_condition_with_memo(predicate_memo),
+            )),
+        predicate_memo,
+    )
+}
+
+fn unconditional_truth(
+    predicate_memo: &helm_schema_core::PredicateMemo,
+) -> SelectionTruthReachability {
+    SelectionTruthReachability::exact_with_memo(
+        Predicate::True,
+        SelectionTruthSource::RawInput,
+        predicate_memo,
+    )
+}
+
 fn inline_range_body_condition(condition: Predicate) -> Predicate {
     let paths = condition
         .value_paths()
@@ -777,6 +833,7 @@ fn unknown_scalar_arms() -> Vec<(PathCondition, Vec<StringPart>)> {
 
 fn merge_scalar_part_arms(
     arms: Vec<(PathCondition, Vec<StringPart>)>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> Vec<(PathCondition, Vec<StringPart>)> {
     let mut merged: Vec<(PathCondition, Vec<StringPart>)> = Vec::new();
     for (condition, parts) in arms {
@@ -784,7 +841,7 @@ fn merge_scalar_part_arms(
             .iter_mut()
             .find(|(_, existing_parts)| *existing_parts == parts)
         {
-            *existing = any_predicates(vec![existing.clone(), condition]);
+            *existing = any_predicates_with_memo(vec![existing.clone(), condition], predicate_memo);
         } else {
             merged.push((condition, parts));
         }

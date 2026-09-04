@@ -33,12 +33,12 @@ use crate::analysis_db::{BoundHelperCallResolution, IrAnalysisDb};
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, merge_provenance_sites};
 use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::{
-    ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates,
-    conjoin_predicates,
+    ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
+    conjoin_predicates_with_memo,
 };
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::{ContractProvenance, ValueKind};
-use helm_schema_core::{GuardDnf, Predicate};
+use helm_schema_core::{GuardDnf, Predicate, PredicateMemo};
 
 use super::domain::{AbstractFragment, Guarded, PathCondition, SiteFacts, Splice, StringPart};
 use super::eval::{Interpreter, NodeView, ValueRead};
@@ -137,7 +137,8 @@ pub(crate) fn eval_bound_helper_fragment(
         .min();
     let contributions = interpreter.eval_node_list(&roots);
     let root = contributions.assemble();
-    let structural_scalar_dispatch = scalar_dispatch_from_fragment(&root);
+    let predicate_memo = db.predicate_memo().as_ref();
+    let structural_scalar_dispatch = scalar_dispatch_from_fragment(&root, predicate_memo);
     let projected_scalar_dispatch = (!structural_scalar_dispatch
         .as_ref()
         .is_some_and(|dispatch| dispatch.complete))
@@ -154,11 +155,14 @@ pub(crate) fn eval_bound_helper_fragment(
             .collect::<Vec<_>>();
         scalar_interpreter
             .scalar_body_arms(&scalar_children, body.source)
-            .and_then(scalar_dispatch_from_alternatives)
+            .and_then(|arms| scalar_dispatch_from_alternatives(arms, predicate_memo))
     })
     .flatten();
-    let scalar_dispatch =
-        merge_scalar_dispatch_candidates(structural_scalar_dispatch, projected_scalar_dispatch);
+    let scalar_dispatch = merge_scalar_dispatch_candidates(
+        structural_scalar_dispatch,
+        projected_scalar_dispatch,
+        predicate_memo,
+    );
     let json_payload_truth = interpreter
         .json_payload_truth_outputs
         .first()
@@ -208,6 +212,7 @@ const MAX_SCALAR_DISPATCH_STATES: usize = 128;
 fn merge_scalar_dispatch_candidates(
     structural: Option<ScalarValueDispatch>,
     projected: Option<ScalarValueDispatch>,
+    predicate_memo: &PredicateMemo,
 ) -> Option<ScalarValueDispatch> {
     let (structural, projected) = match (structural, projected) {
         (Some(structural), Some(projected)) => (structural, projected),
@@ -224,7 +229,8 @@ fn merge_scalar_dispatch_candidates(
     let fallback = structural.clone();
     let mut conditions_by_value: BTreeMap<ScalarValue, Vec<Predicate>> = BTreeMap::new();
     for (condition, value) in structural.arms.into_iter().chain(projected.arms) {
-        let condition = TruthCondition::from_predicate(condition).when_true();
+        let condition =
+            TruthCondition::from_predicate_with_memo(condition, predicate_memo).when_true();
         if condition != Predicate::False {
             conditions_by_value
                 .entry(value)
@@ -237,20 +243,20 @@ fn merge_scalar_dispatch_candidates(
     }
     let arms = conditions_by_value
         .into_iter()
-        .map(|(value, conditions)| (any_predicates(conditions), value))
+        .map(|(value, conditions)| (any_predicates_with_memo(conditions, predicate_memo), value))
         .collect::<Vec<_>>();
     for (index, (left, _)) in arms.iter().enumerate() {
-        if arms
-            .iter()
-            .skip(index + 1)
-            .any(|(right, _)| conjoin_predicates(left.clone(), right.clone()).is_some())
-        {
+        if arms.iter().skip(index + 1).any(|(right, _)| {
+            conjoin_predicates_with_memo(left.clone(), right.clone(), predicate_memo).is_some()
+        }) {
             return Some(fallback);
         }
     }
-    let complete = TruthCondition::any(
-        arms.iter()
-            .map(|(condition, _)| TruthCondition::exact(condition.clone())),
+    let complete = TruthCondition::any_with_memo(
+        arms.iter().map(|(condition, _)| {
+            TruthCondition::exact_with_memo(condition.clone(), predicate_memo)
+        }),
+        predicate_memo,
     )
     .predicate()
         == Some(&Predicate::True);
@@ -259,6 +265,7 @@ fn merge_scalar_dispatch_candidates(
 
 fn scalar_dispatch_from_fragment(
     fragment: &Guarded<AbstractFragment>,
+    predicate_memo: &PredicateMemo,
 ) -> Option<ScalarValueDispatch> {
     let mut states = Vec::new();
     for (condition, node) in &fragment.arms {
@@ -280,23 +287,22 @@ fn scalar_dispatch_from_fragment(
         return None;
     }
     for (index, (left, _)) in states.iter().enumerate() {
-        if states
-            .iter()
-            .skip(index + 1)
-            .any(|(right, _)| conjoin_predicates(left.clone(), right.clone()).is_some())
-        {
+        if states.iter().skip(index + 1).any(|(right, _)| {
+            conjoin_predicates_with_memo(left.clone(), right.clone(), predicate_memo).is_some()
+        }) {
             return None;
         }
     }
-    let complete = TruthCondition::any(
-        states
-            .iter()
-            .map(|(condition, _)| TruthCondition::from_predicate(condition.clone())),
+    let complete = TruthCondition::any_with_memo(
+        states.iter().map(|(condition, _)| {
+            TruthCondition::from_predicate_with_memo(condition.clone(), predicate_memo)
+        }),
+        predicate_memo,
     )
     .predicate()
         == Some(&Predicate::True);
     Some(ScalarValueDispatch {
-        arms: merge_scalar_dispatch_states(states)
+        arms: merge_scalar_dispatch_states(states, predicate_memo)
             .into_iter()
             .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))
             .collect(),
@@ -306,14 +312,18 @@ fn scalar_dispatch_from_fragment(
 
 fn scalar_dispatch_from_alternatives(
     contributions: Vec<(Predicate, Vec<StringPart>)>,
+    predicate_memo: &PredicateMemo,
 ) -> Option<ScalarValueDispatch> {
     let mut states = Vec::new();
     let conditions = contributions
         .iter()
-        .map(|(condition, _)| TruthCondition::from_predicate(condition.clone()))
+        .map(|(condition, _)| {
+            TruthCondition::from_predicate_with_memo(condition.clone(), predicate_memo)
+        })
         .collect::<Vec<_>>();
-    let mut complete =
-        TruthCondition::any(conditions.clone()).predicate() == Some(&Predicate::True);
+    let mut complete = TruthCondition::any_with_memo(conditions.clone(), predicate_memo)
+        .predicate()
+        == Some(&Predicate::True);
     for ((_, parts), condition_truth) in contributions.into_iter().zip(conditions) {
         let selected_condition = condition_truth.when_true();
         let contribution = scalar_render_contribution(&parts);
@@ -329,7 +339,7 @@ fn scalar_dispatch_from_alternatives(
             return None;
         }
     }
-    let states = merge_scalar_dispatch_states(states);
+    let states = merge_scalar_dispatch_states(states, predicate_memo);
     if states.is_empty() {
         return None;
     }
@@ -379,6 +389,7 @@ fn scalar_render_contribution(parts: &[StringPart]) -> Option<Vec<ScalarRenderPa
 
 fn merge_scalar_dispatch_states(
     states: Vec<(Predicate, Vec<ScalarRenderPart>)>,
+    predicate_memo: &PredicateMemo,
 ) -> Vec<(Predicate, Vec<ScalarRenderPart>)> {
     let mut by_value: BTreeMap<Vec<ScalarRenderPart>, Vec<Predicate>> = BTreeMap::new();
     for (condition, rendered) in states {
@@ -386,7 +397,12 @@ fn merge_scalar_dispatch_states(
     }
     by_value
         .into_iter()
-        .map(|(rendered, conditions)| (any_predicates(conditions), rendered))
+        .map(|(rendered, conditions)| {
+            (
+                any_predicates_with_memo(conditions, predicate_memo),
+                rendered,
+            )
+        })
         .collect()
 }
 

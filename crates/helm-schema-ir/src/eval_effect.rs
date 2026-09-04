@@ -813,30 +813,46 @@ pub(crate) struct SelectionTruthReachability {
 }
 
 impl SelectionTruthReachability {
+    #[cfg(test)]
     pub(crate) fn from_condition(
         condition: &TruthCondition,
         truth_source: SelectionTruthSource,
     ) -> Self {
+        Self::from_condition_with_memo(
+            condition,
+            truth_source,
+            &helm_schema_core::PredicateMemo::new(),
+        )
+    }
+
+    pub(crate) fn from_condition_with_memo(
+        condition: &TruthCondition,
+        truth_source: SelectionTruthSource,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Self {
         Self {
-            when_true: SelectionReachability::from((
+            when_true: SelectionReachability::from_condition_with_memo(
                 condition,
                 SelectionPolarity::Truthy,
                 truth_source,
-            )),
-            when_false: SelectionReachability::from((
+                memo,
+            ),
+            when_false: SelectionReachability::from_condition_with_memo(
                 condition,
                 SelectionPolarity::Falsy,
                 truth_source,
-            )),
+                memo,
+            ),
         }
     }
 
-    pub(crate) fn exact(
+    pub(crate) fn exact_with_memo(
         predicate: helm_schema_core::Predicate,
         truth_source: SelectionTruthSource,
+        memo: &helm_schema_core::PredicateMemo,
     ) -> Self {
         let when_true = SelectionReachability::exact(predicate, truth_source);
-        let when_false = when_true.complement();
+        let when_false = when_true.complement_with_memo(memo);
         Self {
             when_true,
             when_false,
@@ -854,14 +870,23 @@ impl SelectionTruthReachability {
         &self.when_true
     }
 
+    #[cfg(test)]
     pub(crate) fn truth_condition(&self) -> TruthCondition {
+        self.truth_condition_with_memo(&helm_schema_core::PredicateMemo::new())
+    }
+
+    pub(crate) fn truth_condition_with_memo(
+        &self,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> TruthCondition {
         if let Some(predicate) = self.when_true.exact_predicate() {
-            return TruthCondition::exact(predicate);
+            return TruthCondition::exact_with_memo(predicate, memo);
         }
-        TruthCondition::from_subsets(
+        TruthCondition::from_subsets_with_memo(
             self.when_true.proven_selected_subset(),
             self.when_false.proven_selected_subset(),
             false,
+            memo,
         )
     }
 }
@@ -918,11 +943,15 @@ impl SelectionReachability {
     }
 
     pub(crate) fn complement(&self) -> Self {
+        self.complement_with_memo(&helm_schema_core::PredicateMemo::new())
+    }
+
+    pub(crate) fn complement_with_memo(&self, memo: &helm_schema_core::PredicateMemo) -> Self {
         match &self.state {
             SelectionState::Always => Self::never(self.truth_source),
             SelectionState::Never => Self::always(self.truth_source),
             SelectionState::Exact(predicate) => Self::exact(
-                TruthCondition::exact(predicate.clone()).when_false(),
+                TruthCondition::exact_with_memo(predicate.clone(), memo).when_false_with_memo(memo),
                 self.truth_source,
             ),
             SelectionState::Approximate { .. } => Self::approximate(None, self.truth_source),
@@ -1100,6 +1129,41 @@ impl From<(&TruthCondition, SelectionPolarity, SelectionTruthSource)> for Select
     }
 }
 
+impl SelectionReachability {
+    pub(crate) fn from_condition_with_memo(
+        condition: &TruthCondition,
+        polarity: SelectionPolarity,
+        truth_source: SelectionTruthSource,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Self {
+        if let Some(predicate) = condition.predicate() {
+            let selection = Self::exact(predicate.clone(), truth_source);
+            return match polarity {
+                SelectionPolarity::Truthy => selection,
+                SelectionPolarity::Falsy => selection.complement_with_memo(memo),
+            };
+        }
+        let sound_subset = match polarity {
+            SelectionPolarity::Truthy => condition.when_true(),
+            SelectionPolarity::Falsy => condition.when_false_with_memo(memo),
+        };
+        Self::approximate(Some(sound_subset), truth_source)
+    }
+
+    pub(crate) fn from_dispatch_with_memo(
+        dispatch: &ScalarValueDispatch,
+        polarity: SelectionPolarity,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Self {
+        Self::from_condition_with_memo(
+            &dispatch.truth_condition_with_memo(memo),
+            polarity,
+            SelectionTruthSource::RenderedScalar,
+            memo,
+        )
+    }
+}
+
 impl From<(&ScalarValueDispatch, SelectionPolarity)> for SelectionReachability {
     fn from((dispatch, polarity): (&ScalarValueDispatch, SelectionPolarity)) -> Self {
         Self::from((
@@ -1133,7 +1197,15 @@ impl EvalResult {
         Self::default()
     }
 
+    #[cfg(test)]
     pub(crate) fn from_value(value: AbstractValue) -> Self {
+        Self::from_value_with_memo(value, &helm_schema_core::PredicateMemo::new())
+    }
+
+    pub(crate) fn from_value_with_memo(
+        value: AbstractValue,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Self {
         let scalar_dispatch = match &value {
             AbstractValue::ValuesPath(path) => Some(ScalarValueDispatch::identity(path.clone())),
             AbstractValue::JsonDecodedPath(path) => {
@@ -1146,20 +1218,25 @@ impl EvalResult {
         };
         let truth = scalar_dispatch
             .as_ref()
-            .map(ScalarValueDispatch::truth_condition)
-            .unwrap_or_else(|| truth_for_value(Some(&value)));
+            .map(|dispatch| dispatch.truth_condition_with_memo(memo))
+            .unwrap_or_else(|| truth_for_value_with_memo(Some(&value), memo));
         let selection_reachability = scalar_dispatch.as_ref().map(|dispatch| {
             if matches!(
                 &value,
                 AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_)
             ) {
-                SelectionReachability::from((
+                SelectionReachability::from_condition_with_memo(
                     &truth,
                     SelectionPolarity::Truthy,
                     SelectionTruthSource::RawInput,
-                ))
+                    memo,
+                )
             } else {
-                SelectionReachability::from((dispatch, SelectionPolarity::Truthy))
+                SelectionReachability::from_dispatch_with_memo(
+                    dispatch,
+                    SelectionPolarity::Truthy,
+                    memo,
+                )
             }
         });
         Self {
@@ -1188,32 +1265,50 @@ impl EvalResult {
         }
     }
 
-    pub(crate) fn with_truth(mut self, predicate: helm_schema_core::Predicate) -> Self {
-        self.set_truth_condition(
-            TruthCondition::exact(predicate),
+    pub(crate) fn with_truth_with_memo(
+        mut self,
+        predicate: helm_schema_core::Predicate,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Self {
+        self.set_truth_condition_with_memo(
+            TruthCondition::exact_with_memo(predicate, memo),
             SelectionTruthSource::RawInput,
+            memo,
         );
         self
     }
 
+    #[cfg(test)]
     pub(crate) fn with_scalar_dispatch(mut self, dispatch: ScalarValueDispatch) -> Self {
         self.set_scalar_dispatch(dispatch);
         self
     }
 
-    pub(crate) fn set_truth_condition(
+    pub(crate) fn with_scalar_dispatch_with_memo(
+        mut self,
+        dispatch: ScalarValueDispatch,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Self {
+        self.set_scalar_dispatch_with_memo(dispatch, memo);
+        self
+    }
+
+    pub(crate) fn set_truth_condition_with_memo(
         &mut self,
         truth: TruthCondition,
         truth_source: SelectionTruthSource,
+        memo: &helm_schema_core::PredicateMemo,
     ) {
-        self.selection_reachability = Some(SelectionReachability::from((
+        self.selection_reachability = Some(SelectionReachability::from_condition_with_memo(
             &truth,
             SelectionPolarity::Truthy,
             truth_source,
-        )));
+            memo,
+        ));
         self.truth = truth;
     }
 
+    #[cfg(test)]
     pub(crate) fn set_scalar_dispatch(&mut self, dispatch: ScalarValueDispatch) {
         self.selection_reachability = Some(SelectionReachability::from((
             &dispatch,
@@ -1223,6 +1318,21 @@ impl EvalResult {
         self.scalar_dispatch = Some(dispatch);
     }
 
+    pub(crate) fn set_scalar_dispatch_with_memo(
+        &mut self,
+        dispatch: ScalarValueDispatch,
+        memo: &helm_schema_core::PredicateMemo,
+    ) {
+        self.selection_reachability = Some(SelectionReachability::from_dispatch_with_memo(
+            &dispatch,
+            SelectionPolarity::Truthy,
+            memo,
+        ));
+        self.truth = dispatch.truth_condition_with_memo(memo);
+        self.scalar_dispatch = Some(dispatch);
+    }
+
+    #[cfg(test)]
     pub(crate) fn output_reachability(&self, polarity: SelectionPolarity) -> SelectionReachability {
         let selected = self.selection_reachability.clone().unwrap_or_else(|| {
             SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
@@ -1230,6 +1340,20 @@ impl EvalResult {
         match polarity {
             SelectionPolarity::Truthy => selected,
             SelectionPolarity::Falsy => selected.complement(),
+        }
+    }
+
+    pub(crate) fn output_reachability_with_memo(
+        &self,
+        polarity: SelectionPolarity,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> SelectionReachability {
+        let selected = self.selection_reachability.clone().unwrap_or_else(|| {
+            SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
+        });
+        match polarity {
+            SelectionPolarity::Truthy => selected,
+            SelectionPolarity::Falsy => selected.complement_with_memo(memo),
         }
     }
 
@@ -1256,10 +1380,16 @@ impl EvalResult {
     }
 }
 
-fn truth_for_value(value: Option<&AbstractValue>) -> TruthCondition {
+fn truth_for_value_with_memo(
+    value: Option<&AbstractValue>,
+    memo: &helm_schema_core::PredicateMemo,
+) -> TruthCondition {
     match value {
         Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) => {
-            TruthCondition::exact(helm_schema_core::Predicate::truthy_path(path.encode()))
+            TruthCondition::exact_with_memo(
+                helm_schema_core::Predicate::truthy_path(path.encode()),
+                memo,
+            )
         }
         _ => TruthCondition::Unknown,
     }

@@ -26,6 +26,7 @@ use crate::schema_tree::{
 };
 
 pub(crate) struct LoweredEmissionPlan {
+    predicate_memo: helm_schema_core::PredicateMemo,
     contract_schema_signals: ContractSchemaSignals,
     documents: RootValuesDocuments,
     values_descriptions: BTreeMap<String, String>,
@@ -58,6 +59,7 @@ impl RootValuesDocuments {
         &'a self,
         guards: &[helm_schema_core::ConditionalGuard],
         dependency_roots: &'a BTreeSet<Vec<String>>,
+        predicate_memo: &helm_schema_core::PredicateMemo,
     ) -> (
         Option<usize>,
         &'a YamlValue,
@@ -74,13 +76,16 @@ impl RootValuesDocuments {
             .iter()
             .enumerate()
             .filter(|(_, documents)| {
-                predicate.exactly_implies(&helm_schema_core::Predicate::all(
-                    documents
-                        .guards
-                        .iter()
-                        .map(helm_schema_core::ConditionalGuard::predicate)
-                        .collect(),
-                ))
+                predicate_memo.exactly_implies(
+                    &predicate,
+                    &helm_schema_core::Predicate::all(
+                        documents
+                            .guards
+                            .iter()
+                            .map(helm_schema_core::ConditionalGuard::predicate)
+                            .collect(),
+                    ),
+                )
             })
             .max_by_key(|(_, documents)| documents.guards.len());
         let (values_document, composed, subchart_defaults, dependency_refill) = guarded.map_or(
@@ -116,6 +121,7 @@ fn prepare_guarded_values_documents(
     composed: &YamlValue,
     subchart_defaults: &YamlValue,
     dependency_refill: &YamlValue,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> Vec<GuardedRootValuesDocuments> {
     let guarded_sources = signals
         .guarded_values_default_sources()
@@ -137,12 +143,15 @@ fn prepare_guarded_values_documents(
             let sources = guarded_sources
                 .iter()
                 .filter(|(source_guards, _)| {
-                    branch_predicate.exactly_implies(&helm_schema_core::Predicate::all(
-                        source_guards
-                            .iter()
-                            .map(helm_schema_core::ConditionalGuard::predicate)
-                            .collect(),
-                    ))
+                    predicate_memo.exactly_implies(
+                        &branch_predicate,
+                        &helm_schema_core::Predicate::all(
+                            source_guards
+                                .iter()
+                                .map(helm_schema_core::ConditionalGuard::predicate)
+                                .collect(),
+                        ),
+                    )
                 })
                 .map(|(_, source)| source.clone())
                 .collect::<BTreeSet<_>>();
@@ -202,6 +211,7 @@ pub(crate) struct CompletedGeneratedSchema {
 impl LoweredEmissionPlan {
     #[tracing::instrument(skip_all)]
     pub(crate) fn build(input: &ValuesSchemaInput<'_>) -> Self {
+        let predicate_memo = helm_schema_core::PredicateMemo::new();
         let contract_schema_signals = input.contract_schema_signals.clone();
         let mut composed = input
             .values_documents
@@ -240,6 +250,7 @@ impl LoweredEmissionPlan {
             &composed,
             &subchart_defaults,
             &dependency_refill,
+            &predicate_memo,
         );
         let documents = RootValuesDocuments {
             composed,
@@ -278,6 +289,7 @@ impl LoweredEmissionPlan {
         );
 
         Self {
+            predicate_memo,
             contract_schema_signals,
             documents,
             values_descriptions: input.values_descriptions.cloned().unwrap_or_default(),
@@ -345,6 +357,7 @@ impl LoweredEmissionPlan {
             &self.documents,
             &self.support.dependency_roots,
             &mut emission_report,
+            &self.predicate_memo,
         );
         if !selected_terminals.is_empty() {
             let terminal_clauses = selected_terminals
@@ -360,6 +373,7 @@ impl LoweredEmissionPlan {
                     .guarded_values_default_sources(),
                 &self.documents,
                 &self.support.dependency_roots,
+                &self.predicate_memo,
             );
         }
         prune_unreachable_provider_definitions(&document, &mut provider_definitions);

@@ -67,7 +67,7 @@ use helm_schema_core::{GuardDnf, Predicate};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Opaque,
-    PathCondition, Sequence, SiteFacts, StringPart, and_conditions,
+    PathCondition, Sequence, SiteFacts, StringPart, and_conditions_with_memo,
 };
 
 /// The result of evaluating one template source: the abstract rendered
@@ -345,9 +345,9 @@ impl LoopControl {
         any_conditions(self.breaks.clone())
     }
 
-    fn guard_all(&mut self, condition: &PathCondition) {
+    fn guard_all(&mut self, condition: &PathCondition, memo: &helm_schema_core::PredicateMemo) {
         for exit in self.breaks.iter_mut().chain(&mut self.continues) {
-            *exit = and_conditions(condition.clone(), exit.clone());
+            *exit = super::domain::and_conditions_with_memo(condition.clone(), exit.clone(), memo);
         }
     }
 
@@ -405,18 +405,22 @@ impl Contributions {
         self.values.arms.push(arm);
     }
 
-    pub(super) fn guard_all(&mut self, condition: &PathCondition) {
+    pub(super) fn guard_all(
+        &mut self,
+        condition: &PathCondition,
+        memo: &helm_schema_core::PredicateMemo,
+    ) {
         for entry in &mut self.entries {
-            entry.value.guard_all(condition);
+            entry.value.guard_all(condition, memo);
         }
         for item in &mut self.items {
-            item.guard_all(condition);
+            item.guard_all(condition, memo);
         }
-        self.values.guard_all(condition);
+        self.values.guard_all(condition, memo);
         for floating in &mut self.floating {
-            floating.value.guard_all(condition);
+            floating.value.guard_all(condition, memo);
         }
-        self.loop_control.guard_all(condition);
+        self.loop_control.guard_all(condition, memo);
     }
 
     pub(super) fn extend(&mut self, other: Self) {
@@ -932,8 +936,11 @@ impl<'a> Interpreter<'a> {
                 if !context.condition_lowering_is_usable_for_control(expr) {
                     return Vec::new();
                 }
-                let predicate = context.condition_predicate_expr(expr).normalize_boolean();
-                prior_negations.push(predicate.negated().normalize_boolean());
+                let predicate = self
+                    .db
+                    .predicate_memo()
+                    .normalize(context.condition_predicate_expr(expr));
+                prior_negations.push(self.db.predicate_memo().normalize(predicate.negated()));
                 conjuncts.push(predicate);
             }
             branches.push(helm_schema_core::KindBranch {
@@ -1043,7 +1050,8 @@ impl<'a> Interpreter<'a> {
             .or(current_value_dot);
         let mut eval_env =
             EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref())
-                .without_helper_call_args();
+                .without_helper_call_args()
+                .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals and root bindings are distinct namespaces (see the hole
         // evaluator); roots resolve through `root_fields` only.
         eval_env.locals = template_bindings;
@@ -1710,14 +1718,18 @@ impl<'a> Interpreter<'a> {
             }
             self.rewind(entry_scope);
             let exit_condition = next.loop_control.exit_condition();
-            next.guard_all(&remaining);
+            next.guard_all(&remaining, self.db.predicate_memo().as_ref());
             out.extend(next);
             remaining = if exit_condition == Predicate::False {
                 remaining
             } else if exit_condition == Predicate::True {
                 Predicate::False
             } else {
-                and_conditions(remaining, exit_condition.negated())
+                and_conditions_with_memo(
+                    remaining,
+                    exit_condition.negated(),
+                    self.db.predicate_memo().as_ref(),
+                )
             };
             index += 1;
         }

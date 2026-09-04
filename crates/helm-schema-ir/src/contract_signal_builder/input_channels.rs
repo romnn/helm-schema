@@ -10,6 +10,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     observed_facts: &ObservedFacts,
     dependency_values_root_fragments: &BTreeSet<String>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
@@ -26,6 +27,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             &observed_facts.range_modes,
             routes,
             yaml_serialized_paths.contains(&contract_use.source_expr),
+            predicate_memo,
         );
     }
     for capture in &observed_facts.captures {
@@ -106,7 +108,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             }
         }
     }
-    finish_schema_signals(paths, terminal_clauses)
+    finish_schema_signals(paths, terminal_clauses, predicate_memo)
 }
 
 fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&helm_schema_core::ValuesPath> {

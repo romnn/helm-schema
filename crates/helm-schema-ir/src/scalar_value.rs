@@ -6,6 +6,8 @@
 
 use std::collections::BTreeSet;
 
+use helm_schema_core::PredicateMemo;
+
 /// One exact scalar value carried by a dispatch arm.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum ScalarValue {
@@ -200,28 +202,37 @@ impl ScalarValueDispatch {
         }
     }
 
-    pub(crate) fn condition_matches_pattern(&self, pattern: &str) -> TruthCondition {
+    pub(crate) fn condition_matches_pattern_with_memo(
+        &self,
+        pattern: &str,
+        memo: &PredicateMemo,
+    ) -> TruthCondition {
         let mut matches = Vec::new();
         let mut mismatches = Vec::new();
         let mut fully_classified = true;
         for (arm_condition, value) in &self.arms {
-            let value_condition = value.condition_matches_pattern(pattern);
+            let value_condition = value.condition_matches_pattern(pattern, memo);
             fully_classified &= value_condition.predicate().is_some();
-            if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.when_true())
-            {
+            if let Some(condition) = conjoin_predicates_with_memo(
+                arm_condition.clone(),
+                value_condition.when_true(),
+                memo,
+            ) {
                 matches.push(condition);
             }
-            if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.when_false())
-            {
+            if let Some(condition) = conjoin_predicates_with_memo(
+                arm_condition.clone(),
+                value_condition.when_false_with_memo(memo),
+                memo,
+            ) {
                 mismatches.push(condition);
             }
         }
-        TruthCondition::from_subsets(
-            any_predicates(matches),
-            any_predicates(mismatches),
+        TruthCondition::from_subsets_with_memo(
+            any_predicates_with_memo(matches, memo),
+            any_predicates_with_memo(mismatches, memo),
             self.complete && fully_classified,
+            memo,
         )
     }
 
@@ -230,28 +241,37 @@ impl ScalarValueDispatch {
     /// Concrete strings use the full constraint parser. Input identities
     /// require an exact regex preimage; constraints without one remain
     /// unknown for that arm.
-    pub(crate) fn condition_matches_semver(&self, constraint: &str) -> TruthCondition {
+    pub(crate) fn condition_matches_semver_with_memo(
+        &self,
+        constraint: &str,
+        memo: &PredicateMemo,
+    ) -> TruthCondition {
         let mut matches = Vec::new();
         let mut mismatches = Vec::new();
         let mut fully_classified = true;
         for (arm_condition, value) in &self.arms {
-            let value_condition = value.condition_matches_semver(constraint);
+            let value_condition = value.condition_matches_semver(constraint, memo);
             fully_classified &= value_condition.predicate().is_some();
-            if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.when_true())
-            {
+            if let Some(condition) = conjoin_predicates_with_memo(
+                arm_condition.clone(),
+                value_condition.when_true(),
+                memo,
+            ) {
                 matches.push(condition);
             }
-            if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.when_false())
-            {
+            if let Some(condition) = conjoin_predicates_with_memo(
+                arm_condition.clone(),
+                value_condition.when_false_with_memo(memo),
+                memo,
+            ) {
                 mismatches.push(condition);
             }
         }
-        TruthCondition::from_subsets(
-            any_predicates(matches),
-            any_predicates(mismatches),
+        TruthCondition::from_subsets_with_memo(
+            any_predicates_with_memo(matches, memo),
+            any_predicates_with_memo(mismatches, memo),
             self.complete && fully_classified,
+            memo,
         )
     }
 
@@ -267,32 +287,45 @@ impl ScalarValueDispatch {
             .flatten()
     }
 
-    pub(crate) fn condition_equals(&self, target: &helm_schema_core::GuardValue) -> TruthCondition {
+    pub(crate) fn condition_equals_with_memo(
+        &self,
+        target: &helm_schema_core::GuardValue,
+        memo: &PredicateMemo,
+    ) -> TruthCondition {
         let mut matches = Vec::new();
         let mut mismatches = Vec::new();
         let mut fully_classified = true;
         for (arm_condition, value) in &self.arms {
-            let value_condition = value.condition_equals(target);
+            let value_condition = value.condition_equals(target, memo);
             fully_classified &= value_condition.predicate().is_some();
-            if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.when_true())
-            {
+            if let Some(condition) = conjoin_predicates_with_memo(
+                arm_condition.clone(),
+                value_condition.when_true(),
+                memo,
+            ) {
                 matches.push(condition);
             }
-            if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.when_false())
-            {
+            if let Some(condition) = conjoin_predicates_with_memo(
+                arm_condition.clone(),
+                value_condition.when_false_with_memo(memo),
+                memo,
+            ) {
                 mismatches.push(condition);
             }
         }
-        TruthCondition::from_subsets(
-            any_predicates(matches),
-            any_predicates(mismatches),
+        TruthCondition::from_subsets_with_memo(
+            any_predicates_with_memo(matches, memo),
+            any_predicates_with_memo(mismatches, memo),
             self.complete && fully_classified,
+            memo,
         )
     }
 
     pub(crate) fn truth_condition(&self) -> TruthCondition {
+        self.truth_condition_with_memo(&PredicateMemo::new())
+    }
+
+    pub(crate) fn truth_condition_with_memo(&self, memo: &PredicateMemo) -> TruthCondition {
         let mut truthy = Vec::new();
         let mut falsy = Vec::new();
         let mut fully_classified = true;
@@ -302,35 +335,44 @@ impl ScalarValueDispatch {
                 continue;
             };
             if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.clone())
+                conjoin_predicates_with_memo(arm_condition.clone(), value_condition.clone(), memo)
             {
                 truthy.push(condition);
             }
             if let Some(condition) =
-                conjoin_predicates(arm_condition.clone(), value_condition.negated())
+                conjoin_predicates_with_memo(arm_condition.clone(), value_condition.negated(), memo)
             {
                 falsy.push(condition);
             }
         }
-        TruthCondition::from_subsets(
-            any_predicates(truthy),
-            any_predicates(falsy),
+        TruthCondition::from_subsets_with_memo(
+            any_predicates_with_memo(truthy, memo),
+            any_predicates_with_memo(falsy, memo),
             self.complete && fully_classified,
+            memo,
         )
     }
 
-    pub(crate) fn select_default(primary: &Self, fallback: &Self) -> Option<ScalarValueDispatch> {
-        let primary_truth = primary.truth_condition();
+    pub(crate) fn select_default_with_memo(
+        primary: &Self,
+        fallback: &Self,
+        memo: &PredicateMemo,
+    ) -> Option<ScalarValueDispatch> {
+        let primary_truth = primary.truth_condition_with_memo(memo);
         let truthy = primary_truth.when_true();
-        let falsy = primary_truth.when_false();
+        let falsy = primary_truth.when_false_with_memo(memo);
         let mut arms = Vec::new();
         for (condition, value) in &primary.arms {
-            if let Some(condition) = conjoin_predicates(condition.clone(), truthy.clone()) {
+            if let Some(condition) =
+                conjoin_predicates_with_memo(condition.clone(), truthy.clone(), memo)
+            {
                 arms.push((condition, value.clone()));
             }
         }
         for (condition, value) in &fallback.arms {
-            if let Some(condition) = conjoin_predicates(condition.clone(), falsy.clone()) {
+            if let Some(condition) =
+                conjoin_predicates_with_memo(condition.clone(), falsy.clone(), memo)
+            {
                 arms.push((condition, value.clone()));
             }
         }
@@ -348,21 +390,26 @@ impl ScalarValueDispatch {
         Some(Self { arms, complete })
     }
 
-    pub(crate) fn select_ternary(
+    pub(crate) fn select_ternary_with_memo(
         condition: &TruthCondition,
         when_true: &Self,
         when_false: &Self,
+        memo: &PredicateMemo,
     ) -> Option<Self> {
         let truthy = condition.when_true();
-        let falsy = condition.when_false();
+        let falsy = condition.when_false_with_memo(memo);
         let mut arms = Vec::new();
         for (arm_condition, value) in &when_true.arms {
-            if let Some(condition) = conjoin_predicates(arm_condition.clone(), truthy.clone()) {
+            if let Some(condition) =
+                conjoin_predicates_with_memo(arm_condition.clone(), truthy.clone(), memo)
+            {
                 arms.push((condition, value.clone()));
             }
         }
         for (arm_condition, value) in &when_false.arms {
-            if let Some(condition) = conjoin_predicates(arm_condition.clone(), falsy.clone()) {
+            if let Some(condition) =
+                conjoin_predicates_with_memo(arm_condition.clone(), falsy.clone(), memo)
+            {
                 arms.push((condition, value.clone()));
             }
         }
@@ -498,26 +545,39 @@ impl ScalarValue {
         }
     }
 
-    fn condition_equals(&self, target: &helm_schema_core::GuardValue) -> TruthCondition {
+    fn condition_equals(
+        &self,
+        target: &helm_schema_core::GuardValue,
+        memo: &PredicateMemo,
+    ) -> TruthCondition {
         use helm_schema_core::{Guard, GuardValue, Predicate};
 
         match self {
-            Self::Literal(value) => TruthCondition::exact(if value == target {
-                Predicate::True
-            } else {
-                Predicate::False
-            }),
-            Self::Identity(path) => TruthCondition::exact(Predicate::from(Guard::Eq {
-                path: path.clone(),
-                value: target.clone(),
-            })),
+            Self::Literal(value) => TruthCondition::exact_with_memo(
+                if value == target {
+                    Predicate::True
+                } else {
+                    Predicate::False
+                },
+                memo,
+            ),
+            Self::Identity(path) => TruthCondition::exact_with_memo(
+                Predicate::from(Guard::Eq {
+                    path: path.clone(),
+                    value: target.clone(),
+                }),
+                memo,
+            ),
             Self::Rendered(parts) => {
                 if let Some(value) = rendered_constant(parts) {
-                    return TruthCondition::exact(if target == &GuardValue::string(value) {
-                        Predicate::True
-                    } else {
-                        Predicate::False
-                    });
+                    return TruthCondition::exact_with_memo(
+                        if target == &GuardValue::string(value) {
+                            Predicate::True
+                        } else {
+                            Predicate::False
+                        },
+                        memo,
+                    );
                 }
                 let [
                     ScalarRenderPart::Identity {
@@ -530,13 +590,13 @@ impl ScalarValue {
                     return TruthCondition::Unknown;
                 };
                 let GuardValue::String(target) = target else {
-                    return TruthCondition::exact(Predicate::False);
+                    return TruthCondition::exact_with_memo(Predicate::False, memo);
                 };
-                rendered_identity_equals(path, *stringified, lexical_escapes, target)
+                rendered_identity_equals(path, *stringified, lexical_escapes, target, memo)
             }
             Self::PrintfStringIdentity(path) => {
                 let GuardValue::String(target) = target else {
-                    return TruthCondition::exact(Predicate::False);
+                    return TruthCondition::exact_with_memo(Predicate::False, memo);
                 };
                 let predicate = Predicate::from(Guard::MatchesPattern {
                     path: path.clone(),
@@ -544,22 +604,22 @@ impl ScalarValue {
                     templated: false,
                 });
                 if target.is_empty() {
-                    TruthCondition::exact(predicate)
+                    TruthCondition::exact_with_memo(predicate, memo)
                 } else {
-                    TruthCondition::from_subsets(predicate, Predicate::False, false)
+                    TruthCondition::from_subsets_with_memo(predicate, Predicate::False, false, memo)
                 }
             }
             Self::SplitLength { value, separator } => {
                 let GuardValue::Int(length) = target else {
-                    return TruthCondition::exact(Predicate::False);
+                    return TruthCondition::exact_with_memo(Predicate::False, memo);
                 };
                 let Ok(length) = usize::try_from(*length) else {
-                    return TruthCondition::exact(Predicate::False);
+                    return TruthCondition::exact_with_memo(Predicate::False, memo);
                 };
                 let Some(pattern) = split_length_pattern(separator, length) else {
                     return TruthCondition::Unknown;
                 };
-                value.condition_matches_pattern(&pattern)
+                value.condition_matches_pattern(&pattern, memo)
             }
         }
     }
@@ -591,35 +651,42 @@ impl ScalarValue {
         }
     }
 
-    fn condition_matches_pattern(&self, pattern: &str) -> TruthCondition {
+    fn condition_matches_pattern(&self, pattern: &str, memo: &PredicateMemo) -> TruthCondition {
         use helm_schema_core::{Guard, GuardValue, Predicate};
 
         let Ok(regex) = regex::Regex::new(pattern) else {
             return TruthCondition::Unknown;
         };
         match self {
-            Self::Literal(GuardValue::String(value)) => {
-                TruthCondition::exact(if regex.is_match(value) {
+            Self::Literal(GuardValue::String(value)) => TruthCondition::exact_with_memo(
+                if regex.is_match(value) {
                     Predicate::True
                 } else {
                     Predicate::False
-                })
-            }
+                },
+                memo,
+            ),
             Self::Literal(_) | Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => {
                 TruthCondition::Unknown
             }
-            Self::Identity(path) => TruthCondition::exact(Predicate::from(Guard::MatchesPattern {
-                path: path.clone(),
-                pattern: pattern.to_string(),
-                templated: false,
-            })),
+            Self::Identity(path) => TruthCondition::exact_with_memo(
+                Predicate::from(Guard::MatchesPattern {
+                    path: path.clone(),
+                    pattern: pattern.to_string(),
+                    templated: false,
+                }),
+                memo,
+            ),
             Self::Rendered(parts) => {
                 if let Some(value) = rendered_constant(parts) {
-                    return TruthCondition::exact(if regex.is_match(&value) {
-                        Predicate::True
-                    } else {
-                        Predicate::False
-                    });
+                    return TruthCondition::exact_with_memo(
+                        if regex.is_match(&value) {
+                            Predicate::True
+                        } else {
+                            Predicate::False
+                        },
+                        memo,
+                    );
                 }
                 let [
                     ScalarRenderPart::Identity {
@@ -661,10 +728,11 @@ impl ScalarValue {
                             })
                             .collect(),
                     );
-                    return TruthCondition::from_subsets(
+                    return TruthCondition::from_subsets_with_memo(
                         Predicate::all(vec![unchanged.clone(), raw_match.clone()]),
                         Predicate::all(vec![unchanged, raw_match.negated()]),
                         false,
+                        memo,
                     );
                 }
                 let predicate = raw_match;
@@ -678,15 +746,20 @@ impl ScalarValue {
                         path: path.clone(),
                         pattern: pattern.to_string(),
                     });
-                    TruthCondition::from_subsets(predicate, raw_string_mismatch, false)
+                    TruthCondition::from_subsets_with_memo(
+                        predicate,
+                        raw_string_mismatch,
+                        false,
+                        memo,
+                    )
                 } else {
-                    TruthCondition::exact(predicate)
+                    TruthCondition::exact_with_memo(predicate, memo)
                 }
             }
         }
     }
 
-    fn condition_matches_semver(&self, constraint: &str) -> TruthCondition {
+    fn condition_matches_semver(&self, constraint: &str, memo: &PredicateMemo) -> TruthCondition {
         use helm_schema_core::{GuardValue, Predicate};
 
         let constant = match self {
@@ -699,18 +772,21 @@ impl ScalarValue {
         };
         if let Some(value) = constant {
             return match helm_schema_ast::semver_constraint_matches_version(constraint, &value) {
-                Some(matches) => TruthCondition::exact(if matches {
-                    Predicate::True
-                } else {
-                    Predicate::False
-                }),
+                Some(matches) => TruthCondition::exact_with_memo(
+                    if matches {
+                        Predicate::True
+                    } else {
+                        Predicate::False
+                    },
+                    memo,
+                ),
                 None => TruthCondition::Unknown,
             };
         }
         let Some(pattern) = helm_schema_ast::semver_constraint_match_pattern(constraint) else {
             return TruthCondition::Unknown;
         };
-        self.condition_matches_pattern(&pattern)
+        self.condition_matches_pattern(&pattern, memo)
     }
 }
 
@@ -739,6 +815,7 @@ fn rendered_identity_equals(
     stringified: bool,
     lexical_escapes: &BTreeSet<crate::helper_meta::LexicalEscape>,
     target: &str,
+    memo: &PredicateMemo,
 ) -> TruthCondition {
     use crate::helper_meta::LexicalEscape;
     use helm_schema_core::{Guard, GuardValue, Predicate};
@@ -753,7 +830,7 @@ fn rendered_identity_equals(
         templated: false,
     })];
     if !stringified {
-        return TruthCondition::exact(matches.remove(0));
+        return TruthCondition::exact_with_memo(matches.remove(0), memo);
     }
 
     let mut candidate_texts = BTreeSet::from([target.to_string()]);
@@ -790,13 +867,13 @@ fn rendered_identity_equals(
             })
         }));
     }
-    let when_true = any_predicates(matches);
+    let when_true = any_predicates_with_memo(matches, memo);
     let when_false = if exact {
         when_true.negated()
     } else {
         Predicate::False
     };
-    TruthCondition::from_subsets(when_true, when_false, exact)
+    TruthCondition::from_subsets_with_memo(when_true, when_false, exact, memo)
 }
 
 fn rendered_constant(parts: &[ScalarRenderPart]) -> Option<String> {
@@ -810,26 +887,34 @@ fn rendered_constant(parts: &[ScalarRenderPart]) -> Option<String> {
     Some(rendered)
 }
 
-pub(crate) fn any_predicates(
+pub(crate) fn any_predicates_with_memo(
     predicates: Vec<helm_schema_core::Predicate>,
+    memo: &PredicateMemo,
 ) -> helm_schema_core::Predicate {
-    helm_schema_core::Predicate::Or(predicates).normalize_boolean()
+    memo.normalize(helm_schema_core::Predicate::Or(predicates))
 }
 
-pub(crate) fn conjoin_predicates(
+pub(crate) fn conjoin_predicates_with_memo(
     left: helm_schema_core::Predicate,
     right: helm_schema_core::Predicate,
+    memo: &PredicateMemo,
 ) -> Option<helm_schema_core::Predicate> {
-    let predicate = helm_schema_core::Predicate::And(vec![left, right]).normalize_boolean();
+    let predicate = memo.normalize(helm_schema_core::Predicate::And(vec![left, right]));
     (predicate != helm_schema_core::Predicate::False).then_some(predicate)
 }
 
-fn normalized_factored(predicate: helm_schema_core::Predicate) -> helm_schema_core::Predicate {
-    predicate.normalize_boolean()
+fn normalized_factored(
+    predicate: helm_schema_core::Predicate,
+    memo: &PredicateMemo,
+) -> helm_schema_core::Predicate {
+    memo.normalize(predicate)
 }
 
-fn factored_negated(predicate: helm_schema_core::Predicate) -> helm_schema_core::Predicate {
-    helm_schema_core::Predicate::Not(Box::new(predicate)).normalize_boolean()
+fn factored_negated(
+    predicate: helm_schema_core::Predicate,
+    memo: &PredicateMemo,
+) -> helm_schema_core::Predicate {
+    memo.normalize(helm_schema_core::Predicate::Not(Box::new(predicate)))
 }
 
 pub(crate) const fn bool_predicate(value: bool) -> helm_schema_core::Predicate {
@@ -863,50 +948,86 @@ pub(crate) enum TruthCondition {
 
 impl TruthCondition {
     pub(crate) fn exact(predicate: helm_schema_core::Predicate) -> Self {
+        Self::exact_with_memo(predicate, &PredicateMemo::new())
+    }
+
+    pub(crate) fn exact_with_memo(
+        predicate: helm_schema_core::Predicate,
+        memo: &PredicateMemo,
+    ) -> Self {
         if predicate.contains_approximation() {
-            Self::from_predicate(predicate)
+            Self::from_predicate_with_memo(predicate, memo)
         } else {
-            Self::Exact(normalized_factored(predicate))
+            Self::Exact(normalized_factored(predicate, memo))
         }
     }
 
     pub(crate) fn from_predicate(predicate: helm_schema_core::Predicate) -> Self {
+        Self::from_predicate_with_memo(predicate, &PredicateMemo::new())
+    }
+
+    pub(crate) fn from_predicate_with_memo(
+        predicate: helm_schema_core::Predicate,
+        memo: &PredicateMemo,
+    ) -> Self {
         use helm_schema_core::Predicate;
 
         if !predicate.contains_approximation() {
-            return Self::exact(predicate);
+            return Self::exact_with_memo(predicate, memo);
         }
         match predicate.kind() {
             helm_schema_core::PredicateKind::Approximate { sound_subset, .. } => {
                 let when_true = sound_subset.cloned().unwrap_or(Predicate::False);
-                Self::from_subsets(when_true, Predicate::False, false)
+                Self::from_subsets_with_memo(when_true, Predicate::False, false, memo)
             }
             helm_schema_core::PredicateKind::Not(inner) => {
-                Self::from_predicate(inner.clone()).negated()
+                Self::from_predicate_with_memo(inner.clone(), memo).negated_with_memo(memo)
             }
-            helm_schema_core::PredicateKind::And(predicates) => {
-                Self::all(predicates.iter().cloned().map(Self::from_predicate))
-            }
-            helm_schema_core::PredicateKind::Or(predicates) => {
-                Self::any(predicates.iter().cloned().map(Self::from_predicate))
-            }
+            helm_schema_core::PredicateKind::And(predicates) => Self::all_with_memo(
+                predicates
+                    .iter()
+                    .cloned()
+                    .map(|predicate| Self::from_predicate_with_memo(predicate, memo)),
+                memo,
+            ),
+            helm_schema_core::PredicateKind::Or(predicates) => Self::any_with_memo(
+                predicates
+                    .iter()
+                    .cloned()
+                    .map(|predicate| Self::from_predicate_with_memo(predicate, memo)),
+                memo,
+            ),
             _ => Self::Exact(predicate),
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn from_subsets(
         when_true: helm_schema_core::Predicate,
         when_false: helm_schema_core::Predicate,
         complete: bool,
     ) -> Self {
+        Self::from_subsets_with_memo(when_true, when_false, complete, &PredicateMemo::new())
+    }
+
+    pub(crate) fn from_subsets_with_memo(
+        when_true: helm_schema_core::Predicate,
+        when_false: helm_schema_core::Predicate,
+        complete: bool,
+        memo: &PredicateMemo,
+    ) -> Self {
         use helm_schema_core::Predicate;
 
-        let when_true = normalized_factored(when_true);
-        let when_false = normalized_factored(when_false);
-        let disjoint = Predicate::all(vec![when_true.clone(), when_false.clone()])
-            .exactly_implies(&Predicate::False);
-        let exhaustive = Predicate::True
-            .exactly_implies(&Predicate::Or(vec![when_true.clone(), when_false.clone()]));
+        let when_true = normalized_factored(when_true, memo);
+        let when_false = normalized_factored(when_false, memo);
+        let disjoint = memo.exactly_implies(
+            &Predicate::all(vec![when_true.clone(), when_false.clone()]),
+            &Predicate::False,
+        );
+        let exhaustive = memo.exactly_implies(
+            &Predicate::True,
+            &Predicate::Or(vec![when_true.clone(), when_false.clone()]),
+        );
         if complete && disjoint && exhaustive {
             return Self::Exact(when_true);
         }
@@ -940,25 +1061,32 @@ impl TruthCondition {
     }
 
     pub(crate) fn when_false(&self) -> helm_schema_core::Predicate {
+        self.when_false_with_memo(&PredicateMemo::new())
+    }
+
+    pub(crate) fn when_false_with_memo(&self, memo: &PredicateMemo) -> helm_schema_core::Predicate {
         match self {
             Self::Unknown => helm_schema_core::Predicate::False,
             Self::Partial { when_false, .. } => when_false.clone(),
-            Self::Exact(when_true) => factored_negated(when_true.clone()),
+            Self::Exact(when_true) => factored_negated(when_true.clone(), memo),
         }
     }
 
-    pub(crate) fn negated(&self) -> Self {
+    pub(crate) fn negated_with_memo(&self, memo: &PredicateMemo) -> Self {
         match self {
             Self::Unknown => Self::Unknown,
             Self::Partial {
                 when_true,
                 when_false,
-            } => Self::from_subsets(when_false.clone(), when_true.clone(), false),
-            Self::Exact(predicate) => Self::Exact(factored_negated(predicate.clone())),
+            } => Self::from_subsets_with_memo(when_false.clone(), when_true.clone(), false, memo),
+            Self::Exact(predicate) => Self::Exact(factored_negated(predicate.clone(), memo)),
         }
     }
 
-    pub(crate) fn all(conditions: impl IntoIterator<Item = Self>) -> Self {
+    pub(crate) fn all_with_memo(
+        conditions: impl IntoIterator<Item = Self>,
+        memo: &PredicateMemo,
+    ) -> Self {
         use helm_schema_core::Predicate;
 
         let conditions = conditions.into_iter().collect::<Vec<_>>();
@@ -974,12 +1102,21 @@ impl TruthCondition {
         let complete = conditions
             .iter()
             .all(|condition| condition.predicate().is_some());
-        let when_true = conjoin_many(conditions.iter().map(Self::when_true));
-        let when_false = any_predicates(conditions.iter().map(Self::when_false).collect());
-        Self::from_subsets(when_true, when_false, complete)
+        let when_true = conjoin_many(conditions.iter().map(Self::when_true), memo);
+        let when_false = any_predicates_with_memo(
+            conditions
+                .iter()
+                .map(|condition| condition.when_false_with_memo(memo))
+                .collect(),
+            memo,
+        );
+        Self::from_subsets_with_memo(when_true, when_false, complete, memo)
     }
 
-    pub(crate) fn any(conditions: impl IntoIterator<Item = Self>) -> Self {
+    pub(crate) fn any_with_memo(
+        conditions: impl IntoIterator<Item = Self>,
+        memo: &PredicateMemo,
+    ) -> Self {
         use helm_schema_core::Predicate;
 
         let conditions = conditions.into_iter().collect::<Vec<_>>();
@@ -995,18 +1132,25 @@ impl TruthCondition {
         let complete = conditions
             .iter()
             .all(|condition| condition.predicate().is_some());
-        let when_true = any_predicates(conditions.iter().map(Self::when_true).collect());
-        let when_false = conjoin_many(conditions.iter().map(Self::when_false));
-        Self::from_subsets(when_true, when_false, complete)
+        let when_true =
+            any_predicates_with_memo(conditions.iter().map(Self::when_true).collect(), memo);
+        let when_false = conjoin_many(
+            conditions
+                .iter()
+                .map(|condition| condition.when_false_with_memo(memo)),
+            memo,
+        );
+        Self::from_subsets_with_memo(when_true, when_false, complete, memo)
     }
 }
 
 fn conjoin_many(
     predicates: impl IntoIterator<Item = helm_schema_core::Predicate>,
+    memo: &PredicateMemo,
 ) -> helm_schema_core::Predicate {
     let mut condition = helm_schema_core::Predicate::True;
     for predicate in predicates {
-        let Some(joined) = conjoin_predicates(condition, predicate) else {
+        let Some(joined) = conjoin_predicates_with_memo(condition, predicate, memo) else {
             return helm_schema_core::Predicate::False;
         };
         condition = joined;

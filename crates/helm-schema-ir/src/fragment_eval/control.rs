@@ -12,12 +12,16 @@ use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
 use crate::eval_effect::{SelectionTruthReachability, SelectionTruthSource};
-use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates};
+use crate::scalar_value::{
+    ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
+};
 use crate::value_path_context::{guard_value_is_truthy, predicate_any};
 use crate::{Guard, ValueKind};
 use helm_schema_core::{GuardValue, Predicate};
 
-use super::domain::{AbstractFragment, Guarded, PathCondition, Splice, SpliceMeta, and_conditions};
+use super::domain::{
+    AbstractFragment, Guarded, PathCondition, Splice, SpliceMeta, and_conditions_with_memo,
+};
 use super::eval::{Adopted, ArmSpec, Contributions, Interpreter, NodeView};
 
 /// Exact range sequences resolved from a statically known list iterable.
@@ -98,7 +102,11 @@ impl Interpreter<'_> {
             for prior in &prior_conditions {
                 let negated = prior.negated();
                 self.push_predicate(negated.clone());
-                arm_condition = and_conditions(arm_condition, negated);
+                arm_condition = and_conditions_with_memo(
+                    arm_condition,
+                    negated,
+                    self.db.predicate_memo().as_ref(),
+                );
             }
 
             let arm = self.classify_branch(region, index);
@@ -129,7 +137,11 @@ impl Interpreter<'_> {
                 _ => false,
             };
             if let Some(own) = own_condition {
-                arm_condition = and_conditions(arm_condition, own.clone());
+                arm_condition = and_conditions_with_memo(
+                    arm_condition,
+                    own.clone(),
+                    self.db.predicate_memo().as_ref(),
+                );
                 if !matches!(arm, ArmSpec::Range { .. }) {
                     prior_conditions.push(own);
                 }
@@ -145,12 +157,19 @@ impl Interpreter<'_> {
                 } else {
                     own_reachability.clone()
                 };
-                let truth = TruthCondition::all(
+                let truth = TruthCondition::all_with_memo(
                     prior_semantic_reachability
                         .iter()
-                        .map(SelectionTruthReachability::truth_condition)
-                        .map(|truth| truth.negated())
-                        .chain(std::iter::once(join_reachability.truth_condition())),
+                        .map(|reachability| {
+                            reachability
+                                .truth_condition_with_memo(self.db.predicate_memo().as_ref())
+                        })
+                        .map(|truth| truth.negated_with_memo(self.db.predicate_memo().as_ref()))
+                        .chain(std::iter::once(
+                            join_reachability
+                                .truth_condition_with_memo(self.db.predicate_memo().as_ref()),
+                        )),
+                    self.db.predicate_memo().as_ref(),
                 );
                 if matches!(arm, ArmSpec::If(_) | ArmSpec::With(_)) {
                     prior_semantic_reachability.push(join_reachability);
@@ -241,14 +260,18 @@ impl Interpreter<'_> {
                                 self.rewind(item_scope);
                                 let break_condition = iteration.loop_control.break_condition();
                                 iteration.take_loop_control();
-                                iteration.guard_all(&remaining);
+                                iteration.guard_all(&remaining, self.db.predicate_memo().as_ref());
                                 all.extend(iteration);
                                 if break_condition != Predicate::False {
                                     scalar_exit_states.push((
-                                        TruthCondition::exact(and_conditions(
-                                            remaining.clone(),
-                                            break_condition.clone(),
-                                        )),
+                                        TruthCondition::exact_with_memo(
+                                            and_conditions_with_memo(
+                                                remaining.clone(),
+                                                break_condition.clone(),
+                                                self.db.predicate_memo().as_ref(),
+                                            ),
+                                            self.db.predicate_memo().as_ref(),
+                                        ),
                                         self.locals.clone(),
                                     ));
                                 }
@@ -257,12 +280,21 @@ impl Interpreter<'_> {
                                 } else if break_condition == Predicate::True {
                                     Predicate::False
                                 } else {
-                                    and_conditions(remaining, break_condition.negated())
+                                    and_conditions_with_memo(
+                                        remaining,
+                                        break_condition.negated(),
+                                        self.db.predicate_memo().as_ref(),
+                                    )
                                 };
                             }
                             if remaining != Predicate::False {
-                                scalar_exit_states
-                                    .push((TruthCondition::exact(remaining), self.locals.clone()));
+                                scalar_exit_states.push((
+                                    TruthCondition::exact_with_memo(
+                                        remaining,
+                                        self.db.predicate_memo().as_ref(),
+                                    ),
+                                    self.locals.clone(),
+                                ));
                             }
                             if !scalar_exit_states.is_empty() {
                                 let mut scalar_join = self.locals.clone();
@@ -270,6 +302,7 @@ impl Interpreter<'_> {
                                     &alternative_entry,
                                     &scalar_exit_states,
                                     true,
+                                    self.db.predicate_memo().as_ref(),
                                 );
                                 self.locals.scalar_dispatches = scalar_join.scalar_dispatches;
                             }
@@ -316,8 +349,11 @@ impl Interpreter<'_> {
             if let Some(semantic_arm_truth) = semantic_arm_truth {
                 local_arm_states.push((semantic_arm_truth, self.locals.clone()));
             }
-            self.locals
-                .conjoin_changed_truthy_reductions(&entry_locals, &stamped_condition);
+            self.locals.conjoin_changed_truthy_reductions(
+                &entry_locals,
+                &stamped_condition,
+                self.db.predicate_memo().as_ref(),
+            );
             outcomes.push(self.locals.clone());
             if entry_root.is_some() {
                 root_arm_states.push((
@@ -328,7 +364,7 @@ impl Interpreter<'_> {
             }
 
             contributions.extend(extra);
-            contributions.guard_all(&arm_condition);
+            contributions.guard_all(&arm_condition, self.db.predicate_memo().as_ref());
             out.extend(contributions);
         }
 
@@ -360,11 +396,13 @@ impl Interpreter<'_> {
                 &entry_locals,
                 &local_arm_states,
                 has_unconditional_else,
+                self.db.predicate_memo().as_ref(),
             );
             self.locals.join_scalar_dispatch_arms(
                 &entry_locals,
                 &local_arm_states,
                 has_unconditional_else,
+                self.db.predicate_memo().as_ref(),
             );
         }
 
@@ -516,7 +554,11 @@ impl Interpreter<'_> {
                 None,
                 Contributions::default(),
                 None,
-                SelectionTruthReachability::exact(Predicate::True, SelectionTruthSource::RawInput),
+                SelectionTruthReachability::exact_with_memo(
+                    Predicate::True,
+                    SelectionTruthSource::RawInput,
+                    self.db.predicate_memo().as_ref(),
+                ),
             ),
             ArmSpec::If(header) => {
                 let (condition, truth) =
@@ -716,12 +758,12 @@ impl Interpreter<'_> {
                 self.push_predicate(conjunct);
             }
         }
-        let semantic_truth = if evaluated_truth.when_true().exact_predicate().is_none() && faithful
-        {
-            SelectionTruthReachability::exact(predicate.clone(), SelectionTruthSource::RawInput)
-        } else {
-            evaluated_truth
-        };
+        let semantic_truth = semantic_truth_reachability(
+            evaluated_truth,
+            &predicate,
+            faithful,
+            self.db.predicate_memo().as_ref(),
+        );
         (Some(predicate), semantic_truth)
     }
 
@@ -745,11 +787,12 @@ impl Interpreter<'_> {
         }
         let heuristic_subset = (!sound_subset.is_empty())
             .then(|| Predicate::all(sound_subset.into_iter().map(Predicate::from).collect()));
-        let positive_subset = any_predicates(
+        let positive_subset = any_predicates_with_memo(
             evaluated_subset
                 .into_iter()
                 .chain(heuristic_subset)
                 .collect(),
+            self.db.predicate_memo().as_ref(),
         );
         if positive_subset == Predicate::False {
             self.value_path_context()
@@ -918,12 +961,12 @@ impl Interpreter<'_> {
                 .insert(name.trim_start_matches('$').to_string(), binding.clone());
         }
         self.dot_stack.push(dot);
-        let semantic_truth = if evaluated_truth.when_true().exact_predicate().is_none() && faithful
-        {
-            SelectionTruthReachability::exact(predicate.clone(), SelectionTruthSource::RawInput)
-        } else {
-            evaluated_truth
-        };
+        let semantic_truth = semantic_truth_reachability(
+            evaluated_truth,
+            &predicate,
+            faithful,
+            self.db.predicate_memo().as_ref(),
+        );
         (Some(predicate), semantic_truth)
     }
 
@@ -1148,9 +1191,10 @@ impl Interpreter<'_> {
             Self::exact_range_iterations(iterable, header, value_variable, key_variable)
         });
         let own_condition = Predicate::all(own);
-        let truth = SelectionTruthReachability::exact(
+        let truth = SelectionTruthReachability::exact_with_memo(
             own_condition.clone(),
             SelectionTruthSource::RawInput,
+            self.db.predicate_memo().as_ref(),
         );
         if let Some(iterations) = iterations {
             return (Some(own_condition), extra, Some(iterations), truth);
@@ -2169,6 +2213,23 @@ impl Interpreter<'_> {
             self.root_value_dispatches_observed
                 .insert(key.clone(), dispatch);
         }
+    }
+}
+
+pub(super) fn semantic_truth_reachability(
+    evaluated_truth: SelectionTruthReachability,
+    predicate: &Predicate,
+    faithful: bool,
+    predicate_memo: &helm_schema_core::PredicateMemo,
+) -> SelectionTruthReachability {
+    if evaluated_truth.when_true().exact_predicate().is_none() && faithful {
+        SelectionTruthReachability::exact_with_memo(
+            predicate.clone(),
+            SelectionTruthSource::RawInput,
+            predicate_memo,
+        )
+    } else {
+        evaluated_truth
     }
 }
 

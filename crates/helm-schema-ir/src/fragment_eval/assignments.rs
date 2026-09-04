@@ -410,7 +410,8 @@ impl Interpreter<'_> {
         let env = crate::eval_env::EvalEnv::from_fragment_context(
             &template_bindings,
             current_dot.as_ref(),
-        );
+        )
+        .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         for expr in exprs {
             let mutation_expr = match expr {
                 TemplateExpr::VariableDefinition { value, .. }

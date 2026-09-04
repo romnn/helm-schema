@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
-use helm_schema_core::{Guard, GuardValue, Predicate};
+use helm_schema_core::{Guard, GuardValue, Predicate, PredicateMemo};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
@@ -38,11 +38,12 @@ pub(super) fn eval_ternary(
             &mut effects,
         );
         condition_truth = condition.truth.clone();
-        condition_reachability = SelectionReachability::from((
+        condition_reachability = SelectionReachability::from_condition_with_memo(
             &condition_truth,
             SelectionPolarity::Truthy,
             SelectionTruthSource::RawInput,
-        ));
+            env.predicate_memo.as_ref(),
+        );
         effects.merge(condition.effects.consumed_as_predicate());
     } else if let Some(condition_arg) = args.get(2) {
         let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
@@ -53,11 +54,12 @@ pub(super) fn eval_ternary(
             &mut effects,
         );
         condition_truth = condition.truth.clone();
-        condition_reachability = SelectionReachability::from((
+        condition_reachability = SelectionReachability::from_condition_with_memo(
             &condition_truth,
             SelectionPolarity::Truthy,
             SelectionTruthSource::RawInput,
-        ));
+            env.predicate_memo.as_ref(),
+        );
         effects.merge(condition.effects.consumed_as_predicate());
     } else {
         condition_truth = TruthCondition::Unknown;
@@ -78,7 +80,7 @@ pub(super) fn eval_ternary(
             let reachability = if index == 0 {
                 condition_reachability.clone()
             } else {
-                condition_reachability.complement()
+                condition_reachability.complement_with_memo(env.predicate_memo.as_ref())
             };
             super::conjoin_result_reachability(
                 &mut result,
@@ -87,7 +89,11 @@ pub(super) fn eval_ternary(
                 condition_truth
                     .when_true()
                     .value_paths()
-                    .union(&condition_truth.when_false().value_paths())
+                    .union(
+                        &condition_truth
+                            .when_false_with_memo(env.predicate_memo.as_ref())
+                            .value_paths(),
+                    )
                     .map(helm_schema_core::ValuesPath::encode)
                     .collect(),
             );
@@ -103,10 +109,14 @@ pub(super) fn eval_ternary(
     effects.promote_tested_type_hints();
     let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
     if let [Some(when_true), Some(when_false)] = scalar_dispatches.as_slice()
-        && let Some(dispatch) =
-            ScalarValueDispatch::select_ternary(&condition_truth, when_true, when_false)
+        && let Some(dispatch) = ScalarValueDispatch::select_ternary_with_memo(
+            &condition_truth,
+            when_true,
+            when_false,
+            env.predicate_memo.as_ref(),
+        )
     {
-        return result.with_scalar_dispatch(dispatch);
+        return result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref());
     }
     result
 }
@@ -130,9 +140,12 @@ pub(super) fn eval_type_is(
                 && type_name == Some("invalid")
                 && let Some(path) = result.exact_input_identity()
             {
-                truth = TruthCondition::exact(Predicate::invalid_kind_path(path));
+                truth = TruthCondition::exact_with_memo(
+                    Predicate::invalid_kind_path(path),
+                    env.predicate_memo.as_ref(),
+                );
             } else if let (Some(schema_type), Some(type_name)) = (&schema_type, type_name) {
-                truth = type_is_truth(&result, schema_type, type_name);
+                truth = type_is_truth(&result, schema_type, type_name, env.predicate_memo.as_ref());
             }
         }
         effects.merge(result.effects);
@@ -142,7 +155,11 @@ pub(super) fn eval_type_is(
             .when_true()
             .value_paths()
             .into_iter()
-            .chain(truth.when_false().value_paths())
+            .chain(
+                truth
+                    .when_false_with_memo(env.predicate_memo.as_ref())
+                    .value_paths(),
+            )
             .map(|path| path.encode())
             .filter(|path| subject_paths.contains(path))
             .collect();
@@ -152,7 +169,11 @@ pub(super) fn eval_type_is(
         effects.add_tested_type_hints(tested_paths, &schema_type);
     }
     let mut result = EvalResult::with_effects(None, effects);
-    result.set_truth_condition(truth, crate::eval_effect::SelectionTruthSource::RawInput);
+    result.set_truth_condition_with_memo(
+        truth,
+        crate::eval_effect::SelectionTruthSource::RawInput,
+        env.predicate_memo.as_ref(),
+    );
     result
 }
 
@@ -164,21 +185,27 @@ fn literal_type_name(expr: &TemplateExpr) -> Option<&str> {
     Some(value)
 }
 
-fn type_is_truth(result: &EvalResult, schema_type: &str, type_name: &str) -> TruthCondition {
+fn type_is_truth(
+    result: &EvalResult,
+    schema_type: &str,
+    type_name: &str,
+    memo: &PredicateMemo,
+) -> TruthCondition {
     if let Some(value) = result
         .scalar_dispatch
         .as_ref()
         .and_then(ScalarValueDispatch::constant_value)
     {
-        return TruthCondition::exact(bool_predicate(
-            guard_value_schema_type(&value) == schema_type,
-        ));
+        return TruthCondition::exact_with_memo(
+            bool_predicate(guard_value_schema_type(&value) == schema_type),
+            memo,
+        );
     }
     result
         .value
         .as_ref()
         .map_or(TruthCondition::Unknown, |value| {
-            abstract_value_type_is(value, schema_type, type_name)
+            abstract_value_type_is(value, schema_type, type_name, memo)
         })
 }
 
@@ -186,56 +213,63 @@ fn abstract_value_type_is(
     value: &AbstractValue,
     schema_type: &str,
     type_name: &str,
+    memo: &PredicateMemo,
 ) -> TruthCondition {
     match value {
         AbstractValue::ValuesPath(path) => {
             if path.segments().len() == 0 {
-                TruthCondition::exact(bool_predicate(schema_type == "object"))
+                TruthCondition::exact_with_memo(bool_predicate(schema_type == "object"), memo)
             } else if matches!(type_name, "int64" | "float64") {
-                values_numeric_type_truth(&path.encode(), type_name)
+                values_numeric_type_truth(&path.encode(), type_name, memo)
             } else {
-                TruthCondition::exact(Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type: schema_type.to_string(),
-                }))
+                TruthCondition::exact_with_memo(
+                    Predicate::from(Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: schema_type.to_string(),
+                    }),
+                    memo,
+                )
             }
         }
         AbstractValue::OutputPath(path, meta) if meta.is_input_identity() => {
             if matches!(type_name, "int64" | "float64") {
-                values_numeric_type_truth(&path.encode(), type_name)
+                values_numeric_type_truth(&path.encode(), type_name, memo)
             } else {
-                TruthCondition::exact(Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type: schema_type.to_string(),
-                }))
+                TruthCondition::exact_with_memo(
+                    Predicate::from(Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: schema_type.to_string(),
+                    }),
+                    memo,
+                )
             }
         }
         AbstractValue::JsonDecodedPath(path) => {
-            json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name)
+            json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name, memo)
         }
         AbstractValue::OutputPath(path, meta) if meta.json_decoded => {
-            json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name)
+            json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name, memo)
         }
         AbstractValue::Dict(_)
         | AbstractValue::Overlay { .. }
         | AbstractValue::MergedLayers(_)
         | AbstractValue::RootContext => {
-            TruthCondition::exact(bool_predicate(schema_type == "object"))
+            TruthCondition::exact_with_memo(bool_predicate(schema_type == "object"), memo)
         }
         AbstractValue::List(_) | AbstractValue::KeysList(_) | AbstractValue::SplitList { .. } => {
-            TruthCondition::exact(bool_predicate(schema_type == "array"))
+            TruthCondition::exact_with_memo(bool_predicate(schema_type == "array"), memo)
         }
         AbstractValue::StringSet(_) | AbstractValue::SplitSegment { .. } => {
-            TruthCondition::exact(bool_predicate(schema_type == "string"))
+            TruthCondition::exact_with_memo(bool_predicate(schema_type == "string"), memo)
         }
         AbstractValue::DerivedBoolean(_) => {
-            TruthCondition::exact(bool_predicate(schema_type == "boolean"))
+            TruthCondition::exact_with_memo(bool_predicate(schema_type == "boolean"), memo)
         }
         AbstractValue::Choice(choices) => {
-            type_is_for_alternatives(choices.iter(), schema_type, type_name)
+            type_is_for_alternatives(choices.iter(), schema_type, type_name, memo)
         }
         AbstractValue::FirstTruthy(candidates) => {
-            type_is_for_alternatives(candidates.iter(), schema_type, type_name)
+            type_is_for_alternatives(candidates.iter(), schema_type, type_name, memo)
         }
         AbstractValue::Top
         | AbstractValue::Unknown
@@ -249,22 +283,24 @@ fn type_is_for_alternatives<'a>(
     alternatives: impl IntoIterator<Item = &'a AbstractValue>,
     schema_type: &str,
     type_name: &str,
+    memo: &PredicateMemo,
 ) -> TruthCondition {
     let conditions = alternatives
         .into_iter()
-        .map(|value| abstract_value_type_is(value, schema_type, type_name))
+        .map(|value| abstract_value_type_is(value, schema_type, type_name, memo))
         .collect::<Vec<_>>();
     if conditions.is_empty() {
         return TruthCondition::Unknown;
     }
-    TruthCondition::from_subsets(
+    TruthCondition::from_subsets_with_memo(
         Predicate::all(conditions.iter().map(TruthCondition::when_true).collect()),
         Predicate::all(conditions.iter().map(TruthCondition::when_false).collect()),
         false,
+        memo,
     )
 }
 
-fn values_numeric_type_truth(path: &str, type_name: &str) -> TruthCondition {
+fn values_numeric_type_truth(path: &str, type_name: &str, memo: &PredicateMemo) -> TruthCondition {
     let integer = Predicate::from(Guard::TypeIs {
         path: helm_schema_core::ValuesPath::parse(path),
         schema_type: "integer".to_string(),
@@ -274,11 +310,14 @@ fn values_numeric_type_truth(path: &str, type_name: &str) -> TruthCondition {
         schema_type: "number".to_string(),
     });
     match type_name {
-        "int64" => TruthCondition::from_subsets(Predicate::False, integer.negated(), false),
-        "float64" => TruthCondition::from_subsets(
+        "int64" => {
+            TruthCondition::from_subsets_with_memo(Predicate::False, integer.negated(), false, memo)
+        }
+        "float64" => TruthCondition::from_subsets_with_memo(
             Predicate::all(vec![number.clone(), integer.negated()]),
             number.negated(),
             false,
+            memo,
         ),
         _ => TruthCondition::Unknown,
     }
@@ -288,17 +327,24 @@ fn json_decoded_numeric_type_truth(
     path: &str,
     schema_type: &str,
     type_name: &str,
+    memo: &PredicateMemo,
 ) -> TruthCondition {
     match type_name {
-        "int64" => TruthCondition::exact(Predicate::False),
-        "float64" => TruthCondition::exact(Predicate::from(Guard::TypeIs {
-            path: helm_schema_core::ValuesPath::parse(path),
-            schema_type: "number".to_string(),
-        })),
-        _ => TruthCondition::exact(Predicate::from(Guard::TypeIs {
-            path: helm_schema_core::ValuesPath::parse(path),
-            schema_type: schema_type.to_string(),
-        })),
+        "int64" => TruthCondition::exact_with_memo(Predicate::False, memo),
+        "float64" => TruthCondition::exact_with_memo(
+            Predicate::from(Guard::TypeIs {
+                path: helm_schema_core::ValuesPath::parse(path),
+                schema_type: "number".to_string(),
+            }),
+            memo,
+        ),
+        _ => TruthCondition::exact_with_memo(
+            Predicate::from(Guard::TypeIs {
+                path: helm_schema_core::ValuesPath::parse(path),
+                schema_type: schema_type.to_string(),
+            }),
+            memo,
+        ),
     }
 }
 
@@ -336,7 +382,13 @@ pub(super) fn eval_comparison(
             .map(|arg| eval_expr_with_helper_calls(arg, env, resolver)),
     );
     raw_identity_operands.extend(args.iter().map(direct_comparison_identity));
-    eval_comparison_operands(function, operands, &raw_identity_operands, literal_kind)
+    eval_comparison_operands_with_memo(
+        function,
+        operands,
+        &raw_identity_operands,
+        literal_kind,
+        env.predicate_memo.as_ref(),
+    )
 }
 
 fn direct_comparison_identity(expr: &TemplateExpr) -> bool {
@@ -356,22 +408,27 @@ pub(super) fn comparison_literal_kind(args: &[TemplateExpr]) -> Option<&'static 
     })
 }
 
-pub(super) fn eval_comparison_operands(
+fn eval_comparison_operands_with_memo(
     function: &str,
     operands: Vec<EvalResult>,
     raw_identity_operands: &[bool],
     literal_kind: Option<&str>,
+    memo: &PredicateMemo,
 ) -> EvalResult {
     let mut comparison_effects = Effects::default();
-    let equality = equality_condition(&operands, raw_identity_operands);
+    let equality = equality_condition(&operands, raw_identity_operands, memo);
     let truth = if function == "ne" {
-        equality.negated()
+        equality.negated_with_memo(memo)
     } else {
         equality
     };
     let Some(literal_kind) = literal_kind else {
         let mut result = merge_operand_results(operands, comparison_effects);
-        result.set_truth_condition(truth, crate::eval_effect::SelectionTruthSource::RawInput);
+        result.set_truth_condition_with_memo(
+            truth,
+            crate::eval_effect::SelectionTruthSource::RawInput,
+            memo,
+        );
         return result;
     };
     for operand in &operands {
@@ -383,11 +440,19 @@ pub(super) fn eval_comparison_operands(
         record_comparable_kind_result(operand, literal_kind, &mut comparison_effects);
     }
     let mut result = merge_operand_results(operands, comparison_effects);
-    result.set_truth_condition(truth, crate::eval_effect::SelectionTruthSource::RawInput);
+    result.set_truth_condition_with_memo(
+        truth,
+        crate::eval_effect::SelectionTruthSource::RawInput,
+        memo,
+    );
     result
 }
 
-fn equality_condition(operands: &[EvalResult], raw_identity_operands: &[bool]) -> TruthCondition {
+fn equality_condition(
+    operands: &[EvalResult],
+    raw_identity_operands: &[bool],
+    memo: &PredicateMemo,
+) -> TruthCondition {
     let [left, right] = operands else {
         return TruthCondition::Unknown;
     };
@@ -400,17 +465,20 @@ fn equality_condition(operands: &[EvalResult], raw_identity_operands: &[bool]) -
     ) {
         (Some(left), Some(right)) => match (left.constant_value(), right.constant_value()) {
             (Some(left), Some(right)) => {
-                return TruthCondition::exact(if left == right {
-                    Predicate::True
-                } else {
-                    Predicate::False
-                });
+                return TruthCondition::exact_with_memo(
+                    if left == right {
+                        Predicate::True
+                    } else {
+                        Predicate::False
+                    },
+                    memo,
+                );
             }
             (Some(target), None) => {
-                return right.condition_equals(&target);
+                return right.condition_equals_with_memo(&target, memo);
             }
             (None, Some(target)) => {
-                return left.condition_equals(&target);
+                return left.condition_equals_with_memo(&target, memo);
             }
             (None, None) => {}
         },
@@ -419,10 +487,13 @@ fn equality_condition(operands: &[EvalResult], raw_identity_operands: &[bool]) -
                 && let Some(path) = direct_raw_identity_path(right.value.as_ref())
                 && let Some(value) = dispatch.constant_value()
             {
-                return TruthCondition::exact(Predicate::from(Guard::Eq {
-                    path: helm_schema_core::ValuesPath::parse(&path),
-                    value,
-                }));
+                return TruthCondition::exact_with_memo(
+                    Predicate::from(Guard::Eq {
+                        path: helm_schema_core::ValuesPath::parse(&path),
+                        value,
+                    }),
+                    memo,
+                );
             }
         }
         (None, Some(dispatch)) => {
@@ -430,10 +501,13 @@ fn equality_condition(operands: &[EvalResult], raw_identity_operands: &[bool]) -
                 && let Some(path) = direct_raw_identity_path(left.value.as_ref())
                 && let Some(value) = dispatch.constant_value()
             {
-                return TruthCondition::exact(Predicate::from(Guard::Eq {
-                    path: helm_schema_core::ValuesPath::parse(&path),
-                    value,
-                }));
+                return TruthCondition::exact_with_memo(
+                    Predicate::from(Guard::Eq {
+                        path: helm_schema_core::ValuesPath::parse(&path),
+                        value,
+                    }),
+                    memo,
+                );
             }
         }
         (None, None) => {}

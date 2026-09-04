@@ -117,6 +117,7 @@ fn kind_selector_path(
 pub(super) fn finish_schema_signals(
     mut paths: BTreeMap<ValuesPath, ContractPathAccumulator>,
     mut terminal_clauses: Vec<Vec<ConditionalGuard>>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> ContractSchemaSignals {
     record_member_access_implications(&mut paths, &mut terminal_clauses);
     let referenced_paths = paths
@@ -161,6 +162,7 @@ pub(super) fn finish_schema_signals(
                 has_descendants,
                 has_item_descendants,
                 has_structured_item_descendants,
+                predicate_memo,
             );
             (value_path, evidence)
         })
@@ -257,6 +259,7 @@ impl ContractPathAccumulator {
         has_referenced_descendants: bool,
         has_item_descendants: bool,
         has_structured_item_descendants: bool,
+        predicate_memo: &helm_schema_core::PredicateMemo,
     ) -> ContractPathSchemaEvidence {
         let ContractPathAccumulator {
             referenced,
@@ -365,7 +368,7 @@ impl ContractPathAccumulator {
                 guards.iter().map(ConditionalGuard::predicate).collect(),
             );
             for (range_predicate, range_domain) in &range_domains {
-                if branch_predicate.exactly_implies(range_predicate) {
+                if predicate_memo.exactly_implies(&branch_predicate, range_predicate) {
                     branch.record_range_domain(*range_domain);
                 }
             }

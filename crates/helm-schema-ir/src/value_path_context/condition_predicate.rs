@@ -1838,7 +1838,10 @@ impl ValuePathContext<'_> {
             },
         };
         let dispatch = self.eval_env.root_value_dispatches.get(field)?;
-        let selected = dispatch.condition_equals(&value).predicate()?.clone();
+        let selected = dispatch
+            .condition_equals_with_memo(&value, self.eval_env.predicate_memo.as_ref())
+            .predicate()?
+            .clone();
         Some(if negated {
             selected.negated()
         } else {

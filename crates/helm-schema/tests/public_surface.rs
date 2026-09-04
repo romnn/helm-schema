@@ -160,6 +160,64 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
 }
 
 #[test]
+fn successive_sessions_keep_schema_and_diagnostics_identical() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            enabled: true
+            feature: true
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/configmap.yaml")?,
+        indoc! {r"
+            {{- if and .Values.enabled .Values.feature }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            {{- end }}
+        "},
+    )?;
+    let opts = GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: SchemaProfile::default().into(),
+        provider: ProviderOptions {
+            allow_net: false,
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    };
+
+    let first_diagnostics = DiagnosticSink::new();
+    let first = AnalysisSession::with_diagnostics(opts.clone(), first_diagnostics.clone())
+        .generated_schema()?;
+    let second_diagnostics = DiagnosticSink::new();
+    let second =
+        AnalysisSession::with_diagnostics(opts, second_diagnostics.clone()).generated_schema()?;
+
+    sim_assert_eq!(have: second.schema, want: first.schema);
+    sim_assert_eq!(
+        have: second_diagnostics.snapshot(),
+        want: first_diagnostics.snapshot()
+    );
+    Ok(())
+}
+
+#[test]
 fn split_call_and_pipeline_emit_the_same_nil_strict_schema() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(

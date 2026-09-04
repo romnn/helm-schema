@@ -307,7 +307,9 @@ fn eval_string_transform_invocation(
     };
     let result = EvalResult::with_effects(derive_value_text(value), effects);
     match scalar_dispatch {
-        Some(dispatch) => result.with_scalar_dispatch(dispatch),
+        Some(dispatch) => {
+            result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref())
+        }
         None => result,
     }
 }
@@ -402,23 +404,33 @@ fn eval_direct_invocation(
                 return EvalResult::none();
             };
             let operand = eval_expr_with_helper_calls(arg, env, resolver);
-            let truth = operand.truth.negated();
+            let truth = operand.truth.negated_with_memo(env.predicate_memo.as_ref());
             let effects = operand.effects;
             let value = Some(AbstractValue::DerivedBoolean(effects.output_paths.clone()));
             let mut result = EvalResult::with_effects(value, effects);
-            result.set_truth_condition(truth, SelectionTruthSource::RawInput);
+            result.set_truth_condition_with_memo(
+                truth,
+                SelectionTruthSource::RawInput,
+                env.predicate_memo.as_ref(),
+            );
             result
         }
-        "dict" => eval_dict(args, env, resolver).with_truth(if args.is_empty() {
-            Predicate::False
-        } else {
-            Predicate::True
-        }),
-        "list" | "tuple" => eval_list(args, env, resolver).with_truth(if args.is_empty() {
-            Predicate::False
-        } else {
-            Predicate::True
-        }),
+        "dict" => eval_dict(args, env, resolver).with_truth_with_memo(
+            if args.is_empty() {
+                Predicate::False
+            } else {
+                Predicate::True
+            },
+            env.predicate_memo.as_ref(),
+        ),
+        "list" | "tuple" => eval_list(args, env, resolver).with_truth_with_memo(
+            if args.is_empty() {
+                Predicate::False
+            } else {
+                Predicate::True
+            },
+            env.predicate_memo.as_ref(),
+        ),
         "slice" | "mustSlice" if (2..=3).contains(&args.len()) => {
             let Some((subject, bounds)) = args.split_first() else {
                 return EvalResult::none();
@@ -588,7 +600,9 @@ fn eval_direct_invocation(
                 ));
             }
             match scalar_dispatch {
-                Some(dispatch) => result.with_scalar_dispatch(dispatch),
+                Some(dispatch) => {
+                    result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref())
+                }
                 None => result,
             }
         }
@@ -694,9 +708,10 @@ fn eval_direct_invocation(
                     crate::value_path_context::value_has_key(subject, key)
                 })
             {
-                result.set_truth_condition(
-                    TruthCondition::exact(predicate),
+                result.set_truth_condition_with_memo(
+                    TruthCondition::exact_with_memo(predicate, env.predicate_memo.as_ref()),
                     SelectionTruthSource::RawInput,
+                    env.predicate_memo.as_ref(),
                 );
             }
             result
@@ -832,7 +847,7 @@ fn eval_direct_invocation(
                 Some(AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_))
             ) && let Some(truth) = subject.truth.predicate()
             {
-                push_fail_capture(vec![truth.clone().negated()], &mut subject.effects);
+                push_fail_capture(vec![truth.negated()], &mut subject.effects);
             }
             subject.effects.merge(message.effects);
             subject
@@ -868,7 +883,7 @@ fn eval_direct_invocation(
                 let dispatch = subject
                     .scalar_dispatch
                     .or_else(|| direct_stringified_dispatch(subject_expr, env, resolver));
-                scalar_pattern_condition(function, args, dispatch.as_ref()).or_else(|| {
+                scalar_pattern_condition(function, args, dispatch.as_ref(), env).or_else(|| {
                     direct_quoted_falsy_pattern_condition(
                         function,
                         args,
@@ -892,7 +907,11 @@ fn eval_direct_invocation(
             let result = EvalResult::with_effects(widened, effects);
             let mut result = result;
             if let Some(truth) = scalar_truth {
-                result.set_truth_condition(truth, SelectionTruthSource::RawInput);
+                result.set_truth_condition_with_memo(
+                    truth,
+                    SelectionTruthSource::RawInput,
+                    env.predicate_memo.as_ref(),
+                );
             }
             result
         }
@@ -1094,7 +1113,9 @@ fn eval_piped_invocation(
                 });
             let result = EvalResult::with_effects(current.value, effects);
             match dispatch {
-                Some(dispatch) => result.with_scalar_dispatch(dispatch),
+                Some(dispatch) => {
+                    result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref())
+                }
                 None => result,
             }
         }
@@ -1138,7 +1159,7 @@ fn eval_piped_invocation(
                 || function_semantics(function).predicate == PredicateSemantics::String =>
         {
             let scalar_truth =
-                scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref());
+                scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref(), env);
             let piped = current.clone();
             let (string_paths, raw_range_key_paths) =
                 string_invocation_operand_facts(function, args, Some(&current), env, resolver);
@@ -1163,7 +1184,11 @@ fn eval_piped_invocation(
             );
             let mut result = EvalResult::with_effects(widened, effects);
             if let Some(truth) = scalar_truth {
-                result.set_truth_condition(truth, SelectionTruthSource::RawInput);
+                result.set_truth_condition_with_memo(
+                    truth,
+                    SelectionTruthSource::RawInput,
+                    env.predicate_memo.as_ref(),
+                );
             }
             result
         }
@@ -1308,14 +1333,15 @@ fn eval_short_circuit_args(
         // subset: positive-only consumers may use it, while member-domain
         // ownership and other complement-sensitive consumers abstain.
         let operand_truth = result.truth.clone();
-        let operand_reachability = result.output_reachability(SelectionPolarity::Truthy);
+        let operand_reachability = result
+            .output_reachability_with_memo(SelectionPolarity::Truthy, env.predicate_memo.as_ref());
         operand_conditions.push(operand_truth.clone());
         let selection = if index + 1 < args.len() {
             // The chain's VALUE is this operand's exactly when the chain
             // stops here, which is the operand's condition inverted for
             // `and` and held for `or`.
             if previous_truthy {
-                operand_reachability.complement()
+                operand_reachability.complement_with_memo(env.predicate_memo.as_ref())
             } else {
                 operand_reachability.clone()
             }
@@ -1334,7 +1360,11 @@ fn eval_short_circuit_args(
             operand_truth
                 .when_true()
                 .value_paths()
-                .union(&operand_truth.when_false().value_paths())
+                .union(
+                    &operand_truth
+                        .when_false_with_memo(env.predicate_memo.as_ref())
+                        .value_paths(),
+                )
                 .map(helm_schema_core::ValuesPath::encode)
                 .collect(),
         );
@@ -1349,7 +1379,7 @@ fn eval_short_circuit_args(
         let execution_reachability = if previous_truthy {
             operand_reachability
         } else {
-            operand_reachability.complement()
+            operand_reachability.complement_with_memo(env.predicate_memo.as_ref())
         };
         let next_condition = execution_reachability.execution_predicate(
             if previous_truthy {
@@ -1360,7 +1390,11 @@ fn eval_short_circuit_args(
             operand_truth
                 .when_true()
                 .value_paths()
-                .union(&operand_truth.when_false().value_paths())
+                .union(
+                    &operand_truth
+                        .when_false_with_memo(env.predicate_memo.as_ref())
+                        .value_paths(),
+                )
                 .map(helm_schema_core::ValuesPath::encode)
                 .collect(),
         );
@@ -1372,9 +1406,14 @@ fn eval_short_circuit_args(
             .with_predicate_constraints(arg, previous_truthy);
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
-    result.set_truth_condition(
-        combined_short_circuit_truth(&operand_conditions, previous_truthy),
+    result.set_truth_condition_with_memo(
+        combined_short_circuit_truth(
+            &operand_conditions,
+            previous_truthy,
+            env.predicate_memo.as_ref(),
+        ),
         SelectionTruthSource::RawInput,
+        env.predicate_memo.as_ref(),
     );
     result
 }
@@ -1409,28 +1448,41 @@ fn scalar_pattern_condition(
     function: &str,
     args: &[TemplateExpr],
     dispatch: Option<&ScalarValueDispatch>,
+    env: &EvalEnv,
 ) -> Option<TruthCondition> {
     let dispatch = dispatch?;
     match function {
         "regexMatch" | "mustRegexMatch" => {
             let pattern = literal_string(args.first()?)?;
-            Some(dispatch.condition_matches_pattern(pattern))
+            Some(dispatch.condition_matches_pattern_with_memo(pattern, env.predicate_memo.as_ref()))
         }
         "contains" => {
             let needle = literal_string(args.first()?)?;
-            Some(dispatch.condition_matches_pattern(&escape_regex_literal(needle)))
+            Some(dispatch.condition_matches_pattern_with_memo(
+                &escape_regex_literal(needle),
+                env.predicate_memo.as_ref(),
+            ))
         }
         "hasPrefix" => {
             let prefix = literal_string(args.first()?)?;
-            Some(dispatch.condition_matches_pattern(&format!("^{}", escape_regex_literal(prefix))))
+            Some(dispatch.condition_matches_pattern_with_memo(
+                &format!("^{}", escape_regex_literal(prefix)),
+                env.predicate_memo.as_ref(),
+            ))
         }
         "hasSuffix" => {
             let suffix = literal_string(args.first()?)?;
-            Some(dispatch.condition_matches_pattern(&format!("{}$", escape_regex_literal(suffix))))
+            Some(dispatch.condition_matches_pattern_with_memo(
+                &format!("{}$", escape_regex_literal(suffix)),
+                env.predicate_memo.as_ref(),
+            ))
         }
         "semverCompare" => {
             let constraint = literal_string(args.first()?)?;
-            Some(dispatch.condition_matches_semver(constraint))
+            Some(
+                dispatch
+                    .condition_matches_semver_with_memo(constraint, env.predicate_memo.as_ref()),
+            )
         }
         _ => None,
     }
@@ -1501,10 +1553,11 @@ fn direct_quoted_falsy_pattern_condition(
     let AbstractValue::ValuesPath(path) = subject.value? else {
         return None;
     };
-    Some(TruthCondition::from_subsets(
+    Some(TruthCondition::from_subsets_with_memo(
         Predicate::False,
         Predicate::truthy_path(path.encode()).negated(),
         false,
+        env.predicate_memo.as_ref(),
     ))
 }
 
@@ -1516,14 +1569,18 @@ fn literal_string(expr: &TemplateExpr) -> Option<&str> {
     Some(value)
 }
 
-fn combined_short_circuit_truth(operands: &[TruthCondition], conjunction: bool) -> TruthCondition {
+fn combined_short_circuit_truth(
+    operands: &[TruthCondition],
+    conjunction: bool,
+    memo: &helm_schema_core::PredicateMemo,
+) -> TruthCondition {
     if operands.is_empty() {
         return TruthCondition::Unknown;
     }
     if conjunction {
-        TruthCondition::all(operands.iter().cloned())
+        TruthCondition::all_with_memo(operands.iter().cloned(), memo)
     } else {
-        TruthCondition::any(operands.iter().cloned())
+        TruthCondition::any_with_memo(operands.iter().cloned(), memo)
     }
 }
 

@@ -3,9 +3,9 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::abstract_value::AbstractValue;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{
-    ScalarValueDispatch, TruthCondition, any_predicates, conjoin_predicates,
+    ScalarValueDispatch, TruthCondition, any_predicates_with_memo, conjoin_predicates_with_memo,
 };
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, PredicateMemo};
 
 use super::SymbolicLocalState;
 
@@ -95,6 +95,7 @@ pub(super) fn joined_scalar_dispatch_arms(
     entry: &SymbolicLocalState,
     arms: &[(TruthCondition, SymbolicLocalState)],
     has_unconditional_else: bool,
+    memo: &PredicateMemo,
 ) -> Option<HashMap<String, ScalarValueDispatch>> {
     if arms
         .iter()
@@ -105,7 +106,11 @@ pub(super) fn joined_scalar_dispatch_arms(
     let mut outcomes = arms.to_vec();
     if !has_unconditional_else {
         outcomes.push((
-            TruthCondition::any(arms.iter().map(|(condition, _)| condition.clone())).negated(),
+            TruthCondition::any_with_memo(
+                arms.iter().map(|(condition, _)| condition.clone()),
+                memo,
+            )
+            .negated_with_memo(memo),
             entry.clone(),
         ));
     }
@@ -132,9 +137,11 @@ pub(super) fn joined_scalar_dispatch_arms(
             };
             complete &= dispatch.complete;
             for (inner_condition, value) in &dispatch.arms {
-                if let Some(condition) =
-                    conjoin_predicates(outer_condition.clone(), inner_condition.clone())
-                {
+                if let Some(condition) = conjoin_predicates_with_memo(
+                    outer_condition.clone(),
+                    inner_condition.clone(),
+                    memo,
+                ) {
                     dispatch_arms.push((condition, value.clone()));
                 }
             }
@@ -157,11 +164,16 @@ pub(super) fn joined_truthy_reduction_arms(
     entry: &SymbolicLocalState,
     arms: &[(TruthCondition, SymbolicLocalState)],
     has_unconditional_else: bool,
+    memo: &PredicateMemo,
 ) -> Option<HashMap<String, Predicate>> {
     let mut outcomes = arms.to_vec();
     if !has_unconditional_else {
         outcomes.push((
-            TruthCondition::any(arms.iter().map(|(condition, _)| condition.clone())).negated(),
+            TruthCondition::any_with_memo(
+                arms.iter().map(|(condition, _)| condition.clone()),
+                memo,
+            )
+            .negated_with_memo(memo),
             entry.clone(),
         ));
     }
@@ -201,12 +213,17 @@ pub(super) fn joined_truthy_reduction_arms(
                 complete = false;
                 break;
             }
-            if let Some(alternative) = conjoin_predicates(arm_condition, reduction.clone()) {
+            if let Some(alternative) =
+                conjoin_predicates_with_memo(arm_condition, reduction.clone(), memo)
+            {
                 alternatives.push(alternative);
             }
         }
         if complete {
-            joined.insert(variable.clone(), any_predicates(alternatives));
+            joined.insert(
+                variable.clone(),
+                any_predicates_with_memo(alternatives, memo),
+            );
         }
     }
     Some(joined)

@@ -1,14 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::rc::Rc;
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::MemberHostConversion;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::ScalarValueDispatch;
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, PredicateMemo};
 
 /// Abstract interpreter environment for Helm expression evaluation.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) root_fields: HashMap<String, AbstractValue>,
@@ -44,6 +45,7 @@ pub(crate) struct EvalEnv {
     pub(crate) bound_values: BoundValueContext,
     pub(crate) allow_field_root_lookup: bool,
     pub(crate) skip_helper_call_args: bool,
+    pub(crate) predicate_memo: Rc<PredicateMemo>,
 }
 
 impl EvalEnv {
@@ -74,6 +76,11 @@ impl EvalEnv {
 
     pub(crate) fn without_helper_call_args(mut self) -> Self {
         self.skip_helper_call_args = true;
+        self
+    }
+
+    pub(crate) fn with_predicate_memo(mut self, predicate_memo: Rc<PredicateMemo>) -> Self {
+        self.predicate_memo = predicate_memo;
         self
     }
 

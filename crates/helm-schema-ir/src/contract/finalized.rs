@@ -52,6 +52,7 @@ impl FinalizedContract {
         values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
         values_program_wrapper_exclusions: BTreeSet<helm_schema_core::ValuesPath>,
         dependency_values_root_fragments: &BTreeSet<String>,
+        predicate_memo: &helm_schema_core::PredicateMemo,
     ) -> Self {
         let mut default_guard_sets = BTreeMap::<_, Vec<Vec<ConditionalGuard>>>::new();
         for fact in &observed_facts.activated_values_default_sources {
@@ -100,6 +101,7 @@ impl FinalizedContract {
             &document.uses,
             observed_facts,
             dependency_values_root_fragments,
+            predicate_memo,
         )
         .with_values_default_sources(observed_facts.values_default_sources.clone())
         .with_guarded_values_default_sources(guarded_values_default_sources)

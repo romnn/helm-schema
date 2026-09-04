@@ -37,6 +37,7 @@ pub(super) fn eval_printf(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    let memo = env.predicate_memo.as_ref();
     let mut effects = Effects::default();
     let mut provenance_paths = BTreeSet::new();
     let mut widened_paths = BTreeSet::new();
@@ -132,14 +133,21 @@ pub(super) fn eval_printf(
     if let Some(paths) = AbstractValue::path_choices(parse_values_paths(provenance_paths)) {
         values.push(paths);
     }
-    // Non-identity influence stays widened because formatted output is not
-    // structurally identical to a nested value that contributed text.
+    // Non-identity influence stays widened: formatted output is not structurally identical to a nested value.
     if let Some(widened) = AbstractValue::widened(parse_values_paths(widened_paths)) {
         values.push(widened);
     }
     let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
-    match scalar_dispatch {
-        Some(dispatch) => result.with_scalar_dispatch(dispatch),
+    attach_scalar_dispatch(result, scalar_dispatch, memo)
+}
+
+fn attach_scalar_dispatch(
+    result: EvalResult,
+    dispatch: Option<crate::scalar_value::ScalarValueDispatch>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
+) -> EvalResult {
+    match dispatch {
+        Some(dispatch) => result.with_scalar_dispatch_with_memo(dispatch, predicate_memo),
         None => result,
     }
 }
@@ -603,14 +611,17 @@ pub(super) fn eval_from_json(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     if let Some(piped) = piped {
-        let mut result = eval_from_json_result(piped);
+        let mut result = eval_from_json_result(piped, env.predicate_memo.as_ref());
         merge_arg_effects(args, env, resolver, &mut result.effects);
         return result;
     }
     let Some(arg) = args.first() else {
         return eval_all_args(args, env, resolver);
     };
-    eval_from_json_result(eval_expr_with_helper_calls(arg, env, resolver))
+    eval_from_json_result(
+        eval_expr_with_helper_calls(arg, env, resolver),
+        env.predicate_memo.as_ref(),
+    )
 }
 
 pub(super) fn eval_to_json(
@@ -643,7 +654,10 @@ pub(super) fn eval_to_json_result(result: EvalResult) -> EvalResult {
     serialized
 }
 
-pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
+fn eval_from_json_result(
+    result: EvalResult,
+    predicate_memo: &helm_schema_core::PredicateMemo,
+) -> EvalResult {
     let payload_truth = result.json_payload_truth.clone();
     if let Some(folded) = literal_decoded_value(result.value.as_ref(), DecodeFormat::Json) {
         return EvalResult::with_effects(Some(folded), result.effects);
@@ -668,9 +682,10 @@ pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
         None
     };
     let mut decoded = EvalResult::with_effects(value, effects);
-    decoded.set_truth_condition(
+    decoded.set_truth_condition_with_memo(
         payload_truth,
         crate::eval_effect::SelectionTruthSource::RawInput,
+        predicate_memo,
     );
     decoded
 }
@@ -986,7 +1001,9 @@ pub(super) fn eval_trim_affix(
         );
         let result = EvalResult::with_effects(Some(value), effects);
         return match scalar_dispatch {
-            Some(dispatch) => result.with_scalar_dispatch(dispatch),
+            Some(dispatch) => {
+                result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref())
+            }
             None => result,
         };
     }
@@ -1000,7 +1017,9 @@ pub(super) fn eval_trim_affix(
     );
     let result = EvalResult::with_effects(value, effects);
     match scalar_dispatch {
-        Some(dispatch) => result.with_scalar_dispatch(dispatch),
+        Some(dispatch) => {
+            result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref())
+        }
         None => result,
     }
 }

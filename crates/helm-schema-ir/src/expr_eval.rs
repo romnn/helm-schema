@@ -204,7 +204,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                 && entries.contains_key("Values")
                 && let Some(value) = env.dot.as_ref().and_then(|dot| dot.apply_to_path(path))
             {
-                EvalResult::from_value(value)
+                EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref())
             } else {
                 let Some((_, tail)) = path.split_first() else {
                     return EvalResult::none();
@@ -212,9 +212,10 @@ pub(crate) fn eval_expr_with_helper_calls(
                 root_values_selector_result(tail, env)
             }
         }
-        TemplateExpr::Field(path) if path.is_empty() => {
-            EvalResult::from_value(env.dot.clone().unwrap_or(AbstractValue::RootContext))
-        }
+        TemplateExpr::Field(path) if path.is_empty() => EvalResult::from_value_with_memo(
+            env.dot.clone().unwrap_or(AbstractValue::RootContext),
+            env.predicate_memo.as_ref(),
+        ),
         TemplateExpr::Field(path) => {
             let dot_base = env
                 .dot
@@ -231,7 +232,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                     .and_then(|value| value.apply_to_path(tail))
             });
             let mut result = value
-                .map(EvalResult::from_value)
+                .map(|value| EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref()))
                 .unwrap_or_else(EvalResult::none);
             // What the access navigates: the dot's own values identity when
             // it has one, otherwise the identity a CALL DICT binds to the
@@ -260,20 +261,27 @@ pub(crate) fn eval_expr_with_helper_calls(
             root_values_selector_result(tail, env)
         }
         TemplateExpr::Variable(var) if var.is_empty() => env.locals.get(var).cloned().map_or_else(
-            || EvalResult::from_value(AbstractValue::RootContext),
+            || {
+                EvalResult::from_value_with_memo(
+                    AbstractValue::RootContext,
+                    env.predicate_memo.as_ref(),
+                )
+            },
             |value| local_value_result(var, value, None, env),
         ),
         TemplateExpr::Variable(var) if !var.is_empty() => {
             if let Some(value) = env.locals.get(var).cloned() {
                 local_value_result(var, value, None, env)
             } else if let Some(dispatch) = local_scalar_dispatch(var, env) {
-                EvalResult::none().with_scalar_dispatch(dispatch.clone())
+                EvalResult::none()
+                    .with_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref())
             } else if let Some(predicate) = env
                 .local_truthy_reductions
                 .get(var)
                 .or_else(|| env.local_truthy_reductions.get(var.trim_start_matches('$')))
             {
-                EvalResult::none().with_truth(predicate.clone())
+                EvalResult::none()
+                    .with_truth_with_memo(predicate.clone(), env.predicate_memo.as_ref())
             } else {
                 EvalResult::none()
             }
@@ -344,7 +352,8 @@ pub(crate) fn eval_expr_with_helper_calls(
                     .get(head)
                     .and_then(|value| value.apply_to_path(tail))
             {
-                let mut result = EvalResult::from_value(value);
+                let mut result =
+                    EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
                 if tail.is_empty() {
                     attach_named_root_field_semantics(&mut result, head, env);
                 }
@@ -385,7 +394,8 @@ pub(crate) fn eval_expr_with_helper_calls(
                 .extend(env.bound_values.selector_paths(expr));
             match value {
                 Some(value) => {
-                    let mut result = EvalResult::from_value(value);
+                    let mut result =
+                        EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
                     result.effects.merge(effects);
                     result
                 }
@@ -396,7 +406,7 @@ pub(crate) fn eval_expr_with_helper_calls(
             eval_call_with_helper_calls(function, args, env, resolver)
         }
         TemplateExpr::Pipeline(stages) => eval_pipeline_with_helper_calls(stages, env, resolver),
-        TemplateExpr::Literal(literal) => literal_result(literal),
+        TemplateExpr::Literal(literal) => literal_result(literal, env),
         TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
             EvalResult::with_effects(
                 None,
@@ -440,8 +450,9 @@ fn static_semver_numeric_selector(
     };
     let component = i64::try_from(component).ok()?;
     Some(
-        EvalResult::with_effects(None, version.effects).with_scalar_dispatch(
+        EvalResult::with_effects(None, version.effects).with_scalar_dispatch_with_memo(
             ScalarValueDispatch::constant(helm_schema_core::GuardValue::Int(component)),
+            env.predicate_memo.as_ref(),
         ),
     )
 }
@@ -453,7 +464,8 @@ fn root_values_selector_result(segments: &[String], env: &EvalEnv) -> EvalResult
     let Some(tail) = crate::abstract_value::resolve_root_values_methods(segments) else {
         return EvalResult::none();
     };
-    let mut result = EvalResult::from_value(values_path_value(tail, env));
+    let mut result =
+        EvalResult::from_value_with_memo(values_path_value(tail, env), env.predicate_memo.as_ref());
     let tail = tail
         .iter()
         .cloned()
@@ -607,7 +619,7 @@ fn local_value_result(
     env: &EvalEnv,
 ) -> EvalResult {
     let source_paths = value.fragment_source_paths();
-    let mut result = EvalResult::from_value(value);
+    let mut result = EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
     if env.pipeline_bound_locals.contains(var) {
         // A pipeline-bound local's fragment value records provenance, not
         // necessarily its runtime scalar (`default`, transforms, and helper
@@ -643,15 +655,16 @@ fn local_value_result(
     }
     if selected_paths.is_none() {
         if let Some(dispatch) = local_scalar_dispatch(var, env) {
-            result.set_scalar_dispatch(dispatch.clone());
+            result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
         } else if let Some(predicate) = env
             .local_truthy_reductions
             .get(var)
             .or_else(|| env.local_truthy_reductions.get(var.trim_start_matches('$')))
         {
-            result.set_truth_condition(
-                TruthCondition::exact(predicate.clone()),
+            result.set_truth_condition_with_memo(
+                TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
                 crate::eval_effect::SelectionTruthSource::RenderedScalar,
+                env.predicate_memo.as_ref(),
             );
         }
     }
@@ -664,7 +677,7 @@ fn local_scalar_dispatch<'a>(var: &str, env: &'a EvalEnv) -> Option<&'a ScalarVa
         .or_else(|| env.local_scalar_dispatches.get(var.trim_start_matches('$')))
 }
 
-fn literal_result(literal: &Literal) -> EvalResult {
+fn literal_result(literal: &Literal, env: &EvalEnv) -> EvalResult {
     let truthy = match literal {
         Literal::Bool(value) => *value,
         Literal::Int(value) => *value != 0,
@@ -678,11 +691,14 @@ fn literal_result(literal: &Literal) -> EvalResult {
         )),
         _ => None,
     };
-    let result = EvalResult::with_effects(value, Effects::default()).with_truth(if truthy {
-        Predicate::True
-    } else {
-        Predicate::False
-    });
+    let result = EvalResult::with_effects(value, Effects::default()).with_truth_with_memo(
+        if truthy {
+            Predicate::True
+        } else {
+            Predicate::False
+        },
+        env.predicate_memo.as_ref(),
+    );
     let scalar = match literal {
         Literal::String(value) | Literal::RawString(value) => {
             Some(helm_schema_core::GuardValue::string(value.clone()))
@@ -693,7 +709,10 @@ fn literal_result(literal: &Literal) -> EvalResult {
         Literal::Float(_) => None,
     };
     match scalar {
-        Some(scalar) => result.with_scalar_dispatch(ScalarValueDispatch::constant(scalar)),
+        Some(scalar) => result.with_scalar_dispatch_with_memo(
+            ScalarValueDispatch::constant(scalar),
+            env.predicate_memo.as_ref(),
+        ),
         None => result,
     }
 }
@@ -713,11 +732,12 @@ fn attach_root_field_semantics(result: &mut EvalResult, path: &[String], env: &E
 
 fn attach_named_root_field_semantics(result: &mut EvalResult, field: &str, env: &EvalEnv) {
     if let Some(dispatch) = env.root_value_dispatches.get(field) {
-        result.set_scalar_dispatch(dispatch.clone());
+        result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
     } else if let Some(predicate) = env.root_truthy_predicates.get(field) {
-        result.set_truth_condition(
-            TruthCondition::exact(predicate.clone()),
+        result.set_truth_condition_with_memo(
+            TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
             crate::eval_effect::SelectionTruthSource::RenderedScalar,
+            env.predicate_memo.as_ref(),
         );
     }
 }

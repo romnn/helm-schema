@@ -333,12 +333,14 @@ impl ContractIr {
         }
         let fail_conditions = observed_facts.captures.iter().cloned().collect::<Vec<_>>();
         let uses = normalize_contract_uses(uses, dependency_uses, &fail_conditions);
+        let predicate_memo = helm_schema_core::PredicateMemo::new();
         FinalizedContract::new(
             uses,
             &observed_facts,
             values_program_wrappers,
             values_program_wrapper_exclusions,
             &dependency_values_root_fragments,
+            &predicate_memo,
         )
     }
 }

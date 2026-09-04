@@ -255,6 +255,7 @@ pub(super) fn record_contract_use(
         helm_schema_core::Conjunction,
     )],
     has_yaml_serialized_use: bool,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     let source_path = contract_use.source_expr.clone();
     if contract_use.range_key {
@@ -344,6 +345,7 @@ pub(super) fn record_contract_use(
             range_modes,
             string_requirement_routes,
             has_yaml_serialized_use,
+            predicate_memo,
         );
     }
 }
@@ -483,6 +485,7 @@ pub(super) fn record_contract_use_conjunction(
         helm_schema_core::Conjunction,
     )],
     has_yaml_serialized_use: bool,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     let source_path = contract_use.source_expr.clone();
     let source_expr = source_path.encode();
@@ -838,7 +841,8 @@ pub(super) fn record_contract_use_conjunction(
         let matching_string_routes = string_requirement_routes
             .iter()
             .filter(|(_, route)| {
-                row_predicate.exactly_implies(&Predicate::all(route.clone().into_vec()))
+                predicate_memo
+                    .exactly_implies(&row_predicate, &Predicate::all(route.clone().into_vec()))
             })
             .map(|(route, _)| *route)
             .collect::<BTreeSet<_>>();
