@@ -462,8 +462,9 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A1 — allocation-free `ValuesPath` and `Segment` ordering
 
-- Status: implementation and byte/adjudication gates complete; final timing is blocked by
-  recurring external compiler activity, so no implementation commit or adoption decision exists.
+- Status: implementation and byte/adjudication gates complete; the cached variant is selected,
+  but the final ten-chart timing curve is blocked by recurring external compiler activity, so no
+  implementation commit or round-level adoption decision exists.
 - Contract: replace comparison-time encoded `String` allocation with a lazy byte stream that is
   exactly equivalent to the current `encode()`/`encode_component()` order. Preserve derived
   segment equality, hashing, constructors, path syntax, public signatures, emitted ordering, and
@@ -497,17 +498,21 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
     `27e9dd3a32c82eba1c11331f4e24613086af43f9482944ea64d43578c84d8797` and is byte-exact to C1
     on all ten reference charts across schema, stdout, JSON diagnostics, and status.
   - The frozen cached-spelling alternative stores a `Box<str>` maintained by every path
-    constructor and mutation. Its provisional five-pair isolated-chart comparison reports lazy
-    18.19 s CPU median (17.51–19.43) versus cached 9.67 s (9.41–9.81), with paired gains
-    46.90% median (46.07%–50.23%). Every load1 was above 4 (6.58–10.46), so this is strong
-    directional evidence but not yet the final retained variant decision.
+    constructor and mutation. The retained five-pair isolated-chart comparison reports lazy
+    18.89 s CPU median (18.63–19.69) versus cached 9.84 s (9.40–10.59), with paired gains
+    48.10% median (45.21%–50.24%). All retained pairs favor cached by far more than the 5%
+    criterion, so cached is the selected final representation. Every load1 was above 4 and remains
+    marked loaded.
   - The exact final cached candidate is 16,177,136 bytes with SHA-256
     `ff96f5453c5be509e930abeda0b68551ab76090c76dd7c810cebf95c1d37af38`. It is byte-exact to C1
     on all ten reference charts and to the lazy variant on the isolated chart, across all four
     channels.
   - The full-depth round-74 battery checks 160 charts and 284,869 coalesced probes with zero
-    acceptance flips. Final schema/IR fixture and full verification gates remain pending until a
-    valid decision measurement selects the final representation.
+    acceptance flips. Final schema/IR fixture and full verification gates remain pending until the
+    ten-chart curve permits the round-level decision.
+  - Three compiler-free grafana pairs compare C1 at 4.77 s CPU median (4.62–5.24) with A1 at
+    3.14 s (3.08–3.15). Paired gains are 34.17% median (31.82%–41.22%), so the interval does not
+    cross zero and the first half of the frozen rejection criterion is decisively satisfied.
 - Deviations:
   - The first focused nextest filter used the default profile, which excludes the integration-test
     binary, and exited 4 with zero tests. Rerunning with `--profile integration --test value_path`
@@ -536,6 +541,16 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   - While locating dossier lines, a shell diagnostic used Markdown backticks inside a
     double-quoted pattern and unintentionally launched `task lint`. Its output is not a gate and it
     further delayed host cooldown; no result from that interval is retained.
+  - On the user-requested retry, two short external Cargo builds delayed the first clean start.
+    Four isolated variant pairs then completed before another compiler began during pair 5; that
+    fifth pair alone was discarded. A compiler-free replacement pair produced the retained
+    five-pair result above.
+  - Five grafana pairs followed. Process ages prove the first three completed before a new Clippy
+    process began; pair 5 and its attempted replacement overlapped later cross-target checks and
+    are discarded, while pair 4 is unused because the frozen repeat count was already met.
+  - The interfering parent was then identified as PID 95163, an external `cargo-fc fc lint` that
+    remained active beyond 10 minutes and repeatedly launched cross-target Clippy waves. The
+    resumed run therefore hit the same non-concurrent-build blocker before cilium.
 - Adjudication evidence: Helm v4.2.3. The representation-only full-depth battery reports zero
   flips, hence zero candidate-accepts/Helm-aborts cells; no schema semantics are proposed.
 - Public/wire decision: pre-registered as none. Ordering and encoding remain the existing public
@@ -553,6 +568,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   `templates/prometheus/rules-1.14/kubernetes-apps.yaml`; there is no `charts/` directory.
 - Variant artifacts: lazy/cached isolated byte outputs are under `a1/variant-byte`; five randomized
   pairs and their per-invocation load records are under `a1/variant-measure`.
+- Retained variant decision evidence is under `a1/variant-measure-retry`: pairs 1–4 plus replacement
+  pair 5b. Original pair 5 is explicitly invalidated by the post-window compiler snapshot.
 - Final build: `cargo build -p helm-schema-cli --release`; exit 0 in 29.16 s, followed immediately
   by the preserved `helm-schema-a1` copy named above.
 - Ten-chart byte gate: preserved `helm-schema-c1` versus `helm-schema-a1`, using the round-0 private
@@ -569,6 +586,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   `a1/measure-valid/grafana`, and `a1/measure-retained/cilium`. The process evidence includes
   external Cargo parents 58027, 72045, 2031, 19838, 65788, 66101, 57971, and 88097, spanning other
   workspaces and rust-analyzer.
+- The resumed grafana window is under `a1/measure-retry/grafana`; pairs 1–3 are retained, while the
+  later pair directories remain available as explicitly invalid/unused evidence.
 
 ### Self-adversarial pass
 
@@ -583,9 +602,9 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Output identity is sensitive to `BTreeMap` iteration order; a comparator that merely appears
   reasonable but differs on one punctuation edge case must be rejected even if fixtures happen
   not to contain that case.
-- The large provisional cached-spelling win could still be exaggerated by loaded-host cache and
-  thermal behavior. It does not authorize a commit until a compiler-free isolated variant window
-  and the final C1-versus-A1 ten-chart curve both reproduce it.
+- The cached-spelling result remains a loaded-host number, but all five compiler-free paired gains
+  are 45% or greater and agree with the earlier provisional window. It selects the variant without
+  substituting for the still-required final C1-versus-A1 ten-chart curve.
 
 ### Gates on the final tree
 
