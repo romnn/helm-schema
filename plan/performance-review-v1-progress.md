@@ -1,0 +1,187 @@
+# Performance review v1 progress
+
+## Decision register
+
+- Frozen plan: `plan/performance-review-v1.md` at `1ce9e660`.
+- Frozen-plan policy: the plan remains byte-identical to `1ce9e660` for the whole campaign. This
+  ledger is the only campaign prose surface, including measurements that disagree with the frozen
+  estimates.
+- Wave scope and order: round 0, then C1, A1, A2, A2b, B2, B1, E1, A3a, A3, R1, A6, A4, E2,
+  E3, A7, and the A5 study. Each item is adopted or rejected only by its frozen criterion.
+- Starting tree: clean `main` at `1d20fb66`. While round 0 was being measured, the concurrent bug
+  hunt landed documentation-only commits through `9abc724f`; executable inputs and all ten
+  reference chart trees are byte-identical across that range, and a rebuild at `9abc724f`
+  reproduced the measured binary byte-for-byte. `9abc724f` is therefore the acceptance baseline
+  for the first implementation round.
+- Starting production Rust LOC: 66,064 (`task tokei:core`).
+- Corpus state: 163 chart directories, 156 schema artifacts, and 18 symbolic-IR artifacts. The
+  authoritative battery remains
+  `round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced` in
+  `crates/helm-schema/tests/schema_emission_profiles.rs`.
+- Helm adjudicator: Helm 4.2.3 (`v4.2.3`, Git commit
+  `43e8b7feece8beb0fcba47059ec9b522fd929a64`, Go 1.26.5, Kube client 1.36).
+- Measurement host: Apple M3 Pro, macOS, private campaign root
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y`. The round-0 decision window stayed below
+  load1 4.0; later rounds must record every invocation's load independently.
+- Cache snapshot: 186 K8s files / 3.8 MiB, aggregate SHA-256
+  `91075ab6af3b13c23b56a793d3281479b00e4bfa79f7b160bdf92d35a53345c2`; 25 CRD files /
+  2.1 MiB, aggregate SHA-256
+  `ae659b0e8e5b6f23b1827450d28bcb6710006fc318b9c837f22378a48d14fb08`.
+- Downstream gate: `task -t
+  /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml check:local`, after installing
+  the exact candidate from `./crates/helm-schema-cli/`. The campaign never pushes.
+
+### Re-baselined ten-chart decision table
+
+The reference chart directories have no diff from the frozen review tree `b3475dec`, so the
+structural columns are retained from that plan. Output byte sizes and JSON node counts were
+independently recomputed from the round-0 artifacts and match all ten frozen rows. CPU is
+`user + sys`; all timing runs are offline, compact, and use Kubernetes v1.35.0.
+
+| Chart | n | CPU s median (min–max) | Wall s median (min–max) | load1 per run | templates | actions | defines | `.Values` paths | subcharts | output MB | output nodes | µs CPU / action |
+|---|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| coredns | 5 | 0.33 (0.33–0.33) | 0.34 (0.34–0.35) | 3.40, 3.40, 3.21, 3.21, 3.21 | 17 | 707 | 9 | 120 | 0 | 0.36 | 9,552 | 467 |
+| metrics-server | 5 | 0.16 (0.16–0.17) | 0.17 (0.17–0.18) | 3.40, 3.40, 3.21, 3.21, 3.21 | 20 | 404 | 11 | 82 | 0 | 0.18 | 5,125 | 396 |
+| istiod | 5 | 0.57 (0.57–0.57) | 0.58 (0.57–0.59) | 3.40, 3.40, 3.21, 3.21, 3.03 | 28 | 948 | 8 | 126 | 0 | 0.29 | 14,018 | 601 |
+| cert-manager | 5 | 0.67 (0.67–0.69) | 0.69 (0.68–0.72) | 3.40, 3.21, 3.21, 3.21, 3.03 | 48 | 1,521 | 19 | 226 | 0 | 0.70 | 16,249 | 440 |
+| argo-cd | 3 | 5.59 (5.54–5.86) | 5.66 (5.61–5.92) | 2.78, 3.37, 2.13 | 166 | 5,536 | 63 | 1,291 | 1 | 2.08 | 77,624 | 1,010 |
+| grafana | 3 | 4.37 (4.35–4.81) | 4.39 (4.37–5.10) | 2.59, 3.50, 2.20 | 39 | 2,677 | 29 | 425 | 0 | 1.26 | 49,452 | 1,632 |
+| cilium | 3 | 7.88 (7.88–9.21) | 7.95 (7.95–9.74) | 3.34, 3.54, 2.43 | 148 | 5,861 | 49 | 1,126 | 0 | 1.70 | 78,339 | 1,344 |
+| datadog | 3 | 63.06 (63.06–66.46) | 63.24 (63.23–69.06) | 3.60, 3.33, 2.39 | 143 | 6,534 | 203 | 838 | 4 | 2.10 | 118,295 | 9,651 |
+| airflow | 3 | 88.45 (88.25–90.74) | 88.63 (88.45–91.10) | 3.80, 2.67, 2.45 | 160 | 8,612 | 223 | 1,333 | 1 | 3.90 | 175,792 | 10,271 |
+| kube-prometheus-stack | 3 | 119.77 (119.58–124.44) | 120.00 (119.80–126.42) | 3.72, 1.84, 2.05 | 265 | 21,004 | 112 | 1,985 | 5 | 6.99 | 294,793 | 5,702 |
+
+The quiet-host re-baseline contradicts the frozen table most strongly on the three large charts:
+datadog is 22.2% faster than 81.1 s, airflow is 20.7% faster than 111.5 s, and
+kube-prometheus-stack is 22.3% faster than 154.2 s. This confirms the plan's own warning that its
+loaded-host large-chart numbers were inflated by roughly 20%. The absolute wave-1 targets do not
+move; the required reductions from this baseline are now 52.4% for datadog to get below 30 s,
+43.5% for airflow to get below 50 s, and 8.2% for kube-prometheus-stack to get below 110 s. The
+mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 49.2% from cilium.
+
+## Round 0 — current-tree re-baseline
+
+- Status: blocked before the first commit by two reproducible pre-existing integration-gate
+  failures; round-0 measurements are complete and retained.
+- Contract: measurement and campaign-prose infrastructure only. Build and preserve the exact
+  starting binary, establish one private cache snapshot, prove online/offline identity on all ten
+  reference charts, re-measure the decision baseline, and record current corpus/LOC/tool state.
+  No production, test, fixture, corpus, or frozen-plan byte may change.
+- Acceptance baseline: `9abc724f`. Measurement began at `1d20fb66`; the only intervening paths
+  are bug-hunt prose, and the rebuilt `9abc724f` executable is byte-identical.
+- Baseline production Rust LOC: 66,064.
+- Pre-registered acceptance expectations:
+  - Online and warm-offline schema, stdout, JSON diagnostic, and exit bytes are identical for all
+    ten charts.
+  - Every repeat of a chart is deterministic on those same four channels.
+  - The copied binaries built at `1d20fb66` and the documentation-only successor `9abc724f` are
+    byte-identical.
+  - No schema or IR fixture changes; no corpus acceptance flips; frozen plan unchanged.
+- Performance baseline: the decision-register table above is the campaign baseline. It replaces
+  the frozen plan's loaded-host table for every later paired decision.
+- Measured results:
+  - The initial clean release build took 60.10 s wall, 434.99 s user, and 28.06 s sys. The binary
+    was copied immediately; size 16,061,424 bytes, SHA-256
+    `89c242c64d55357032e7dce45749bf3cc0cc0428d1986662ea434a83ae3db06b`.
+  - All ten online warm runs and all ten warm-offline runs exited 0. Schema, stdout, JSON
+    diagnostics, and exit-status files are byte-identical online versus offline for every chart.
+  - Every baseline repetition exited 0 and produced one unique hash per chart for schema, stdout,
+    and diagnostics. CPU/wall medians, ranges, and invocation-order load values are preserved in
+    the decision-register table.
+  - `helm version` reports v4.2.3. Current inventory is 163 chart directories, 156 schema
+    artifacts, 18 IR artifacts, and the round-74 battery named above. Production Rust LOC is
+    66,064.
+  - Rebuilding after the documentation-only concurrent advance took 0.51 s and emitted a binary
+    byte-identical to the measured copy, validating the retained measurements against the actual
+    first implementation baseline.
+- Deviations:
+  - `ps -Ao ...` was denied by the sandbox (`operation not permitted`), so external build-process
+    observation was unavailable. No campaign build overlapped a decision run; the load and
+    wall/CPU evidence is retained so third parties can judge host contention.
+  - The first online-loop wrapper used zsh's read-only `status` parameter and exited 1 immediately
+    after the first coredns invocation. No resulting artifact was used. The corrected wrapper used
+    `rc` and restarted the complete ten-chart pass.
+  - Load1 was 4.30 during inventory and 4.08 immediately before the decision window. The first
+    actual timing invocation began at 3.40; every retained timing start was below 4.0. No retained
+    wall/CPU ratio exceeds 1.10.
+  - `main` advanced from `1d20fb66` to `9abc724f` during the measurements. `git diff` proves the
+    range changes only `plan/schema-bug-hunt-v1.md` and its reports; executable inputs and all ten
+    charts are unchanged. The required rebuild produced identical bytes, so the samples were not
+    invalidated.
+  - The first `task test:integration` final-tree gate ran all 665 tests in 933.616 s and exited 201:
+    663 passed, 2 failed, and 24 were skipped. The failures were
+    `lean_profile_schemas_match_their_separate_fixture_lane`, whose
+    `schema-emission-temporal-wrapper` fixture lacks generated VPA `controlledResources` and
+    `controlledValues` fields and has a corresponding conditional-order difference, and
+    `corpus_charts_vendor_every_locked_dependency`, which reports unvendored
+    `openldap-stack-ha` locks for `ltb-passwd 0.1.x` and `phpldapadmin 0.1.x`.
+  - The exact integration command was rerun as the second honest attempt. It completed all 665
+    tests in 931.056 s and exited 201 with the same two failures (663 passed, 24 skipped). HEAD
+    remained `9abc724f`; the only worktree path was this new ledger. Because neither failure is
+    attributable to the performance campaign and repairing either is outside the frozen item list,
+    autonomy contract stop condition 4 fired before `task test:all` or the round-0 commit.
+- Adjudication evidence: Helm v4.2.3. Round 0 has no candidate schema and therefore no flips or
+  candidate-accepts/Helm-aborts cells. The cache identity check is 10/10 on all four output
+  channels.
+- Public/wire decision: none. This round changes only this ledger.
+
+### Review dossier
+
+- Clean build: `/usr/bin/time -p cargo build -p helm-schema-cli --release`; exit 0. Immediate copy
+  to `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-1d20fb66`, followed by
+  SHA-256 and byte comparison after the `9abc724f` rebuild.
+- Cache snapshot: copy `~/.cache/helm-schema/kubernetes-json-schema` to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s` and `crds-catalog` to the sibling
+  `crd` directory. Aggregate hashes are computed from sorted per-file SHA-256 rows.
+- Identity environment:
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s
+  HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`.
+  Online runs use the copied binary with `<chart> --compact --k8s-version v1.35.0 --diag-format
+  json --output <online.schema.json>`; offline runs add `--offline`. Program stdout/stderr and
+  status are separate files. All 40 channel comparisons pass for ten charts.
+- Timing command shape: record `uptime` and UTC start, then
+  `DIAG=<stderr.jsonl> /usr/bin/time -p sh -c 'exec "$@" 2>"$DIAG"' sh <copied-binary>
+  testdata/charts/<chart> --compact --offline --k8s-version v1.35.0 --diag-format json --output
+  <schema.json> > <stdout> 2> <time.txt>`. Five runs were used for the four charts below 2 s;
+  three for the other six.
+- Artifact proof: each chart's baseline schema, stdout, and diagnostic files have one unique
+  SHA-256 across repetitions; every status is 0. `jq '[paths] | length + 1'` recomputed output
+  node counts, and `wc -c` recomputed compact byte sizes.
+- Scope proof: `git diff --quiet 1d20fb66..9abc724f -- Cargo.toml Cargo.lock mise.toml
+  Taskfile.yml crates <ten chart paths>` exits 0. `git diff --exit-code 1ce9e660 --
+  plan/performance-review-v1.md` exits 0.
+
+### Self-adversarial pass
+
+- Differently built binary: the baseline never uses an installed executable. Both relevant HEADs
+  emit the exact preserved bytes, so the concurrent documentation commit cannot contaminate the
+  comparison.
+- Cache state: every timed call is warm and offline against one private snapshot. The preceding
+  online/offline check includes diagnostics and statuses, not schema alone.
+- Host state: per-run load is disclosed in invocation order. Every retained load is below the
+  frozen protocol's loaded threshold, and CPU/wall ratios remain below 1.10. The denied process
+  listing prevents a stronger claim than that.
+- Statistic integrity: raw `real`, `user`, and `sys` files remain in the private campaign root;
+  medians are not mixed across online, traced, symbolized, or differently built runs.
+- Static table reuse: only structural columns are carried from the frozen plan, and the ten chart
+  inputs are byte-identical to its reviewed tree. Output sizes/nodes are independently reproduced.
+
+### Gates on the final tree
+
+- `cargo fmt --check`: exit 0; 0.961 s.
+- `task lint`: exit 0; the whole workspace compiles under Clippy and all three AST-grep policy
+  tests pass. The two existing escaped-newline findings remain informational.
+- `task lint:fc`: exit 0; 48 feature combinations for 13 packages across three targets pass in
+  174.99 s with zero errors and warnings.
+- `cargo nextest run --workspace`: exit 0; 1,338/1,338 tests pass in 104.522 s.
+- `task test:integration`, attempt 1: exit 201; 663/665 pass in 933.616 s, 2 fail, 24 skip.
+- `task test:integration`, attempt 2: exit 201; 663/665 pass in 931.056 s, the same 2 fail, 24
+  skip. This reproducible pre-existing failure blocks the round.
+- `task test:all`: not run because autonomy contract stop condition 4 fired after the second
+  integration attempt.
+- Downstream luup2: not required; round 0 changes no schema semantics.
+- `task tokei:core`: exit 0; 66,064 production Rust LOC.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0.
+- `git diff --check`: exit 0 after recording the blocker.
+
+- Measured production LOC delta: 0 (66,064 to 66,064).
