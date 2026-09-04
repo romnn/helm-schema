@@ -1052,3 +1052,73 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0; under 0.001 s.
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
+
+## Round B1 — release-profile LTO and codegen units
+
+- Status: pre-registered; implementation not started.
+- Contract: evaluate fat LTO and `codegen-units = 1` as two isolated release-profile changes on
+  top of B2, then preserve only a configuration whose final combined behavior satisfies the frozen
+  criterion. Change no Rust source, dependency, schema semantics, diagnostic, status, fixture,
+  corpus input, or wire representation.
+- Acceptance baseline: `a34859c0` for executable/schema identity and `0be5d6c7` for the completed
+  B2 ledger state.
+- Baseline production Rust LOC: 67,062.
+- Pre-registered acceptance expectations:
+  - Build B2, LTO-only, and codegen-units-only release binaries in separate initially empty target
+    directories. Record each clean build's wall/CPU cost and binary size.
+  - For each isolated candidate, run three randomized interleaved pairs on grafana, cilium, and
+    datadog under one cache snapshot, recording load and exact output channels.
+  - An isolated option advances only if its median gain across the three chart medians is at least
+    5%, every chart's paired range is wholly above zero, and its clean build wall time is no more
+    than twice B2's. If both advance, build and measure their combination before landing it; the
+    final profile must independently satisfy the same threshold.
+  - All ten reference outputs, all 156 schema fixtures, all 18 IR fixtures, stdout, JSON
+    diagnostics, statuses, and the full-depth battery remain byte-identical with zero flips.
+- Performance baseline: the preserved B2 result is 1.48 s CPU median on grafana and 11.25 s on
+  datadog. Cilium was not a B2 decision chart, so every B1 candidate uses a fresh preserved-binary
+  B2 pair rather than borrowing an older curve row.
+- Measured results: pending.
+- Deviations: none at pre-registration.
+- Adjudication evidence: pending; B1 is representation-only and requires byte identity and zero
+  acceptance flips.
+- Public/wire decision: pre-registered as none. Release code generation may alter executable size
+  and build latency, never emitted data or library state.
+
+### Review dossier
+
+- Planned builds: separate target directories under
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/b1/build`, using the unchanged profile for B2,
+  `CARGO_PROFILE_RELEASE_LTO=fat` for LTO-only, and
+  `CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1` for codegen-only.
+- Planned performance evidence: three randomized interleaved pairs per chart and isolated option,
+  with `/usr/bin/time -p`, UTC starts, load1, the round-0 cache, and no concurrent builds.
+- Planned final gates: only an adopted profile proceeds to the ten-chart byte gate, artifact and
+  corpus gates, then the complete final-tree verification list. A rejected experiment is restored
+  and recorded without rerunning semantic gates against an unshipped tree.
+
+### Self-adversarial pass
+
+- Warm incremental build time cannot establish the clean-build cost. Each comparison must start
+  from its own absent target directory and compile the same source/dependency graph.
+- Measuring LTO and codegen units only together cannot identify whether either option pays for
+  itself. The isolated candidates must be retained and measured independently.
+- A smaller executable is not a performance gain, and a single fast chart cannot hide a negative
+  paired range elsewhere. The decision uses the median of chart-level paired medians plus the
+  per-chart non-regression check.
+- Host load can drift during the longer Datadog windows. Interleaving, exact copied binaries, and
+  per-invocation load records are mandatory; absolute comparisons to an older round are not.
+
+### Gates on the final tree
+
+- Pending: `cargo fmt --check`.
+- Pending: `task lint`.
+- Pending: `task lint:fc`.
+- Pending: `cargo nextest run --workspace`.
+- Pending: `task test:integration`.
+- Pending: `task test:all`.
+- Pending: downstream luup2 decision and, if required, install plus `check:local`.
+- Pending: `task tokei:core`.
+- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
+- Pending: `git diff --check`.
+
+- Measured production LOC delta: pending.
