@@ -462,9 +462,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A1 — allocation-free `ValuesPath` and `Segment` ordering
 
-- Status: implementation and byte/adjudication gates complete; the cached variant is selected,
-  but the final ten-chart timing curve is blocked by recurring external compiler activity, so no
-  implementation commit or round-level adoption decision exists.
+- Status: landed in `0926805c`.
 - Contract: replace comparison-time encoded `String` allocation with a lazy byte stream that is
   exactly equivalent to the current `encode()`/`encode_component()` order. Preserve derived
   segment equality, hashing, constructors, path syntax, public signatures, emitted ordering, and
@@ -508,11 +506,31 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
     on all ten reference charts and to the lazy variant on the isolated chart, across all four
     channels.
   - The full-depth round-74 battery checks 160 charts and 284,869 coalesced probes with zero
-    acceptance flips. Final schema/IR fixture and full verification gates remain pending until the
-    ten-chart curve permits the round-level decision.
-  - Three compiler-free grafana pairs compare C1 at 4.77 s CPU median (4.62–5.24) with A1 at
-    3.14 s (3.08–3.15). Paired gains are 34.17% median (31.82%–41.22%), so the interval does not
-    cross zero and the first half of the frozen rejection criterion is decisively satisfied.
+    acceptance flips. All 156 schema fixtures and all 18 IR fixtures are byte-identical.
+  - The final compiler-free curve is below. `A` is the preserved C1 binary and `B` is the exact
+    cached-spelling A1 binary. CPU and wall columns are median (min–max); gain is the median and
+    range of the paired CPU percentages.
+
+    | Chart | n | A CPU s | B CPU s | A wall s | B wall s | paired gain | load1 range |
+    |---|---:|---:|---:|---:|---:|---:|---:|
+    | coredns | 5 | 0.35 (0.33–0.35) | 0.29 (0.28–0.30) | 0.35 (0.34–0.38) | 0.29 (0.29–0.34) | 17.14% (9.09–20.00%) | 3.65–3.65 |
+    | metrics-server | 5 | 0.17 (0.17–0.17) | 0.15 (0.15–0.17) | 0.18 (0.18–0.18) | 0.16 (0.16–0.19) | 11.77% (0.00–11.77%) | 3.60–3.65 |
+    | istiod | 5 | 0.58 (0.57–0.58) | 0.45 (0.45–0.45) | 0.59 (0.58–0.60) | 0.46 (0.45–0.47) | 22.41% (21.05–22.41%) | 3.47–3.60 |
+    | cert-manager | 5 | 0.69 (0.68–0.71) | 0.57 (0.57–0.58) | 0.70 (0.70–0.71) | 0.58 (0.58–0.62) | 17.39% (14.71–18.57%) | 3.35–3.47 |
+    | argo-cd | 3 | 5.86 (5.76–5.91) | 4.59 (4.55–4.60) | 5.90 (5.79–5.97) | 4.61 (4.59–4.70) | 22.17% (20.31–22.36%) | 3.19–3.43 |
+    | grafana | 3 | 4.77 (4.62–5.24) | 3.14 (3.08–3.15) | 4.86 (4.73–5.82) | 3.25 (3.17–3.29) | 34.17% (31.82–41.22%) | 4.43–4.63 |
+    | cilium | 3 | 7.97 (7.95–7.98) | 5.29 (5.27–5.31) | 8.00 (8.00–8.01) | 5.33 (5.28–5.40) | 33.46% (33.46–33.88%) | 3.46–4.06 |
+    | datadog | 5 | 63.85 (63.70–64.16) | 36.29 (36.17–36.30) | 64.04 (63.93–64.42) | 36.48 (36.37–36.53) | 43.22% (43.04–43.42%) | 2.37–4.83 |
+    | airflow | 3 | 89.20 (89.20–89.20) | 40.40 (40.35–40.51) | 89.47 (89.44–89.53) | 40.63 (40.54–40.75) | 54.71% (54.59–54.77%) | 2.79–8.39 |
+    | kube-prometheus-stack | 3 | 120.76 (120.54–120.90) | 45.61 (45.60–45.67) | 121.16 (121.09–121.36) | 45.95 (45.94–45.99) | 62.23% (62.16–62.24%) | 2.30–3.86 |
+
+  - No candidate median is slower. Metrics-server's paired range touches zero, so it is not
+    claimed as a proven gain on that chart; every other paired range is strictly positive.
+    Grafana and cilium both exceed the frozen 5% criterion by more than 30 points, so A1 lands.
+  - The frozen 6–25% expectation reproduces on the six smaller/mid charts except grafana and
+    cilium, which exceed it; the three large charts exceed it substantially. After A1, grafana,
+    airflow, and kube-prometheus-stack already meet their absolute wave-1 targets. Argo-cd,
+    cilium, and datadog remain above theirs at 4.59 s, 5.29 s, and 36.29 s respectively.
 - Deviations:
   - The first focused nextest filter used the default profile, which excludes the integration-test
     binary, and exited 4 with zero tests. Rerunning with `--profile integration --test value_path`
@@ -551,10 +569,21 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   - The interfering parent was then identified as PID 95163, an external `cargo-fc fc lint` that
     remained active beyond 10 minutes and repeatedly launched cross-target Clippy waves. The
     resumed run therefore hit the same non-concurrent-build blocker before cilium.
+  - On the next user-requested retry, the host began at load1 3.76 with no compiler. Process
+    snapshots at every chart boundary remained compiler-free through cilium, the four small
+    charts, argo-cd, datadog, airflow, and kube-prometheus-stack. Those are the only samples in the
+    final table.
+  - Some retained invocations are still marked loaded: all grafana runs, one edge of cilium and
+    datadog, and airflow up to load1 8.39. CPU intervals remain tight and wall/CPU stays close to
+    one on the decision charts; wall is decorative where a sub-second run exceeds the 1.10 ratio.
+  - The user proposed a lightweight follow-up with Criterion cases and opt-in Perfetto trace
+    writing. That is good wave-2 infrastructure but is outside A1 and the frozen item list, so it
+    is deferred to the campaign handoff rather than mixed into this performance commit.
 - Adjudication evidence: Helm v4.2.3. The representation-only full-depth battery reports zero
   flips, hence zero candidate-accepts/Helm-aborts cells; no schema semantics are proposed.
 - Public/wire decision: pre-registered as none. Ordering and encoding remain the existing public
-  semantics; only comparison mechanics may change.
+  semantics. `ValuesPath` caches that spelling privately and `Segment` compares a lazy equivalent
+  byte stream; every observed schema and diagnostic byte remains unchanged.
 
 ### Review dossier
 
@@ -588,6 +617,10 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   workspaces and rust-analyzer.
 - The resumed grafana window is under `a1/measure-retry/grafana`; pairs 1–3 are retained, while the
   later pair directories remain available as explicitly invalid/unused evidence.
+- Final timing evidence is under `a1/measure-quiet` for every chart except grafana. Five pairs are
+  retained for coredns, metrics-server, istiod, cert-manager, and datadog; three for argo-cd,
+  cilium, airflow, and kube-prometheus-stack. Every invocation records UTC start, `uptime`, schema,
+  stdout, JSON stderr, status, and `/usr/bin/time -p` output separately.
 
 ### Self-adversarial pass
 
@@ -608,16 +641,19 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Early `task lint`: first attempt exit 201 for the byte-slice spelling; second and final-code
-  early attempt exit 0. This is not the required final-tree gate.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending: downstream luup2 decision and, if required, install plus `check:local`.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; 1.097 s.
+- `task lint`: exit 0; 1.469 s. Whole-workspace Clippy and all three AST-grep policies pass; the
+  two existing escaped-newline findings remain informational.
+- `task lint:fc`: exit 0; 48 feature combinations for 13 packages across three targets pass in
+  85.69 s with zero errors or warnings.
+- `cargo nextest run --workspace`: exit 0; 1,340/1,340 tests pass in 47.991 s after a 1m15s build.
+- `task test:integration`: exit 0; 666/666 tests pass in 508.844 s, with 24 profile skips.
+- `task test:all`: exit 0; 2,010/2,010 tests pass in 540.974 s, with 24 profile skips and live
+  network tests included.
+- Downstream luup2: not triggered because A1 is representation-only and all public schema,
+  diagnostic, and status bytes are exact; the campaign's installed C1 gate remains 32/32 green.
+- `task tokei:core`: exit 0; 66,154 production Rust LOC in 0.990 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0.
+- `git diff --check`: exit 0.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +75 (66,079 to 66,154).
