@@ -21,6 +21,7 @@
 use color_eyre::eyre;
 use indoc::indoc;
 
+use semver::{Version, VersionReq};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -62,14 +63,20 @@ fn chart_lock_path(chart_dir: &std::path::Path) -> Option<std::path::PathBuf> {
         .find(|path| path.is_file())
 }
 
-/// A locked dependency counts as vendored when `charts/` holds its packaged
-/// archive at the locked version, or its unpacked directory (under the real
-/// or aliased name) whose `Chart.yaml` records the locked version.
-fn dependency_is_vendored(chart_dir: &std::path::Path, names: &[&str], version: &str) -> bool {
+/// A locked dependency counts as vendored when `charts/` holds its packaged archive at the locked
+/// version, or its unpacked directory records a version accepted by the lock entry.
+///
+/// Helm preserves version requirements for local dependencies in `Chart.lock`, so an unpacked
+/// dependency may legitimately satisfy a lock such as `0.1.x`.
+fn dependency_is_vendored(
+    chart_dir: &std::path::Path,
+    names: &[&str],
+    locked_version: &str,
+) -> bool {
     let vendored_charts_dir = chart_dir.join("charts");
     names.iter().any(|name| {
         if vendored_charts_dir
-            .join(format!("{name}-{version}.tgz"))
+            .join(format!("{name}-{locked_version}.tgz"))
             .is_file()
         {
             return true;
@@ -79,8 +86,20 @@ fn dependency_is_vendored(chart_dir: &std::path::Path, names: &[&str], version: 
             return false;
         };
         serde_yaml::from_str::<VendoredChartVersion>(&manifest_text)
-            .is_ok_and(|manifest| manifest.version == version)
+            .is_ok_and(|manifest| locked_version_matches(locked_version, &manifest.version))
     })
+}
+
+fn locked_version_matches(locked: &str, vendored: &str) -> bool {
+    let locked = locked.strip_prefix('v').unwrap_or(locked);
+    let vendored = vendored.strip_prefix('v').unwrap_or(vendored);
+    let Ok(vendored) = Version::parse(vendored) else {
+        return false;
+    };
+    if let Ok(locked) = Version::parse(locked) {
+        return locked == vendored;
+    }
+    VersionReq::parse(locked).is_ok_and(|requirement| requirement.matches(&vendored))
 }
 
 /// Every chart directory reachable from the corpus roots through unpacked
@@ -200,6 +219,17 @@ fn unpacked_dependency_with_wrong_version_is_not_vendored() -> eyre::Result<()> 
         chart_dir.path(),
         &["common"],
         "2.0.0"
+    ));
+    assert!(dependency_is_vendored(chart_dir.path(), &["common"], "1.x"));
+    assert!(dependency_is_vendored(
+        chart_dir.path(),
+        &["common"],
+        "v1.x"
+    ));
+    assert!(!dependency_is_vendored(
+        chart_dir.path(),
+        &["common"],
+        "2.x"
     ));
     Ok(())
 }
