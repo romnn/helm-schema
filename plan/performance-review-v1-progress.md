@@ -1055,7 +1055,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
-- Status: pre-registered; counter instrumentation not started.
+- Status: counter complete and recorded before shortcut implementation.
 - Contract: first measure, without changing results, the joined-variable count, variables whose
   entry dispatch is identical in every outcome, and joins discarded by the 128-arm cap. Only after
   recording those counts, preserve an entry dispatch directly when every outcome carries that
@@ -1083,8 +1083,26 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
     semantic rejection rules above.
 - Performance baseline: the A3a ten-chart curve is 0.16, 0.09, 0.21, 0.34, 2.48, 1.22, 1.93,
   10.60, 11.36, and 16.40 s CPU median in reference-chart order. The isolated chart is 2.13 s.
-- Measured results: pending.
-- Deviations: none at pre-registration.
+- Measured results: the tracing-only A3a counter reports the following before any shortcut code:
+
+| Chart | join calls | joined variables | unchanged in every outcome | unchanged share | capped joins |
+|---|---:|---:|---:|---:|---:|
+| coredns | 157 | 9 | 9 | 100.0% | 1 |
+| metrics-server | 53 | 1 | 1 | 100.0% | 0 |
+| istiod | 254 | 9 | 8 | 88.9% | 1 |
+| cert-manager | 212 | 29 | 28 | 96.6% | 1 |
+| argo-cd | 978 | 218 | 168 | 77.1% | 6 |
+| grafana | 772 | 751 | 289 | 38.5% | 14 |
+| cilium | 1,492 | 675 | 476 | 70.5% | 66 |
+| datadog | 5,264 | 1,591 | 1,018 | 64.0% | 26 |
+| airflow | 3,242 | 1,689 | 1,267 | 75.0% | 100 |
+| kube-prometheus-stack | 3,526 | 3,465 | 2,555 | 73.7% | 318 |
+| **Total** | **15,950** | **8,437** | **5,819** | **69.0%** | **533** |
+
+  The 69.0% aggregate unchanged share and each large chart's 64.0--75.0% share clear the frozen
+  20% counter limb independently of later speed measurement.
+- Deviations: none in the counter step. The tracing events are temporary and will be removed before
+  the semantic candidate is built.
 - Adjudication evidence: pending; this is the campaign's semantic round.
 - Public/wire decision: pre-registered as an adjudicated schema re-spelling/precision change only.
   No CLI, serialized IR, cache, or diagnostic contract may change.
@@ -1094,6 +1112,10 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Planned counter: tracing events aggregate ordinary local counts without a global/thread-local
   accumulator or test-order-sensitive reset. Counter code and events are removed before building
   the semantic candidate.
+- Counter artifacts are under `/private/tmp/helm-schema-performance-v1.LSEe9Y/a3/counter`. The
+  preserved `helm-schema-a3-counter` binary ran all ten charts with the round-0 cache and
+  `--trace-output`; `trace_processor_shell query` selected instant events whose
+  `debug.message = 'a3_join_counter'` and summed the three integer fields per chart.
 - Planned byte gate: preserved A3a and A3 binaries on all ten charts under the round-0 private
   cache, capturing schema, stdout, JSON diagnostics, and status separately.
 - Planned adjudication: one clean candidate dump/battery using `SCHEMA_ACCEPTANCE_BASELINE_REF`
