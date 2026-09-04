@@ -942,7 +942,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round B2 — `mimalloc` on every CLI target
 
-- Status: pre-registered; implementation not started.
+- Status: landed in `a34859c0`.
 - Contract: make the CLI's existing `mimalloc` dependency and global allocator declaration apply
   on macOS and the other supported non-musl targets, rather than only musl. Change no library
   ownership, allocation site, schema semantics, diagnostic, status, fixture, corpus input, or wire
@@ -960,22 +960,64 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Performance baseline: the preserved A2b binary is the direct A side. The latest round-wide A2
   medians were 2.04 s for grafana and 17.84 s for datadog; A2b's isolated predicate-heavy chart
   result does not substitute for fresh allocator pairs on either chart.
-- Measured results: pending.
-- Deviations: none at pre-registration.
-- Adjudication evidence: pending; B2 is representation-only and requires byte identity and zero
-  acceptance flips.
-- Public/wire decision: pre-registered as none. The allocator is process-local implementation
-  policy for the CLI binary and does not add shared semantic cache state to any library session.
+- Measured results:
+  - Grafana: A2b 1.82 s CPU median (1.81--1.84), B2 1.48 s (1.44--1.52); median paired gain
+    18.68%, range 16.02--21.74%.
+  - Datadog: A2b 13.17 s CPU median (13.13--13.23), B2 11.25 s (11.24--11.30); median paired gain
+    14.39%, range 14.32--14.97%.
+  - All ten pairs preserve schema, stdout, JSON diagnostics, and status exactly. Load1 spans
+    1.81--3.64. Both charts clear 5% and every paired sample is positive, so B2 is adopted.
+  - The first incremental release build including `libmimalloc-sys` took 12.74 s wall, 22.91 s
+    user, and 1.54 s sys. The final portability-only rebuild took 1.53 s wall. The final binary is
+    16,280,000 bytes, 118,768 bytes larger than A2b.
+  - Unpaired suite corroboration is mixed by target coverage: integration is effectively flat at
+    372.423 s versus A2b's 371.333 s, while `test:all` falls from 363.095 s to 310.574 s. These
+    gate timings are not used for adoption because test binaries do not uniformly inherit the CLI
+    entry point's allocator and the runs were not randomized A/B pairs.
+- Deviations:
+  - The literal first implementation removed every target condition. `task lint:fc` attempt one
+    then exited 201 after 45.71 s because `libmimalloc-sys`'s bundled C source failed under the
+    workspace's Zig-based `x86_64-pc-windows-gnu` cross-check; the other 47 combinations passed.
+    This was attributable to B2. The final implementation retains the system allocator on Windows
+    and enables `mimalloc` on all supported non-Windows targets.
+  - Rebuilding after that correction produced the exact same macOS executable as the measured
+    candidate (matching SHA-256 below). The byte gate, corpus battery, and randomized measurements
+    therefore exercise the exact final binary rather than an invalidated predecessor.
+- Adjudication evidence: Helm v4.2.3. All ten reference charts are exact for schema, stdout, JSON
+  diagnostics, and status. The artifact paths differ by zero files from `30a5903f`; the battery
+  covers 160 charts and 284,869 composed probes with zero flips, hence zero
+  candidate-accepts/Helm-aborts cells.
+- Public/wire decision: none. The allocator is process-local implementation policy for the CLI
+  binary on non-Windows targets and does not add shared semantic cache state to any library
+  session. Windows retains its system allocator to satisfy the supported cross-target build.
 
 ### Review dossier
 
-- Planned implementation: move `mimalloc` into ordinary CLI dependencies and remove only the
-  target-environment condition from the existing global allocator declaration.
-- Planned byte and artifact gates: A2b versus B2 on all ten charts under the round-0 private cache
-  and `git diff --exit-code 30a5903f -- testdata/chart-corpus-schemas
-  crates/helm-schema-ir/tests/fixtures`.
-- Planned performance gate: five randomized interleaved pairs on grafana and datadog, with no
-  concurrent builds and exact output-channel comparison inside every pair.
+- Final implementation: `mimalloc` is a dependency under
+  `cfg(not(target_os = "windows"))`; the existing global allocator declaration carries the same
+  condition. Linux musl behavior is retained, macOS and Linux glibc gain the allocator, and the
+  Windows cross-target remains buildable.
+- Final binary: `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-b2-final`, SHA-256
+  `c3e5a57fb4618e84fa4d331a3dadb7b98798534ef6efb9fb96fb35038b658a43`. It is byte-identical
+  to the initially measured `helm-schema-b2` copy.
+- Final ten-chart byte gate: preserved `helm-schema-a2b` versus `helm-schema-b2`, with
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s`,
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, and
+  `--compact --offline --k8s-version v1.35.0 --diag-format json`; all four channels are exact under
+  `b2/byte`.
+- Artifact gate: `git diff --exit-code 30a5903f -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`; exit 0, covering 156 schema and 18 IR artifacts.
+- Corpus battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/b2/battery
+  SCHEMA_ACCEPTANCE_BASELINE_REF=30a5903f
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/b2/battery/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 152.685 s with 160 charts, 284,869 probes,
+  and zero flips.
+- Final randomized interleaved pairs are under `b2/measure`. Odd pairs run B then A and even pairs
+  A then B; every invocation records UTC start and load1 beside `/usr/bin/time -p` output. No build
+  overlaps the measurement window.
 
 ### Self-adversarial pass
 
@@ -986,18 +1028,27 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   Both named charts must clear the threshold on paired CPU, not wall time.
 - The CLI allocator choice must not leak into the libraries as global cache or analysis state;
   concurrent library sessions remain isolated by ordinary ownership.
+- The first cross-target failure demonstrates that allocator portability cannot be inferred from
+  native builds. The final target predicate is covered directly by all 48 cargo-fc combinations.
+- The lower `test:all` duration may include scheduling and host effects. It is not credited to B2;
+  the paired preserved-binary CPU result is sufficient on its own.
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Pending: `task lint`.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending: downstream luup2 decision and, if required, install plus `check:local`.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; 0.887 s.
+- `task lint`: exit 0; 0.934 s. Whole-workspace Clippy and all three AST-grep policies pass.
+- `task lint:fc`: exit 0 on the final tree; 48/48 feature combinations pass in 36.25 s. The failed
+  first attempt is recorded under Deviations rather than hidden.
+- `cargo nextest run --workspace`: exit 0; 1,344/1,344 tests pass in 19.196 s after a 26.53 s
+  rebuild.
+- `task test:integration`: exit 0; 667/667 tests pass in 372.423 s, with 24 profile skips.
+- `task test:all`: exit 0; 2,015/2,015 tests pass in 310.574 s, with 24 profile skips and live
+  network tests included.
+- Downstream luup2: not triggered because B2 is representation-only and every schema, diagnostic,
+  stdout, status, fixture, and acceptance channel is exact; the campaign's installed C1 gate
+  remains 32/32 green.
+- `task tokei:core`: exit 0; 67,062 production Rust LOC in 0.789 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.001 s.
+- `git diff --check`: exit 0; under 0.001 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: 0 (67,062 to 67,062).
