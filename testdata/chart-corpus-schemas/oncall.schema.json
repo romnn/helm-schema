@@ -490458,6 +490458,180 @@
         },
         {
           "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/2"
+                  },
+                  {
+                    "$ref": "#/$defs/yD"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/yD"
+                  },
+                  {
+                    "$ref": "#/$defs/1"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/q"
+                          },
+                          {
+                            "$ref": "#/$defs/n"
+                          },
+                          {
+                            "$ref": "#/$defs/36"
+                          }
+                        ],
+                        "description": "Prometheus server container name"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "verticalAutoscaler": {
+                        "additionalProperties": {},
+                        "description": "Vertical Pod Autoscaler config\nRef: https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler",
+                        "properties": {
+                          "containerPolicies": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/3"
+                              },
+                              {
+                                "description": "Per-container resource policies.",
+                                "items": {
+                                  "additionalProperties": false,
+                                  "description": "ContainerResourcePolicy controls how autoscaler computes the recommended resources for a specific container.",
+                                  "properties": {
+                                    "containerName": {
+                                      "description": "Name of the container or DefaultContainerResourcePolicy, in which case the policy is used by the containers that don't have their own policy specified.",
+                                      "type": "string"
+                                    },
+                                    "controlledResources": {
+                                      "description": "Specifies the type of recommendations that will be computed (and possibly applied) by VPA. If not specified, the default of [ResourceCPU, ResourceMemory] will be used.",
+                                      "items": {
+                                        "description": "ResourceName is the name identifying various resources in a ResourceList.",
+                                        "type": "string"
+                                      },
+                                      "type": "array"
+                                    },
+                                    "controlledValues": {
+                                      "description": "Specifies which resource values should be controlled. The default is \"RequestsAndLimits\".",
+                                      "enum": [
+                                        "RequestsAndLimits",
+                                        "RequestsOnly"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "maxAllowed": {
+                                      "additionalProperties": {
+                                        "$ref": "#/$defs/Kj"
+                                      },
+                                      "description": "Specifies the maximum amount of resources that will be recommended for the container. The default is no maximum.",
+                                      "type": "object"
+                                    },
+                                    "minAllowed": {
+                                      "additionalProperties": {
+                                        "$ref": "#/$defs/Kj"
+                                      },
+                                      "description": "Specifies the minimal amount of resources that will be recommended for the container. The default is no minimum.",
+                                      "type": "object"
+                                    },
+                                    "mode": {
+                                      "description": "Whether autoscaler is enabled for the container. The default is \"Auto\".",
+                                      "enum": [
+                                        "Auto",
+                                        "Off"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "forceNamespace": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/q"
+                      },
+                      {
+                        "$ref": "#/$defs/3"
+                      },
+                      {
+                        "$ref": "#/$defs/n"
+                      },
+                      {
+                        "$ref": "#/$defs/36"
+                      }
+                    ],
+                    "description": "Force namespace of namespaced resources"
+                  }
+                }
+              },
+              {
+                "$ref": "#/$defs/sU"
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "commonMetaLabels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/3"
+                      },
+                      {
+                        "$ref": "#/$defs/1I"
+                      }
+                    ],
+                    "description": "Additional labels to attach to all resources"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "$ref": "#/$defs/8"
@@ -496685,164 +496859,6 @@
                         }
                       }
                     }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/2"
-                  },
-                  {
-                    "$ref": "#/$defs/yD"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/yD"
-                  },
-                  {
-                    "$ref": "#/$defs/1"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "name": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/q"
-                          },
-                          {
-                            "$ref": "#/$defs/n"
-                          },
-                          {
-                            "$ref": "#/$defs/36"
-                          }
-                        ],
-                        "description": "Prometheus server container name"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "verticalAutoscaler": {
-                        "additionalProperties": {},
-                        "description": "Vertical Pod Autoscaler config\nRef: https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler",
-                        "properties": {
-                          "containerPolicies": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/3"
-                              },
-                              {
-                                "description": "Per-container resource policies.",
-                                "items": {
-                                  "additionalProperties": false,
-                                  "description": "ContainerResourcePolicy controls how autoscaler computes the recommended resources for a specific container.",
-                                  "properties": {
-                                    "containerName": {
-                                      "description": "Name of the container or DefaultContainerResourcePolicy, in which case the policy is used by the containers that don't have their own policy specified.",
-                                      "type": "string"
-                                    },
-                                    "maxAllowed": {
-                                      "additionalProperties": {
-                                        "$ref": "#/$defs/Kj"
-                                      },
-                                      "description": "Specifies the maximum amount of resources that will be recommended for the container. The default is no maximum.",
-                                      "type": "object"
-                                    },
-                                    "minAllowed": {
-                                      "additionalProperties": {
-                                        "$ref": "#/$defs/Kj"
-                                      },
-                                      "description": "Specifies the minimal amount of resources that will be recommended for the container. The default is no minimum.",
-                                      "type": "object"
-                                    },
-                                    "mode": {
-                                      "description": "Whether autoscaler is enabled for the container. The default is \"Auto\".",
-                                      "enum": [
-                                        "Auto",
-                                        "Off"
-                                      ],
-                                      "type": "string"
-                                    }
-                                  },
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "forceNamespace": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/q"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/n"
-                      },
-                      {
-                        "$ref": "#/$defs/36"
-                      }
-                    ],
-                    "description": "Force namespace of namespaced resources"
-                  }
-                }
-              },
-              {
-                "$ref": "#/$defs/sU"
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "commonMetaLabels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/1I"
-                      }
-                    ],
-                    "description": "Additional labels to attach to all resources"
                   }
                 }
               }

@@ -41,6 +41,11 @@ fn core_resource_qualified_probe_bypasses_canonical_kind_table() {
 }
 
 #[test]
+fn third_party_resource_qualified_probe_abstains() {
+    assert!(probe("autoscaling.k8s.io/v1/VerticalPodAutoscaler").is_none());
+}
+
+#[test]
 fn unknown_group_version_probe_abstains() {
     assert!(probe("example.com/v1").is_none());
 }
