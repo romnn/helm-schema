@@ -1261,7 +1261,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A6 — lazy `EvalResult` truth
 
-- Status: pre-registered; R1 indicates rejection without a code spike.
+- Status: rejected without a code spike; the measured residual cannot meet the frozen threshold,
+  and the post-freeze selection-reachability invariant makes the specified laziness ineffective.
 - Contract: evaluate the frozen lazy-`truth` item only against the post-A3 representation and the
   current `EvalResult` invariants. If the R1 counter proves the 5% isolated-chart threshold
   impossible or a post-freeze consumer makes the specified laziness ineffective, write no Rust
@@ -1280,14 +1281,42 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
     compete and tests must obtain a fresh cache by ordinary construction.
 - Performance baseline: 0.19 s CPU median for the adopted A3 isolated chart; 875 eager scalar-set
   operations and 1.588 ms inclusive in both truth computations in the R1 counter build.
-- Measured results: pending final source reconciliation.
-- Deviations: pending.
-- Adjudication evidence: Helm v4.2.3; no code or representation change is expected.
-- Public/wire decision: pending.
+- Measured results:
+  - `EvalResult::set_scalar_dispatch_with_memo` constructs
+    `SelectionReachability::from_dispatch_with_memo` before storing `truth`.
+    `from_dispatch_with_memo` itself calls `dispatch.truth_condition_with_memo`, then the setter
+    calls the same derivation again for `self.truth`. A lazy `truth` field can remove at most the
+    second call; it cannot remove the first without expanding A6 into lazy selection reachability.
+  - The R1 span deliberately enclosed both calls and measured 875 setter invocations / 1.588 ms on
+    the isolated chart. Even deleting the entire span would be only 0.84% of the 0.19 s CPU
+    baseline; the specified change's upper bound is smaller still. A 2x counter error remains under
+    1.7%, far below the frozen 5% rejection line.
+  - No candidate binary or paired A/B run is warranted: the measured upper bound fires the R1
+    abandon rule before implementation and avoids adding a `OnceCell` that cannot pay for its
+    state or accessor migration.
+- Deviations:
+  - The frozen plan predates `39b44aaf` (`perf(ir): memoize predicate operations per session`),
+    which added eager selection reachability on 2026-09-04. The plan's premise that stored
+    `EvalResult.truth` is the sole eager consumer is therefore no longer true. The plan remains
+    frozen; this ledger records the contradiction.
+  - The user's later direction permits retaining modest stable gains, but there is no implemented
+    gain to retain here. Expanding the item to another lazy representation would exceed A6's
+    contract and add reasoning/test surface before evidence.
+- Adjudication evidence: Helm v4.2.3. No code, schema, diagnostic, status, fixture, or acceptance
+  channel changed; R1's 160-chart / 284,863-probe zero-flip battery is the exact final tree.
+- Public/wire decision: none. Keep eager `EvalResult` fields; reject the stale lazy-field design.
 
 ### Review dossier
 
-- Pending source reconciliation and final-tree identity checks.
+- `git blame -L 1140,1170 crates/helm-schema-ir/src/eval_effect.rs` and `git blame -L 1315,1340
+  crates/helm-schema-ir/src/eval_effect.rs` attribute the new reachability derivation and memo-aware
+  setter to `39b44aaf`.
+- `rg -n '\.truth\b|selection_reachability' crates/helm-schema-ir/src --glob '*.rs'` enumerates
+  both fields' readers and writers. Direct inspection follows the setter into
+  `SelectionReachability::from_dispatch_with_memo` at `eval_effect.rs:1153`.
+- Counter evidence is `/private/tmp/helm-schema-performance-v1.LSEe9Y/r1/counter-loaded/kubernetes-apps/trace.pftrace`;
+  `trace_processor_shell query <trace> "select count(*) calls, round(sum(dur)/1e6,3) ms from slice
+  where name='r1_set_scalar_dispatch_truth'"` returns 875 / 1.588 ms.
 
 ### Self-adversarial pass
 
@@ -1299,9 +1328,34 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ### Gates on the final tree
 
-- Pending; expected to remain the exact R1 production tree.
+- `cargo fmt --check`: exit 0; 2.21 s.
+- `task lint`: exit 0; 38.42 s. Whole-workspace Clippy and AST-grep complete; the scan repeats the
+  two existing test-literal style warnings.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass in 82.77 s; total command duration
+  84.21 s. The already-established Zig cache access was used for the exact gate.
+- `cargo nextest run --workspace`: exit 0; 1,348/1,348 tests pass in 25.838 s after a 37.83 s
+  rebuild; total command duration 64.29 s.
+- `task test:integration`: exit 0; 669/669 tests pass in 335.369 s, with 24 profile skips; total
+  command duration 340.97 s including a package-cache-lock wait.
+- `task test:all`: exit 0; 2,021/2,021 tests pass in 257.273 s, with 24 profile skips and live
+  network tests included; total command duration 258.80 s.
+- Corpus battery: exit 0; 160 charts, 284,863 probes, zero flips, one test passes in 142.184 s;
+  total command duration 152.80 s. Command uses
+  `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a6-battery`,
+  `SCHEMA_ACCEPTANCE_BASELINE_REF=5f50bcc8`, the sibling `coverage.json`, and
+  `ADJUDICATE_WITH_HELM=1`.
+- Downstream luup2: not triggered because A6 writes no production code and changes no schema
+  semantics; the exact R1/A3 production tree retains A3's 32/32 green result.
+- Artifact gate, `git diff --exit-code 5f50bcc8 -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`: exit 0; 156 schema and 18 IR artifacts are exact; under
+  0.01 s.
+- Production-tree identity, `git diff --exit-code 5f50bcc8 -- crates testdata Cargo.toml Cargo.lock
+  taskfile.yaml mise.toml`: exit 0; 0.01 s.
+- `task tokei:core`: exit 0; 67,373 production Rust LOC in 0.65 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.01 s.
+- `git diff --check`: exit 0; 0.01 s.
 
-- Measured production LOC delta: pending; expected 0.
+- Measured production LOC delta: 0 (67,373 to 67,373).
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
