@@ -594,3 +594,38 @@ Next: complete round 1 first, then preregister F23/D3 implementation; first run 
   earlier serial scheduling and over-broad harness review cycle.
 
 Next: finish round1 in main while isolated F23/D3 implementation proceeds; first run `git status --short`.
+
+### Round 1 review convergence and final validation
+
+- Review3 Fable exited 0 and converged on byte transport/accounting; output retained
+  in `<root>/round1/review3/claude-messages.md`. Its Unicode-delimiter observation
+  exposed why a projected YAML lexer was not the right repair: Kubernetes framing
+  is physical-line based and can differ from YAML's lexical document boundaries.
+- Withdrawn design: Unicode-to-LF scanner projection, applied briefly but never
+  dumped or committed. It could invent a second resource after a Unicode boundary.
+  Chosen deletion: remove the second YAML lexer and character-offset map; mirror
+  pinned `YAMLReader`/`LineReader` framing, then let Helm alone parse YAML values.
+  The remaining delimiter check is the exact upstream single-token framing rule,
+  not a YAML/template-layout inference heuristic. Fifteen targeted tests pass.
+- Review4 target and self-contained brief: `<root>/round1/review4`.
+  Native gpt-6-astra/high output: `astra-out.md`; Fable5.1/xhigh output:
+  `claude-messages.md` (CLI exit 0, extracted after completion from its full stream).
+  Both traced the exact pinned sources and converged with no substantive defect.
+  They checked Unicode comments, physical versus Unicode markers, CRLF/bare CR,
+  final unterminated lines, leading/consecutive/trailing delimiters and empty input.
+- Convergence is mechanism-backed, not a vote: the parent reproduced the missing
+  resource and envelope failures; the replacement removes their incompatible model.
+  No further speculative harness expansion in this prerequisite round.
+- Disclosed residuals: comment-only/null chunks can be reported uncertain rather
+  than skipped because `fromYaml` returns an empty map; unsupported encoding or
+  invalid framing fails adjudication rather than certifying a verdict. Provider
+  rejection means pinned strict-schema rejection, not every server's warning/pruning
+  mode. A probe-independent abort/rejection still needs causal justification in the
+  family dossier. These limits neither invent rejection evidence nor approve an
+  uncertain tightening. Accepted-but-provider-rejected loosenings deliberately fail.
+- Final test-binary inventory compiled successfully (exit 0). One clean dump started
+  with all three dump flags in `<root>/round1/dump.hxX6x2`; corpus, IR, generator,
+  lean and final-output lanes are selected in one nextest invocation. `dump.log`
+  retains output. Battery and final gates follow that dump; no earlier gate is reused.
+
+Next: finish round1 dump, battery and final gates; first run `tail -10 /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round1/dump.log`.
