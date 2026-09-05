@@ -1705,7 +1705,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round E3 — remove small normalization, merge, and output dead work
 
-- Status: pre-registered; implementation pending.
+- Status: landed in `7d31176f`.
 - Contract: make only the three frozen byte-exact cleanups: borrow contract-normalization identity
   fields instead of cloning them for comparisons; compute canonical merge sort keys once with a
   stable decorate–sort–undecorate pass; and bound retained pretty JSON bytes at Helm's file limit
@@ -1735,16 +1735,83 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   1.76, 8.75, 6.07, and 7.80 s. R1 attributed `normalize_contract_uses` self time of 2,359, 310,
   and 642 ms to datadog, airflow, and kube-prometheus-stack; output metrics and default-pretty
   double serialization sit outside the compact-only frozen curve and need separate measurement.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending byte, artifact, and battery gates against Helm v4.2.3.
-- Public/wire decision: pending; the intended changes preserve all existing output bytes and
-  metrics-enabled behavior.
+- Measured results:
+  - Borrowed normalization (`E2` to `e3a`) representative paired gains are datadog 0.23%
+    (-0.47--0.92%), airflow 0.83% (-0.67--1.32%), and kube-prometheus-stack 0.26%
+    (0.13--3.35%). Only KPS is wholly positive; the others are neutral.
+  - Decorated canonical sorting (`e3a` to `e3b`) yields grafana 0.99% (0.00--2.91%), datadog
+    -0.12% (-1.05--0.59%, five pairs), airflow 0.51% (-0.68--1.17%), and
+    kube-prometheus-stack 0.39% (0.26--2.44%). Datadog and airflow cross zero; no regression is
+    proven.
+  - The CLI output path (`e3b` to final E3) on default-pretty output is airflow 5.92 to 5.95 s CPU,
+    -0.34% paired (-2.20--0.84%), and kube-prometheus-stack 7.75 to 7.71 s, +0.91%
+    (-0.26--1.29%). Airflow's 3,872,015-byte pretty output stays below the limit; KPS's
+    6,988,158-byte output takes the compact fallback. Both ranges cross zero, so neither is a speed
+    claim. The threshold test proves that the retained pretty allocation is released exactly at
+    5 MiB before compact serialization begins.
+  - Final combined compact curve:
+
+    | chart | pairs | E2 CPU s median (range) | E3 CPU s median (range) | paired decision (range) | load1 range |
+    |---|---:|---:|---:|---:|---:|
+    | coredns | 5 | 0.13 (0.13--0.14) | 0.13 (0.13--0.13) | neutral; 0.00% (0.00--7.14%) | 4.00--4.00 |
+    | metrics-server | 5 | 0.08 (0.08--0.08) | 0.08 (0.08--0.08) | neutral; 0.00% (0.00--0.00%) | 4.00--4.00 |
+    | istiod | 5 | 0.18 (0.18--0.18) | 0.18 (0.17--0.19) | not proven; 0.00% (-5.56--5.56%) | 4.00--4.00 |
+    | cert-manager | 5 | 0.32 (0.32--0.32) | 0.32 (0.31--0.32) | neutral; 0.00% (0.00--3.13%) | 3.84--4.00 |
+    | argo-cd | 5 | 2.24 (2.24--2.24) | 2.23 (2.21--2.23) | gain; 0.45% (0.45--1.34%) | 3.53--3.84 |
+    | grafana | 5 | 1.01 (1.01--1.02) | 1.01 (0.99--1.01) | neutral; 0.98% (0.00--2.94%) | 3.57--4.17 |
+    | cilium | 5 | 1.72 (1.71--1.73) | 1.71 (1.69--1.71) | neutral; 1.16% (0.00--1.74%) | 4.06--4.23 |
+    | datadog | 5 | 8.55 (8.51--8.63) | 8.54 (8.51--8.57) | not proven; -0.23% (-0.35--1.16%) | 3.45--4.13 |
+    | airflow | 5 | 5.95 (5.94--5.97) | 5.90 (5.89--5.93) | gain; 0.84% (0.50--1.17%) | 3.41--5.17 |
+    | kube-prometheus-stack | 5 | 7.70 (7.65--7.72) | 7.60 (7.58--7.68) | gain; 0.92% (0.39--1.81%) | 3.09--4.29 |
+
+  - Datadog's absolute candidate median is 0.01 s lower despite the paired median's two-tick
+    negative result. Its range crosses zero and is recorded as neutral, not a gain or regression.
+    Airflow and KPS have wholly positive final ranges.
+  - Compact and default-pretty schema bytes, stdout, JSON diagnostics, and statuses are exact on all
+    ten charts. All 156 schema artifacts and 18 IR artifacts are exact. The final battery checks
+    160 charts and 284,863 probes with zero flips.
+- Deviations:
+  - The first borrowed-predicate compile exposed three stale `&source_path` comparisons after the
+    local became a reference. The focused compiler diagnostics identified all three; they were
+    corrected before any intermediate binary was built.
+  - The canonical-sort subchange has a slightly negative Datadog paired median, but its five-pair
+    range crosses zero and its absolute medians are equal to timer resolution. The frozen E3 text
+    both says to reject individually on no measurable movement and says these dead-work removals
+    land on byte identity. The byte-identity instruction plus the user's explicit stable
+    non-regression direction governs this neutral result.
+  - The default-pretty Airflow subcheck likewise has a -0.34% median with a crossed-zero range. It
+    does not take the fallback; the KPS fallback is positive and the exact-limit test proves the
+    allocation reduction. The output subchange is retained for bounded memory and byte identity,
+    not claimed as an Airflow speedup.
+  - The frozen compact-only protocol cannot directly expose removal of pretty serialization or CLI
+    metric collection. Separate default-pretty pairs and the exact 5 MiB unit case supply that
+    evidence; the final compact curve remains the campaign curve.
+- Adjudication evidence: Helm v4.2.3. The final battery reports 160 charts / 284,863 probes / zero
+  flips, hence zero candidate-accepts/Helm-aborts cells. Both output formats, diagnostics, statuses,
+  and all owned artifacts are exact.
+- Public/wire decision: output bytes and existing metrics behavior are unchanged. E3 adds the
+  additive `write_schema_json_without_metrics` library function so the CLI can explicitly avoid a
+  scan it discarded; the existing metrics-returning API remains unchanged. The normalization and
+  merge changes are crate-private.
 
 ### Review dossier
 
-- Pending intermediate binaries, representative pairs, final curve, byte comparisons, focused
-  tests, and final-tree gates.
+- Preserved release binaries are `helm-schema-e3a` (`78bfa00a…`), `helm-schema-e3b`
+  (`3f836a20…`), and final `helm-schema-e3` (`04dbab46…`) under the campaign `bin` directory.
+- Subchange measurements are under `e3/measure-e3a`, `e3/measure-e3b`, and
+  `e3/measure-e3c-pretty`. The final compact curve is under `e3/measure-final`. Each invocation uses
+  the campaign K8s/CRD snapshot, randomized adjacent order, `--offline --k8s-version v1.35.0
+  --diag-format json`, and `/usr/bin/time -p`; compact runs add `--compact`.
+- Byte evidence is under `e3/byte`. Baseline E2 and final E3 run all ten charts in both compact and
+  default-pretty modes; schema, stdout, stderr, and status comparisons all pass.
+- Focused tests: `cargo test -p helm-schema-ir contract_normalization --lib`; seven tests pass.
+  `cargo test -p helm-schema-gen canonical_schema_sort_matches_lexical_wire_order --lib`; one test
+  passes. `cargo test -p helm-schema output_pipeline::format::tests --lib`; four tests pass,
+  including measured/unmeasured byte identity and the exact Helm-limit fallback.
+- Acceptance battery uses
+  `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/e3/battery`,
+  `SCHEMA_ACCEPTANCE_BASELINE_REF=9e27f681`, sibling `coverage.json`, and
+  `ADJUDICATE_WITH_HELM=1`; the exact round-74 ignored-only command exits 0.
 
 ### Self-adversarial pass
 
@@ -1759,12 +1826,37 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   growth.
 - Metrics remain available through the existing API. Only the CLI path that discards them may opt
   out, preventing a performance round from becoming a public API break.
+- `Vec::clear` would retain the 5 MiB allocation while compact bytes are allocated. The bounded
+  writer replaces the vector at the threshold so the old allocation is dropped first.
+- The canonical string is still the ordering authority. Precomputing it once changes computation,
+  not comparison semantics, and stable sorting preserves tie order.
+- The borrowed render-site set is dropped before `Vec::retain`; the borrow checker enforces the
+  mutation boundary that the design relies on.
 
 ### Gates on the final tree
 
-- Pending.
+- `cargo fmt --check`: exit 0; 1.10 s.
+- `task lint`: exit 0; 16.61 s. Whole-workspace Clippy and all three AST-grep policies pass; the
+  scan repeats two existing multiline-literal warnings.
+- `task lint:fc`: exit 0; 48/48 combinations pass in 81.18 s; total command duration 81.80 s.
+- `cargo nextest run --workspace`: exit 0; 1,360/1,360 tests pass in 8.361 s after a 58.34 s
+  rebuild; total command duration 67.26 s.
+- `task test:integration`: exit 0; 669/669 tests pass in 238.167 s, with 24 profile skips; total
+  command duration 239.63 s.
+- `task test:all`: exit 0; 2,033/2,033 tests pass in 245.665 s, with 24 profile skips and live
+  network tests included; total command duration 246.93 s.
+- Corpus battery: exit 0; 160 charts, 284,863 probes, zero flips; 142.668 s test time and 160.54 s
+  total command duration.
+- Downstream luup2: not triggered because both output modes, schema semantics, diagnostics,
+  statuses, fixtures, and acceptance are exact. The campaign's 32/32 A3/C1 downstream result
+  remains green.
+- `task tokei:core`: exit 0; 67,538 production Rust LOC in 1.43 s.
+- Artifact gate, `git diff --exit-code 9e27f681 -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`: exit 0; 156 schema and 18 IR artifacts exact; under 0.01 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.01 s.
+- `git diff --check`: exit 0; 0.02 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +58 (67,480 to 67,538).
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
