@@ -242,3 +242,70 @@ commands exited 0; all four preregistered proof cases reproduced, proof exit 0.
   stdout, JSON diagnostics and exit bytes, then records CPU/wall medians and load.
 
 Next: finish round 0 timing and harness review; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round0/timings/summary.json`.
+
+### Ten-chart performance floor
+
+All commands exited 0. Ten online/offline comparisons and every timed repeat match
+on schema, stdout, JSON diagnostics and exit bytes. No build overlapped this pass.
+Some starts exceed load1 4 and are marked loaded by the disclosed load column;
+small-chart wall/CPU ratios also reflect the timer's 0.01-second resolution.
+
+| Chart | n | CPU median (min–max), s | Wall median (min–max), s | load1 per run |
+|---|---:|---:|---:|---|
+| coredns | 5 | 0.13 (0.13–0.13) | 0.14 (0.14–0.14) | 4.18, 4.25, 4.25, 4.25, 4.25 |
+| metrics-server | 5 | 0.08 (0.08–0.08) | 0.09 (0.09–0.09) | 4.25, 4.25, 4.25, 4.25, 4.25 |
+| istiod | 5 | 0.18 (0.18–0.19) | 0.19 (0.18–0.19) | 4.25, 4.25, 4.25, 4.25, 4.25 |
+| cert-manager | 5 | 0.32 (0.31–0.32) | 0.33 (0.31–0.33) | 4.25, 4.25, 4.25, 4.25, 4.25 |
+| argo-cd | 3 | 2.24 (2.22–2.28) | 2.26 (2.23–2.29) | 4.25, 4.07, 4.07 |
+| grafana | 5 | 1.01 (1.00–1.03) | 1.03 (1.01–1.04) | 4.22, 4.22, 4.22, 4.22, 4.22 |
+| cilium | 5 | 1.72 (1.71–1.76) | 1.73 (1.71–1.77) | 4.12, 4.12, 4.12, 4.11, 4.11 |
+| datadog | 3 | 8.01 (7.99–8.07) | 8.11 (8.02–8.11) | 4.11, 4.01, 3.86 |
+| airflow | 3 | 5.67 (5.64–5.73) | 5.72 (5.67–5.74) | 3.79, 3.81, 3.97 |
+| kube-prometheus-stack | 3 | 7.53 (7.48–7.53) | 7.64 (7.60–7.65) | 3.89, 3.74, 3.84 |
+
+Raw invocation evidence: `<root>/round0/timings/<chart>/<run>/`; summary:
+`<root>/round0/timings/summary.json`. The three large-chart medians above are the
+performance floor; subsequent IR/gen rounds require paired checks and cannot absorb
+more than 10% regression. Timing script exit 0.
+
+### Harness review correction
+
+Native Astra (`gpt-6-astra`, high) found one confirmed metadata fidelity issue:
+`harness.py` changed cert-manager's declared `v0.0.0` version/appVersion to `0.0.0`
+when materializing `Chart.yaml`. The repair copies `Chart.template.yaml` byte-for-byte,
+removing the metadata parse/re-serialization entirely. Its seven root cases were rerun
+in `<root>/round0/root-metadata-correction`; exit 0, all seven still reject in both
+Helm and schema. Original evidence is retained and superseded only for these cases.
+
+The reviewer independently checked 584 metadata/default/lock-file copies and all
+125 CI overlays for byte identity, verified raw-null preservation, and found no
+artificial disagreement among the exercised cases. The harness now explicitly rejects
+packed dependencies before any copy; the temporal-wrapper archive confirmed that
+boundary with zero copy calls. Packed-chart adjudication requires an unpacking step
+before extending this scratch harness; it is not silently treated as covered.
+
+Review output: `<root>/round0/review/astra-out.md`; follow-up native review confirmed
+both repairs and reported no substantive residuals. Fable's cross-vendor result is
+still pending, so ensemble convergence is not claimed.
+
+### Next-round phase findings, before implementation
+
+- F23 is emission-phase loss: a derived missing/null guard is encoded using
+  `AbsenceDefaults.deeper_stage`, which mixes dependency defaults (already consumed
+  by Helm coalescing) with actual template-time root-merge defaults. An unconditional
+  deletion of its default-fill branch would also remove justified runtime fallback.
+  The repair must distinguish runtime defaults structurally and cover both nil
+  predicates and F23's missing falsy branch. No production edit yet.
+- D3 loses source identity at insertion into the suffix-keyed implicit-template map.
+  The existing abstract expression evaluator already resolves singleton computed
+  template names. Exact full-name indexing and caller-context `Template.BasePath`
+  binding can delete the suffix resolver instead of adding a collision rescue path.
+  Pinned Helm v4.2.3 source is now available at
+  `/Users/roman/go/pkg/mod/helm.sh/helm/v4@v4.2.3`; `engine.go` assigns Template
+  fields at render entry and named includes execute with their passed data.
+- The existing battery's approximate composition must not become a verdict oracle:
+  before any semantic fixture adoption, every changed cell needs the exact
+  pre-render coalesced document plus provider/policy adjudication. A bounded design
+  review is examining the smallest sound repair while F23/D3 analysis continues.
+
+Next: finish round 0 cross-vendor review; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round0/review/claude-out.md`.
