@@ -62,6 +62,14 @@ zero candidate-accepts/Helm-aborts against `8fbcc732`.
 - The existing round-74 renderer does not pin Kubernetes or remove test templates, and
   uses approximate coalescing for probes. Establish the independent pinned harness first;
   record baseline battery coverage separately from valid Helm adjudication evidence.
+- A default overlay aborting does not invalidate every other overlay: retain per-probe
+  adjudication, and distinguish Helm-abort matches from provider-rejection matches.
+  A family still needs its structural soundness argument; a matched cell alone is not it.
+- F5 integer iteration depends on values transport in pinned Helm: `--set items=0`
+  renders a minimal `range .Values.items`, while `-f integer.json` with numeric zero
+  aborts. Both serialize as the same JSON number. Default: record this expressiveness
+  limit, investigate the schema-validation boundary, and do not claim transport-independent
+  integer rejection from file-based witnesses alone.
 
 ## Round 0 — harness and baseline
 
@@ -430,3 +438,49 @@ Next: round 1 exact flip integration; first run `sed -n '1350,1480p' crates/helm
   No dump or full final-tree gate has run on this change, and no fix commit has landed.
 
 Next: complete round 1 copy/identity repairs and repeat review; first run `git diff --stat`.
+
+### Round 1 second review and reach adjudication
+
+- The three first-review defects are repaired. Native Astra independently traced
+  the live changes and found no further defect in identity proof, archive boundaries,
+  scoped exclusions or exact revalidation. Thirteen helper tests and both integration
+  controls passed before the next reporting changes; these are targeted checks, not
+  final-tree gates.
+- Fable5.1/xhigh review exited 0. Its complete assistant output was recovered from
+  `<root>/round1/review2/claude-stream.jsonl` into `claude-messages.md` with `jq` after
+  completion. Its final comment-hook reply again followed the substantive report;
+  this time the report was retained. Fable confirms the three repairs and the exact
+  value/provider invariant, but requests clearer accounting of reach.
+- Dissent adjudication: do not reject a tightening solely because an unrelated
+  default-overlay control aborts. The oracle must judge the actual overlay, which
+  can repair defaults or activate a different branch. Chart-metadata incompatibility
+  under pinned 1.29.0 is a real limitation for witnesses on jupyterhub and okteto,
+  not permission to change the pin or claim supported-cluster coverage. Retain the
+  per-probe law and add distinct typed outcomes/counters for Helm-abort tightenings,
+  provider-rejection tightenings, fully validated loosenings and provider-uncertain
+  loosenings. A matched abort is not proof of the constraint's structural origin.
+- Missing cached kinds: retain uncertainty rather than fetch new inference fixtures
+  during this prerequisite. The review's claim that one missing kind prevents all
+  provider rejection evidence on a chart is too broad: a proved invalid sibling
+  resource dominates uncertainty. Provider-uncertain loosenings now have their own
+  case list, rather than being indistinguishable from complete validation.
+- Source-schema wording: the provider source retains references but normalizes regex
+  dialects; it is not a literal disk-byte accessor. The pinned bundle has no patterns,
+  and no counterexample to the normalization was established. Do not add another
+  accessor or representation for an unproved concern.
+- Shared partials under `templates/tests` remain excluded by explicit campaign
+  policy. The proposed partial-file exception would change that policy and is not
+  adopted. The review's document-end concern is being checked against pinned Helm.
+- A further concrete transport defect was confirmed: embedding original YAML text
+  in a JSON values string lets Helm's outer YAML parser fold Unicode line breaks
+  before `fromYaml` sees them. `apiVersion: v1<U+0085>kind: ConfigMap` decodes correctly
+  through `.Files.Get`/`--set-file`, but errors through the current JSON envelope.
+  Evidence: `/private/tmp/helm-yaml-transport.utoIsF`. Repair underway: original-byte
+  document files in a fresh decoder chart, only ASCII filenames in the values envelope;
+  delete the cached decoder state. No inference heuristics are involved.
+- Invalid targeted test invocation: the default nextest profile selected zero tests
+  and exited 4. Re-run with `--ignore-default-filter`; never count a filtered suite.
+- F5 transport witness: `<root>/range-channel`, actual command exits 0 (`--set`)
+  and 1 (JSON values file). This is analysis groundwork, not a closed family.
+
+Next: finish round 1 raw-document repair and focused review; first run `git diff --stat`.
