@@ -270,6 +270,20 @@ gate's.
   direction, not a verdict** — a tightening that rejects something helm
   renders is a false rejection, and batteries that only count flip
   directions hide exactly that.
+- The corpus battery
+  (`round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced`
+  in `crates/helm-schema/tests/schema_emission_profiles.rs`) reads its
+  CANDIDATE from the on-disk fixture unless
+  `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` names a dump directory. **Any round
+  that changes a fixture byte MUST run the battery with
+  `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` pointing at the one clean dump of
+  the final build, after that dump exists.** Run without it on
+  not-yet-regenerated fixtures, the battery compares a schema against
+  itself and proves nothing. Tell-tales of a vacuous run:
+  `flips_adjudicated: 0` on a round that changed bytes, and a per-chart
+  `guards_discovered` count equal to the baseline-only count. The
+  performance v1 A3 round (2026-09-05) reported zero flips this way and
+  actually carried 73.
 - For old-vs-new acceptance probing use a compiled Rust prober (the
   `jsonschema` crate in a scratch integration test) at three
   granularities: top-level deletions, second-level deletions, and empty
