@@ -1144,3 +1144,65 @@ Next: finish the three bounded F23/D3 output corrections in correction.m6Nvh1 an
   performance-campaign obligation is closed from these partial diagnostics.
 
 Next: freeze and re-verify the bounded output correction, then run its final build/dump/battery; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/d3-review4-correction-handoff.md`.
+
+### Round 3 pre-registration — F77 independent descendant contracts
+
+- Parallel D3 state: review five reports are saved in `round2/review5/`; Fable
+  completed with exit 0. The partial literal-marker counterexample was executed
+  with `bin/helm-schema-round2-review5`: Helm renders, schema rejects. Its
+  correction in APFS clone `round2/correction-marker.7sO8cq` passes 511 focused
+  tests by partitioning proved literal coverage from the remaining output.
+  `round2/d3-partial-marker-handoff.md` records the exact law and tests.
+  Fable's additional per-program selection, accumulated-default and local-reload
+  metadata findings are being adjudicated before further scope is accepted.
+  No final D3 dump, battery, timing floor or full-gate verdict is claimed.
+- Status: design/implementation authorized independently of the unfinished D3
+  return-boundary work. Acceptance baseline `12c62e6e`. Score remains 3/83.
+  Ordering deviation: the exact differential located a separate generator defect,
+  so it can advance while D3's focused correction is reviewed. F78 stays active
+  but is not bundled into an unproven common cause; A1 groundwork is retained.
+- Helm invariant: serializing an entire input subtree does not excuse a stricter
+  operation that independently consumes a descendant. Every value document must
+  satisfy both actual consumers under their respective execution conditions.
+  Merely reading a descendant or knowing its declared default does not prove that
+  a serialized collection has one fixed shape.
+- First-loss evidence: `round2/a3-differential-evidence/handoff.md` establishes
+  that exporter `image.repository` retains its unconditional string requirement
+  through captures, normalization, final signals and path resolution. Both resolved
+  schemas are exactly `{"type":"string"}`. Generator ownership returns
+  `OwnedByAncestor` and then `None` solely because serialized `image` owns its
+  descendants. The correction belongs at base materialization, not branch joins
+  or a new conditional rescue arm.
+- Pre-registered tightenings, all five currently accepted although pinned Helm
+  aborts: `image.repository=false` in kubernetes-event-exporter, phpmyadmin and
+  zookeeper; `rabbitmqImage.repository=false` and
+  `credentialUpdaterImage.repository=false` in rabbitmq-cluster-operator.
+  These four fixtures are UNADJUDICATED_INTAKE, not quarantine or known-valid
+  rejection entries. Expect those four fixture changes and no default-acceptance
+  roster change. Other independent descendant contracts may tighten structurally;
+  every moved probe still needs live adjudication, with no accepted-abort regression.
+- Faithful target: retain each independent descendant contract under its real
+  condition without reintroducing declared child shapes beneath serialization-only
+  observations. The physical minimal target was hand-written and checked against
+  Helm/Rust validation in `a3-differential-evidence/minimal*`. The typed two-path
+  full-schema regression deliberately omits presence/default facts to isolate
+  ownership; it is red with the exact missing object/string subtree.
+- Designs to compare: retain independent structural base facts while suppressing
+  only inherited declaration shape; or separate declaration ownership from contract
+  emission entirely. Prefer the existing phase output and fewer representations,
+  but do not equate every structural-schema hint with an unconditional contract.
+  Conditional-only descendants, guarded wildcard items, serialized object/array
+  alternatives, defaults-only children, and stronger ancestor contracts are required
+  counterexamples. Removing serialization support wholesale is not a fix.
+- Work will use an isolated candidate and the shared T7 build cache. No reverted
+  A3 shortcut or diagnostic engine/vfs dependency enters production. F77 closure
+  and the older performance campaign's A3 closure remain distinct: the latter
+  still requires the corrected candidate-dump battery against `8fbcc732`, including
+  F78 and the recorded F79/F80 policies.
+- Candidate: `round3-f77.HQExNW`, an APFS clone of the sealed F74-only tree.
+  It contains neither the A3 reversal nor diagnostic-only dependencies. The
+  proposed bounded design refines existing base ownership for independently
+  proved base contracts, retaining guarded overlay lanes and testing alternatives
+  before changing production. No new declaration/contract pass is assumed needed.
+
+Next: implement F77 at the proved generator ownership seam while D3's bounded correction advances; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/a3-differential-evidence/handoff.md`.
