@@ -42,6 +42,10 @@
   Checkpoint repository changes promptly. The user explicitly requested committing
   the current repository changes before the final validation rerun completes;
   such a checkpoint is not a claim that the round or family is closed.
+- User clarification: keep useful structural corrections active rather than deferring
+  them to improve the score. Separate independently ready work so one unresolved
+  mechanism does not hold the entire batch. F74 now has its own isolated validation
+  tree; F23/D3 remains active. Do not restart broad reviews for mechanical changes.
 
 ## Validation correction inherited from the performance campaign
 
@@ -849,3 +853,83 @@ Next: finish bounded compiler corrections and focused corrective review; first r
   normalization is not yet established as the first loss. No F77/F78 fix claimed.
 
 Next: complete expression-owned tpl evaluation and proved-safe helper cache reuse; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/review2/astra-out.md`.
+
+### Round 2 checkpoint — independent F74 validation and concrete D3 blockers
+
+- Status: active, not deferred or closed. Score remains 2/83 (2.4%). The last
+  landed code change is `a1ab3df8`; subsequent ledger checkpoints do not count as
+  implementation closure. F23/D3 and F74 production changes remain uncommitted.
+- Scheduling correction: isolate F74 at acceptance baseline `4dd9f3e5` in
+  `<root>/round2/f74-standalone.Uh4POA`, without creating a branch or changing the
+  main index. Its 14 source files and 159 fixture replacements are independent of
+  experimental F23/D3. Main has not adopted those fixtures. Keep the two mechanisms
+  active in parallel, with no new broad F74 ensemble for mechanical lint corrections.
+- F74 measured correctness: one clean dump `round2/f74-dump.bUkBvD`, 165 selected
+  tests, exit 0; 203 mapped artifacts, 159 changed and 44 identical. All IR and
+  generator fixtures are unchanged. Explicit candidate-dump battery against
+  `4dd9f3e5`, `ADJUDICATE_WITH_HELM=1`: 160 profiles, 284,867 probes, zero screened
+  acceptance flips, exit 0. This is not fixture self-comparison: changed bytes
+  were established before adoption. F74 is intended to preserve acceptance exactly;
+  finite screening is supplemented by structural reference-protection regressions.
+  Three changed final-output profiles also passed 74 before/after Rust probes each.
+- F74 shipping proof: all 18 frozen size witnesses pass the actual default writer
+  and pinned Helm 4.2.3 loader, each exit 0. Largest actual output among them:
+  gitea, 4,681,704 bytes including newline, below 5,242,880. Four pretty fixtures
+  remain larger; the existing default writer emits their compact form. No writer
+  policy or descriptions were changed. Full sizes and loader evidence:
+  `round2/f74-standalone-evidence/final-size18/size-results.json` and
+  `round2/f74-standalone-handoff.md`.
+- F74 gates on that exact isolated candidate: `cargo fmt --check` 0; `task lint`
+  0; `task lint:fc` 0; `cargo nextest run --workspace` 0 (1,378 passed);
+  `task test:integration` 0 (689 passed, 24 skipped); `task test:all` 0 (2,071
+  passed, 24 skipped, including four live controls); CLI install 0; documented
+  luup2 `check:local` with xargs shim 0; `task tokei:core` 0. These are not final
+  gates for any subsequent performance correction. Exact commands, own exits and
+  173-file checksums: `round2/f74-standalone-evidence/`. Production Rust LOC
+  67,597 → 67,816 (+219). Initial lint failure and accidental cargo-fc 0.6 run
+  do not count; corrected final feature gate used configured 0.7 and 48 combinations.
+- F74 performance floor FAILED. Successful measurement is not a passing floor:
+  Datadog 8.01 → 8.78 s (+9.6%), Airflow 5.67 → 6.34 s (+11.8%),
+  kube-prometheus-stack 7.53 → 8.51 s (+13.0%). Quiet-window copied locked-build
+  binary `round2/f74-standalone-evidence/helm-schema-final-dump`, SHA-256
+  `08690f612bbbe08aa80f0e55de4d41a8750d62e813b28eb0b28c524efc795399`.
+  Evidence `round2/f74-timings/summary.json`; online/offline output equality and
+  per-run CPU/load records retained. Do not adopt a slower floor or land this
+  candidate unchanged. Current bounded repair targets a redundant owned-tree
+  rebuild during generated-reference inlining; its output must remain identical.
+- D3 review-three dossier: `round2/review3/{brief.md,tracked.diff,corrective.diff}`,
+  native Astra `astra-out.md`, completed Fable `claude-messages.md`. Confirmed
+  defects were invocation-context/pipeline transport, missing returned scalar and
+  selection predicates, and returned manifest resource identity. Review has not
+  converged; no cosmetic finding is being used to start another cycle.
+- D3 corrections in the private implementation: unify direct and piped invocation
+  through evaluated context; preserve scalar dispatch and selection predicates;
+  return the actual mutated root from `set`; honor Helm's literal `<no value>`
+  removal. Targeted tests: 491 passed. Pinned Helm marker-normalization controls
+  distinguish null/empty strings, which render, from nonempty strings, which abort
+  in the witness. Unproved dynamic text preimages remain approximate, not falsely
+  exact. Ten-file digest manifest and detailed evidence:
+  `round2/d3-review3-files.json`, `round2/d3-review3-handoff.md`.
+- Confirmed remaining D3 mechanism: direct Deployment output associates
+  `.Values.count` at `spec.replicas` with apps/v1 Deployment, while the identical
+  complete manifest returned by `tpl (.Files.Get ...)` loses that resource identity.
+  Witness `round2/tpl-nested-resource-probe.md`. Chosen design preserves the existing
+  guarded fragment as returned output through selection and assignment, consumed
+  at structural YAML placement. Rejected per-values-path site metadata loses
+  occurrence and condition correlation across alternative resources. No execution
+  pre-scan or parallel effect model is restored. Design:
+  `round2/tpl-resource-site-design.md`; implementation remains active.
+- Cache correction: a real entry-file regression proves the caller-name cache
+  optimization missed the production root representation: fragment dot is a dict
+  equal to root bindings, not a `RootContext` marker. Correct only the cache key
+  under the existing parsed-body unobservability proof, preserving evaluation input
+  and nested explicit root carriers. Private cache checks 19/19 passed. Main's
+  new focused regression independently failed before correction, exit 100, with
+  two cache entries instead of one (`round2/cache-entry-main-red.log`). The main
+  correction then passed all 19 cache tests, exit 0, in 0.031 s
+  (`round2/cache-entry-main-green.log`); no timing improvement is claimed yet.
+- Next-family overlap is read-only causal work on F77/F78. A suspected unconditional
+  payload loss is not a proven first-loss phase until the minimal witness and exact
+  differential establish it. The performance campaign's A3 obligation remains open.
+
+Next: finish F74's redundant-copy correction and D3's returned-resource transport; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/f74-timings/summary.json`.
