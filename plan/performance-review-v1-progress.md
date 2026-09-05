@@ -1457,7 +1457,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   `90b1831aae8a92eb779e16bc07cb5c8e7ff70de84ce9bd7e0450e4adc2173d90`. The binary copied before
   the final comment correction has the same hash, proving the timing executable is the final
   executable. The A3 baseline hash is
-  `18f889cc3ae9f07fae4a3470426b7940f0fdc8f4e36e8a8fe84f4e54638a0098`.
+  `18f889f5f3849317fbe498e614712874ccd1b2c8f49b899c31004b106d0a0098`.
 - Ten-chart byte evidence is under `a4/byte-final3`. Both binaries set
   `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s` and
   `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, then run
