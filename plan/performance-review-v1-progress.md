@@ -1055,7 +1055,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round R1 — re-trace the post-A3 residual
 
-- Status: pre-registered; measurement in progress.
+- Status: complete; no production commit exists because R1 restores the exact A3 tree. The
+  pre-registration landed in `a698f60c`; this dossier is the measurement-only round result.
 - Contract: make no shipped code, schema, diagnostic, status, fixture, corpus-input, or wire-format
   change. Capture fresh Perfetto traces for datadog, airflow, and kube-prometheus-stack on the
   adopted A3 tree; answer the frozen plan's counter questions with temporary session-owned
@@ -1086,17 +1087,124 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Performance baseline: the adopted A3 curve is 9.81 s CPU median for datadog, 6.34 s for airflow,
   and 8.48 s for kube-prometheus-stack. The corresponding A3-over-A3a paired gains are 7.22%,
   45.01%, and 49.10%; R1 must not infer a residual from the frozen 63-chart-era estimates.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: Helm v4.2.3; R1 is measurement-only and must end at the already-adjudicated
-  A3 semantic tree with zero new acceptance flips.
-- Public/wire decision: pending the trace and counter evidence; R1 itself has no public or wire
-  change.
+- Measured results:
+
+  | Perfetto span, self ms unless noted | datadog | airflow | kube-prometheus-stack |
+  |---|---:|---:|---:|
+  | traced run | 12,226 | 7,717 | 9,515 |
+  | `collect_manifest_contract_for_template` | 280 | 536 | 743 |
+  | `summarize_bound_helper_call` | 3,824 | 1,788 | 450 |
+  | `collect_manifest_contract_for_chart` | 1,595 | 993 | 793 |
+  | `normalize_contract_uses` | 2,359 | 310 | 642 |
+  | `derive_schema_signals_from_contract_parts` | 1,324 | 313 | 865 |
+  | gen `LoweredEmissionPlan::build` inclusive (`collect_conditional_schemas`) | 423 (327) | 1,269 (1,024) | 2,334 (1,647) |
+  | `append_selected_constraints` | 411 | 395 | 725 |
+  | `extract_repeated_provider_payloads` | 360 | 313 | 521 |
+  | `minimize_schema` | 142 | 310 | 521 |
+  | `parse_go_template` | 453 | 444 | 475 |
+  | everything else | 1,054 | 1,046 | 1,445 |
+
+  - The accepted trace invocations record CPU/wall of 11.73/12.26 s for datadog at load1 7.28,
+    7.53/7.75 s for airflow at load1 12.90, and 9.29/9.55 s for kube-prometheus-stack at load1
+    6.22. Their wall/CPU ratios are 1.045, 1.029, and 1.028. All three schemas are exact against
+    the copied A3 binary's byte-gate artifacts.
+  - Exact counter results, with counter durations accepted only from the lean build:
+
+    | Chart | `normalize` calls / owner-local distinct | `exactly_implies` calls / owner-local distinct | helper calls / misses / `seen`-only misses | helper miss s / `seen`-only s | scalar pass runs / consumed / s | conditional validator calls / distinct / reusable | validator compile s |
+    |---|---:|---:|---:|---:|---:|---:|---:|
+    | datadog | 4,300,818 / 142,942 | 1,303,691 / 76,361 | 3,100 / 1,111 / 762 | 7.717 / 3.119 | 1,090 / 820 / 1.663 | 2,372 / 225 / 90.5% | 0.119 |
+    | airflow | 1,388,411 / 102,220 | 401,529 / 42,000 | 2,268 / 986 / 226 | 2.454 / 0.225 | 926 / 528 / 0.443 | 4,174 / 323 / 92.3% | 0.396 |
+    | kube-prometheus-stack | 990,054 / 90,161 | 304,530 / 48,686 | 1,925 / 288 / 82 | 0.722 / 0.085 | 255 / 157 / 0.134 | 8,062 / 638 / 92.1% | 0.784 |
+
+  - `seen` alone accounts for 40.4% of datadog's inclusive helper-miss time, 9.2% of airflow's,
+    and 11.8% of kube-prometheus-stack's. A4 therefore advances with a revised datadog expectation
+    of roughly 15--30%, bounded above by the 3.824 s helper-self residual rather than the frozen
+    63.6 s headline.
+  - The second scalar projection is consumed 75.2% of the time on datadog, 57.0% on airflow, and
+    61.6% on kube-prometheus-stack. Proportional avoidable time is only about 0.412, 0.190, and
+    0.051 s respectively. A7 remains scheduled after A4, with a revised datadog expectation of
+    roughly 3--5%; A4 must re-establish that baseline because it changes helper misses first.
+  - Conditional validator reuse is 90--92%. Avoiding repeat compilation projects approximately
+    0.108 s on datadog, 0.366 s on airflow, and 0.722 s on kube-prometheus-stack before lookup
+    overhead. E2 advances; its acceptance still depends on a 30% `collect_conditional_schemas`
+    span drop, not this projection.
+  - A6's isolated `kubernetes-apps.yaml` counter sees 875 eager-set operations but only 1.588 ms
+    inside both truth computations, under 1% of the adopted chart's 0.19 s CPU. Moreover,
+    `SelectionReachability` added after the frozen plan in `39b44aaf` now consumes the same truth
+    eagerly, so lazifying only `EvalResult.truth` cannot remove the computation the plan described.
+    A6's residual has collapsed and the frozen 5% gate cannot plausibly be met.
+  - A5's `@file:templates/configmaps/configmap.yaml` is now two misses and 0.596 s inclusive, not
+    seven evaluations / 33.9 s. Its frozen under-2-second rejection criterion has already fired;
+    the final study round will record the rejection without adding footprint plumbing.
+  - The predicate counter also exposes incomplete cache threading: 70,263 short-lived memos on
+    datadog, 73,465 on airflow, and 52,352 on kube-prometheus-stack carry 5--11% of predicate calls.
+    They are owner-local, not global, so this is not a correctness or concurrency defect; it is a
+    measured follow-up for completing explicit session-cache propagation after the frozen wave.
+- Deviations:
+  - The first full counter build intentionally ran under external compilation and took 127.26 s;
+    its build duration is invalid and unused. Its exact counts and complete validator keys are
+    deterministic and were retained, while every duration from its loaded three-chart run was
+    discarded.
+  - The full counter embedded complete validator keys and one event per `PredicateMemo` in the
+    Perfetto stream. Datadog produced an 88.34 MB trace and suffered shared-I/O stalls. A second,
+    lean counter retained the same session-owned helper and scalar-pass state but emitted only
+    summary lines; its accepted wall/CPU ratios are 1.015, 1.022, and 1.082 for datadog, airflow,
+    and kube-prometheus-stack.
+  - A third lean build measured conditional-validator compilation without writing a trace. Its
+    accepted wall/CPU ratios are 1.027, 1.012, and 1.013. This separates exact complete-key reuse
+    from timing overhead rather than treating the loaded full-counter compilation times as valid.
+  - Datadog trace attempts at 16.35/14.42 and 32.71/19.49 wall/CPU were invalidated after external
+    builds began mid-run. Kube-prometheus-stack attempts at 12.44/10.74, 27.98/14.72, and
+    21.30/13.24 were invalidated for the same reason.
+  - A shell guard intended to wait for five quiet process-list samples hit macOS sandbox denials
+    on every nested `ps` call and launched the 21.30 s invalid KPS attempt. The tooling failure and
+    its artifacts are retained; later retries used direct process checks.
+  - `trace_processor_shell` reports 674 / 1,500 / 2,696 `misplaced_end_event` health notices in the
+    accepted datadog / airflow / KPS traces. This also occurs in the frozen campaign's traces. Root
+    span durations match `/usr/bin/time`, and every named span remains queryable, but the warning
+    is disclosed rather than silently treated as a pristine trace.
+  - The fresh zero-flip battery emits 284,863 probes, six fewer than the A3 dossier's recorded
+    284,869. Its coverage report differs because the A3 run compared against pre-A3 `33d46316`,
+    while R1 compares the identical post-A3 tree against `fbc03204`; no production, fixture, or
+    corpus input changed between R1 baseline and candidate. Both exact totals remain in the ledger.
+- Adjudication evidence: Helm v4.2.3. The fresh round-74 battery checks 160 charts and 284,863
+  probes with zero flips, hence zero candidate-accepts/Helm-aborts cells. R1 is measurement-only
+  and ends at the already-adjudicated A3 semantic tree.
+- Public/wire decision: none. R1 changes only this ledger. A4 and E2 advance, A7 remains a modest
+  post-A4 experiment under the user's stable-non-regression direction, A6 is rejected before a
+  code spike because its residual and original design premise both collapsed, and A5's final study
+  is pre-adjudicated as a measured rejection.
 
 ### Review dossier
 
-- Pending. Every accepted and invalidated trace/counter command, cache path, `TMPDIR`, load record,
-  executable digest, and trace-query command will be recorded here.
+- Final phase traces are under `/private/tmp/helm-schema-performance-v1.LSEe9Y/r1/trace-final`:
+  `datadog-retry2`, `airflow`, and `kube-prometheus-stack-retry3`. Each invocation sets
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s` and
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, then
+  runs copied binary `helm-schema-a3` with `--compact --offline --k8s-version v1.35.0
+  --diag-format json --trace-output <trace> --output <schema>` under `/usr/bin/time -p -o
+  <time>`. Its SHA-256 is
+  `18f889f5f3849317fbe498e614712874ccd1b2c8f49b899c31004b106d0a0098`.
+- `trace_processor_shell query` computes a `child` CTE grouped by `parent_id`, then `self_dur =
+  slice.dur - COALESCE(child.child_dur, 0)` for every named self row. The emission `build` row uses
+  inclusive duration only for a `build` slice whose direct parent is
+  `generate_values_schema_with_report`; `collect_conditional_schemas` is reported parenthetically.
+- Exact count traces are under `r1/counter-loaded`. The full counter binary SHA-256 is
+  `08980d4fea6bf69aa8b8a95e1a564eee32aa022f9d74dd0662e2ee4193cd4c37`;
+  SQL pivots `args` by slice `arg_set_id`, selects `debug.message` values prefixed `r1_`, and counts
+  distinct complete `debug.key` strings only for events whose parent is
+  `collect_conditional_schemas`.
+- Accepted timing counters are under `r1/counter-lean-final` and
+  `r1/validator-counter-final`. Their binary SHA-256 values are
+  `e0815ab426cc4dcf48ae29eb1dbd234890d0a6de0d394a1579a8eb16aa7f9d4a` and
+  `bb13b139459fc8d819aa36ffe39fb7b106adced6c3ec6923f967745e7ac17209`.
+  Each uses the same cache/CLI environment as the phase traces but no `--trace-output`; `awk -F
+  '\t'` sums the `r1_helper_stats`, `r1_scalar_projection_stats`, or
+  `r1_conditional_validator_compile` rows. All six resulting schemas compare exact to A3.
+- Final restoration checks: `git diff --exit-code 12aa5f47 -- crates testdata Cargo.toml Cargo.lock
+  taskfile.yaml mise.toml`; exit 0. `git diff --exit-code fbc03204 --
+  testdata/chart-corpus-schemas crates/helm-schema-ir/tests/fixtures`; exit 0, covering 156 schema
+  and 18 IR artifacts. `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`; exit 0.
 
 ### Self-adversarial pass
 
@@ -1108,12 +1216,48 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   must preserve the owning session/phase identity before totals are reconciled.
 - An estimate inherited from the frozen plan after A3's 45--49% large-chart gain is stale by
   construction. Every downstream decision must use this checkpoint's measured residual.
+- Inclusive helper-miss timers nest, so their totals can exceed helper-self trace time. The A4
+  decision uses the `seen`-only share within the same inclusive accounting (40.4%) and caps the
+  projected absolute saving at the non-overlapping 3.824 s helper-self residual.
+- The 70k short-lived predicate memos are not evidence for replacing them with process-global
+  state. The safe follow-up is to finish passing one chart/session-owned memo through production
+  call paths; concurrent library runs must retain independent ownership and deterministic clearing.
 
 ### Gates on the final tree
 
-- Pending after all temporary instrumentation has been removed.
+- `cargo fmt --check`: exit 0; 1.34 s.
+- `task lint`: exit 0; 16.44 s. Whole-workspace Clippy and all three AST-grep policies complete;
+  the scan repeats two existing test-literal style warnings without failing the gate.
+- `task lint:fc`, attempt 1: exit 201; 33.42 s. All 32 Linux/Windows combinations failed before
+  Clippy because the sandbox denied Zig's `/Users/roman/.cache/zig/tmp` creation; all 16 native
+  combinations ran. This is a tooling failure, not a source diagnostic.
+- `task lint:fc`, exact escalated retry: exit 0; 75.65 s. All 48/48 feature combinations pass
+  across Linux, Windows, and macOS targets.
+- `cargo nextest run --workspace`: exit 0; 1,348/1,348 tests pass in 10.486 s after a 31.13 s
+  rebuild; total command duration 42.12 s.
+- `task test:integration`: exit 0; 669/669 tests pass in 451.665 s, with 24 profile skips; total
+  command duration 454.10 s. An external workload arrived after launch, so the duration is gate
+  evidence only.
+- `task test:all`: exit 0; 2,021/2,021 tests pass in 243.591 s, with 24 profile skips and live
+  network tests included; total command duration 245.00 s.
+- Corpus battery: exit 0; 160 charts, 284,863 probes, zero flips, one test passes in 135.693 s;
+  total command duration 146.04 s including its rebuild. Command sets
+  `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/r1/battery-final`,
+  `SCHEMA_ACCEPTANCE_BASELINE_REF=fbc03204`,
+  `SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/r1/battery-final/coverage.json`,
+  and `ADJUDICATE_WITH_HELM=1`.
+- Downstream luup2: not triggered because R1 restores the exact A3 code and schemas; A3's installed
+  downstream gate remains 32/32 green.
+- Artifact gate, `git diff --exit-code fbc03204 -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`: exit 0; 156 schema and 18 IR artifacts are exact; under
+  0.01 s.
+- Production-tree identity, `git diff --exit-code 12aa5f47 -- crates testdata Cargo.toml Cargo.lock
+  taskfile.yaml mise.toml`: exit 0; 0.07 s.
+- `task tokei:core`: exit 0; 67,373 production Rust LOC in 1.05 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; 0.01 s.
+- `git diff --check`: exit 0; 0.01 s.
 
-- Measured production LOC delta: pending; expected 0.
+- Measured production LOC delta: 0 (67,373 to 67,373).
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
