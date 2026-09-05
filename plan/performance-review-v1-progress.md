@@ -1858,6 +1858,68 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: +58 (67,480 to 67,538).
 
+## Round A7 — lazily compute the second helper scalar projection
+
+- Status: pre-registered; counter pending before implementation.
+- Contract: first re-measure second scalar-projection executions and consumers on the post-A4/E3
+  tree with throwaway per-summary/tracing-only state, then restore it. If eligible, defer only the
+  existing second scalar interpreter pass behind a summary-owned `OnceCell`, retaining the original
+  active helper-cycle snapshot and complete bound resolution. Never skip the pass when its result is
+  requested, never hold the bound-helper memo borrow while computing it, and keep the structural
+  first pass, merge rules, schemas, diagnostics, statuses, fixtures, APIs, and wire formats exact.
+  No static, thread-local, process-global, lock, or cross-analysis cache is permitted.
+- Acceptance baseline: `19283512`, the completed E3 ledger on production commit `7d31176f`.
+- Baseline production Rust LOC: 67,538.
+- Pre-registered acceptance expectations:
+  - A temporary release counter records second-pass runs and reads for datadog, airflow, and
+    kube-prometheus-stack before lazy code exists. It is removed completely before the candidate
+    build. A consumed fraction above 80% rejects A7 without a production change.
+  - The deferred input owns the helper name, bound resolution, and exact `seen` snapshot from the
+    original miss. The `OnceCell` belongs to the memoized `FragmentSummary`, so unrelated analyses
+    cannot share it and dropping the analysis clears it.
+  - Focused tests prove an unread incomplete structural dispatch never runs the scalar pass; the
+    first read computes it once; repeated reads reuse it; and direct/mutual recursion uses the
+    original cycle cuts. Debug comparison may recompute eager and lazy results on first read.
+  - All ten schemas, stdout, JSON diagnostics, and statuses remain byte-identical. All 156 schema
+    artifacts and 18 IR artifacts remain exact. The 160-chart battery has zero flips and zero
+    candidate-accepts/Helm-aborts cells. The memo cache-state triple remains exact.
+  - Five randomized adjacent pairs on all ten charts form the final curve, with Datadog as the
+    frozen decision chart. The plan rejects below 5% paired Datadog gain; the user's later direction
+    permits a smaller stable result only when no chart has a proven regression and the ownership
+    simplification remains local and explicit.
+- Performance baseline: E3 medians in reference order are 0.13, 0.08, 0.18, 0.32, 2.23, 1.01,
+  1.71, 8.54, 5.90, and 7.60 s CPU. R1 measured pre-A4 consumed fractions of 75.2%, 57.0%, and
+  61.6%, with proportional avoidable time estimates of 0.412, 0.190, and 0.051 s; those values are
+  hypotheses until the post-A4 counter completes.
+- Measured results: pending.
+- Deviations: pending.
+- Adjudication evidence: pending byte, cache, artifact, and battery gates against Helm v4.2.3.
+- Public/wire decision: pending; the intended deferred state is private and summary-owned.
+
+### Review dossier
+
+- Pending counter binary/restoration, implementation, copied binaries, focused tests, cache triple,
+  byte gate, randomized pairs, and final-tree gates.
+
+### Self-adversarial pass
+
+- A lazy pass run with the caller's current cycle set can differ from the eager miss. The deferred
+  input must own the original miss's full `seen` snapshot.
+- A `OnceCell` holding only the projected pass result is insufficient if final merging also depends
+  on the structural dispatch. The deferred state must retain every input to the existing merge.
+- Computing through a borrowed `bound_helper_calls` entry can trigger nested helper lookups and a
+  `RefCell` panic. The caller must own an `Rc<FragmentSummary>` before invoking the accessor.
+- Consumption counters must distinguish a summary whose second pass ran from any ordinary read of a
+  structural scalar dispatch; otherwise the eligibility fraction is inflated.
+- Laziness may improve release generation while adding `OnceCell` and owned deferred-input cost to
+  every miss. Only paired whole-run measurements can decide the net result.
+
+### Gates on the final tree
+
+- Pending.
+
+- Measured production LOC delta: pending.
+
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
 - Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
