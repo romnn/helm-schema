@@ -1021,3 +1021,74 @@ Next: finish F74's redundant-copy correction and D3's returned-resource transpor
   `round2/f74-standalone-evidence/inplace-final-sha256.txt`.
 
 Next: finish F23/D3's focused returned-output corrections; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/review4/brief.md`.
+
+### F23/D3 continuation — focused review four and overlapped corrections
+
+- Status: active; score remains 3/83. F74 is landed and must not be redone.
+  The remaining compiler round's acceptance baseline is now `12c62e6e`, so its
+  semantic changes are compared against the landed, acceptance-equivalent F74
+  schemas rather than mixing deduplication movement into the verdict.
+- Returned-output implementation reached 503 passing focused tests in the private
+  tree: 431 IR unit, 25 extractor, 25 namespace, eight invocation, nine resource,
+  and five engine schema tests. Full-schema and acceptance controls cover direct,
+  piped, saved and List output; branch-specific Deployment/ConfigMap preimages;
+  and quote/encoding/block-text negative placement. These are focused evidence,
+  not final gates or family closure. Exact logs and 18-file manifest:
+  `round2/d3-resource-final-{ir,engine}.log`,
+  `round2/d3-resource-output-files.json`, `round2/d3-resource-output-handoff.md`.
+- Focused major-correction review: `round2/review4/brief.md`, exact 26-file
+  `files.txt`, tracked diff against `4dd9f3e5`, corrective and new-file diffs.
+  Native Astra delivered `astra-out.md`; Fable's read-only review is still running
+  and contributes no final verdict yet. The original review tree
+  `implementation.kR1Lpd` remains frozen. All 26 files were additionally preserved
+  byte-identically under `review4/reviewed-source/`, with verified SHA256SUMS.
+- Astra architecture verdict: sound shape, semantic corrections required. Returning
+  the existing occurrence tree and deleting the helper-only output path is the
+  right ownership boundary, but its ordinary-value alternatives and transformations
+  must retain their existing meaning. No parallel resource map is requested.
+- Confirmed new quote regression: a ConfigMap slot selecting a literal helper or
+  `quote .Values.token` rejects numeric/boolean token values in the candidate's
+  quoted branch although Helm renders valid strings and the available baseline
+  accepts. `output_alternative` rebuilt a known quoted value as raw scalar taint,
+  losing its transform metadata. Target: use the existing complete value lowering
+  for that arm, not a taint-only substitute or a provider exemption.
+- Confirmed marker defect: a wrapper around a literal tpl output containing
+  `<no value>` becomes truthy because returned tree text disagrees with the
+  normalized scalar result. Helm renders the empty string. The available review3
+  binary also rejects this witness but predates the ten-file normalization repair;
+  historical newness at that narrower intermediate boundary is unmeasured.
+  Target: normalize proved literal returned output and scalar result together,
+  without claiming an exact preimage for unproved dynamic text.
+- Confirmed saved-indentation gap: direct `tpl ... | nindent 2` places replicas
+  under an already populated Deployment spec, while saving the indented result
+  and later emitting the variable loses that placement constraint. Helm outputs
+  match byte-for-byte; the gap also exists in the available earlier binary.
+  Target: transport evaluated placement through the value/local lifecycle without
+  double-counting intrinsic and applied indentation. This is useful scoped
+  precision work, not falsely labeled a new regression.
+- Independent adjudication: `round2/opaque-output-probe/adjudication.md`, with
+  pinned Helm 4.2.3/kube 1.29.0, baseline/candidate schemas and compiled Rust
+  acceptance checks. Rebuilding the scratch probe with the frozen Cargo.lock
+  produced identical schemas, ruling out scratch dependency drift for these cases.
+- Scheduling: corrections proceed in a fresh private copy,
+  `round2/correction.m6Nvh1`, while Fable reads the unchanged frozen tree. No
+  branch/ref changes, no main integration of this known-bad candidate, and no
+  premature dump or adoption. This overlaps confirmed implementation work with
+  review latency while preserving a deterministic review target.
+- Next-family evidence: a permanent-test candidate in
+  `round2/f77-final-signals-probe` proves complementary rows lose metadata payload
+  only during final signal construction: two controls pass, full-evidence target
+  fails with exit 101. F77/F78 attribution is still open. An exact eight-line
+  A3-shortcut reversal is now being built from a fresh `12c62e6e` archive at
+  `round2/a3-differential.s07665`; sealed F74 and main remain unchanged.
+- F46 groundwork now isolates a separate parsed-helper boundary defect even with
+  literal `if false`, without capabilities or undecidable guards. Compact helper
+  yields no abort clause; formatted, closing-trimmed helper incorrectly yields
+  `Truthy(x)`. Genuine untrimmed whitespace remains truthy. Private tests: one
+  control passes and one regression fails (exit 101). Pinned Helm renders the
+  trimmed known-false helper (0) and aborts on the untrimmed control (1).
+  Actual extracted body text retains the trailing newline but loses its outer
+  closing trim delimiter. Evidence and two structural designs:
+  `round2/f46-groundwork.md`, `round2/f46-boundary-trace.log`. No F46 fix is claimed.
+
+Next: finish the three bounded F23/D3 output corrections in correction.m6Nvh1 and collect Fable's review; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/opaque-output-probe/adjudication.md`.
