@@ -1206,3 +1206,48 @@ Next: freeze and re-verify the bounded output correction, then run its final bui
   before changing production. No new declaration/contract pass is assumed needed.
 
 Next: implement F77 at the proved generator ownership seam while D3's bounded correction advances; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/a3-differential-evidence/handoff.md`.
+
+### Parallel candidate reviews — resumed 2026-09-06
+
+- Confirmed HEAD `187188bc`; index empty, unfinished F23/D3 work preserved.
+  Landed family score remains 3/83 (3.6%): F74 and F79 fixed, F73 policy-decided.
+  No uncommitted candidate is counted as closed.
+- F77 candidate `round3-f77.HQExNW` passed 637 generator tests after the
+  representation-independent closed-host correction. Production Rust delta +156
+  against F74. The five earlier pinned Helm witnesses matched; their release
+  binary predates that last correction and is not final-source evidence.
+- Major review target: `round3-f77-review/{brief.md,full.diff,files.txt,sha256.txt}`.
+  It includes nine files: the eight generator files plus an explicit matched-flip
+  battery mode. Native Astra high delivered `astra-out.md`; personal Fable 5.1
+  xhigh is running, stdout `claude-out.md`, stderr `claude-err.log` (session 81889).
+  Both reviews are read-only. No convergence or final gates claimed yet.
+- Native F77 review: sound phase shape, two substantive corrections required.
+  First, independent provider and strict-string obligations currently pass through
+  the existing union-style inference merge. A serialized parent with a strict
+  string consumer and a bare boolean provider sink can still admit booleans.
+  Resolve the provider preimage independently, then intersect the strict-string
+  obligation. Second, the new matched mode must reject uncertain Kubernetes
+  loosenings instead of treating diagnostic accounting as a matched verdict.
+  Corrections and permanent red/green tests are scoped to COW copy
+  `round3-f77-correction`; the reviewed tree remains frozen.
+- D3 review-six target: `round2/review6/{brief.md,corrective.diff,files.json}`,
+  comparing the exact 13-file boundary correction to frozen review five.
+  All four prior witness repairs and all hashes verified by native Astra high.
+  Its new source-confirmed finding is a truthiness predicate introduced by ordinary
+  variable reload at the local branch join: raw false/zero still print when
+  selected, so output selection must remain the branch condition, not value
+  truthiness. Numeric-zero ConfigMap provider acceptance is being executed before
+  claiming the downstream consequence. Keep the ordinary reload's metadata;
+  correct the selection at its owner, without another evaluator or representation.
+  Personal Fable review-six is running; no convergence claimed.
+- D3 latest locked release build exited 0 (1m01s), all 13 source hashes unchanged.
+  Copied binary `bin/helm-schema-round2-review6`, SHA-256
+  `a607d93f68246a45c81a4a2c95811f4a17cadb0fdfebc5a2122e6e1fc610084e`.
+  Focused source had 515 passing tests before these new review findings.
+  No final dump, battery, full gates or timing floor result claimed.
+- Scheduling: both independent review pairs overlap. New builds use only the
+  shared T7 target; no build overlaps timing. The prepared F77 dump/battery script
+  names baseline `12c62e6e`, a fresh dump, and live Helm adjudication explicitly;
+  it has not run while corrections remain open.
+
+Next: verify the bounded F77 and D3 review corrections, then advance converged candidates to final validation; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-review/astra-out.md`.
