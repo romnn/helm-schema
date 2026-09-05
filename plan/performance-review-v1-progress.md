@@ -2705,3 +2705,148 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - `git diff --check`: exit 0; under 0.001 s.
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
+
+## Campaign closure
+
+- Status: complete. Every frozen item was implemented and adopted or measured and rejected on its
+  own criterion. Final production is `c5aafe86`; A5 leaves it unchanged. The final schema/IR tree
+  is the A7 tree, the frozen plan is unchanged, the 160-chart battery has zero flips, and luup2 is
+  32/32 green.
+- Final production Rust LOC: 67,597, an increase of 1,533 from the 66,064 starting tree. Three
+  lines belong to the separately authorized baseline repair; the frozen performance rounds add
+  1,530. The largest additions replace repeated work with explicit owner-local indexes and memo
+  state rather than hidden global state.
+
+### Round and commit ledger
+
+| round | pre-registration / evidence commits | production decision | closing ledger |
+|---|---|---|---|
+| 0 | `6988a949` | measurement only | `6988a949` |
+| baseline prerequisite | — | `6ceaf9bc`, `8fbcc732` | `acd226a4` |
+| C1 | `d6559ff1` | `7cee5c6c` landed | `5cea0a47` |
+| A1 | `1ecd0bb8`; blockers `7d34fc9e`, `69fbcf2e` | `0926805c` landed | `f6a139bb` |
+| A2 | `8157d77e` | `39b44aaf` landed | `d252d448` |
+| A2b | `1f4347ea` | `30a5903f` landed | `85c67c0b` |
+| B2 | `54be8f79` | `a34859c0` landed | `0be5d6c7` |
+| B1 | `0d427649` | rejected and restored | `81531769` |
+| E1 | `49048b56` | `9911ff51` landed | `7ab80b9d` |
+| A3a | `11d25c8c` | `33d46316` landed | `1d9db805` |
+| A3 | `01776bbc`; counter `0ba87ea9` | `fbc03204` landed | `12aa5f47` |
+| R1 | `a698f60c` | measurement only, restored | `5f50bcc8` |
+| A6 | `83a3b4a1` | rejected before spike | `6f8a1b0f` |
+| A4 | `4d8b7740` | `dc16e7e0` landed | `15591dba`; hash correction `dcbb820d` |
+| E2 | `947aa4df` | `22bed389` landed | `897fade1` |
+| E3 | `9e27f681` | `7d31176f` landed | `19283512` |
+| A7 | `c0147b86`; counter `a7f9e5bf` | `c5aafe86` landed | `b9b2ba85` |
+| A5 | `8b14c4d0` | rejected without spike | `9d4c76fe` |
+
+### Performance curve
+
+CPU seconds are the candidate median from each round's accepted randomized window. A rejected or
+measurement-only round repeats the unchanged production row. A2b's ten-chart row is carried from
+A2 because its frozen decision measurement was the isolated predicate-heavy chart; B2's full row
+was re-established as E1's same-window baseline. Adjacent absolute rows are not themselves paired
+comparisons: for example, E2's Datadog candidate beat its same-window A4 binary even though the
+absolute median is above A4's earlier window.
+
+| round / final tree | coredns | metrics | istiod | cert | argo | grafana | cilium | datadog | airflow | KPS |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| round 0 | 0.33 | 0.16 | 0.57 | 0.67 | 5.59 | 4.37 | 7.88 | 63.06 | 88.45 | 119.77 |
+| C1 | 0.33 | 0.17 | 0.57 | 0.68 | 5.71 | 4.65 | 8.48 | 63.10 | 90.24 | 122.02 |
+| A1 | 0.29 | 0.15 | 0.45 | 0.57 | 4.59 | 3.14 | 5.29 | 36.29 | 40.40 | 45.61 |
+| A2 | 0.24 | 0.14 | 0.36 | 0.51 | 3.76 | 2.04 | 3.17 | 17.84 | 19.84 | 38.33 |
+| A2b (A2 row) | 0.24 | 0.14 | 0.36 | 0.51 | 3.76 | 2.04 | 3.17 | 17.84 | 19.84 | 38.33 |
+| B2 re-established | 0.18 | 0.10 | 0.26 | 0.40 | 2.76 | 1.46 | 2.29 | 11.48 | 13.67 | 20.34 |
+| B1 rejected | 0.18 | 0.10 | 0.26 | 0.40 | 2.76 | 1.46 | 2.29 | 11.48 | 13.67 | 20.34 |
+| E1 | 0.15 | 0.09 | 0.22 | 0.35 | 2.53 | 1.27 | 2.01 | 11.23 | 12.63 | 18.83 |
+| A3a | 0.16 | 0.09 | 0.21 | 0.34 | 2.48 | 1.22 | 1.93 | 10.60 | 11.36 | 16.40 |
+| A3 | 0.14 | 0.09 | 0.19 | 0.34 | 2.48 | 1.14 | 1.84 | 9.81 | 6.34 | 8.48 |
+| R1 / A6 rejected | 0.14 | 0.09 | 0.19 | 0.34 | 2.48 | 1.14 | 1.84 | 9.81 | 6.34 | 8.48 |
+| A4 | 0.14 | 0.09 | 0.18 | 0.33 | 2.48 | 1.09 | 1.83 | 8.54 | 6.18 | 8.39 |
+| E2 | 0.14 | 0.08 | 0.19 | 0.33 | 2.35 | 1.04 | 1.76 | 8.75 | 6.07 | 7.80 |
+| E3 | 0.13 | 0.08 | 0.18 | 0.32 | 2.23 | 1.01 | 1.71 | 8.54 | 5.90 | 7.60 |
+| A7 / A5 final | 0.13 | 0.08 | 0.17 | 0.32 | 2.21 | 0.99 | 1.70 | 8.00 | 5.67 | 7.51 |
+
+### Success-metric reconciliation
+
+| target | re-baselined requirement | final result | verdict |
+|---|---|---|---|
+| no chart slower | final no greater than round 0 | every chart 50.0--93.7% faster | met |
+| mid charts under 4 s | argo, grafana, cilium below 4 | 2.21, 0.99, 1.70 s | met |
+| datadog under 30 s | at least 52.4% below 63.06 s | 8.00 s, 87.3% below | met |
+| airflow under 50 s | at least 43.5% below 88.45 s | 5.67 s, 93.6% below | met |
+| KPS under 110 s | at least 8.2% below 119.77 s | 7.51 s, 93.7% below | met |
+| stretch: all large under 30 s | all three below 30 | 8.00, 5.67, 7.51 s | met |
+| stretch: all mid under 3 s | all three below 3 | 2.21, 0.99, 1.70 s | met |
+
+The frozen table's loaded-host large-chart baselines were 20--22% above the quiet round-0 values,
+so the absolute goalposts did not move but the required reductions did: Datadog 63.06 to 30 rather
+than 81.1 to 30, Airflow 88.45 rather than 111.5, and KPS 119.77 rather than 154.2. The final tree
+still exceeds every original absolute target by a wide margin. The broader design law—very large
+charts within only a few seconds—is not yet satisfied at 5.67--8.00 s and remains wave-2 work.
+
+The test feedback loop also improved materially, though these are not randomized performance
+decisions and test counts grew during the campaign. From A1 to the final unchanged A5 tree,
+`task test:integration` fell from 508.844 to 235.210 s (53.8%) while growing from 666 to 669 tests;
+`task test:all` fell from 540.974 to 239.448 s (55.7%) while growing from 2,010 to 2,034 tests.
+A2 and A2b supplied the clearest causal corroboration; allocator coverage and host/network state
+mean the suite totals remain supporting evidence only.
+
+### Final Perfetto residual
+
+Fresh traces use the preserved A7 decision binary, SHA-256
+`e0599c10509f8eec8908d3bedb36966908b784bc59c496e38a85c8bf3d41cb81`, the private K8s/CRD
+snapshot, and `--compact --offline --k8s-version v1.35.0 --diag-format json --trace-output`. Every
+schema is exact against A7's byte-gate candidate artifact. CPU is user plus sys; wall/CPU is
+1.015, 1.016, and 1.014 respectively, so all traces pass the frozen 1.10 acceptance limit.
+
+| phase, self ms unless marked inclusive | datadog | airflow | kube-prometheus-stack |
+|---|---:|---:|---:|
+| traced CPU / wall s | 8.50 / 8.63 | 6.25 / 6.35 | 8.07 / 8.18 |
+| invocation load1 | 8.27 | 7.43 | 6.57 |
+| `collect_manifest_contract_for_template` | 872 | 446 | 618 |
+| `summarize_bound_helper_call` | 1,283 | 1,116 | 267 |
+| `collect_manifest_contract_for_chart` | 1,215 | 272 | 893 |
+| `normalize_contract_uses` | 1,910 | 299 | 594 |
+| `derive_schema_signals_from_contract_parts` | 1,225 | 310 | 830 |
+| emission `build` inclusive (`collect_conditional_schemas`) | 321 (230) | 848 (596) | 1,548 (888) |
+| `append_selected_constraints` | 315 | 384 | 662 |
+| `extract_repeated_provider_payloads` | 316 | 301 | 513 |
+| `minimize_schema` | 139 | 306 | 486 |
+| `parse_go_template` | 310 | 324 | 427 |
+
+Artifacts are under `/private/tmp/helm-schema-performance-v1.LSEe9Y/final/trace/<chart>`. Trace
+SHA-256 values are `5dd8d87a…` (Datadog, 16,162,304 bytes), `3fc81665…` (Airflow, 20,861,805),
+and `7fc97657…` (KPS, 20,931,573). `trace_processor_shell query` uses a direct-child-duration CTE
+and reports `slice.dur - SUM(direct child dur)` as self time. Trace Processor reports 685, 1,585,
+and 2,814 `misplaced_end_event` health notices; root durations and phase names remain queryable,
+but the phase table is residual guidance rather than decision timing.
+
+The final `cargo install --path ./crates/helm-schema-cli/` gate independently rebuilt the source
+and installed SHA-256 `2753b9ac…`; it was used only for downstream correctness, never for a
+performance comparison. Every performance decision and final trace used its explicitly named
+copied release binary, preventing an independently built executable from contaminating timings.
+
+### Wave-2 handoff
+
+1. Complete explicit session-cache propagation before adding new memo algorithms. R1 observed
+   70,263, 73,465, and 52,352 short-lived predicate memos on Datadog, Airflow, and KPS carrying
+   5--11% of predicate calls. The right boundary is an analysis/generation session-owned context
+   passed through every compiler phase. It must be cheap to construct and drop, isolate concurrent
+   library calls, and require no global reset hook.
+2. Re-trace after that propagation. The current first targets are Datadog's 1.910 s contract
+   normalization plus 1.283 s helper summaries and 1.225 s signal derivation; Airflow's 1.116 s
+   helper summaries and 596 ms conditional emission; and KPS's 893 ms chart-contract collection,
+   888 ms conditional emission, and 830 ms derivation. Prefer deleting repeated projections or
+   sharing typed phase artifacts over adding another parallel representation.
+3. Add lightweight continuous performance infrastructure as a separate follow-up, not retroactive
+   plan evidence. Criterion cases should pin representative mechanisms—encoded path ordering,
+   predicate normalize/implies hits and misses, capped scalar joins, helper summary hit/lazy-read
+   behavior, conditional validator reuse, and structural JSON metadata. A small opt-in end-to-end
+   harness should cover one small, one mid, and one large checked-in chart, record binary identity
+   and cache mode, and write Perfetto traces only when requested. Keep routine CI short; schedule
+   the large case or use a generous regression threshold rather than recreating the correctness
+   corpus battery as performance infrastructure.
+4. Treat the suite-speed reductions as a developer-experience signal, not a benchmark oracle.
+   Criterion distributions and periodic same-host chart runs should decide regressions; full suites
+   remain correctness gates.
