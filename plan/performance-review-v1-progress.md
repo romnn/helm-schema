@@ -1359,7 +1359,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A4 — helper memo key uses the reachable cycle-cut footprint
 
-- Status: pre-registered; implementation pending.
+- Status: landed in `dc16e7e0`.
 - Contract: replace `BoundHelperCallCacheKey.seen`'s whole active call chain with its intersection
   against a conservative transitive closure of every chart-authored helper that the target helper
   can call. Discover calls from parsed `TemplateExpr` trees across every control-flow branch. Any
@@ -1389,15 +1389,101 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Performance baseline: adopted A3 CPU medians are 9.81 s datadog, 6.34 s airflow, and 8.48 s
   kube-prometheus-stack. The accepted R1 datadog trace attributes 3.824 s self to helper summaries;
   the lean counter measures 7.717 s inclusive miss time, including 3.119 s in `seen`-only misses.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending byte, cache, artifact, and battery gates against Helm v4.2.3.
-- Public/wire decision: pending; the intended change is private memo-key representation only.
+- Measured results:
+
+  | chart | pairs | baseline CPU s median (range) | A4 CPU s median (range) | paired decision (range) | load1 range |
+  |---|---:|---:|---:|---:|---:|
+  | coredns | 5 | 0.14 (0.14--0.15) | 0.14 (0.14--0.14) | neutral; 0.00% (0.00--6.67%) | 2.50--4.06 |
+  | metrics-server | 5 | 0.09 (0.09--0.09) | 0.09 (0.08--0.09) | neutral; 0.00% (0.00--11.11%) | 4.06--4.06 |
+  | istiod | 5 | 0.18 (0.18--0.19) | 0.18 (0.18--0.18) | neutral; 0.00% (0.00--5.26%) | 4.06--4.06 |
+  | cert-manager | 5 | 0.33 (0.33--0.34) | 0.33 (0.33--0.33) | neutral; 0.00% (0.00--2.94%) | 3.90--4.06 |
+  | argo-cd | 5 | 2.49 (2.48--2.53) | 2.48 (2.47--2.51) | not proven; 0.40% (-0.80--2.37%) | 3.90--4.23 |
+  | grafana | 5 | 1.14 (1.13--1.14) | 1.09 (1.08--1.10) | gain; 4.39% (3.51--4.42%) | 4.23--4.37 |
+  | cilium | 5 | 1.84 (1.83--1.84) | 1.83 (1.82--1.85) | not proven; 0.54% (-0.54--1.09%) | 5.53--6.20 |
+  | datadog | 5 | 9.84 (9.77--10.33) | 8.54 (8.50--8.79) | gain; 13.58% (12.95--14.91%) | 4.53--5.88 |
+  | airflow | 5 | 6.27 (6.25--6.29) | 6.18 (6.16--6.25) | neutral; 1.44% (0.00--1.75%) | 2.73--4.47 |
+  | kube-prometheus-stack | 5 | 8.39 (8.37--8.61) | 8.39 (8.34--8.79) | not proven; 0.60% (-1.55--2.79%) | 2.61--3.24 |
+
+  - Datadog clears the adoption rule with all five pairs positive. Grafana also has a wholly
+    positive paired range. No chart has a wholly negative range; crossed-zero mid/large results
+    are reported as unproven, not gains and not regressions.
+  - A final Datadog trace reports 2,238 `summarize_bound_helper_call` spans, 3,320.656 ms self and
+    5,353.722 ms inclusive. Against R1's 3,824 ms self, the targeted phase falls 13.2%, matching
+    the whole-run result. The trace run itself used 10.90 s CPU and 12.01 s wall; its 561
+    `misplaced_end_event` health notices make the slice totals corroboration, not the decision
+    measurement.
+  - All ten reference charts are exact on schema, stdout, JSON diagnostics, and status. The fresh
+    cache triple is exact across empty online, warm online, and warm offline for all four channels.
+    All 156 schema artifacts and 18 IR artifacts remain exact. The final battery checks 160 charts
+    and 284,863 probes with zero flips.
+- Deviations:
+  - The first candidate (`f3aa4875…`) projected parsed `include`/`template` calls but overlooked
+    `tpl`. Review traced the counterexample: a file-backed nested template inherits `helper_seen`
+    and may call any helper. Its preliminary timing (datadog 10.24 to 8.76 s, 14.08%; airflow 6.46
+    to 6.33 s; kube-prometheus-stack 8.45 to 8.38 s) is invalid and is not the decision result.
+    Every reachable `tpl` now makes the footprint unknown and retains the complete chain.
+  - The initial recursive transitive walk was replaced before final measurement by an explicit
+    worklist. This preserves the closure while removing adversarial helper-depth stack risk.
+  - A second adversarial pass treated parser-recovery `TemplateExpr::Unknown` as another unknown
+    closure. The evaluator currently abstains on those nodes too, but full-chain fallback makes the
+    cache law independent of that implementation detail. A regression test pins it.
+  - The first byte wrapper used zsh's read-only `status` parameter and exited before producing a
+    complete set. The corrected wrapper uses `base_code`/`candidate_code`; no partial artifacts
+    were used.
+  - An exploratory comparison between the preserved campaign snapshot and a newly empty cache
+    found only a cert-manager diagnostic difference: the old snapshot advertised v1.24 while the
+    fresh cache did not. That is cache inventory, not an A4 difference. The binding cache-law gate
+    compares empty-online, warm-online, and warm-offline within one fresh snapshot and is exact.
+  - Two battery runs were superseded: one overlapped the later `Unknown` fallback edit, and the
+    next preceded a source-comment correction. The final `battery-final4` run is after every source
+    edit and is the recorded evidence.
+  - `task lint:fc` attempt 1 exited 201 because the sandbox denied Zig's
+    `/Users/roman/.cache/zig/tmp` creation. The exact escalated retry completed 48/48 combinations.
+- Adjudication evidence: Helm v4.2.3. The final corpus matrix is 160 charts / 284,863 probes / zero
+  flips, so every direction cell including candidate-accepts/Helm-aborts is zero. Ten-chart bytes,
+  diagnostics, stdout, and statuses are exact; cache state and all owned schema/IR artifacts are
+  exact.
+- Public/wire decision: none. A4 changes a private, chart-session-owned memo key. It adds no global
+  or cross-session state and exposes no schema, diagnostic, CLI, file-format, or library-API change.
 
 ### Review dossier
 
-- Pending implementation, copied binaries, cache triple, byte comparisons, randomized pairs, and
-  exact gate commands.
+- Focused tests: `cargo test -p helm-schema-ir analysis_db --lib`; exit 0, 15/15 selected tests
+  pass. They cover direct, conditional and mutual recursion; observably distinct relevant cuts;
+  shared irrelevant caller chains; and full-chain fallback for dynamic names, `tpl`, and unknown
+  expressions.
+- Candidate build: `cargo build --release -p helm-schema-cli`, copied immediately to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/a4/bin/helm-schema-a4-final3`; SHA-256
+  `90b1831aae8a92eb779e16bc07cb5c8e7ff70de84ce9bd7e0450e4adc2173d90`. The binary copied before
+  the final comment correction has the same hash, proving the timing executable is the final
+  executable. The A3 baseline hash is
+  `18f889cc3ae9f07fae4a3470426b7940f0fdc8f4e36e8a8fe84f4e54638a0098`.
+- Ten-chart byte evidence is under `a4/byte-final3`. Both binaries set
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s` and
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, then run
+  `testdata/charts/<chart> --compact --offline --k8s-version v1.35.0 --diag-format json --output
+  <schema>` with stdout, stderr, and status captured separately.
+- Cache-law evidence is under `a4/cache-triple-final3`; the candidate runs every chart online from
+  a new shared empty snapshot, online again warm, then offline warm with the same CLI arguments.
+  All 80 pairwise channel comparisons pass. The rebuilt final3 executable hash is identical to the
+  executable used by this gate.
+- Final timings are under `a4/measure-final2`. Each chart has five pairs whose order is chosen by
+  zsh `RANDOM` and recorded in `order.txt`; each invocation records UTC start, load1, `/usr/bin/time
+  -p`, schema, stdout, JSON stderr, and status. No build overlapped the measurement window.
+- Final trace: the final3 binary runs Datadog with the same cache and CLI options plus
+  `--trace-output a4/trace-final/datadog/trace.pftrace`. `trace_processor_shell query` computes
+  helper count, inclusive duration, and self duration by subtracting direct child slices.
+- Acceptance battery:
+  `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a4/battery-final4
+  SCHEMA_ACCEPTANCE_BASELINE_REF=6f8a1b0f
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/a4/battery-final4/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0.
+- Independent adversarial review used one OpenAI reviewer and Claude Opus 5. Both converged after
+  the `tpl`, behavioral-test, iterative-walk, `Unknown`, and comment-accuracy corrections; the
+  final live diff had no substantive blocker.
 
 ### Self-adversarial pass
 
@@ -1411,12 +1497,42 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   project `seen` alone; bindings, dot, root predicates, and root scalar dispatches remain exact.
 - Ownership is part of correctness: putting the call graph or summary memo in global state would
   make concurrent library sessions compete, complicate clearing, and make tests order-dependent.
+- Nested template text is a second program, so its call graph cannot be recovered from the outer
+  helper's expressions. Treating all `tpl` calls as unknown is conservative by design.
+- Parser recovery may hide modeled expression shape in an `Unknown` node. Full-chain fallback is
+  cheaper than depending on current evaluator abstention and prevents a future evaluator extension
+  from silently under-keying this memo.
+- Hash-equal rebuilt release binaries tie the final source tree to the measured executable. The
+  preliminary pre-`tpl` result is explicitly excluded despite being numerically attractive.
+- Datadog is the decision chart; a small apparent win elsewhere cannot rescue it. Its five-pair
+  range stays wholly positive, while every crossed-zero result is labeled unproven.
 
 ### Gates on the final tree
 
-- Pending.
+- `cargo fmt --check`: exit 0; 1.05 s.
+- `task lint`: exit 0; 20.88 s. Whole-workspace Clippy and all three AST-grep policies pass; the
+  scan repeats two existing multiline-literal warnings.
+- `task lint:fc`, attempt 1: exit 201; 45.30 s. All 32 Linux/Windows combinations were blocked by
+  Zig's sandboxed cache; 16 native combinations ran.
+- `task lint:fc`, exact escalated retry: exit 0; 61.90 s; 48/48 combinations pass.
+- `cargo nextest run --workspace`: exit 0; 1,356/1,356 tests pass in 10.372 s after a 65 s rebuild;
+  total command duration 76.03 s.
+- `task test:integration`: exit 0; 669/669 tests pass in 249.253 s, with 24 profile skips; total
+  command duration 251.57 s.
+- `task test:all`: exit 0; 2,029/2,029 tests pass in 286.652 s, with 24 profile skips and live
+  network tests included; total command duration 287.80 s.
+- Corpus battery: exit 0; 160 charts, 284,863 probes, zero flips, one test passes in 169.10 s;
+  total command duration 182.38 s including its final-tree rebuild.
+- Downstream luup2: not triggered because A4 is representation-only and every schema, diagnostic,
+  status, fixture, and acceptance channel is exact. The campaign's installed A3/C1 downstream
+  result remains 32/32 green.
+- `task tokei:core`: exit 0; 67,433 production Rust LOC in 0.87 s.
+- Artifact gate, `git diff --exit-code 6f8a1b0f -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`: exit 0; 156 schema and 18 IR artifacts exact; 0.01 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; 0.01 s.
+- `git diff --check`: exit 0; 0.02 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +60 (67,373 to 67,433).
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
