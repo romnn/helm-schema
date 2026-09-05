@@ -1534,6 +1534,67 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: +60 (67,373 to 67,433).
 
+## Round E2 — memoize conditional-schema acceptance checks
+
+- Status: pre-registered; implementation pending.
+- Contract: add one generation-owned memo for
+  `conditional_target_schema`'s `(complete wrapped schema document, declared-default instance)`
+  acceptance result. The wrapped document includes the injected Helm-truthy definition. Keys use
+  exact owned values, never addresses or digest-only identity. Keep the standalone declared-default
+  preservation calls, schema semantics, condition ordering, diagnostics, provider caches, fixtures,
+  public APIs, and wire formats unchanged. No static, thread-local, process-global, lock, or
+  cross-generation state is permitted.
+- Acceptance baseline: `dcbb820d`, the corrected A4 ledger on production commit `dc16e7e0`.
+- Baseline production Rust LOC: 67,433.
+- Pre-registered acceptance expectations:
+  - R1 already performed the frozen throwaway counter: datadog has 2,372 calls / 225 distinct
+    complete keys / 90.5% reuse, airflow 4,174 / 323 / 92.3%, and kube-prometheus-stack 8,062 / 638
+    / 92.1%. Compile residuals are 0.119, 0.396, and 0.784 s respectively. The implementation step
+    starts only after this committed preregistration.
+  - Debug builds recompute and compare memo hits, so cache reuse is continuously checked rather
+    than trusted. Release builds reuse the exact stored Boolean.
+  - All ten reference schemas, stdout, JSON diagnostics, and statuses remain byte-identical. All
+    156 schema artifacts and 18 IR artifacts remain exact. The 160-chart battery has zero flips and
+    zero candidate-accepts/Helm-aborts cells. Empty-online, warm-online, and warm-offline outputs
+    remain exact on all ten charts.
+  - Fresh Perfetto traces on the three large charts measure `collect_conditional_schemas` after A4.
+    E2 clears its frozen performance gate only if that span falls by at least 30%. Five randomized
+    interleaved pairs per large chart decide whole-run movement; crossed-zero ranges are not gains.
+  - Reject and restore on any byte/acceptance change, any debug recomputation disagreement, a
+    `collect_conditional_schemas` reduction below 30%, or a proven whole-run regression. Under the
+    user's direction, a modest stable whole-run gain may land when the binding phase gate clears.
+- Performance baseline: the adopted A4 medians are 8.54 s datadog, 6.18 s airflow, and 8.39 s
+  kube-prometheus-stack. R1's pre-E2 `collect_conditional_schemas` self spans are 327, 1,024, and
+  1,647 ms; they must be re-measured against an A4 baseline trace in the same quiet window.
+- Measured results: pending.
+- Deviations: pending.
+- Adjudication evidence: pending byte, cache, artifact, and battery gates against Helm v4.2.3.
+- Public/wire decision: pending; the intended memo is private and generation-owned.
+
+### Review dossier
+
+- Pending implementation, copied binaries, exact complete-key tests, cache triple, byte gate,
+  randomized pairs, phase traces, and final-tree gates.
+
+### Self-adversarial pass
+
+- A schema `Value` may be moved out and replaced later in emission. Address identity is unsound;
+  the key must own the complete wrapped document and declared instance.
+- A digest can prefilter but cannot decide equality. This item uses exact value equality, so hash
+  collisions cannot produce a cache hit.
+- The Helm-truthy `$defs` wrapper changes the compiled schema. Keying the unwrapped branch alone
+  would merge semantically different validators and is forbidden.
+- The memo is a speed optimization, not evidence. Debug hit recomputation must compare against the
+  same uncached validator path, and any mismatch rejects the round.
+- Session ownership keeps concurrent library generations independent and makes clearing equivalent
+  to dropping the generation state.
+
+### Gates on the final tree
+
+- Pending.
+
+- Measured production LOC delta: pending.
+
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
 - Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
