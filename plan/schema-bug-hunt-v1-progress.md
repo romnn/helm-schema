@@ -667,3 +667,70 @@ Next: finish round1 dump, battery and final gates; first run `tail -10 /private/
   compiler fixes will be reviewed together after their isolated implementation is ready.
 
 Next: finish final round1 validation and integrate the compiler batch; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round1/final.Md7PMu/gate-exits.tsv`.
+
+### Compiler batch extension — F74 preregistration
+
+- User-directed batching: prepare F74 alongside F23/D3 in the isolated snapshot,
+  with one major-batch ensemble and validation cycle once ready. Do not hold a sound
+  completed batch indefinitely for an unresolved deduplication design; record a
+  concrete residual if exact sharing cannot satisfy the shipping limit.
+- F74 contract: validation-equivalent deduplication must preserve every constraint,
+  description, schema scope and reachable reference target while reducing serialized
+  output below Helm's 5 MiB file limit wherever exact structural sharing permits it.
+  No descriptions dropped, chart-specific handling or tuned thresholds.
+- Pre-registered movement: all 18 oversize corpus artifacts listed in the frozen
+  finding (openebs, milvus, oncall, kube-prometheus-stack, gitea, nats, redmine,
+  stacks-blockchain-api, airflow, netbox, okteto, weblate, dify, datadog, signoz-signoz,
+  kyverno, synapse and prometheus). Other charts may receive byte-only sharing changes.
+  F74 itself must produce zero acceptance flips in every roster; combined semantic
+  movement must trace to F23/D3 instead. No roster promotion follows size alone.
+- Design comparison: a full exact-subtree interner versus extending the existing
+  immutable metadata/planning pass. Prefer the latter: include existing definitions,
+  recursively emit selected bodies, protect incoming pointer addresses and inherited
+  reference scopes, and use exact equality after fingerprint screening. Preserve the
+  metadata's original node identities; never reuse its addresses on cloned JSON.
+- Intended deletion, only if covered equivalently: the generator's separate repeated
+  provider-payload extraction pass and threshold. Provider-identity extraction/rebasing
+  remains a distinct earlier phase. Borrowed representatives and one emission pass
+  should bound work; the actual three-chart CPU floor decides performance acceptance.
+- Counterexamples: nested duplication solely in existing definitions, repeated parent
+  and child bodies, self-reference, nested/escaped pointer targets, pointers through
+  allOf indices, nested IDs/anchors, external refs, data-position objects, name and
+  fingerprint collisions, unreachable extracted children, determinism and idempotence.
+
+Next: finish main-tree gates while isolated compiler batch advances; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round1/final.Md7PMu/gate-exits.tsv`.
+
+### Round 1 closed — F79 fixed
+
+- Code checkpoint: `a1ab3df8`. Final validation subsequently completed against that
+  unchanged code. F79 is fixed; F73 remains policy-decided. Scorecard: 2/83 resolved.
+- One final clean dump: 211/211 tests, exit 0, 111.187 s, in
+  `<root>/round1/dump-final.g7VokY`. All 202 flat JSON artifacts are byte-identical
+  to the preceding dump; no fixture adoption or mixed dump batches.
+- Final battery: baseline `ca05c438`, explicit final candidate dump above,
+  `ADJUDICATE_WITH_HELM=1`, exit 0, 338.766 s. Report:
+  `<root>/round1/final.Md7PMu/coverage.json`; 160 profiles, 284,863 probes,
+  33,795 guards, zero screened/adjudicated flips, zero accepted aborts or provider
+  rejections. This is expected for unchanged inference output, not a claim that
+  corpus correctness defects were fixed. The three F79 controls were independently
+  matched by exact coalescence/render/provider tests.
+- Final gates, each command's own exit stored in `final.Md7PMu/gate-exits.tsv`:
+  `cargo fmt --check` 0; `task lint` 0; `task lint:fc` 0;
+  `cargo nextest run --workspace` 0 (1,361 tests, 8.670 s);
+  `task test:integration` 0 (687 tests, 261.779 s);
+  `task test:all` 0 (2,052 tests, 258.592 s);
+  `cargo install --path ./crates/helm-schema-cli/` 0;
+  luup2 `check:local` with the documented shim 0;
+  `task tokei:core` 0; frozen findings diff against `cc1d2d32` 0;
+  `git diff --check` 0. Task commands ran through Bash without outcome pipelines.
+- Production LOC: 67,597 → 67,597, delta 0. No IR/generator production edits,
+  so no new performance-floor run is required; round0 timings remain the floor.
+- Roster sizes unchanged: intake 100, quarantine 24, known valid rejections four.
+  Contaminated fixtures remain the same nine listed in round0. F80's origin-based
+  classifier remains open; this round introduces no blanket policy exemption.
+- Compiler-batch battery policy: the legacy round74 zero-flip assertion remains
+  the default. The isolated batch adds explicit `SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS`
+  mode for correctness work, retaining live-flip accounting and zero accepted-abort/
+  provider-rejection checks. This permits proven fixes, not outcome-tuned allowances.
+
+Next: compiler batch F23/D3/F74 in isolated implementation.kR1Lpd; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/f23-files.txt`.
