@@ -1055,7 +1055,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
-- Status: counter complete and recorded before shortcut implementation.
+- Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
+  shortcut implementation.
 - Contract: first measure, without changing results, the joined-variable count, variables whose
   entry dispatch is identical in every outcome, and joins discarded by the 128-arm cap. Only after
   recording those counts, preserve an entry dispatch directly when every outcome carries that
@@ -1101,11 +1102,52 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
   The 69.0% aggregate unchanged share and each large chart's 64.0--75.0% share clear the frozen
   20% counter limb independently of later speed measurement.
-- Deviations: none in the counter step. The tracing events are temporary and will be removed before
-  the semantic candidate is built.
-- Adjudication evidence: pending; this is the campaign's semantic round.
-- Public/wire decision: pre-registered as an adjudicated schema re-spelling/precision change only.
-  No CLI, serialized IR, cache, or diagnostic contract may change.
+
+  Final CPU evidence:
+
+| Chart | n | A3a CPU s median (min--max) | A3 CPU s median (min--max) | Gain median (range) | load1 |
+|---|---:|---:|---:|---:|---:|
+| coredns | 5 | 0.15 (0.14--0.15) | 0.14 (0.14--0.15) | not proven; 0.00% (0.00--6.67%) | 2.98--3.07 |
+| metrics-server | 5 | 0.09 (0.09--0.09) | 0.09 (0.09--0.09) | 0.00% (0.00--0.00%) | 2.98 |
+| istiod | 5 | 0.21 (0.21--0.22) | 0.19 (0.19--0.20) | 9.52% (4.76--13.64%) | 2.98 |
+| cert-manager | 5 | 0.34 (0.34--0.35) | 0.34 (0.34--0.35) | not proven; 0.00% (-2.94--2.86%) | 2.90--2.98 |
+| argo-cd | 3 | 2.51 (2.49--2.51) | 2.48 (2.48--2.51) | 0.40% (0.00--1.20%) | 2.90--3.00 |
+| grafana | 3 | 1.22 (1.22--1.24) | 1.14 (1.13--1.14) | 7.38% (6.56--8.06%) | 2.84--2.92 |
+| cilium | 3 | 1.92 (1.92--1.92) | 1.84 (1.84--1.85) | 4.17% (3.65--4.17%) | 3.02--3.17 |
+| datadog | 5 | 10.54 (10.53--10.70) | 9.81 (9.77--9.84) | 7.22% (6.64--8.04%) | 3.17--4.31 |
+| airflow | 5 | 11.49 (11.43--11.55) | 6.34 (6.29--6.57) | 45.01% (42.52--45.28%) | 3.04--4.41 |
+| kube-prometheus-stack | 5 | 16.60 (16.44--16.74) | 8.48 (8.45--8.54) | 49.10% (48.30--49.52%) | 2.42--3.74 |
+
+  The isolated chart improves from 2.12 s (2.11--2.17) to 0.19 s (0.18--0.20), a 91.04%
+  paired gain (90.78--91.51%) at load1 2.78--3.01. The counter and speed limbs both independently
+  clear the frozen criterion, and no reference-chart median regresses.
+- Deviations:
+  - The counter step completed without deviation and its tracing events were removed before the
+    candidate build. No global, thread-local, or reset hook remains.
+  - Kube-prometheus-stack pairs 4--5 began beside a concurrent build at load1 18--20 and are
+    invalidated. Replacement pairs 6--7 use the unchanged binaries at load1 3.30--3.74; the final
+    five-pair row combines pairs 1--3 and 6--7 only.
+  - The documented chart-corpus dump command uses nextest's default profile, which now filters the
+    corpus binary. It selected zero tests and exited 4. The corrected command added `--profile
+    integration`, produced one clean 156-file dump, and passed 157/157 tests.
+  - The first full integration gate exited 201 after 371.295 s: 667 passed and two fixture lanes
+    failed (`lean_profile_schemas_match_their_separate_fixture_lane` and generator
+    `schema_fixtures_match`). The initial dump covered chart-corpus and IR fixtures but not those
+    separate lanes. Clean targeted dumps changed only lean `schema-emission-temporal-wrapper` and
+    generator `signoz_zookeeper_statefulset`; the two targeted tests then passed, and every full
+    final-tree gate was rerun.
+  - The second integration run and final all-target run were heavily slowed by an unrelated
+    workspace build (872.542 s and 559.191 s). They are correctness evidence only; all performance
+    decisions use the quiet interleaved windows above.
+- Adjudication evidence: Helm v4.2.3. The ten-chart byte gate changes schema bytes exactly on the
+  four pre-registered charts—argo-cd, cilium, datadog, and airflow—while the other six stay exact;
+  stdout, JSON diagnostics, and statuses are exact on all ten. The battery checks 160 charts and
+  284,869 probes with zero acceptance flips, so every acceptance cell including
+  candidate-accepts/Helm-aborts is zero. The changed bytes are acceptance-equivalent re-spellings
+  under the complete battery rather than accepted semantic flips.
+- Public/wire decision: schema representation changes are adopted and fixtures regenerated; CLI,
+  diagnostics, status, and cache behavior do not change. The shortcut compares the entire
+  `ScalarValueDispatch` structurally, including completeness, predicates, values, and arm order.
 
 ### Review dossier
 
@@ -1116,10 +1158,37 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   preserved `helm-schema-a3-counter` binary ran all ten charts with the round-0 cache and
   `--trace-output`; `trace_processor_shell query` selected instant events whose
   `debug.message = 'a3_join_counter'` and summed the three integer fields per chart.
-- Planned byte gate: preserved A3a and A3 binaries on all ten charts under the round-0 private
-  cache, capturing schema, stdout, JSON diagnostics, and status separately.
-- Planned adjudication: one clean candidate dump/battery using `SCHEMA_ACCEPTANCE_BASELINE_REF`
-  against `33d46316`, Helm 4.2.3 enabled, and per-flip direction/verdict retained in the ledger.
+- Differential tests: `cargo nextest run -p helm-schema-ir -E
+  'test(scalar_dispatch_join_keeps_128_arms_and_discards_129) +
+  test(unchanged_partial_dispatch_survives_the_join_cap) +
+  test(changed_nested_and_missing_dispatches_match_the_old_join)'`; exit 0, 3/3 pass after a
+  28.84 s rebuild. Changed and missing outcomes match an explicit A3a oracle; unchanged partial
+  over-cap dispatches pin the intentional semantic difference.
+- Final binary: `cargo build --release -p helm-schema-cli`; exit 0 in 21.62 s, copied immediately to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-a3`, SHA-256
+  `18f889f5f3849317fbe498e614712874ccd1b2c8f49b899c31004b106d0a0098`, 16,298,192 bytes.
+- Ten-chart byte gate is under `a3/byte`, using the preserved A3a/A3 binaries and the round-0
+  private cache with `--compact --offline --k8s-version v1.35.0 --diag-format json`.
+- Final randomized curve is under `a3/measure-final`; replacement kube-prometheus-stack pairs are
+  6--7 and invalid pairs 4--5 remain preserved. The isolated five pairs are under
+  `a3/measure-isolated`. Each invocation records UTC start, load1, `/usr/bin/time -p`, and separate
+  schema/stdout/diagnostic/status channels.
+- Corpus battery: `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a3/battery
+  SCHEMA_ACCEPTANCE_BASELINE_REF=33d46316
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/a3/battery/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 143.049 s with zero flips.
+- Clean dumps: chart corpus under `a3/dump` (156 outputs), IR under `a3/ir-dump` (18), lean profile
+  under `a3/lean-dump` (4), and generator schemas under `a3/gen-dump` (20). The final tree is exact
+  against every corresponding dump. A3 changes 46 chart-corpus schemas, two IR fixtures, one lean
+  fixture, and one generator fixture.
+- Contamination disclosure: changed `signoz-signoz.schema.json` is one of the four fixtures the bug
+  hunt explicitly proves contaminated. Changed D3/D4-debt umbrellas include apisix, dify, gitea,
+  milvus, netbox, oncall, openebs, redmine, stacks-blockchain-api, synapse, weblate, and yourls.
+  A3 only re-spells their existing acceptance with zero battery flips; it does not claim to repair
+  those correctness defects.
 
 ### Self-adversarial pass
 
@@ -1135,21 +1204,35 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   preservation.
 - A large speedup cannot excuse one false acceptance or false rejection. Semantic adjudication is
   an independent hard gate.
+- A zero-flip battery cannot prove arbitrary logical equivalence, but it exercises all 284,869
+  mandated composed probes and every chart-specific semantic test plus downstream luup2 passes.
+  The exact dispatch equality precondition supplies the structural argument beyond the probes.
+- Regenerating a contaminated fixture can preserve a known wrong answer. The contamination list is
+  disclosed above, and no changed fixture is described as newly correct.
 
 ### Gates on the final tree
 
-- Pending: `cargo fmt --check`.
-- Pending: `task lint`.
-- Pending: `task lint:fc`.
-- Pending: `cargo nextest run --workspace`.
-- Pending: `task test:integration`.
-- Pending: `task test:all`.
-- Pending: downstream luup2 install plus `check:local` because A3 changes schema semantics.
-- Pending: `task tokei:core`.
-- Pending: `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`.
-- Pending: `git diff --check`.
+- `cargo fmt --check`: exit 0; 2.025 s.
+- `task lint`: exit 0; 20.132 s. Whole-workspace Clippy and all three AST-grep policies pass.
+- `task lint:fc`: exit 0; 48/48 feature combinations pass in 59.02 s.
+- `cargo nextest run --workspace`: exit 0; 1,348/1,348 tests pass in 15.696 s after a 48.57 s
+  rebuild.
+- `task test:integration`: exit 0 on honest attempt two; 669/669 tests pass in 872.542 s, with 24
+  profile skips. Attempt one and its two candidate-owned fixture failures are recorded above.
+- `task test:all`: exit 0; 2,021/2,021 tests pass in 559.191 s, with 24 profile skips and live
+  network tests included.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; exact local candidate installed after a
+  51.95 s release build.
+- `PATH=/private/tmp/helm-schema-xargs-shim:$PATH
+  HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema task -t
+  /Volumes/T7/branches/luup2/deployment/charts/taskfile.yaml check:local`: exit 0 in approximately
+  69 s; downstream schemas, JSON Schema validation, strict Helm lint, rendering, and chart checks
+  pass.
+- `task tokei:core`: exit 0; 67,373 production Rust LOC in 0.088 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.001 s.
+- `git diff --check`: exit 0 in 27.015 s across the multi-million-line fixture re-spelling.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +8 (67,365 to 67,373).
 
 ## Round A3a — stop oversized scalar joins at the discard boundary
 
