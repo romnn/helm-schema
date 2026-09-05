@@ -14,6 +14,11 @@
   reproduced the measured binary byte-for-byte. The separately authorized baseline repairs landed
   in `6ceaf9bc` and `8fbcc732`; `8fbcc732` is therefore the acceptance baseline for C1.
 - Starting production Rust LOC: 66,064 (`task tokei:core`).
+- Validation correction (2026-09-05, after closure): an independent re-run of the corpus battery
+  against the pre-campaign baseline found that round A3's "zero flips" was vacuous and that A3
+  carries 73 acceptance flips. See "Validation correction" before the campaign closure. A3 remains
+  landed by the user's decision after reviewing the inventory; the plan's A3 adjudication
+  requirement is therefore **not met** until the bug-hunt findings F77–F80 are closed.
 - Corpus state: 163 chart directories, 156 schema artifacts, and 18 symbolic-IR artifacts. The
   authoritative battery remains
   `round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced` in
@@ -1280,6 +1285,8 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
     284,869. Its coverage report differs because the A3 run compared against pre-A3 `33d46316`,
     while R1 compares the identical post-A3 tree against `fbc03204`; no production, fixture, or
     corpus input changed between R1 baseline and candidate. Both exact totals remain in the ledger.
+    **Correction 2026-09-05:** both runs compared a fixture set against itself (the A3 run because
+    it preceded the dump, the R1 run by construction), so neither adjudicated A3's changed bytes.
 - Adjudication evidence: Helm v4.2.3. The fresh round-74 battery checks 160 charts and 284,863
   probes with zero flips, hence zero candidate-accepts/Helm-aborts cells. R1 is measurement-only
   and ends at the already-adjudicated A3 semantic tree.
@@ -2117,7 +2124,10 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
 - Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
-  shortcut implementation.
+  shortcut implementation. **Validation correction (2026-09-05):** the adjudication recorded below
+  was vacuous; the round carries 73 acceptance flips (21 false rejections, 49
+  candidate-accepts/Helm-aborts, 3 matched). See "Validation correction" before the campaign
+  closure. A3 remains landed by the user's decision after review of that inventory.
 - Contract: first measure, without changing results, the joined-variable count, variables whose
   entry dispatch is identical in every outcome, and joins discarded by the 128-arm cap. Only after
   recording those counts, preserve an entry dispatch directly when every outcome carries that
@@ -2202,10 +2212,14 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
     decisions use the quiet interleaved windows above.
 - Adjudication evidence: Helm v4.2.3. The ten-chart byte gate changes schema bytes exactly on the
   four pre-registered charts—argo-cd, cilium, datadog, and airflow—while the other six stay exact;
-  stdout, JSON diagnostics, and statuses are exact on all ten. The battery checks 160 charts and
-  284,869 probes with zero acceptance flips, so every acceptance cell including
-  candidate-accepts/Helm-aborts is zero. The changed bytes are acceptance-equivalent re-spellings
-  under the complete battery rather than accepted semantic flips.
+  stdout, JSON diagnostics, and statuses are exact on all ten. ~~The battery checks 160 charts and~~
+  ~~284,869 probes with zero acceptance flips, so every acceptance cell including~~
+  ~~candidate-accepts/Helm-aborts is zero. The changed bytes are acceptance-equivalent re-spellings~~
+  ~~under the complete battery rather than accepted semantic flips.~~ **Struck 2026-09-05:** that
+  battery ran at 01:16:51 against baseline `33d46316` while the pre-A3 fixtures were still on
+  disk (the clean dump began at 01:18:12), and without `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` the test
+  reads its candidate from the on-disk fixture. Baseline and candidate were the same bytes. A real
+  comparison reports 73 flips; see "Validation correction".
 - Public/wire decision: schema representation changes are adopted and fixtures regenerated; CLI,
   diagnostics, status, and cache behavior do not change. The shortcut compares the entire
   `ScalarValueDispatch` structurally, including completeness, predicates, values, and arm order.
@@ -2240,7 +2254,10 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
   schema_emission_profiles -E
   'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
-  ignored-only --no-capture`; exit 0, one test passes in 143.049 s with zero flips.
+  ignored-only --no-capture`; exit 0, one test passes in 143.049 s with zero flips. **Struck
+  2026-09-05:** this run preceded the fixture dump, so candidate equalled baseline; its coverage
+  report shows `guards_discovered: 156` for oauth2-proxy where a real old-versus-new comparison
+  shows 278.
 - Clean dumps: chart corpus under `a3/dump` (156 outputs), IR under `a3/ir-dump` (18), lean profile
   under `a3/lean-dump` (4), and generator schemas under `a3/gen-dump` (20). The final tree is exact
   against every corresponding dump. A3 changes 46 chart-corpus schemas, two IR fixtures, one lean
@@ -2265,9 +2282,12 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   preservation.
 - A large speedup cannot excuse one false acceptance or false rejection. Semantic adjudication is
   an independent hard gate.
-- A zero-flip battery cannot prove arbitrary logical equivalence, but it exercises all 284,869
-  mandated composed probes and every chart-specific semantic test plus downstream luup2 passes.
-  The exact dispatch equality precondition supplies the structural argument beyond the probes.
+- ~~A zero-flip battery cannot prove arbitrary logical equivalence, but it exercises all 284,869~~
+  ~~mandated composed probes and every chart-specific semantic test plus downstream luup2 passes.~~
+  ~~The exact dispatch equality precondition supplies the structural argument beyond the probes.~~
+  **Struck 2026-09-05:** the battery did not exercise the changed bytes at all. The dispatch
+  equality argument is sound for the join itself, but it says nothing about what downstream
+  contract merging does with the simpler dispatch shape, which is where the flips come from.
 - Regenerating a contaminated fixture can preserve a known wrong answer. The contamination list is
   disclosed above, and no changed fixture is described as newly correct.
 
@@ -2706,12 +2726,108 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
 
+## Validation correction (2026-09-05)
+
+An independent validation of the closed campaign re-ran the corpus battery on the final tree
+against the real pre-campaign baseline and found that round A3's adjudication never happened.
+This section records the mechanism, the evidence, the flip inventory, its root causes, and the
+decision taken. It does not change any measured performance number.
+
+### Mechanism
+
+- `crates/helm-schema/tests/schema_emission_profiles.rs` (`read_acceptance_candidate`) reads the
+  candidate schema from the **on-disk fixture file** when `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` is
+  unset. The baseline comes from git at `SCHEMA_ACCEPTANCE_BASELINE_REF`.
+- The A3 battery (`a3/battery/coverage.json`, written 01:16:51) ran against `33d46316` while the
+  pre-A3 fixtures were still on disk; the clean corpus dump (`a3/dump`) began at 01:18:12 and the
+  fixtures were adopted afterwards. Baseline and candidate were therefore the same bytes and the
+  reported `flips_adjudicated: 0` is vacuous. The tell-tale is in the coverage report: it discovers
+  156 guards on oauth2-proxy, where a real old-versus-new comparison discovers 278.
+- Every later round was byte-exact, so each later battery compared a fixture set against itself and
+  reported zero flips **by construction**. Those runs are evidence of byte-exactness only, which the
+  fixture tests already prove; they are not adjudication evidence. The baseline-prerequisite round
+  is the one round that used `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` correctly.
+- The binding rule going forward is in `CLAUDE.md` ("Fixture regeneration and flip adjudication"):
+  a round that changes any fixture byte runs the battery with `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP`
+  naming the one clean dump of the final build, after that dump exists.
+
+### Reproduction
+
+Both commands were run on the final tree (`8f129854`, production `c5aafe86`) with Helm v4.2.3:
+
+```
+TMPDIR=<private> SCHEMA_ACCEPTANCE_BASELINE_REF=8fbcc732 \
+SCHEMA_PROBE_COVERAGE_REPORT=<private>/coverage.json ADJUDICATE_WITH_HELM=1 \
+cargo nextest run -p helm-schema --profile integration --test schema_emission_profiles \
+  -E 'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' \
+  --run-ignored ignored-only --no-capture
+```
+
+exits 100: 73 flips adjudicated, 49 candidate-accepts/Helm-aborts, 21 "tightening rejects a
+document Helm renders", 3 matched. The same command with `SCHEMA_ACCEPTANCE_BASELINE_REF=33d46316`
+(the implementor's own A3 baseline) reports the identical 73 / 49 / 21. `git log 8fbcc732..HEAD --
+testdata/chart-corpus-schemas/` lists only `fbc03204`, so A3 is the sole source.
+
+### Flip inventory
+
+| family | cells | charts and paths | Helm verdict |
+|---|---:|---|---|
+| string-type fact lost | 40 | kubernetes-event-exporter, phpmyadmin, zookeeper `image.repository`; rabbitmq-cluster-operator `rabbitmqImage.repository`, `credentialUpdaterImage.repository` (false, true, integer, number, empty array, empty object item, empty object, unknown object member each) | Helm aborts (`contains` on a non-string in the bitnami `rollingTag` helper); candidate accepts |
+| object-type fact lost | 9 | datadog `operator.datadogAgent` (false, true, integer, number, empty string, coercible string, non-coercible string, empty array, empty object item) | Helm aborts (`.enabled` on a non-map in the operator subchart); candidate accepts |
+| default-derived typing newly applied | 18 | redis-ha `haproxy.checkFall` now `integer` (10 probes), `haproxy.checkInterval` now `string` (8 probes) | Helm renders (plain interpolation into `haproxy.cfg` text); candidate rejects |
+| provider name constraint newly derived | 3 | oauth2-proxy `config.existingConfig` (true, number, coercible string) | `helm template` renders `name: true`; Kubernetes would reject it; candidate rejects |
+| matched | 3 | — | direction agrees with Helm |
+
+### Root causes
+
+- The A3 join itself is sound. A four-line reproducer (a local bound to a `.Values` path, unchanged
+  through one `if`, then used in `printf`) shows the pre-A3 and A3 binaries emit semantically
+  identical schemas: the same `not global.imageRegistry and not image.registry` condition written
+  as two conjuncts before and as one `not anyOf` after.
+- The 49 lost facts were, in the pre-A3 output, attached under a tautological three-way registry
+  split (`global.imageRegistry`, `image.registry`, neither) that the old join's arm doubling
+  produced. A3 collapses that split and contract merging then loses the unconditional fact whose
+  true structural source (the `contains` operand, the `.enabled` member access) is not surfacing
+  on its own. The old output was right by accident. Filed as bug-hunt F77 and F78.
+- The 18 redis-ha cells are the analyzer's declared-shape typing policy applying to a path it had
+  previously lost; a minimal chart with the same template is typed identically by the pre-A3
+  binary. Filed as bug-hunt F80 (a policy decision, not an A3 defect).
+- The 3 oauth2-proxy cells are a legitimate provider constraint (the value flows into a Kubernetes
+  name field) that the round-74 oracle cannot see because it uses `helm template
+  --skip-schema-validation`. Filed as bug-hunt F79 (a harness defect).
+
+### What A3 is worth on the final tree
+
+Reverting only the eight-line shortcut in a worktree, three interleaved pairs against the final
+binary, load1 2.0–3.0:
+
+| chart | final tree without A3 | final tree | A3's share |
+|---|---:|---:|---:|
+| datadog | 8.57 s | 7.86 s | 8% |
+| airflow | 10.59 s | 5.58 s | 47% |
+| kube-prometheus-stack | 15.45 s | 7.39 s | 52% |
+
+The reverted binary reproduces the pre-A3 output byte-for-byte on all eight charts checked
+(redis-ha, oauth2-proxy, kubernetes-event-exporter, phpmyadmin, zookeeper,
+rabbitmq-cluster-operator, argo-cd, cilium), which also proves every round after A3 is byte-exact
+relative to the pre-A3 tree.
+
+### Decision
+
+By the frozen plan's A3 rule the round should be rejected. The user chose to keep it after
+reviewing this inventory, on the grounds that the join is sound, the lost facts are loosenings
+of constraints the analyzer only derived by accident, the tightenings are the analyzer's standing
+policy or legitimate provider constraints, and the fix belongs in the correctness campaign. The
+plan's A3 adjudication requirement stays open until F77 and F78 are fixed and the battery above
+reports zero candidate-accepts/Helm-aborts cells against `8fbcc732`.
+
 ## Campaign closure
 
 - Status: complete. Every frozen item was implemented and adopted or measured and rejected on its
   own criterion. Final production is `c5aafe86`; A5 leaves it unchanged. The final schema/IR tree
-  is the A7 tree, the frozen plan is unchanged, the 160-chart battery has zero flips, and luup2 is
-  32/32 green.
+  is the A7 tree, the frozen plan is unchanged, ~~the 160-chart battery has zero flips~~, and luup2 is
+  32/32 green. **Correction 2026-09-05:** the battery against the pre-campaign baseline
+  `8fbcc732` reports 73 flips, all from A3; see "Validation correction" above.
 - Final production Rust LOC: 67,597, an increase of 1,533 from the 66,064 starting tree. Three
   lines belong to the separately authorized baseline repair; the frozen performance rounds add
   1,530. The largest additions replace repeated work with explicit owner-local indexes and memo
@@ -2778,6 +2894,7 @@ absolute median is above A4's earlier window.
 | KPS under 110 s | at least 8.2% below 119.77 s | 7.51 s, 93.7% below | met |
 | stretch: all large under 30 s | all three below 30 | 8.00, 5.67, 7.51 s | met |
 | stretch: all mid under 3 s | all three below 3 | 2.21, 0.99, 1.70 s | met |
+| zero un-adjudicated corpus flips (plan definition of done) | every A3 flip adjudicated, zero candidate-accepts/Helm-aborts | 73 flips against `8fbcc732`: 21 false rejections, 49 candidate-accepts/Helm-aborts (added 2026-09-05) | **not met**; A3 kept by user decision pending F77–F80 |
 
 The frozen table's loaded-host large-chart baselines were 20--22% above the quiet round-0 values,
 so the absolute goalposts did not move but the required reductions did: Datadog 63.06 to 30 rather
@@ -2828,6 +2945,12 @@ performance comparison. Every performance decision and final trace used its expl
 copied release binary, preventing an independently built executable from contaminating timings.
 
 ### Wave-2 handoff
+
+**Before anything else, close A3's adjudication.** The bug-hunt findings F77 and F78 (facts lost
+in contract merging when A3 collapses a sibling condition split) must be fixed, F79 (the
+battery's oracle) decided, and F80 (default-derived typing) decided; then the round-74 battery
+must be re-run against `8fbcc732` with `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` set. The 49
+candidate-accepts/Helm-aborts cells must reach zero before A3's adjudication counts as done.
 
 1. Complete explicit session-cache propagation before adding new memo algorithms. R1 observed
    70,263, 73,465, and 52,352 short-lived predicate memos on Datadog, Airflow, and KPS carrying
