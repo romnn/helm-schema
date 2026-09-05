@@ -1357,6 +1357,67 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,373 to 67,373).
 
+## Round A4 — helper memo key uses the reachable cycle-cut footprint
+
+- Status: pre-registered; implementation pending.
+- Contract: replace `BoundHelperCallCacheKey.seen`'s whole active call chain with its intersection
+  against a conservative transitive closure of every chart-authored helper that the target helper
+  can call. Discover calls from parsed `TemplateExpr` trees across every control-flow branch. Any
+  dynamic `include`/`template` name makes that helper's closure unknown and retains the whole
+  `seen` set. Keep helper resolution, cycle cuts, summaries, diagnostics, schemas, fixtures, and
+  public APIs unchanged. The direct-call/closure memo belongs to `IrAnalysisDb`, one chart analysis
+  session; no static, thread-local, process-global, lock, or cross-session state is permitted.
+- Acceptance baseline: `6f8a1b0f`, the completed A6 rejection on the exact R1 production tree.
+- Baseline production Rust LOC: 67,373.
+- Pre-registered acceptance expectations:
+  - All ten reference schemas, stdout, JSON diagnostics, and exit statuses remain byte-identical.
+    All 156 schema artifacts and 18 IR artifacts remain exact. The 160-chart battery has zero
+    acceptance flips and zero candidate-accepts/Helm-aborts cells.
+  - Focused tests cover direct recursion, recursion behind a conditional, mutual recursion,
+    dynamic-name recursion falling back to the whole chain, and two irrelevant caller chains
+    returning the same memoized `Rc<FragmentSummary>`.
+  - Empty-cache online, warm-cache online, and warm-cache offline runs are byte-identical on all ten
+    charts because the new memo is in-memory analysis state and never changes provider cache laws.
+  - At least five randomized interleaved A/B pairs decide datadog. The R1 estimate is 15--30%; the
+    item lands only with a positive median and a paired range that does not cross zero on datadog,
+    plus no proven regression on any curve chart. The user's stable-modest-gain direction applies
+    if the result is positive but smaller than the estimate.
+  - Reject and restore on any byte difference, acceptance flip, changed recursion/cycle-cut result,
+    dynamic-name unsoundness, or proven performance regression. R1 already clears the frozen
+    eligibility gate: 762 of 1,111 datadog misses are `seen`-only and account for 40.4% of inclusive
+    miss time, above 10%.
+- Performance baseline: adopted A3 CPU medians are 9.81 s datadog, 6.34 s airflow, and 8.48 s
+  kube-prometheus-stack. The accepted R1 datadog trace attributes 3.824 s self to helper summaries;
+  the lean counter measures 7.717 s inclusive miss time, including 3.119 s in `seen`-only misses.
+- Measured results: pending.
+- Deviations: pending.
+- Adjudication evidence: pending byte, cache, artifact, and battery gates against Helm v4.2.3.
+- Public/wire decision: pending; the intended change is private memo-key representation only.
+
+### Review dossier
+
+- Pending implementation, copied binaries, cache triple, byte comparisons, randomized pairs, and
+  exact gate commands.
+
+### Self-adversarial pass
+
+- `unconditional_include_names` is unsound for this key because it intentionally skips conditional
+  bodies. The closure must inspect every parsed expression in every branch.
+- A dynamic helper name can reach any chart-authored helper. The only safe bounded response is to
+  retain the complete active chain for that key.
+- The closure must be transitive and include the target helper itself. Direct-only projection can
+  miss mutual recursion; omitting self can collapse top-level and recursive contexts.
+- A memo hit is valid only when every input that affects the summary remains in the key. A4 may
+  project `seen` alone; bindings, dot, root predicates, and root scalar dispatches remain exact.
+- Ownership is part of correctness: putting the call graph or summary memo in global state would
+  make concurrent library sessions compete, complicate clearing, and make tests order-dependent.
+
+### Gates on the final tree
+
+- Pending.
+
+- Measured production LOC delta: pending.
+
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
 - Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
