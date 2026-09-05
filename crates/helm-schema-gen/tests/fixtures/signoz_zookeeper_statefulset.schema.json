@@ -7354,29 +7354,45 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/t"
-                      }
-                    ]
-                  }
+        "not": {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
                 },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
+                {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "registry": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      "required": [
+                        "registry"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
                   "properties": {
                     "global": {
                       "properties": {
@@ -7394,10 +7410,8 @@
                     "global"
                   ],
                   "type": "object"
-                }
-              },
-              {
-                "not": {
+                },
+                {
                   "properties": {
                     "image": {
                       "properties": {
@@ -7415,49 +7429,31 @@
                     "image"
                   ],
                   "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "global": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/t"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
                 }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "registry": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "registry"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
+              ]
+            }
+          ]
+        }
       },
       "then": {
         "additionalProperties": {},
@@ -16862,200 +16858,162 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
+            "properties": {
+              "persistence": {
                 "properties": {
-                  "global": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/t"
-                      }
-                    ]
+                  "enabled": {
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
-                  "global"
+                  "enabled"
                 ],
                 "type": "object"
-              },
-              {
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "volumePermissions": {
                 "properties": {
-                  "persistence": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
-                  "persistence"
+                  "enabled"
                 ],
                 "type": "object"
-              },
-              {
-                "properties": {
-                  "volumePermissions": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "volumePermissions"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "global": {
+              }
+            },
+            "required": [
+              "volumePermissions"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
                       "properties": {
-                        "imageRegistry": {
+                        "global": {
                           "$ref": "#/$defs/t"
                         }
                       },
                       "required": [
-                        "imageRegistry"
+                        "global"
                       ],
                       "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "volumePermissions": {
+                    },
+                    {
                       "properties": {
-                        "image": {
+                        "volumePermissions": {
                           "properties": {
-                            "registry": {
-                              "$ref": "#/$defs/t"
+                            "image": {
+                              "properties": {
+                                "registry": {
+                                  "$ref": "#/$defs/t"
+                                }
+                              },
+                              "required": [
+                                "registry"
+                              ],
+                              "type": "object"
                             }
                           },
                           "required": [
-                            "registry"
+                            "image"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "image"
+                        "volumePermissions"
                       ],
                       "type": "object"
                     }
-                  },
-                  "required": [
-                    "volumePermissions"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "persistence": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
+                  ]
                 },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "volumePermissions": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "volumePermissions"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "volumePermissions": {
+                {
+                  "anyOf": [
+                    {
                       "properties": {
-                        "image": {
+                        "global": {
                           "properties": {
-                            "registry": {
+                            "imageRegistry": {
                               "$ref": "#/$defs/t"
                             }
                           },
                           "required": [
-                            "registry"
+                            "imageRegistry"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "image"
+                        "global"
                       ],
                       "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "volumePermissions": {
+                          "properties": {
+                            "image": {
+                              "properties": {
+                                "registry": {
+                                  "$ref": "#/$defs/t"
+                                }
+                              },
+                              "required": [
+                                "registry"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "volumePermissions"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "global": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/t"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "global"
+                        ],
+                        "type": "object"
+                      }
                     }
-                  },
-                  "required": [
-                    "volumePermissions"
-                  ],
-                  "type": "object"
+                  ]
                 }
-              }
-            ]
+              ]
+            }
           }
         ]
       },
@@ -17373,1286 +17331,6 @@
         "allOf": [
           {
             "properties": {
-              "global": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "digest": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "digest"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "repository": {}
-                      },
-                      "required": [
-                        "repository"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "repository": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "imageRegistry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "imageRegistry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "global": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "digest": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "digest"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "repository": {}
-                      },
-                      "required": [
-                        "repository"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "repository": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "imageRegistry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "imageRegistry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "client": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "client"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "quorum": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "quorum"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "global": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "persistence": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "persistence"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "digest": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "digest"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "volumePermissions": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "repository": {}
-                          },
-                          "required": [
-                            "repository"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "volumePermissions"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "volumePermissions": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "repository": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "repository"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "volumePermissions"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "imageRegistry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "imageRegistry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "registry": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "registry"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "global": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "persistence": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "persistence"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "volumePermissions": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "repository": {}
-                          },
-                          "required": [
-                            "repository"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "volumePermissions"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "volumePermissions": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "repository": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "repository"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "volumePermissions"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "imageRegistry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "imageRegistry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "digest": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "digest"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "registry": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "registry"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "global": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "repository": {}
-                      },
-                      "required": [
-                        "repository"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "repository": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "imageRegistry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "imageRegistry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "digest": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "digest"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "global": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "repository": {}
-                      },
-                      "required": [
-                        "repository"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "repository": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "imageRegistry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "imageRegistry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "digest": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "digest"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "client": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "client"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "quorum": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "quorum"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "digest": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "digest"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "repository": {}
-                      },
-                      "required": [
-                        "repository"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "repository": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "anyOf": [
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/$defs/t"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "digest": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "digest"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "repository": {}
-                      },
-                      "required": [
-                        "repository"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "repository": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "repository"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "anyOf": [
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/$defs/t"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "client": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "client"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "quorum": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "quorum"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
               "livenessProbe": {
                 "properties": {
                   "enabled": {
@@ -18894,187 +17572,6 @@
             "type": "object"
           },
           {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "digest": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "digest"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "volumePermissions": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "repository": {}
-                          },
-                          "required": [
-                            "repository"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "volumePermissions"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "volumePermissions": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "repository": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "repository"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "volumePermissions"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "anyOf": [
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/$defs/t"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "registry": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "registry"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "persistence": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "persistence"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "volumePermissions": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "volumePermissions"
-            ],
-            "type": "object"
-          },
-          {
             "anyOf": [
               {
                 "not": {
@@ -19225,80 +17722,120 @@
           },
           {
             "not": {
-              "properties": {
-                "global": {
+              "allOf": [
+                {
                   "anyOf": [
                     {
+                      "properties": {
+                        "global": {
+                          "anyOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/$defs/t"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/t"
+                      "properties": {
+                        "volumePermissions": {
+                          "properties": {
+                            "image": {
+                              "properties": {
+                                "registry": {
+                                  "$ref": "#/$defs/t"
+                                }
+                              },
+                              "required": [
+                                "registry"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "volumePermissions"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "imageRegistry": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "imageRegistry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "volumePermissions": {
+                          "properties": {
+                            "image": {
+                              "properties": {
+                                "registry": {
+                                  "$ref": "#/$defs/t"
+                                }
+                              },
+                              "required": [
+                                "registry"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "volumePermissions"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "global": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "global"
+                        ],
+                        "type": "object"
+                      }
                     }
                   ]
                 }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "digest": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "digest"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "volumePermissions": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "registry": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      "required": [
-                        "registry"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "volumePermissions"
-              ],
-              "type": "object"
+              ]
             }
           }
         ]
@@ -20150,64 +18687,104 @@
           },
           {
             "not": {
-              "properties": {
-                "global": {
+              "allOf": [
+                {
                   "anyOf": [
                     {
+                      "properties": {
+                        "global": {
+                          "anyOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/$defs/t"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/t"
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "registry": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "registry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "imageRegistry": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "imageRegistry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "registry": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "registry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "global": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "global"
+                        ],
+                        "type": "object"
+                      }
                     }
                   ]
                 }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "digest": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "digest"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
+              ]
             }
           }
         ]
@@ -20263,64 +18840,104 @@
           },
           {
             "not": {
-              "properties": {
-                "global": {
+              "allOf": [
+                {
                   "anyOf": [
                     {
+                      "properties": {
+                        "global": {
+                          "anyOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/$defs/t"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/t"
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "registry": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "registry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "imageRegistry": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "imageRegistry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "registry": {
+                              "$ref": "#/$defs/t"
+                            }
+                          },
+                          "required": [
+                            "registry"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "global": {
+                            "$ref": "#/$defs/t"
+                          }
+                        },
+                        "required": [
+                          "global"
+                        ],
+                        "type": "object"
+                      }
                     }
                   ]
                 }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "digest": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "digest"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "registry": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "registry"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
+              ]
             }
           },
           {

@@ -122,6 +122,14 @@ pub(super) fn joined_scalar_dispatch_arms(
         .collect();
     let mut joined = HashMap::new();
     for variable in variables {
+        if let Some(entry_dispatch) = entry.scalar_dispatches.get(variable)
+            && outcomes
+                .iter()
+                .all(|(_, state)| state.scalar_dispatches.get(variable) == Some(entry_dispatch))
+        {
+            joined.insert(variable.clone(), entry_dispatch.clone());
+            continue;
+        }
         let mut dispatch_arms = Vec::new();
         let mut complete = outcomes
             .iter()

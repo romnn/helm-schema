@@ -1,10 +1,12 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::{
+    ScalarValue, ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo,
+};
 use crate::symbolic_local_state::SymbolicLocalState;
 use helm_schema_core::{GuardValue, Predicate, PredicateMemo, ValuesPath};
 use test_util::prelude::sim_assert_eq;
@@ -26,6 +28,78 @@ fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
         },
     );
     state
+}
+
+fn joined_scalar_dispatches_without_unchanged_shortcut(
+    entry: &SymbolicLocalState,
+    arms: &[(TruthCondition, SymbolicLocalState)],
+    has_unconditional_else: bool,
+    memo: &PredicateMemo,
+) -> Option<HashMap<String, ScalarValueDispatch>> {
+    if arms
+        .iter()
+        .any(|(condition, _)| matches!(condition, TruthCondition::Unknown))
+    {
+        return None;
+    }
+    let mut outcomes = arms.to_vec();
+    if !has_unconditional_else {
+        outcomes.push((
+            TruthCondition::any_with_memo(
+                arms.iter().map(|(condition, _)| condition.clone()),
+                memo,
+            )
+            .negated_with_memo(memo),
+            entry.clone(),
+        ));
+    }
+
+    let variables: BTreeSet<&String> = arms
+        .iter()
+        .flat_map(|(_, state)| state.scalar_dispatches.keys())
+        .chain(entry.scalar_dispatches.keys())
+        .collect();
+    let mut joined = HashMap::new();
+    for variable in variables {
+        let mut dispatch_arms = Vec::new();
+        let mut complete = outcomes
+            .iter()
+            .all(|(condition, _)| condition.predicate().is_some());
+        'outcomes: for (condition, state) in &outcomes {
+            let outer_condition = condition.when_true();
+            if outer_condition == Predicate::False {
+                continue;
+            }
+            let Some(dispatch) = state.scalar_dispatches.get(variable) else {
+                complete = false;
+                continue;
+            };
+            complete &= dispatch.complete;
+            for (inner_condition, value) in &dispatch.arms {
+                if let Some(condition) = conjoin_predicates_with_memo(
+                    outer_condition.clone(),
+                    inner_condition.clone(),
+                    memo,
+                ) {
+                    dispatch_arms.push((condition, value.clone()));
+                    if dispatch_arms.len() > 128 {
+                        break 'outcomes;
+                    }
+                }
+            }
+        }
+        if dispatch_arms.is_empty() || dispatch_arms.len() > 128 {
+            continue;
+        }
+        joined.insert(
+            variable.clone(),
+            ScalarValueDispatch {
+                arms: dispatch_arms,
+                complete,
+            },
+        );
+    }
+    Some(joined)
 }
 
 #[test]
@@ -58,6 +132,106 @@ fn scalar_dispatch_join_keeps_128_arms_and_discards_129() {
         &memo,
     );
     sim_assert_eq!(have: over_cap.scalar_dispatches.is_empty(), want: true);
+}
+
+#[test]
+fn unchanged_partial_dispatch_survives_the_join_cap() {
+    let memo = PredicateMemo::default();
+    let entry = state_with_scalar_arm_count(129);
+    let mut partial = entry.clone();
+    if let Some(dispatch) = partial.scalar_dispatches.get_mut("value") {
+        dispatch.complete = false;
+    }
+    let entry = partial.clone();
+    let mut joined = SymbolicLocalState::default();
+    joined.join_scalar_dispatch_arms(
+        &entry,
+        &[(TruthCondition::exact(Predicate::True), partial.clone())],
+        true,
+        &memo,
+    );
+    sim_assert_eq!(
+        have: joined.scalar_dispatches.get("value"),
+        want: entry.scalar_dispatches.get("value")
+    );
+
+    let old = joined_scalar_dispatches_without_unchanged_shortcut(
+        &entry,
+        &[(TruthCondition::exact(Predicate::True), partial)],
+        true,
+        &memo,
+    );
+    sim_assert_eq!(
+        have: old.and_then(|dispatches| dispatches.get("value").cloned()),
+        want: None
+    );
+}
+
+#[test]
+fn changed_nested_and_missing_dispatches_match_the_old_join() {
+    let memo = PredicateMemo::default();
+    let entry = state_with_scalar_arm_count(1);
+    let outer = Predicate::truthy_path("outer");
+    let inner = Predicate::truthy_path("inner");
+    let mut nested = SymbolicLocalState::default();
+    nested.scalar_dispatches.insert(
+        "value".to_string(),
+        ScalarValueDispatch {
+            arms: vec![
+                (
+                    inner.clone(),
+                    ScalarValue::Literal(GuardValue::String("nested-true".to_string())),
+                ),
+                (
+                    inner.negated(),
+                    ScalarValue::Literal(GuardValue::String("nested-false".to_string())),
+                ),
+            ],
+            complete: true,
+        },
+    );
+    let changed_arms = vec![
+        (TruthCondition::exact(outer.clone()), nested),
+        (
+            TruthCondition::exact(outer.negated()),
+            state_with_scalar_arm_count(2),
+        ),
+    ];
+    let mut changed = SymbolicLocalState::default();
+    changed.join_scalar_dispatch_arms(&entry, &changed_arms, true, &memo);
+    sim_assert_eq!(
+        have: changed.scalar_dispatches,
+        want: joined_scalar_dispatches_without_unchanged_shortcut(
+            &entry,
+            &changed_arms,
+            true,
+            &memo
+        )
+        .unwrap_or_default()
+    );
+
+    let missing_arms = vec![
+        (
+            TruthCondition::exact(Predicate::truthy_path("present")),
+            entry.clone(),
+        ),
+        (
+            TruthCondition::exact(Predicate::truthy_path("present").negated()),
+            SymbolicLocalState::default(),
+        ),
+    ];
+    let mut missing = SymbolicLocalState::default();
+    missing.join_scalar_dispatch_arms(&entry, &missing_arms, true, &memo);
+    sim_assert_eq!(
+        have: missing.scalar_dispatches,
+        want: joined_scalar_dispatches_without_unchanged_shortcut(
+            &entry,
+            &missing_arms,
+            true,
+            &memo
+        )
+        .unwrap_or_default()
+    );
 }
 
 #[test]

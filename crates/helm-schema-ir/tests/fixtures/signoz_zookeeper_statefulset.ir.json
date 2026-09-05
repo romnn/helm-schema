@@ -7541,26 +7541,33 @@
       "condition": [
         [
           {
-            "path": "global",
-            "type": "truthy"
-          },
-          {
-            "path": "global.imageRegistry",
-            "type": "not"
-          },
-          {
-            "path": "image.registry",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "global",
-            "type": "not"
-          },
-          {
-            "path": "image.registry",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [
@@ -7673,40 +7680,40 @@
       "condition": [
         [
           {
-            "path": "global",
-            "type": "truthy"
-          },
-          {
-            "path": "global.imageRegistry",
-            "type": "not"
-          },
-          {
-            "path": "image.registry",
-            "type": "not"
-          },
-          {
             "paths": [
               "tls.client.enabled",
               "tls.quorum.enabled"
             ],
             "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "global",
-            "type": "not"
           },
           {
-            "path": "image.registry",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ],
         [
@@ -18852,10 +18859,6 @@
       "condition": [
         [
           {
-            "path": "global",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.enabled",
             "type": "truthy"
           },
@@ -18864,30 +18867,33 @@
             "type": "truthy"
           },
           {
-            "path": "global.imageRegistry",
-            "type": "not"
-          },
-          {
-            "path": "volumePermissions.image.registry",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "global",
-            "type": "not"
-          },
-          {
-            "path": "volumePermissions.image.registry",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [
