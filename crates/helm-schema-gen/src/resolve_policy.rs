@@ -844,10 +844,16 @@ pub(crate) use scalar_preimage::{
     split_segment_pattern, strict_plain_scalar_string_schema,
 };
 
+/// Carries generation-owned state through conditional target lowering.
+pub(crate) struct ConditionalTargetContext<'a> {
+    pub(crate) values_yaml_doc: &'a YamlValue,
+    pub(crate) acceptance_memo: &'a mut ConditionalSchemaAcceptanceMemo,
+}
+
 pub(crate) fn conditional_target_schema(
     target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
-    values_yaml_doc: &YamlValue,
+    context: &mut ConditionalTargetContext<'_>,
     branch_schema: Value,
     values_yaml_schema: &Value,
     resolved_fallback: Value,
@@ -856,7 +862,7 @@ pub(crate) fn conditional_target_schema(
     let schema = conditional_target_schema_inner(
         target_value_path,
         overlay,
-        values_yaml_doc,
+        context,
         branch_schema,
         values_yaml_schema,
         resolved_fallback,
@@ -885,22 +891,22 @@ pub(crate) fn conditional_target_schema(
 fn conditional_target_schema_inner(
     target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
-    values_yaml_doc: &YamlValue,
+    context: &mut ConditionalTargetContext<'_>,
     branch_schema: Value,
     values_yaml_schema: &Value,
     resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
-    let declared_default = yaml_value_at_values_path(values_yaml_doc, target_value_path)
+    let declared_default = yaml_value_at_values_path(context.values_yaml_doc, target_value_path)
         .and_then(|value| serde_json::to_value(value).ok());
     let self_guard_excludes_declared_default =
-        self_guards_exclude_declared_default(target_value_path, overlay, values_yaml_doc);
+        self_guards_exclude_declared_default(target_value_path, overlay, context.values_yaml_doc);
     // A branch that rejects the path's own declared default narrows values
     // the chart itself ships.
-    let rejects_declared_default = |schema: &Value| {
+    let mut rejects_declared_default = |schema: &Value| {
         declared_default
             .as_ref()
-            .is_some_and(|default_value| !schema_accepts_json_value(schema, default_value))
+            .is_some_and(|default_value| !context.acceptance_memo.accepts(schema, default_value))
     };
 
     let branch_schema =
@@ -1122,9 +1128,10 @@ fn schema_allows_non_falsy_type(schema: &Value, schema_type: &str) -> bool {
 mod declared_default;
 
 pub(crate) use declared_default::{
-    open_objects_rejecting_declared_members, preserve_declared_default_in_schema,
+    ConditionalSchemaAcceptanceMemo, open_objects_rejecting_declared_members,
+    preserve_declared_default_in_schema,
 };
 use declared_default::{
-    schema_accepts_json_value, schema_type_for_guard_value,
-    should_merge_values_yaml_into_conditional_branch, should_open_fragment_values_schema,
+    schema_type_for_guard_value, should_merge_values_yaml_into_conditional_branch,
+    should_open_fragment_values_schema,
 };

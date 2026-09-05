@@ -18,7 +18,9 @@ use crate::emission_report::{EmissionReport, InsertionAbstentionCounts};
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
 use crate::provider_resolution::ProviderSchemaResolutions;
 use crate::provider_schema::ProviderSchemaCandidate;
-use crate::resolve_policy::conditional_target_schema;
+use crate::resolve_policy::{
+    ConditionalSchemaAcceptanceMemo, ConditionalTargetContext, conditional_target_schema,
+};
 use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
 use crate::values_yaml::yaml_value_at_values_path;
@@ -226,6 +228,7 @@ pub(crate) fn collect_conditional_schemas(
         }
     }
     let mut conditionals = Vec::new();
+    let mut acceptance_memo = ConditionalSchemaAcceptanceMemo::default();
 
     let root_path = ValuesPath::default();
     if let Some(root_implications) = synthesized_implications.get(&root_path) {
@@ -589,10 +592,14 @@ pub(crate) fn collect_conditional_schemas(
             } else {
                 resolved_overlay.schema
             };
+            let mut context = ConditionalTargetContext {
+                values_yaml_doc,
+                acceptance_memo: &mut acceptance_memo,
+            };
             let target_schema = conditional_target_schema(
                 target_value_path,
                 overlay,
-                values_yaml_doc,
+                &mut context,
                 branch_schema,
                 &resolved_target.values_yaml_schema,
                 resolved_target.schema.clone(),

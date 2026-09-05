@@ -1,8 +1,33 @@
+use std::collections::HashMap;
+
 use super::{
     HELM_TRUTHY_DEFINITION_NAME, PLAIN_SCALAR_NULL_TOKEN_PATTERN, SchemaNode, Value,
     ValuePathSchemaFacts, empty_schema, helm_truthy_definition_schema, is_object_or_array_schema,
     is_scalar_like_schema, union_schema_list, value_references_helm_truthy,
 };
+
+/// Stores exact conditional schema/default acceptance results for one generation.
+#[derive(Default)]
+pub(crate) struct ConditionalSchemaAcceptanceMemo {
+    pub(crate) entries: HashMap<(Value, Value), bool>,
+}
+
+impl ConditionalSchemaAcceptanceMemo {
+    pub(crate) fn accepts(&mut self, schema: &Value, instance: &Value) -> bool {
+        let key = (schema_acceptance_document(schema), instance.clone());
+        if let Some(cached) = self.entries.get(&key) {
+            #[cfg(debug_assertions)]
+            {
+                let recomputed = schema_document_accepts_json_value(&key.0, &key.1);
+                debug_assert!(cached.eq(&recomputed));
+            }
+            return *cached;
+        }
+        let accepted = schema_document_accepts_json_value(&key.0, &key.1);
+        self.entries.insert(key, accepted);
+        accepted
+    }
+}
 
 pub(crate) fn open_objects_rejecting_declared_members(schema: Value, declared: &Value) -> Value {
     preserve_declared_default(schema, declared, false)
@@ -214,7 +239,23 @@ pub(super) fn schema_accepts_json_value(schema: &Value, instance: &Value) -> boo
             "allOf": [schema]
         })
     });
-    jsonschema::validator_for(document.as_ref().unwrap_or(schema))
+    schema_document_accepts_json_value(document.as_ref().unwrap_or(schema), instance)
+}
+
+fn schema_acceptance_document(schema: &Value) -> Value {
+    if !value_references_helm_truthy(schema) {
+        return schema.clone();
+    }
+    serde_json::json!({
+        "$defs": {
+            HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema()
+        },
+        "allOf": [schema]
+    })
+}
+
+fn schema_document_accepts_json_value(document: &Value, instance: &Value) -> bool {
+    jsonschema::validator_for(document)
         .map(|validator| validator.is_valid(instance))
         .unwrap_or(false)
 }

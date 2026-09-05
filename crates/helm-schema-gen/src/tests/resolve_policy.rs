@@ -1,7 +1,38 @@
 use super::*;
-use crate::resolve_policy::schema_covers_strict_plain_scalar_string;
+use crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME;
+use crate::resolve_policy::{
+    ConditionalSchemaAcceptanceMemo, schema_covers_strict_plain_scalar_string,
+};
 use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn conditional_schema_acceptance_memo_uses_complete_exact_keys() {
+    let mut memo = ConditionalSchemaAcceptanceMemo::default();
+    let string_schema = serde_json::json!({ "type": "string" });
+
+    // Exact schema/instance repeats share an entry, while a different instance cannot.
+    sim_assert_eq!(have: memo.accepts(&string_schema, &serde_json::json!("ok")), want: true);
+    sim_assert_eq!(have: memo.entries.len(), want: 1);
+    sim_assert_eq!(have: memo.accepts(&string_schema, &serde_json::json!("ok")), want: true);
+    sim_assert_eq!(have: memo.entries.len(), want: 1);
+    sim_assert_eq!(have: memo.accepts(&string_schema, &serde_json::json!(1)), want: false);
+    sim_assert_eq!(have: memo.entries.len(), want: 2);
+
+    // A Helm-truthy reference stores the complete injected definition document as its key.
+    let truthy_schema = serde_json::json!({
+        "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
+    });
+    sim_assert_eq!(have: memo.accepts(&truthy_schema, &serde_json::json!(true)), want: true);
+    let wrapped_key_exists = memo.entries.keys().any(|(document, instance)| {
+        instance == &serde_json::json!(true)
+            && document
+                .get("$defs")
+                .and_then(Value::as_object)
+                .is_some_and(|definitions| definitions.contains_key(HELM_TRUTHY_DEFINITION_NAME))
+    });
+    sim_assert_eq!(have: wrapped_key_exists, want: true);
+}
 
 #[test]
 fn common_plain_string_proof_respects_one_of_exclusivity() {
