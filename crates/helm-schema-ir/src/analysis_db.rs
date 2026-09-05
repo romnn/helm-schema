@@ -140,6 +140,10 @@ pub(crate) struct IrAnalysisDb {
     /// resource spans), shared across memoized-summary misses.
     body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
+    /// Transitive literal-helper-call closures memoized for this chart analysis.
+    ///
+    /// `None` records an unknown closure and preserves the whole active call chain in the key.
+    helper_seen_footprints: RefCell<HashMap<String, Option<BTreeSet<String>>>>,
     custom_merge_helpers: RefCell<HashMap<String, Option<CustomMergeHelper>>>,
     nil_scrub_helpers: RefCell<HashMap<String, bool>>,
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
@@ -257,6 +261,7 @@ impl IrAnalysisDb {
             chart_default_strings,
             body_eval_facts: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
+            helper_seen_footprints: RefCell::new(HashMap::new()),
             custom_merge_helpers: RefCell::new(HashMap::new()),
             nil_scrub_helpers: RefCell::new(HashMap::new()),
             predicate_memo: Rc::new(helm_schema_core::PredicateMemo::new()),
@@ -993,8 +998,10 @@ impl IrAnalysisDb {
         self.parsed_defines.parsed_body(name)
     }
 
-    /// Evaluate one bound helper call in the fragment domain, memoized per
-    /// (helper, bindings, dot, call chain).
+    /// Evaluates one bound helper call in the fragment domain.
+    ///
+    /// The memo key includes the helper name, bindings, dot, root predicates, root scalar
+    /// dispatches, and reachable cycle cuts. An unknown footprint retains the complete chain.
     #[tracing::instrument(skip_all, fields(helper = name))]
     #[expect(
         clippy::too_many_arguments,
@@ -1026,7 +1033,7 @@ impl IrAnalysisDb {
             context,
             seen,
         });
-        let seen_key = seen.iter().cloned().collect();
+        let seen_key = self.helper_seen_key(name, seen);
         let key = BoundHelperCallCacheKey::from_resolution(name, &resolved.resolution, seen_key);
 
         if let Some(cached) = self.bound_helper_calls.borrow().get(&key) {
@@ -1051,6 +1058,67 @@ impl IrAnalysisDb {
             summary,
             argument_effects: resolved.argument_effects,
         }
+    }
+
+    fn helper_seen_key(&self, name: &str, seen: &HashSet<String>) -> BTreeSet<String> {
+        self.prepare_helper_seen_footprint(name);
+        let footprints = self.helper_seen_footprints.borrow();
+        let footprint = footprints.get(name).and_then(Option::as_ref);
+        seen.iter()
+            .filter(|helper| footprint.is_none_or(|footprint| footprint.contains(*helper)))
+            .cloned()
+            .collect()
+    }
+
+    fn prepare_helper_seen_footprint(&self, name: &str) {
+        if self.helper_seen_footprints.borrow().contains_key(name) {
+            return;
+        }
+        let mut footprint = BTreeSet::new();
+        let mut pending = vec![name.to_string()];
+        let mut complete = true;
+        while let Some(helper) = pending.pop() {
+            if !footprint.insert(helper.clone()) {
+                continue;
+            }
+            let Some(expressions) = self.parsed_defines.expressions(&helper) else {
+                continue;
+            };
+            for expression in expressions {
+                expression.walk(|inner| {
+                    if matches!(inner, TemplateExpr::Unknown(_)) {
+                        complete = false;
+                        return;
+                    }
+                    let TemplateExpr::Call { function, args } = inner else {
+                        return;
+                    };
+                    if function == "tpl" {
+                        // Nested template programs inherit the active cycle cuts.
+                        complete = false;
+                        return;
+                    }
+                    if !matches!(function.as_str(), "include" | "template") {
+                        return;
+                    }
+                    match args.first().map(TemplateExpr::deparen) {
+                        Some(TemplateExpr::Literal(
+                            helm_schema_ast::Literal::String(callee)
+                            | helm_schema_ast::Literal::RawString(callee),
+                        )) => {
+                            if self.has_helper(callee) {
+                                pending.push(callee.clone());
+                            }
+                        }
+                        _ => complete = false,
+                    }
+                });
+            }
+        }
+        let footprint = complete.then_some(footprint);
+        self.helper_seen_footprints
+            .borrow_mut()
+            .insert(name.to_string(), footprint);
     }
 }
 

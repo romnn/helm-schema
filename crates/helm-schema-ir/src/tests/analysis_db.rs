@@ -1,6 +1,192 @@
-use super::extract_define_blocks;
+use std::collections::{BTreeSet, HashSet};
+use std::rc::Rc;
+
+use super::{IrAnalysisDb, extract_define_blocks};
+use crate::eval_env::EvalEnv;
+use crate::fragment_eval::summary::FragmentSummary;
+use crate::fragment_expr_eval::FragmentEvalContext;
+use helm_schema_core::ValuesPath;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+
+fn helper_db(source: &str) -> IrAnalysisDb {
+    let mut defines = helm_schema_ast::DefineIndex::new();
+    defines.add_file_source("templates/_helpers.tpl", source);
+    IrAnalysisDb::new(&defines)
+}
+
+fn summarize_helper(
+    db: &IrAnalysisDb,
+    name: &str,
+    initial_seen: impl IntoIterator<Item = &'static str>,
+) -> Rc<FragmentSummary> {
+    let mut seen = initial_seen
+        .into_iter()
+        .map(str::to_string)
+        .collect::<HashSet<_>>();
+    db.summarize_bound_helper_call(
+        name,
+        None,
+        None,
+        None,
+        &EvalEnv::default(),
+        FragmentEvalContext::new(db),
+        &mut seen,
+    )
+    .summary
+}
+
+#[test]
+fn direct_recursion_keeps_the_helper_in_its_cycle_cut_key() {
+    let db = helper_db(indoc! {r#"
+        {{- define "direct" -}}
+        {{- include "direct" . -}}
+        {{- end -}}
+    "#});
+    let summary = summarize_helper(&db, "direct", []);
+
+    sim_assert_eq!(have: db.bound_helper_calls.borrow().len(), want: 1);
+    sim_assert_eq!(have: Rc::strong_count(&summary), want: 2);
+}
+
+#[test]
+fn conditional_recursion_is_in_the_conservative_cycle_cut_key() {
+    let db = helper_db(indoc! {r#"
+        {{- define "conditional" -}}
+        {{- if .Values.enabled -}}
+        {{- include "conditional" . -}}
+        {{- end -}}
+        {{- end -}}
+    "#});
+    let seen = HashSet::from(["conditional".to_string(), "unrelated".to_string()]);
+
+    sim_assert_eq!(
+        have: db.helper_seen_key("conditional", &seen),
+        want: BTreeSet::from(["conditional".to_string()])
+    );
+}
+
+#[test]
+fn mutual_recursion_keeps_every_reachable_cycle_cut() {
+    let db = helper_db(indoc! {r#"
+        {{- define "a" -}}
+        {{- if .Values.enabled -}}{{ include "b" . }}{{- end -}}
+        {{- end -}}
+        {{- define "b" -}}
+        {{- include "a" . -}}
+        {{- end -}}
+    "#});
+    let summary = summarize_helper(&db, "a", []);
+    let seen = HashSet::from(["a".to_string(), "b".to_string(), "unrelated".to_string()]);
+
+    sim_assert_eq!(have: db.bound_helper_calls.borrow().len(), want: 2);
+    sim_assert_eq!(have: Rc::strong_count(&summary), want: 2);
+    sim_assert_eq!(
+        have: db.helper_seen_key("a", &seen),
+        want: BTreeSet::from(["a".to_string(), "b".to_string()])
+    );
+}
+
+#[test]
+fn relevant_cycle_cuts_do_not_share_helper_summaries() {
+    let db = helper_db(indoc! {r#"
+        {{- define "a" -}}
+        {{- .Values.from_a -}}
+        {{- include "target" . -}}
+        {{- end -}}
+        {{- define "target" -}}
+        {{- include "a" . -}}
+        {{- end -}}
+    "#});
+
+    let cut = summarize_helper(&db, "target", ["a"]);
+    let uncut = summarize_helper(&db, "target", ["unrelated"]);
+    let cut_paths = cut
+        .rendered
+        .iter()
+        .map(|row| row.path.clone())
+        .collect::<Vec<_>>();
+    let uncut_paths = uncut
+        .rendered
+        .iter()
+        .map(|row| row.path.clone())
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(have: Rc::ptr_eq(&cut, &uncut), want: false);
+    sim_assert_eq!(have: cut_paths, want: Vec::<ValuesPath>::new());
+    sim_assert_eq!(have: uncut_paths, want: vec![ValuesPath::parse("from_a")]);
+}
+
+#[test]
+fn dynamic_helper_names_retain_the_whole_active_chain() {
+    let db = helper_db(indoc! {r#"
+        {{- define "dynamic" -}}
+        {{- include .Values.helper . -}}
+        {{- include "dynamic" . -}}
+        {{- end -}}
+    "#});
+    let seen = HashSet::from(["dynamic".to_string(), "caller".to_string()]);
+
+    sim_assert_eq!(
+        have: db.helper_seen_key("dynamic", &seen),
+        want: BTreeSet::from(["caller".to_string(), "dynamic".to_string()])
+    );
+    let first = summarize_helper(&db, "dynamic", ["caller-one"]);
+    let second = summarize_helper(&db, "dynamic", ["caller-two"]);
+
+    sim_assert_eq!(have: Rc::ptr_eq(&first, &second), want: false);
+    sim_assert_eq!(have: db.bound_helper_calls.borrow().len(), want: 2);
+}
+
+#[test]
+fn unknown_expressions_retain_the_whole_active_chain() {
+    let db = helper_db(indoc! {r#"
+        {{- define "unknown" -}}
+        {{- 0x1p10000 -}}
+        {{- end -}}
+    "#});
+    let seen = HashSet::from(["unknown".to_string(), "caller".to_string()]);
+
+    sim_assert_eq!(
+        have: db.helper_seen_key("unknown", &seen),
+        want: BTreeSet::from(["caller".to_string(), "unknown".to_string()])
+    );
+}
+
+#[test]
+fn tpl_programs_retain_the_whole_active_chain() {
+    let db = helper_db(indoc! {r#"
+        {{- define "render-file" -}}
+        {{- tpl (.Files.Get "files/program.tpl") . -}}
+        {{- end -}}
+    "#});
+    let seen = HashSet::from(["render-file".to_string(), "caller".to_string()]);
+
+    sim_assert_eq!(
+        have: db.helper_seen_key("render-file", &seen),
+        want: BTreeSet::from(["caller".to_string(), "render-file".to_string()])
+    );
+    let first = summarize_helper(&db, "render-file", ["caller-one"]);
+    let second = summarize_helper(&db, "render-file", ["caller-two"]);
+
+    sim_assert_eq!(have: Rc::ptr_eq(&first, &second), want: false);
+    sim_assert_eq!(have: db.bound_helper_calls.borrow().len(), want: 2);
+}
+
+#[test]
+fn irrelevant_caller_chains_share_one_helper_summary() {
+    let db = helper_db(indoc! {r#"
+        {{- define "leaf" -}}
+        {{- .Values.value -}}
+        {{- end -}}
+    "#});
+
+    let first = summarize_helper(&db, "leaf", ["caller-one"]);
+    let second = summarize_helper(&db, "leaf", ["caller-two"]);
+
+    sim_assert_eq!(have: Rc::ptr_eq(&first, &second), want: true);
+    sim_assert_eq!(have: db.bound_helper_calls.borrow().len(), want: 1);
+}
 
 #[test]
 fn extracts_define_blocks_with_exact_body_spans() {
