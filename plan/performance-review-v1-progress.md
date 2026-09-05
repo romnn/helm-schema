@@ -1703,6 +1703,69 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: +47 (67,433 to 67,480).
 
+## Round E3 — remove small normalization, merge, and output dead work
+
+- Status: pre-registered; implementation pending.
+- Contract: make only the three frozen byte-exact cleanups: borrow contract-normalization identity
+  fields instead of cloning them for comparisons; compute canonical merge sort keys once with a
+  stable decorate–sort–undecorate pass; and bound retained pretty JSON bytes at Helm's file limit
+  while letting the CLI skip final-output metrics it never reads. Preserve schema ordering, pretty
+  and compact bytes, newline behavior, metrics for callers that request them, diagnostics, statuses,
+  provider caches, fixtures, public behavior, and wire formats. Add no global or cross-session state.
+- Acceptance baseline: `897fade1`, the completed E2 ledger on production commit `22bed389`.
+- Baseline production Rust LOC: 67,480.
+- Pre-registered acceptance expectations:
+  - Preserve an intermediate release executable after each subchange. The contract-normalization
+    candidate is measured on the three large charts, the canonical-sort candidate on grafana and
+    the three large charts, and the output candidate on default-pretty airflow and
+    kube-prometheus-stack plus compact output. A subchange with a proven regression is restored;
+    otherwise the frozen plan permits these proven dead-work deletions to land on byte identity.
+  - The final combined candidate has five randomized adjacent A/B pairs on all ten reference
+    charts. CPU medians, ranges, paired ranges, and load are recorded. Crossed-zero ranges are not
+    reported as gains.
+  - All ten schemas, stdout, JSON diagnostics, statuses, and both compact/default output bytes are
+    exact. All 156 schema artifacts and 18 IR artifacts remain exact. The 160-chart battery has zero
+    acceptance flips and zero candidate-accepts/Helm-aborts cells.
+  - Tests pin stable canonical ordering, the exact pretty-to-compact threshold including its
+    trailing newline, and equality of metrics-enabled versus CLI-unmeasured bytes. The large pretty
+    path retains at most Helm's threshold before falling back to compact serialization.
+  - Reject any subchange that changes a byte or has a wholly negative representative paired range.
+    The user's stable-non-regression direction applies when a cleanup is positive but modest.
+- Performance baseline: E2 CPU medians in reference order are 0.14, 0.08, 0.19, 0.33, 2.35, 1.04,
+  1.76, 8.75, 6.07, and 7.80 s. R1 attributed `normalize_contract_uses` self time of 2,359, 310,
+  and 642 ms to datadog, airflow, and kube-prometheus-stack; output metrics and default-pretty
+  double serialization sit outside the compact-only frozen curve and need separate measurement.
+- Measured results: pending.
+- Deviations: pending.
+- Adjudication evidence: pending byte, artifact, and battery gates against Helm v4.2.3.
+- Public/wire decision: pending; the intended changes preserve all existing output bytes and
+  metrics-enabled behavior.
+
+### Review dossier
+
+- Pending intermediate binaries, representative pairs, final curve, byte comparisons, focused
+  tests, and final-tree gates.
+
+### Self-adversarial pass
+
+- Borrowed render-site keys may not outlive or overlap mutation of the `uses` vector. Compute keep
+  decisions under the immutable borrow, drop the key set, then retain rows.
+- Stable output order is part of the wire contract. Decorated keys must use stable sorting and move
+  the original values without recomputing or changing tie order.
+- Pretty output at exactly `HELM_MAX_CHART_FILE_BYTES` must still fall back to compact output, and
+  the trailing newline is appended after that threshold decision exactly as before.
+- A counting writer that discards all pretty bytes would serialize small schemas twice. Retain bytes
+  only while below the limit; once the limit is crossed, clear them and count without further
+  growth.
+- Metrics remain available through the existing API. Only the CLI path that discards them may opt
+  out, preventing a performance round from becoming a public API break.
+
+### Gates on the final tree
+
+- Pending.
+
+- Measured production LOC delta: pending.
+
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
 - Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
