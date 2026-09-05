@@ -1053,6 +1053,68 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
 
+## Round R1 — re-trace the post-A3 residual
+
+- Status: pre-registered; measurement in progress.
+- Contract: make no shipped code, schema, diagnostic, status, fixture, corpus-input, or wire-format
+  change. Capture fresh Perfetto traces for datadog, airflow, and kube-prometheus-stack on the
+  adopted A3 tree; answer the frozen plan's counter questions with temporary session-owned
+  instrumentation; restore that instrumentation completely; and replace the plan's estimates for
+  A4, A5, A6, A7, and E2 here before starting any of those items. No process-global counter or
+  cache is permitted.
+- Acceptance baseline: `fbc03204` for the adopted A3 production and fixture tree; `12aa5f47` for
+  the completed A3 ledger state.
+- Baseline production Rust LOC: 67,373.
+- Pre-registered acceptance expectations:
+  - The final R1 tree is byte-for-byte identical to `12aa5f47` outside this ledger. All ten
+    reference schemas, stdout, JSON diagnostics, exit statuses, 156 schema artifacts, and 18 IR
+    artifacts remain exact; the frozen plan remains unchanged.
+  - Each large-chart trace is accepted only when its wall/CPU ratio is at most 1.10 and no build
+    overlaps it. Phase accounting uses inclusive span time minus direct child spans, matching the
+    frozen protocol, and records load1 at invocation start.
+  - Temporary counters report predicate calls and distinct inputs, helper calls and misses plus
+    call-chain/`seen`-only misses, second scalar-projection computations and reads, and validator
+    calls plus distinct complete `(wrapped document, instance)` keys. They are owned by the chart
+    analysis/generation session and removed before the final gates.
+  - A4 is abandoned without a spike when datadog's post-A3 `seen`-only share of helper-miss time is
+    below 10%. A5 remains study-only and is rejected when the seven caller-context evaluations no
+    longer cost at least 2 s or the consultation sites cannot be proved total. A6 is rejected when
+    its measured residual cannot plausibly yield a 5% paired gain on the single-template chart. A7
+    is rejected when its second-pass consumed fraction exceeds 80% or its residual cannot plausibly
+    yield a 5% Datadog gain. E2 advances only when complete-key reuse is at least 50% and its
+    measured compile residual can plausibly clear the frozen large-chart criterion.
+- Performance baseline: the adopted A3 curve is 9.81 s CPU median for datadog, 6.34 s for airflow,
+  and 8.48 s for kube-prometheus-stack. The corresponding A3-over-A3a paired gains are 7.22%,
+  45.01%, and 49.10%; R1 must not infer a residual from the frozen 63-chart-era estimates.
+- Measured results: pending.
+- Deviations: pending.
+- Adjudication evidence: Helm v4.2.3; R1 is measurement-only and must end at the already-adjudicated
+  A3 semantic tree with zero new acceptance flips.
+- Public/wire decision: pending the trace and counter evidence; R1 itself has no public or wire
+  change.
+
+### Review dossier
+
+- Pending. Every accepted and invalidated trace/counter command, cache path, `TMPDIR`, load record,
+  executable digest, and trace-query command will be recorded here.
+
+### Self-adversarial pass
+
+- A trace captured under scheduler contention can make a collapsed residual look artificially hot
+  or cold; wall/CPU validation and per-run load are mandatory.
+- Sampling alone cannot establish cache hit rates or consumed fractions. Decisions require exact
+  session-owned counters, and counter builds are never used for timing.
+- Aggregate memo sizes can hide duplication across separately owned analysis phases. Counter output
+  must preserve the owning session/phase identity before totals are reconciled.
+- An estimate inherited from the frozen plan after A3's 45--49% large-chart gain is stale by
+  construction. Every downstream decision must use this checkpoint's measured residual.
+
+### Gates on the final tree
+
+- Pending after all temporary instrumentation has been removed.
+
+- Measured production LOC delta: pending; expected 0.
+
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
 - Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
