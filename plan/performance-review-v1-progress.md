@@ -1536,7 +1536,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round E2 — memoize conditional-schema acceptance checks
 
-- Status: pre-registered; implementation pending.
+- Status: landed in `22bed389`.
 - Contract: add one generation-owned memo for
   `conditional_target_schema`'s `(complete wrapped schema document, declared-default instance)`
   acceptance result. The wrapped document includes the injected Helm-truthy definition. Keys use
@@ -1566,15 +1566,99 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Performance baseline: the adopted A4 medians are 8.54 s datadog, 6.18 s airflow, and 8.39 s
   kube-prometheus-stack. R1's pre-E2 `collect_conditional_schemas` self spans are 327, 1,024, and
   1,647 ms; they must be re-measured against an A4 baseline trace in the same quiet window.
-- Measured results: pending.
-- Deviations: pending.
-- Adjudication evidence: pending byte, cache, artifact, and battery gates against Helm v4.2.3.
-- Public/wire decision: pending; the intended memo is private and generation-owned.
+- Measured results:
+
+  | chart | pairs | A4 CPU s median (range) | E2 CPU s median (range) | paired decision (range) | load1 range |
+  |---|---:|---:|---:|---:|---:|
+  | coredns | 5 | 0.15 (0.15--0.15) | 0.14 (0.14--0.15) | neutral; 6.67% (0.00--6.67%) | 4.50--4.86 |
+  | metrics-server | 5 | 0.09 (0.09--0.09) | 0.08 (0.08--0.08) | gain; 11.11% (11.11--11.11%) | 4.86--4.86 |
+  | istiod | 5 | 0.19 (0.19--0.20) | 0.19 (0.18--0.20) | not proven; 0.00% (-5.26--5.26%) | 4.86--4.86 |
+  | cert-manager | 5 | 0.35 (0.35--0.36) | 0.33 (0.33--0.33) | gain; 5.71% (5.71--8.33%) | 4.86--5.03 |
+  | argo-cd | 5 | 2.68 (2.63--2.72) | 2.35 (2.33--2.41) | gain; 11.40% (10.27--13.06%) | 4.95--5.62 |
+  | grafana | 5 | 1.14 (1.14--1.16) | 1.04 (1.04--1.05) | gain; 8.77% (8.70--9.48%) | 5.62--6.30 |
+  | cilium | 5 | 1.90 (1.90--1.94) | 1.76 (1.75--1.77) | gain; 7.89% (7.37--8.76%) | 6.28--6.98 |
+  | datadog | 5 | 8.85 (8.78--8.87) | 8.75 (8.69--8.77) | gain; 1.03% (0.91--1.69%) | 5.48--6.78 |
+  | airflow | 5 | 6.47 (6.43--6.51) | 6.07 (6.04--6.11) | gain; 6.18% (4.98--6.65%) | 4.62--5.18 |
+  | kube-prometheus-stack | 5 | 8.57 (8.53--8.60) | 7.80 (7.79--7.85) | gain; 8.87% (8.56--9.31%) | 4.28--4.82 |
+
+  - Nine charts are non-negative in every pair; Istiod's one-tick noise crosses zero and is not
+    promoted as a gain. No chart has a wholly negative range.
+  - Three randomized trace pairs per large chart measure
+    `collect_conditional_schemas` self time:
+
+    | chart | A4 self ms median (range) | E2 self ms median (range) | paired reduction median (range) |
+    |---|---:|---:|---:|
+    | datadog | 321.713 (320.845--333.938) | 230.621 (226.554--231.706) | 29.39% (27.98--30.94%) |
+    | airflow | 986.890 (982.098--993.241) | 616.770 (612.388--633.792) | 37.20% (36.19--37.95%) |
+    | kube-prometheus-stack | 1,627.745 (1,623.946--1,630.444) | 913.659 (892.141--914.692) | 43.90% (43.74--45.19%) |
+
+  - The large-chart median phase reduction is 37.20%, above the frozen 30% gate. Datadog alone is
+    0.61 percentage points short, consistent with R1's much smaller 0.119 s compile residual; the
+    two charts with material residuals clear the gate by 7--14 points.
+  - All ten output-channel comparisons, 156 schema artifacts, 18 IR artifacts, and all 80
+    cold/warm/offline cache-state comparisons are exact. The final battery checks 160 charts and
+    284,863 probes with zero flips.
+- Deviations:
+  - The first implementation made the uncached declared-default path clone every schema. That was
+    corrected before final measurement so only the conditional memo owns complete key documents.
+  - Adding the eighth function argument made the first `task lint` attempt exit 201, and
+    `debug_assert_eq!` hit the workspace's disallowed equality macro. A small
+    `ConditionalTargetContext` now carries the values document and generation memo together,
+    preserving the seven-argument boundary. A second lint attempt then caught
+    `debug_assert!(left == right)` as `manual_assert_eq`; the final spelling uses `bool::eq` inside
+    the required debug assertion. No lint suppression was added.
+  - The lint-driven context change altered the release binary hash. All preliminary phase and
+    ten-chart measurements from candidate `6df0331a…` were invalidated even though their gains were
+    similar. Every decision number above comes from final binary `1634967e…`.
+  - The first final-battery attempt exited 101 because its new `TMPDIR` did not yet exist and clang
+    could not create a temporary assembly object. Creating that exact directory and rerunning the
+    exact command produced the recorded clean result.
+  - An earlier zero-flip battery completed before the final lint-driven source edit and is retained
+    only as superseded evidence. `battery-final2` is after every source change.
+  - MediaAnalysis remained active during the final measurement window. Load1 stayed 4.28--6.98;
+    randomized adjacent pairs and the narrow wholly positive ranges on every material chart keep
+    the decision comparative. Absolute cross-round medians are not used as the gain claim.
+  - The frozen rejection text does not state whether the 30% span threshold applies to every chart
+    or the measured large-chart set. The preregistration also said only that the three large charts
+    would be traced. The decision uses their median (37.20%); Datadog's 29.39% miss is disclosed
+    rather than rounded upward. This also follows the user's later instruction to retain modest,
+    non-regressing improvements.
+- Adjudication evidence: Helm v4.2.3. The final round-74 battery reports 160 charts, 284,863 probes,
+  and zero flips, hence zero candidate-accepts/Helm-aborts cells. Ten-chart schemas, stdout, JSON
+  diagnostics, statuses, provider-cache modes, and all owned artifacts are exact.
+- Public/wire decision: none. The cache is an owned local in `collect_conditional_schemas`, reached
+  through an explicit lowering context and dropped when that generation ends. Concurrent library
+  calls neither share nor compete for it, and clearing it means dropping the generation state.
 
 ### Review dossier
 
-- Pending implementation, copied binaries, exact complete-key tests, cache triple, byte gate,
-  randomized pairs, phase traces, and final-tree gates.
+- Focused proof: `cargo test -p helm-schema-gen
+  conditional_schema_acceptance_memo_uses_complete_exact_keys --lib`; exit 0. The test proves exact
+  schema/instance reuse, instance separation, and inclusion of the injected Helm-truthy definition
+  in stored keys. Debug builds recompute every hit through the uncached validator path.
+- Candidate build: `cargo build --release -p helm-schema-cli`, copied immediately to
+  `/private/tmp/helm-schema-performance-v1.LSEe9Y/bin/helm-schema-e2-final2`; SHA-256
+  `1634967e9c706765ad825f98350978139fcaea093979d4e863190578c62c3947`.
+- Ten-chart byte evidence is under `e2/byte-final2`. Baseline A4 and E2 set
+  `HELM_SCHEMA_K8S_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/k8s` and
+  `HELM_SCHEMA_CRD_SCHEMA_CACHE=/private/tmp/helm-schema-performance-v1.LSEe9Y/cache/crd`, then run
+  `testdata/charts/<chart> --compact --offline --k8s-version v1.35.0 --diag-format json --output
+  <schema>` with stdout, JSON stderr, and status captured separately.
+- Cache-state evidence is under `e2/cache-triple-final2`: one fresh snapshot, every chart online
+  once empty, online again warm, then offline warm. Schema, stdout, stderr, and status match across
+  both comparisons for all ten charts.
+- Final randomized timings and trace pairs are under `e2/measure-final2` and
+  `e2/trace-pairs-final`. Every invocation records order, UTC start, load1, `/usr/bin/time -p`, and
+  separate output channels. `trace_processor_shell query` subtracts direct child slices to compute
+  `collect_conditional_schemas` self time.
+- Acceptance battery:
+  `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/e2/battery-final2
+  SCHEMA_ACCEPTANCE_BASELINE_REF=947aa4df
+  SCHEMA_PROBE_COVERAGE_REPORT=/private/tmp/helm-schema-performance-v1.LSEe9Y/e2/battery-final2/coverage.json
+  ADJUDICATE_WITH_HELM=1 cargo nextest run -p helm-schema --profile integration --test
+  schema_emission_profiles -E
+  'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)' --run-ignored
+  ignored-only --no-capture`; exit 0, one test passes in 144.479 s; total command duration 156.99 s.
 
 ### Self-adversarial pass
 
@@ -1588,12 +1672,36 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   same uncached validator path, and any mismatch rejects the round.
 - Session ownership keeps concurrent library generations independent and makes clearing equivalent
   to dropping the generation state.
+- Debug hit recomputation deliberately prevents E2 from accelerating debug tests. It is a
+  correctness tripwire; the measured speedup exists only in release builds, where the assertion is
+  compiled out.
+- HashMap iteration never affects output because entries are queried only by exact key and the
+  stored Boolean is never enumerated. Randomized hash state therefore cannot change determinism.
 
 ### Gates on the final tree
 
-- Pending.
+- `cargo fmt --check`: exit 0; 1.12 s.
+- `task lint`: exit 0; 17.86 s. Whole-workspace Clippy and all three AST-grep policies pass; the
+  scan repeats two existing multiline-literal warnings.
+- `task lint:fc`: exit 0; 48/48 combinations pass in 77.10 s; total command duration 77.99 s.
+- `cargo nextest run --workspace`: exit 0; 1,357/1,357 tests pass in 9.306 s after a 37.92 s
+  rebuild; total command duration 47.81 s.
+- `task test:integration`: exit 0; 669/669 tests pass in 256.074 s, with 24 profile skips; total
+  command duration 258.12 s.
+- `task test:all`: exit 0; 2,030/2,030 tests pass in 257.284 s, with 24 profile skips and live
+  network tests included; total command duration 258.64 s.
+- Corpus battery: exit 0; 160 charts, 284,863 probes, zero flips; 144.479 s test time and 156.99 s
+  total command duration.
+- Downstream luup2: not triggered because E2 is representation-only and every schema, diagnostic,
+  status, fixture, and acceptance channel is exact. The campaign's 32/32 A3/C1 downstream result
+  remains green.
+- `task tokei:core`: exit 0; 67,480 production Rust LOC in 0.95 s.
+- Artifact gate, `git diff --exit-code 947aa4df -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`: exit 0; 156 schema and 18 IR artifacts exact; under 0.01 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.01 s.
+- `git diff --check`: exit 0; 0.02 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +47 (67,433 to 67,480).
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
