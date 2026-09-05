@@ -1092,3 +1092,55 @@ Next: finish F23/D3's focused returned-output corrections; first run `cat /priva
   `round2/f46-groundwork.md`, `round2/f46-boundary-trace.log`. No F46 fix is claimed.
 
 Next: finish the three bounded F23/D3 output corrections in correction.m6Nvh1 and collect Fable's review; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/opaque-output-probe/adjudication.md`.
+
+### Continuation checkpoint — corrections, review evidence and disk cleanup
+
+- Fable review four completed with exit 0; report
+  `round2/review4/claude-messages.md`. It independently confirmed the weaker
+  ordinary-value lowering, adding default/identity and mixed `toYaml` examples,
+  and suspected mixed intrinsic indentation. Cache projection and invocation
+  fixes verified clean. Parent rejects the proposed `has_output=false` stopgap:
+  known structural facts must survive through the shared lowering. No convergence
+  is claimed until the corrected mechanism is re-verified.
+- In `correction.m6Nvh1`, the three bounded corrections and additional Fable
+  controls reached 509 passing focused tests. Ordinary and selected output now
+  share `LowerScope`-backed lowering; proved literal output and scalar dispatch
+  agree; applied indentation has explicit Unchanged/Known/Unknown states.
+  Differing layouts abstain from guessed placement while retaining ordinary
+  dependency/evaluation facts; complete per-arm layout precision is not claimed.
+  Ten-file manifest and handoff: `round2/d3-review4-correction-files.json` and
+  `round2/d3-review4-correction-handoff.md`. A bounded cleanup now avoids computing
+  this derived output when the existing `has_output` decision proves it unused;
+  those 509 results do not count as the final tree's rerun after that cleanup.
+- Environmental deviation: transient ENOSPC interrupted formatting and both
+  targeted commands, exits 1/101/101. Source-integrity checks found no truncation.
+  Exactly one retry of each succeeded, exits 0/0/0. The user then explicitly
+  requested removal of no-longer-needed temporary data.
+- Cleanup, with all builds paused and required diagnostic executables copied out:
+  removed the regenerable build caches `round2/f74-standalone-target`,
+  `round2/f23-target`, `round2/a3-differential-target`,
+  `round2/f77-final-signals-probe/target`, and `round1/oracle-probe/target`.
+  Removal exited 0 and reclaimed about 24 GiB. These artifacts can be rebuilt;
+  source, final dumps, reviews, logs and comparison binaries were not removed.
+- The active 16 GiB `round2/target` cache was moved, not deleted, to
+  `/Volumes/T7/dev/helm-schema-bughunt-cache.srGPpP/round2-target` (exit 0).
+  Its old path is now a symlink. Future private builds share that T7 cache rather
+  than creating another large internal-disk target directory.
+- Both large Datadog `raw-contract.txt` files under
+  `round2/a3-differential-evidence/{baseline,reversed}/datadog-phases` are now
+  losslessly compressed as `.txt.gz`. Original SHA-256 values are recorded in
+  `raw-contract-uncompressed-sha256.txt`; compression and integrity checks exited
+  0. Decompression restores the original evidence. The internal temp tree now
+  measures 5.4 GiB, down from about 48 GiB before the cache move; the Mac reports
+  67 GiB free. T7 reports 63 GiB free. No repository source or Git state was
+  removed as part of cleanup.
+- Exact A3 differential update: F77's unconditional string requirement survives
+  raw capture, normalized rows and final path evidence in both variants. Only
+  the reversed shortcut supplies an additional conditional string overlay that
+  survives emission. A minimal whole-image serialization plus strict repository
+  consumer reproduces the loss; current investigation is generator ancestor
+  ownership, not the separately proven final-signals metadata loss. F78 likewise
+  retains captures and requires a distinct host-placement trace. No family or
+  performance-campaign obligation is closed from these partial diagnostics.
+
+Next: freeze and re-verify the bounded output correction, then run its final build/dump/battery; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/d3-review4-correction-handoff.md`.
