@@ -787,3 +787,65 @@ Next: compiler batch F23/D3/F74 in isolated implementation.kR1Lpd; first run `ca
   are repaired, with a focused corrective ensemble still required before adoption.
 
 Next: finish bounded compiler corrections and focused corrective review; first run `git diff -- crates/helm-schema-ir/src/static_file_template.rs`.
+
+### Round 2 review-two checkpoint — do not land this candidate
+
+- Status: the compiler batch remains uncommitted and unresolved. Main contains the
+  review-two candidate; corrective work continues in `implementation.kR1Lpd`.
+  Score remains 2/83. No fixtures have been adopted. No final dump or battery has
+  been represented as complete.
+- Integrated corrections: caller-aware `tpl` arguments; library-template roles;
+  typed runtime-default consumers with no document getter; data-target reference
+  abstention; per-array reference protection. Main focused checks: IR 407/407,
+  namespace 15/15, generator/minifier/walker selection 109/109, all exit 0.
+  Library engine tests 2/2 pass after correcting an expected set to include the
+  synthetic `global` input admitted by `analysis/collection.rs:39`. The initial
+  library expectation failed, exit 100; no filtering or production change hid it.
+- Corrective ensemble: `<root>/round2/review2/{brief.md,tracked.diff,new-*.diff}`.
+  Native report `astra-out.md` confirms a blocker. Fable's read-only review is
+  still running; do not count an undelivered report as coverage.
+- Confirmed blocker: `collect_template_requests_from_helper` scans a helper body
+  without its control-flow predicates. The new context resolution can discover a
+  payload previously missed by that second scan and hoist its `required` effect.
+  Witness: `round2/tpl-controlflow-review`, with underscore helper bodies and
+  `tpl` under `if .Values.enabled`, transporting `.Template` in a dict. Pinned Helm
+  4.2.3/kube 1.29 verdicts for disabled/missing token, enabled/missing token,
+  enabled/valid token, disabled/null token: render, abort, render, render. Current
+  candidate: reject, reject, accept, reject. `tpl-controlflow*.{schema.json,jsonl,yaml,log}`
+  retain input and evidence. The current candidate is wrong; the exact prior-binary
+  causal comparison is not yet measured.
+- Chosen structural correction in progress: delete the duplicate helper-body scan
+  and the direct expression pre-scan, execute static `tpl` at the existing expression
+  invocation boundary, and return the existing `EvalResult`/`Effects`/`FragmentSummary`.
+  This lets normal helper control flow and `and`/`or` execution predicates scope
+  the effects. Adding guards to another scanner was rejected because it preserves
+  the parallel execution model. Deletion-only helper controls already pass in the
+  isolated tree; direct lazy-operand handling remains in progress.
+- Performance floor FAILED, exit 0 means measurement succeeded, not gate acceptance.
+  Three-run CPU medians versus round0: Datadog 8.01 → 9.63 s (+20.2%), Airflow
+  5.67 → 8.55 s (+50.8%), kube-prometheus-stack 7.53 → 9.58 s (+27.2%). No build
+  overlapped measurement. Copied binary `bin/helm-schema-round2-review2`; evidence
+  `round2/timings-review2/summary.json` and per-run output, diagnostics, exit, timing
+  and hash files. Online/offline and repeated outputs matched. This candidate
+  cannot land unchanged; the working changes are retained for structural repair,
+  not accepted as a slower new baseline.
+- Airflow phase attribution, paired preserved binaries: baseline 6.14 CPU/6.29 wall,
+  candidate 8.20 CPU/8.36 wall, both trace ratios below 1.10. No overlapping builds;
+  load about 6.7. `analyze_charts` 2,946 → 4,868 ms; helper-summary invocations
+  1,820 → 3,251; minifier 312 → 405 ms. Inclusive nested helper spans are not
+  additive phase time. Traces `round2/phase-profile/{baseline,candidate}.pftrace`;
+  trace parser reports 1,680/1,799 misplaced-end notices, the existing tracing
+  limitation, not a pristine trace claim. A brief baseline query overlapped the
+  candidate trace; ordinary untraced medians above remain the floor evidence.
+- Cache repair in progress: extend existing parsed-helper dependency facts with a
+  proof that caller filename is unobservable, initially only for unchanged root
+  passthrough arguments. Unknown syntax, reflection, root escape, dynamic calls,
+  and `tpl` retain full keys. Never remove explicit nested caller data or tune a
+  cap. Design: `round2/d3-cache-observability-design.md`. Actual timing must prove
+  benefit after the final correction, not infer it from invocation counts.
+- Next-family overlap: bounded read-only F77/F78 phase-localization groundwork saved
+  in `round2/f77-f78-groundwork.md`. Historical provider-free binaries reproduce
+  movement, but original captures survive row normalization independently, so
+  normalization is not yet established as the first loss. No F77/F78 fix claimed.
+
+Next: complete expression-owned tpl evaluation and proved-safe helper cache reuse; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/review2/astra-out.md`.
