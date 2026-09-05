@@ -1860,7 +1860,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A7 — lazily compute the second helper scalar projection
 
-- Status: pre-registered; counter pending before implementation.
+- Status: counter complete and restored; implementation pending.
 - Contract: first re-measure second scalar-projection executions and consumers on the post-A4/E3
   tree with throwaway per-summary/tracing-only state, then restore it. If eligible, defer only the
   existing second scalar interpreter pass behind a summary-owned `OnceCell`, retaining the original
@@ -1891,15 +1891,37 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   1.71, 8.54, 5.90, and 7.60 s CPU. R1 measured pre-A4 consumed fractions of 75.2%, 57.0%, and
   61.6%, with proportional avoidable time estimates of 0.412, 0.190, and 0.051 s; those values are
   hypotheses until the post-A4 counter completes.
-- Measured results: pending.
-- Deviations: pending.
+- Measured results:
+
+  | chart | second-pass runs | uniquely consumed summaries | consumed fraction | avoidable runs |
+  |---|---:|---:|---:|---:|
+  | datadog | 369 | 204 | 55.3% | 165 |
+  | airflow | 754 | 380 | 50.4% | 374 |
+  | kube-prometheus-stack | 181 | 92 | 50.8% | 89 |
+
+  - All three charts remain well below the frozen 80% rejection threshold. A4 reduced absolute
+    Datadog pass executions from R1's 1,090 to 369, but the unconsumed fraction grew from 24.8% to
+    44.7%. A7 remains eligible; the likely whole-run gain is now modest rather than 5%.
+  - Implementation and candidate measurements remain pending.
+- Deviations:
+  - The counter runs began at load1 10.84--11.94 immediately after their release build. Counts are
+    deterministic trace events and remain valid; their 8.87, 6.36, and 8.05 s CPU values are not
+    used as performance evidence.
 - Adjudication evidence: pending byte, cache, artifact, and battery gates against Helm v4.2.3.
 - Public/wire decision: pending; the intended deferred state is private and summary-owned.
 
 ### Review dossier
 
-- Pending counter binary/restoration, implementation, copied binaries, focused tests, cache triple,
-  byte gate, randomized pairs, and final-tree gates.
+- Counter binary `helm-schema-a7-counter` has SHA-256
+  `f3ba3bc068f0fd7eea088f2bb64667e1d5650a33a36c5e8e0915c8ca685f7a3b`. Traces are under
+  `a7/counter/{datadog,airflow,kube-prometheus-stack}`. Each summary records whether its second pass
+  ran and uses a summary-owned `Cell<bool>` to emit the consumed event only on its first resolver
+  read. SQL joins `slice.arg_set_id` to `args.arg_set_id` and counts `debug.message` values
+  `a7_scalar_projection_run` and `a7_scalar_projection_consumed`.
+- Restoration gate, `git diff --exit-code c0147b86 -- crates/helm-schema-ir/src/fragment_eval/summary.rs
+  crates/helm-schema-ir/src/fragment_expr_eval/bound_helper_resolver.rs`: exit 0. Implementation,
+  candidate binaries, focused tests, cache triple, byte gate, randomized pairs, and final gates are
+  pending.
 
 ### Self-adversarial pass
 
