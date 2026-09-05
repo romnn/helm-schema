@@ -933,3 +933,91 @@ Next: complete expression-owned tpl evaluation and proved-safe helper cache reus
   differential establish it. The performance campaign's A3 obligation remains open.
 
 Next: finish F74's redundant-copy correction and D3's returned-resource transport; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/f74-timings/summary.json`.
+
+### Round 2a closed — F74 complete schema deduplication
+
+- Status: fixed, committed as `12c62e6e`. Acceptance baseline `4dd9f3e5`.
+  Scorecard: F79 fixed, F74 fixed, F73 policy-decided; 3/83 resolved (3.6%).
+  F23/D3 remains active and uncommitted, not deferred. This independent landing
+  follows the user's instruction to stop coupling ready work to unresolved work.
+- Contract and faithful target: validation-equivalent sharing preserves all
+  constraints, descriptions, lexical reference scopes and reachable pointer
+  targets. It changes serialization, not accepted values. All 18 frozen size
+  witnesses must pass Helm's actual default-output file loader without discarding
+  detail. No chart-specific rule, tuned threshold or writer policy was added.
+- Compiler change: extend the existing immutable metadata/planning and emission
+  passes to existing definitions and reference siblings, recursively emit exact
+  representatives, protect pointer targets and ancestors, and inline unprofitable
+  generated bodies. Move dead owned-body pruning before minimization. Existing
+  provider decoration sharing remains because the generic sharing is not an
+  equivalent replacement for that distinct earlier fact. A full new interner was
+  rejected in favor of completing the existing mechanism.
+- Type-enforced boundary: every schema-child visitor must explicitly select
+  `ReferenceSiblings::Skip` or `Visit`; an implicit leaf-policy call no longer
+  compiles. Existing non-minifier consumers preserve their deliberate policy.
+  Exact equality remains required after fingerprint screening. Unsupported
+  external or data-position reference graphs preserve the input rather than
+  silently treating a guessed resolution as fact.
+- Review dossier: F74 was reviewed in the major-batch native Astra/Fable rounds
+  `round2/review1` and `round2/review2`; briefs, deterministic diffs and both
+  reports are retained there. Confirmed protection findings were repaired:
+  local pointers through data positions now abstain before normalization, and
+  pointer protection is per affected logical array rather than an entire object.
+  No substantive F74 finding remained; later reviews target D3, not clean F74
+  edits. Permanent minifier/walker controls cover nested sharing, scopes,
+  escaped and data-position pointers, collisions, reference siblings, metadata,
+  determinism and repeated minimization. The final in-place substitution control
+  also verifies one-step replacement and untouched data/nested scopes.
+- Performance correction: generated-reference inlining now mutates the owned
+  rewritten tree instead of rebuilding it. This deletes an unnecessary map pass;
+  it does not add a planner or another representation. Parent architecture review
+  verdict: sound ownership correction, with identical schema-position, scope and
+  one-step substitution laws. The user's major-change review cadence does not
+  require another ensemble for this bounded output-preserving correction.
+- Performance floor passed against the unchanged round0 floor: Datadog 8.01 →
+  8.25 CPU s (+3.0%), Airflow 5.67 → 5.75 (+1.4%), kube-prometheus-stack
+  7.53 → 7.99 (+6.1%). Every run was retained; KPS ranged 7.74–9.24 s.
+  Measurement command exited 0, no builds overlapped, copied locked-build binary
+  `round2/f74-standalone-evidence/helm-schema-inplace`. Evidence:
+  `round2/f74-inplace-timings/summary.json` and per-run hashes/load/CPU records.
+  The paired trace measured only 18.7 ms saved in Airflow's minifier; do not
+  attribute the entire lower end-to-end median to that copy removal. The earlier
+  failed floor remains recorded above, not replaced or silently absorbed.
+- One fresh final dump: `round2/f74-inplace-dump.pyKfUr`, 165 tests, exit 0.
+  All 203 mapped artifacts exactly match the preceding independently adjudicated
+  candidate and the isolated adopted fixtures, parity exit 0. No mixed batches.
+  The final candidate-dump battery against `4dd9f3e5`, with
+  `ADJUDICATE_WITH_HELM=1`, exited 0: 160 profiles, 284,867 probes, zero screened
+  acceptance flips. Coverage: `round2/f74-standalone-evidence/inplace-coverage.json`.
+  Zero flips is the intended optimization identity, not fixture self-comparison:
+  159 changed fixtures were established and explicitly compared before adoption.
+  This finite screen is not a proof of arbitrary-schema equivalence; structural
+  regression tests and reference invariants provide the complementary argument.
+- Fixture movement: 154 corpus, two lean and three final-output fixtures changed;
+  all IR and generator fixtures remain identical. No acceptance movement was
+  found in any roster; no intake promotion follows size-only movement. Roster
+  sizes remain intake 100, quarantine 24, known valid rejections four. Contaminated
+  fixtures remain the same nine from round0. Final emitted sizes and all 18 pinned
+  Helm loader exits (each 0) were rechecked from the fresh final dump.
+- Final-tree gates, each own exit 0 in
+  `round2/f74-standalone-evidence/exits.tsv` under `inplace-final-*` labels:
+  `cargo fmt --check`; `task lint`; `task lint:fc` (configured cargo-fc 0.7);
+  `cargo nextest run --workspace` (1,379 passed); `task test:integration`
+  (689 passed, 24 skipped); `task test:all` (2,072 passed, 24 skipped);
+  `cargo install --path ./crates/helm-schema-cli/`; luup2 `check:local` with the
+  recorded xargs shim; `task tokei:core`; frozen-document diff against `cc1d2d32`;
+  `git diff --check`. The enclosing final script also exited 0. A malformed
+  intermediate focused-test command exited 2 and was corrected; it is not coverage.
+- Validation isolation: those full gates ran on the exact F74-only archive, not
+  the dirty experimental main tree. Every one of the 173 staged source/fixture
+  paths was compared with that archive before commit; the exact final SHA-256
+  manifest also verified in main, exit 0. Main minifier/walker tests were rerun
+  with the default filter explicitly disabled: 35 passed, exit 0, 0.050 s.
+  Main frozen-document and staged whitespace checks exited 0. No unrelated
+  F23/D3 file entered the commit. Nothing was pushed.
+- Production Rust LOC: 67,597 → 67,810, delta +213; all-language code +216.
+  Final handoff and sealed file manifest:
+  `round2/f74-inplace-final-handoff.md`,
+  `round2/f74-standalone-evidence/inplace-final-sha256.txt`.
+
+Next: finish F23/D3's focused returned-output corrections; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/review4/brief.md`.
