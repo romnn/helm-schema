@@ -1053,6 +1053,59 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,062 to 67,062).
 
+## Round A5 — study caller-context memo footprint
+
+- Status: pre-registered; study pending.
+- Contract: study only. Enumerate every production read site of
+  `root_truthy_predicates` and `root_value_dispatches` with current file and line, trace the access
+  path far enough to judge whether recorded accessors could be total, and reconcile the frozen
+  seven-evaluation premise with the R1 post-A3 counter. Make no production, test, fixture, corpus,
+  public API, schema, diagnostic, status, cache, or wire-format change. Do not implement the
+  footprint key after the frozen under-2-second rejection criterion has fired.
+- Acceptance baseline: `b9b2ba85`, the completed A7 ledger on production commit `c5aafe86`.
+- Baseline production Rust LOC: 67,597.
+- Pre-registered acceptance expectations:
+  - `rg` plus direct source inspection enumerates every field read and identifies whether any read
+    bypasses an accessor boundary. The dossier records file:line evidence and does not claim
+    totality merely from a name search if values can escape by cloning or whole-struct access.
+  - R1's owner-local counter remains the decision measurement: Airflow's
+    `@file:templates/configmaps/configmap.yaml` has two misses and 0.596 s inclusive on the post-A3
+    tree. Because 0.596 s is below the frozen 2 s threshold, A5 is expected to be rejected without
+    a code spike even if the access enumeration appears tractable.
+  - The final tree is identical to the A7 acceptance baseline outside this ledger. The A7 ten-chart
+    curve is the unchanged A5 curve: 0.13, 0.08, 0.17, 0.32, 2.21, 0.99, 1.70, 8.00, 5.67, and
+    7.51 s CPU in reference order. Schema and IR artifacts remain byte-exact.
+- Performance baseline: A7's five-pair candidate medians are 0.13, 0.08, 0.17, 0.32, 2.21, 0.99,
+  1.70, 8.00, 5.67, and 7.51 s CPU at load1 3.96--5.84. The A5-specific R1 residual is two
+  Airflow misses costing 0.596 s inclusive.
+- Measured results: pending source enumeration; the performance rejection measurement is already
+  fixed by R1.
+- Deviations: none yet.
+- Adjudication evidence: expected to inherit A7's Helm v4.2.3 zero-flip result because A5 permits no
+  code or fixture change.
+- Public/wire decision: pending study result; no public or wire change is permitted.
+
+### Review dossier
+
+- Pending source enumeration and final-tree identity checks.
+
+### Self-adversarial pass
+
+- A simple field-name search can miss reads after a whole `EvalEnv` or nested map is cloned and
+  passed elsewhere. Follow construction and escape sites before judging whether accessors can be
+  total.
+- Inclusive helper time is an upper bound on the caller-context-key opportunity. Treating all
+  0.596 s as removable would already overstate the possible whole-run gain.
+- The R1 counter predates A4, E2, E3, and A7. Those rounds can only make the unchanged 0.596 s
+  estimate stale; A5 must not reinterpret staleness as evidence that the cost grew above 2 s.
+- A rejected study does not justify speculative infrastructure or a partial accessor migration.
+
+### Gates on the final tree
+
+- Pending.
+
+- Measured production LOC delta: pending.
+
 ## Round R1 — re-trace the post-A3 residual
 
 - Status: complete; no production commit exists because R1 restores the exact A3 tree. The
