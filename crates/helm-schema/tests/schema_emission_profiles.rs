@@ -8,6 +8,11 @@ use test_util::prelude::sim_assert_eq;
 #[path = "common/emission_profile_harness.rs"]
 mod harness;
 
+#[path = "common/helm_adjudication.rs"]
+mod helm_adjudication;
+
+use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
+
 use harness::{
     ContractVerdict, ControlCategory, GuardSamplingStrategy, ProbeCoverage, ProbeInstance,
     ProfileSchemas, SemanticControl, Transport, generate_profile_outputs, generate_profile_schemas,
@@ -30,13 +35,77 @@ const PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE: usize = 0;
 #[derive(Debug, Default, Serialize)]
 struct HelmAdjudicationCoverage {
     enabled: bool,
+    /// Rust screening can miss flips that exact Helm coalescence would expose.
+    screening_is_exact: bool,
+    screened_flips: usize,
+    screened_flips_collapsed: usize,
     flips_adjudicated: usize,
+    tightenings_matched_helm_abort: usize,
+    tightenings_matched_kubernetes_rejection: usize,
+    loosenings_matched_kubernetes_validation: usize,
+    loosenings_with_uncertain_kubernetes_cases: Vec<String>,
     candidate_accepts_helm_aborts: usize,
     candidate_accepts_helm_abort_allowance: usize,
     candidate_accepts_helm_abort_cases: Vec<String>,
+    candidate_accepts_kubernetes_rejection_cases: Vec<String>,
+}
+
+impl HelmAdjudicationCoverage {
+    fn record_verdict(&mut self, verdict: HelmFlipVerdict, case: String) -> Option<bool> {
+        let candidate_accepts = match verdict {
+            HelmFlipVerdict::Collapsed => {
+                self.screened_flips_collapsed += 1;
+                return None;
+            }
+            HelmFlipVerdict::TighteningMatchedHelmAbort => {
+                self.tightenings_matched_helm_abort += 1;
+                false
+            }
+            HelmFlipVerdict::TighteningMatchedKubernetesRejection => {
+                self.tightenings_matched_kubernetes_rejection += 1;
+                false
+            }
+            HelmFlipVerdict::LooseningMatchedKubernetesValidation => {
+                self.loosenings_matched_kubernetes_validation += 1;
+                true
+            }
+            HelmFlipVerdict::LooseningWithUncertainKubernetes => {
+                self.loosenings_with_uncertain_kubernetes_cases.push(case);
+                true
+            }
+            HelmFlipVerdict::CandidateAcceptsHelmAborts => {
+                self.candidate_accepts_helm_aborts += 1;
+                self.candidate_accepts_helm_abort_cases.push(case);
+                true
+            }
+            HelmFlipVerdict::CandidateAcceptsKubernetesRejects => {
+                self.candidate_accepts_kubernetes_rejection_cases.push(case);
+                true
+            }
+        };
+        self.flips_adjudicated += 1;
+        Some(candidate_accepts)
+    }
 }
 
 fn validate_helm_adjudication_coverage(coverage: &HelmAdjudicationCoverage) -> eyre::Result<()> {
+    eyre::ensure!(
+        coverage.flips_adjudicated
+            == coverage.tightenings_matched_helm_abort
+                + coverage.tightenings_matched_kubernetes_rejection
+                + coverage.loosenings_matched_kubernetes_validation
+                + coverage.loosenings_with_uncertain_kubernetes_cases.len()
+                + coverage.candidate_accepts_helm_abort_cases.len()
+                + coverage.candidate_accepts_kubernetes_rejection_cases.len(),
+        "adjudicated flip outcome accounting mismatch: {coverage:?}"
+    );
+    eyre::ensure!(
+        coverage
+            .candidate_accepts_kubernetes_rejection_cases
+            .is_empty(),
+        "accepted-but-Kubernetes-rejected cells: {:?}",
+        coverage.candidate_accepts_kubernetes_rejection_cases
+    );
     eyre::ensure!(
         coverage.candidate_accepts_helm_aborts == coverage.candidate_accepts_helm_abort_cases.len(),
         "accepted-but-Helm-aborting accounting mismatch: {coverage:?}"
@@ -167,9 +236,48 @@ fn helm_adjudication_validation_rejects_unregistered_accepted_abort() {
         candidate_accepts_helm_aborts: 1,
         candidate_accepts_helm_abort_allowance: 0,
         candidate_accepts_helm_abort_cases: vec!["chart: probe".to_string()],
+        ..HelmAdjudicationCoverage::default()
     };
 
     assert!(validate_helm_adjudication_coverage(&coverage).is_err());
+}
+
+#[test]
+fn helm_adjudication_records_each_outcome_once() {
+    let mut coverage = HelmAdjudicationCoverage::default();
+    for (verdict, accepted) in [
+        (HelmFlipVerdict::Collapsed, None),
+        (HelmFlipVerdict::TighteningMatchedHelmAbort, Some(false)),
+        (
+            HelmFlipVerdict::TighteningMatchedKubernetesRejection,
+            Some(false),
+        ),
+        (
+            HelmFlipVerdict::LooseningMatchedKubernetesValidation,
+            Some(true),
+        ),
+        (
+            HelmFlipVerdict::LooseningWithUncertainKubernetes,
+            Some(true),
+        ),
+        (HelmFlipVerdict::CandidateAcceptsHelmAborts, Some(true)),
+        (
+            HelmFlipVerdict::CandidateAcceptsKubernetesRejects,
+            Some(true),
+        ),
+    ] {
+        sim_assert_eq!(have: coverage.record_verdict(verdict, "case".to_string()), want: accepted);
+    }
+    sim_assert_eq!(have: json!(coverage), want: json!({
+        "enabled": false, "screening_is_exact": false, "screened_flips": 0,
+        "screened_flips_collapsed": 1, "flips_adjudicated": 6,
+        "tightenings_matched_helm_abort": 1, "tightenings_matched_kubernetes_rejection": 1,
+        "loosenings_matched_kubernetes_validation": 1,
+        "loosenings_with_uncertain_kubernetes_cases": ["case"],
+        "candidate_accepts_helm_aborts": 1, "candidate_accepts_helm_abort_allowance": 0,
+        "candidate_accepts_helm_abort_cases": ["case"],
+        "candidate_accepts_kubernetes_rejection_cases": ["case"]
+    }));
 }
 
 #[test]
@@ -1352,10 +1460,15 @@ fn read_acceptance_candidate(
     fixture_path: &std::path::Path,
     dump_filename: &str,
 ) -> eyre::Result<serde_json::Value> {
-    let candidate_path = std::env::var_os("SCHEMA_ACCEPTANCE_CANDIDATE_DUMP").map_or_else(
-        || fixture_path.to_path_buf(),
-        |dir| std::path::PathBuf::from(dir).join(dump_filename),
-    );
+    let candidate_path = if let Some(dir) = std::env::var_os("SCHEMA_ACCEPTANCE_CANDIDATE_DUMP") {
+        std::path::PathBuf::from(dir).join(dump_filename)
+    } else {
+        eyre::ensure!(
+            std::env::var_os("ADJUDICATE_WITH_HELM").is_none(),
+            "live adjudication requires SCHEMA_ACCEPTANCE_CANDIDATE_DUMP"
+        );
+        fixture_path.to_path_buf()
+    };
     serde_json::from_str(
         &std::fs::read_to_string(&candidate_path)
             .wrap_err_with(|| format!("read {}", candidate_path.display()))?,
@@ -1383,37 +1496,62 @@ fn collect_acceptance_flips(
         &[baseline, current],
     )?;
     chart_coverage.label = label.to_string();
+    let helm_chart = std::cell::OnceCell::new();
+    let cache = std::env::var_os("SCHEMA_ACCEPTANCE_K8S_CACHE").map_or_else(
+        || test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        std::path::PathBuf::from,
+    );
+    let mut kubernetes = OfflineKubernetesValidator::new(&cache);
     for (probe_name, probe) in probes {
         comparison.probes_checked += 1;
         let (before, after) = profiles.verdicts(&probe);
         if before != after {
             if adjudicate_live {
-                comparison.helm_adjudication.flips_adjudicated += 1;
-                match adjudicate_round74_flip(
-                    chart_relative_path,
-                    &probe_name,
-                    &probe,
-                    defaults,
-                    after,
-                    &profiles.baseline_errors(&probe),
-                    &profiles.candidate_errors(&probe),
-                ) {
-                    Ok(HelmFlipVerdict::Matched) => {}
-                    Ok(HelmFlipVerdict::CandidateAcceptsHelmAborts) => {
-                        comparison.helm_adjudication.candidate_accepts_helm_aborts += 1;
+                comparison.helm_adjudication.screened_flips += 1;
+                // Screening proposes an overlay; only Helm can establish its coalesced document.
+                let chart = match helm_chart.get_or_init(|| {
+                    let path = test_util::workspace_testdata()
+                        .join("charts")
+                        .join(chart_relative_path);
+                    PinnedHelmChart::prepare(&path)
+                }) {
+                    Ok(chart) => chart,
+                    Err(error) => {
                         comparison
-                            .helm_adjudication
-                            .candidate_accepts_helm_abort_cases
-                            .push(format!("{label}: {probe_name}"));
+                            .helm_adjudication_failures
+                            .push(format!("{label}: {probe_name}: {error}"));
+                        continue;
                     }
-                    Err(error) => comparison
-                        .helm_adjudication_failures
-                        .push(error.to_string()),
-                }
+                };
+                let verdict = match adjudicate_round74_flip(
+                    chart,
+                    &probe.helm_values_file(defaults),
+                    &profiles,
+                    &mut kubernetes,
+                ) {
+                    Ok(verdict) => verdict,
+                    Err(error) => {
+                        comparison
+                            .helm_adjudication_failures
+                            .push(format!("{label}: {probe_name}: {error}"));
+                        continue;
+                    }
+                };
+                let Some(candidate_accepts) = comparison
+                    .helm_adjudication
+                    .record_verdict(verdict, format!("{label}: {probe_name}"))
+                else {
+                    continue;
+                };
+                comparison.flips.push(format!(
+                    "{label}: {probe_name}: before={}, after={candidate_accepts}",
+                    !candidate_accepts
+                ));
+            } else {
+                comparison.flips.push(format!(
+                    "{label}: {probe_name}: before={before}, after={after}"
+                ));
             }
-            comparison.flips.push(format!(
-                "{label}: {probe_name}: before={before}, after={after}"
-            ));
         }
     }
     comparison.coverage.push(chart_coverage);
@@ -1422,56 +1560,208 @@ fn collect_acceptance_flips(
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum HelmFlipVerdict {
-    Matched,
+    Collapsed,
+    TighteningMatchedHelmAbort,
+    TighteningMatchedKubernetesRejection,
+    LooseningMatchedKubernetesValidation,
+    LooseningWithUncertainKubernetes,
     CandidateAcceptsHelmAborts,
+    CandidateAcceptsKubernetesRejects,
 }
 
 fn adjudicate_round74_flip(
-    chart: &str,
-    probe_name: &str,
-    probe: &ProbeInstance,
-    defaults: &serde_json::Value,
-    schema_accepts: bool,
-    baseline_errors: &[String],
-    candidate_errors: &[String],
+    chart: &PinnedHelmChart,
+    overlay: &serde_json::Value,
+    profiles: &ProfileSchemas,
+    kubernetes: &mut OfflineKubernetesValidator,
 ) -> eyre::Result<HelmFlipVerdict> {
-    let values = probe.helm_values_file(defaults);
-    let scratch_root = test_util::workspace_root().join("target/round74-helm-adjudication");
-    std::fs::create_dir_all(&scratch_root)
-        .wrap_err_with(|| format!("create {}", scratch_root.display()))?;
-    let scratch = tempfile::Builder::new()
-        .prefix("probe-")
-        .tempdir_in(&scratch_root)
-        .wrap_err("create Round 74 Helm scratch directory")?;
-    let values_path = scratch.path().join("values.json");
-    std::fs::write(&values_path, serde_json::to_vec(&values)?)
-        .wrap_err("write Round 74 Helm values file")?;
-    let chart_path = test_util::workspace_testdata().join("charts").join(chart);
-    let rendered = std::process::Command::new("helm")
-        .args(["template", "round74"])
-        .arg(chart_path)
-        .arg("--skip-schema-validation")
-        .arg("-f")
-        .arg(values_path)
-        .output()
-        .wrap_err_with(|| format!("render {chart}: {probe_name}"))?;
-    eyre::ensure!(
-        schema_accepts || !rendered.status.success(),
-        "{chart}: {probe_name}: tightening rejects a document Helm renders; baseline errors={baseline_errors:?}; candidate errors={candidate_errors:?}"
-    );
-    eprintln!(
-        "HELM_{} {chart}: {probe_name}: candidate_accepts={schema_accepts}",
-        if rendered.status.success() {
-            "RENDER"
+    let probe = chart.adjudicate(overlay)?;
+    let (baseline_errors, candidate_errors) = profiles.coalesced_errors(&probe.values);
+    let before = baseline_errors.is_empty();
+    let after = candidate_errors.is_empty();
+    let mut evidence = json!({
+        "baseline_accepts": before,
+        "candidate_accepts": after,
+        "baseline_errors": baseline_errors,
+        "candidate_errors": candidate_errors,
+        "helm_exit": probe.rendered.status.code(),
+    });
+    let verdict = if before == after {
+        Ok(HelmFlipVerdict::Collapsed)
+    } else if !probe.rendered.status.success() {
+        if after {
+            Ok(HelmFlipVerdict::CandidateAcceptsHelmAborts)
         } else {
-            "ABORT"
+            Ok(HelmFlipVerdict::TighteningMatchedHelmAbort)
         }
-    );
-    if schema_accepts && !rendered.status.success() {
-        Ok(HelmFlipVerdict::CandidateAcceptsHelmAborts)
     } else {
-        Ok(HelmFlipVerdict::Matched)
+        match kubernetes.validate(&probe.rendered.stdout)? {
+            KubernetesVerdict::Invalid(errors) => {
+                evidence
+                    .as_object_mut()
+                    .ok_or_eyre("schema evidence is not an object")?
+                    .insert("kubernetes_errors".to_string(), json!(errors));
+                if after {
+                    Ok(HelmFlipVerdict::CandidateAcceptsKubernetesRejects)
+                } else {
+                    Ok(HelmFlipVerdict::TighteningMatchedKubernetesRejection)
+                }
+            }
+            KubernetesVerdict::Valid => {
+                if after {
+                    Ok(HelmFlipVerdict::LooseningMatchedKubernetesValidation)
+                } else {
+                    Err("tightening rejects a document Helm renders and Kubernetes validates")
+                }
+            }
+            KubernetesVerdict::Uncertain(reasons) => {
+                evidence
+                    .as_object_mut()
+                    .ok_or_eyre("schema evidence is not an object")?
+                    .insert("kubernetes_uncertainty".to_string(), json!(reasons));
+                if after {
+                    Ok(HelmFlipVerdict::LooseningWithUncertainKubernetes)
+                } else {
+                    Err(
+                        "tightening rejects a document Helm renders without a proved Kubernetes violation",
+                    )
+                }
+            }
+        }
+    };
+    std::fs::write(
+        probe.evidence_dir.join("schema-verdicts.json"),
+        serde_json::to_vec_pretty(&evidence)?,
+    )
+    .wrap_err("write exact schema verdict evidence")?;
+    let verdict = verdict
+        .map_err(|reason| eyre::eyre!("{reason}; evidence={}", probe.evidence_dir.display()))?;
+    eprintln!(
+        "HELM_FLIP {verdict:?}: evidence={}",
+        probe.evidence_dir.display()
+    );
+    Ok(verdict)
+}
+
+#[test]
+fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> eyre::Result<()> {
+    let source = tempfile::tempdir()?;
+    std::fs::create_dir(source.path().join("templates"))?;
+    std::fs::write(
+        source.path().join("Chart.yaml"),
+        indoc::indoc! {"
+        apiVersion: v2
+        name: oracle-control
+        version: 0.1.0
+    "},
+    )?;
+    std::fs::write(
+        source.path().join("values.yaml"),
+        indoc::indoc! {"
+        name: valid
+        filled: true
+    "},
+    )?;
+    std::fs::write(
+        source.path().join("templates/configmap.yaml"),
+        indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ .Values.name }}
+    "},
+    )?;
+    let chart = PinnedHelmChart::prepare(source.path())?;
+    let cache =
+        test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
+    let mut kubernetes = OfflineKubernetesValidator::new(&cache);
+    let string_name = json!({"properties": {"name": {"type": "string"}}});
+    let tightening = ProfileSchemas::compile(&json!({}), &string_name, json!({}))?;
+
+    // Helm parses the manifest, but the rendered boolean violates Kubernetes metadata typing.
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &json!({"name": true}), &tightening, &mut kubernetes)?,
+        want: HelmFlipVerdict::TighteningMatchedKubernetesRejection,
+    );
+    let loosening = ProfileSchemas::compile(&string_name, &json!({}), json!({}))?;
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &json!({"name": true}), &loosening, &mut kubernetes)?,
+        want: HelmFlipVerdict::CandidateAcceptsKubernetesRejects,
+    );
+
+    // Actual chart defaults fill this key even when the screening document did not include it.
+    let screened =
+        ProfileSchemas::compile(&json!({"required": ["filled"]}), &json!({}), json!({}))?;
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &json!({}), &screened, &mut kubernetes)?,
+        want: HelmFlipVerdict::Collapsed,
+    );
+
+    // Neither successful rendering nor a missing provider schema proves a tightening valid.
+    let unjustified = ProfileSchemas::compile(&json!({}), &json!(false), json!({}))?;
+    assert!(adjudicate_round74_flip(&chart, &json!({}), &unjustified, &mut kubernetes).is_err());
+    let empty_cache = tempfile::tempdir()?;
+    let mut missing = OfflineKubernetesValidator::new(empty_cache.path());
+    assert!(
+        adjudicate_round74_flip(&chart, &json!({"name": true}), &tightening, &mut missing).is_err()
+    );
+
+    // Rendering alone and complete Kubernetes validation remain distinguishable evidence.
+    let accept_all = ProfileSchemas::compile(&json!(false), &json!({}), json!({}))?;
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &json!({}), &accept_all, &mut kubernetes)?,
+        want: HelmFlipVerdict::LooseningMatchedKubernetesValidation,
+    );
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &json!({}), &accept_all, &mut missing)?,
+        want: HelmFlipVerdict::LooseningWithUncertainKubernetes,
+    );
+
+    // The actual probe aborts even though this chart's unmodified defaults render.
+    let invalid_yaml = json!({"name": "["});
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &invalid_yaml, &unjustified, &mut kubernetes)?,
+        want: HelmFlipVerdict::TighteningMatchedHelmAbort,
+    );
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &invalid_yaml, &accept_all, &mut kubernetes)?,
+        want: HelmFlipVerdict::CandidateAcceptsHelmAborts,
+    );
+    Ok(())
+}
+
+#[test]
+fn existing_configmap_name_tightenings_match_kubernetes_rejections() -> eyre::Result<()> {
+    let chart_path = test_util::workspace_testdata().join("charts/oauth2-proxy");
+    let chart = PinnedHelmChart::prepare(&chart_path)?;
+    let candidate = read_chart_schema_fixture("oauth2-proxy")?;
+    let profiles = ProfileSchemas::compile(&json!({}), &candidate, json!({}))?;
+    let cache =
+        test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
+    let mut kubernetes = OfflineKubernetesValidator::new(&cache);
+
+    // Each source value becomes a non-string ConfigMap volume name after Helm's YAML conversion.
+    for name in [json!(true), json!(1.5), json!("3")] {
+        sim_assert_eq!(
+            have: adjudicate_round74_flip(
+                &chart,
+                &json!({"config": {"existingConfig": name}}),
+                &profiles,
+                &mut kubernetes,
+            )?,
+            want: HelmFlipVerdict::TighteningMatchedKubernetesRejection,
+        );
     }
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(
+            &chart,
+            &json!({"config": {"existingConfig": "valid-config"}}),
+            &profiles,
+            &mut kubernetes,
+        )?,
+        want: HelmFlipVerdict::Collapsed,
+    );
+    Ok(())
 }
 
 #[test]

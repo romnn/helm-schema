@@ -37,6 +37,11 @@
   subagents with `gpt-6-astra` at `high`; Anthropic reviews use `my-claude` with
   Fable 5.1 at `xhigh`. This overrides the earlier CLI command and skill roster.
   Do not launch `codex exec`.
+- User scheduling override: batch related major compiler fixes for one ensemble
+  review and validation cycle; mechanical cleanups do not trigger new ensembles.
+  Checkpoint repository changes promptly. The user explicitly requested committing
+  the current repository changes before the final validation rerun completes;
+  such a checkpoint is not a claim that the round or family is closed.
 
 ## Validation correction inherited from the performance campaign
 
@@ -629,3 +634,36 @@ Next: finish round1 in main while isolated F23/D3 implementation proceeds; first
   retains output. Battery and final gates follow that dump; no earlier gate is reused.
 
 Next: finish round1 dump, battery and final gates; first run `tail -10 /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round1/dump.log`.
+
+### Round 1 code checkpoint requested by user
+
+- Status: committing the complete current repository change at the user's explicit
+  request; final validation remains pending. No analyzer, generator or golden fixture
+  changes are included. F23/D3 implementation remains in the isolated round2 snapshot.
+- First validation: clean dump exit 0 (211 tests, 162.136 s); candidate-dump battery
+  exit 0 (160 profiles, 284,863 probes, 33,795 guards, zero flips, 278.687 s).
+  Coverage exactly matches the unchanged production baseline, as expected.
+- First gate runner recorded fmt 0, lint 201, lint:fc 201, unit 0, integration 0,
+  all 0, install 0, luup 0, LOC 0, frozen 0 and whitespace 0. Integration ran 686
+  tests and all ran 2,051. These are historical results, not final-tree claims:
+  mechanical lint corrections were made afterward/during the runner.
+- Lint corrections: remove two needless raw-string delimiters and one needless
+  borrow, use if-let for candidate selection, replace unchecked JSON indexing,
+  and move outcome accounting into its owning coverage type. No suppressions or
+  approval-law changes. Ordinary lint and feature-combination lint subsequently
+  exit 0; two pre-existing ast-grep escaped-newline warnings remain at
+  `helm-schema-ast/src/tests/expr.rs:957` and `:958`.
+- A full serialized accounting test checks every outcome exactly once. Four targeted
+  tests passed; nextest marked the pure accounting test leaky once. Its single retry
+  passed without a leak (exit 0); no second retry. An attempted stop of the obsolete
+  gate runner reported permission denial, then no-such-process on the required retry;
+  the runner had completed. Its results are retained, not promoted to final results.
+- Final rerun artifacts: `<root>/round1/final.Md7PMu`; fresh one-batch candidate dump
+  `<root>/round1/dump-final.g7VokY`. Final gates run in the background against unchanged
+  code, with each command's own exit stored in `gate-exits.tsv`. The runner now stops
+  at a failure to avoid wasting later expensive gates on a tree needing correction.
+- Ensemble policy follows the user's update: the confirmed mechanism has converged
+  across vendors; these mechanical lint edits do not reopen that ensemble. Major
+  compiler fixes will be reviewed together after their isolated implementation is ready.
+
+Next: finish final round1 validation and integrate the compiler batch; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round1/final.Md7PMu/gate-exits.tsv`.

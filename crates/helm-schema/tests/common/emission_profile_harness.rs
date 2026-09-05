@@ -157,20 +157,21 @@ impl ProfileSchemas {
         (self.full.is_valid(&instance), self.lean.is_valid(&instance))
     }
 
-    pub(crate) fn candidate_errors(&self, probe: &ProbeInstance) -> Vec<String> {
-        let instance = self.compose(probe);
-        self.lean
-            .iter_errors(&instance)
+    pub(crate) fn coalesced_errors(
+        &self,
+        values: &crate::helm_adjudication::CoalescedValues,
+    ) -> (Vec<String>, Vec<String>) {
+        let baseline = self
+            .full
+            .iter_errors(values.as_json())
             .map(|error| format!("{}: {error}", error.instance_path()))
-            .collect()
-    }
-
-    pub(crate) fn baseline_errors(&self, probe: &ProbeInstance) -> Vec<String> {
-        let instance = self.compose(probe);
-        self.full
-            .iter_errors(&instance)
+            .collect();
+        let candidate = self
+            .lean
+            .iter_errors(values.as_json())
             .map(|error| format!("{}: {error}", error.instance_path()))
-            .collect()
+            .collect();
+        (baseline, candidate)
     }
 
     pub(crate) fn assert_monotone<'a>(
