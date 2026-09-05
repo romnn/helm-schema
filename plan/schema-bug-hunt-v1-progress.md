@@ -374,3 +374,59 @@ pending in `review/claude-followup-out.md`; no ensemble-convergence claim yet.
   pending implementation. Existing round-0 gates are not reused for changed tests.
 
 Next: round 1 exact flip integration; first run `sed -n '1350,1480p' crates/helm-schema/tests/schema_emission_profiles.rs`.
+
+### Round 1 implementation and first review
+
+- Implemented the typed exact-value boundary and separate offline Kubernetes leg in
+  test support. The production analyzer/generator and all fixtures remain unchanged.
+  `CoalescedValues` can only be constructed from the template-free Helm output;
+  shortlisted flips are revalidated before their actual direction is recorded.
+  Collapsed screening has a separate counter and the coverage report explicitly
+  states `screening_is_exact: false`. Live candidate-dump selection is mandatory.
+- Scope correction: obtaining default coalescence eagerly for every corpus chart
+  would exclude library roots and metadata-incompatible charts, and could prevent
+  an overlay from repairing invalid dependency defaults. Preparation is lazy and
+  only copies inputs; each proposed overlay is then coalesced independently.
+  The Rust screening defaults therefore remain approximate. No expanded-default
+  or exhaustive-coalescence coverage is claimed by this prerequisite.
+- Targeted tests exposed and repaired provider-source weakening and YAML decoding
+  differences. Provider materialization may remove unresolved references; the oracle
+  compiles the intact source with retrieval disabled. The pinned bundle's legacy
+  meta-schema URI requires explicit Draft 7. Rendered YAML is decoded through
+  Helm's own `fromYaml`, using parser-token document boundaries with character-to-byte
+  offset conversion. Numeric magnitudes at or above 2^53 abstain because that Helm
+  helper can round integers. Missing schemas/references remain uncertain.
+- Targeted results before the first review: nine dedicated oracle tests pass;
+  the synthetic exact-flip test and the real oauth2-proxy test pass. True, 1.5 and
+  `"3"` all match provider tightenings, and `valid-config` remains accepted.
+  An earlier targeted integration run exited 100 on both tests because the legacy
+  meta-schema URI did not compile; those failures led to the explicit dialect fix.
+- F79 finding-text correction: pinned chart source shows the actual sink is
+  `spec.template.spec.volumes[*].configMap.name` in
+  `testdata/charts/oauth2-proxy/templates/deployment.yaml:383`, not `metadata.name`.
+  The three witness values and the mechanism remain valid. The frozen findings
+  document is unchanged; this correction belongs here.
+- Review target: `<root>/round1/review1/{brief.md,tracked.diff,new.diff}`.
+  Native `round1_semantics_review` used gpt-6-astra/high. Fable5.1/xhigh ran
+  through `my-claude` and exited 0, but its stdout again contains only an unrelated
+  comment-hook reply referring to an earlier review message. No substantive Fable
+  findings or ensemble convergence are counted. The next review will capture the
+  complete CLI response stream so the actual review survives that final-message
+  replacement; hooks and the read-only restriction remain enabled.
+- Native review: **not converged**, three confirmed mechanisms. (1) Inference
+  filename fallback selected the built-in apps/v1 Deployment schema for
+  apps.example.test/v1. (2) Expanding a dependency archive into a directory applied
+  the parent's `.helmignore` to previously shielded member files. (3) Basename-based
+  template/test exclusions removed ordinary `.Files` payloads.
+- Independent live verification: controls under `<root>/round1/copy-controls`.
+  Original `packed` and `data` charts both render with exit 0; the current helper
+  aborts both with `missing payload`. The custom Deployment is incorrectly reported
+  invalid against the apps/v1 enum. These are confirmed oracle defects, not
+  hypothesized analyzer regressions. The first packed-control archive contained
+  macOS AppleDouble entries and Helm rejected it before loading; that invalid run
+  was discarded, then `COPYFILE_DISABLE=1 tar ...` produced the proper control.
+- Corrections in progress: require structural GVK ownership evidence, retain
+  sanitized dependency packaging, and scope exclusions to actual chart roots.
+  No dump or full final-tree gate has run on this change, and no fix commit has landed.
+
+Next: complete round 1 copy/identity repairs and repeat review; first run `git diff --stat`.
