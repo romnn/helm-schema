@@ -484,3 +484,68 @@ Next: complete round 1 copy/identity repairs and repeat review; first run `git d
   and 1 (JSON values file). This is analysis groundwork, not a closed family.
 
 Next: finish round 1 raw-document repair and focused review; first run `git diff --stat`.
+
+### Round 1 third review — lexical boundary correction
+
+- Original-byte file transport is implemented and fourteen dedicated oracle tests
+  pass (parent rerun, exit 0). The accounting controls also pass (three selected tests,
+  exit 0), including all four matched/uncertain categories and both invalid loosenings.
+- Review target: `<root>/round1/review3/{brief.md,tracked.diff,new-helper.diff,new-tests.diff}`.
+  Native Astra found one further concrete defect before the transport boundary:
+  yaml-rust's comment scanner recognizes CR/LF, but Helm YAML 1.1 also recognizes
+  NEL/LS/PS. A resource following a comment and NEL can disappear from the document
+  list and falsely report complete Kubernetes validity. Parent reproduced this with
+  the freshly rebuilt live-module prober: `<root>/round1/copy-controls/unicode-comment.yaml`
+  reports `Valid`, while pinned Helm decodes `ConfigMap.metadata.name=false`.
+- Structural correction selected: adapt only the token scanner's character iterator
+  to the exact YAML 1.1 break alphabet, retaining one character per original character
+  and preserving original byte slices for decoding. No scalar values come from the
+  projected scanner. Native source review found no boundary discrepancy, including
+  CR followed by a Unicode break; regression checks will cover that adjacency.
+- Exact dependency check: `go version -m` on the installed Helm binary identifies
+  `go.yaml.in/yaml/v2 v2.4.3`. Downloaded that version and checked
+  `yamlprivateh.go:102`; its break alphabet matches the previously inspected v2.4.4.
+  The latter was not the binary's actual dependency and is not the final source pin.
+- The `...` concern does not establish an extra Kubernetes resource: pinned Helm
+  `fromYaml` decodes only the first mapping in that chunk, and Kubernetes YAMLReader
+  also splits at `---`, not at an implicit document after `...`. Do not add a second
+  resource the actual decoding path does not produce.
+- Deviations: native author encountered capacity errors; source work was retained,
+  and the parent reran the fourteen tests rather than trusting an inaccessible agent
+  process ID. The parent's first transport reproduction used `--set-file direct`
+  instead of the fixture's `raw` key and exited 1; corrected command exited 0 and
+  demonstrated the mismatch. Preparatory `cargo fmt --check` and `git diff --check`
+  were run before review completion (both exit 0); they do not count as final gates
+  and will be rerun after convergence. Fable's third review remains running.
+
+Next: round 1 lexical correction after review3 completes; first run `git status --short`.
+
+### Round 2 groundwork — F23 and D3 (not started)
+
+- Native architectural groundwork reused round1 witnesses and added runtime-merge
+  and deleted-guard controls under `<root>/round2`. No production edits or builds.
+  `minimal_probes.py` records commands, coalesced documents, raw IR, generated baseline,
+  hand-authored targets and Helm verdicts in `minimal-evidence-v2`.
+- Target adjudication: 28 cases; 27 coalesced documents; zero target/Helm disagreements;
+  six baseline disagreements. Deleting the dependency root fails before coalescence
+  and does not acquire a schema verdict. These finite controls are not corpus coverage.
+- F23 first loss is emission: IR already contains `Absent(kid.grp)`, but the emitted
+  arm excludes missing. Deleting `kid.grp` therefore aborts but validates. Deleting
+  root `grp` is the positive control and already rejects. Empty object residues render.
+- A second F23 discriminator proves the defect is not only absence: deleting default-true
+  `kid.flag` makes Helm skip the body, but schema emission treats the missing flag as true
+  and rejects an unused scalar `kid.grp`. The same scalar with explicit flag false passes.
+- D3 first loss precedes IR: a child full-name self-include acquires fabricated
+  `kid.parentToken` reads. Helm reads only `kid.childToken`; adding the irrelevant parent
+  token changes schema acceptance without changing the chart's render contract.
+- Runtime default control: an explicit root `mustMergeOverwrite` restores missing `grp`
+  from `_defaults.grp`. Deleting both aborts; deleting only the input target renders.
+  A naive removal of all default-aware encoding would regress this case.
+- Two F23 designs: split coalesced/runtime synthetic default documents, or lower effective
+  predicates through the existing typed runtime-source relations before input encoding.
+  The latter is the preferred destination: it replaces effective predicates instead of
+  adding compensating clauses beside them and can delete the false refill model. Exact
+  runtime operator/precedence evidence is being checked before implementation. An unused
+  fallback type overconstraint is a separate witnessed merge issue, not a claimed F23 fix.
+
+Next: complete round 1 first, then preregister F23/D3 implementation; first run `tail -80 plan/schema-bug-hunt-v1-progress.md`.
