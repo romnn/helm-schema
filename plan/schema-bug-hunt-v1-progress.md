@@ -549,3 +549,48 @@ Next: round 1 lexical correction after review3 completes; first run `git status 
   fallback type overconstraint is a separate witnessed merge issue, not a claimed F23 fix.
 
 Next: complete round 1 first, then preregister F23/D3 implementation; first run `tail -80 plan/schema-bug-hunt-v1-progress.md`.
+
+### Round 2 preregistration — isolated parallel implementation
+
+- Status: implementation authorized in a source-only archive of `6336fa00` at
+  `<root>/round2/implementation.kR1Lpd`. No branch/ref/index changes were needed.
+  The main tree remains dedicated to round1. Integrate and land F23+D3 together.
+- Acceptance baseline: `6336fa00`, whose analyzer and fixtures are still `cc1d2d32`.
+  The intervening round1 harness commit will not change that production baseline.
+- Contract: missing paths in an already-coalesced values document read as nil/falsy,
+  regardless of which chart declared their defaults. Only actual preceding runtime
+  operations can supply fallback values. Template-file includes resolve the exact
+  execution name supplied by the caller, including root name and aliased dependency
+  namespaces; a shared suffix never establishes identity.
+- Pre-registered witnesses: missing `kid.grp` in the minimal absence chart tightens
+  to reject/Helm-abort; missing `kid.flag` with unused scalar `kid.grp` loosens to
+  accept/Helm-render; collision defaults lose the invented `kid.parentToken` requirement
+  and accept/Helm-render. Runtime-merge restoration and double-deletion controls must
+  retain their observed verdicts. Exact targets already adjudicated above.
+- Corpus expectations: F23 tightenings on documented deletion witnesses in
+  kube-prometheus-stack, phpmyadmin, rook-ceph, nacos, openebs, prometheus, open-webui,
+  argo-cd, graylog, metallb, datadog and cloudnative-pg. D3 removal of leaked constraints
+  may loosen graylog, milvus, netbox, openebs, redmine, spinnaker, weblate, dify, gitea,
+  oncall and contaminated signoz-signoz; apisix/synapse are acceptance-neutral controls.
+  Other dependency-containing schemas may change through the same F23 predicate rule;
+  they require cell-by-cell adjudication, not blanket approval.
+- Roster expectations: intake movement includes phpmyadmin, rook-ceph, nacos, open-webui,
+  apisix, dify, gitea, graylog, milvus, netbox, oncall, openebs, redmine, spinnaker,
+  synapse and weblate. Quarantine movement includes the overlapping D3 charts and nacos;
+  promote only when actual defaults now render and validate. Known-rejection defaults
+  remain rejected. Non-intake long-standing F23 charts retain valid defaults while
+  tightening genuine aborts. No unregistered candidate-accepts/Helm-aborts allowance.
+- Chosen scope: separate dependency declarations from the existing runtime-default
+  inference at the encoding boundary, with an origin-enforcing type where it prevents
+  misuse. Do not claim the existing runtime approximation exact. The broader rewrite
+  needs operator and temporal provenance currently absent from `ValuesDefaultSource`:
+  324 member-selection cases, 36 source/eager-copy cases and a read-before-write
+  counterexample establish that missing evidence. Retain these separate merge defects
+  for the relevant mechanism sweep instead of hiding them or inventing source order.
+- Ownership: one native agent owns F23 generator/default semantics; another owns D3
+  AST source identity, IR lookup/static context and chart indexing. Both work only in
+  the isolated snapshot and run targeted tests there. Parent finishes round1 reviews
+  and gates concurrently; no timing measurement overlaps builds. This corrects the
+  earlier serial scheduling and over-broad harness review cycle.
+
+Next: finish round1 in main while isolated F23/D3 implementation proceeds; first run `git status --short`.
