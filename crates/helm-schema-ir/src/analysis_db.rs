@@ -1139,6 +1139,7 @@ pub(crate) struct DotFrame {
     pub(crate) fragment: Option<AbstractValue>,
 }
 
+#[derive(Clone, Debug)]
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, AbstractValue>,
     pub(crate) dot: DotFrame,

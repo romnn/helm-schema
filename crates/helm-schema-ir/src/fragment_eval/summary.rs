@@ -23,13 +23,14 @@
 //!   dependency reads instead),
 //! - arms merge with the value lattice's merge rules.
 
+use std::cell::OnceCell;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::rc::Rc;
 
 use helm_schema_syntax::TemplatedDocument;
 
 use crate::abstract_value::AbstractValue;
-use crate::analysis_db::{BoundHelperCallResolution, IrAnalysisDb};
+use crate::analysis_db::{BoundHelperCallResolution, IrAnalysisDb, ParsedHelperBody};
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, merge_provenance_sites};
 use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::{
@@ -84,14 +85,66 @@ pub(crate) struct FragmentSummary {
     pub(crate) value: Option<AbstractValue>,
     /// Truthiness of a typed value serialized as this helper's JSON output.
     pub(crate) json_payload_truth: TruthCondition,
-    /// Known scalar output alternatives evaluated under this summary's
-    /// bound call context.
-    pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
+    /// Known scalar output alternatives, initialized on demand when the structural pass is partial.
+    pub(crate) scalar_dispatch: OnceCell<Option<ScalarValueDispatch>>,
+    deferred_scalar_projection: Option<DeferredScalarProjection>,
     /// Rendered splice/taint rows flattened from the tree: per-path branch
     /// conditions, defaultedness, encoding, and provenance. Value-position
     /// call sites use these for no-render demotion and for restoring
     /// per-path meta after transfer functions collapse the value shape.
     pub(crate) rendered: Vec<RenderedRow>,
+}
+
+/// Inputs that reproduce the second scalar pass from the original helper-summary miss.
+#[derive(Debug)]
+struct DeferredScalarProjection {
+    helper_name: String,
+    resolution: BoundHelperCallResolution,
+    seen: HashSet<String>,
+    structural: Option<ScalarValueDispatch>,
+}
+
+impl FragmentSummary {
+    pub(crate) fn scalar_dispatch(&self, db: &IrAnalysisDb) -> Option<&ScalarValueDispatch> {
+        self.scalar_dispatch
+            .get_or_init(|| {
+                let deferred = self.deferred_scalar_projection.as_ref()?;
+                deferred.evaluate(db)
+            })
+            .as_ref()
+    }
+}
+
+impl DeferredScalarProjection {
+    fn evaluate(&self, db: &IrAnalysisDb) -> Option<ScalarValueDispatch> {
+        let body = db.parsed_helper_body(&self.helper_name)?;
+        let body_facts = db.helper_body_eval_facts(&self.helper_name, || {
+            let document = TemplatedDocument::parse_with_root(body.source, body.tree.root_node());
+            super::eval::BodyEvalFacts::collect(body.source, db, body.tree, &document)
+        });
+        let mut interpreter = bound_helper_interpreter(
+            &self.helper_name,
+            &body,
+            &self.resolution,
+            db,
+            &self.seen,
+            body_facts,
+        );
+        interpreter.scalar_output_projection = true;
+        let scalar_root = body.tree.root_node();
+        let mut scalar_cursor = scalar_root.walk();
+        let scalar_children = scalar_root
+            .named_children(&mut scalar_cursor)
+            .collect::<Vec<_>>();
+        let projected = interpreter
+            .scalar_body_arms(&scalar_children, body.source)
+            .and_then(|arms| scalar_dispatch_from_alternatives(arms, db.predicate_memo().as_ref()));
+        merge_scalar_dispatch_candidates(
+            self.structural.clone(),
+            projected,
+            db.predicate_memo().as_ref(),
+        )
+    }
 }
 
 /// Evaluate one bound helper body as a fragment. `seen` is the active call
@@ -109,26 +162,8 @@ pub(crate) fn eval_bound_helper_fragment(
     let body_facts = db.helper_body_eval_facts(name, || {
         super::eval::BodyEvalFacts::collect(body.source, db, body.tree, &document)
     });
-    let make_interpreter = || {
-        let mut interpreter = Interpreter::with_body_facts(
-            body.source,
-            Some(body.source_path),
-            db,
-            &document,
-            Rc::clone(&body_facts),
-        );
-        interpreter.source_offset = body.body_offset;
-        interpreter.inline_files = vec![format!("define:{name}")];
-        interpreter.helper_scope = true;
-        interpreter.helper_seen = seen.clone();
-        interpreter.root_bindings = resolution.bindings.clone();
-        interpreter.root_truthy_predicates = resolution.root_truthy_predicates.clone();
-        interpreter.root_value_dispatches = resolution.root_value_dispatches.clone();
-        interpreter.root_value_dot = resolution.dot.helper.clone();
-        interpreter.dot_stack.push(resolution.dot.fragment.clone());
-        interpreter.locals = SymbolicLocalState::default();
-        interpreter
-    };
+    let make_interpreter =
+        || bound_helper_interpreter(name, &body, resolution, db, seen, Rc::clone(&body_facts));
     let mut interpreter = make_interpreter();
     let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
     let root_render_indent = roots
@@ -139,30 +174,22 @@ pub(crate) fn eval_bound_helper_fragment(
     let root = contributions.assemble();
     let predicate_memo = db.predicate_memo().as_ref();
     let structural_scalar_dispatch = scalar_dispatch_from_fragment(&root, predicate_memo);
-    let projected_scalar_dispatch = (!structural_scalar_dispatch
+    let (scalar_dispatch, deferred_scalar_projection) = if structural_scalar_dispatch
         .as_ref()
-        .is_some_and(|dispatch| dispatch.complete))
-    .then(|| {
-        // Scalar composition is a narrower projection than the structural
-        // fragment domain. Consult it when the structural result cannot
-        // prove an exhaustive set of scalar arms.
-        let mut scalar_interpreter = make_interpreter();
-        scalar_interpreter.scalar_output_projection = true;
-        let scalar_root = body.tree.root_node();
-        let mut scalar_cursor = scalar_root.walk();
-        let scalar_children = scalar_root
-            .named_children(&mut scalar_cursor)
-            .collect::<Vec<_>>();
-        scalar_interpreter
-            .scalar_body_arms(&scalar_children, body.source)
-            .and_then(|arms| scalar_dispatch_from_alternatives(arms, predicate_memo))
-    })
-    .flatten();
-    let scalar_dispatch = merge_scalar_dispatch_candidates(
-        structural_scalar_dispatch,
-        projected_scalar_dispatch,
-        predicate_memo,
-    );
+        .is_some_and(|dispatch| dispatch.complete)
+    {
+        (OnceCell::from(structural_scalar_dispatch), None)
+    } else {
+        (
+            OnceCell::new(),
+            Some(DeferredScalarProjection {
+                helper_name: name.to_string(),
+                resolution: resolution.clone(),
+                seen: seen.clone(),
+                structural: structural_scalar_dispatch,
+            }),
+        )
+    };
     let json_payload_truth = interpreter
         .json_payload_truth_outputs
         .first()
@@ -189,6 +216,7 @@ pub(crate) fn eval_bound_helper_fragment(
         value: projected_value(&root),
         json_payload_truth,
         scalar_dispatch,
+        deferred_scalar_projection,
         rendered,
         root,
         root_render_indent,
@@ -205,6 +233,35 @@ pub(crate) fn eval_bound_helper_fragment(
         root_set_value_dispatches: interpreter.root_value_dispatches_observed,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
     }
+}
+
+fn bound_helper_interpreter<'a>(
+    name: &str,
+    body: &ParsedHelperBody<'a>,
+    resolution: &BoundHelperCallResolution,
+    db: &'a IrAnalysisDb,
+    seen: &HashSet<String>,
+    body_facts: Rc<super::eval::BodyEvalFacts>,
+) -> Interpreter<'a> {
+    let document = TemplatedDocument::parse_with_root(body.source, body.tree.root_node());
+    let mut interpreter = Interpreter::with_body_facts(
+        body.source,
+        Some(body.source_path),
+        db,
+        &document,
+        body_facts,
+    );
+    interpreter.source_offset = body.body_offset;
+    interpreter.inline_files = vec![format!("define:{name}")];
+    interpreter.helper_scope = true;
+    interpreter.helper_seen = seen.clone();
+    interpreter.root_bindings = resolution.bindings.clone();
+    interpreter.root_truthy_predicates = resolution.root_truthy_predicates.clone();
+    interpreter.root_value_dispatches = resolution.root_value_dispatches.clone();
+    interpreter.root_value_dot = resolution.dot.helper.clone();
+    interpreter.dot_stack.push(resolution.dot.fragment.clone());
+    interpreter.locals = SymbolicLocalState::default();
+    interpreter
 }
 
 const MAX_SCALAR_DISPATCH_STATES: usize = 128;

@@ -813,7 +813,7 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
         &mut summary_seen,
     );
     assert!(
-        call.summary.scalar_dispatch.is_some(),
+        call.summary.scalar_dispatch(&analysis_db).is_some(),
         "the bound summary must retain a complete literal dispatch: {:#?}",
         call.summary
     );
@@ -833,6 +833,49 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
         have: result.truth.predicate().cloned(),
         want: Some(Predicate::truthy_path("useFIPSAgent")),
         "the callee's dot-relative selector must resolve through `.Values`: {result:#?}"
+    );
+}
+
+#[test]
+fn partial_helper_scalar_dispatch_is_deferred_and_cached() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "partial-mode" -}}
+            {{- if .Values.enabled -}}
+            {{- print "enabled" -}}
+            {{- include "partial-mode" . -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
+    let mut seen = HashSet::new();
+    let env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let call = analysis_db.summarize_bound_helper_call(
+        "partial-mode",
+        None,
+        Some(&root_bindings),
+        None,
+        &env,
+        context,
+        &mut seen,
+    );
+
+    // A partial structural result leaves the second interpreter dormant until a value consumer.
+    sim_assert_eq!(have: call.summary.scalar_dispatch.get().is_none(), want: true);
+    let first = call.summary.scalar_dispatch(&analysis_db);
+    sim_assert_eq!(have: first.is_some(), want: true);
+    sim_assert_eq!(have: call.summary.scalar_dispatch.get().is_some(), want: true);
+
+    // Repeated reads borrow the same summary-owned result instead of evaluating the body again.
+    let second = call.summary.scalar_dispatch(&analysis_db);
+    sim_assert_eq!(
+        have: first.zip(second).is_some_and(|(left, right)| std::ptr::eq(left, right)),
+        want: true
     );
 }
 

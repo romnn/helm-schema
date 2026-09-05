@@ -125,13 +125,15 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             .extend(summary.root_set_value_dispatches.clone());
         let mut result = EvalResult::with_effects(summary.value.clone(), effects);
         result.json_payload_truth = summary.json_payload_truth.clone();
-        Some(match &summary.scalar_dispatch {
-            Some(dispatch) => result.with_scalar_dispatch_with_memo(
-                dispatch.clone(),
-                self.caller_env.predicate_memo.as_ref(),
-            ),
-            None => result,
-        })
+        Some(
+            match summary.scalar_dispatch(self.params.context.analysis_db) {
+                Some(dispatch) => result.with_scalar_dispatch_with_memo(
+                    dispatch.clone(),
+                    self.caller_env.predicate_memo.as_ref(),
+                ),
+                None => result,
+            },
+        )
     }
 
     fn resolve_implicit_template_call(
