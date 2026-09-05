@@ -264,9 +264,11 @@ impl<'a, R: Retrieve> BundleState<'a, R> {
             return Ok(());
         }
 
-        try_visit_subschemas_mut(schema, &mut |subschema| {
-            self.bundle_schema(subschema, &current_document_uri)
-        })
+        try_visit_subschemas_mut(
+            schema,
+            helm_schema_json_schema_walk::ReferenceSiblings::Skip,
+            &mut |subschema| self.bundle_schema(subschema, &current_document_uri),
+        )
     }
 
     fn should_preserve_reference(

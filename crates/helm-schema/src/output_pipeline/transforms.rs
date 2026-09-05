@@ -41,8 +41,13 @@ pub(crate) fn apply_schema_output_pipeline(
     }
     let generated_definitions = generated_definitions.retain_unchanged(&schema);
 
-    schema = apply_output_transforms(schema, base_dir, reference_policy, options)?;
-    prune_unreachable_owned_definitions(&mut schema, &generated_definitions);
+    schema = apply_output_transforms(
+        schema,
+        base_dir,
+        reference_policy,
+        options,
+        &generated_definitions,
+    )?;
     annotate_final_schema(schema, policy, &override_identity, reference_policy)
 }
 
@@ -59,6 +64,7 @@ fn apply_output_transforms(
     base_dir: &Path,
     reference_policy: ReferencePolicy,
     options: OutputPipelineOptions,
+    generated_definitions: &OwnedDefinitions,
 ) -> EngineResult<Value> {
     match reference_policy {
         ReferencePolicy::SelfContained => schema = flatten::bundle_prepared_refs(schema, base_dir)?,
@@ -72,6 +78,9 @@ fn apply_output_transforms(
         strip_schema_descriptions(&mut schema);
     }
 
+    // Remove dead owned bodies before minimization can extract new definitions
+    // from them and lose their original ownership.
+    prune_unreachable_owned_definitions(&mut schema, generated_definitions);
     if options.minimize {
         schema = minimize_schema(schema);
     }

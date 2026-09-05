@@ -11,6 +11,29 @@ fn output_policy() -> FinalOutputPolicy {
     FinalOutputPolicy::for_profile(crate::generation::SchemaProfile::Full, false)
 }
 
+#[test]
+fn minimization_does_not_preserve_children_of_dead_owned_definitions() -> eyre::Result<()> {
+    let repeated =
+        serde_json::json!({"type": "string", "description": "Retained prose. ".repeat(30)});
+    let source = serde_json::json!({
+        "$defs": {"dead": {"properties": {"a": repeated, "b": repeated}}},
+        "type": "object"
+    });
+    let owned = crate::output_pipeline::reachability::OwnedDefinitions::capture(&source);
+    let output = super::apply_output_transforms(
+        source,
+        std::path::Path::new("/unused"),
+        ReferencePolicy::PreserveRefs,
+        OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: true,
+        },
+        &owned,
+    )?;
+    sim_assert_eq!(have: output, want: serde_json::json!({"type": "object"}));
+    Ok(())
+}
+
 fn request(reference_policy: ReferencePolicy) -> PreparedEmitRequest {
     PreparedEmitRequest::empty(EmitRequest {
         reference_policy,

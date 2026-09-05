@@ -6,1418 +6,35 @@
       }
     },
     "10": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            },
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            }
-          ],
-          "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
-          "type": "string"
-        },
-        {
-          "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
-          "type": "null"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "additionalProperties": {},
+      "properties": {
+        "path": {
           "type": "string"
         }
-      ]
+      }
     },
     "11": {
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": [
-        "string",
-        "null"
-      ]
+      "additionalProperties": {},
+      "properties": {
+        "path": {},
+        "pathType": {}
+      }
     },
     "12": {
-      "additionalProperties": false,
-      "properties": {
-        "port": {
-          "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "service": {
-          "description": "Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
+      "description": "Added capabilities",
+      "items": {
+        "$ref": "#/$defs/2"
       },
-      "required": [
-        "port"
-      ],
       "type": [
-        "object",
+        "array",
         "null"
       ]
     },
     "13": {
-      "additionalProperties": {
-        "oneOf": [
-          {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          {
-            "type": [
-              "number",
-              "null"
-            ]
-          }
-        ]
-      },
-      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "14": {
-      "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "15": {
-      "additionalProperties": false,
-      "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-      "properties": {
-        "name": {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
-    },
-    "16": {
-      "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
-      "format": "int64",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "17": {
-      "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
-      "format": "int64",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "18": {
-      "additionalProperties": {},
-      "properties": {
-        "tls": {
-          "additionalProperties": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          },
-          "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-          "items": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "19": {
-      "additionalProperties": false,
-      "description": "TCPSocketAction describes an action based on opening a socket",
-      "properties": {
-        "host": {
-          "description": "Optional: Host name to connect to, defaults to the pod IP.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "port": {
-          "oneOf": [
-            {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            {
-              "type": [
-                "integer",
-                "null"
-              ]
-            }
-          ]
-        }
-      },
-      "required": [
-        "port"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "1a": {
-      "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "1b": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            },
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            }
-          ],
-          "type": "string"
-        }
-      ]
-    },
-    "1c": {
-      "anyOf": [
-        {
-          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        }
-      ]
-    },
-    "1d": {
-      "additionalProperties": false,
-      "description": "HTTPGetAction describes an action based on HTTP Get requests.",
-      "properties": {
-        "host": {
-          "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "httpHeaders": {
-          "description": "Custom headers to set in the request. HTTP allows repeated headers.",
-          "items": {
-            "additionalProperties": false,
-            "description": "HTTPHeader describes a custom header to be used in HTTP probes",
-            "properties": {
-              "name": {
-                "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
-                "type": "string"
-              },
-              "value": {
-                "description": "The header field value",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name",
-              "value"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "path": {
-          "description": "Path to access on the HTTP server.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "port": {
-          "oneOf": [
-            {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            {
-              "type": [
-                "integer",
-                "null"
-              ]
-            }
-          ]
-        },
-        "scheme": {
-          "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "port"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "1e": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "additionalProperties": false,
-        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "description": "The label key that the selector applies to.",
-            "type": "string"
-          },
-          "operator": {
-            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-            "type": "string"
-          },
-          "values": {
-            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "1f": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "additionalProperties": false,
-        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "description": "The label key that the selector applies to.",
-            "type": "string"
-          },
-          "operator": {
-            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-            "type": "string"
-          },
-          "values": {
-            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "1g": {
-      "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
-      "format": "int64",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "1h": {
-      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-      "items": {
-        "additionalProperties": false,
-        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-        "properties": {
-          "name": {
-            "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-map-keys": [
-        "name"
-      ],
-      "x-kubernetes-list-type": "map"
-    },
-    "1i": {
-      "additionalProperties": false,
-      "description": "ExecAction describes a \"run in container\" action.",
-      "properties": {
-        "command": {
-          "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "1j": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "1k": {
-      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "1l": {
-      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "1m": {
-      "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "1n": {
-      "description": "The port that will be exposed by this service.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "1o": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "integer",
-            "null"
-          ]
-        }
-      ]
-    },
-    "1p": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "2": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "3": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "4": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "5": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "6": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "7": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
-    },
-    "8": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "allOf": [
-          {
-            "not": {
-              "pattern": "[ \\t]#"
-            }
-          },
-          {
-            "not": {
-              "pattern": ":[ \\t]|:$"
-            }
-          },
-          {
-            "not": {
-              "pattern": "[\\r\\n]"
-            }
-          }
-        ],
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "9": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "A": {
-      "properties": {
-        "ingress": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "B": {
-      "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-      "format": "int32",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "C": {
-      "additionalProperties": {
-        "additionalProperties": {},
-        "properties": {
-          "name": {}
-        },
-        "type": "object"
-      },
-      "type": "object"
-    },
-    "D": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "additionalProperties": {
-            "additionalProperties": {},
-            "properties": {
-              "pathType": {
-                "type": "string"
-              }
-            }
-          },
-          "items": {
-            "additionalProperties": {},
-            "properties": {
-              "pathType": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    "E": {
-      "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-      "format": "int32",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "F": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "additionalProperties": {
-            "additionalProperties": {},
-            "properties": {
-              "path": {
-                "type": "string"
-              }
-            }
-          },
-          "items": {
-            "additionalProperties": {},
-            "properties": {
-              "path": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    "G": {
-      "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-      "format": "int32",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "H": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "service": {}
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "I": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            }
-          ]
-        },
-        "secretName": {}
-      },
-      "type": "object"
-    },
-    "J": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "K": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "array"
-            }
-          ]
-        }
-      }
-    },
-    "L": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "additionalProperties": false,
-          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-          "properties": {
-            "matchExpressions": {
-              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-              "items": {
-                "additionalProperties": false,
-                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                "properties": {
-                  "key": {
-                    "description": "key is the label key that the selector applies to.",
-                    "type": "string"
-                  },
-                  "operator": {
-                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                    "type": "string"
-                  },
-                  "values": {
-                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                    "items": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "key",
-                  "operator"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "matchLabels": {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
-        },
-        "matchLabelKeys": {
-          "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-list-type": "atomic"
-        },
-        "mismatchLabelKeys": {
-          "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-list-type": "atomic"
-        },
-        "namespaceSelector": {
-          "additionalProperties": false,
-          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-          "properties": {
-            "matchExpressions": {
-              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-              "items": {
-                "additionalProperties": false,
-                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                "properties": {
-                  "key": {
-                    "description": "key is the label key that the selector applies to.",
-                    "type": "string"
-                  },
-                  "operator": {
-                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                    "type": "string"
-                  },
-                  "values": {
-                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                    "items": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "key",
-                  "operator"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "matchLabels": {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
-        },
-        "namespaces": {
-          "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "topologyKey": {
-          "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "M": {
-      "properties": {
-        "existingSecret": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "existingSecret"
-      ],
-      "type": "object"
-    },
-    "N": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "type": [
-            "array",
-            "integer",
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    "O": {
-      "description": "Added capabilities",
-      "items": {
-        "type": [
-          "string",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "P": {
-      "items": {
-        "additionalProperties": {},
-        "properties": {
-          "name": {}
-        },
-        "type": "object"
-      },
-      "type": "array"
-    },
-    "Q": {
       "description": "Name of the environment variable. Must be a C_IDENTIFIER.",
       "type": "string"
     },
-    "R": {
+    "14": {
       "additionalProperties": {},
       "properties": {
         "paths": {
@@ -1429,7 +46,7 @@
         }
       }
     },
-    "S": {
+    "15": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -1440,7 +57,7 @@
       ],
       "type": "object"
     },
-    "T": {
+    "16": {
       "properties": {
         "tls": {
           "$ref": "#/$defs/t"
@@ -1451,7 +68,7 @@
       ],
       "type": "object"
     },
-    "U": {
+    "17": {
       "properties": {
         "http": {
           "enum": [
@@ -1464,7 +81,7 @@
       ],
       "type": "object"
     },
-    "V": {
+    "18": {
       "properties": {
         "port": {
           "enum": [
@@ -1477,7 +94,7 @@
       ],
       "type": "object"
     },
-    "W": {
+    "19": {
       "properties": {
         "smtp": {
           "enum": [
@@ -1490,111 +107,23 @@
       ],
       "type": "object"
     },
-    "X": {
+    "1a": {
+      "additionalProperties": {},
+      "properties": {
+        "pathType": {
+          "type": "string"
+        }
+      }
+    },
+    "1b": {
       "additionalProperties": false,
       "description": "LifecycleHandler defines a specific action that should be taken in a lifecycle hook. One and only one of the fields, except TCPSocket must be specified.",
       "properties": {
         "exec": {
-          "additionalProperties": false,
-          "description": "ExecAction describes a \"run in container\" action.",
-          "properties": {
-            "command": {
-              "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ]
+          "$ref": "#/$defs/s"
         },
         "httpGet": {
-          "additionalProperties": false,
-          "description": "HTTPGetAction describes an action based on HTTP Get requests.",
-          "properties": {
-            "host": {
-              "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "httpHeaders": {
-              "description": "Custom headers to set in the request. HTTP allows repeated headers.",
-              "items": {
-                "additionalProperties": false,
-                "description": "HTTPHeader describes a custom header to be used in HTTP probes",
-                "properties": {
-                  "name": {
-                    "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The header field value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name",
-                  "value"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "path": {
-              "description": "Path to access on the HTTP server.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              ]
-            },
-            "scheme": {
-              "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": [
-            "object",
-            "null"
-          ]
+          "$ref": "#/$defs/r"
         },
         "sleep": {
           "additionalProperties": false,
@@ -1615,40 +144,7 @@
           ]
         },
         "tcpSocket": {
-          "additionalProperties": false,
-          "description": "TCPSocketAction describes an action based on opening a socket",
-          "properties": {
-            "host": {
-              "description": "Optional: Host name to connect to, defaults to the pod IP.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": [
-            "object",
-            "null"
-          ]
+          "$ref": "#/$defs/p"
         }
       },
       "type": [
@@ -1656,7 +152,7 @@
         "null"
       ]
     },
-    "Y": {
+    "1c": {
       "additionalProperties": false,
       "description": "EnvVarSource represents a source for the value of an EnvVar.",
       "properties": {
@@ -1669,11 +165,7 @@
               "type": "string"
             },
             "name": {
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": [
-                "string",
-                "null"
-              ]
+              "$ref": "#/$defs/l"
             },
             "optional": {
               "description": "Specify whether the ConfigMap or its key must be defined",
@@ -1729,20 +221,7 @@
               ]
             },
             "divisor": {
-              "oneOf": [
-                {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                }
-              ]
+              "$ref": "#/$defs/C"
             },
             "resource": {
               "description": "Required: resource to select",
@@ -1767,11 +246,7 @@
               "type": "string"
             },
             "name": {
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": [
-                "string",
-                "null"
-              ]
+              "$ref": "#/$defs/l"
             },
             "optional": {
               "description": "Specify whether the Secret or its key must be defined",
@@ -1796,17 +271,9 @@
         "null"
       ]
     },
-    "Z": {
+    "1d": {
       "if": {
-        "properties": {
-          "enabled": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "enabled"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/k"
       },
       "then": {
         "additionalProperties": {},
@@ -1814,22 +281,7 @@
           "existingSecret": {
             "anyOf": [
               {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^(null|Null|NULL)[ \\t]+#"
-                    }
-                  },
-                  {
-                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                    }
-                  }
-                ],
-                "type": "string"
+                "$ref": "#/$defs/6"
               },
               {
                 "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -1838,276 +290,508 @@
               {
                 "allOf": [
                   {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
+                    "$ref": "#/$defs/j"
                   },
                   {
-                    "not": {
-                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                    }
+                    "$ref": "#/$defs/e"
                   },
                   {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
+                    "$ref": "#/$defs/h"
                   },
                   {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
+                    "$ref": "#/$defs/9"
                   },
                   {
-                    "not": {
-                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                    }
+                    "$ref": "#/$defs/f"
                   },
                   {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
+                    "$ref": "#/$defs/b"
                   },
                   {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
+                    "$ref": "#/$defs/g"
                   },
                   {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
+                    "$ref": "#/$defs/7"
                   },
                   {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
+                    "$ref": "#/$defs/8"
                   },
                   {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                    }
+                    "$ref": "#/$defs/c"
                   }
                 ],
                 "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                 "type": "string"
               },
               {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
+                "$ref": "#/$defs/1"
               },
               {
-                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                "type": "string"
+                "$ref": "#/$defs/4"
               },
               {
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "maxItems": 0,
-                      "type": "array"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "not": {
-                            "pattern": "[ \\t]#"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": ":[ \\t]|:$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[\\r\\n]"
-                          }
-                        }
-                      ],
-                      "type": "string"
-                    },
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "maxProperties": 0,
-                      "type": "object"
-                    }
-                  ]
-                },
-                "propertyNames": {
-                  "allOf": [
-                    {
-                      "not": {
-                        "pattern": "[ \\t]#"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": ":[ \\t]|:$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "[\\r\\n]"
-                      }
-                    }
-                  ],
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/a"
               },
               {
-                "pattern": "^[ \\t]*(#.*)?$",
-                "type": "string"
+                "$ref": "#/$defs/5"
               },
               {
-                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                "type": "string"
+                "$ref": "#/$defs/3"
               }
             ]
           }
         }
       }
     },
-    "a": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+    "1e": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "$ref": "#/$defs/a"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/j"
+            },
+            {
+              "$ref": "#/$defs/e"
+            },
+            {
+              "$ref": "#/$defs/h"
+            },
+            {
+              "$ref": "#/$defs/9"
+            },
+            {
+              "$ref": "#/$defs/f"
+            },
+            {
+              "$ref": "#/$defs/b"
+            },
+            {
+              "$ref": "#/$defs/g"
+            },
+            {
+              "$ref": "#/$defs/7"
+            },
+            {
+              "$ref": "#/$defs/8"
+            },
+            {
+              "$ref": "#/$defs/c"
+            }
+          ],
+          "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
+          "type": "string"
+        },
+        {
+          "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/3"
+        }
+      ]
+    },
+    "1f": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "1g": {
+      "additionalProperties": {
+        "$ref": "#/$defs/C"
+      },
+      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "1h": {
+      "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "1i": {
+      "additionalProperties": false,
+      "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/l"
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "1j": {
+      "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+      "format": "int64",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "1k": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "1l": {
+      "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+      "format": "int64",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "1m": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "$ref": "#/$defs/2"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "1n": {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Y"
+          },
+          "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+          "items": {
+            "$ref": "#/$defs/Y"
+          }
+        }
       }
     },
-    "b": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
+    "1o": {
+      "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "string",
+        "null"
+      ]
     },
-    "c": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
+    "1p": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "$ref": "#/$defs/a"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/3"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/1u"
+        }
+      ]
     },
-    "d": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
+    "1q": {
+      "anyOf": [
+        {
+          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/1"
+        },
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/d"
+        },
+        {
+          "$ref": "#/$defs/3"
+        }
+      ]
     },
-    "e": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
+    "1r": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "$ref": "#/$defs/1t"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
     },
-    "f": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
+    "1s": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/1t"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
     },
-    "g": {
+    "1t": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/2"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "1u": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/j"
+        },
+        {
+          "$ref": "#/$defs/e"
+        },
+        {
+          "$ref": "#/$defs/h"
+        },
+        {
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/f"
+        },
+        {
+          "$ref": "#/$defs/b"
+        },
+        {
+          "$ref": "#/$defs/g"
+        },
+        {
+          "$ref": "#/$defs/7"
+        },
+        {
+          "$ref": "#/$defs/8"
+        },
+        {
+          "$ref": "#/$defs/c"
+        }
+      ],
+      "type": "string"
+    },
+    "1v": {
+      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/2"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "1w": {
+      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/2"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "1x": {
+      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+      "items": {
+        "additionalProperties": false,
+        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+        "properties": {
+          "name": {
+            "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-map-keys": [
+        "name"
+      ],
+      "x-kubernetes-list-type": "map"
+    },
+    "1y": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/1"
+        },
+        {
+          "$ref": "#/$defs/m"
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/2"
+              },
+              "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/n"
+            }
+          ]
+        }
+      ]
+    },
+    "2": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "3": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "4": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "5": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "6": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "7": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "h": {
+    "8": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "helm-double-quoted-safe": {
-      "anyOf": [
-        {
-          "type": [
-            "boolean",
-            "integer",
-            "null",
-            "number"
-          ]
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
-          },
-          "type": "array"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
-          },
-          "propertyNames": {
-            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "i": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "j": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "k": {
+    "9": {
       "not": {
         "pattern": "[ \\t]#"
       }
     },
-    "l": {
-      "anyOf": [
+    "A": {
+      "description": "The port that will be exposed by this service.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "B": {
+      "oneOf": [
         {
-          "not": {
-            "properties": {
-              "containerPort": {}
-            },
-            "required": [
-              "containerPort"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/2"
         },
         {
-          "properties": {
-            "containerPort": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "containerPort"
-          ],
-          "type": "object"
+          "type": [
+            "integer",
+            "null"
+          ]
         }
       ]
     },
-    "m": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+    "C": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
     },
-    "n": {
+    "D": {
       "properties": {
         "type": {
           "enum": [
@@ -2120,219 +804,39 @@
       ],
       "type": "object"
     },
-    "o": {
+    "E": {
       "additionalProperties": false,
       "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
       "properties": {
         "exec": {
-          "additionalProperties": false,
-          "description": "ExecAction describes a \"run in container\" action.",
-          "properties": {
-            "command": {
-              "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ]
+          "$ref": "#/$defs/s"
         },
         "failureThreshold": {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
+          "$ref": "#/$defs/y"
         },
         "grpc": {
-          "additionalProperties": false,
-          "properties": {
-            "port": {
-              "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
-              "format": "int32",
-              "type": "integer"
-            },
-            "service": {
-              "description": "Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": [
-            "object",
-            "null"
-          ]
+          "$ref": "#/$defs/F"
         },
         "httpGet": {
-          "additionalProperties": false,
-          "description": "HTTPGetAction describes an action based on HTTP Get requests.",
-          "properties": {
-            "host": {
-              "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "httpHeaders": {
-              "description": "Custom headers to set in the request. HTTP allows repeated headers.",
-              "items": {
-                "additionalProperties": false,
-                "description": "HTTPHeader describes a custom header to be used in HTTP probes",
-                "properties": {
-                  "name": {
-                    "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The header field value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name",
-                  "value"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "path": {
-              "description": "Path to access on the HTTP server.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              ]
-            },
-            "scheme": {
-              "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": [
-            "object",
-            "null"
-          ]
+          "$ref": "#/$defs/r"
         },
         "initialDelaySeconds": {
-          "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
+          "$ref": "#/$defs/R"
         },
         "periodSeconds": {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
+          "$ref": "#/$defs/v"
         },
         "successThreshold": {
-          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
+          "$ref": "#/$defs/w"
         },
         "tcpSocket": {
-          "additionalProperties": false,
-          "description": "TCPSocketAction describes an action based on opening a socket",
-          "properties": {
-            "host": {
-              "description": "Optional: Host name to connect to, defaults to the pod IP.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": [
-            "object",
-            "null"
-          ]
+          "$ref": "#/$defs/p"
         },
         "terminationGracePeriodSeconds": {
-          "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
+          "$ref": "#/$defs/I"
         },
         "timeoutSeconds": {
-          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
+          "$ref": "#/$defs/Q"
         }
       },
       "type": [
@@ -2340,7 +844,31 @@
         "null"
       ]
     },
-    "p": {
+    "F": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "description": "Port number of the gRPC service. Number must be in the range 1 to 65535.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "service": {
+          "description": "Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).\n\nIf this is not specified, the default behavior is defined by gRPC.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "G": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -2378,7 +906,7 @@
         "null"
       ]
     },
-    "q": {
+    "H": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -2410,7 +938,15 @@
         }
       ]
     },
-    "r": {
+    "I": {
+      "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
+      "format": "int64",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "J": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -2448,7 +984,7 @@
         "null"
       ]
     },
-    "s": {
+    "K": {
       "additionalProperties": false,
       "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
       "properties": {
@@ -2457,181 +993,22 @@
           "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
           "properties": {
             "labelSelector": {
-              "additionalProperties": false,
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-              "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                    "properties": {
-                      "key": {
-                        "description": "key is the label key that the selector applies to.",
-                        "type": "string"
-                      },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                        "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                        "items": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "type": [
-                          "array",
-                          "null"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "operator"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "matchLabels": {
-                  "additionalProperties": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
+              "$ref": "#/$defs/q"
             },
             "matchLabelKeys": {
-              "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-type": "atomic"
+              "$ref": "#/$defs/1w"
             },
             "mismatchLabelKeys": {
-              "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-type": "atomic"
+              "$ref": "#/$defs/1v"
             },
             "namespaceSelector": {
-              "additionalProperties": false,
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-              "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                    "properties": {
-                      "key": {
-                        "description": "key is the label key that the selector applies to.",
-                        "type": "string"
-                      },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                        "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                        "items": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "type": [
-                          "array",
-                          "null"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "operator"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "matchLabels": {
-                  "additionalProperties": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
+              "$ref": "#/$defs/q"
             },
             "namespaces": {
-              "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
+              "$ref": "#/$defs/1m"
             },
             "topologyKey": {
-              "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-              "type": "string"
+              "$ref": "#/$defs/1k"
             }
           },
           "required": [
@@ -2654,10 +1031,579 @@
         "null"
       ]
     },
+    "L": {
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "auth": {
+                "$ref": "#/$defs/z"
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "auth": {
+              "$ref": "#/$defs/k"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "M": {
+      "additionalProperties": {},
+      "properties": {
+        "host": {},
+        "paths": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/11"
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/11"
+              },
+              "type": "array"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "N": {
+      "additionalProperties": {
+        "$ref": "#/$defs/C"
+      },
+      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "O": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/k"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "P": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/7"
+        },
+        {
+          "$ref": "#/$defs/8"
+        }
+      ],
+      "type": "string"
+    },
+    "Q": {
+      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "R": {
+      "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "S": {
+      "additionalProperties": {},
+      "properties": {
+        "paths": {
+          "additionalProperties": {
+            "$ref": "#/$defs/1a"
+          },
+          "items": {
+            "$ref": "#/$defs/1a"
+          }
+        }
+      }
+    },
+    "T": {
+      "additionalProperties": {},
+      "properties": {
+        "paths": {
+          "additionalProperties": {
+            "$ref": "#/$defs/10"
+          },
+          "items": {
+            "$ref": "#/$defs/10"
+          }
+        }
+      }
+    },
+    "U": {
+      "anyOf": [
+        {
+          "properties": {
+            "service": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "service": {}
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "V": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ]
+        },
+        "secretName": {}
+      },
+      "type": "object"
+    },
+    "W": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/1"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "array"
+            }
+          ]
+        }
+      }
+    },
+    "X": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "$ref": "#/$defs/q"
+        },
+        "matchLabelKeys": {
+          "$ref": "#/$defs/1w"
+        },
+        "mismatchLabelKeys": {
+          "$ref": "#/$defs/1v"
+        },
+        "namespaceSelector": {
+          "$ref": "#/$defs/q"
+        },
+        "namespaces": {
+          "$ref": "#/$defs/1m"
+        },
+        "topologyKey": {
+          "$ref": "#/$defs/1k"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "Y": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    "Z": {
+      "additionalProperties": {},
+      "properties": {
+        "paths": {
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    "a": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/P"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/P"
+      },
+      "type": "object"
+    },
+    "b": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "c": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "d": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "e": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "f": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "g": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "h": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/i"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/i"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "i": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
+    },
+    "j": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "k": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "l": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "m": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "n": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "o": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {}
+      },
+      "type": "object"
+    },
+    "p": {
+      "additionalProperties": false,
+      "description": "TCPSocketAction describes an action based on opening a socket",
+      "properties": {
+        "host": {
+          "description": "Optional: Host name to connect to, defaults to the pod IP.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "$ref": "#/$defs/B"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "q": {
+      "additionalProperties": false,
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "description": "key is the label key that the selector applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                "type": "string"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "$ref": "#/$defs/2"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "matchLabels": {
+          "additionalProperties": {
+            "$ref": "#/$defs/2"
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "r": {
+      "additionalProperties": false,
+      "description": "HTTPGetAction describes an action based on HTTP Get requests.",
+      "properties": {
+        "host": {
+          "description": "Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "httpHeaders": {
+          "description": "Custom headers to set in the request. HTTP allows repeated headers.",
+          "items": {
+            "additionalProperties": false,
+            "description": "HTTPHeader describes a custom header to be used in HTTP probes",
+            "properties": {
+              "name": {
+                "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
+                "type": "string"
+              },
+              "value": {
+                "description": "The header field value",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "value"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "path": {
+          "description": "Path to access on the HTTP server.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port": {
+          "$ref": "#/$defs/B"
+        },
+        "scheme": {
+          "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "s": {
+      "additionalProperties": false,
+      "description": "ExecAction describes a \"run in container\" action.",
+      "properties": {
+        "command": {
+          "description": "Command is the command line to execute inside the container, the working directory for the command  is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy.",
+          "items": {
+            "$ref": "#/$defs/2"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
     "t": {
       "anyOf": [
         {
-          "const": true
+          "minProperties": 1,
+          "type": "object"
         },
         {
           "not": {
@@ -2674,141 +1620,77 @@
           "type": "array"
         },
         {
-          "minProperties": 1,
-          "type": "object"
+          "const": true
         }
       ]
     },
     "u": {
-      "anyOf": [
-        {
-          "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        }
-      ]
+      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+      "format": "int32",
+      "type": "integer"
     },
     "v": {
-      "allOf": [
+      "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+      "format": "int32",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "w": {
+      "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+      "format": "int32",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "x": {
+      "anyOf": [
         {
           "not": {
             "properties": {
-              "auth": {
-                "properties": {
-                  "existingSecret": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "existingSecret"
-                ],
-                "type": "object"
-              }
+              "containerPort": {}
             },
             "required": [
-              "auth"
+              "containerPort"
             ],
             "type": "object"
           }
         },
         {
           "properties": {
-            "auth": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
+            "containerPort": {
+              "enum": [
+                null
+              ]
             }
           },
           "required": [
-            "auth"
+            "containerPort"
           ],
           "type": "object"
         }
       ]
     },
-    "w": {
-      "additionalProperties": {},
-      "properties": {
-        "host": {},
-        "paths": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {},
-                  "pathType": {}
-                }
-              },
-              "type": "object"
-            },
-            {
-              "items": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {},
-                  "pathType": {}
-                }
-              },
-              "type": "array"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "x": {
-      "additionalProperties": {
-        "oneOf": [
-          {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          {
-            "type": [
-              "number",
-              "null"
-            ]
-          }
-        ]
-      },
-      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": [
-        "object",
-        "null"
-      ]
-    },
     "y": {
-      "anyOf": [
-        {
-          "description": "The port that will be exposed by this service.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        }
+      "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+      "format": "int32",
+      "type": [
+        "integer",
+        "null"
       ]
     },
     "z": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
+      "properties": {
+        "existingSecret": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "existingSecret"
+      ],
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2847,7 +1729,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/H"
+        "$ref": "#/$defs/U"
       },
       "then": false
     },
@@ -2858,7 +1740,7 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/i"
             }
           }
         }
@@ -2922,7 +1804,7 @@
             "additionalProperties": {},
             "properties": {
               "clusterIP": {
-                "$ref": "#/$defs/7"
+                "$ref": "#/$defs/i"
               }
             }
           }
@@ -2931,7 +1813,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/A"
+        "$ref": "#/$defs/O"
       },
       "then": {
         "allOf": [
@@ -2949,7 +1831,7 @@
                       },
                       {
                         "items": {
-                          "$ref": "#/$defs/w"
+                          "$ref": "#/$defs/M"
                         },
                         "type": "array"
                       },
@@ -2958,7 +1840,7 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/w"
+                          "$ref": "#/$defs/M"
                         },
                         "type": "object"
                       }
@@ -2976,10 +1858,10 @@
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/N"
+                      "$ref": "#/$defs/Z"
                     },
                     "items": {
-                      "$ref": "#/$defs/N"
+                      "$ref": "#/$defs/Z"
                     }
                   }
                 }
@@ -2990,7 +1872,7 @@
             "additionalProperties": {},
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/18"
+                "$ref": "#/$defs/1n"
               }
             }
           }
@@ -2999,7 +1881,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/l"
+        "$ref": "#/$defs/x"
       },
       "then": false
     },
@@ -3010,7 +1892,7 @@
           "additionalProperties": {},
           "properties": {
             "repository": {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/i"
             }
           }
         }
@@ -3065,7 +1947,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/v"
+        "$ref": "#/$defs/L"
       },
       "then": {
         "additionalProperties": {},
@@ -3112,12 +1994,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/O"
           },
           {
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/16"
               }
             },
             "required": [
@@ -3137,7 +2019,7 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/I"
+                      "$ref": "#/$defs/V"
                     },
                     "type": "array"
                   },
@@ -3147,7 +2029,7 @@
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/I"
+                      "$ref": "#/$defs/V"
                     },
                     "type": "object"
                   },
@@ -3199,14 +2081,20 @@
         "extraEnv": {
           "anyOf": [
             {
-              "$ref": "#/$defs/C"
+              "additionalProperties": {
+                "$ref": "#/$defs/o"
+              },
+              "type": "object"
             },
             {
               "maximum": 0,
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/P"
+              "items": {
+                "$ref": "#/$defs/o"
+              },
+              "type": "array"
             },
             {
               "type": "null"
@@ -3224,7 +2112,7 @@
                 "not": {
                   "properties": {
                     "outgoingSMTP": {
-                      "$ref": "#/$defs/M"
+                      "$ref": "#/$defs/z"
                     }
                   },
                   "required": [
@@ -3236,7 +2124,7 @@
               {
                 "properties": {
                   "outgoingSMTP": {
-                    "$ref": "#/$defs/i"
+                    "$ref": "#/$defs/k"
                   }
                 },
                 "required": [
@@ -3249,7 +2137,7 @@
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/S"
+                "$ref": "#/$defs/15"
               }
             },
             "required": [
@@ -3258,7 +2146,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/L"
           }
         ]
       },
@@ -3274,22 +2162,22 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/3"
-              },
-              {
-                "$ref": "#/$defs/8"
-              },
-              {
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/2"
+                "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/5"
+              },
+              {
+                "$ref": "#/$defs/3"
               },
               {
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/1p"
+                "$ref": "#/$defs/1u"
               }
             ]
           }
@@ -3334,7 +2222,7 @@
           "additionalProperties": {},
           "properties": {
             "pullPolicy": {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/i"
             }
           }
         }
@@ -3367,7 +2255,7 @@
               {
                 "properties": {
                   "containerPort": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/17"
                   }
                 },
                 "required": [
@@ -3378,7 +2266,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/x"
           }
         ]
       },
@@ -3388,7 +2276,7 @@
       "if": {
         "properties": {
           "service": {
-            "$ref": "#/$defs/n"
+            "$ref": "#/$defs/D"
           }
         },
         "required": [
@@ -3455,7 +2343,7 @@
               {
                 "properties": {
                   "service": {
-                    "$ref": "#/$defs/V"
+                    "$ref": "#/$defs/18"
                   }
                 },
                 "required": [
@@ -3485,7 +2373,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/U"
           }
         ]
       },
@@ -3518,7 +2406,7 @@
               {
                 "properties": {
                   "containerPort": {
-                    "$ref": "#/$defs/W"
+                    "$ref": "#/$defs/19"
                   }
                 },
                 "required": [
@@ -3529,7 +2417,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/x"
           }
         ]
       },
@@ -3562,7 +2450,7 @@
             "additionalProperties": {},
             "properties": {
               "loadBalancerIP": {
-                "$ref": "#/$defs/7"
+                "$ref": "#/$defs/i"
               }
             }
           }
@@ -3619,10 +2507,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1f"
+                            "$ref": "#/$defs/1s"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1e"
+                            "$ref": "#/$defs/1r"
                           }
                         },
                         "type": "object",
@@ -3659,10 +2547,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1f"
+                            "$ref": "#/$defs/1s"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1e"
+                            "$ref": "#/$defs/1r"
                           }
                         },
                         "type": [
@@ -3696,7 +2584,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/s"
+                    "$ref": "#/$defs/K"
                   },
                   "type": [
                     "array",
@@ -3706,7 +2594,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/X"
                   },
                   "type": [
                     "array",
@@ -3726,7 +2614,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/s"
+                    "$ref": "#/$defs/K"
                   },
                   "type": [
                     "array",
@@ -3736,7 +2624,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/X"
                   },
                   "type": [
                     "array",
@@ -3753,7 +2641,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/m"
         },
         {
           "type": "null"
@@ -3767,7 +2655,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/i"
+                "$ref": "#/$defs/k"
               },
               {
                 "anyOf": [
@@ -3799,7 +2687,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/M"
+                  "$ref": "#/$defs/z"
                 }
               }
             ]
@@ -3807,7 +2695,7 @@
           "then": false
         },
         {
-          "$ref": "#/$defs/Z"
+          "$ref": "#/$defs/1d"
         }
       ],
       "properties": {
@@ -3825,17 +2713,17 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/3"
+          "$ref": "#/$defs/4"
         },
         {
           "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/4"
+          "$ref": "#/$defs/5"
         },
         {
-          "$ref": "#/$defs/2"
+          "$ref": "#/$defs/3"
         },
         {
           "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
@@ -3850,7 +2738,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/W"
+                "$ref": "#/$defs/19"
               },
               {
                 "not": {
@@ -3882,7 +2770,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/U"
+                "$ref": "#/$defs/17"
               }
             ]
           },
@@ -3894,10 +2782,17 @@
           "additionalProperties": {},
           "properties": {
             "name": {
-              "$ref": "#/$defs/10"
+              "$ref": "#/$defs/1e"
             },
             "port": {
-              "$ref": "#/$defs/u"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/u"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                }
+              ]
             }
           },
           "required": [
@@ -3909,31 +2804,31 @@
           "additionalProperties": {},
           "properties": {
             "name": {
-              "$ref": "#/$defs/10"
+              "$ref": "#/$defs/1e"
             },
             "port": {
               "allOf": [
                 {
                   "oneOf": [
                     {
-                      "$ref": "#/$defs/1b"
+                      "$ref": "#/$defs/1p"
                     },
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/3"
+                          "$ref": "#/$defs/4"
                         },
                         {
                           "type": "integer"
                         },
                         {
-                          "$ref": "#/$defs/4"
+                          "$ref": "#/$defs/5"
                         },
                         {
-                          "$ref": "#/$defs/J"
+                          "$ref": "#/$defs/d"
                         },
                         {
-                          "$ref": "#/$defs/2"
+                          "$ref": "#/$defs/3"
                         },
                         {
                           "type": "null"
@@ -3943,7 +2838,14 @@
                   ]
                 },
                 {
-                  "$ref": "#/$defs/u"
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/u"
+                    },
+                    {
+                      "$ref": "#/$defs/d"
+                    }
+                  ]
                 }
               ]
             }
@@ -3983,7 +2885,7 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/O"
+                      "$ref": "#/$defs/12"
                     },
                     "drop": {
                       "anyOf": [
@@ -4026,7 +2928,7 @@
               ]
             },
             "procMount": {
-              "$ref": "#/$defs/1a"
+              "$ref": "#/$defs/1o"
             },
             "readOnlyRootFilesystem": {
               "anyOf": [
@@ -4040,22 +2942,22 @@
               ]
             },
             "runAsGroup": {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/1l"
             },
             "runAsNonRoot": {
-              "$ref": "#/$defs/14"
+              "$ref": "#/$defs/1h"
             },
             "runAsUser": {
-              "$ref": "#/$defs/16"
+              "$ref": "#/$defs/1j"
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/r"
+              "$ref": "#/$defs/J"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/q"
+              "$ref": "#/$defs/H"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/p"
+              "$ref": "#/$defs/G"
             }
           },
           "type": "object"
@@ -4079,7 +2981,7 @@
               "args": {
                 "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/2"
                 },
                 "type": [
                   "array",
@@ -4089,7 +2991,7 @@
               "command": {
                 "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/2"
                 },
                 "type": [
                   "array",
@@ -4103,13 +3005,13 @@
                   "description": "EnvVar represents an environment variable present in a Container.",
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/Q"
+                      "$ref": "#/$defs/13"
                     },
                     "value": {
-                      "$ref": "#/$defs/11"
+                      "$ref": "#/$defs/1f"
                     },
                     "valueFrom": {
-                      "$ref": "#/$defs/Y"
+                      "$ref": "#/$defs/1c"
                     }
                   },
                   "required": [
@@ -4138,7 +3040,7 @@
                       "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                       "properties": {
                         "name": {
-                          "$ref": "#/$defs/z"
+                          "$ref": "#/$defs/l"
                         },
                         "optional": {
                           "description": "Specify whether the ConfigMap must be defined",
@@ -4165,7 +3067,7 @@
                       "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                       "properties": {
                         "name": {
-                          "$ref": "#/$defs/z"
+                          "$ref": "#/$defs/l"
                         },
                         "optional": {
                           "description": "Specify whether the Secret must be defined",
@@ -4210,10 +3112,10 @@
                 "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
                 "properties": {
                   "postStart": {
-                    "$ref": "#/$defs/X"
+                    "$ref": "#/$defs/1b"
                   },
                   "preStop": {
-                    "$ref": "#/$defs/X"
+                    "$ref": "#/$defs/1b"
                   }
                 },
                 "type": [
@@ -4222,7 +3124,7 @@
                 ]
               },
               "livenessProbe": {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/E"
               },
               "name": {
                 "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
@@ -4235,7 +3137,7 @@
                   "description": "ContainerPort represents a network port in a single container.",
                   "properties": {
                     "containerPort": {
-                      "$ref": "#/$defs/1k"
+                      "$ref": "#/$defs/u"
                     },
                     "hostIP": {
                       "description": "What host IP to bind the external port to.",
@@ -4288,7 +3190,7 @@
                 "x-kubernetes-patch-strategy": "merge"
               },
               "readinessProbe": {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/E"
               },
               "resizePolicy": {
                 "description": "Resources resize policy for the container.",
@@ -4325,13 +3227,13 @@
                 "description": "ResourceRequirements describes the compute resource requirements.",
                 "properties": {
                   "claims": {
-                    "$ref": "#/$defs/1h"
+                    "$ref": "#/$defs/1x"
                   },
                   "limits": {
-                    "$ref": "#/$defs/x"
+                    "$ref": "#/$defs/N"
                   },
                   "requests": {
-                    "$ref": "#/$defs/13"
+                    "$ref": "#/$defs/1g"
                   }
                 },
                 "type": [
@@ -4362,12 +3264,12 @@
                     "description": "Adds and removes POSIX capabilities from running containers.",
                     "properties": {
                       "add": {
-                        "$ref": "#/$defs/O"
+                        "$ref": "#/$defs/12"
                       },
                       "drop": {
                         "description": "Removed capabilities",
                         "items": {
-                          "$ref": "#/$defs/5"
+                          "$ref": "#/$defs/2"
                         },
                         "type": [
                           "array",
@@ -4388,7 +3290,7 @@
                     ]
                   },
                   "procMount": {
-                    "$ref": "#/$defs/1a"
+                    "$ref": "#/$defs/1o"
                   },
                   "readOnlyRootFilesystem": {
                     "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
@@ -4398,22 +3300,22 @@
                     ]
                   },
                   "runAsGroup": {
-                    "$ref": "#/$defs/17"
+                    "$ref": "#/$defs/1l"
                   },
                   "runAsNonRoot": {
-                    "$ref": "#/$defs/14"
+                    "$ref": "#/$defs/1h"
                   },
                   "runAsUser": {
-                    "$ref": "#/$defs/16"
+                    "$ref": "#/$defs/1j"
                   },
                   "seLinuxOptions": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/J"
                   },
                   "seccompProfile": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/H"
                   },
                   "windowsOptions": {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/G"
                   }
                 },
                 "type": [
@@ -4422,7 +3324,7 @@
                 ]
               },
               "startupProbe": {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/E"
               },
               "stdin": {
                 "description": "Whether this container should allocate a buffer for stdin in the container runtime. If this is not set, reads from stdin in the container will always result in EOF. Default is false.",
@@ -4577,7 +3479,10 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/C"
+          "additionalProperties": {
+            "$ref": "#/$defs/o"
+          },
+          "type": "object"
         },
         {
           "description": "List of environment variables to set in the container. Cannot be updated.",
@@ -4588,13 +3493,13 @@
                 "description": "EnvVar represents an environment variable present in a Container.",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/Q"
+                    "$ref": "#/$defs/13"
                   },
                   "value": {
-                    "$ref": "#/$defs/11"
+                    "$ref": "#/$defs/1f"
                   },
                   "valueFrom": {
-                    "$ref": "#/$defs/Y"
+                    "$ref": "#/$defs/1c"
                   }
                 },
                 "required": [
@@ -4612,7 +3517,10 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/P"
+          "items": {
+            "$ref": "#/$defs/o"
+          },
+          "type": "array"
         },
         {
           "type": "null"
@@ -4640,7 +3548,7 @@
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
           "items": {
-            "$ref": "#/$defs/15"
+            "$ref": "#/$defs/1i"
           },
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
@@ -4653,7 +3561,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/i"
+            "$ref": "#/$defs/k"
           },
           "then": {
             "allOf": [
@@ -4662,10 +3570,10 @@
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/F"
+                      "$ref": "#/$defs/T"
                     },
                     "items": {
-                      "$ref": "#/$defs/F"
+                      "$ref": "#/$defs/T"
                     }
                   }
                 }
@@ -4675,26 +3583,26 @@
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/D"
+                      "$ref": "#/$defs/S"
                     },
                     "items": {
-                      "$ref": "#/$defs/D"
+                      "$ref": "#/$defs/S"
                     }
                   }
                 }
               },
               {
-                "$ref": "#/$defs/18"
+                "$ref": "#/$defs/1n"
               },
               {
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/R"
+                      "$ref": "#/$defs/14"
                     },
                     "items": {
-                      "$ref": "#/$defs/R"
+                      "$ref": "#/$defs/14"
                     }
                   }
                 }
@@ -4708,7 +3616,7 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/n"
                       }
                     ],
                     "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
@@ -4724,7 +3632,7 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/n"
                       }
                     ],
                     "description": "ingressClassName: nginx"
@@ -4738,10 +3646,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/16"
               },
               {
-                "$ref": "#/$defs/i"
+                "$ref": "#/$defs/k"
               }
             ]
           },
@@ -4750,11 +3658,11 @@
             "properties": {
               "tls": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/K"
+                  "$ref": "#/$defs/W"
                 },
                 "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
                 "items": {
-                  "$ref": "#/$defs/K"
+                  "$ref": "#/$defs/W"
                 }
               }
             }
@@ -4787,16 +3695,16 @@
           "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
           "properties": {
             "exec": {
-              "$ref": "#/$defs/1i"
+              "$ref": "#/$defs/s"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/G"
+              "$ref": "#/$defs/y"
             },
             "grpc": {
-              "$ref": "#/$defs/12"
+              "$ref": "#/$defs/F"
             },
             "httpGet": {
-              "$ref": "#/$defs/1d"
+              "$ref": "#/$defs/r"
             },
             "initialDelaySeconds": {
               "anyOf": [
@@ -4811,16 +3719,16 @@
               ]
             },
             "periodSeconds": {
-              "$ref": "#/$defs/B"
+              "$ref": "#/$defs/v"
             },
             "successThreshold": {
-              "$ref": "#/$defs/E"
+              "$ref": "#/$defs/w"
             },
             "tcpSocket": {
-              "$ref": "#/$defs/19"
+              "$ref": "#/$defs/p"
             },
             "terminationGracePeriodSeconds": {
-              "$ref": "#/$defs/1g"
+              "$ref": "#/$defs/I"
             },
             "timeoutSeconds": {
               "anyOf": [
@@ -4848,7 +3756,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/1b"
+              "$ref": "#/$defs/1p"
             },
             {
               "anyOf": [
@@ -4856,10 +3764,22 @@
                   "$ref": "#/$defs/6"
                 },
                 {
-                  "$ref": "#/$defs/8"
+                  "$ref": "#/$defs/a"
                 },
                 {
                   "allOf": [
+                    {
+                      "$ref": "#/$defs/j"
+                    },
+                    {
+                      "$ref": "#/$defs/e"
+                    },
+                    {
+                      "$ref": "#/$defs/h"
+                    },
+                    {
+                      "$ref": "#/$defs/9"
+                    },
                     {
                       "$ref": "#/$defs/f"
                     },
@@ -4867,28 +3787,16 @@
                       "$ref": "#/$defs/b"
                     },
                     {
-                      "$ref": "#/$defs/e"
-                    },
-                    {
-                      "$ref": "#/$defs/k"
-                    },
-                    {
-                      "$ref": "#/$defs/c"
-                    },
-                    {
-                      "$ref": "#/$defs/9"
-                    },
-                    {
-                      "$ref": "#/$defs/d"
-                    },
-                    {
                       "$ref": "#/$defs/g"
                     },
                     {
-                      "$ref": "#/$defs/h"
+                      "$ref": "#/$defs/7"
                     },
                     {
-                      "$ref": "#/$defs/a"
+                      "$ref": "#/$defs/8"
+                    },
+                    {
+                      "$ref": "#/$defs/c"
                     }
                   ],
                   "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
@@ -4910,14 +3818,14 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/5"
+            "$ref": "#/$defs/2"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/m"
         },
         {
           "type": "null"
@@ -4928,7 +3836,7 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "$ref": "#/$defs/Z"
+          "$ref": "#/$defs/1d"
         }
       ],
       "description": "JSON file defining outgoing SMTP servers",
@@ -4943,7 +3851,7 @@
       "type": "object"
     },
     "podAnnotations": {
-      "$ref": "#/$defs/1j"
+      "$ref": "#/$defs/1y"
     },
     "podLabels": {
       "anyOf": [
@@ -4954,7 +3862,7 @@
           "allOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/5"
+                "$ref": "#/$defs/2"
               },
               "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
               "type": [
@@ -4963,12 +3871,12 @@
               ]
             },
             {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/n"
             }
           ]
         },
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/m"
         }
       ]
     },
@@ -4985,16 +3893,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/3"
-        },
-        {
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/J"
+          "$ref": "#/$defs/5"
         },
         {
-          "$ref": "#/$defs/2"
+          "$ref": "#/$defs/d"
+        },
+        {
+          "$ref": "#/$defs/3"
         }
       ]
     },
@@ -5007,16 +3915,28 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/3"
-        },
-        {
-          "$ref": "#/$defs/8"
-        },
-        {
           "$ref": "#/$defs/4"
         },
         {
+          "$ref": "#/$defs/a"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
           "allOf": [
+            {
+              "$ref": "#/$defs/j"
+            },
+            {
+              "$ref": "#/$defs/e"
+            },
+            {
+              "$ref": "#/$defs/h"
+            },
+            {
+              "$ref": "#/$defs/9"
+            },
             {
               "$ref": "#/$defs/f"
             },
@@ -5024,35 +3944,23 @@
               "$ref": "#/$defs/b"
             },
             {
-              "$ref": "#/$defs/e"
-            },
-            {
-              "$ref": "#/$defs/k"
-            },
-            {
-              "$ref": "#/$defs/c"
-            },
-            {
-              "$ref": "#/$defs/9"
-            },
-            {
-              "$ref": "#/$defs/d"
-            },
-            {
               "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/h"
+              "$ref": "#/$defs/7"
             },
             {
-              "$ref": "#/$defs/a"
+              "$ref": "#/$defs/8"
+            },
+            {
+              "$ref": "#/$defs/c"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/2"
+          "$ref": "#/$defs/3"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -5070,34 +3978,34 @@
           "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
           "properties": {
             "exec": {
-              "$ref": "#/$defs/1i"
+              "$ref": "#/$defs/s"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/G"
+              "$ref": "#/$defs/y"
             },
             "grpc": {
-              "$ref": "#/$defs/12"
+              "$ref": "#/$defs/F"
             },
             "httpGet": {
-              "$ref": "#/$defs/1d"
+              "$ref": "#/$defs/r"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/1m"
+              "$ref": "#/$defs/R"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/B"
+              "$ref": "#/$defs/v"
             },
             "successThreshold": {
-              "$ref": "#/$defs/E"
+              "$ref": "#/$defs/w"
             },
             "tcpSocket": {
-              "$ref": "#/$defs/19"
+              "$ref": "#/$defs/p"
             },
             "terminationGracePeriodSeconds": {
-              "$ref": "#/$defs/1g"
+              "$ref": "#/$defs/I"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/1l"
+              "$ref": "#/$defs/Q"
             }
           },
           "type": "object"
@@ -5106,7 +4014,7 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/m"
         },
         {
           "type": "null"
@@ -5118,13 +4026,13 @@
       "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
       "properties": {
         "claims": {
-          "$ref": "#/$defs/1h"
+          "$ref": "#/$defs/1x"
         },
         "limits": {
-          "$ref": "#/$defs/x"
+          "$ref": "#/$defs/N"
         },
         "requests": {
-          "$ref": "#/$defs/13"
+          "$ref": "#/$defs/1g"
         }
       },
       "type": [
@@ -5196,10 +4104,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/r"
+              "$ref": "#/$defs/J"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/q"
+              "$ref": "#/$defs/H"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -5245,7 +4153,7 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/p"
+              "$ref": "#/$defs/G"
             }
           },
           "type": "object"
@@ -5262,7 +4170,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/n"
+                "$ref": "#/$defs/D"
               },
               {
                 "anyOf": [
@@ -5300,7 +4208,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/V"
+                "$ref": "#/$defs/18"
               },
               {
                 "not": {
@@ -5319,7 +4227,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/n"
+            "$ref": "#/$defs/D"
           },
           "then": {
             "allOf": [
@@ -5330,7 +4238,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "http": {
-                        "$ref": "#/$defs/1c"
+                        "$ref": "#/$defs/1q"
                       }
                     }
                   }
@@ -5343,7 +4251,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "smtp": {
-                        "$ref": "#/$defs/1c"
+                        "$ref": "#/$defs/1q"
                       }
                     }
                   }
@@ -5355,7 +4263,7 @@
       ],
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/1j"
+          "$ref": "#/$defs/1y"
         },
         "clusterIP": {},
         "externalIPs": {
@@ -5366,7 +4274,7 @@
             {
               "description": "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.",
               "items": {
-                "$ref": "#/$defs/5"
+                "$ref": "#/$defs/2"
               },
               "type": "array"
             },
@@ -5409,7 +4317,7 @@
                     ]
                   },
                   "port": {
-                    "$ref": "#/$defs/1n"
+                    "$ref": "#/$defs/A"
                   },
                   "protocol": {
                     "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
@@ -5419,7 +4327,7 @@
                     ]
                   },
                   "targetPort": {
-                    "$ref": "#/$defs/1o"
+                    "$ref": "#/$defs/B"
                   }
                 },
                 "required": [
@@ -5456,7 +4364,7 @@
             {
               "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
               "items": {
-                "$ref": "#/$defs/5"
+                "$ref": "#/$defs/2"
               },
               "type": "array"
             }
@@ -5476,10 +4384,24 @@
           "additionalProperties": {},
           "properties": {
             "http": {
-              "$ref": "#/$defs/y"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/A"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                }
+              ]
             },
             "smtp": {
-              "$ref": "#/$defs/y"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/A"
+                },
+                {
+                  "$ref": "#/$defs/d"
+                }
+              ]
             }
           },
           "required": [
@@ -5497,7 +4419,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/15"
           },
           "then": {
             "allOf": [
@@ -5507,7 +4429,7 @@
                   "imagePullSecrets": {
                     "description": "Image pull secrets that are attached to the ServiceAccount",
                     "items": {
-                      "$ref": "#/$defs/15"
+                      "$ref": "#/$defs/1i"
                     },
                     "type": [
                       "array",
@@ -5524,34 +4446,34 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/j"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
                             "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/k"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
                             "$ref": "#/$defs/g"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/7"
                           },
                           {
-                            "$ref": "#/$defs/a"
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
                           }
                         ],
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -5564,20 +4486,20 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/8"
-                      },
-                      {
                         "$ref": "#/$defs/4"
+                      },
+                      {
+                        "$ref": "#/$defs/a"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
                       },
                       {
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/2"
+                        "$ref": "#/$defs/3"
                       }
                     ],
                     "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -5608,16 +4530,16 @@
               "$ref": "#/$defs/1"
             },
             {
-              "$ref": "#/$defs/3"
-            },
-            {
-              "$ref": "#/$defs/8"
-            },
-            {
               "$ref": "#/$defs/4"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/a"
+            },
+            {
+              "$ref": "#/$defs/5"
+            },
+            {
+              "$ref": "#/$defs/3"
             },
             {
               "type": "string"
@@ -5625,34 +4547,34 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/j"
+                },
+                {
+                  "$ref": "#/$defs/e"
+                },
+                {
+                  "$ref": "#/$defs/h"
+                },
+                {
+                  "$ref": "#/$defs/9"
+                },
+                {
                   "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/b"
                 },
                 {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/k"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/9"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
                   "$ref": "#/$defs/g"
                 },
                 {
-                  "$ref": "#/$defs/h"
+                  "$ref": "#/$defs/7"
                 },
                 {
-                  "$ref": "#/$defs/a"
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/c"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

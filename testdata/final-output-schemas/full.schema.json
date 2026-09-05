@@ -14,6 +14,18 @@
       "type": "object"
     },
     "2": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "3": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "4": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "5": {
       "anyOf": [
         {
           "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
@@ -26,24 +38,21 @@
           "type": "null"
         },
         {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
+          "$ref": "#/$defs/3"
         },
         {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
+          "$ref": "#/$defs/4"
         },
         {
           "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
+          "$ref": "#/$defs/2"
         }
       ]
     },
-    "3": {
+    "6": {
       "allOf": [
         {
           "not": {
@@ -63,7 +72,7 @@
       ],
       "type": "string"
     },
-    "4": {
+    "7": {
       "properties": {
         "kind": {
           "enum": [
@@ -76,22 +85,11 @@
       ],
       "type": "object"
     },
-    "5": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "6": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "7": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
     "t": {
       "anyOf": [
         {
-          "const": true
+          "minProperties": 1,
+          "type": "object"
         },
         {
           "not": {
@@ -108,8 +106,7 @@
           "type": "array"
         },
         {
-          "minProperties": 1,
-          "type": "object"
+          "const": true
         }
       ]
     }
@@ -460,7 +457,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/4"
+                "$ref": "#/$defs/7"
               },
               {
                 "$ref": "#/$defs/1"
@@ -490,17 +487,17 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/6"
+                    "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/4"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/5"
+                    "$ref": "#/$defs/2"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
@@ -515,7 +512,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/4"
+                "$ref": "#/$defs/7"
               },
               {
                 "not": {
@@ -608,7 +605,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/6"
+                    "$ref": "#/$defs/3"
                   },
                   {
                     "additionalProperties": {
@@ -621,7 +618,7 @@
                           "type": "integer"
                         },
                         {
-                          "$ref": "#/$defs/3"
+                          "$ref": "#/$defs/6"
                         },
                         {
                           "type": "number"
@@ -639,15 +636,15 @@
                       ]
                     },
                     "propertyNames": {
-                      "$ref": "#/$defs/3"
+                      "$ref": "#/$defs/6"
                     },
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/4"
                   },
                   {
-                    "$ref": "#/$defs/5"
+                    "$ref": "#/$defs/2"
                   }
                 ]
               }
@@ -681,7 +678,7 @@
       "type": "object"
     },
     "replicas": {
-      "$ref": "#/$defs/2"
+      "$ref": "#/$defs/5"
     },
     "requiredText": {},
     "version": {
@@ -745,7 +742,7 @@
             "additionalProperties": {},
             "properties": {
               "replicas": {
-                "$ref": "#/$defs/2"
+                "$ref": "#/$defs/5"
               }
             }
           }

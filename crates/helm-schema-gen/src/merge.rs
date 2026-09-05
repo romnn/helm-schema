@@ -83,9 +83,13 @@ fn strip_validation_annotations(schema: &mut Value) {
     if let Some(object) = schema.as_object_mut() {
         object.retain(|key, _| !is_annotation_keyword(key));
     }
-    helm_schema_json_schema_walk::visit_subschemas_mut(schema, &mut |subschema| {
-        strip_validation_annotations(subschema);
-    });
+    helm_schema_json_schema_walk::visit_subschemas_mut(
+        schema,
+        helm_schema_json_schema_walk::ReferenceSiblings::Skip,
+        &mut |subschema| {
+            strip_validation_annotations(subschema);
+        },
+    );
 }
 
 pub(crate) fn union_schema_list(mut schemas: Vec<Value>) -> Value {

@@ -52,7 +52,11 @@ pub fn normalize_schema_pattern_dialects(schema: &mut Value) {
             }
         }
     }
-    visit_subschemas_mut(schema, &mut normalize_schema_pattern_dialects);
+    visit_subschemas_mut(
+        schema,
+        helm_schema_json_schema_walk::ReferenceSiblings::Skip,
+        &mut normalize_schema_pattern_dialects,
+    );
 }
 
 /// Rewrite a leading global case-insensitivity group (`(?i)…` or `^(?i)…`)

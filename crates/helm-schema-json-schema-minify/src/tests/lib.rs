@@ -3,6 +3,43 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+mod complete_deduplication;
+
+#[test]
+fn generated_reference_inlining_is_one_step_and_preserves_other_scopes() {
+    let mut schema = json!({
+        "$id": "https://example.test/root",
+        "properties": {
+            "value": {"$ref": "#/$defs/1"},
+            "nested": {
+                "$id": "child",
+                "properties": {"value": {"$ref": "#/$defs/1"}}
+            }
+        },
+        "default": {"$ref": "#/$defs/1"}
+    });
+    let replacements = BTreeMap::from([
+        ("#/$defs/1".to_string(), json!({"$ref": "#/$defs/2"})),
+        ("#/$defs/2".to_string(), json!({"type": "string"})),
+    ]);
+
+    inline_generated_references(&mut schema, &replacements);
+
+    // An inserted reference is not recursively substituted, and neither data
+    // payloads nor a nested resource belong to the outer definition namespace.
+    sim_assert_eq!(have: schema, want: json!({
+        "$id": "https://example.test/root",
+        "properties": {
+            "value": {"$ref": "#/$defs/2"},
+            "nested": {
+                "$id": "child",
+                "properties": {"value": {"$ref": "#/$defs/1"}}
+            }
+        },
+        "default": {"$ref": "#/$defs/1"}
+    }));
+}
+
 #[test]
 fn generated_definition_names_use_compact_base62() {
     for (value, expected) in [
@@ -258,7 +295,7 @@ fn repeated_schemas_may_reference_unchanged_root_definitions() {
 }
 
 #[test]
-fn existing_definition_bodies_are_not_rewritten() {
+fn nested_references_preserve_existing_definition_addresses() {
     let repeated = json!({
         "allOf": [
             { "$ref": "#/$defs/base" },
@@ -275,6 +312,7 @@ fn existing_definition_bodies_are_not_rewritten() {
             "base": repeated
         },
         "properties": {
+            "byPointer": {"$ref": "#/$defs/base/allOf/0"},
             "left": repeated,
             "right": repeated
         }
@@ -413,14 +451,14 @@ fn equivalent_junctor_grouping_produces_one_stable_definition() {
     sim_assert_eq!(have: regrouped, want: minimized.clone());
     sim_assert_eq!(
         have: minimized.pointer("/properties/left/$ref"),
-        want: Some(&Value::String("#/$defs/1".to_string()))
+        want: Some(&Value::String("#/$defs/2".to_string()))
     );
     sim_assert_eq!(
         have: minimized.pointer("/properties/right/$ref"),
-        want: Some(&Value::String("#/$defs/1".to_string()))
+        want: Some(&Value::String("#/$defs/2".to_string()))
     );
     sim_assert_eq!(
-        have: minimized.pointer("/$defs/1/allOf").and_then(Value::as_array).map(Vec::len),
+        have: minimized.pointer("/$defs/2/allOf").and_then(Value::as_array).map(Vec::len),
         want: Some(3)
     );
 }

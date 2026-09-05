@@ -3,14 +3,7 @@
     "1": {
       "properties": {
         "csi": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/t"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/$defs/4"
         }
       },
       "required": [
@@ -30,103 +23,86 @@
       ]
     },
     "4": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "5": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "6": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "7": {
-      "properties": {
-        "repository": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "8": {
-      "properties": {
-        "tag": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "tag"
-      ],
-      "type": "object"
-    },
-    "9": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "installCsiOperator": {}
-                },
-                "required": [
-                  "installCsiOperator"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/t"
         },
         {
-          "properties": {
-            "csi": {
-              "properties": {
-                "installCsiOperator": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "installCsiOperator"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "csi"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "csi": {
-              "properties": {
-                "installCsiOperator": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "installCsiOperator"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "csi"
-          ],
           "type": "object"
         }
       ]
     },
+    "5": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "6": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "7": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "8": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "9": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
     "A": {
+      "properties": {
+        "image": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "B": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/g"
+        },
+        {
+          "$ref": "#/$defs/j"
+        },
+        {
+          "$ref": "#/$defs/f"
+        },
+        {
+          "$ref": "#/$defs/a"
+        },
+        {
+          "$ref": "#/$defs/h"
+        },
+        {
+          "$ref": "#/$defs/e"
+        },
+        {
+          "$ref": "#/$defs/i"
+        },
+        {
+          "$ref": "#/$defs/8"
+        },
+        {
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/m"
+        }
+      ],
+      "type": "string"
+    },
+    "C": {
       "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
       "items": {
         "additionalProperties": false,
@@ -154,7 +130,7 @@
       ],
       "x-kubernetes-list-type": "map"
     },
-    "B": {
+    "D": {
       "anyOf": [
         {
           "not": {
@@ -212,14 +188,11 @@
         }
       ]
     },
-    "C": {
+    "E": {
       "allOf": [
         {
           "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "$ref": "#/$defs/3"
           },
           "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
           "type": [
@@ -228,14 +201,11 @@
           ]
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/q"
         }
       ]
     },
-    "D": {
+    "F": {
       "properties": {
         "ceph-csi-operator": {
           "properties": {
@@ -254,19 +224,12 @@
       ],
       "type": "object"
     },
-    "E": {
+    "G": {
       "properties": {
         "csi": {
           "properties": {
             "provisioner": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/4"
             }
           },
           "required": [
@@ -280,19 +243,12 @@
       ],
       "type": "object"
     },
-    "F": {
+    "H": {
       "properties": {
         "csi": {
           "properties": {
             "snapshotter": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/4"
             }
           },
           "required": [
@@ -306,19 +262,12 @@
       ],
       "type": "object"
     },
-    "G": {
+    "I": {
       "properties": {
         "csi": {
           "properties": {
             "csiAddons": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/4"
             }
           },
           "required": [
@@ -332,19 +281,12 @@
       ],
       "type": "object"
     },
-    "H": {
+    "J": {
       "properties": {
         "csi": {
           "properties": {
             "registrar": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/4"
             }
           },
           "required": [
@@ -358,19 +300,12 @@
       ],
       "type": "object"
     },
-    "I": {
+    "K": {
       "properties": {
         "csi": {
           "properties": {
             "attacher": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/4"
             }
           },
           "required": [
@@ -384,19 +319,12 @@
       ],
       "type": "object"
     },
-    "J": {
+    "L": {
       "properties": {
         "csi": {
           "properties": {
             "cephcsi": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/4"
             }
           },
           "required": [
@@ -410,19 +338,12 @@
       ],
       "type": "object"
     },
-    "K": {
+    "M": {
       "properties": {
         "csi": {
           "properties": {
             "resizer": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/4"
             }
           },
           "required": [
@@ -436,11 +357,65 @@
       ],
       "type": "object"
     },
-    "L": {
+    "N": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "M": {
+    "O": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "installCsiOperator": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "installCsiOperator"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "P": {
+      "not": {
+        "properties": {
+          "csi": {
+            "properties": {
+              "installCsiOperator": {}
+            },
+            "required": [
+              "installCsiOperator"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "csi"
+        ],
+        "type": "object"
+      }
+    },
+    "Q": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/a"
+        },
+        {
+          "$ref": "#/$defs/8"
+        },
+        {
+          "$ref": "#/$defs/9"
+        }
+      ],
+      "type": "string"
+    },
+    "R": {
       "additionalProperties": false,
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
@@ -458,21 +433,21 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "N": {
+    "S": {
       "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "string",
         "null"
       ]
     },
-    "O": {
+    "T": {
       "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "P": {
+    "U": {
       "properties": {
         "ceph-csi-operator": {
           "properties": {
@@ -491,140 +466,64 @@
       ],
       "type": "object"
     },
-    "Q": {
+    "a": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "b": {
       "properties": {
-        "enabled": {
+        "repository": {
           "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "enabled"
+        "repository"
       ],
       "type": "object"
     },
-    "R": {
+    "c": {
+      "properties": {
+        "tag": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "tag"
+      ],
+      "type": "object"
+    },
+    "d": {
       "anyOf": [
         {
-          "$ref": "#/$defs/t"
+          "$ref": "#/$defs/P"
         },
         {
-          "type": "object"
+          "$ref": "#/$defs/o"
+        },
+        {
+          "$ref": "#/$defs/O"
         }
       ]
     },
-    "a": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "allOf": [
-          {
-            "not": {
-              "pattern": "[ \\t]#"
-            }
-          },
-          {
-            "not": {
-              "pattern": ":[ \\t]|:$"
-            }
-          },
-          {
-            "not": {
-              "pattern": "[\\r\\n]"
-            }
-          }
-        ],
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "b": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "c": {
+    "e": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "d": {
+    "f": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "e": {
+    "g": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "f": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "g": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
     "h": {
       "not": {
-        "pattern": "[ \\t]#"
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
     "helm-double-quoted-safe": {
@@ -642,12 +541,6 @@
           "type": "string"
         },
         {
-          "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
-          },
-          "type": "array"
-        },
-        {
           "additionalProperties": {
             "$ref": "#/$defs/helm-double-quoted-safe"
           },
@@ -655,36 +548,85 @@
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
           },
           "type": "object"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
         }
       ]
     },
     "i": {
       "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "j": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "k": {
-      "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
+    "k": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/Q"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/Q"
+      },
+      "type": "object"
+    },
     "l": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "m": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "m": {
+    "n": {
       "oneOf": [
         {
-          "type": [
-            "string",
-            "null"
-          ]
+          "$ref": "#/$defs/3"
         },
         {
           "type": [
@@ -694,13 +636,38 @@
         }
       ]
     },
-    "n": {
+    "o": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "installCsiOperator": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "installCsiOperator"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "p": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "o": {
+    "q": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "r": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -738,7 +705,7 @@
         "null"
       ]
     },
-    "p": {
+    "s": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -770,7 +737,32 @@
         }
       ]
     },
-    "q": {
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "u": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -808,37 +800,10 @@
         "null"
       ]
     },
-    "r": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "installCsiOperator": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "installCsiOperator"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "s": {
+    "v": {
       "properties": {
         "monitoring": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/z"
         }
       },
       "required": [
@@ -846,76 +811,17 @@
       ],
       "type": "object"
     },
-    "t": {
+    "w": {
       "anyOf": [
         {
-          "const": true
+          "$ref": "#/$defs/P"
         },
         {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "minProperties": 1,
-          "type": "object"
+          "$ref": "#/$defs/O"
         }
       ]
     },
-    "u": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "installCsiOperator": {}
-                },
-                "required": [
-                  "installCsiOperator"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "csi": {
-              "properties": {
-                "installCsiOperator": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "installCsiOperator"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "csi"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "v": {
+    "x": {
       "additionalProperties": false,
       "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
       "properties": {
@@ -961,92 +867,26 @@
         "null"
       ]
     },
-    "w": {
+    "y": {
       "description": "Added capabilities",
       "items": {
-        "type": [
-          "string",
-          "null"
-        ]
+        "$ref": "#/$defs/3"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "x": {
+    "z": {
       "properties": {
-        "image": {
-          "enum": [
-            null
-          ]
+        "enabled": {
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "image"
+        "enabled"
       ],
       "type": "object"
-    },
-    "y": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "z": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        }
-      ],
-      "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1056,7 +896,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/E"
+            "$ref": "#/$defs/G"
           },
           {
             "$ref": "#/$defs/1"
@@ -1081,7 +921,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/K"
           },
           {
             "$ref": "#/$defs/1"
@@ -1106,7 +946,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/v"
           },
           {
             "anyOf": [
@@ -1160,14 +1000,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/J"
+            "$ref": "#/$defs/L"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
                   "cephcsi": {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": [
@@ -1186,7 +1026,7 @@
               "csi": {
                 "properties": {
                   "cephcsi": {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/c"
                   }
                 },
                 "required": [
@@ -1263,20 +1103,20 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/D"
+                "$ref": "#/$defs/F"
               },
               {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/o"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/D"
+                "$ref": "#/$defs/F"
               },
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/w"
               }
             ]
           }
@@ -1303,7 +1143,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/M"
           },
           {
             "$ref": "#/$defs/1"
@@ -1343,7 +1183,7 @@
               "csi": {
                 "properties": {
                   "registrar": {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/c"
                   }
                 },
                 "required": [
@@ -1362,7 +1202,7 @@
               "csi": {
                 "properties": {
                   "registrar": {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": [
@@ -1377,7 +1217,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/J"
           },
           {
             "$ref": "#/$defs/1"
@@ -1431,7 +1271,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/9"
+            "$ref": "#/$defs/d"
           },
           {
             "properties": {
@@ -1469,7 +1309,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/x"
+            "$ref": "#/$defs/A"
           },
           {
             "not": {
@@ -1521,7 +1361,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/9"
+            "$ref": "#/$defs/d"
           },
           {
             "properties": {
@@ -1636,7 +1476,7 @@
               "csi": {
                 "properties": {
                   "snapshotter": {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/c"
                   }
                 },
                 "required": [
@@ -1655,7 +1495,7 @@
               "csi": {
                 "properties": {
                   "snapshotter": {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": [
@@ -1670,7 +1510,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/1"
@@ -1724,7 +1564,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/9"
+            "$ref": "#/$defs/d"
           },
           {
             "properties": {
@@ -1776,7 +1616,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/s"
+        "$ref": "#/$defs/v"
       },
       "then": {
         "additionalProperties": {},
@@ -1796,7 +1636,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/J"
           },
           {
             "$ref": "#/$defs/1"
@@ -1819,7 +1659,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/9"
+        "$ref": "#/$defs/d"
       },
       "then": {
         "allOf": [
@@ -2047,36 +1887,21 @@
                       "priorityClassName": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/5"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
+                            "$ref": "#/$defs/l"
                           },
                           {
                             "$ref": "#/$defs/6"
                           },
                           {
+                            "$ref": "#/$defs/k"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/k"
-                              },
-                              {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/h"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
-                              },
-                              {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/g"
                               },
                               {
                                 "$ref": "#/$defs/j"
@@ -2085,17 +1910,32 @@
                                 "$ref": "#/$defs/f"
                               },
                               {
-                                "$ref": "#/$defs/g"
+                                "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/l"
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/8"
+                              },
+                              {
+                                "$ref": "#/$defs/9"
+                              },
+                              {
+                                "$ref": "#/$defs/m"
                               }
                             ],
                             "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/4"
+                            "$ref": "#/$defs/5"
                           },
                           {
                             "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -2173,7 +2013,7 @@
                           {
                             "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
                             "items": {
-                              "$ref": "#/$defs/M"
+                              "$ref": "#/$defs/R"
                             },
                             "type": [
                               "array",
@@ -2235,11 +2075,11 @@
                             "description": "Resource limits and requests for the manager container",
                             "properties": {
                               "claims": {
-                                "$ref": "#/$defs/A"
+                                "$ref": "#/$defs/C"
                               },
                               "limits": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/m"
+                                  "$ref": "#/$defs/n"
                                 },
                                 "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                 "type": [
@@ -2249,7 +2089,7 @@
                               },
                               "requests": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/m"
+                                  "$ref": "#/$defs/n"
                                 },
                                 "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                 "type": [
@@ -2284,7 +2124,7 @@
                       "tolerations": {
                         "description": "Tolerations for the controller manager pod (default: [])",
                         "items": {
-                          "$ref": "#/$defs/v"
+                          "$ref": "#/$defs/x"
                         },
                         "type": [
                           "array",
@@ -2306,28 +2146,28 @@
                   "nameOverride": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/b"
+                        "$ref": "#/$defs/l"
                       },
                       {
                         "$ref": "#/$defs/2"
                       },
                       {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/a"
-                      },
-                      {
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/4"
+                        "$ref": "#/$defs/k"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
                       },
                       {
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/z"
+                        "$ref": "#/$defs/B"
                       }
                     ]
                   }
@@ -2388,10 +2228,10 @@
                             ]
                           },
                           "seLinuxOptions": {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/u"
                           },
                           "seccompProfile": {
-                            "$ref": "#/$defs/p"
+                            "$ref": "#/$defs/s"
                           },
                           "supplementalGroups": {
                             "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -2437,7 +2277,7 @@
                             ]
                           },
                           "windowsOptions": {
-                            "$ref": "#/$defs/o"
+                            "$ref": "#/$defs/r"
                           }
                         },
                         "type": [
@@ -2507,7 +2347,7 @@
                                 "description": "Adds and removes POSIX capabilities from running containers.",
                                 "properties": {
                                   "add": {
-                                    "$ref": "#/$defs/w"
+                                    "$ref": "#/$defs/y"
                                   },
                                   "drop": {
                                     "description": "List of capabilities to drop from the manager container (default: [\"ALL\"])",
@@ -2526,10 +2366,10 @@
                                 ]
                               },
                               "privileged": {
-                                "$ref": "#/$defs/O"
+                                "$ref": "#/$defs/T"
                               },
                               "procMount": {
-                                "$ref": "#/$defs/N"
+                                "$ref": "#/$defs/S"
                               },
                               "readOnlyRootFilesystem": {
                                 "description": "Mount root filesystem as read-only (default: true)",
@@ -2562,13 +2402,13 @@
                                 ]
                               },
                               "seLinuxOptions": {
-                                "$ref": "#/$defs/q"
+                                "$ref": "#/$defs/u"
                               },
                               "seccompProfile": {
-                                "$ref": "#/$defs/p"
+                                "$ref": "#/$defs/s"
                               },
                               "windowsOptions": {
-                                "$ref": "#/$defs/o"
+                                "$ref": "#/$defs/r"
                               }
                             },
                             "type": [
@@ -2639,16 +2479,16 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/5"
-                          },
-                          {
                             "$ref": "#/$defs/6"
                           },
                           {
-                            "$ref": "#/$defs/L"
+                            "$ref": "#/$defs/7"
                           },
                           {
-                            "$ref": "#/$defs/4"
+                            "$ref": "#/$defs/N"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
                           }
                         ],
                         "description": "Number of controller manager replicas (default: 1)"
@@ -2700,7 +2540,7 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/b"
+                            "$ref": "#/$defs/l"
                           },
                           {
                             "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -2710,36 +2550,21 @@
                             "$ref": "#/$defs/2"
                           },
                           {
-                            "$ref": "#/$defs/5"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
                             "$ref": "#/$defs/6"
                           },
                           {
-                            "$ref": "#/$defs/4"
+                            "$ref": "#/$defs/k"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/k"
-                              },
-                              {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/h"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
-                              },
-                              {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/g"
                               },
                               {
                                 "$ref": "#/$defs/j"
@@ -2748,10 +2573,25 @@
                                 "$ref": "#/$defs/f"
                               },
                               {
-                                "$ref": "#/$defs/g"
+                                "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/l"
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/8"
+                              },
+                              {
+                                "$ref": "#/$defs/9"
+                              },
+                              {
+                                "$ref": "#/$defs/m"
                               }
                             ],
                             "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -2773,7 +2613,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/1"
@@ -2798,14 +2638,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/I"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
                   "csiAddons": {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/c"
                   }
                 },
                 "required": [
@@ -2824,7 +2664,7 @@
               "csi": {
                 "properties": {
                   "csiAddons": {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": [
@@ -2894,7 +2734,7 @@
               "csi": {
                 "properties": {
                   "attacher": {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/c"
                   }
                 },
                 "required": [
@@ -2913,7 +2753,7 @@
               "csi": {
                 "properties": {
                   "attacher": {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": [
@@ -2928,7 +2768,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/K"
           },
           {
             "$ref": "#/$defs/1"
@@ -2982,7 +2822,7 @@
       "if": {
         "properties": {
           "discover": {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/4"
           }
         },
         "required": [
@@ -3007,7 +2847,7 @@
               "csi": {
                 "properties": {
                   "provisioner": {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": [
@@ -3022,7 +2862,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/E"
+            "$ref": "#/$defs/G"
           },
           {
             "$ref": "#/$defs/1"
@@ -3032,7 +2872,7 @@
               "csi": {
                 "properties": {
                   "provisioner": {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/c"
                   }
                 },
                 "required": [
@@ -3095,14 +2935,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/M"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
                   "resizer": {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/b"
                   }
                 },
                 "required": [
@@ -3121,7 +2961,7 @@
               "csi": {
                 "properties": {
                   "resizer": {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/c"
                   }
                 },
                 "required": [
@@ -3249,7 +3089,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/J"
+            "$ref": "#/$defs/L"
           },
           {
             "$ref": "#/$defs/1"
@@ -3304,20 +3144,20 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/w"
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/D"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/o"
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/D"
               }
             ]
           }
@@ -3346,17 +3186,17 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/5"
+                            "$ref": "#/$defs/6"
                           },
                           {
                             "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
                             "type": "boolean"
                           },
                           {
-                            "$ref": "#/$defs/6"
+                            "$ref": "#/$defs/7"
                           },
                           {
-                            "$ref": "#/$defs/4"
+                            "$ref": "#/$defs/5"
                           }
                         ],
                         "description": "Automatically mount a ServiceAccount's API credentials (default: true)"
@@ -3383,7 +3223,7 @@
                             "$ref": "#/$defs/2"
                           },
                           {
-                            "$ref": "#/$defs/C"
+                            "$ref": "#/$defs/E"
                           }
                         ],
                         "description": "Annotations to add to the service account (default: {})"
@@ -3409,22 +3249,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/k"
-                              },
-                              {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/h"
-                              },
-                              {
-                                "$ref": "#/$defs/i"
-                              },
-                              {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/g"
                               },
                               {
                                 "$ref": "#/$defs/j"
@@ -3433,36 +3258,51 @@
                                 "$ref": "#/$defs/f"
                               },
                               {
-                                "$ref": "#/$defs/g"
+                                "$ref": "#/$defs/a"
                               },
                               {
-                                "$ref": "#/$defs/l"
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/8"
+                              },
+                              {
+                                "$ref": "#/$defs/9"
+                              },
+                              {
+                                "$ref": "#/$defs/m"
                               }
                             ],
                             "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/b"
+                            "$ref": "#/$defs/l"
                           },
                           {
                             "$ref": "#/$defs/2"
                           },
                           {
-                            "$ref": "#/$defs/5"
-                          },
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
                             "$ref": "#/$defs/6"
+                          },
+                          {
+                            "$ref": "#/$defs/k"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
                           },
                           {
                             "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/4"
+                            "$ref": "#/$defs/5"
                           }
                         ],
                         "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
@@ -3482,20 +3322,20 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/w"
               },
               {
-                "$ref": "#/$defs/P"
+                "$ref": "#/$defs/U"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/o"
               },
               {
-                "$ref": "#/$defs/P"
+                "$ref": "#/$defs/U"
               }
             ]
           }
@@ -3522,7 +3362,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/9"
+            "$ref": "#/$defs/d"
           },
           {
             "properties": {
@@ -3536,7 +3376,7 @@
                       "controllerManager": {
                         "properties": {
                           "manager": {
-                            "$ref": "#/$defs/x"
+                            "$ref": "#/$defs/A"
                           }
                         },
                         "required": [
@@ -3602,7 +3442,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/9"
+            "$ref": "#/$defs/d"
           }
         ]
       },
@@ -3612,7 +3452,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/9"
+            "$ref": "#/$defs/d"
           },
           {
             "properties": {
@@ -3650,7 +3490,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/I"
           },
           {
             "$ref": "#/$defs/1"
@@ -3679,7 +3519,7 @@
               "csi": {
                 "properties": {
                   "serviceMonitor": {
-                    "$ref": "#/$defs/Q"
+                    "$ref": "#/$defs/z"
                   }
                 },
                 "required": [
@@ -3694,7 +3534,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/v"
           }
         ]
       },
@@ -3719,13 +3559,13 @@
                               {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/b"
+                                    "$ref": "#/$defs/l"
                                   },
                                   {
-                                    "$ref": "#/$defs/a"
+                                    "$ref": "#/$defs/k"
                                   },
                                   {
-                                    "$ref": "#/$defs/z"
+                                    "$ref": "#/$defs/B"
                                   }
                                 ]
                               },
@@ -3779,7 +3619,7 @@
                             "$ref": "#/$defs/2"
                           },
                           {
-                            "$ref": "#/$defs/y"
+                            "$ref": "#/$defs/q"
                           }
                         ],
                         "description": "Additional labels for the ServiceMonitor"
@@ -3802,22 +3642,7 @@
                       "interval": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/k"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/h"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
+                            "$ref": "#/$defs/g"
                           },
                           {
                             "$ref": "#/$defs/j"
@@ -3826,10 +3651,25 @@
                             "$ref": "#/$defs/f"
                           },
                           {
-                            "$ref": "#/$defs/g"
+                            "$ref": "#/$defs/a"
                           },
                           {
-                            "$ref": "#/$defs/l"
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/m"
                           }
                         ],
                         "description": "Interval at which metrics should be scraped",
@@ -3872,10 +3712,10 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/n"
+          "$ref": "#/$defs/p"
         },
         {
-          "$ref": "#/$defs/C"
+          "$ref": "#/$defs/E"
         }
       ],
       "description": "Pod annotations"
@@ -4014,7 +3854,7 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/w"
+                      "$ref": "#/$defs/y"
                     },
                     "drop": {
                       "anyOf": [
@@ -4046,10 +3886,10 @@
               ]
             },
             "privileged": {
-              "$ref": "#/$defs/O"
+              "$ref": "#/$defs/T"
             },
             "procMount": {
-              "$ref": "#/$defs/N"
+              "$ref": "#/$defs/S"
             },
             "readOnlyRootFilesystem": {
               "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
@@ -4094,13 +3934,13 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/q"
+              "$ref": "#/$defs/u"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/p"
+              "$ref": "#/$defs/s"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/o"
+              "$ref": "#/$defs/r"
             }
           },
           "type": "object"
@@ -4285,43 +4125,28 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/b"
+              "$ref": "#/$defs/l"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/5"
-            },
-            {
-              "$ref": "#/$defs/a"
-            },
-            {
               "$ref": "#/$defs/6"
             },
             {
-              "$ref": "#/$defs/4"
+              "$ref": "#/$defs/k"
+            },
+            {
+              "$ref": "#/$defs/7"
+            },
+            {
+              "$ref": "#/$defs/5"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/k"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/h"
-                },
-                {
-                  "$ref": "#/$defs/i"
-                },
-                {
-                  "$ref": "#/$defs/c"
+                  "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/j"
@@ -4330,10 +4155,25 @@
                   "$ref": "#/$defs/f"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/a"
                 },
                 {
-                  "$ref": "#/$defs/l"
+                  "$ref": "#/$defs/h"
+                },
+                {
+                  "$ref": "#/$defs/e"
+                },
+                {
+                  "$ref": "#/$defs/i"
+                },
+                {
+                  "$ref": "#/$defs/8"
+                },
+                {
+                  "$ref": "#/$defs/9"
+                },
+                {
+                  "$ref": "#/$defs/m"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -4356,7 +4196,7 @@
         {
           "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
           "items": {
-            "$ref": "#/$defs/M"
+            "$ref": "#/$defs/R"
           },
           "type": "array"
         },
@@ -4408,7 +4248,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/n"
+          "$ref": "#/$defs/p"
         },
         {
           "type": "null"
@@ -4442,12 +4282,12 @@
               ]
             },
             {
-              "$ref": "#/$defs/y"
+              "$ref": "#/$defs/q"
             }
           ]
         },
         {
-          "$ref": "#/$defs/n"
+          "$ref": "#/$defs/p"
         }
       ],
       "description": "Custom pod labels for the operator"
@@ -4480,13 +4320,13 @@
           "description": "ResourceRequirements describes the compute resource requirements.",
           "properties": {
             "claims": {
-              "$ref": "#/$defs/A"
+              "$ref": "#/$defs/C"
             },
             "limits": {
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/m"
+                    "$ref": "#/$defs/n"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -4505,7 +4345,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/m"
+                    "$ref": "#/$defs/n"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -4543,7 +4383,7 @@
         {
           "description": "If specified, the pod's tolerations.",
           "items": {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/x"
           },
           "type": "array"
         },
@@ -4564,16 +4404,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/5"
-        },
-        {
           "$ref": "#/$defs/6"
         },
         {
-          "$ref": "#/$defs/L"
+          "$ref": "#/$defs/7"
         },
         {
-          "$ref": "#/$defs/4"
+          "$ref": "#/$defs/N"
+        },
+        {
+          "$ref": "#/$defs/5"
         },
         {
           "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",

@@ -105,7 +105,7 @@ fn index_value(
             let follows_schema_children = matches!(
                 context,
                 SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray
-            ) && !object.contains_key("$ref");
+            );
             let mut keys = object.keys().collect::<Vec<_>>();
             keys.sort();
             let children = keys
@@ -286,6 +286,7 @@ fn object_has_unsafe_reference_scope_keyword(object: &Map<String, Value>) -> boo
             key.as_str(),
             "$id"
                 | "id"
+                | "$schema"
                 | "$anchor"
                 | "$dynamicRef"
                 | "$dynamicAnchor"
@@ -498,18 +499,31 @@ fn try_map_schema_context_at<E>(
     }
 }
 
-/// Visit direct child schema positions under `schema`.
+/// Controls whether schema siblings of `$ref` remain visible to a visitor.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReferenceSiblings {
+    /// Treat a schema containing `$ref` as a leaf.
+    Skip,
+    /// Visit lexical schema children without resolving the reference.
+    Visit,
+}
+
+/// Visits direct child schema positions under `schema`.
 ///
-/// The walker follows JSON Schema keywords whose values are themselves schemas,
-/// maps of schemas, or arrays of schemas. `$ref` nodes are treated as leaves so
-/// callers do not accidentally rewrite inside unresolved reference objects.
-pub fn visit_subschemas(schema: &Value, visitor: &mut impl FnMut(&Value)) {
+/// The policy determines whether `$ref` objects are leaves.
+/// References themselves are never resolved or followed.
+pub fn visit_subschemas(
+    schema: &Value,
+    reference_siblings: ReferenceSiblings,
+    visitor: &mut impl FnMut(&Value),
+) {
+    match reference_siblings {
+        ReferenceSiblings::Skip if schema.get("$ref").is_some() => return,
+        ReferenceSiblings::Skip | ReferenceSiblings::Visit => {}
+    }
     let Value::Object(object) = schema else {
         return;
     };
-    if object.contains_key("$ref") {
-        return;
-    }
 
     for (key, value) in object {
         match schema_child_context_for_keyword(key) {
@@ -541,8 +555,12 @@ pub fn visit_subschemas(schema: &Value, visitor: &mut impl FnMut(&Value)) {
 }
 
 /// Mutably visit direct child schema positions under `schema`.
-pub fn visit_subschemas_mut(schema: &mut Value, visitor: &mut impl FnMut(&mut Value)) {
-    let result = try_visit_subschemas_mut(schema, &mut |subschema| {
+pub fn visit_subschemas_mut(
+    schema: &mut Value,
+    reference_siblings: ReferenceSiblings,
+    visitor: &mut impl FnMut(&mut Value),
+) {
+    let result = try_visit_subschemas_mut(schema, reference_siblings, &mut |subschema| {
         visitor(subschema);
         Ok::<(), Infallible>(())
     });
@@ -562,14 +580,16 @@ pub fn visit_subschemas_mut(schema: &mut Value, visitor: &mut impl FnMut(&mut Va
 /// Returns the visitor's error without visiting the remaining subschemas.
 pub fn try_visit_subschemas_mut<E>(
     schema: &mut Value,
+    reference_siblings: ReferenceSiblings,
     visitor: &mut impl FnMut(&mut Value) -> Result<(), E>,
 ) -> Result<(), E> {
+    match reference_siblings {
+        ReferenceSiblings::Skip if schema.get("$ref").is_some() => return Ok(()),
+        ReferenceSiblings::Skip | ReferenceSiblings::Visit => {}
+    }
     let Value::Object(object) = schema else {
         return Ok(());
     };
-    if object.contains_key("$ref") {
-        return Ok(());
-    }
 
     for (key, value) in object {
         match schema_child_context_for_keyword(key) {

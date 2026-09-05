@@ -13,24 +13,74 @@
     },
     "10": {
       "properties": {
+        "redisPasswordFile": {
+          "$ref": "#/$defs/q"
+        }
+      },
+      "required": [
+        "redisPasswordFile"
+      ],
+      "type": "object"
+    },
+    "11": {
+      "properties": {
+        "clientCertFile": {
+          "$ref": "#/$defs/j"
+        }
+      },
+      "required": [
+        "clientCertFile"
+      ],
+      "type": "object"
+    },
+    "12": {
+      "properties": {
+        "serverCertFile": {
+          "$ref": "#/$defs/j"
+        }
+      },
+      "required": [
+        "serverCertFile"
+      ],
+      "type": "object"
+    },
+    "13": {
+      "properties": {
+        "clientCertFile": {
+          "$ref": "#/$defs/q"
+        }
+      },
+      "required": [
+        "clientCertFile"
+      ],
+      "type": "object"
+    },
+    "14": {
+      "properties": {
+        "clientKeyFile": {
+          "$ref": "#/$defs/j"
+        }
+      },
+      "required": [
+        "clientKeyFile"
+      ],
+      "type": "object"
+    },
+    "15": {
+      "properties": {
+        "serverCertFile": {
+          "$ref": "#/$defs/q"
+        }
+      },
+      "required": [
+        "serverCertFile"
+      ],
+      "type": "object"
+    },
+    "16": {
+      "properties": {
         "serverKeyFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "key": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "key"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/j"
         }
       },
       "required": [
@@ -38,7 +88,29 @@
       ],
       "type": "object"
     },
-    "11": {
+    "17": {
+      "properties": {
+        "clientKeyFile": {
+          "$ref": "#/$defs/q"
+        }
+      },
+      "required": [
+        "clientKeyFile"
+      ],
+      "type": "object"
+    },
+    "18": {
+      "properties": {
+        "serverKeyFile": {
+          "$ref": "#/$defs/q"
+        }
+      },
+      "required": [
+        "serverKeyFile"
+      ],
+      "type": "object"
+    },
+    "19": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -76,91 +148,27 @@
         "null"
       ]
     },
-    "12": {
+    "1a": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "additionalProperties": false,
-        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "description": "The label key that the selector applies to.",
-            "type": "string"
-          },
-          "operator": {
-            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-            "type": "string"
-          },
-          "values": {
-            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
+        "$ref": "#/$defs/1f"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "13": {
+    "1b": {
       "description": "A list of node selector requirements by node's labels.",
       "items": {
-        "additionalProperties": false,
-        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "description": "The label key that the selector applies to.",
-            "type": "string"
-          },
-          "operator": {
-            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-            "type": "string"
-          },
-          "values": {
-            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
+        "$ref": "#/$defs/1f"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "14": {
+    "1c": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -192,139 +200,169 @@
         }
       ]
     },
-    "15": {
+    "1d": {
       "allOf": [
         {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
+          "$ref": "#/$defs/f"
         },
         {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
+          "$ref": "#/$defs/8"
         },
         {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
+          "$ref": "#/$defs/e"
         },
         {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
+          "$ref": "#/$defs/7"
         },
         {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
+          "$ref": "#/$defs/9"
         },
         {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
+          "$ref": "#/$defs/g"
         },
         {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
+          "$ref": "#/$defs/d"
         },
         {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
+          "$ref": "#/$defs/5"
         },
         {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
+          "$ref": "#/$defs/6"
         },
         {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
+          "$ref": "#/$defs/h"
+        }
+      ],
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "string"
+    },
+    "1e": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/f"
+        },
+        {
+          "$ref": "#/$defs/8"
+        },
+        {
+          "$ref": "#/$defs/e"
+        },
+        {
+          "$ref": "#/$defs/7"
+        },
+        {
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/g"
+        },
+        {
+          "$ref": "#/$defs/d"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/h"
         }
       ],
       "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
       "type": "string"
     },
-    "16": {
-      "not": {
-        "allOf": [
-          {
-            "properties": {
-              "auth": {
-                "properties": {
-                  "redisPasswordFile": {
-                    "properties": {
-                      "secret": {
-                        "properties": {
-                          "name": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "secret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "redisPasswordFile"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
+    "1f": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/i"
           },
-          {
-            "properties": {
-              "auth": {
-                "properties": {
-                  "redisPasswordFile": {
-                    "properties": {
-                      "secret": {
-                        "properties": {
-                          "key": {
-                            "$ref": "#/$defs/t"
-                          }
-                        },
-                        "required": [
-                          "key"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "secret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "redisPasswordFile"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
-          }
-        ]
-      }
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
     },
-    "17": {
+    "1g": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/f"
+        },
+        {
+          "$ref": "#/$defs/8"
+        },
+        {
+          "$ref": "#/$defs/e"
+        },
+        {
+          "$ref": "#/$defs/7"
+        },
+        {
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/g"
+        },
+        {
+          "$ref": "#/$defs/d"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/h"
+        }
+      ],
+      "description": "key is the key to project.",
+      "type": "string"
+    },
+    "1h": {
+      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/i"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "1i": {
+      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/i"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "1j": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -362,12 +400,9 @@
         "null"
       ]
     },
-    "18": {
+    "1k": {
       "additionalProperties": {
-        "type": [
-          "string",
-          "null"
-        ]
+        "$ref": "#/$defs/i"
       },
       "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
       "type": [
@@ -375,304 +410,8 @@
         "null"
       ]
     },
-    "19": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "1a": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        }
-      ]
-    },
-    "1b": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            },
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "null"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            }
-          ],
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        }
-      ]
-    },
-    "1c": {
-      "properties": {
-        "auth": {
-          "properties": {
-            "redisPasswordFile": {
-              "properties": {
-                "secret": {
-                  "properties": {
-                    "key": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "key"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "secret"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "redisPasswordFile"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "1d": {
-      "properties": {
-        "redisPasswordFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "redisPasswordFile"
-      ],
-      "type": "object"
-    },
-    "1e": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        }
-      ],
-      "description": "key is the key to project.",
+    "1l": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
       "type": "string"
     },
     "2": {
@@ -691,24 +430,7 @@
             "type": "integer"
           },
           {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
+            "$ref": "#/$defs/U"
           },
           {
             "type": "number"
@@ -726,24 +448,7 @@
         ]
       },
       "propertyNames": {
-        "allOf": [
-          {
-            "not": {
-              "pattern": "[ \\t]#"
-            }
-          },
-          {
-            "not": {
-              "pattern": ":[ \\t]|:$"
-            }
-          },
-          {
-            "not": {
-              "pattern": "[\\r\\n]"
-            }
-          }
-        ],
-        "type": "string"
+        "$ref": "#/$defs/U"
       },
       "type": "object"
     },
@@ -766,16 +471,19 @@
       "type": "string"
     },
     "5": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
     },
     "6": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
     },
     "7": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
+      "not": {
+        "pattern": "[ \\t]#"
+      }
     },
     "8": {
       "not": {
@@ -790,64 +498,123 @@
     "A": {
       "allOf": [
         {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
+          "additionalProperties": {
+            "$ref": "#/$defs/i"
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "type": [
+            "object",
+            "null"
+          ]
         },
         {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
+          "$ref": "#/$defs/s"
+        }
+      ]
+    },
+    "B": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "C": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/i"
         },
         {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "D": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "E": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
         },
         {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
+          "items": {},
+          "type": "array"
+        }
+      ]
+    },
+    "F": {
+      "properties": {
+        "auth": {
+          "$ref": "#/$defs/10"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "G": {
+      "properties": {
+        "redisPasswordFile": {
+          "$ref": "#/$defs/j"
+        }
+      },
+      "required": [
+        "redisPasswordFile"
+      ],
+      "type": "object"
+    },
+    "H": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/f"
         },
         {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
+          "$ref": "#/$defs/8"
         },
         {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
+          "$ref": "#/$defs/e"
         },
         {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
+          "$ref": "#/$defs/7"
         },
         {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
+          "$ref": "#/$defs/9"
         },
         {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
+          "$ref": "#/$defs/g"
         },
         {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
+          "$ref": "#/$defs/d"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/h"
         }
       ],
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
       "type": "string"
     },
-    "B": {
+    "I": {
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
       "type": "null"
     },
-    "C": {
+    "J": {
       "additionalProperties": false,
       "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
       "properties": {
@@ -856,181 +623,22 @@
           "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
           "properties": {
             "labelSelector": {
-              "additionalProperties": false,
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-              "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                    "properties": {
-                      "key": {
-                        "description": "key is the label key that the selector applies to.",
-                        "type": "string"
-                      },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                        "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                        "items": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "type": [
-                          "array",
-                          "null"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "operator"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "matchLabels": {
-                  "additionalProperties": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
+              "$ref": "#/$defs/r"
             },
             "matchLabelKeys": {
-              "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-type": "atomic"
+              "$ref": "#/$defs/1i"
             },
             "mismatchLabelKeys": {
-              "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-type": "atomic"
+              "$ref": "#/$defs/1h"
             },
             "namespaceSelector": {
-              "additionalProperties": false,
-              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-              "properties": {
-                "matchExpressions": {
-                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                    "properties": {
-                      "key": {
-                        "description": "key is the label key that the selector applies to.",
-                        "type": "string"
-                      },
-                      "operator": {
-                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                        "type": "string"
-                      },
-                      "values": {
-                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                        "items": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "type": [
-                          "array",
-                          "null"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "operator"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "matchLabels": {
-                  "additionalProperties": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
+              "$ref": "#/$defs/r"
             },
             "namespaces": {
-              "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
+              "$ref": "#/$defs/Y"
             },
             "topologyKey": {
-              "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-              "type": "string"
+              "$ref": "#/$defs/1l"
             }
           },
           "required": [
@@ -1053,26 +661,10 @@
         "null"
       ]
     },
-    "D": {
+    "K": {
       "properties": {
         "caCertFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/j"
         }
       },
       "required": [
@@ -1080,26 +672,10 @@
       ],
       "type": "object"
     },
-    "E": {
+    "L": {
       "properties": {
         "caCertFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "key": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "key"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/q"
         }
       },
       "required": [
@@ -1107,18 +683,10 @@
       ],
       "type": "object"
     },
-    "F": {
+    "M": {
       "properties": {
         "redisAddressConfig": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/1"
         }
       },
       "required": [
@@ -1126,7 +694,7 @@
       ],
       "type": "object"
     },
-    "G": {
+    "N": {
       "anyOf": [
         {
           "properties": {
@@ -1154,18 +722,10 @@
         }
       ]
     },
-    "H": {
+    "O": {
       "properties": {
         "prometheusRule": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/1"
         }
       },
       "required": [
@@ -1173,18 +733,10 @@
       ],
       "type": "object"
     },
-    "I": {
+    "P": {
       "properties": {
         "networkPolicy": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/1"
         }
       },
       "required": [
@@ -1192,14 +744,14 @@
       ],
       "type": "object"
     },
-    "J": {
+    "Q": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "K": {
+    "R": {
       "properties": {
         "type": {
           "enum": [
@@ -1212,29 +764,10 @@
       ],
       "type": "object"
     },
-    "L": {
-      "anyOf": [
-        {
-          "pattern": "\\{\\{",
-          "type": "string"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "M": {
+    "S": {
       "properties": {
         "rbac": {
-          "properties": {
-            "create": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/D"
         }
       },
       "required": [
@@ -1242,197 +775,45 @@
       ],
       "type": "object"
     },
-    "N": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
+    "T": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "null"
     },
-    "O": {
+    "U": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/7"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/6"
+        }
+      ],
+      "type": "string"
+    },
+    "V": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
         "labelSelector": {
-          "additionalProperties": false,
-          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-          "properties": {
-            "matchExpressions": {
-              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-              "items": {
-                "additionalProperties": false,
-                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                "properties": {
-                  "key": {
-                    "description": "key is the label key that the selector applies to.",
-                    "type": "string"
-                  },
-                  "operator": {
-                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                    "type": "string"
-                  },
-                  "values": {
-                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                    "items": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "key",
-                  "operator"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "matchLabels": {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
+          "$ref": "#/$defs/r"
         },
         "matchLabelKeys": {
-          "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-list-type": "atomic"
+          "$ref": "#/$defs/1i"
         },
         "mismatchLabelKeys": {
-          "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-list-type": "atomic"
+          "$ref": "#/$defs/1h"
         },
         "namespaceSelector": {
-          "additionalProperties": false,
-          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-          "properties": {
-            "matchExpressions": {
-              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-              "items": {
-                "additionalProperties": false,
-                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                "properties": {
-                  "key": {
-                    "description": "key is the label key that the selector applies to.",
-                    "type": "string"
-                  },
-                  "operator": {
-                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                    "type": "string"
-                  },
-                  "values": {
-                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                    "items": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "key",
-                  "operator"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "matchLabels": {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
+          "$ref": "#/$defs/r"
         },
         "namespaces": {
-          "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
+          "$ref": "#/$defs/Y"
         },
         "topologyKey": {
-          "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-          "type": "string"
+          "$ref": "#/$defs/1l"
         }
       },
       "required": [
@@ -1443,171 +824,273 @@
         "null"
       ]
     },
-    "P": {
+    "W": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            },
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
+          "$ref": "#/$defs/4"
         },
         {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
+          "$ref": "#/$defs/T"
         },
         {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
+          "$ref": "#/$defs/2"
         },
         {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/b"
         },
         {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
+          "$ref": "#/$defs/3"
         },
         {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
+          "$ref": "#/$defs/1d"
+        },
+        {
+          "$ref": "#/$defs/c"
+        },
+        {
+          "$ref": "#/$defs/a"
+        }
+      ]
+    },
+    "X": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "$ref": "#/$defs/b"
+        },
+        {
+          "$ref": "#/$defs/3"
+        },
+        {
+          "$ref": "#/$defs/c"
+        },
+        {
+          "$ref": "#/$defs/a"
         },
         {
           "type": "null"
         },
         {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            }
-          ],
-          "type": "string"
+          "$ref": "#/$defs/x"
         }
       ]
     },
-    "Q": {
+    "Y": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "$ref": "#/$defs/i"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "Z": {
+      "additionalProperties": {},
+      "properties": {
+        "additionalMetricsRelabels": {
+          "$ref": "#/$defs/E"
+        },
+        "additionalRelabeling": {
+          "$ref": "#/$defs/E"
+        },
+        "interval": {},
+        "scrapeTimeout": {}
+      }
+    },
+    "a": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "b": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "c": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "d": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "e": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "f": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "g": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "h": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "i": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "j": {
+      "properties": {
+        "secret": {
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "k": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "l": {
+      "properties": {
+        "secret": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "m": {
+      "properties": {
+        "secret": {}
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "n": {
+      "pattern": "\\{\\{",
+      "type": "string"
+    },
+    "o": {
+      "properties": {
+        "redisTlsConfig": {
+          "$ref": "#/$defs/1"
+        }
+      },
+      "required": [
+        "redisTlsConfig"
+      ],
+      "type": "object"
+    },
+    "p": {
+      "additionalProperties": {},
+      "properties": {
+        "key": {},
+        "name": {}
+      }
+    },
+    "providerSchema1": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "$ref": "#/$defs/T"
+        },
+        {
+          "$ref": "#/$defs/b"
+        },
+        {
+          "$ref": "#/$defs/3"
+        },
+        {
+          "$ref": "#/$defs/1d"
+        },
+        {
+          "$ref": "#/$defs/c"
+        },
+        {
+          "$ref": "#/$defs/a"
+        }
+      ]
+    },
+    "q": {
+      "properties": {
+        "secret": {
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "r": {
       "additionalProperties": false,
       "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
@@ -1628,10 +1111,7 @@
               "values": {
                 "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
                 "items": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "$ref": "#/$defs/i"
                 },
                 "type": [
                   "array",
@@ -1655,10 +1135,7 @@
         },
         "matchLabels": {
           "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "$ref": "#/$defs/i"
           },
           "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
           "type": [
@@ -1673,902 +1150,6 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "R": {
-      "additionalProperties": {},
-      "properties": {
-        "additionalMetricsRelabels": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            }
-          ]
-        },
-        "additionalRelabeling": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            }
-          ]
-        },
-        "interval": {},
-        "scrapeTimeout": {}
-      }
-    },
-    "S": {
-      "properties": {
-        "auth": {
-          "properties": {
-            "redisPasswordFile": {
-              "properties": {
-                "secret": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "secret"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "redisPasswordFile"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "T": {
-      "properties": {
-        "clientCertFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "clientCertFile"
-      ],
-      "type": "object"
-    },
-    "U": {
-      "properties": {
-        "serverCertFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serverCertFile"
-      ],
-      "type": "object"
-    },
-    "V": {
-      "properties": {
-        "clientCertFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "key": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "key"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "clientCertFile"
-      ],
-      "type": "object"
-    },
-    "W": {
-      "properties": {
-        "clientKeyFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "clientKeyFile"
-      ],
-      "type": "object"
-    },
-    "X": {
-      "properties": {
-        "serverCertFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "key": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "key"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serverCertFile"
-      ],
-      "type": "object"
-    },
-    "Y": {
-      "properties": {
-        "serverKeyFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serverKeyFile"
-      ],
-      "type": "object"
-    },
-    "Z": {
-      "properties": {
-        "clientKeyFile": {
-          "properties": {
-            "secret": {
-              "properties": {
-                "key": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "key"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "clientKeyFile"
-      ],
-      "type": "object"
-    },
-    "a": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "b": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "c": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "d": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "e": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "f": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "g": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "h": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "helm-double-quoted-safe": {
-      "anyOf": [
-        {
-          "type": [
-            "boolean",
-            "integer",
-            "null",
-            "number"
-          ]
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
-          },
-          "type": "array"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
-          },
-          "propertyNames": {
-            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "i": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "j": {
-      "properties": {
-        "secret": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "k": {
-      "properties": {
-        "secret": {}
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "l": {
-      "properties": {
-        "redisTlsConfig": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "redisTlsConfig"
-      ],
-      "type": "object"
-    },
-    "m": {
-      "additionalProperties": {},
-      "properties": {
-        "key": {},
-        "name": {}
-      }
-    },
-    "n": {
-      "pattern": "\\{\\{",
-      "type": "string"
-    },
-    "o": {
-      "properties": {
-        "auth": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "p": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "providerSchema1": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            }
-          ],
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "allOf": [
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "null"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        }
-      ]
-    },
-    "q": {
-      "additionalProperties": {},
-      "properties": {
-        "name": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^(null|Null|NULL)[ \\t]+#"
-                  }
-                },
-                {
-                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                  }
-                }
-              ],
-              "type": "string"
-            },
-            {
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "null"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-              "type": "string"
-            },
-            {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "maxItems": 0,
-                    "type": "array"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "maxProperties": 0,
-                    "type": "object"
-                  }
-                ]
-              },
-              "propertyNames": {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              "type": "object"
-            },
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                  }
-                }
-              ],
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            {
-              "pattern": "^[ \\t]*(#.*)?$",
-              "type": "string"
-            },
-            {
-              "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "r": {
-      "additionalProperties": {},
-      "properties": {
-        "key": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^(null|Null|NULL)[ \\t]+#"
-                  }
-                },
-                {
-                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                  }
-                }
-              ],
-              "type": "string"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                  }
-                }
-              ],
-              "description": "key is the key to project.",
-              "type": "string"
-            },
-            {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "maxItems": 0,
-                    "type": "array"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "maxProperties": 0,
-                    "type": "object"
-                  }
-                ]
-              },
-              "propertyNames": {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              "type": "object"
-            }
-          ]
-        }
-      }
-    },
     "s": {
       "additionalProperties": {
         "type": "string"
@@ -2578,7 +1159,8 @@
     "t": {
       "anyOf": [
         {
-          "const": true
+          "minProperties": 1,
+          "type": "object"
         },
         {
           "not": {
@@ -2595,187 +1177,107 @@
           "type": "array"
         },
         {
-          "minProperties": 1,
-          "type": "object"
+          "const": true
         }
       ]
     },
     "u": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "v": {
-      "not": {
-        "allOf": [
-          {
-            "properties": {
-              "redisPasswordFile": {
-                "properties": {
-                  "secret": {
-                    "properties": {
-                      "name": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "secret"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "redisPasswordFile"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "redisPasswordFile": {
-                "properties": {
-                  "secret": {
-                    "properties": {
-                      "key": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "key"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "secret"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "redisPasswordFile"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "w": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "x": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "y": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
-    },
-    "z": {
       "properties": {
-        "secret": {
-          "properties": {
-            "name": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+        "auth": {
+          "$ref": "#/$defs/1"
         }
       },
       "required": [
-        "secret"
+        "auth"
       ],
       "type": "object"
+    },
+    "v": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/W"
+        }
+      }
+    },
+    "w": {
+      "additionalProperties": {},
+      "properties": {
+        "key": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/4"
+            },
+            {
+              "$ref": "#/$defs/2"
+            },
+            {
+              "$ref": "#/$defs/1g"
+            },
+            {
+              "$ref": "#/$defs/3"
+            }
+          ]
+        }
+      }
+    },
+    "x": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/f"
+        },
+        {
+          "$ref": "#/$defs/8"
+        },
+        {
+          "$ref": "#/$defs/e"
+        },
+        {
+          "$ref": "#/$defs/7"
+        },
+        {
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/g"
+        },
+        {
+          "$ref": "#/$defs/d"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/h"
+        }
+      ],
+      "type": "string"
+    },
+    "y": {
+      "properties": {
+        "auth": {
+          "$ref": "#/$defs/G"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "z": {
+      "not": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/G"
+          },
+          {
+            "$ref": "#/$defs/10"
+          }
+        ]
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2818,7 +1320,7 @@
           {
             "properties": {
               "auth": {
-                "$ref": "#/$defs/z"
+                "$ref": "#/$defs/j"
               }
             },
             "required": [
@@ -2827,10 +1329,19 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/16"
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/y"
+                },
+                {
+                  "$ref": "#/$defs/F"
+                }
+              ]
+            }
           },
           {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/u"
           }
         ]
       },
@@ -2910,7 +1421,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/I"
+        "$ref": "#/$defs/P"
       },
       "then": {
         "allOf": [
@@ -2929,41 +1440,41 @@
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/6"
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/7"
+                            "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/5"
+                            "$ref": "#/$defs/a"
                           },
                           {
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/u"
+                            "$ref": "#/$defs/x"
                           }
                         ]
                       },
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/6"
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "type": "integer"
                           },
                           {
-                            "$ref": "#/$defs/7"
+                            "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/x"
+                            "$ref": "#/$defs/B"
                           },
                           {
-                            "$ref": "#/$defs/5"
+                            "$ref": "#/$defs/a"
                           },
                           {
                             "type": "null"
@@ -3009,7 +1520,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/G"
+        "$ref": "#/$defs/N"
       },
       "then": false
     },
@@ -3058,12 +1569,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/P"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/N"
+                "$ref": "#/$defs/D"
               }
             },
             "required": [
@@ -3072,7 +1583,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/M"
+            "$ref": "#/$defs/S"
           }
         ]
       },
@@ -3087,7 +1598,7 @@
                     "$ref": "#/$defs/2"
                   },
                   {
-                    "$ref": "#/$defs/w"
+                    "$ref": "#/$defs/A"
                   }
                 ],
                 "description": "global custom labels, applied to all resrouces"
@@ -3098,7 +1609,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/P"
+                "$ref": "#/$defs/X"
               }
             }
           }
@@ -3138,7 +1649,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/F"
+        "$ref": "#/$defs/M"
       },
       "then": {
         "allOf": [
@@ -3255,7 +1766,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/o"
+        "$ref": "#/$defs/u"
       },
       "then": {
         "allOf": [
@@ -3297,7 +1808,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/H"
+        "$ref": "#/$defs/O"
       },
       "then": {
         "allOf": [
@@ -3332,7 +1843,7 @@
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/u"
+                    "$ref": "#/$defs/x"
                   }
                 ]
               }
@@ -3400,10 +1911,19 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/16"
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/y"
+                },
+                {
+                  "$ref": "#/$defs/F"
+                }
+              ]
+            }
           },
           {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/u"
           }
         ]
       },
@@ -3426,10 +1946,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/y"
           },
           {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/u"
           }
         ]
       },
@@ -3485,7 +2005,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/10"
+                    "$ref": "#/$defs/18"
                   }
                 },
                 "required": [
@@ -3496,7 +2016,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/Y"
+                    "$ref": "#/$defs/16"
                   }
                 },
                 "required": [
@@ -3505,7 +2025,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/l"
+                "$ref": "#/$defs/o"
               }
             ]
           },
@@ -3514,7 +2034,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/W"
+                    "$ref": "#/$defs/14"
                   }
                 },
                 "required": [
@@ -3525,7 +2045,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/Z"
+                    "$ref": "#/$defs/17"
                   }
                 },
                 "required": [
@@ -3534,7 +2054,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/l"
+                "$ref": "#/$defs/o"
               }
             ]
           },
@@ -3543,7 +2063,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/D"
+                    "$ref": "#/$defs/K"
                   }
                 },
                 "required": [
@@ -3554,7 +2074,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/E"
+                    "$ref": "#/$defs/L"
                   }
                 },
                 "required": [
@@ -3563,7 +2083,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/l"
+                "$ref": "#/$defs/o"
               }
             ]
           },
@@ -3572,7 +2092,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/T"
+                    "$ref": "#/$defs/11"
                   }
                 },
                 "required": [
@@ -3583,7 +2103,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/V"
+                    "$ref": "#/$defs/13"
                   }
                 },
                 "required": [
@@ -3592,7 +2112,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/l"
+                "$ref": "#/$defs/o"
               }
             ]
           },
@@ -3601,7 +2121,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/X"
+                    "$ref": "#/$defs/15"
                   }
                 },
                 "required": [
@@ -3612,7 +2132,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/12"
                   }
                 },
                 "required": [
@@ -3621,7 +2141,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/l"
+                "$ref": "#/$defs/o"
               }
             ]
           }
@@ -3648,7 +2168,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/N"
           },
           {
             "anyOf": [
@@ -3674,7 +2194,7 @@
               {
                 "properties": {
                   "service": {
-                    "$ref": "#/$defs/K"
+                    "$ref": "#/$defs/R"
                   }
                 },
                 "required": [
@@ -3762,7 +2282,7 @@
     {
       "if": {
         "not": {
-          "$ref": "#/$defs/F"
+          "$ref": "#/$defs/M"
         }
       },
       "then": {
@@ -3774,22 +2294,22 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/A"
+                "$ref": "#/$defs/H"
               },
               {
-                "$ref": "#/$defs/6"
+                "$ref": "#/$defs/b"
               },
               {
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/7"
+                "$ref": "#/$defs/c"
               },
               {
-                "$ref": "#/$defs/5"
+                "$ref": "#/$defs/a"
               },
               {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/I"
               }
             ],
             "description": "If serviceMonitor.multipleTarget is enabled, this configuration is actually not used"
@@ -3820,7 +2340,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/O"
           }
         ]
       },
@@ -3835,31 +2355,31 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/c"
+                    "$ref": "#/$defs/f"
                   },
                   {
                     "$ref": "#/$defs/8"
                   },
                   {
-                    "$ref": "#/$defs/b"
+                    "$ref": "#/$defs/e"
                   },
                   {
-                    "$ref": "#/$defs/g"
+                    "$ref": "#/$defs/7"
                   },
                   {
                     "$ref": "#/$defs/9"
                   },
                   {
+                    "$ref": "#/$defs/g"
+                  },
+                  {
                     "$ref": "#/$defs/d"
                   },
                   {
-                    "$ref": "#/$defs/a"
+                    "$ref": "#/$defs/5"
                   },
                   {
-                    "$ref": "#/$defs/e"
-                  },
-                  {
-                    "$ref": "#/$defs/f"
+                    "$ref": "#/$defs/6"
                   },
                   {
                     "$ref": "#/$defs/h"
@@ -3878,13 +2398,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/y"
           },
           {
-            "$ref": "#/$defs/1c"
+            "$ref": "#/$defs/F"
           },
           {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/u"
           }
         ]
       },
@@ -3948,7 +2468,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/l"
+        "$ref": "#/$defs/o"
       },
       "then": {
         "allOf": [
@@ -4286,7 +2806,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/M"
+        "$ref": "#/$defs/S"
       },
       "then": {
         "additionalProperties": {},
@@ -4302,31 +2822,31 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/c"
+                        "$ref": "#/$defs/f"
                       },
                       {
                         "$ref": "#/$defs/8"
                       },
                       {
-                        "$ref": "#/$defs/b"
+                        "$ref": "#/$defs/e"
                       },
                       {
-                        "$ref": "#/$defs/g"
+                        "$ref": "#/$defs/7"
                       },
                       {
                         "$ref": "#/$defs/9"
                       },
                       {
+                        "$ref": "#/$defs/g"
+                      },
+                      {
                         "$ref": "#/$defs/d"
                       },
                       {
-                        "$ref": "#/$defs/a"
+                        "$ref": "#/$defs/5"
                       },
                       {
-                        "$ref": "#/$defs/e"
-                      },
-                      {
-                        "$ref": "#/$defs/f"
+                        "$ref": "#/$defs/6"
                       },
                       {
                         "$ref": "#/$defs/h"
@@ -4375,10 +2895,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/13"
+                            "$ref": "#/$defs/1b"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/12"
+                            "$ref": "#/$defs/1a"
                           }
                         },
                         "type": "object",
@@ -4415,10 +2935,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/13"
+                            "$ref": "#/$defs/1b"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/12"
+                            "$ref": "#/$defs/1a"
                           }
                         },
                         "type": [
@@ -4452,7 +2972,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/C"
+                    "$ref": "#/$defs/J"
                   },
                   "type": [
                     "array",
@@ -4462,7 +2982,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/O"
+                    "$ref": "#/$defs/V"
                   },
                   "type": [
                     "array",
@@ -4482,7 +3002,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/C"
+                    "$ref": "#/$defs/J"
                   },
                   "type": [
                     "array",
@@ -4492,7 +3012,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/O"
+                    "$ref": "#/$defs/V"
                   },
                   "type": [
                     "array",
@@ -4509,7 +3029,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         },
         {
           "type": "null"
@@ -4519,7 +3039,7 @@
     "annotations": {
       "allOf": [
         {
-          "$ref": "#/$defs/18"
+          "$ref": "#/$defs/1k"
         },
         {
           "$ref": "#/$defs/s"
@@ -4556,31 +3076,31 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
                               },
                               {
                                 "$ref": "#/$defs/8"
                               },
                               {
-                                "$ref": "#/$defs/b"
+                                "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/g"
+                                "$ref": "#/$defs/7"
                               },
                               {
                                 "$ref": "#/$defs/9"
                               },
                               {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
                                 "$ref": "#/$defs/d"
                               },
                               {
-                                "$ref": "#/$defs/a"
+                                "$ref": "#/$defs/5"
                               },
                               {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
+                                "$ref": "#/$defs/6"
                               },
                               {
                                 "$ref": "#/$defs/h"
@@ -4593,16 +3113,16 @@
                             "$ref": "#/$defs/2"
                           },
                           {
-                            "$ref": "#/$defs/6"
+                            "$ref": "#/$defs/b"
                           },
                           {
                             "$ref": "#/$defs/3"
                           },
                           {
-                            "$ref": "#/$defs/7"
+                            "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/5"
+                            "$ref": "#/$defs/a"
                           }
                         ]
                       }
@@ -4620,10 +3140,10 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/z"
+                "$ref": "#/$defs/j"
               },
               {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/z"
               }
             ]
           },
@@ -4648,31 +3168,31 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/c"
+                            "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/8"
                           },
                           {
-                            "$ref": "#/$defs/b"
+                            "$ref": "#/$defs/e"
                           },
                           {
-                            "$ref": "#/$defs/g"
+                            "$ref": "#/$defs/7"
                           },
                           {
                             "$ref": "#/$defs/9"
                           },
                           {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/a"
+                            "$ref": "#/$defs/5"
                           },
                           {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
+                            "$ref": "#/$defs/6"
                           },
                           {
                             "$ref": "#/$defs/h"
@@ -4695,17 +3215,17 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/z"
               },
               {
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/k"
+                      "$ref": "#/$defs/m"
                     }
                   },
                   {
-                    "$ref": "#/$defs/j"
+                    "$ref": "#/$defs/l"
                   }
                 ]
               }
@@ -4720,7 +3240,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/G"
               }
             ]
           },
@@ -4740,7 +3260,7 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/15"
+                        "$ref": "#/$defs/1e"
                       }
                     ],
                     "description": "The secret key will be mounted into this path as a file\ne.g., if secret key is pass.json, the env variable\nREDIS_PASSWORD_FILE will be set to /auth/pass.json"
@@ -4758,11 +3278,11 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/z"
+                  "$ref": "#/$defs/j"
                 }
               },
               {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/z"
               }
             ]
           },
@@ -4775,22 +3295,22 @@
                     "$ref": "#/$defs/4"
                   },
                   {
-                    "$ref": "#/$defs/A"
+                    "$ref": "#/$defs/H"
                   },
                   {
-                    "$ref": "#/$defs/6"
+                    "$ref": "#/$defs/b"
                   },
                   {
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/5"
+                    "$ref": "#/$defs/a"
                   },
                   {
-                    "$ref": "#/$defs/B"
+                    "$ref": "#/$defs/I"
                   }
                 ],
                 "description": "Redis password (when not stored in a secret)"
@@ -4806,7 +3326,7 @@
                   {
                     "properties": {
                       "redisPasswordFile": {
-                        "$ref": "#/$defs/j"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -4818,7 +3338,7 @@
                     "not": {
                       "properties": {
                         "redisPasswordFile": {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/m"
                         }
                       },
                       "required": [
@@ -4843,7 +3363,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/z"
               }
             ]
           },
@@ -4857,7 +3377,7 @@
                     "description": "Use existing secret (ignores redisPassword)",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/1b"
+                        "$ref": "#/$defs/W"
                       }
                     }
                   }
@@ -4872,25 +3392,25 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/A"
+                        "$ref": "#/$defs/H"
                       },
                       {
                         "$ref": "#/$defs/2"
                       },
                       {
-                        "$ref": "#/$defs/6"
+                        "$ref": "#/$defs/b"
                       },
                       {
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/5"
+                        "$ref": "#/$defs/a"
                       },
                       {
-                        "$ref": "#/$defs/B"
+                        "$ref": "#/$defs/I"
                       }
                     ],
                     "description": "Redis user (version 6.X and above)"
@@ -4954,7 +3474,7 @@
               "description": "The secret key will be mounted into this path as a file\ne.g., if secret key is pass.json, the env variable\nREDIS_PASSWORD_FILE will be set to /auth/pass.json"
             },
             "secret": {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/p"
             }
           }
         },
@@ -4980,7 +3500,7 @@
         {
           "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
           "items": {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/i"
           },
           "type": "array"
         },
@@ -4995,10 +3515,10 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/w"
+          "$ref": "#/$defs/A"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         }
       ],
       "description": "global custom labels, applied to all resrouces"
@@ -5035,7 +3555,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/J"
+                        "$ref": "#/$defs/Q"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -5091,7 +3611,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/y"
+                        "$ref": "#/$defs/C"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -5116,7 +3636,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/J"
+                        "$ref": "#/$defs/Q"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -5158,7 +3678,7 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         },
         {
           "type": "null"
@@ -5177,7 +3697,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         },
         {
           "type": "null"
@@ -5190,7 +3710,8 @@
     "extraManifests": {
       "anyOf": [
         {
-          "$ref": "#/$defs/19"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -5256,45 +3777,45 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/b"
             },
             {
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/c"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/a"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/c"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/8"
                 },
                 {
-                  "$ref": "#/$defs/b"
+                  "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/7"
                 },
                 {
                   "$ref": "#/$defs/9"
                 },
                 {
+                  "$ref": "#/$defs/g"
+                },
+                {
                   "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/a"
+                  "$ref": "#/$defs/5"
                 },
                 {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/6"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -5321,16 +3842,16 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/w"
+          "$ref": "#/$defs/A"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         }
       ],
       "description": "prometheus.io/path: /metrics\nprometheus.io/port: \"9121\"\nprometheus.io/scrape: \"true\""
     },
     "nameOverride": {
-      "$ref": "#/$defs/P"
+      "$ref": "#/$defs/X"
     },
     "networkPolicy": {
       "additionalProperties": {},
@@ -5359,7 +3880,7 @@
                         "except": {
                           "description": "except is a slice of CIDRs that should not be included within an IPBlock Valid examples are \"192.168.1.0/24\" or \"2001:db8::/64\" Except values will be rejected if they are outside the cidr range",
                           "items": {
-                            "$ref": "#/$defs/p"
+                            "$ref": "#/$defs/i"
                           },
                           "type": [
                             "array",
@@ -5376,10 +3897,10 @@
                       ]
                     },
                     "namespaceSelector": {
-                      "$ref": "#/$defs/Q"
+                      "$ref": "#/$defs/r"
                     },
                     "podSelector": {
-                      "$ref": "#/$defs/Q"
+                      "$ref": "#/$defs/r"
                     }
                   },
                   "type": [
@@ -5413,14 +3934,14 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/i"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         },
         {
           "type": "null"
@@ -5475,10 +3996,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/1j"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/14"
+              "$ref": "#/$defs/1c"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -5524,13 +4045,13 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/11"
+              "$ref": "#/$defs/19"
             }
           },
           "type": "object"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         },
         {
           "type": "null"
@@ -5547,42 +4068,42 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/6"
+          "$ref": "#/$defs/b"
         },
         {
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/c"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/c"
+              "$ref": "#/$defs/f"
             },
             {
               "$ref": "#/$defs/8"
             },
             {
-              "$ref": "#/$defs/b"
+              "$ref": "#/$defs/e"
             },
             {
-              "$ref": "#/$defs/g"
+              "$ref": "#/$defs/7"
             },
             {
               "$ref": "#/$defs/9"
             },
             {
+              "$ref": "#/$defs/g"
+            },
+            {
               "$ref": "#/$defs/d"
             },
             {
-              "$ref": "#/$defs/a"
+              "$ref": "#/$defs/5"
             },
             {
-              "$ref": "#/$defs/e"
-            },
-            {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/6"
             },
             {
               "$ref": "#/$defs/h"
@@ -5592,7 +4113,7 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/5"
+          "$ref": "#/$defs/a"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -5636,7 +4157,14 @@
                             },
                             "annotations": {
                               "additionalProperties": {
-                                "$ref": "#/$defs/L"
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/n"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
                               },
                               "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
                               "type": "object"
@@ -5681,7 +4209,14 @@
                             },
                             "labels": {
                               "additionalProperties": {
-                                "$ref": "#/$defs/L"
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/n"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
                               },
                               "description": "Labels to add or overwrite.",
                               "type": "object"
@@ -5743,7 +4278,7 @@
                                 "$ref": "#/$defs/3"
                               },
                               {
-                                "$ref": "#/$defs/u"
+                                "$ref": "#/$defs/x"
                               }
                             ]
                           },
@@ -5858,31 +4393,31 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/c"
+                                "$ref": "#/$defs/f"
                               },
                               {
                                 "$ref": "#/$defs/8"
                               },
                               {
-                                "$ref": "#/$defs/b"
+                                "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/g"
+                                "$ref": "#/$defs/7"
                               },
                               {
                                 "$ref": "#/$defs/9"
                               },
                               {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
                                 "$ref": "#/$defs/d"
                               },
                               {
-                                "$ref": "#/$defs/a"
+                                "$ref": "#/$defs/5"
                               },
                               {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/f"
+                                "$ref": "#/$defs/6"
                               },
                               {
                                 "$ref": "#/$defs/h"
@@ -5936,7 +4471,7 @@
                   {
                     "properties": {
                       "serverKeyFile": {
-                        "$ref": "#/$defs/j"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -5948,7 +4483,7 @@
                     "not": {
                       "properties": {
                         "serverKeyFile": {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/m"
                         }
                       },
                       "required": [
@@ -5970,7 +4505,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/Y"
+                "$ref": "#/$defs/16"
               },
               {
                 "$ref": "#/$defs/1"
@@ -5985,7 +4520,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_KEY_FILE will be set to /tls/tls-server-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/w"
                   }
                 }
               }
@@ -5996,7 +4531,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/W"
+                "$ref": "#/$defs/14"
               },
               {
                 "$ref": "#/$defs/1"
@@ -6011,7 +4546,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_KEY_FILE  will be set to /tls/tls-client-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/w"
                   }
                 }
               }
@@ -6067,7 +4602,7 @@
                   {
                     "properties": {
                       "clientCertFile": {
-                        "$ref": "#/$defs/j"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -6079,7 +4614,7 @@
                     "not": {
                       "properties": {
                         "clientCertFile": {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/m"
                         }
                       },
                       "required": [
@@ -6140,7 +4675,7 @@
                   {
                     "properties": {
                       "caCertFile": {
-                        "$ref": "#/$defs/j"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -6152,7 +4687,7 @@
                     "not": {
                       "properties": {
                         "caCertFile": {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/m"
                         }
                       },
                       "required": [
@@ -6177,7 +4712,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/X"
+                "$ref": "#/$defs/15"
               }
             ]
           },
@@ -6189,7 +4724,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_CERT_FILE will be set to /tls/tls-server-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/v"
                   }
                 }
               }
@@ -6204,7 +4739,7 @@
                   {
                     "properties": {
                       "clientKeyFile": {
-                        "$ref": "#/$defs/j"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -6216,7 +4751,7 @@
                     "not": {
                       "properties": {
                         "clientKeyFile": {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/m"
                         }
                       },
                       "required": [
@@ -6238,7 +4773,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/D"
+                "$ref": "#/$defs/K"
               },
               {
                 "$ref": "#/$defs/1"
@@ -6253,7 +4788,7 @@
                 "description": "REDIS_EXPORTER_TLS_CA_CERT_FILE will be set to /tls/tls-ca-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/w"
                   }
                 }
               }
@@ -6267,7 +4802,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/V"
+                "$ref": "#/$defs/13"
               }
             ]
           },
@@ -6279,7 +4814,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_CERT_FILE will be set to /tls/tls-client-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/v"
                   }
                 }
               }
@@ -6293,7 +4828,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/U"
+                "$ref": "#/$defs/12"
               }
             ]
           },
@@ -6305,7 +4840,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_CERT_FILE will be set to /tls/tls-server-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/w"
                   }
                 }
               }
@@ -6316,7 +4851,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/Z"
+                "$ref": "#/$defs/17"
               },
               {
                 "$ref": "#/$defs/1"
@@ -6331,7 +4866,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_KEY_FILE  will be set to /tls/tls-client-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/v"
                   }
                 }
               }
@@ -6430,7 +4965,7 @@
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/15"
+                    "$ref": "#/$defs/1e"
                   }
                 ],
                 "description": "All secrets key about TLS config will be mounted into this path"
@@ -6445,7 +4980,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/11"
               }
             ]
           },
@@ -6457,7 +4992,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_CERT_FILE will be set to /tls/tls-client-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/w"
                   }
                 }
               }
@@ -6473,7 +5008,7 @@
                     "not": {
                       "properties": {
                         "serverCertFile": {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/m"
                         }
                       },
                       "required": [
@@ -6485,7 +5020,7 @@
                   {
                     "properties": {
                       "serverCertFile": {
-                        "$ref": "#/$defs/j"
+                        "$ref": "#/$defs/l"
                       }
                     },
                     "required": [
@@ -6547,7 +5082,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/E"
+                "$ref": "#/$defs/L"
               }
             ]
           },
@@ -6559,7 +5094,7 @@
                 "description": "REDIS_EXPORTER_TLS_CA_CERT_FILE will be set to /tls/tls-ca-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/v"
                   }
                 }
               }
@@ -6570,7 +5105,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/10"
+                "$ref": "#/$defs/18"
               },
               {
                 "$ref": "#/$defs/1"
@@ -6585,7 +5120,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_KEY_FILE will be set to /tls/tls-server-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/v"
                   }
                 }
               }
@@ -6599,7 +5134,7 @@
           "description": "REDIS_EXPORTER_TLS_CA_CERT_FILE will be set to /tls/tls-ca-cert.crt",
           "properties": {
             "secret": {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/p"
             }
           }
         },
@@ -6608,7 +5143,7 @@
           "description": "REDIS_EXPORTER_TLS_CLIENT_CERT_FILE will be set to /tls/tls-client-cert.crt",
           "properties": {
             "secret": {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/p"
             }
           }
         },
@@ -6617,7 +5152,7 @@
           "description": "REDIS_EXPORTER_TLS_CLIENT_KEY_FILE  will be set to /tls/tls-client-key.key",
           "properties": {
             "secret": {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/p"
             }
           }
         },
@@ -6632,7 +5167,7 @@
           "description": "REDIS_EXPORTER_TLS_SERVER_CERT_FILE will be set to /tls/tls-server-cert.crt",
           "properties": {
             "secret": {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/p"
             }
           }
         },
@@ -6641,7 +5176,7 @@
           "description": "REDIS_EXPORTER_TLS_SERVER_KEY_FILE will be set to /tls/tls-server-key.key",
           "properties": {
             "secret": {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/p"
             }
           }
         },
@@ -6664,16 +5199,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/6"
+          "$ref": "#/$defs/b"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/c"
         },
         {
-          "$ref": "#/$defs/x"
+          "$ref": "#/$defs/B"
         },
         {
-          "$ref": "#/$defs/5"
+          "$ref": "#/$defs/a"
         }
       ]
     },
@@ -6711,7 +5246,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/C"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -6721,7 +5256,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/C"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -6761,7 +5296,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/1e"
+                        "$ref": "#/$defs/1g"
                       },
                       {
                         "$ref": "#/$defs/3"
@@ -6785,7 +5320,7 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/k"
         },
         {
           "additionalProperties": false,
@@ -6805,7 +5340,7 @@
                 "add": {
                   "description": "Added capabilities",
                   "items": {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/i"
                   },
                   "type": [
                     "array",
@@ -6815,7 +5350,7 @@
                 "drop": {
                   "description": "Removed capabilities",
                   "items": {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/i"
                   },
                   "type": [
                     "array",
@@ -6873,13 +5408,13 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/1j"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/14"
+              "$ref": "#/$defs/1c"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/11"
+              "$ref": "#/$defs/19"
             }
           },
           "type": "object"
@@ -6907,7 +5442,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/K"
+                "$ref": "#/$defs/R"
               }
             ]
           },
@@ -6919,7 +5454,7 @@
         "annotations": {
           "allOf": [
             {
-              "$ref": "#/$defs/18"
+              "$ref": "#/$defs/1k"
             },
             {
               "$ref": "#/$defs/s"
@@ -6934,10 +5469,10 @@
               "$ref": "#/$defs/2"
             },
             {
-              "$ref": "#/$defs/w"
+              "$ref": "#/$defs/A"
             },
             {
-              "$ref": "#/$defs/i"
+              "$ref": "#/$defs/k"
             }
           ]
         },
@@ -6949,7 +5484,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/x"
+              "$ref": "#/$defs/B"
             }
           ]
         },
@@ -6959,7 +5494,7 @@
               "$ref": "#/$defs/4"
             },
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/b"
             },
             {
               "$ref": "#/$defs/3"
@@ -6967,31 +5502,31 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/c"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/8"
                 },
                 {
-                  "$ref": "#/$defs/b"
+                  "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/7"
                 },
                 {
                   "$ref": "#/$defs/9"
                 },
                 {
+                  "$ref": "#/$defs/g"
+                },
+                {
                   "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/a"
+                  "$ref": "#/$defs/5"
                 },
                 {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/6"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -7001,10 +5536,10 @@
               "type": "string"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/c"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/a"
             },
             {
               "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
@@ -7027,7 +5562,7 @@
               "type": "string"
             },
             {
-              "$ref": "#/$defs/u"
+              "$ref": "#/$defs/x"
             }
           ]
         }
@@ -7042,7 +5577,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/N"
+            "$ref": "#/$defs/D"
           },
           "then": {
             "additionalProperties": {},
@@ -7052,31 +5587,31 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/c"
+                        "$ref": "#/$defs/f"
                       },
                       {
                         "$ref": "#/$defs/8"
                       },
                       {
-                        "$ref": "#/$defs/b"
+                        "$ref": "#/$defs/e"
                       },
                       {
-                        "$ref": "#/$defs/g"
+                        "$ref": "#/$defs/7"
                       },
                       {
                         "$ref": "#/$defs/9"
                       },
                       {
+                        "$ref": "#/$defs/g"
+                      },
+                      {
                         "$ref": "#/$defs/d"
                       },
                       {
-                        "$ref": "#/$defs/a"
+                        "$ref": "#/$defs/5"
                       },
                       {
-                        "$ref": "#/$defs/e"
-                      },
-                      {
-                        "$ref": "#/$defs/f"
+                        "$ref": "#/$defs/6"
                       },
                       {
                         "$ref": "#/$defs/h"
@@ -7092,20 +5627,20 @@
                     "$ref": "#/$defs/2"
                   },
                   {
-                    "$ref": "#/$defs/6"
+                    "$ref": "#/$defs/b"
                   },
                   {
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/c"
                   },
                   {
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/5"
+                    "$ref": "#/$defs/a"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -7131,16 +5666,16 @@
               "$ref": "#/$defs/2"
             },
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/b"
             },
             {
               "$ref": "#/$defs/3"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/c"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/a"
             },
             {
               "type": "null"
@@ -7151,31 +5686,31 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/c"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/8"
                 },
                 {
-                  "$ref": "#/$defs/b"
+                  "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/7"
                 },
                 {
                   "$ref": "#/$defs/9"
                 },
                 {
+                  "$ref": "#/$defs/g"
+                },
+                {
                   "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/a"
+                  "$ref": "#/$defs/5"
                 },
                 {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/6"
                 },
                 {
                   "$ref": "#/$defs/h"
@@ -7199,7 +5734,7 @@
           "type": "object"
         },
         "additionalRelabeling": {
-          "$ref": "#/$defs/1a"
+          "$ref": "#/$defs/E"
         },
         "apiVersion": {
           "type": "string"
@@ -7212,13 +5747,13 @@
           "anyOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/R"
+                "$ref": "#/$defs/Z"
               },
               "type": "object"
             },
             {
               "items": {
-                "$ref": "#/$defs/R"
+                "$ref": "#/$defs/Z"
               },
               "type": "array"
             }

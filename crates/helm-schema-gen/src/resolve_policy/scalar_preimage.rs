@@ -402,7 +402,11 @@ pub(super) fn helm_falsy_schema() -> Value {
 /// structural and action-free constraint remains intact.
 pub(super) fn templated_yaml_provider_preimage(mut schema: Value) -> Value {
     fn admit_template_programs(schema: &mut Value) {
-        helm_schema_json_schema_walk::visit_subschemas_mut(schema, &mut admit_template_programs);
+        helm_schema_json_schema_walk::visit_subschemas_mut(
+            schema,
+            helm_schema_json_schema_walk::ReferenceSiblings::Skip,
+            &mut admit_template_programs,
+        );
         if schema_allows_type(schema, "string") {
             *schema = union_schema_list(vec![
                 std::mem::take(schema),
