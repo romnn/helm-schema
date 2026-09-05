@@ -1259,6 +1259,50 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 - Measured production LOC delta: 0 (67,373 to 67,373).
 
+## Round A6 — lazy `EvalResult` truth
+
+- Status: pre-registered; R1 indicates rejection without a code spike.
+- Contract: evaluate the frozen lazy-`truth` item only against the post-A3 representation and the
+  current `EvalResult` invariants. If the R1 counter proves the 5% isolated-chart threshold
+  impossible or a post-freeze consumer makes the specified laziness ineffective, write no Rust
+  code. Do not broaden the item into laziness for selection reachability, redesign `EvalResult`, or
+  introduce global/shared cache state.
+- Acceptance baseline: `5f50bcc8`, the completed R1 residual checkpoint.
+- Baseline production Rust LOC: 67,373.
+- Pre-registered acceptance expectations:
+  - If implemented, all ten reference schemas, stdout, JSON diagnostics, statuses, 156 schema
+    artifacts, 18 IR artifacts, and the 160-chart acceptance battery remain exact.
+  - The frozen acceptance threshold is at least 5% paired CPU gain on the isolated
+    `kubernetes-apps.yaml` chart. R1's measured 1.588 ms relevant span against a 0.19 s chart is
+    under 1%; absent contradictory evidence, the item is rejected without adding a `OnceCell`.
+  - Any retained cache/lazy cell must be owned by one chart/evaluation session and passed through
+    explicit owners. Process-global state is forbidden because concurrent library runs must not
+    compete and tests must obtain a fresh cache by ordinary construction.
+- Performance baseline: 0.19 s CPU median for the adopted A3 isolated chart; 875 eager scalar-set
+  operations and 1.588 ms inclusive in both truth computations in the R1 counter build.
+- Measured results: pending final source reconciliation.
+- Deviations: pending.
+- Adjudication evidence: Helm v4.2.3; no code or representation change is expected.
+- Public/wire decision: pending.
+
+### Review dossier
+
+- Pending source reconciliation and final-tree identity checks.
+
+### Self-adversarial pass
+
+- A tracing span can perturb a millisecond-scale residual. The rejection must remain valid even if
+  all measured instrumentation time were useful work and even if the estimate were wrong by 2x.
+- Lazifying a stored field does not save work when another eagerly constructed field needs the same
+  derivation. The current selection-reachability path must be traced from setter to consumer before
+  deciding.
+
+### Gates on the final tree
+
+- Pending; expected to remain the exact R1 production tree.
+
+- Measured production LOC delta: pending; expected 0.
+
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
 - Status: landed in `fbc03204`; counter evidence was committed separately in `0ba87ea9` before
