@@ -84,6 +84,12 @@ cause is now closed (F4) and three earlier claims are refuted (see
   the reasoning does not.
 - **`plan/chart-corpus-expansion.md:2460` is stale** — it records the opposite
   direction for `nats`' `env` paths. See F17.
+- **`plan/performance-review-v1-progress.md` round A3 claimed "zero flips over
+  284,869 probes"; the claim was vacuous.** The battery ran before the regenerated
+  fixtures were on disk and, without `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP`, compared
+  the pre-A3 fixtures against themselves. A real run against the pre-campaign
+  baseline `8fbcc732` reports 73 flips, 49 of them false acceptances. The ledger
+  was corrected on 2026-09-05; the flips are filed here as F77–F80.
 
 ## Why this hunt exists
 
@@ -214,7 +220,7 @@ per-chart entries that follow.
 
 **The F-numbers are arrival order, not leverage order, and they are not
 renumbered** — the agents' raw reports and this document's own cross-references
-both cite them. Read the clusters below instead. The 79 families (F0–F76 plus D4
+both cite them. Read the clusters below instead. The 83 families (F0–F80 plus D4
 and D5) collapse into eleven mechanisms — the first of which, guard analysis, is
 large enough to split into four — and a fix aimed at a cluster is worth far more
 than one aimed at a family.
@@ -222,7 +228,7 @@ than one aimed at a family.
 | Cluster | Families | What is actually broken |
 | --- | --- | --- |
 | **A1 — an undecidable element deletes a whole guard or region** | F7, F8, F42, F46, F56, F57, F65 | The abstract interpreter, on meeting anything it cannot decide, drops the *enclosing* construct rather than widening. Each family is a different trigger for one behaviour, and it is the single largest cluster. |
-| **A2 — the guard survives, an obligation inside it does not** | F21, F25, F29, F34, F53, F67, F70 | The region is analyzed, but a constraint escapes it, is duplicated unguarded, or is never attached. F70 is the highest-yield witness pattern in the hunt. |
+| **A2 — the guard survives, an obligation inside it does not** | F21, F25, F29, F34, F53, F67, F70, F77, F78 | The region is analyzed, but a constraint escapes it, is duplicated unguarded, or is never attached. F70 is the highest-yield witness pattern in the hunt. |
 | **A3 — boolean, emptiness and comparison semantics** | F2, F45, F52, F59, F66, F75 | Helm/Go truthiness modelled as presence-and-non-null. `{}`, `[]`, `""` and `0` fall through the gap, and numeric `gt`/`lt` guards contribute nothing at all. |
 | **A4 — `if`/`else if` chain structure** | F3, F35 | A chain's arms are not treated as mutually exclusive alternatives. |
 | **B — alternative branches merged instead of case-split** | F15, F17, F27, F50, F51, F69 | Where the chart says "either shape", the analyzer intersects rather than unions. F69 is the severe form: the admitted domain collapses to `null`. |
@@ -231,10 +237,11 @@ than one aimed at a family.
 | **E — reject arms that can never fire** | F24 | Coverage that looks present and is not. Read the sweep caveats before trusting any count here. |
 | **F — rendered output and YAML safety** | F12, F13, F26, F30, F40, F41, D5 | The preimage machinery is right and is applied inconsistently — 94 sinks in one cilium schema, 6 missed. |
 | **G — provider schema handling** | F0, F20, F31, F37, F39, F60 | Kubernetes/CRD schemas applied at the wrong level, collapsed, or allowed to override chart-local structure. |
-| **H — function catalogue and call lowering** | F9, F10, F14, F18, F28, F33, F36, F43, F44, F47, F49, F55, F64, F68, F72 | Coverage gaps in the builtin catalogue decide whether a contract exists at all. Mostly mechanical, individually small, collectively large. |
+| **H — function catalogue and call lowering** | F9, F10, F14, F18, F28, F33, F36, F43, F44, F47, F49, F55, F64, F68, F72, F80 | Coverage gaps in the builtin catalogue decide whether a contract exists at all. Mostly mechanical, individually small, collectively large. |
 | **I — path binding and attribution** | F4, F11, F32, F38, F48, F61, F76 | A constraint is attached to the wrong path, or the path binding is lost. |
 | **J — validation and version gates** | F6, F71 | Charts with a file dedicated to validation (`validateValues`, `requirements.yaml`) contribute zero constraints from it. `openebs` adds a third witness under `mayastor.etcd`. |
 | **K — output size and installability** | F74 | Not a lowering defect: 18 of 156 schemas exceed Helm's 5 MiB limit and cannot be shipped at all, so their correctness is moot until the size is fixed. |
+| **L — the adjudication harness itself** | F79 | Not a lowering defect: the round-74 oracle is `helm template --skip-schema-validation`, so it cannot see a Kubernetes-typed sink and files legitimate provider constraints as false rejections. |
 
 ### Where to start
 
@@ -263,6 +270,13 @@ first three carry numbers strong enough to justify their position.
 Two cheap gates belong in CI regardless of fix order, because both are already
 built and both found real bugs: the chart-shipped `ci/` oracle and the root-key
 null-deletion probe. See "A free oracle nobody has been running".
+
+**F77 and F78 gate something outside this document.** The performance campaign's
+round A3 (`fbc03204`) stays landed on the condition that these two are fixed and
+the corpus battery is re-run against `8fbcc732` with
+`SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` set; see the "Validation correction" section of
+`plan/performance-review-v1-progress.md`. F79 and F80 need a decision before a
+patch.
 
 Two results should shape where effort goes before any of this is picked up.
 **Direction A is clean** — of 308 synthesised reject-arm witnesses, 305 abort
@@ -1860,6 +1874,14 @@ shown wrong by witnessed false acceptances under F23:
 
 That is **four** contaminated fixtures, none of which any mechanical gate found.
 
+The performance campaign's round A3 (`fbc03204`, 2026-09-05) regenerated 46 corpus
+fixtures without a real adjudication (see "Corrections to earlier documents").
+Five of them now carry witnessed false acceptances under F77/F78 —
+`kubernetes-event-exporter`, `phpmyadmin`, `zookeeper`, `rabbitmq-cluster-operator`
+and `datadog` — which brings the tally to **nine**. `redis-ha` and `oauth2-proxy`
+changed in the tightening direction under F80 and F79 and are policy questions,
+not contamination.
+
 **Sequencing note for whoever fixes D3.** `graylog`'s 31 dead subchart arms
 (and `openebs`'s) are currently masked: those charts reject every document, so the
 dead arms cannot be exercised. They become **live false acceptances the moment the
@@ -2329,6 +2351,153 @@ and list all render `%!s(...)` and break the document.
 Compare F21, which is a constraint *escaping* the guard arm its siblings sit
 inside; F76 is a constraint being pulled *into* a guard it was never under.
 
+### F77 — an unconditional string-operand fact is lost when a sibling condition split collapses
+
+**Class:** false acceptance. **Charts:** `kubernetes-event-exporter`, `phpmyadmin`,
+`zookeeper` (`image.repository`), `rabbitmq-cluster-operator`
+(`rabbitmqImage.repository`, `credentialUpdaterImage.repository`). **Status:** PROVEN
+by 40 battery witnesses; trigger isolated to one commit; merging mechanism SUSPECTED.
+
+Every bitnami-derived chart in this group calls `common.warnings.rollingTag` from
+`NOTES.txt`, and that helper runs `contains "bitnami/" .repository`. A non-string
+repository aborts Helm:
+
+```
+kubernetes-event-exporter/charts/common/templates/_warnings.tpl:14:32
+  executing "common.warnings.rollingTag" at <.repository>:
+    wrong type for value; expected string; got bool
+```
+
+Before `fbc03204` (performance round A3) the fixture carried the fact, but not
+where it should have been. `kubernetes-event-exporter.schema.json` at `8fbcc732` has
+`image.repository: {type: string}` under `/allOf[10]/then`, whose `if` is
+`anyOf[global.imageRegistry truthy, image.registry truthy, neither]` — a tautology.
+The split is the registry case analysis inside `common.images.image`, where the
+old branch join re-split `$repositoryName`'s unchanged dispatch at every `if`. A3
+preserves an unchanged local's dispatch across a join, so the split collapses to
+one condition, and after that the unconditional string fact is gone from the
+schema entirely. The candidate accepts `image.repository: false`, `true`, `1`,
+`1.5`, `[]`, `[{}]`, `{}` and `{unknown: true}` on all four charts.
+
+The join itself is not the bug. A four-line reproducer
+
+```gotemplate
+{{- $r := .Values.image.repository }}
+{{- $s := ":" }}
+{{- if .Values.image.digest }}{{ $s = "@" }}{{ end }}
+image: {{ printf "%s%s" $r $s }}
+```
+
+gives semantically identical schemas under the pre-A3 and A3 binaries (the same
+`not global.imageRegistry and not image.registry` condition written as two
+conjuncts before and one `not anyOf` after). A twenty-line reproducer with the
+vendored `common.images.image` plus `rollingTag` in `NOTES.txt` keeps
+`image.repository: {type: string}` as an unconditional property under **both**
+binaries. So the loss needs the real chart's row population — the image root is
+consumed by `common.images.image`, `common.images.pullSecrets`,
+`common.warnings.modifiedImages`, `common.errors.insecureImages` and `rollingTag`
+— and it happens in contract normalisation, where an unconditional row is merged
+with or subsumed by conditional siblings whose conditions changed shape. Start in
+`crates/helm-schema-ir/src/contract_normalization.rs`
+(`merge_pathless_resource_variants`, `drop_default_guard_subsumed_duplicates`,
+`drop_self_truthy_subsumed_duplicates`, `expand_condition_disjuncts`) with the real
+chart; reverting the eight-line hunk in
+`crates/helm-schema-ir/src/symbolic_local_state/branch_join.rs` restores the fact
+byte-for-byte and is the fastest differential harness.
+
+Witness: `SCHEMA_ACCEPTANCE_BASELINE_REF=8fbcc732 ADJUDICATE_WITH_HELM=1` on the
+round-74 battery (see the ledger's "Validation correction" for the full command),
+or `helm template x testdata/charts/kubernetes-event-exporter --set image.repository=false`
+against the committed schema. The `string` fact should be derived from the
+`contains` operand on its own, unconditionally, whatever the sibling rows do;
+that it was only ever present through a tautological split is the underlying
+defect, and F26/F12 show the same operand-typing logic misfiring in the other
+direction.
+
+### F78 — an object-type fact from a subchart member access is lost the same way
+
+**Class:** false acceptance. **Chart:** `datadog` (`operator.datadogAgent`, the
+`operator` alias of the `datadog-operator` subchart's `datadogAgent`). **Status:**
+PROVEN by 9 battery witnesses; trigger isolated to `fbc03204`; mechanism SUSPECTED.
+
+`charts/datadog-operator/templates/deployment.yaml:178` renders
+`- "-datadogAgentEnabled={{ .Values.datadogAgent.enabled }}"`. Any non-map aborts:
+
+```
+datadog/charts/operator/templates/deployment.yaml:178:46
+  executing ... at <.Values.datadogAgent.enabled>:
+    can't evaluate field enabled in type interface {}
+```
+
+At `8fbcc732` the fixture has `operator.datadogAgent: {type: object, properties:
+{enabled}}`; after A3 the `type` is gone and `false`, `true`, `1`, `1.5`, `""`,
+`"3"`, `"x"`, `[]` and `[{}]` are accepted. The same `args` list carries two
+locals that pass unchanged through `if` joins (`$version := include
+"check-image-tag" .` at `:104` and `$registryMode := include
+"datadog-registry-mode" .` at `:135`), which is the A3 trigger pattern; the
+member-access obligation is presumably merged into rows whose conditions those
+joins shaped. Not reduced to a minimal chart yet. Same suspects and same
+differential harness as F77; note the subchart-alias plumbing (cluster D) is
+also in play, so check where the fact is lost — in the subchart's own contract
+or during re-rooting under `operator`.
+
+### F79 — the round-74 oracle files legitimate provider constraints as false rejections
+
+**Class:** harness defect, not a lowering bug. **Chart:** `oauth2-proxy`
+(`config.existingConfig`). **Status:** PROVEN.
+
+After A3 the schema gains `allOf[85]`: when the legacy-config mode resolves to
+`existing-configmap`, `config.existingConfig` must be a plain-scalar string. That
+is right: `oauth2-proxy.legacy-config.name` (`_helpers.tpl:227-233`) returns the
+value into a ConfigMap `metadata.name`, which Kubernetes types as a string and
+which the unquoted rendering re-parses under YAML rules. The constraint only
+appeared with A3 because the mode helper's six-arm dispatch used to be lost at a
+join and could not be resolved by `eq (include ...) "existing-configmap"`.
+
+`adjudicate_round74_flip` renders with `helm template --skip-schema-validation`
+and nothing else. `name: true` renders, so the battery reports "tightening
+rejects a document Helm renders" and fails — for `true`, `1.5` and `"3"`. This
+directly contradicts the rule under "For the implementor" that a wrongly-typed
+value in a typed Kubernetes field is a legitimate provider constraint (one agent
+excluded 1,108 such cells by hand). The oracle has no Kubernetes leg and no way
+to classify a provider-derived tightening as matched, so any future improvement
+in provider typing will fail the battery. Options: validate the rendered
+manifests against the pinned Kubernetes schemas offline before calling a
+tightening false; or let the analyzer mark provider-derived constraints so the
+harness can treat them as matched. Either way the decision belongs with whoever
+owns `schema_emission_profiles.rs`, and it should land before F77/F78 are
+re-adjudicated, or those re-runs will fail on this instead. See also "Harness
+pitfalls worth inheriting".
+
+### F80 — declared-shape typing on config-text interpolations collides with the flip law
+
+**Class:** policy decision, not a lowering bug. **Chart:** `redis-ha`
+(`haproxy.checkFall`, `haproxy.checkInterval`). **Status:** PROVEN as a
+contradiction between two written rules.
+
+`_configs.tpl:646-674` renders `check inter {{ $root.Values.haproxy.checkInterval }}
+fall {{ $root.Values.haproxy.checkFall }}` into `haproxy.cfg` text inside a
+ConfigMap. Helm renders any value there, including `checkFall: not-a-value`. The
+values defaults are `1` and `1s`, and the A3-era fixture types the leaves
+`integer` and `string` from those defaults; 18 battery probes flip to rejected.
+
+This is the declared-shape typing policy that "For the implementor" calls
+deliberate, and it is standing behaviour: a minimal chart with the same template
+is typed identically by the pre-A3 binary. The pre-A3 `redis-ha` fixture had no
+type on these two leaves only because the old join lost the fact somewhere in the
+`range $i := until $replicas` body; A3 restored it. But `AGENTS.md`'s flip law says
+a tightening that rejects something Helm renders is a false rejection, and on a
+flip the two rules cannot both hold. F43 is the same collision seen from a
+`default <literal>` site.
+
+A decision is needed, and it should be written next to the policy: either the flip
+law exempts declared-shape typing (and the battery classifies such tightenings as
+matched, ideally by having the analyzer tag them), or declared-shape typing is
+withdrawn for sinks that are opaque text (config files, script bodies, NOTES
+output), in which case F43 broadens into a family and every corpus fixture with a
+default-typed leaf under a text sink moves. Until decided, count these 18 cells
+as neither bug nor non-bug.
+
 ## Per-chart findings
 
 Single-instance defects not yet generalized into a family.
@@ -2703,6 +2872,16 @@ Seven traps cost agents real time and would cost the next engineer the same. The
 first one invalidates results rather than merely wasting time, and was found
 late — **findings adjudicated before it was known should be re-checked**:
 
+- **The round-74 battery's candidate is the on-disk fixture unless
+  `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` is set.** Run before the regenerated fixtures
+  land, it compares a schema against itself and reports zero flips. That is how
+  the performance campaign's A3 round landed 73 un-adjudicated flips (F77–F80).
+  `AGENTS.md` now makes the candidate dump mandatory for any fixture-changing
+  round; a `guards_discovered` count equal to the baseline-only count is the
+  tell-tale.
+- **The round-74 oracle is `helm template --skip-schema-validation` and nothing
+  else.** It cannot see Kubernetes-typed sinks, so a correct provider constraint
+  fails the battery as a "tightening that rejects a document Helm renders". See F79.
 - **Pin the adjudicator to `--kube-version 1.29.0`.** The corpus schemas are
   generated at `v1.29.0-standalone-strict`, and that version also drives
   `.Capabilities.KubeVersion` during analysis, while bare `helm template`
