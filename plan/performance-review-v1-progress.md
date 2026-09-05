@@ -1055,7 +1055,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A5 — study caller-context memo footprint
 
-- Status: pre-registered; study pending.
+- Status: rejected without a code spike; the final production tree is identical to A7.
 - Contract: study only. Enumerate every production read site of
   `root_truthy_predicates` and `root_value_dispatches` with current file and line, trace the access
   path far enough to judge whether recorded accessors could be total, and reconcile the frozen
@@ -1078,16 +1078,55 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 - Performance baseline: A7's five-pair candidate medians are 0.13, 0.08, 0.17, 0.32, 2.21, 0.99,
   1.70, 8.00, 5.67, and 7.51 s CPU at load1 3.96--5.84. The A5-specific R1 residual is two
   Airflow misses costing 0.596 s inclusive.
-- Measured results: pending source enumeration; the performance rejection measurement is already
-  fixed by R1.
-- Deviations: none yet.
-- Adjudication evidence: expected to inherit A7's Helm v4.2.3 zero-flip result because A5 permits no
-  code or fixture change.
-- Public/wire decision: pending study result; no public or wire change is permitted.
+- Measured results:
+  - Direct semantic key consultations are
+    `value_path_context/condition_predicate.rs:1798` (`truthy.get`), `:1840`
+    (`dispatch.get`), `:1869` and `:1898` (`dispatch.contains_key`),
+    `expr_eval.rs:734-736` (`dispatch.get`, then `truthy.get`), and
+    `expr_call_eval/root_mutation.rs:156,163` (the two root-field shapes both call `truthy.get`).
+  - The maps are transported wholesale at `analysis_db.rs:1252-1253`, copied into each helper
+    interpreter at `fragment_eval/summary.rs:259-260`, and copied again into short-lived `EvalEnv`
+    values at `fragment_eval/eval.rs:1063-1064` and `fragment_eval/hole_effects.rs:422-423`.
+    Branch evaluation snapshots and restores both maps at `fragment_eval/control.rs:2089-2100`.
+    The current full-key memo materializes both complete maps at `analysis_db.rs:1380-1387`.
+  - `rg` finds no other production references to either field. Rust field privacy and the absence
+    of generic serialization or reflection make that source enumeration complete for the current
+    representation, but it does not prove a small accessor retrofit total: values escape through
+    ordinary `HashMap` clones before all eight semantic lookups. An exact design would have to
+    replace the transported map representation or propagate a shared origin/footprint recorder
+    through every clone, branch snapshot, nested helper hit, and mutation. That is the large design
+    the frozen item proposed studying, not a safe local memo-key edit.
+  - R1 measured the named Airflow helper at two misses and 0.596 s inclusive. Even granting the
+    impossible upper bound that footprint reuse removes all of that time, it is only 9.4% of A3's
+    6.34 s Airflow CPU median and is below the frozen 2 s absolute criterion. A4, E2, E3, and A7
+    subsequently reduced whole-run work; there is no evidence that this residual grew.
+  - A5 therefore fires both conservative rejection findings: the narrow accessor design is not
+    shown total across the transported mutable state, and the measured opportunity is 0.596 s,
+    1.404 s below the frozen minimum. No implementation or temporary spike was written.
+- Deviations:
+  - The frozen evidence expected seven misses; the 163-chart/post-A3 tree has two. The frozen plan
+    remains unchanged and this ledger records the collapsed premise.
+  - No fresh timing run can isolate the same cache-key component without implementing the rejected
+    instrumentation. R1's exact owner-local counter is used as pre-registered; the unchanged A7
+    curve supplies the final ten-chart row.
+- Adjudication evidence: Helm v4.2.3. The fresh battery checks 160 charts and 284,863 probes with
+  zero flips, hence zero candidate-accepts/Helm-aborts cells. Production and all owned artifacts are
+  identical to A7, so no semantic adjudication was needed.
+- Public/wire decision: rejected. No API, cache, schema, diagnostic, status, fixture, or wire change
+  exists. The study specifically rejects a partial accessor layer that would make the existing
+  owner-local state harder to reason about without proving a sufficient payoff.
 
 ### Review dossier
 
-- Pending source enumeration and final-tree identity checks.
+- Source inventory command:
+  `rg -n '\b(root_truthy_predicates|root_value_dispatches)\b' crates --glob '*.rs'`; direct
+  inspection classified each production match as construction, key materialization, transport,
+  semantic lookup, branch-state mutation, or test setup.
+- Acceptance battery uses `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a5/battery`,
+  `SCHEMA_ACCEPTANCE_BASELINE_REF=b9b2ba85`, sibling `coverage.json`, and
+  `ADJUDICATE_WITH_HELM=1`; the exact round-74 ignored-only command exits 0 in 147.69 s total.
+- Final identity command, `git diff --exit-code b9b2ba85 -- crates testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures Cargo.toml Cargo.lock taskfile.yaml mise.toml`: exit 0.
 
 ### Self-adversarial pass
 
@@ -1102,9 +1141,30 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ### Gates on the final tree
 
-- Pending.
+- `cargo fmt --check`: exit 0; 1.13 s.
+- `task lint`: exit 0; 17.69 s. Whole-workspace Clippy and all configured source policies pass;
+  the scan repeats two existing multiline-literal warnings.
+- `task lint:fc`: exit 0; all 48 combinations pass in 44.45 s; 45.09 s total.
+- `cargo nextest run --workspace`: exit 0; 1,361/1,361 tests pass in 8.228 s after a 27.37 s
+  rebuild; 36.02 s total.
+- `task test:integration`: exit 0; 669/669 tests pass in 235.210 s, with 24 profile skips;
+  236.74 s total.
+- `task test:all`: exit 0; 2,034/2,034 tests pass in 239.448 s, with 24 profile skips and live
+  network tests included; 240.73 s total.
+- Corpus battery: exit 0; 160 charts, 284,863 probes, zero flips; 137.056 s test time and 147.69 s
+  total.
+- `cargo install --path ./crates/helm-schema-cli/`: exit 0; installed the final A7 production tree
+  in 28.33 s. A transient crates.io send failure recovered on the tool's own retry.
+- Downstream luup2 `check:local`: exit 0; 32/32 chart tasks pass in 46.37 s using
+  `PATH=/private/tmp/helm-schema-xargs-shim:...` and
+  `HELM_SCHEMA_BIN=/Users/roman/.cargo/bin/helm-schema`.
+- `task tokei:core`: exit 0; 67,597 production Rust LOC in 0.96 s.
+- Artifact gate, `git diff --exit-code b9b2ba85 -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`: exit 0; 156 schema and 18 IR artifacts exact; under 0.01 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.01 s.
+- `git diff --check`: exit 0; under 0.01 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: 0 (67,597 to 67,597).
 
 ## Round R1 — re-trace the post-A3 residual
 
