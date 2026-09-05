@@ -734,3 +734,56 @@ Next: finish main-tree gates while isolated compiler batch advances; first run `
   provider-rejection checks. This permits proven fixes, not outcome-tuned allowances.
 
 Next: compiler batch F23/D3/F74 in isolated implementation.kR1Lpd; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/f23-files.txt`.
+
+### Round 2 checkpoint — integrated mechanisms, corrective review pending
+
+- Status: implementation and focused regressions, not closure. Acceptance baseline
+  `670f84f2`; score remains 2/83 (2.4%). No corpus fixtures adopted and no final
+  compiler-batch gates, candidate battery, or performance-floor verdict yet.
+- User-directed workflow adjustment: every distinct defect gets a minimal permanent
+  regression in the main repository at its responsible compiler phase. Shared
+  mechanisms use table cases, not duplicated chart scaffolding. These fast checks
+  complement the corpus and Helm adjudication. Ensemble reviews are batched after
+  major fixes, not repeated for mechanical lint edits.
+- Integrated F23/D3/F74 from the isolated snapshot. The first deterministic major
+  review target is `<root>/round2/review1/{tracked.diff,brief.md}` plus its four
+  untracked-file diffs. Native Astra report: `astra-out.md`; Fable report:
+  `claude-messages.md`, extracted from the completed `claude-stream.jsonl` because
+  the personal comment hook produces additional closing text. Reviewers were read-only.
+- Confirmed Astra finding: static `tpl` requests used a fragment-only argument
+  environment, losing caller `.Template` and rebinding transported original roots
+  to replacement contexts. Pinned Helm 4.2.3 controls render the parent value.
+  The correction uses the existing caller-aware expression evaluator and root
+  capture at the program boundary; it adds no Template-specific resolver.
+  Three permanent regressions were first run red in main: exit 100, three failures
+  in 0.016 s (`round2/tpl-main-red.log`). After correction all 15 namespace tests
+  pass, exit 0, 0.022 s (`round2/tpl-main-green-all.log`).
+- Independent minifier counterexample: a valid local reference through a data
+  position can contain another reference into a relocated subtree. Before correction
+  the minimized schema failed compilation. Evidence: `round2/reference-through-data*`.
+  The correction abstains before normalization when a pointer target lies outside
+  indexed schema positions; no keyword-specific exception. Permanent cases cover
+  `default`, `examples`, and extension carriers, full unchanged-schema equality,
+  and explicit accepted-string/rejected-number controls. Main minifier/walker tests:
+  33/33, exit 0, 0.034 s (`round2/minifier-main-green-all.log`).
+- Invalid focused runs: the initial combined nextest command and its namespace-only
+  retry omitted `--ignore-default-filter`; both exited 4 with zero tests because
+  the default profile excludes integration binaries. Neither is passing evidence.
+  The explicitly unfiltered commands above are the valid results.
+- Fable findings under adjudication: helper cache keys now include caller filename
+  (actual CPU floor decides); library-chart non-underscore bodies must not enter
+  the execution registry; object-wide reference protection suppresses unrelated
+  logical-array normalization; raw-YAML runtime-hint projections weaken F23's typed
+  consumer boundary. The latter three have bounded structural corrections in progress.
+- Deferred scope findings, not guessed fixes: runtime merge operator/write dominance;
+  root-refill semantics; a provably dead missing-root companion whose blanket removal
+  would require execution ownership absent from current terminal clauses; transported
+  root argument width; external-reference minification requiring URI/resource identity.
+  External-reference abstention is safe but reduces optimization reach. No claim that
+  all external references are necessarily outside this document.
+- Architecture review is not yet converged: Fable called F23 a local maximum at the
+  raw-YAML consumer boundary. The correction must retire that escape hatch rather
+  than merely rename it. Astra's `tpl` finding and the independent reference finding
+  are repaired, with a focused corrective ensemble still required before adoption.
+
+Next: finish bounded compiler corrections and focused corrective review; first run `git diff -- crates/helm-schema-ir/src/static_file_template.rs`.
