@@ -309,3 +309,68 @@ still pending, so ensemble convergence is not claimed.
   review is examining the smallest sound repair while F23/D3 analysis continues.
 
 Next: finish round 0 cross-vendor review; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round0/review/claude-out.md`.
+
+### Final baseline harness evidence
+
+Fable's first review completed with exit 0. It confirmed the coalescing mechanism
+and required future-use safeguards: an explicit candidate path, environment/artifact
+provenance, and an explicit result for dependency-processing failures. Those safeguards
+are implemented. `--schemas` is now mandatory, dump layout is explicit, each result
+records its schema hash, each run has a metadata manifest, and each successful
+coalesce retains the actual capabilities document. Failed coalesces retain unknown
+schema acceptance and the real render failure. The metadata and archive fixes remain.
+
+The complete proof, CI and root sweeps were rerun against the fresh dump under
+`proof-reviewed`, `ci-reviewed`, and `root-reviewed`. Native Astra independently
+verified all candidate hashes and current harness/prober identities. All 1,074
+successful coalesces retain capabilities: `KubeVersion` is v1.29.0, while the API
+discovery set is the installed Helm binary's inherited set. No claim is made that
+`--kube-version` rewrites API discovery or enables a live cluster `lookup`.
+
+The reviewed counts reproduce the scorecards: CI 119 accept/render, one reject/abort,
+five reject/render; root 191 accept/render, 738 reject/abort, nine accept/abort,
+seven reject/render, four failed coalesces with unknown acceptance. Fable's original
+CI prose counts were inconsistent with the data; the result arrays and Astra's
+independent tally settle that at five disagreements. Fable follow-up output remains
+pending in `review/claude-followup-out.md`; no ensemble-convergence claim yet.
+
+## Round 1 — adjudication prerequisite (F79, with F80 conservatively unresolved)
+
+- Status: pre-registered; implementation starting.
+- Contract: a reported flip must compare both schemas against the exact pre-render
+  values document produced by pinned Helm for the same overlay subsequently rendered.
+  Kubernetes invalidity must be proved by a found offline schema, never cache absence.
+- Acceptance baseline commit: `ca05c438` (production and fixtures still `cc1d2d32`).
+- Ordering deviation: source review found the existing battery combines approximate
+  null-deletion composition with an unpinned render of the original chart. A semantic
+  round cannot use that as its verdict oracle, so this prerequisite precedes F23/D3.
+- Pre-registered witnesses: F79 oauth2-proxy `config.existingConfig` true, 1.5 and
+  `"3"` must be rejected by the rendered ConfigMap's Kubernetes name schema when
+  the helper chooses existing-configmap mode. Missing provider schemas must remain
+  uncertain. Kyverno `mode:null` stays present in exact coalesced JSON; template-time
+  mutation must not alter the validated document. A screened flip whose exact
+  revalidation agrees is recorded as collapsed screening, not an adjudicated flip.
+- Roster expectations: no schema, IR, generator or lean fixture movement; all three
+  roster sizes and the nine contaminated fixtures remain unchanged.
+- Designs considered: (1) retain Rust probe screening, obtain real coalesced defaults,
+  and revalidate shortlisted flips on raw Helm-coalesced documents; (2) a persistent
+  Go coalescer pinned to Helm processes every overlay. Choose (1) for this prerequisite:
+  it fixes verdict soundness using the installed Helm executable. Design (2) removes
+  screening's coalescence blind spot but adds a toolchain/protocol and must clone
+  dependency-processing state for every request. The remaining screening limitation
+  must be explicit; approximate screening is never a full coverage proof.
+- Compiler/test boundary: a `CoalescedValues` type constructed only from the
+  template-free Helm result separates verified documents from proposed overlays.
+  Offline provider results distinguish valid, invalid and uncertain explicitly.
+- F80 remains policy-decided but implementation-open: `ResolvedPathSchema` already
+  separates structural schema and values-default shape, but emitted-facet provenance
+  is not present in `EmissionReport`. A default mismatch at a text-used path cannot
+  exempt independent runtime constraints. No blanket or chart-specific exemption.
+- Architecture review: native Astra's bounded review found the existing adjudicator
+  a local maximum and chose the exact shortlisted-verdict boundary above. The D3
+  review independently selected full-name lookup through existing abstract values;
+  neither review licenses heuristic inference.
+- Measured results, clean dump, adversarial review, final-tree gates and LOC delta:
+  pending implementation. Existing round-0 gates are not reused for changed tests.
+
+Next: round 1 exact flip integration; first run `sed -n '1350,1480p' crates/helm-schema/tests/schema_emission_profiles.rs`.
