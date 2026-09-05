@@ -1,8 +1,28 @@
-use super::{intersect_schema_list, merge_two_schemas};
+use super::{intersect_schema_list, merge_two_schemas, sort_schemas_by_canonical_json};
 use color_eyre::eyre;
 use serde_json::Value;
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn canonical_schema_sort_matches_lexical_wire_order() {
+    let mut schemas = vec![
+        serde_json::json!({ "type": "string" }),
+        serde_json::json!({ "maximum": 5, "type": "integer" }),
+        serde_json::json!(false),
+    ];
+
+    sort_schemas_by_canonical_json(&mut schemas);
+
+    sim_assert_eq!(
+        have: schemas,
+        want: vec![
+            serde_json::json!(false),
+            serde_json::json!({ "maximum": 5, "type": "integer" }),
+            serde_json::json!({ "type": "string" }),
+        ]
+    );
+}
 
 #[test]
 fn provider_intersection_never_widens_a_shared_plain_string_domain() -> eyre::Result<()> {

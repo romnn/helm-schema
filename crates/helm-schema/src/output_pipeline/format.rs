@@ -39,6 +39,31 @@ pub fn write_schema_json(
     schema: &Value,
     format: JsonOutputFormat,
 ) -> EngineResult<FinalOutputMetrics> {
+    let serialized_bytes = write_schema_json_bytes(out, schema, format)?;
+    Ok(final_output_metrics(schema, serialized_bytes))
+}
+
+/// Serializes a schema without computing [`FinalOutputMetrics`].
+///
+/// Pretty output automatically falls back to compact JSON before crossing
+/// Helm's per-file size limit.
+///
+/// # Errors
+///
+/// Returns an error when JSON serialization or writing to `out` fails.
+pub fn write_schema_json_without_metrics(
+    out: &mut impl Write,
+    schema: &Value,
+    format: JsonOutputFormat,
+) -> EngineResult<()> {
+    write_schema_json_bytes(out, schema, format).map(|_| ())
+}
+
+fn write_schema_json_bytes(
+    out: &mut impl Write,
+    schema: &Value,
+    format: JsonOutputFormat,
+) -> EngineResult<usize> {
     let mut bytes = match format {
         JsonOutputFormat::Compact => serde_json::to_vec(schema)?,
         JsonOutputFormat::Pretty => {
@@ -46,17 +71,48 @@ pub fn write_schema_json(
             // limit still fits comfortably in compact form (whitespace is
             // most of the size at that scale), so pretty degrades to
             // compact rather than emitting a schema the chart cannot ship.
-            let pretty = serde_json::to_vec_pretty(schema)?;
-            if pretty.len() >= HELM_MAX_CHART_FILE_BYTES {
-                serde_json::to_vec(schema)?
-            } else {
-                pretty
+            let mut pretty = BoundedPrettyWriter::default();
+            serde_json::to_writer_pretty(&mut pretty, schema)?;
+            match pretty.into_bytes() {
+                Some(bytes) => bytes,
+                None => serde_json::to_vec(schema)?,
             }
         }
     };
     bytes.push(b'\n');
     out.write_all(&bytes)?;
-    Ok(final_output_metrics(schema, bytes.len()))
+    Ok(bytes.len())
+}
+
+#[derive(Default)]
+struct BoundedPrettyWriter {
+    bytes: Vec<u8>,
+    written: usize,
+}
+
+impl BoundedPrettyWriter {
+    fn into_bytes(self) -> Option<Vec<u8>> {
+        (self.written < HELM_MAX_CHART_FILE_BYTES).then_some(self.bytes)
+    }
+}
+
+impl Write for BoundedPrettyWriter {
+    fn write(&mut self, buffer: &[u8]) -> std::io::Result<usize> {
+        let previous = self.written;
+        self.written = self.written.saturating_add(buffer.len());
+        if previous < HELM_MAX_CHART_FILE_BYTES {
+            if self.written < HELM_MAX_CHART_FILE_BYTES {
+                self.bytes.extend_from_slice(buffer);
+            } else {
+                self.bytes = Vec::new();
+            }
+        }
+        Ok(buffer.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
 }
 
 fn final_output_metrics(schema: &Value, serialized_bytes: usize) -> FinalOutputMetrics {

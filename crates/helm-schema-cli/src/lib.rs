@@ -10,7 +10,9 @@ use std::path::Path;
 
 use helm_schema::chart_source::RootChartSource;
 use helm_schema::diagnostics::DiagnosticSink;
-use helm_schema::output::{FetchPolicy, LoadBudget, PolicyInputOptions, write_schema_json};
+use helm_schema::output::{
+    FetchPolicy, LoadBudget, PolicyInputOptions, write_schema_json_without_metrics,
+};
 use helm_schema::{AnalysisSession, EngineResult};
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
@@ -136,7 +138,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
 
     if let Some(path) = cli.output.output {
         let mut out = BufWriter::new(create_output_file(&path)?);
-        write_schema_json(&mut out, &schema, json_format)
+        write_schema_json_without_metrics(&mut out, &schema, json_format)
             .map_err(|err| write_output_error_with_path(err, &path))?;
         out.flush().map_err(|err| CliError::WriteOutput {
             path: path.clone(),
@@ -145,7 +147,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
     } else {
         let stdout = std::io::stdout();
         let mut out = BufWriter::new(stdout.lock());
-        write_schema_json(&mut out, &schema, json_format)?;
+        write_schema_json_without_metrics(&mut out, &schema, json_format)?;
         out.flush()?;
     }
 

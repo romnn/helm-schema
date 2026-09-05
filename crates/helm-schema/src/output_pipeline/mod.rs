@@ -13,7 +13,7 @@ mod reachability;
 mod transforms;
 
 pub(crate) use annotation::FinalOutputPolicy;
-pub use format::{FinalOutputMetrics, write_schema_json};
+pub use format::{FinalOutputMetrics, write_schema_json, write_schema_json_without_metrics};
 pub use options::{
     EmitRequest, JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, ReferencePolicy,
 };

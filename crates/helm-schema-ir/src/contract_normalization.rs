@@ -144,7 +144,9 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
             let key = (
                 contract_use.source_expr.clone(),
                 contract_use.kind,
-                contract_predicates(&contract_use),
+                contract_predicates(&contract_use)
+                    .cloned()
+                    .unwrap_or_default(),
             );
             if let Some(existing) = pathless_index_by_identity
                 .get(&key)
@@ -174,13 +176,16 @@ pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>
         .filter(|contract_use| has_self_default_guard(contract_use))
         .map(render_site)
         .collect();
-
-    uses.retain(|contract_use| {
-        if has_self_default_guard(contract_use) {
-            return true;
-        }
-        !defaulted_render_sites.contains(&render_site(contract_use))
-    });
+    let keep = uses
+        .iter()
+        .map(|contract_use| {
+            has_self_default_guard(contract_use)
+                || !defaulted_render_sites.contains(&render_site(contract_use))
+        })
+        .collect::<Vec<_>>();
+    drop(defaulted_render_sites);
+    let mut keep = keep.into_iter();
+    uses.retain(|_| keep.next().unwrap_or(true));
 }
 
 #[tracing::instrument(skip_all)]
@@ -210,7 +215,11 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
     }
 
     let mut keep = vec![true; uses.len()];
-    let predicates_by_index = uses.iter().map(contract_predicates).collect::<Vec<_>>();
+    let empty_predicates = BTreeSet::new();
+    let predicates_by_index = uses
+        .iter()
+        .map(|contract_use| contract_predicates(contract_use).unwrap_or(&empty_predicates))
+        .collect::<Vec<_>>();
     for indices in buckets.values() {
         if indices.len() < 2 {
             continue;
@@ -219,13 +228,16 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
             let Some(contract_use) = uses.get(index) else {
                 continue;
             };
-            let source_path = contract_use.source_expr.clone();
-            let predicates = predicates_by_index.get(index).cloned().unwrap_or_default();
+            let source_path = &contract_use.source_expr;
+            let predicates = predicates_by_index
+                .get(index)
+                .copied()
+                .unwrap_or(&empty_predicates);
             let has_self_truthy = predicates.iter().any(
-                |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == &source_path),
+                |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == source_path),
             );
             if predicates.iter().any(
-                |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &source_path),
+                |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == source_path),
             ) {
                 continue;
             }
@@ -233,7 +245,7 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
                 .iter()
                 .filter_map(|&other_index| {
                     uses.get(other_index)
-                        .zip(predicates_by_index.get(other_index))
+                        .zip(predicates_by_index.get(other_index).copied())
                 })
                 // Cheapest discriminant first: a subsuming row must carry
                 // strictly MORE predicates, so length filters out most of the
@@ -247,12 +259,9 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
                         && predicates.is_subset(other_predicates)
                         && ((!has_self_truthy
                             && other_predicates.iter().any(|predicate| {
-                                matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == &source_path)
+                                matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) if path == source_path)
                             }))
-                            || extra_predicates_are_truthy_parents(
-                                &predicates,
-                                other_predicates,
-                            ))
+                            || extra_predicates_are_truthy_parents(predicates, other_predicates))
                 });
             if subsumed && let Some(flag) = keep.get_mut(index) {
                 *flag = false;
@@ -450,37 +459,30 @@ fn merge_suffix_string_requirements(
     (paths.len() >= 2).then_some(conjunctions)
 }
 
-type RenderSite = (
-    helm_schema_core::ValuesPath,
-    YamlPath,
+type RenderSite<'a> = (
+    &'a helm_schema_core::ValuesPath,
+    &'a YamlPath,
     ValueKind,
-    Option<ResourceRef>,
+    Option<&'a ResourceRef>,
 );
 
-fn render_site(contract_use: &ContractUse) -> RenderSite {
+fn render_site(contract_use: &ContractUse) -> RenderSite<'_> {
     (
-        contract_use.source_expr.clone(),
-        contract_use.path.clone(),
+        &contract_use.source_expr,
+        &contract_use.path,
         contract_use.kind,
-        contract_use.resource.clone(),
+        contract_use.resource.as_ref(),
     )
 }
 
 fn has_self_default_guard(contract_use: &ContractUse) -> bool {
-    let source_path = contract_use.source_expr.clone();
+    let source_path = &contract_use.source_expr;
     contract_predicates(contract_use)
-        .iter()
-        .any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &source_path))
+        .is_some_and(|predicates| predicates.iter().any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == source_path)))
 }
 
-fn contract_predicates(contract_use: &ContractUse) -> BTreeSet<Predicate> {
-    contract_use
-        .condition
-        .disjuncts()
-        .iter()
-        .next()
-        .cloned()
-        .unwrap_or_default()
+fn contract_predicates(contract_use: &ContractUse) -> Option<&BTreeSet<Predicate>> {
+    contract_use.condition.disjuncts().iter().next()
 }
 
 fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {

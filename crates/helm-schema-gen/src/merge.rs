@@ -30,7 +30,7 @@ pub(crate) fn intersect_schema_list(schemas: Vec<Value>) -> Value {
         0 => empty_schema(),
         1 => schemas.pop().unwrap_or_else(empty_schema),
         _ => {
-            schemas.sort_by_key(helm_schema_json_schema_walk::canonical_json_string);
+            sort_schemas_by_canonical_json(&mut schemas);
             serde_json::json!({ "allOf": schemas })
         }
     }
@@ -41,7 +41,7 @@ fn dedup_validation_equivalent_schemas(mut schemas: Vec<Value>) -> Vec<Value> {
         return schemas;
     }
 
-    schemas.sort_by_key(helm_schema_json_schema_walk::canonical_json_string);
+    sort_schemas_by_canonical_json(&mut schemas);
     let mut fingerprints = BTreeSet::new();
     schemas.retain(|schema| {
         let mut validation_schema = schema.clone();
@@ -178,11 +178,23 @@ fn schema_only_allows_type(schema: &Value, expected_type: &str) -> bool {
 
 fn deduped_sorted_any_of(variants: Vec<Value>) -> Value {
     let mut variants = dedup_schemas(variants);
-    variants.sort_by_key(helm_schema_json_schema_walk::canonical_json_string);
+    sort_schemas_by_canonical_json(&mut variants);
     if let [variant] = variants.as_slice() {
         return variant.clone();
     }
     SchemaNode::any_of(variants.into_iter().map(SchemaNode::from_value).collect()).into_value()
+}
+
+fn sort_schemas_by_canonical_json(schemas: &mut Vec<Value>) {
+    let mut keyed = std::mem::take(schemas)
+        .into_iter()
+        .map(|schema| {
+            let key = helm_schema_json_schema_walk::canonical_json_string(&schema);
+            (key, schema)
+        })
+        .collect::<Vec<_>>();
+    keyed.sort_by(|left, right| left.0.cmp(&right.0));
+    schemas.extend(keyed.into_iter().map(|(_, schema)| schema));
 }
 
 fn flatten_union_variants(v: Value) -> Vec<Value> {
