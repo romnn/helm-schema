@@ -1860,7 +1860,7 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ## Round A7 — lazily compute the second helper scalar projection
 
-- Status: counter complete and restored; implementation pending.
+- Status: landed in `c5aafe86`.
 - Contract: first re-measure second scalar-projection executions and consumers on the post-A4/E3
   tree with throwaway per-summary/tracing-only state, then restore it. If eligible, defer only the
   existing second scalar interpreter pass behind a summary-owned `OnceCell`, retaining the original
@@ -1902,13 +1902,41 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   - All three charts remain well below the frozen 80% rejection threshold. A4 reduced absolute
     Datadog pass executions from R1's 1,090 to 369, but the unconsumed fraction grew from 24.8% to
     44.7%. A7 remains eligible; the likely whole-run gain is now modest rather than 5%.
-  - Implementation and candidate measurements remain pending.
+  - Final randomized paired curve:
+
+    | chart | pairs | E3 CPU s median (range) | A7 CPU s median (range) | paired decision (range) | load1 range |
+    |---|---:|---:|---:|---:|---:|
+    | coredns | 5 | 0.13 (0.13--0.14) | 0.13 (0.13--0.13) | neutral; 0.00% (0.00--7.14%) | 4.70--4.70 |
+    | metrics-server | 5 | 0.08 (0.08--0.08) | 0.08 (0.07--0.08) | neutral; 0.00% (0.00--12.50%) | 4.70--4.70 |
+    | istiod | 5 | 0.18 (0.17--0.18) | 0.17 (0.17--0.18) | not proven; 5.56% (-5.88--5.56%) | 4.48--4.70 |
+    | cert-manager | 5 | 0.32 (0.31--0.32) | 0.32 (0.32--0.32) | not proven; 0.00% (-3.23--0.00%) | 4.48--4.48 |
+    | argo-cd | 5 | 2.22 (2.21--2.25) | 2.21 (2.17--2.26) | not proven; 0.45% (-1.80--2.25%) | 4.26--4.80 |
+    | grafana | 5 | 1.00 (1.00--1.01) | 0.99 (0.98--1.01) | not proven; 1.00% (-1.00--2.00%) | 4.08--4.37 |
+    | cilium | 5 | 1.70 (1.69--1.73) | 1.70 (1.69--1.71) | not proven; 0.59% (-1.18--1.73%) | 4.08--4.23 |
+    | datadog | 5 | 8.53 (8.50--8.56) | 8.00 (7.98--8.01) | gain; 6.21% (5.88--6.43%) | 4.01--5.84 |
+    | airflow | 5 | 5.89 (5.86--5.91) | 5.67 (5.66--5.78) | gain; 3.41% (2.03--3.74%) | 4.67--5.73 |
+    | kube-prometheus-stack | 5 | 7.60 (7.58--7.64) | 7.51 (7.50--7.53) | gain; 1.32% (0.79--1.44%) | 3.96--4.75 |
+
+  - Datadog clears the frozen 5% threshold with a wholly positive paired range. Airflow and KPS
+    also improve across every pair. The seven smaller charts are timer-resolution neutral or have
+    crossed-zero ranges; none has a proven regression.
+  - All ten schema, stdout, JSON-diagnostic, and status channels are exact. The empty-cache online,
+    warm online, and warm offline matrix is exact across baseline and candidate. All 156 schema
+    and 18 IR artifacts are exact. The final battery checks 160 charts and 284,863 probes with zero
+    flips.
 - Deviations:
   - The counter runs began at load1 10.84--11.94 immediately after their release build. Counts are
-    deterministic trace events and remain valid; their 8.87, 6.36, and 8.05 s CPU values are not
-    used as performance evidence.
-- Adjudication evidence: pending byte, cache, artifact, and battery gates against Helm v4.2.3.
-- Public/wire decision: pending; the intended deferred state is private and summary-owned.
+  deterministic trace events and remain valid; their 8.87, 6.36, and 8.05 s CPU values are not
+  used as performance evidence.
+  - The post-A4 counter contradicted R1's estimated 5% whole-run A7 gain for airflow and KPS. The
+    implementation still produces 3.41% and 1.32% proven gains there; Datadog alone reproduces the
+    frozen threshold at 6.21%.
+- Adjudication evidence: Helm v4.2.3. The battery reports 160 charts, 284,863 probes, zero flips,
+  zero adjudicated changes, and zero candidate-accepts/Helm-aborts cells. Byte and cache-state
+  matrices are exact, so no semantic adjudication was needed.
+- Public/wire decision: adopted. The lazy cell and replay inputs are crate-private and owned by the
+  memoized per-analysis `FragmentSummary`. Dropping the analysis drops the cache; concurrent library
+  sessions neither share nor contend for it. Public APIs and wire output are unchanged.
 
 ### Review dossier
 
@@ -1919,9 +1947,24 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
   read. SQL joins `slice.arg_set_id` to `args.arg_set_id` and counts `debug.message` values
   `a7_scalar_projection_run` and `a7_scalar_projection_consumed`.
 - Restoration gate, `git diff --exit-code c0147b86 -- crates/helm-schema-ir/src/fragment_eval/summary.rs
-  crates/helm-schema-ir/src/fragment_expr_eval/bound_helper_resolver.rs`: exit 0. Implementation,
-  candidate binaries, focused tests, cache triple, byte gate, randomized pairs, and final gates are
-  pending.
+  crates/helm-schema-ir/src/fragment_expr_eval/bound_helper_resolver.rs`: exit 0 before the
+  production implementation.
+- Baseline `helm-schema-e3` SHA-256 is `04dbab465eff3eb6733d388160d8f487414f76e662a27322b53be7600362f801`;
+  candidate `helm-schema-a7` is `e0599c10509f8eec8908d3bedb36966908b784bc59c496e38a85c8bf3d41cb81`.
+  Both were release builds copied out of `target/` immediately after their builds.
+- `a7/byte` holds the ten-chart four-channel comparison. `a7/cache-triple` holds empty-cache
+  online, warm online, and warm offline results using private copied K8s and CRD roots; all 80
+  baseline/candidate and mode comparisons pass.
+- `a7/measure-final` holds five randomized adjacent pairs per chart. Every invocation uses the
+  campaign cache snapshot, `--offline --compact --k8s-version v1.35.0 --diag-format json`, and
+  `/usr/bin/time -p`; load1 and start time are captured beside each run. No build overlapped these
+  measurements.
+- Focused test, `cargo test -p helm-schema-ir partial_helper_scalar_dispatch_is_deferred_and_cached
+  --lib`: exit 0; one test passes. It observes an empty cell, one on-demand computation, and pointer
+  identity on the second read.
+- Acceptance battery uses `TMPDIR=/private/tmp/helm-schema-performance-v1.LSEe9Y/a7/battery`,
+  `SCHEMA_ACCEPTANCE_BASELINE_REF=a7f9e5bf`, sibling `coverage.json`, and
+  `ADJUDICATE_WITH_HELM=1`; the exact round-74 ignored-only command exits 0 in 166.40 s total.
 
 ### Self-adversarial pass
 
@@ -1938,9 +1981,25 @@ mid-chart target below 4 s requires 28.4% from argo-cd, 8.5% from grafana, and 4
 
 ### Gates on the final tree
 
-- Pending.
+- `cargo fmt --check`: exit 0; 1.10 s.
+- `task lint`: exit 0; 16.21 s. Whole-workspace Clippy and all configured source policies pass.
+- `task lint:fc`: exit 0; all 48 combinations pass; 92.72 s total.
+- `cargo nextest run --workspace`: exit 0; 1,361/1,361 tests pass; 69.11 s total.
+- `task test:integration`: exit 0; 669/669 tests pass in 222.868 s, with 24 profile skips;
+  225.32 s total.
+- `task test:all`: exit 0; 2,034/2,034 tests pass in 226.360 s, with 24 profile skips and live
+  network tests included; 227.65 s total.
+- Corpus battery: exit 0; 160 charts, 284,863 probes, zero flips; 139.642 s test time and 166.40 s
+  total.
+- Downstream luup2: not triggered within A7 because schemas, diagnostics, statuses, artifacts, and
+  acceptance are exact. The campaign-close gate will run once on the final tree.
+- `task tokei:core`: exit 0; 67,597 production Rust LOC in 0.85 s.
+- Artifact gate, `git diff --exit-code a7f9e5bf -- testdata/chart-corpus-schemas
+  crates/helm-schema-ir/tests/fixtures`: exit 0; 156 schema and 18 IR artifacts exact; under 0.01 s.
+- `git diff --exit-code 1ce9e660 -- plan/performance-review-v1.md`: exit 0; under 0.01 s.
+- `git diff --check`: exit 0; under 0.01 s.
 
-- Measured production LOC delta: pending.
+- Measured production LOC delta: +59 (67,538 to 67,597).
 
 ## Round A3 — preserve scalar dispatches unchanged across every outcome
 
