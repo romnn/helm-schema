@@ -1640,3 +1640,127 @@ Next: repair A1/default through explicit unknown ordered alternatives, then resu
   `d32302cbecbc1e23d8c732c9651fb35b474746ce0bf9137c93263491801c60ca`.
 
 Next: make one clean F51 dump and run the candidate battery against `f245c1e9`; first run `cargo build --release -p helm-schema-cli` after every concurrent build has stopped.
+
+### Round 4 correction checkpoint — F51 binding decisions
+
+- Status: **active correction; implementation checkpoint `ae8b2aa3` remains
+  committed, but the family is not closed**. Acceptance baseline remains
+  `f245c1e9`. The first candidate dump and battery were valid and found one
+  false rejection, so no fixture was adopted.
+- Battery correction: the clean dump at `round4-f51-dump.mXkFN2` contained all
+  203 expected artifacts. The explicit candidate-dump battery screened 284,861
+  probes and 46,703 guards, then failed on the sole movement:
+  `signoz-signoz`, `signoz.additionalEnvs <- null deletion`, baseline accept to
+  candidate reject. Helm 4.2.3 renders it; the pinned provider result is
+  `UnchangedUnknown` because `ClickHouseInstallation` has no pinned schema.
+  Coverage is `round4-f51-final/f51-coverage.json`; raw Helm evidence is under
+  `round4-f51-battery.nwshmb`.
+- First correction: binding provenance moved from a value map plus
+  `pipeline_bound_locals` side set into typed alternatives carrying condition,
+  value and direct/evaluated boundary. Reviews broke the initial version with
+  rebound `$`, evaluated helper dot, exact range locals, first branch
+  reassignment, conditioned-value flattening, traversal-state overwrite and a
+  value-by-mode/effects product. All received focused regressions. A clean
+  `9ad50db9` archive passed 1,068/1,068 IR/generator tests and the Helm-backed
+  matrix passed 5/5; the mixed main tree had only its three pre-existing D3
+  failures.
+- Final-review correction: native Sol returned clean, but Fable constructed two
+  reachable residuals. A `with` join could retain direct and evaluated values as
+  unconditional arms, rejecting a null ranged member even when a nonempty
+  override replaces it. Seeding `$` as `RootContext` also lost intermediate-host
+  capture for pristine helper-root `$.Values.a.b`. Both are now red-first
+  full-schema/IR regressions; the expanded pinned Helm matrix passes 9/9.
+- Design decision: at the user's request, one read-only GPT-6 Astra/xhigh pass
+  reviewed only this binding seam. Its report is
+  `round4-f51-evidence/astra-binding-design.md`. The existing unordered bag plus
+  exact-`if` repair is a local maximum. The selected design is one immutable
+  binding decision owner: leaves pair value and Go evaluation boundary; one
+  `select(TruthCondition, true_exit, false_exit)` represents `if`, `with` and
+  range exits; partial truth retains independently proved true and false
+  subsets; the uncovered complement stays an unresolved choice and cannot emit
+  branch-specific strict facts. F78 may absorb the same owner later, deleting
+  the transient binding representation rather than adding another mode tree.
+- Range boundary: exact sequential iterations retain last-write state. A
+  symbolic member is not the final iteration, so only the written slot's
+  positive exit widens to `UnresolvedLoopExit`; the exact zero exit and
+  unaffected slots remain. Focused tests cover empty/one/two-item `range =`,
+  post-loop strict reads and symbolic member-dependent writes. The AST-visible
+  assignment form is used; no source spelling heuristic was added.
+- Current measurement: the decision implementation passes 442/442 IR tests,
+  the focused grouped schema module passes 14/14 and its Helm matrix passes
+  9/9. The first full generator run after the redesign passed 653/663; three
+  failures belong to the active D3 tree and seven identified F51 transport/join
+  regressions are being corrected at shared owner boundaries. No final source
+  freeze, clean patch, dump or fixture movement is claimed.
+- Review dossier: initial batch `brief.md`, `sol-out.md`, `claude-out2.md`;
+  correction review `review2-brief.md`, `sol-review2-out.md`,
+  `claude-review2-out.md`; final correction review `review3-f51-brief.md`,
+  `sol-review3-f51-out.md`, `claude-review3-f51-out.md`, all under
+  `round4-batched-review`. The first Fable invocation answered only a dirty-tree
+  attribution hook and produced no semantic review; it was retained as an
+  invalid review run and retried once successfully.
+- Validation deviations: a default-profile integration invocation selected zero
+  tests and exited 4; the integration-profile retry passed. Two clean-archive
+  commands failed before testing because the copied `mise.toml` was untrusted;
+  the exact config was trusted and the rerun passed. Two later links failed with
+  `ENOSPC` before tests. They are invalid harness runs; reproducible build output
+  was removed and T7 free space recovered to 127 GiB before one retry.
+- Performance evidence: the pre-final candidate's first three-chart pass is not
+  accepted as a floor decision. Datadog CPU median remained within 5%, while
+  Airflow and KPS medians exceeded 10%; several runs had severe wall/CPU
+  contention and concurrent unrelated host builds. The clean minima were within
+  the floor. The final decision will use preserved F77 and final F51 binaries in
+  the same interleaved window after all builds stop.
+- LOC and gates: the superseded clean correction measured 68,774 production
+  Rust LOC. `cargo fmt --check`, frozen-document check and `git diff --check`
+  passed at that checkpoint. Full final-tree gates, downstream luup2 and the
+  performance floor remain pending and are not claimed.
+
+Next: converge the decision-owner generator regressions, freeze a correction-only patch against `9ad50db9`, then run its clean IR/generator and Helm matrices; first run `cargo nextest run -p helm-schema-ir -p helm-schema-gen` with `CARGO_TARGET_DIR=/Volumes/T7/dev/helm-schema-bughunt-cache.srGPpP/f51-correction-target`.
+
+### Round 4 correction checkpoint — F17 escaped-container ownership
+
+- Status: **active correction; no main-tree source or fixture commit**. The
+  isolated candidate is `round4-f17`; baseline is `f245c1e9`.
+- Contract: a YAML header and each descendant execute exactly once in their own
+  Helm control-arm source window. An already-evaluated parent shell wraps a
+  deferred descendant only on paths where that shell rendered. Controls owned by
+  one escaped container advance monotonically rather than rescanning earlier
+  controls or completed subtrees.
+- Implemented phase shape: `BodyEvalFacts` owns one source-only `AdoptionPlan`;
+  `NodeView` consumes exact windows and a monotone control cursor; deferred
+  reattachment consumes guarded inert parent shells. This replaced repeated
+  runtime discovery rather than adding a second evaluator. Review-3 regressions
+  for sibling target-window bounds, middle/else placement, absent-parent bypass
+  and 64 shared controls passed 21/21. Full IR passed 421/421 and full generator
+  passed 646/646 after correcting a branch-selected sequence provider-slot
+  regression.
+- Final convergence did not approve that candidate. Native Sol and Fable found
+  adjacent-control and deeper-open-stack witnesses where bypassing the newest
+  absent shell must fall back to an earlier live same-indent/trailing shell, not
+  directly to the syntactic ancestor. Fable also identified an equal-indent
+  mapping-parent filter and residual `established_content_mark` rescans that can
+  restore `O(S*C)` behavior. These are being reproduced against Helm and fixed
+  as one source-plan representation of the rendered open-container stack.
+- Dynamic-key adjudication: native Sol also found a pre-existing action-line
+  `{{ key }}:` header that the syntax tree does not open as a mapping parent. It
+  is being reproduced separately. A small typed syntax/source-node representation
+  may feed the same parent model; an interpreter-side line rescue is forbidden.
+  If it requires a distinct parser redesign, it will be recorded as a newly
+  discovered family rather than misrepresented as an F17 correction.
+- Review dossier: `review3-f17-brief.md`, `claude-review3-f17-out.md` and the
+  native review report summarized in `review3-design.md`; final pass
+  `review4-f17-final-brief.md`, `sol-review4-f17-final-out.md` and
+  `claude-review4-f17-final-out.md`, all under `round4-batched-review`. The final
+  candidate handoff is `round4-f17-evidence/handoff-final.md`; it is superseded
+  for closure by the active reproduction/correction pass.
+- Release/performance: the superseded final source built in release mode and was
+  copied to `round4-f17-evidence/helm-schema-f17-final`, SHA-256
+  `9921cb51ed288e8a21831c523adc16bad721f70050e5cfd1cbe453873956cd23`.
+  It is evidence only; any source correction requires a new build. No timing,
+  dump, battery, fixture adoption or final gate is claimed.
+- LOC: the superseded reviewed candidate measured 68,857 production Rust LOC,
+  +799 from its baseline. The next shape must preserve the one plan/interpreter
+  boundary and justify any additional code by deleting runtime rediscovery.
+
+Next: reproduce the adjacent/deeper shell, equal-indent sequence and dynamic-key witnesses with Helm, then correct the source-plan open-stack model; first run the focused `fragment_golden` cases in `/private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round4-f17` with `CARGO_TARGET_DIR=/Volumes/T7/dev/helm-schema-bughunt-cache.srGPpP/f17-target`.
