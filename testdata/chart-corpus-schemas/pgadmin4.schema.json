@@ -715,28 +715,19 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/2C"
+            "$ref": "#/$defs/2H"
           },
           "type": "object"
         },
         {
           "items": {
-            "$ref": "#/$defs/2C"
+            "$ref": "#/$defs/2H"
           },
           "type": "array"
         }
       ]
     },
     "1Y": {
-      "additionalProperties": {
-        "$ref": "#/$defs/33"
-      },
-      "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-      "items": {
-        "$ref": "#/$defs/33"
-      }
-    },
-    "1Z": {
       "if": {
         "$ref": "#/$defs/3f"
       },
@@ -744,9 +735,18 @@
         "additionalProperties": {},
         "properties": {
           "mirror": {
-            "$ref": "#/$defs/2N"
+            "$ref": "#/$defs/2A"
           }
         }
+      }
+    },
+    "1Z": {
+      "additionalProperties": {
+        "$ref": "#/$defs/33"
+      },
+      "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+      "items": {
+        "$ref": "#/$defs/33"
       }
     },
     "1a": {
@@ -1031,7 +1031,7 @@
     "1k": {
       "properties": {
         "istioIngress": {
-          "$ref": "#/$defs/2A"
+          "$ref": "#/$defs/2B"
         }
       },
       "required": [
@@ -1488,6 +1488,26 @@
       ]
     },
     "2A": {
+      "additionalProperties": {},
+      "properties": {
+        "portNumber": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/1"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "maximum": 4294967295,
+              "minimum": 0,
+              "type": "integer"
+            }
+          ]
+        }
+      }
+    },
+    "2B": {
       "properties": {
         "virtualService": {
           "$ref": "#/$defs/a"
@@ -1498,7 +1518,7 @@
       ],
       "type": "object"
     },
-    "2B": {
+    "2C": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -1507,21 +1527,6 @@
         "secretName": {}
       },
       "type": "object"
-    },
-    "2C": {
-      "additionalProperties": {},
-      "properties": {
-        "destination": {
-          "additionalProperties": {},
-          "properties": {
-            "host": {},
-            "portNumber": {},
-            "subset": {}
-          },
-          "type": "object"
-        },
-        "weight": {}
-      }
     },
     "2D": {
       "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
@@ -1563,6 +1568,21 @@
       "type": "object"
     },
     "2H": {
+      "additionalProperties": {},
+      "properties": {
+        "destination": {
+          "additionalProperties": {},
+          "properties": {
+            "host": {},
+            "portNumber": {},
+            "subset": {}
+          },
+          "type": "object"
+        },
+        "weight": {}
+      }
+    },
+    "2I": {
       "properties": {
         "networkPolicy": {
           "$ref": "#/$defs/a"
@@ -1573,7 +1593,7 @@
       ],
       "type": "object"
     },
-    "2I": {
+    "2J": {
       "additionalProperties": {},
       "properties": {
         "hostnames": {
@@ -1583,7 +1603,7 @@
       },
       "type": "object"
     },
-    "2J": {
+    "2K": {
       "properties": {
         "autoscaling": {
           "$ref": "#/$defs/a"
@@ -1594,7 +1614,7 @@
       ],
       "type": "object"
     },
-    "2K": {
+    "2L": {
       "allOf": [
         {
           "additionalProperties": {},
@@ -1608,7 +1628,7 @@
         }
       ]
     },
-    "2L": {
+    "2M": {
       "properties": {
         "httpRoute": {
           "$ref": "#/$defs/a"
@@ -1619,27 +1639,10 @@
       ],
       "type": "object"
     },
-    "2M": {
+    "2N": {
       "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
       "format": "int32",
       "type": "integer"
-    },
-    "2N": {
-      "additionalProperties": {},
-      "properties": {
-        "portNumber": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "maximum": 4294967295,
-              "minimum": 0,
-              "type": "integer"
-            }
-          ]
-        }
-      }
     },
     "2O": {
       "additionalProperties": {},
@@ -1671,6 +1674,21 @@
     },
     "2Q": {
       "properties": {
+        "secretName": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/1"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "2R": {
+      "properties": {
         "extraContainers": {
           "$ref": "#/$defs/t"
         }
@@ -1680,7 +1698,7 @@
       ],
       "type": "object"
     },
-    "2R": {
+    "2S": {
       "properties": {
         "readinessProbe": {
           "$ref": "#/$defs/t"
@@ -1691,7 +1709,7 @@
       ],
       "type": "object"
     },
-    "2S": {
+    "2T": {
       "additionalProperties": {},
       "properties": {
         "hostnames": {
@@ -1699,7 +1717,7 @@
         }
       }
     },
-    "2T": {
+    "2U": {
       "properties": {
         "resourceType": {
           "enum": [
@@ -1709,17 +1727,6 @@
       },
       "required": [
         "resourceType"
-      ],
-      "type": "object"
-    },
-    "2U": {
-      "properties": {
-        "livenessProbe": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "livenessProbe"
       ],
       "type": "object"
     },
@@ -2022,7 +2029,7 @@
       "additionalProperties": {},
       "properties": {
         "destination": {
-          "$ref": "#/$defs/2N"
+          "$ref": "#/$defs/2A"
         }
       }
     },
@@ -2316,17 +2323,13 @@
     },
     "30": {
       "properties": {
-        "secretName": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "type": "string"
-            }
-          ]
+        "livenessProbe": {
+          "$ref": "#/$defs/t"
         }
       },
+      "required": [
+        "livenessProbe"
+      ],
       "type": "object"
     },
     "31": {
@@ -2535,7 +2538,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/N"
+          "$ref": "#/$defs/M"
         }
       ]
     },
@@ -2586,7 +2589,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/N"
+          "$ref": "#/$defs/M"
         }
       ]
     },
@@ -3758,16 +3761,6 @@
       "type": "string"
     },
     "M": {
-      "additionalProperties": {
-        "$ref": "#/$defs/17"
-      },
-      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "N": {
       "allOf": [
         {
           "$ref": "#/$defs/g"
@@ -3802,7 +3795,7 @@
       ],
       "type": "string"
     },
-    "O": {
+    "N": {
       "additionalProperties": {},
       "properties": {
         "readOnly": {
@@ -3830,6 +3823,16 @@
           ]
         }
       }
+    },
+    "O": {
+      "additionalProperties": {
+        "$ref": "#/$defs/17"
+      },
+      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "P": {
       "allOf": [
@@ -3910,7 +3913,7 @@
     "T": {
       "properties": {
         "serverDefinitions": {
-          "$ref": "#/$defs/2T"
+          "$ref": "#/$defs/2U"
         }
       },
       "required": [
@@ -4531,7 +4534,7 @@
               "description": "ContainerPort represents a network port in a single container.",
               "properties": {
                 "containerPort": {
-                  "$ref": "#/$defs/2M"
+                  "$ref": "#/$defs/2N"
                 },
                 "hostIP": {
                   "description": "What host IP to bind the external port to.",
@@ -4627,7 +4630,7 @@
                 "$ref": "#/$defs/Q"
               },
               "requests": {
-                "$ref": "#/$defs/M"
+                "$ref": "#/$defs/O"
               }
             },
             "type": [
@@ -5091,7 +5094,7 @@
             "$ref": "#/$defs/3"
           },
           {
-            "$ref": "#/$defs/2H"
+            "$ref": "#/$defs/2I"
           },
           {
             "properties": {
@@ -5105,7 +5108,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/2J"
+            "$ref": "#/$defs/2K"
           },
           {
             "not": {
@@ -5192,7 +5195,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/2L"
+            "$ref": "#/$defs/2M"
           },
           {
             "allOf": [
@@ -5245,7 +5248,7 @@
                     "$ref": "#/$defs/8"
                   },
                   {
-                    "$ref": "#/$defs/N"
+                    "$ref": "#/$defs/M"
                   }
                 ]
               }
@@ -5431,7 +5434,7 @@
                         "$ref": "#/$defs/Q"
                       },
                       "requests": {
-                        "$ref": "#/$defs/M"
+                        "$ref": "#/$defs/O"
                       }
                     },
                     "type": [
@@ -5855,11 +5858,11 @@
             "properties": {
               "extraSecretMounts": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/N"
                 },
                 "description": "Additional secret mounts to be mounted inside a container\n- name: pgpassfile\nsecret: pgpassfile\nsubPath: pgpassfile\nmountPath: \"/var/lib/pgadmin/storage/pgadmin/file.pgpass\"\nreadOnly: true",
                 "items": {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/N"
                 }
               }
             }
@@ -6474,13 +6477,13 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/2K"
+                          "$ref": "#/$defs/2L"
                         },
                         "type": "object"
                       },
                       {
                         "items": {
-                          "$ref": "#/$defs/2K"
+                          "$ref": "#/$defs/2L"
                         },
                         "type": "array"
                       },
@@ -7111,7 +7114,7 @@
                                           "$ref": "#/$defs/Q"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/M"
+                                          "$ref": "#/$defs/O"
                                         }
                                       },
                                       "type": [
@@ -8136,11 +8139,11 @@
             "properties": {
               "hostAliases": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/2S"
+                  "$ref": "#/$defs/2T"
                 },
                 "description": "Pod HostAliases\nRef: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/\n- ip: \"127.0.0.1\"\nhostnames:\n- \"pgadmin4.local\"",
                 "items": {
-                  "$ref": "#/$defs/2S"
+                  "$ref": "#/$defs/2T"
                 }
               }
             }
@@ -8155,7 +8158,7 @@
                   "http": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/2M"
+                        "$ref": "#/$defs/2N"
                       },
                       {
                         "$ref": "#/$defs/n"
@@ -8238,7 +8241,7 @@
                     "$ref": "#/$defs/Q"
                   },
                   "requests": {
-                    "$ref": "#/$defs/M"
+                    "$ref": "#/$defs/O"
                   }
                 },
                 "type": [
@@ -8383,11 +8386,11 @@
             "properties": {
               "extraConfigmapMounts": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/N"
                 },
                 "description": "Additional config maps to be mounted inside a container\nCan be used to map config maps for sidecar as well\n- name: certs-configmap\nmountPath: /etc/ssl/certs\nsubPath: \"\"\nconfigMap: certs-configmap\nreadOnly: true",
                 "items": {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/N"
                 }
               }
             }
@@ -9262,13 +9265,13 @@
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2I"
+                      "$ref": "#/$defs/2J"
                     },
                     "type": "object"
                   },
                   {
                     "items": {
-                      "$ref": "#/$defs/2I"
+                      "$ref": "#/$defs/2J"
                     },
                     "type": "array"
                   },
@@ -9488,7 +9491,7 @@
             "$ref": "#/$defs/3"
           },
           {
-            "$ref": "#/$defs/2R"
+            "$ref": "#/$defs/2S"
           },
           {
             "$ref": "#/$defs/w"
@@ -9578,7 +9581,7 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/2B"
+                          "$ref": "#/$defs/2C"
                         },
                         "type": "array"
                       },
@@ -9587,7 +9590,7 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/2B"
+                          "$ref": "#/$defs/2C"
                         },
                         "type": "object"
                       },
@@ -9612,7 +9615,7 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/30"
+                          "$ref": "#/$defs/2Q"
                         },
                         "type": "array"
                       },
@@ -9624,7 +9627,7 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/30"
+                          "$ref": "#/$defs/2Q"
                         },
                         "type": "object"
                       }
@@ -9647,7 +9650,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/2Q"
+                "$ref": "#/$defs/2R"
               }
             ]
           },
@@ -9657,7 +9660,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/2Q"
+                "$ref": "#/$defs/2R"
               }
             ]
           }
@@ -9694,7 +9697,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/2J"
+        "$ref": "#/$defs/2K"
       },
       "then": {
         "allOf": [
@@ -9755,7 +9758,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/2H"
+        "$ref": "#/$defs/2I"
       },
       "then": {
         "allOf": [
@@ -9918,7 +9921,7 @@
             "$ref": "#/$defs/2"
           },
           {
-            "$ref": "#/$defs/2R"
+            "$ref": "#/$defs/2S"
           },
           {
             "$ref": "#/$defs/w"
@@ -10377,7 +10380,7 @@
             "$ref": "#/$defs/3"
           },
           {
-            "$ref": "#/$defs/2U"
+            "$ref": "#/$defs/30"
           },
           {
             "$ref": "#/$defs/w"
@@ -10533,6 +10536,98 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/2M"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpRoute": {
+                "additionalProperties": {},
+                "description": "HTTP route configuration",
+                "properties": {
+                  "hostnames": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "$ref": "#/$defs/b"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/C"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "description": "Service configuration",
+                "required": [
+                  "port"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Service configuration",
+                "properties": {
+                  "port": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "description": "Port specifies the destination port number to use for this resource.\nPort is required when the referent is a Kubernetes Service. In this\ncase, the port number is the service port number, not the target port.\nFor other resources, destination port might be derived from the referent\nresource or this field.",
+                        "format": "int32",
+                        "maximum": 65535,
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Service configuration",
+                "properties": {
+                  "port": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -11177,91 +11272,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/2L"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpRoute": {
-                "additionalProperties": {},
-                "description": "HTTP route configuration",
-                "properties": {
-                  "hostnames": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/b"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/C"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "description": "Service configuration",
-                "required": [
-                  "port"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Service configuration",
-                "properties": {
-                  "port": {
-                    "description": "Port specifies the destination port number to use for this resource.\nPort is required when the referent is a Kubernetes Service. In this\ncase, the port number is the service port number, not the target port.\nFor other resources, destination port might be derived from the referent\nresource or this field.",
-                    "format": "int32",
-                    "maximum": 65535,
-                    "minimum": 1,
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Service configuration",
-                "properties": {
-                  "port": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
     },
     {
       "if": {
@@ -11959,7 +11969,7 @@
                 "description": "Ingress configuration\nRef: https://kubernetes.io/docs/concepts/services-networking/ingress/",
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/1Y"
+                    "$ref": "#/$defs/1Z"
                   }
                 }
               }
@@ -12041,7 +12051,7 @@
             "$ref": "#/$defs/2"
           },
           {
-            "$ref": "#/$defs/2U"
+            "$ref": "#/$defs/30"
           },
           {
             "$ref": "#/$defs/w"
@@ -12857,7 +12867,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/1Y"
+                    "$ref": "#/$defs/1Z"
                   }
                 }
               },
@@ -12979,7 +12989,7 @@
                 "$ref": "#/$defs/a"
               },
               {
-                "$ref": "#/$defs/2A"
+                "$ref": "#/$defs/2B"
               }
             ]
           },
@@ -13022,11 +13032,11 @@
                         "properties": {
                           "http": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/1Z"
+                              "$ref": "#/$defs/1P"
                             },
                             "description": "http is a list of ordered routing rules. First match wins",
                             "items": {
-                              "$ref": "#/$defs/1Z"
+                              "$ref": "#/$defs/1P"
                             }
                           }
                         }
@@ -13047,11 +13057,11 @@
                         "properties": {
                           "http": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/1P"
+                              "$ref": "#/$defs/1T"
                             },
                             "description": "http is a list of ordered routing rules. First match wins",
                             "items": {
-                              "$ref": "#/$defs/1P"
+                              "$ref": "#/$defs/1T"
                             }
                           }
                         }
@@ -13079,7 +13089,7 @@
                             "$ref": "#/$defs/8"
                           },
                           {
-                            "$ref": "#/$defs/N"
+                            "$ref": "#/$defs/M"
                           }
                         ]
                       }
@@ -13281,11 +13291,11 @@
                         "properties": {
                           "http": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/1T"
+                              "$ref": "#/$defs/1Y"
                             },
                             "description": "http is a list of ordered routing rules. First match wins",
                             "items": {
-                              "$ref": "#/$defs/1T"
+                              "$ref": "#/$defs/1Y"
                             }
                           }
                         }
@@ -13645,7 +13655,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2T"
+                    "$ref": "#/$defs/2U"
                   },
                   {
                     "$ref": "#/$defs/1u"

@@ -6427,6 +6427,28 @@
           "then": false
         },
         {
+          "additionalProperties": {},
+          "properties": {
+            "config": {
+              "description": "runner configuration, where the multi line string is evaluated as a\ntemplate so you can specify helm values inside of it.\ntpl: https://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\nrunner configuration: https://docs.gitlab.com/runner/configuration/advanced-configuration.html",
+              "type": "string"
+            },
+            "configOverride": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/1"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
           "type": "object"
         },
         {
@@ -6469,9 +6491,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {}
         }
       ],
       "description": "Configuration for the Pods that the runner launches for each new job\nConfigure namespace where GitLab Runner job pods will be created\nBy default, job pods use the Release namespace (.Release.Namespace)\nSet this value to run jobs in a different namespace than the runner deployment\nThis enables separation between runner management and job execution\nExample: Runner in \"ops\" namespace, jobs in \"gitlab\" namespace\njobNamespace: \"\""

@@ -141,7 +141,7 @@
     "16": {
       "properties": {
         "persistence": {
-          "$ref": "#/$defs/44"
+          "$ref": "#/$defs/4d"
         }
       },
       "required": [
@@ -201,17 +201,6 @@
     },
     "1A": {
       "properties": {
-        "existingConfigmap": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "existingConfigmap"
-      ],
-      "type": "object"
-    },
-    "1B": {
-      "properties": {
         "namespaceOverride": {
           "$ref": "#/$defs/t"
         }
@@ -220,6 +209,19 @@
         "namespaceOverride"
       ],
       "type": "object"
+    },
+    "1B": {
+      "not": {
+        "properties": {
+          "affinity": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "affinity"
+        ],
+        "type": "object"
+      }
     },
     "1C": {
       "properties": {
@@ -307,7 +309,7 @@
               "$ref": "#/$defs/h"
             },
             {
-              "$ref": "#/$defs/4v"
+              "$ref": "#/$defs/4x"
             }
           ]
         },
@@ -317,7 +319,7 @@
               "$ref": "#/$defs/d"
             },
             {
-              "$ref": "#/$defs/4w"
+              "$ref": "#/$defs/4y"
             }
           ]
         }
@@ -376,22 +378,22 @@
           "$ref": "#/$defs/5"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         },
         {
           "type": "null"
         },
         {
-          "$ref": "#/$defs/4z"
+          "$ref": "#/$defs/4B"
         }
       ]
     },
@@ -604,17 +606,6 @@
     },
     "1c": {
       "properties": {
-        "dataLogDir": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "dataLogDir"
-      ],
-      "type": "object"
-    },
-    "1d": {
-      "properties": {
         "enabled": {
           "enum": [
             null
@@ -623,6 +614,17 @@
       },
       "required": [
         "enabled"
+      ],
+      "type": "object"
+    },
+    "1d": {
+      "properties": {
+        "dataLogDir": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "dataLogDir"
       ],
       "type": "object"
     },
@@ -659,19 +661,19 @@
     "1h": {
       "anyOf": [
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
           "$ref": "#/$defs/o"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         },
         {
           "type": "null"
@@ -775,7 +777,7 @@
     "1o": {
       "properties": {
         "client": {
-          "$ref": "#/$defs/42"
+          "$ref": "#/$defs/43"
         }
       },
       "required": [
@@ -786,7 +788,7 @@
     "1p": {
       "properties": {
         "quorum": {
-          "$ref": "#/$defs/42"
+          "$ref": "#/$defs/43"
         }
       },
       "required": [
@@ -921,17 +923,15 @@
       "type": "object"
     },
     "1z": {
-      "not": {
-        "properties": {
-          "affinity": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "existingConfigmap": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "existingConfigmap"
+      ],
+      "type": "object"
     },
     "2": {
       "type": [
@@ -1016,7 +1016,7 @@
         "tls": {
           "properties": {
             "client": {
-              "$ref": "#/$defs/4a"
+              "$ref": "#/$defs/4b"
             }
           },
           "required": [
@@ -1035,7 +1035,7 @@
         "tls": {
           "properties": {
             "quorum": {
-              "$ref": "#/$defs/4a"
+              "$ref": "#/$defs/4b"
             }
           },
           "required": [
@@ -1052,11 +1052,11 @@
     "26": {
       "anyOf": [
         {
-          "$ref": "#/$defs/3P"
+          "$ref": "#/$defs/3S"
         },
         {
           "not": {
-            "$ref": "#/$defs/3K"
+            "$ref": "#/$defs/3M"
           }
         }
       ]
@@ -1287,7 +1287,7 @@
       "description": "ResourceRequirements describes the compute resource requirements.",
       "properties": {
         "claims": {
-          "$ref": "#/$defs/4F"
+          "$ref": "#/$defs/4H"
         },
         "limits": {
           "$ref": "#/$defs/27"
@@ -1338,10 +1338,10 @@
               "$ref": "#/$defs/E"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/4B"
+              "$ref": "#/$defs/4D"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/4A"
+              "$ref": "#/$defs/4C"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/E"
@@ -1424,7 +1424,7 @@
         {
           "properties": {
             "metrics": {
-              "$ref": "#/$defs/3B"
+              "$ref": "#/$defs/3C"
             }
           },
           "required": [
@@ -1610,7 +1610,7 @@
         "tls": {
           "properties": {
             "client": {
-              "$ref": "#/$defs/40"
+              "$ref": "#/$defs/41"
             }
           },
           "required": [
@@ -1629,7 +1629,7 @@
         "tls": {
           "properties": {
             "quorum": {
-              "$ref": "#/$defs/40"
+              "$ref": "#/$defs/41"
             }
           },
           "required": [
@@ -1711,7 +1711,7 @@
           "$ref": "#/$defs/3e"
         },
         "periodSeconds": {
-          "$ref": "#/$defs/3Q"
+          "$ref": "#/$defs/3T"
         },
         "successThreshold": {
           "$ref": "#/$defs/3t"
@@ -1752,12 +1752,12 @@
     },
     "2k": {
       "properties": {
-        "serviceAccount": {
-          "$ref": "#/$defs/2A"
+        "prometheusRule": {
+          "$ref": "#/$defs/3"
         }
       },
       "required": [
-        "serviceAccount"
+        "prometheusRule"
       ],
       "type": "object"
     },
@@ -1775,7 +1775,7 @@
     "2m": {
       "anyOf": [
         {
-          "$ref": "#/$defs/4i"
+          "$ref": "#/$defs/4k"
         },
         {
           "not": {
@@ -1791,6 +1791,17 @@
       ]
     },
     "2n": {
+      "properties": {
+        "serviceAccount": {
+          "$ref": "#/$defs/2A"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "2o": {
       "properties": {
         "networkPolicy": {
           "properties": {
@@ -1809,7 +1820,7 @@
       ],
       "type": "object"
     },
-    "2o": {
+    "2p": {
       "properties": {
         "dataLogDir": {
           "$ref": "#/$defs/Y"
@@ -1817,17 +1828,6 @@
       },
       "required": [
         "dataLogDir"
-      ],
-      "type": "object"
-    },
-    "2p": {
-      "properties": {
-        "prometheusRule": {
-          "$ref": "#/$defs/3"
-        }
-      },
-      "required": [
-        "prometheusRule"
       ],
       "type": "object"
     },
@@ -1851,7 +1851,7 @@
           "$ref": "#/$defs/3e"
         },
         "periodSeconds": {
-          "$ref": "#/$defs/3Q"
+          "$ref": "#/$defs/3T"
         },
         "successThreshold": {
           "$ref": "#/$defs/3t"
@@ -1912,7 +1912,7 @@
     "2u": {
       "properties": {
         "service": {
-          "$ref": "#/$defs/4d"
+          "$ref": "#/$defs/4f"
         }
       },
       "required": [
@@ -1980,7 +1980,7 @@
         {
           "properties": {
             "volumePermissions": {
-              "$ref": "#/$defs/1d"
+              "$ref": "#/$defs/1c"
             }
           },
           "required": [
@@ -2076,7 +2076,7 @@
           "not": {
             "properties": {
               "volumePermissions": {
-                "$ref": "#/$defs/3K"
+                "$ref": "#/$defs/3M"
               }
             },
             "required": [
@@ -2088,7 +2088,7 @@
         {
           "properties": {
             "volumePermissions": {
-              "$ref": "#/$defs/3P"
+              "$ref": "#/$defs/3S"
             }
           },
           "required": [
@@ -2138,10 +2138,10 @@
           "$ref": "#/$defs/E"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/4B"
+          "$ref": "#/$defs/4D"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/4A"
+          "$ref": "#/$defs/4C"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/E"
@@ -2166,7 +2166,7 @@
         {
           "properties": {
             "volumePermissions": {
-              "$ref": "#/$defs/4i"
+              "$ref": "#/$defs/4k"
             }
           },
           "required": [
@@ -2200,7 +2200,7 @@
         "tls": {
           "properties": {
             "quorum": {
-              "$ref": "#/$defs/3L"
+              "$ref": "#/$defs/3N"
             }
           },
           "required": [
@@ -2243,6 +2243,15 @@
       ]
     },
     "3B": {
+      "additionalProperties": {},
+      "properties": {
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image repository",
+          "type": "string"
+        }
+      }
+    },
+    "3C": {
       "properties": {
         "serviceMonitor": {
           "$ref": "#/$defs/3"
@@ -2253,7 +2262,7 @@
       ],
       "type": "object"
     },
-    "3C": {
+    "3D": {
       "properties": {
         "readinessProbe": {
           "$ref": "#/$defs/3"
@@ -2264,7 +2273,7 @@
       ],
       "type": "object"
     },
-    "3D": {
+    "3E": {
       "properties": {
         "nodeAffinityPreset": {
           "properties": {
@@ -2285,7 +2294,7 @@
       ],
       "type": "object"
     },
-    "3E": {
+    "3F": {
       "properties": {
         "livenessProbe": {
           "$ref": "#/$defs/3"
@@ -2296,7 +2305,7 @@
       ],
       "type": "object"
     },
-    "3F": {
+    "3G": {
       "properties": {
         "prometheusRule": {
           "properties": {
@@ -2315,7 +2324,7 @@
       ],
       "type": "object"
     },
-    "3G": {
+    "3H": {
       "properties": {
         "startupProbe": {
           "$ref": "#/$defs/3"
@@ -2326,7 +2335,7 @@
       ],
       "type": "object"
     },
-    "3H": {
+    "3I": {
       "not": {
         "properties": {
           "metrics": {
@@ -2347,7 +2356,7 @@
         "type": "object"
       }
     },
-    "3I": {
+    "3J": {
       "properties": {
         "serviceAccount": {
           "$ref": "#/$defs/2B"
@@ -2358,7 +2367,7 @@
       ],
       "type": "object"
     },
-    "3J": {
+    "3K": {
       "additionalProperties": {},
       "properties": {
         "passwordsSecretName": {
@@ -2370,10 +2379,21 @@
         }
       }
     },
-    "3K": {
+    "3L": {
+      "properties": {
+        "pdb": {
+          "$ref": "#/$defs/1E"
+        }
+      },
+      "required": [
+        "pdb"
+      ],
+      "type": "object"
+    },
+    "3M": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/4l"
+          "$ref": "#/$defs/4t"
         }
       },
       "required": [
@@ -2381,7 +2401,7 @@
       ],
       "type": "object"
     },
-    "3L": {
+    "3N": {
       "properties": {
         "passwordsSecretTruststoreKey": {
           "$ref": "#/$defs/t"
@@ -2392,7 +2412,7 @@
       ],
       "type": "object"
     },
-    "3M": {
+    "3O": {
       "properties": {
         "passwordsSecretKeystoreKey": {
           "$ref": "#/$defs/t"
@@ -2403,7 +2423,7 @@
       ],
       "type": "object"
     },
-    "3N": {
+    "3P": {
       "allOf": [
         {
           "$ref": "#/$defs/c"
@@ -2417,7 +2437,16 @@
       ],
       "type": "string"
     },
-    "3O": {
+    "3Q": {
+      "additionalProperties": {},
+      "properties": {
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/zookeeper] ZooKeeper image repository",
+          "type": "string"
+        }
+      }
+    },
+    "3R": {
       "additionalProperties": {},
       "properties": {
         "existingSecret": {
@@ -2429,10 +2458,10 @@
         }
       }
     },
-    "3P": {
+    "3S": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/4o"
+          "$ref": "#/$defs/4q"
         }
       },
       "required": [
@@ -2440,7 +2469,7 @@
       ],
       "type": "object"
     },
-    "3Q": {
+    "3T": {
       "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
       "format": "int32",
       "type": [
@@ -2448,18 +2477,18 @@
         "null"
       ]
     },
-    "3R": {
+    "3U": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "3S": {
+    "3V": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "3T": {
+    "3W": {
       "properties": {
         "image": {
           "properties": {
@@ -2478,7 +2507,7 @@
       ],
       "type": "object"
     },
-    "3U": {
+    "3X": {
       "additionalProperties": {},
       "properties": {
         "keystorePassword": {
@@ -2490,18 +2519,7 @@
         }
       }
     },
-    "3V": {
-      "properties": {
-        "pdb": {
-          "$ref": "#/$defs/1E"
-        }
-      },
-      "required": [
-        "pdb"
-      ],
-      "type": "object"
-    },
-    "3W": {
+    "3Y": {
       "additionalProperties": false,
       "description": "NetworkPolicyPeer describes a peer to allow traffic to/from. Only certain combinations of fields are allowed",
       "properties": {
@@ -2544,37 +2562,13 @@
         "null"
       ]
     },
-    "3X": {
+    "3Z": {
       "description": "[object] Pod labels to match to allow traffic from other namespaces",
       "type": [
         "array",
         "null",
         "object"
       ]
-    },
-    "3Y": {
-      "properties": {
-        "ingressNSPodMatchLabels": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "ingressNSPodMatchLabels"
-      ],
-      "type": "object"
-    },
-    "3Z": {
-      "properties": {
-        "containerSecurityContext": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "containerSecurityContext"
-      ],
-      "type": "object"
     },
     "3a": {
       "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -2589,7 +2583,7 @@
         "tls": {
           "properties": {
             "client": {
-              "$ref": "#/$defs/3M"
+              "$ref": "#/$defs/3O"
             }
           },
           "required": [
@@ -2608,7 +2602,7 @@
         "tls": {
           "properties": {
             "quorum": {
-              "$ref": "#/$defs/3M"
+              "$ref": "#/$defs/3O"
             }
           },
           "required": [
@@ -2717,7 +2711,7 @@
         {
           "properties": {
             "tls": {
-              "$ref": "#/$defs/1d"
+              "$ref": "#/$defs/1c"
             }
           },
           "required": [
@@ -2732,7 +2726,7 @@
         "tls": {
           "properties": {
             "client": {
-              "$ref": "#/$defs/3L"
+              "$ref": "#/$defs/3N"
             }
           },
           "required": [
@@ -2921,7 +2915,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/1c"
               }
             ]
           },
@@ -2934,11 +2928,11 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/4l"
+              "$ref": "#/$defs/4t"
             }
           },
           {
-            "$ref": "#/$defs/4o"
+            "$ref": "#/$defs/4q"
           }
         ]
       },
@@ -2983,7 +2977,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/3N"
+            "$ref": "#/$defs/3P"
           },
           {
             "type": "number"
@@ -3001,11 +2995,22 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/3N"
+        "$ref": "#/$defs/3P"
       },
       "type": "object"
     },
     "40": {
+      "properties": {
+        "ingressNSPodMatchLabels": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "ingressNSPodMatchLabels"
+      ],
+      "type": "object"
+    },
+    "41": {
       "properties": {
         "keystorePassword": {
           "$ref": "#/$defs/t"
@@ -3016,7 +3021,7 @@
       ],
       "type": "object"
     },
-    "41": {
+    "42": {
       "properties": {
         "containerSecurityContext": {}
       },
@@ -3025,7 +3030,7 @@
       ],
       "type": "object"
     },
-    "42": {
+    "43": {
       "properties": {
         "existingSecret": {
           "$ref": "#/$defs/t"
@@ -3036,7 +3041,7 @@
       ],
       "type": "object"
     },
-    "43": {
+    "44": {
       "properties": {
         "autoGenerated": {
           "$ref": "#/$defs/t"
@@ -3047,18 +3052,20 @@
       ],
       "type": "object"
     },
-    "44": {
+    "45": {
       "properties": {
-        "storageClass": {
-          "$ref": "#/$defs/t"
+        "containerSecurityContext": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "storageClass"
+        "containerSecurityContext"
       ],
       "type": "object"
     },
-    "45": {
+    "46": {
       "description": "[object] Labels to match to allow traffic from other namespaces",
       "type": [
         "array",
@@ -3066,7 +3073,7 @@
         "object"
       ]
     },
-    "46": {
+    "47": {
       "properties": {
         "client": {
           "$ref": "#/$defs/C"
@@ -3077,7 +3084,7 @@
       ],
       "type": "object"
     },
-    "47": {
+    "48": {
       "properties": {
         "quorum": {
           "$ref": "#/$defs/C"
@@ -3088,7 +3095,7 @@
       ],
       "type": "object"
     },
-    "48": {
+    "49": {
       "properties": {
         "passwordsSecretName": {
           "$ref": "#/$defs/t"
@@ -3099,14 +3106,74 @@
       ],
       "type": "object"
     },
-    "49": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
+    "4A": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/2"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
       "type": [
-        "boolean",
+        "object",
         "null"
       ]
     },
-    "4A": {
+    "4B": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/f"
+        },
+        {
+          "$ref": "#/$defs/i"
+        },
+        {
+          "$ref": "#/$defs/e"
+        },
+        {
+          "$ref": "#/$defs/c"
+        },
+        {
+          "$ref": "#/$defs/l"
+        },
+        {
+          "$ref": "#/$defs/j"
+        },
+        {
+          "$ref": "#/$defs/k"
+        },
+        {
+          "$ref": "#/$defs/a"
+        },
+        {
+          "$ref": "#/$defs/b"
+        },
+        {
+          "$ref": "#/$defs/g"
+        }
+      ],
+      "type": "string"
+    },
+    "4C": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/2"
@@ -3117,7 +3184,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "4B": {
+    "4D": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/2"
@@ -3128,14 +3195,14 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "4C": {
+    "4E": {
       "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
       "items": {
         "$ref": "#/$defs/2"
       },
       "type": "array"
     },
-    "4D": {
+    "4F": {
       "additionalProperties": false,
       "description": "NetworkPolicyPort describes a port to allow traffic on",
       "properties": {
@@ -3163,7 +3230,7 @@
         "null"
       ]
     },
-    "4E": {
+    "4G": {
       "additionalProperties": false,
       "description": "secret defines the Secret containing data to use for the targets.",
       "properties": {
@@ -3174,7 +3241,7 @@
           "$ref": "#/$defs/1Y"
         },
         "optional": {
-          "$ref": "#/$defs/4n"
+          "$ref": "#/$defs/4p"
         }
       },
       "required": [
@@ -3183,7 +3250,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "4F": {
+    "4H": {
       "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
       "items": {
         "additionalProperties": false,
@@ -3211,14 +3278,14 @@
       ],
       "x-kubernetes-list-type": "map"
     },
-    "4G": {
+    "4I": {
       "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
       "items": {
         "$ref": "#/$defs/2"
       },
       "type": "array"
     },
-    "4H": {
+    "4J": {
       "additionalProperties": false,
       "description": "configMap defines the ConfigMap containing data to use for the targets.",
       "properties": {
@@ -3240,7 +3307,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "4I": {
+    "4K": {
       "anyOf": [
         {
           "$ref": "#/$defs/m"
@@ -3253,7 +3320,7 @@
         }
       ]
     },
-    "4J": {
+    "4L": {
       "anyOf": [
         {
           "$ref": "#/$defs/L"
@@ -3266,7 +3333,7 @@
         }
       ]
     },
-    "4K": {
+    "4M": {
       "anyOf": [
         {
           "$ref": "#/$defs/m"
@@ -3279,7 +3346,7 @@
         }
       ]
     },
-    "4L": {
+    "4N": {
       "anyOf": [
         {
           "$ref": "#/$defs/L"
@@ -3292,12 +3359,12 @@
         }
       ]
     },
-    "4M": {
+    "4O": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "integer"
     },
-    "4N": {
+    "4P": {
       "additionalProperties": false,
       "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
       "properties": {
@@ -3362,7 +3429,7 @@
       },
       "type": "object"
     },
-    "4O": {
+    "4Q": {
       "additionalProperties": false,
       "description": "DownwardAPIVolumeFile represents information to create the file containing the pod field",
       "properties": {
@@ -3393,7 +3460,7 @@
         "null"
       ]
     },
-    "4P": {
+    "4R": {
       "allOf": [
         {
           "$ref": "#/$defs/f"
@@ -3429,12 +3496,12 @@
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "string"
     },
-    "4Q": {
+    "4S": {
       "additionalProperties": false,
       "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
         "matchExpressions": {
-          "$ref": "#/$defs/4X"
+          "$ref": "#/$defs/4Z"
         },
         "matchLabels": {
           "$ref": "#/$defs/2Y"
@@ -3443,7 +3510,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "4R": {
+    "4T": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
       "items": {
         "$ref": "#/$defs/2F"
@@ -3453,7 +3520,7 @@
         "null"
       ]
     },
-    "4S": {
+    "4U": {
       "additionalProperties": false,
       "description": "VolumeMount describes a mounting of a Volume within a container.",
       "properties": {
@@ -3503,7 +3570,7 @@
         "null"
       ]
     },
-    "4T": {
+    "4V": {
       "anyOf": [
         {
           "allOf": [
@@ -3527,31 +3594,31 @@
         }
       ]
     },
-    "4U": {
+    "4W": {
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "null"
     },
-    "4V": {
+    "4X": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "$ref": "#/$defs/4y"
+        "$ref": "#/$defs/4A"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "4W": {
+    "4Y": {
       "description": "A list of node selector requirements by node's labels.",
       "items": {
-        "$ref": "#/$defs/4y"
+        "$ref": "#/$defs/4A"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "4X": {
+    "4Z": {
       "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
       "items": {
         "additionalProperties": false,
@@ -3591,6 +3658,13 @@
       ]
     },
     "4a": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "4b": {
       "properties": {
         "truststorePassword": {
           "$ref": "#/$defs/t"
@@ -3601,7 +3675,7 @@
       ],
       "type": "object"
     },
-    "4b": {
+    "4c": {
       "additionalProperties": false,
       "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
       "properties": {
@@ -3687,144 +3761,18 @@
         "null"
       ]
     },
-    "4c": {
-      "properties": {
-        "networkPolicy": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "networkPolicy"
-      ],
-      "type": "object"
-    },
     "4d": {
       "properties": {
-        "type": {
-          "enum": [
-            "NodePort"
-          ]
+        "storageClass": {
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "type"
+        "storageClass"
       ],
       "type": "object"
     },
     "4e": {
-      "properties": {
-        "networkPolicy": {}
-      },
-      "required": [
-        "networkPolicy"
-      ],
-      "type": "object"
-    },
-    "4f": {
-      "description": "Kind is the type of resource being referenced",
-      "type": "string"
-    },
-    "4g": {
-      "description": "Name is the name of resource being referenced",
-      "type": "string"
-    },
-    "4h": {
-      "properties": {
-        "replicaCount": {}
-      },
-      "required": [
-        "replicaCount"
-      ],
-      "type": "object"
-    },
-    "4i": {
-      "properties": {
-        "image": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "4j": {
-      "description": "PVC Access modes",
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
-    },
-    "4k": {
-      "properties": {
-        "ports": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "ports"
-      ],
-      "type": "object"
-    },
-    "4l": {
-      "properties": {
-        "repository": {}
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "4m": {
-      "properties": {
-        "replicaCount": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "replicaCount"
-      ],
-      "type": "object"
-    },
-    "4n": {
-      "description": "Specify whether the Secret or its key must be defined",
-      "type": "boolean"
-    },
-    "4o": {
-      "properties": {
-        "repository": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "4p": {
-      "properties": {
-        "podLabels": {
-          "type": "object"
-        }
-      },
-      "required": [
-        "podLabels"
-      ],
-      "type": "object"
-    },
-    "4q": {
       "properties": {
         "headless": {
           "enum": [
@@ -3837,7 +3785,135 @@
       ],
       "type": "object"
     },
+    "4f": {
+      "properties": {
+        "type": {
+          "enum": [
+            "NodePort"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "4g": {
+      "properties": {
+        "networkPolicy": {}
+      },
+      "required": [
+        "networkPolicy"
+      ],
+      "type": "object"
+    },
+    "4h": {
+      "description": "Kind is the type of resource being referenced",
+      "type": "string"
+    },
+    "4i": {
+      "description": "Name is the name of resource being referenced",
+      "type": "string"
+    },
+    "4j": {
+      "properties": {
+        "replicaCount": {}
+      },
+      "required": [
+        "replicaCount"
+      ],
+      "type": "object"
+    },
+    "4k": {
+      "properties": {
+        "image": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "4l": {
+      "description": "PVC Access modes",
+      "type": [
+        "array",
+        "integer",
+        "null",
+        "object"
+      ]
+    },
+    "4m": {
+      "properties": {
+        "ports": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "ports"
+      ],
+      "type": "object"
+    },
+    "4n": {
+      "properties": {
+        "networkPolicy": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "networkPolicy"
+      ],
+      "type": "object"
+    },
+    "4o": {
+      "properties": {
+        "replicaCount": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "replicaCount"
+      ],
+      "type": "object"
+    },
+    "4p": {
+      "description": "Specify whether the Secret or its key must be defined",
+      "type": "boolean"
+    },
+    "4q": {
+      "properties": {
+        "repository": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
+    },
     "4r": {
+      "properties": {
+        "podLabels": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "podLabels"
+      ],
+      "type": "object"
+    },
+    "4s": {
       "additionalProperties": false,
       "description": "EnvVar represents an environment variable present in a Container.",
       "properties": {
@@ -3932,7 +4008,16 @@
         "null"
       ]
     },
-    "4s": {
+    "4t": {
+      "properties": {
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
+    },
+    "4u": {
       "properties": {
         "headless": {}
       },
@@ -3941,10 +4026,10 @@
       ],
       "type": "object"
     },
-    "4t": {
+    "4v": {
       "description": "Use existing secret (ignores previous passwords)"
     },
-    "4u": {
+    "4w": {
       "anyOf": [
         {
           "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -3957,16 +4042,16 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         },
         {
           "allOf": [
@@ -4007,7 +4092,7 @@
       ],
       "description": "Override namespace for ZooKeeper resources\nUseful when including ZooKeeper as a chart dependency, so it can be released into a different namespace than the parent"
     },
-    "4v": {
+    "4x": {
       "anyOf": [
         {
           "$ref": "#/$defs/m"
@@ -4023,7 +4108,7 @@
         }
       ]
     },
-    "4w": {
+    "4y": {
       "anyOf": [
         {
           "$ref": "#/$defs/L"
@@ -4037,74 +4122,6 @@
         {
           "$ref": "#/$defs/n"
         }
-      ]
-    },
-    "4x": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/f"
-        },
-        {
-          "$ref": "#/$defs/i"
-        },
-        {
-          "$ref": "#/$defs/e"
-        },
-        {
-          "$ref": "#/$defs/c"
-        },
-        {
-          "$ref": "#/$defs/l"
-        },
-        {
-          "$ref": "#/$defs/j"
-        },
-        {
-          "$ref": "#/$defs/k"
-        },
-        {
-          "$ref": "#/$defs/a"
-        },
-        {
-          "$ref": "#/$defs/b"
-        },
-        {
-          "$ref": "#/$defs/g"
-        }
-      ],
-      "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-      "type": "string"
-    },
-    "4y": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
-        "operator": {
-          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-          "type": "string"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/2"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
       ]
     },
     "4z": {
@@ -4140,6 +4157,7 @@
           "$ref": "#/$defs/g"
         }
       ],
+      "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
       "type": "string"
     },
     "5": {
@@ -4172,15 +4190,15 @@
       "type": "object"
     },
     "7": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "pattern": "^[ \\t]*(#.*)?$",
       "type": "string"
     },
     "8": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
       "type": "string"
     },
     "9": {
-      "pattern": "^[ \\t]*(#.*)?$",
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
     "A": {
@@ -4229,7 +4247,7 @@
       "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
         "matchExpressions": {
-          "$ref": "#/$defs/4X"
+          "$ref": "#/$defs/4Z"
         },
         "matchLabels": {
           "$ref": "#/$defs/2Y"
@@ -4258,7 +4276,7 @@
     "G": {
       "properties": {
         "persistence": {
-          "$ref": "#/$defs/2o"
+          "$ref": "#/$defs/2p"
         }
       },
       "required": [
@@ -4301,7 +4319,7 @@
         "tls": {
           "properties": {
             "client": {
-              "$ref": "#/$defs/43"
+              "$ref": "#/$defs/44"
             }
           },
           "required": [
@@ -4320,7 +4338,7 @@
         "tls": {
           "properties": {
             "quorum": {
-              "$ref": "#/$defs/43"
+              "$ref": "#/$defs/44"
             }
           },
           "required": [
@@ -4337,7 +4355,7 @@
     "M": {
       "properties": {
         "global": {
-          "$ref": "#/$defs/44"
+          "$ref": "#/$defs/4d"
         }
       },
       "required": [
@@ -4639,7 +4657,7 @@
         "tls": {
           "properties": {
             "client": {
-              "$ref": "#/$defs/48"
+              "$ref": "#/$defs/49"
             }
           },
           "required": [
@@ -4658,7 +4676,7 @@
         "tls": {
           "properties": {
             "quorum": {
-              "$ref": "#/$defs/48"
+              "$ref": "#/$defs/49"
             }
           },
           "required": [
@@ -4709,7 +4727,7 @@
           "env": {
             "description": "List of environment variables to set in the container. Cannot be updated.",
             "items": {
-              "$ref": "#/$defs/4r"
+              "$ref": "#/$defs/4s"
             },
             "type": [
               "array",
@@ -4916,7 +4934,7 @@
             "description": "ResourceRequirements describes the compute resource requirements.",
             "properties": {
               "claims": {
-                "$ref": "#/$defs/4F"
+                "$ref": "#/$defs/4H"
               },
               "limits": {
                 "$ref": "#/$defs/27"
@@ -5119,7 +5137,7 @@
           "volumeMounts": {
             "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
             "items": {
-              "$ref": "#/$defs/4S"
+              "$ref": "#/$defs/4U"
             },
             "type": [
               "array",
@@ -5277,7 +5295,7 @@
                 "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/4K"
+                "$ref": "#/$defs/4M"
               },
               {
                 "$ref": "#/$defs/d"
@@ -5293,7 +5311,7 @@
                 "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/4I"
+                "$ref": "#/$defs/4K"
               },
               {
                 "$ref": "#/$defs/d"
@@ -5318,7 +5336,7 @@
                 "$ref": "#/$defs/d"
               },
               {
-                "$ref": "#/$defs/4w"
+                "$ref": "#/$defs/4y"
               }
             ]
           },
@@ -5348,7 +5366,7 @@
             "description": "Enable SSL/TLS encryption",
             "properties": {
               "client": {
-                "$ref": "#/$defs/3J"
+                "$ref": "#/$defs/3K"
               }
             }
           }
@@ -5358,7 +5376,7 @@
     {
       "if": {
         "not": {
-          "$ref": "#/$defs/3T"
+          "$ref": "#/$defs/3W"
         }
       },
       "then": {
@@ -5440,7 +5458,7 @@
                 "$ref": "#/$defs/3b"
               },
               {
-                "$ref": "#/$defs/4K"
+                "$ref": "#/$defs/4M"
               },
               {
                 "$ref": "#/$defs/d"
@@ -5517,7 +5535,7 @@
           {
             "properties": {
               "networkPolicy": {
-                "$ref": "#/$defs/3Y"
+                "$ref": "#/$defs/40"
               }
             },
             "required": [
@@ -5565,7 +5583,7 @@
                 "description": "Network policies\nRef: https://kubernetes.io/docs/concepts/services-networking/network-policies/",
                 "properties": {
                   "ingressNSPodMatchLabels": {
-                    "$ref": "#/$defs/3X"
+                    "$ref": "#/$defs/3Z"
                   }
                 }
               }
@@ -5625,7 +5643,7 @@
             "$ref": "#/$defs/1V"
           },
           {
-            "$ref": "#/$defs/3V"
+            "$ref": "#/$defs/3L"
           },
           {
             "$ref": "#/$defs/2G"
@@ -5882,7 +5900,7 @@
             "$ref": "#/$defs/3z"
           },
           {
-            "$ref": "#/$defs/3C"
+            "$ref": "#/$defs/3D"
           }
         ]
       },
@@ -5988,7 +6006,7 @@
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/4v"
+                "$ref": "#/$defs/4x"
               },
               {
                 "$ref": "#/$defs/n"
@@ -6007,14 +6025,14 @@
                 "$ref": "#/$defs/n"
               },
               {
-                "$ref": "#/$defs/4J"
+                "$ref": "#/$defs/4L"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/4L"
+                "$ref": "#/$defs/4N"
               },
               {
                 "$ref": "#/$defs/h"
@@ -6037,7 +6055,7 @@
             "description": "Enable SSL/TLS encryption",
             "properties": {
               "quorum": {
-                "$ref": "#/$defs/3J"
+                "$ref": "#/$defs/3K"
               }
             }
           }
@@ -6068,7 +6086,7 @@
               {
                 "properties": {
                   "metrics": {
-                    "$ref": "#/$defs/2p"
+                    "$ref": "#/$defs/2k"
                   }
                 },
                 "required": [
@@ -6082,7 +6100,7 @@
               {
                 "properties": {
                   "metrics": {
-                    "$ref": "#/$defs/3F"
+                    "$ref": "#/$defs/3G"
                   }
                 },
                 "required": [
@@ -6168,7 +6186,7 @@
                 {
                   "properties": {
                     "volumePermissions": {
-                      "$ref": "#/$defs/4m"
+                      "$ref": "#/$defs/4o"
                     }
                   },
                   "required": [
@@ -6180,7 +6198,7 @@
                   "not": {
                     "properties": {
                       "volumePermissions": {
-                        "$ref": "#/$defs/4h"
+                        "$ref": "#/$defs/4j"
                       }
                     },
                     "required": [
@@ -6202,17 +6220,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/3D"
+                "$ref": "#/$defs/3E"
               },
               {
-                "$ref": "#/$defs/1z"
+                "$ref": "#/$defs/1B"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1z"
+                "$ref": "#/$defs/1B"
               },
               {
                 "properties": {
@@ -6237,7 +6255,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/3D"
+                  "$ref": "#/$defs/3E"
                 }
               }
             ]
@@ -6421,7 +6439,7 @@
                 "description": "Network policies\nRef: https://kubernetes.io/docs/concepts/services-networking/network-policies/",
                 "properties": {
                   "ingressNSMatchLabels": {
-                    "$ref": "#/$defs/45"
+                    "$ref": "#/$defs/46"
                   }
                 }
               }
@@ -6503,7 +6521,7 @@
             "$ref": "#/$defs/1v"
           },
           {
-            "$ref": "#/$defs/3E"
+            "$ref": "#/$defs/3F"
           }
         ]
       },
@@ -6601,7 +6619,7 @@
             "$ref": "#/$defs/1m"
           },
           {
-            "$ref": "#/$defs/2n"
+            "$ref": "#/$defs/2o"
           }
         ]
       },
@@ -6635,7 +6653,7 @@
                                 "ports": {
                                   "description": "ports is a list of destination ports for outgoing traffic. Each item in this list is combined using a logical OR. If this field is empty or missing, this rule matches all ports (traffic not restricted by port). If this field is present and contains at least one item, then this rule allows traffic only if the traffic matches at least one port in the list.",
                                   "items": {
-                                    "$ref": "#/$defs/4D"
+                                    "$ref": "#/$defs/4F"
                                   },
                                   "type": [
                                     "array",
@@ -6645,7 +6663,7 @@
                                 "to": {
                                   "description": "to is a list of destinations for outgoing traffic of pods selected for this rule. Items in this list are combined using a logical OR operation. If this field is empty or missing, this rule matches all destinations (traffic not restricted by destination). If this field is present and contains at least one item, this rule allows traffic only if the traffic matches at least one item in the to list.",
                                   "items": {
-                                    "$ref": "#/$defs/3W"
+                                    "$ref": "#/$defs/3Y"
                                   },
                                   "type": [
                                     "array",
@@ -6798,7 +6816,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/4T"
+            "$ref": "#/$defs/4V"
           },
           {
             "anyOf": [
@@ -6850,7 +6868,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/4T"
+        "$ref": "#/$defs/4V"
       },
       "then": {
         "additionalProperties": {},
@@ -6876,7 +6894,7 @@
             "$ref": "#/$defs/1w"
           },
           {
-            "$ref": "#/$defs/3G"
+            "$ref": "#/$defs/3H"
           }
         ]
       },
@@ -6995,7 +7013,7 @@
                   "auth": {
                     "properties": {
                       "quorum": {
-                        "$ref": "#/$defs/1d"
+                        "$ref": "#/$defs/1c"
                       }
                     },
                     "required": [
@@ -7027,7 +7045,7 @@
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/1B"
+                "$ref": "#/$defs/1A"
               },
               {
                 "not": {
@@ -7042,7 +7060,7 @@
                 "$ref": "#/$defs/w"
               },
               {
-                "$ref": "#/$defs/1B"
+                "$ref": "#/$defs/1A"
               },
               {
                 "$ref": "#/$defs/r"
@@ -7052,7 +7070,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1B"
+                "$ref": "#/$defs/1A"
               },
               {
                 "$ref": "#/$defs/v"
@@ -7071,7 +7089,7 @@
                 "$ref": "#/$defs/K"
               },
               {
-                "$ref": "#/$defs/1B"
+                "$ref": "#/$defs/1A"
               },
               {
                 "not": {
@@ -7221,7 +7239,7 @@
               {
                 "properties": {
                   "service": {
-                    "$ref": "#/$defs/4k"
+                    "$ref": "#/$defs/4m"
                   }
                 },
                 "required": [
@@ -7334,7 +7352,7 @@
             "description": "Enable SSL/TLS encryption",
             "properties": {
               "client": {
-                "$ref": "#/$defs/3U"
+                "$ref": "#/$defs/3X"
               }
             }
           }
@@ -7401,7 +7419,7 @@
             "description": "Authentication parameters",
             "properties": {
               "quorum": {
-                "$ref": "#/$defs/3O"
+                "$ref": "#/$defs/3R"
               }
             }
           }
@@ -7468,7 +7486,7 @@
             "description": "Authentication parameters",
             "properties": {
               "client": {
-                "$ref": "#/$defs/3O"
+                "$ref": "#/$defs/3R"
               }
             }
           }
@@ -7497,7 +7515,7 @@
             "$ref": "#/$defs/1V"
           },
           {
-            "$ref": "#/$defs/3V"
+            "$ref": "#/$defs/3L"
           },
           {
             "$ref": "#/$defs/2G"
@@ -7521,7 +7539,7 @@
             "additionalProperties": {},
             "properties": {
               "namespaceOverride": {
-                "$ref": "#/$defs/4u"
+                "$ref": "#/$defs/4w"
               }
             }
           },
@@ -7549,7 +7567,7 @@
                   "auth": {
                     "properties": {
                       "client": {
-                        "$ref": "#/$defs/1d"
+                        "$ref": "#/$defs/1c"
                       }
                     },
                     "required": [
@@ -7709,7 +7727,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/3T"
+        "$ref": "#/$defs/3W"
       },
       "then": {
         "additionalProperties": {},
@@ -7840,7 +7858,7 @@
                 "$ref": "#/$defs/n"
               },
               {
-                "$ref": "#/$defs/4J"
+                "$ref": "#/$defs/4L"
               }
             ]
           },
@@ -7901,7 +7919,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1z"
+        "$ref": "#/$defs/1B"
       },
       "then": {
         "allOf": [
@@ -7966,7 +7984,7 @@
             "$ref": "#/$defs/H"
           },
           {
-            "$ref": "#/$defs/3H"
+            "$ref": "#/$defs/3I"
           }
         ]
       },
@@ -8009,7 +8027,7 @@
               {
                 "properties": {
                   "volumePermissions": {
-                    "$ref": "#/$defs/3Z"
+                    "$ref": "#/$defs/45"
                   }
                 },
                 "required": [
@@ -8021,7 +8039,7 @@
                 "not": {
                   "properties": {
                     "volumePermissions": {
-                      "$ref": "#/$defs/41"
+                      "$ref": "#/$defs/42"
                     }
                   },
                   "required": [
@@ -8076,7 +8094,7 @@
                   "not": {
                     "properties": {
                       "tls": {
-                        "$ref": "#/$defs/4h"
+                        "$ref": "#/$defs/4j"
                       }
                     },
                     "required": [
@@ -8088,7 +8106,7 @@
                 {
                   "properties": {
                     "tls": {
-                      "$ref": "#/$defs/4m"
+                      "$ref": "#/$defs/4o"
                     }
                   },
                   "required": [
@@ -8187,7 +8205,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1A"
+                  "$ref": "#/$defs/1z"
                 }
               },
               {
@@ -8261,7 +8279,7 @@
         "additionalProperties": {},
         "properties": {
           "containerSecurityContext": {
-            "$ref": "#/$defs/4b"
+            "$ref": "#/$defs/4c"
           }
         }
       }
@@ -8365,7 +8383,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/2k"
+                    "$ref": "#/$defs/2n"
                   },
                   {
                     "$ref": "#/$defs/P"
@@ -8382,10 +8400,10 @@
                 "not": {
                   "allOf": [
                     {
-                      "$ref": "#/$defs/3I"
+                      "$ref": "#/$defs/3J"
                     },
                     {
-                      "$ref": "#/$defs/2k"
+                      "$ref": "#/$defs/2n"
                     }
                   ]
                 }
@@ -8420,7 +8438,7 @@
                 "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/4I"
+                "$ref": "#/$defs/4K"
               },
               {
                 "$ref": "#/$defs/3j"
@@ -8501,7 +8519,7 @@
             "$ref": "#/$defs/1v"
           },
           {
-            "$ref": "#/$defs/3E"
+            "$ref": "#/$defs/3F"
           }
         ]
       },
@@ -8774,7 +8792,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1A"
+                  "$ref": "#/$defs/1z"
                 }
               },
               {
@@ -8855,7 +8873,7 @@
             "$ref": "#/$defs/H"
           },
           {
-            "$ref": "#/$defs/3H"
+            "$ref": "#/$defs/3I"
           }
         ]
       },
@@ -9235,7 +9253,7 @@
                 "not": {
                   "properties": {
                     "service": {
-                      "$ref": "#/$defs/4s"
+                      "$ref": "#/$defs/4u"
                     }
                   },
                   "required": [
@@ -9247,7 +9265,7 @@
               {
                 "properties": {
                   "service": {
-                    "$ref": "#/$defs/4q"
+                    "$ref": "#/$defs/4e"
                   }
                 },
                 "required": [
@@ -9309,7 +9327,7 @@
                 "$ref": "#/$defs/F"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/S"
@@ -9460,7 +9478,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/4C"
+                    "$ref": "#/$defs/4E"
                   },
                   {
                     "type": "null"
@@ -9510,7 +9528,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/4G"
+                    "$ref": "#/$defs/4I"
                   }
                 ],
                 "description": "Override default container args (useful when using custom images)"
@@ -9639,7 +9657,7 @@
                 "not": {
                   "properties": {
                     "rts": {
-                      "$ref": "#/$defs/4e"
+                      "$ref": "#/$defs/4g"
                     }
                   },
                   "required": [
@@ -9651,7 +9669,7 @@
               {
                 "properties": {
                   "rts": {
-                    "$ref": "#/$defs/4c"
+                    "$ref": "#/$defs/4n"
                   }
                 },
                 "required": [
@@ -9662,7 +9680,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/2n"
+            "$ref": "#/$defs/2o"
           }
         ]
       },
@@ -9731,7 +9749,7 @@
             "description": "Enable SSL/TLS encryption",
             "properties": {
               "quorum": {
-                "$ref": "#/$defs/3U"
+                "$ref": "#/$defs/3X"
               }
             }
           }
@@ -10024,11 +10042,11 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/3Z"
+            "$ref": "#/$defs/45"
           },
           {
             "not": {
-              "$ref": "#/$defs/41"
+              "$ref": "#/$defs/42"
             }
           }
         ]
@@ -10044,12 +10062,12 @@
                 "$ref": "#/$defs/2x"
               },
               {
-                "$ref": "#/$defs/1A"
+                "$ref": "#/$defs/1z"
               }
             ]
           },
           {
-            "$ref": "#/$defs/1A"
+            "$ref": "#/$defs/1z"
           }
         ]
       },
@@ -10074,13 +10092,7 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "description": "[default: REPOSITORY_NAME/zookeeper] ZooKeeper image repository",
-                "type": "string"
-              }
-            }
+            "$ref": "#/$defs/3Q"
           }
         }
       }
@@ -10196,7 +10208,7 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/4p"
+                  "$ref": "#/$defs/4r"
                 }
               ]
             }
@@ -10233,7 +10245,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/4p"
+        "$ref": "#/$defs/4r"
       },
       "then": {
         "additionalProperties": {},
@@ -10293,7 +10305,7 @@
             }
           },
           {
-            "$ref": "#/$defs/1c"
+            "$ref": "#/$defs/1d"
           },
           {
             "not": {
@@ -10359,7 +10371,7 @@
                             "$ref": "#/$defs/1"
                           },
                           {
-                            "$ref": "#/$defs/4Q"
+                            "$ref": "#/$defs/4S"
                           },
                           {
                             "type": "null"
@@ -10409,7 +10421,7 @@
             "$ref": "#/$defs/1t"
           },
           {
-            "$ref": "#/$defs/3C"
+            "$ref": "#/$defs/3D"
           }
         ]
       },
@@ -10658,7 +10670,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/4L"
+                "$ref": "#/$defs/4N"
               },
               {
                 "$ref": "#/$defs/3c"
@@ -10810,7 +10822,7 @@
                 "$ref": "#/$defs/F"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/S"
@@ -10904,7 +10916,7 @@
                   "tls": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/4M"
+                        "$ref": "#/$defs/4O"
                       },
                       {
                         "$ref": "#/$defs/2M"
@@ -10913,16 +10925,16 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/8"
+                        "$ref": "#/$defs/9"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/7"
                       },
                       {
                         "$ref": "#/$defs/o"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/8"
                       }
                     ],
                     "description": "Node port for TLS"
@@ -11009,7 +11021,7 @@
             "not": {
               "properties": {
                 "auth": {
-                  "$ref": "#/$defs/47"
+                  "$ref": "#/$defs/48"
                 }
               },
               "required": [
@@ -11108,7 +11120,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1z"
+            "$ref": "#/$defs/1B"
           }
         ]
       },
@@ -11212,7 +11224,7 @@
                 "$ref": "#/$defs/F"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/6"
@@ -11229,7 +11241,7 @@
             "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
             "properties": {
               "accessModes": {
-                "$ref": "#/$defs/4j"
+                "$ref": "#/$defs/4l"
               }
             }
           }
@@ -11271,7 +11283,7 @@
                 "$ref": "#/$defs/F"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/S"
@@ -11387,7 +11399,7 @@
             "$ref": "#/$defs/3k"
           },
           {
-            "$ref": "#/$defs/3G"
+            "$ref": "#/$defs/3H"
           }
         ]
       },
@@ -11442,7 +11454,7 @@
                     "$ref": "#/$defs/4"
                   },
                   {
-                    "$ref": "#/$defs/4z"
+                    "$ref": "#/$defs/4B"
                   }
                 ],
                 "description": "Override namespace for ZooKeeper resources\nUseful when including ZooKeeper as a chart dependency, so it can be released into a different namespace than the parent"
@@ -11512,13 +11524,7 @@
                 "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
                 "properties": {
                   "image": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "repository": {
-                        "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image repository",
-                        "type": "string"
-                      }
-                    }
+                    "$ref": "#/$defs/3B"
                   }
                 }
               }
@@ -11539,7 +11545,7 @@
                     "$ref": "#/$defs/4"
                   },
                   {
-                    "$ref": "#/$defs/4x"
+                    "$ref": "#/$defs/4z"
                   }
                 ],
                 "description": "Dedicated data log directory\nThis allows a dedicated log device to be used, and helps avoid competition between logging and snapshots.\nE.g.\ndataLogDir: /bitnami/zookeeper/dataLog"
@@ -11572,7 +11578,7 @@
             "not": {
               "properties": {
                 "auth": {
-                  "$ref": "#/$defs/46"
+                  "$ref": "#/$defs/47"
                 }
               },
               "required": [
@@ -11632,7 +11638,7 @@
             "$ref": "#/$defs/1m"
           },
           {
-            "$ref": "#/$defs/2n"
+            "$ref": "#/$defs/2o"
           }
         ]
       },
@@ -11948,7 +11954,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/2k"
+                "$ref": "#/$defs/2n"
               },
               {
                 "$ref": "#/$defs/P"
@@ -11956,7 +11962,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/3I"
+            "$ref": "#/$defs/3J"
           },
           {
             "$ref": "#/$defs/2l"
@@ -11990,11 +11996,11 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/4c"
+            "$ref": "#/$defs/4n"
           },
           {
             "not": {
-              "$ref": "#/$defs/4e"
+              "$ref": "#/$defs/4g"
             }
           }
         ]
@@ -12138,10 +12144,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/4W"
+                            "$ref": "#/$defs/4Y"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/4V"
+                            "$ref": "#/$defs/4X"
                           }
                         },
                         "type": "object",
@@ -12178,10 +12184,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/4W"
+                            "$ref": "#/$defs/4Y"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/4V"
+                            "$ref": "#/$defs/4X"
                           }
                         },
                         "type": [
@@ -12351,7 +12357,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/46"
+                  "$ref": "#/$defs/47"
                 }
               },
               {
@@ -12376,7 +12382,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/47"
+                  "$ref": "#/$defs/48"
                 }
               },
               {
@@ -12421,7 +12427,7 @@
               "description": "Enable ZooKeeper client-server authentication. It uses SASL/Digest-MD5"
             },
             "existingSecret": {
-              "$ref": "#/$defs/4t"
+              "$ref": "#/$defs/4v"
             },
             "serverPasswords": {
               "$ref": "#/$defs/3m"
@@ -12439,7 +12445,7 @@
               "description": "Enable ZooKeeper server-server authentication. It uses SASL/Digest-MD5"
             },
             "existingSecret": {
-              "$ref": "#/$defs/4t"
+              "$ref": "#/$defs/4v"
             },
             "learnerPassword": {
               "description": "Password that the ZooKeeper quorumLearner will use to authenticate to quorumServers."
@@ -12465,17 +12471,17 @@
           "$ref": "#/$defs/1a"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         },
         {
           "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
@@ -12597,7 +12603,7 @@
             "$ref": "#/$defs/3"
           },
           "then": {
-            "$ref": "#/$defs/4b"
+            "$ref": "#/$defs/4c"
           }
         }
       ],
@@ -12638,7 +12644,7 @@
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/4x"
+          "$ref": "#/$defs/4z"
         }
       ],
       "description": "Dedicated data log directory\nThis allows a dedicated log device to be used, and helps avoid competition between logging and snapshots.\nE.g.\ndataLogDir: /bitnami/zookeeper/dataLog"
@@ -12664,7 +12670,7 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/4G"
+                        "$ref": "#/$defs/4I"
                       }
                     ],
                     "description": "Args to override all containers in the statefulset"
@@ -12677,7 +12683,7 @@
                   "command": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/4C"
+                        "$ref": "#/$defs/4E"
                       },
                       {
                         "type": "null"
@@ -12788,7 +12794,7 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "allOf": [
@@ -12830,14 +12836,14 @@
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         }
       ],
       "description": "Specifies the DNS policy for the zookeeper pods\nDNS policies can be set on a per-Pod basis. Currently Kubernetes supports the following Pod-specific DNS policies.\nAvailable options: Default, ClusterFirst, ClusterFirstWithHostNet, None\nRef: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy"
@@ -12848,21 +12854,21 @@
           "$ref": "#/$defs/1a"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "description": "EnableServiceLinks indicates whether information about services should be injected into pod's environment variables, matching the syntax of Docker links. Optional: Defaults to true.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
           "description": "EnableServiceLinks indicates whether information about services should be injected into pod's environment variables, matching the syntax of Docker links. Optional: Defaults to true.",
           "type": "boolean"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         }
       ],
       "description": "Whether information about services should be injected into pod's environment variable\nThe environment variables injected by service links are not used, but can lead to slow boot times or slow running of the scripts when there are many services in the current namespace.\nIf you experience slow pod startups or slow running of the scripts you probably want to set this to `false`.\nDNS-Pod services\nRef: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/"
@@ -12893,7 +12899,7 @@
         {
           "description": "List of environment variables to set in the container. Cannot be updated.",
           "items": {
-            "$ref": "#/$defs/4r"
+            "$ref": "#/$defs/4s"
           },
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
@@ -12914,7 +12920,7 @@
     "extraEnvVarsCM": {
       "anyOf": [
         {
-          "$ref": "#/$defs/3S"
+          "$ref": "#/$defs/3V"
         },
         {
           "$ref": "#/$defs/1"
@@ -12931,7 +12937,7 @@
     "extraEnvVarsSecret": {
       "anyOf": [
         {
-          "$ref": "#/$defs/3S"
+          "$ref": "#/$defs/3V"
         },
         {
           "$ref": "#/$defs/1"
@@ -12950,7 +12956,7 @@
         {
           "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
           "items": {
-            "$ref": "#/$defs/4S"
+            "$ref": "#/$defs/4U"
           },
           "type": "array",
           "x-kubernetes-patch-merge-key": "mountPath",
@@ -13049,7 +13055,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/3R"
+                    "$ref": "#/$defs/3U"
                   }
                 },
                 "required": [
@@ -13184,13 +13190,13 @@
                     ]
                   },
                   "items": {
-                    "$ref": "#/$defs/4R"
+                    "$ref": "#/$defs/4T"
                   },
                   "name": {
                     "$ref": "#/$defs/B"
                   },
                   "optional": {
-                    "$ref": "#/$defs/49"
+                    "$ref": "#/$defs/4a"
                   }
                 },
                 "type": [
@@ -13257,7 +13263,7 @@
                   "items": {
                     "description": "Items is a list of downward API volume file",
                     "items": {
-                      "$ref": "#/$defs/4O"
+                      "$ref": "#/$defs/4Q"
                     },
                     "type": [
                       "array",
@@ -13529,10 +13535,10 @@
                                 "$ref": "#/$defs/3f"
                               },
                               "kind": {
-                                "$ref": "#/$defs/4f"
+                                "$ref": "#/$defs/4h"
                               },
                               "name": {
-                                "$ref": "#/$defs/4g"
+                                "$ref": "#/$defs/4i"
                               }
                             },
                             "required": [
@@ -13552,10 +13558,10 @@
                                 "$ref": "#/$defs/3f"
                               },
                               "kind": {
-                                "$ref": "#/$defs/4f"
+                                "$ref": "#/$defs/4h"
                               },
                               "name": {
-                                "$ref": "#/$defs/4g"
+                                "$ref": "#/$defs/4i"
                               },
                               "namespace": {
                                 "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -14129,13 +14135,13 @@
                           "description": "Adapts a ConfigMap into a projected volume.\n\nThe contents of the target ConfigMap's Data field will be presented in a projected volume as files using the keys in the Data field as the file names, unless the items element is populated with specific mappings of keys to paths. Note that this is identical to a configmap volume source without the default mode.",
                           "properties": {
                             "items": {
-                              "$ref": "#/$defs/4R"
+                              "$ref": "#/$defs/4T"
                             },
                             "name": {
                               "$ref": "#/$defs/B"
                             },
                             "optional": {
-                              "$ref": "#/$defs/49"
+                              "$ref": "#/$defs/4a"
                             }
                           },
                           "type": [
@@ -14150,7 +14156,7 @@
                             "items": {
                               "description": "Items is a list of DownwardAPIVolume file",
                               "items": {
-                                "$ref": "#/$defs/4O"
+                                "$ref": "#/$defs/4Q"
                               },
                               "type": [
                                 "array",
@@ -14378,7 +14384,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/3R"
+                    "$ref": "#/$defs/3U"
                   },
                   "secretRef": {
                     "additionalProperties": false,
@@ -14714,7 +14720,7 @@
           "type": "object"
         },
         {
-          "additionalProperties": {}
+          "$ref": "#/$defs/3Q"
         }
       ]
     },
@@ -14824,13 +14830,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/3F"
+                "$ref": "#/$defs/3G"
               },
               {
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/2p"
+                "$ref": "#/$defs/2k"
               }
             ]
           },
@@ -14943,7 +14949,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/3B"
+                "$ref": "#/$defs/3C"
               }
             ]
           },
@@ -15051,7 +15057,7 @@
                           {
                             "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
                             "items": {
-                              "$ref": "#/$defs/4N"
+                              "$ref": "#/$defs/4P"
                             },
                             "type": "array"
                           },
@@ -15232,10 +15238,10 @@
                                 "description": "ca defines the Certificate authority used when verifying server certificates.",
                                 "properties": {
                                   "configMap": {
-                                    "$ref": "#/$defs/4H"
+                                    "$ref": "#/$defs/4J"
                                   },
                                   "secret": {
-                                    "$ref": "#/$defs/4E"
+                                    "$ref": "#/$defs/4G"
                                   }
                                 },
                                 "type": "object"
@@ -15249,10 +15255,10 @@
                                 "description": "cert defines the Client certificate to present when doing client-authentication.",
                                 "properties": {
                                   "configMap": {
-                                    "$ref": "#/$defs/4H"
+                                    "$ref": "#/$defs/4J"
                                   },
                                   "secret": {
-                                    "$ref": "#/$defs/4E"
+                                    "$ref": "#/$defs/4G"
                                   }
                                 },
                                 "type": "object"
@@ -15280,7 +15286,7 @@
                                     "$ref": "#/$defs/1Y"
                                   },
                                   "optional": {
-                                    "$ref": "#/$defs/4n"
+                                    "$ref": "#/$defs/4p"
                                   }
                                 },
                                 "required": [
@@ -15422,7 +15428,7 @@
                           {
                             "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
                             "items": {
-                              "$ref": "#/$defs/4N"
+                              "$ref": "#/$defs/4P"
                             },
                             "type": "array"
                           },
@@ -15446,7 +15452,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/2p"
+                "$ref": "#/$defs/2k"
               }
             ]
           },
@@ -15545,25 +15551,25 @@
                       "type": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/4U"
+                            "$ref": "#/$defs/4W"
                           },
                           {
-                            "$ref": "#/$defs/4P"
+                            "$ref": "#/$defs/4R"
                           },
                           {
                             "$ref": "#/$defs/5"
                           },
                           {
-                            "$ref": "#/$defs/8"
+                            "$ref": "#/$defs/9"
                           },
                           {
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/9"
+                            "$ref": "#/$defs/7"
                           },
                           {
-                            "$ref": "#/$defs/7"
+                            "$ref": "#/$defs/8"
                           }
                         ],
                         "description": "ZooKeeper Prometheus Exporter service type"
@@ -15707,7 +15713,7 @@
       "$ref": "#/$defs/3q"
     },
     "namespaceOverride": {
-      "$ref": "#/$defs/4u"
+      "$ref": "#/$defs/4w"
     },
     "networkPolicy": {
       "additionalProperties": {},
@@ -15733,7 +15739,7 @@
                         "from": {
                           "description": "from is a list of sources which should be able to access the pods selected for this rule. Items in this list are combined using a logical OR operation. If this field is empty or missing, this rule matches all sources (traffic not restricted by source). If this field is present and contains at least one item, this rule allows traffic only if the traffic matches at least one item in the from list.",
                           "items": {
-                            "$ref": "#/$defs/3W"
+                            "$ref": "#/$defs/3Y"
                           },
                           "type": [
                             "array",
@@ -15743,7 +15749,7 @@
                         "ports": {
                           "description": "ports is a list of ports which should be made accessible on the pods selected for this rule. Each item in this list is combined using a logical OR. If this field is empty or missing, this rule matches all ports (traffic not restricted by port). If this field is present and contains at least one item, then this rule allows traffic only if the traffic matches at least one port in the list.",
                           "items": {
-                            "$ref": "#/$defs/4D"
+                            "$ref": "#/$defs/4F"
                           },
                           "type": [
                             "array",
@@ -15785,7 +15791,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/3Y"
+                "$ref": "#/$defs/40"
               }
             ]
           },
@@ -15793,7 +15799,7 @@
             "additionalProperties": {},
             "properties": {
               "ingressNSPodMatchLabels": {
-                "$ref": "#/$defs/3X"
+                "$ref": "#/$defs/3Z"
               }
             }
           }
@@ -15842,7 +15848,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "ingressNSMatchLabels": {
-                    "$ref": "#/$defs/45"
+                    "$ref": "#/$defs/46"
                   }
                 }
               }
@@ -16038,7 +16044,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/2o"
+                      "$ref": "#/$defs/2p"
                     }
                   },
                   {
@@ -16062,7 +16068,7 @@
             "additionalProperties": {},
             "properties": {
               "accessModes": {
-                "$ref": "#/$defs/4j"
+                "$ref": "#/$defs/4l"
               }
             }
           }
@@ -16082,7 +16088,7 @@
                 "not": {
                   "allOf": [
                     {
-                      "$ref": "#/$defs/2o"
+                      "$ref": "#/$defs/2p"
                     },
                     {
                       "$ref": "#/$defs/Y"
@@ -16127,7 +16133,7 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/4Q"
+                        "$ref": "#/$defs/4S"
                       },
                       {
                         "type": "null"
@@ -16295,16 +16301,16 @@
           "$ref": "#/$defs/5"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         },
         {
           "description": "podManagementPolicy controls how pods are created during initial scale up, when replacing pods on nodes, or when scaling down. The default policy is `OrderedReady`, where pods are created in increasing order (pod-0, then pod-1, etc) and the controller will wait until each pod is ready before continuing. When scaling down, the pods are removed in the opposite order. The alternative policy is `Parallel` which will create pods in parallel to match the desired scale without waiting, and on scale down will delete all pods at once.",
@@ -16465,13 +16471,13 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "$ref": "#/$defs/4"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
           "allOf": [
@@ -16510,7 +16516,7 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -16538,7 +16544,7 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
@@ -16546,13 +16552,13 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
           "$ref": "#/$defs/o"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         }
       ],
       "description": "Number of ZooKeeper nodes"
@@ -16577,7 +16583,7 @@
     "revisionHistoryLimit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
@@ -16585,13 +16591,13 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
           "$ref": "#/$defs/o"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         },
         {
           "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
@@ -16621,7 +16627,7 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/8"
+          "$ref": "#/$defs/9"
         },
         {
           "$ref": "#/$defs/4"
@@ -16667,10 +16673,10 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/9"
+          "$ref": "#/$defs/7"
         },
         {
-          "$ref": "#/$defs/7"
+          "$ref": "#/$defs/8"
         }
       ],
       "description": "Kubernetes pod scheduler registry\nhttps://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/"
@@ -16704,7 +16710,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/8"
+                    "$ref": "#/$defs/9"
                   },
                   {
                     "$ref": "#/$defs/4"
@@ -16714,7 +16720,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/9"
+                    "$ref": "#/$defs/7"
                   },
                   {
                     "allOf": [
@@ -16753,7 +16759,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/7"
+                    "$ref": "#/$defs/8"
                   }
                 ],
                 "description": "ZooKeeper service Cluster IP\ne.g.:\nclusterIP: None"
@@ -16779,16 +16785,16 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/8"
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/8"
                       },
                       {
                         "allOf": [
@@ -16873,7 +16879,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/4k"
+                "$ref": "#/$defs/4m"
               }
             ]
           },
@@ -16911,11 +16917,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/4q"
+                "$ref": "#/$defs/4e"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/4s"
+                  "$ref": "#/$defs/4u"
                 }
               }
             ]
@@ -16933,7 +16939,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/4d"
+                    "$ref": "#/$defs/4f"
                   },
                   {
                     "$ref": "#/$defs/2D"
@@ -16951,7 +16957,7 @@
                   "client": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/4M"
+                        "$ref": "#/$defs/4O"
                       },
                       {
                         "$ref": "#/$defs/2M"
@@ -16960,16 +16966,16 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/8"
+                        "$ref": "#/$defs/9"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/7"
                       },
                       {
                         "$ref": "#/$defs/o"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/8"
                       }
                     ],
                     "description": "Node port for clients"
@@ -17082,17 +17088,17 @@
                   "$ref": "#/$defs/1a"
                 },
                 {
-                  "$ref": "#/$defs/8"
+                  "$ref": "#/$defs/9"
                 },
                 {
                   "description": "publishNotReadyAddresses indicates that any agent which deals with endpoints for this Service should disregard any indications of ready/not-ready. The primary use case for setting this field is for a StatefulSet's Headless Service to propagate SRV DNS records for its Pods for the purpose of peer discovery. The Kubernetes controllers that generate Endpoints and EndpointSlice resources for Services interpret this to mean that all endpoints are considered \"ready\" even if the Pods themselves are not. Agents which consume only Kubernetes generated endpoints through the Endpoints or EndpointSlice resources can safely assume this behavior.",
                   "type": "null"
                 },
                 {
-                  "$ref": "#/$defs/9"
+                  "$ref": "#/$defs/7"
                 },
                 {
-                  "$ref": "#/$defs/7"
+                  "$ref": "#/$defs/8"
                 }
               ],
               "description": "If the ZooKeeper headless service should publish DNS records for not ready pods"
@@ -17169,7 +17175,7 @@
               "$ref": "#/$defs/1"
             },
             {
-              "$ref": "#/$defs/8"
+              "$ref": "#/$defs/9"
             },
             {
               "$ref": "#/$defs/4"
@@ -17215,10 +17221,10 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/9"
+              "$ref": "#/$defs/7"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/8"
             }
           ],
           "description": "Control where client requests go, to the same pod or round-robin\nValues: ClientIP or None\nref: https://kubernetes.io/docs/concepts/services-networking/service/"
@@ -17268,25 +17274,25 @@
         "type": {
           "anyOf": [
             {
-              "$ref": "#/$defs/4U"
+              "$ref": "#/$defs/4W"
             },
             {
-              "$ref": "#/$defs/4P"
+              "$ref": "#/$defs/4R"
             },
             {
               "$ref": "#/$defs/5"
             },
             {
-              "$ref": "#/$defs/8"
+              "$ref": "#/$defs/9"
             },
             {
               "$ref": "#/$defs/4"
             },
             {
-              "$ref": "#/$defs/9"
+              "$ref": "#/$defs/7"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/8"
             }
           ],
           "description": "Kubernetes Service type"
@@ -17351,20 +17357,20 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/8"
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/7"
                       },
                       {
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/8"
                       }
                     ],
                     "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the common.names.fullname template"
@@ -17384,17 +17390,17 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/8"
+                        "$ref": "#/$defs/9"
                       },
                       {
                         "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
                         "type": "boolean"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/8"
                       }
                     ],
                     "description": "Allows auto mount of ServiceAccountToken on the serviceAccount created\nCan be set to false if pods using this serviceAccount do not need to use K8s API"
@@ -17429,16 +17435,16 @@
               "$ref": "#/$defs/1"
             },
             {
-              "$ref": "#/$defs/8"
+              "$ref": "#/$defs/9"
             },
             {
               "$ref": "#/$defs/4"
             },
             {
-              "$ref": "#/$defs/9"
+              "$ref": "#/$defs/7"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/8"
             },
             {
               "type": "string"
@@ -17841,6 +17847,14 @@
     "volumePermissions": {
       "allOf": [
         {
+          "additionalProperties": {},
+          "properties": {
+            "image": {
+              "$ref": "#/$defs/3B"
+            }
+          }
+        },
+        {
           "type": "object"
         },
         {
@@ -17860,9 +17874,6 @@
               ]
             }
           }
-        },
-        {
-          "additionalProperties": {}
         }
       ],
       "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node"

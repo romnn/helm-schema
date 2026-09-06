@@ -13,7 +13,7 @@
     "11": {
       "properties": {
         "ingress": {
-          "$ref": "#/$defs/V"
+          "$ref": "#/$defs/W"
         }
       },
       "required": [
@@ -94,7 +94,7 @@
               "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/n"
+              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/e"
@@ -124,7 +124,7 @@
               "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/n"
+              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/e"
@@ -483,7 +483,7 @@
           "$ref": "#/$defs/g"
         },
         {
-          "$ref": "#/$defs/n"
+          "$ref": "#/$defs/l"
         },
         {
           "$ref": "#/$defs/e"
@@ -544,7 +544,7 @@
           "$ref": "#/$defs/g"
         },
         {
-          "$ref": "#/$defs/n"
+          "$ref": "#/$defs/l"
         },
         {
           "$ref": "#/$defs/e"
@@ -659,7 +659,7 @@
               "$ref": "#/$defs/i"
             },
             {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/n"
             }
           ]
         }
@@ -684,7 +684,7 @@
           "$ref": "#/$defs/d"
         },
         {
-          "$ref": "#/$defs/x"
+          "$ref": "#/$defs/A"
         },
         {
           "$ref": "#/$defs/b"
@@ -709,7 +709,7 @@
     "1t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/x"
+          "$ref": "#/$defs/A"
         },
         {
           "$ref": "#/$defs/b"
@@ -842,7 +842,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -852,7 +852,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -1035,15 +1035,8 @@
       }
     },
     "A": {
-      "properties": {
-        "auditLog": {
-          "$ref": "#/$defs/h"
-        }
-      },
-      "required": [
-        "auditLog"
-      ],
-      "type": "object"
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "null"
     },
     "B": {
       "allOf": [
@@ -1072,11 +1065,18 @@
       ]
     },
     "C": {
-      "description": "Port is the network port. Multiple listeners may use the\nsame port, subject to the Listener compatibility rules.\n\nSupport: Core",
-      "format": "int32",
-      "maximum": 65535,
-      "minimum": 1,
-      "type": "integer"
+      "anyOf": [
+        {
+          "description": "Port is the network port. Multiple listeners may use the\nsame port, subject to the Listener compatibility rules.\n\nSupport: Core",
+          "format": "int32",
+          "maximum": 65535,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "D": {
       "properties": {
@@ -1117,6 +1117,19 @@
     },
     "G": {
       "properties": {
+        "tls": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "H": {
+      "properties": {
         "ingress": {}
       },
       "required": [
@@ -1124,7 +1137,7 @@
       ],
       "type": "object"
     },
-    "H": {
+    "I": {
       "oneOf": [
         {
           "type": [
@@ -1140,7 +1153,7 @@
         }
       ]
     },
-    "I": {
+    "J": {
       "properties": {
         "ingress": {
           "enum": [
@@ -1153,21 +1166,8 @@
       ],
       "type": "object"
     },
-    "J": {
-      "description": "Optional: Image-specific registry override\nregistry: \"\""
-    },
     "K": {
-      "properties": {
-        "tls": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
+      "description": "Optional: Image-specific registry override\nregistry: \"\""
     },
     "L": {
       "anyOf": [
@@ -1299,7 +1299,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/l"
+              "$ref": "#/$defs/m"
             }
           }
         ]
@@ -1345,6 +1345,14 @@
       }
     },
     "S": {
+      "additionalProperties": {},
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/C"
+        }
+      }
+    },
+    "T": {
       "properties": {
         "auditLog": {
           "$ref": "#/$defs/D"
@@ -1355,7 +1363,7 @@
       ],
       "type": "object"
     },
-    "T": {
+    "U": {
       "properties": {
         "postDelete": {
           "$ref": "#/$defs/h"
@@ -1366,14 +1374,14 @@
       ],
       "type": "object"
     },
-    "U": {
+    "V": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "V": {
+    "W": {
       "properties": {
         "tls": {
           "properties": {
@@ -1394,7 +1402,7 @@
       ],
       "type": "object"
     },
-    "W": {
+    "X": {
       "additionalProperties": {},
       "properties": {
         "source": {
@@ -1406,7 +1414,7 @@
         }
       }
     },
-    "X": {
+    "Y": {
       "allOf": [
         {
           "$ref": "#/$defs/3"
@@ -1419,14 +1427,6 @@
         }
       ],
       "type": "string"
-    },
-    "Y": {
-      "additionalProperties": {},
-      "properties": {
-        "port": {
-          "$ref": "#/$defs/C"
-        }
-      }
     },
     "Z": {
       "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -1454,7 +1454,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/X"
+            "$ref": "#/$defs/Y"
           },
           {
             "type": "number"
@@ -1472,7 +1472,7 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/X"
+        "$ref": "#/$defs/Y"
       },
       "type": "object"
     },
@@ -1594,7 +1594,7 @@
             "gateway": {
               "properties": {
                 "gatewayClass": {
-                  "$ref": "#/$defs/V"
+                  "$ref": "#/$defs/W"
                 }
               },
               "required": [
@@ -1611,6 +1611,10 @@
       ]
     },
     "l": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "m": {
       "properties": {
         "ingress": {
           "$ref": "#/$defs/h"
@@ -1621,7 +1625,7 @@
       ],
       "type": "object"
     },
-    "m": {
+    "n": {
       "anyOf": [
         {
           "properties": {
@@ -1644,10 +1648,6 @@
           }
         }
       ]
-    },
-    "n": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
     },
     "o": {
       "properties": {
@@ -1765,10 +1765,6 @@
       ]
     },
     "x": {
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "null"
-    },
-    "y": {
       "properties": {
         "networkExposure": {
           "properties": {
@@ -1789,7 +1785,7 @@
       ],
       "type": "object"
     },
-    "z": {
+    "y": {
       "properties": {
         "customLogos": {
           "$ref": "#/$defs/h"
@@ -1797,6 +1793,17 @@
       },
       "required": [
         "customLogos"
+      ],
+      "type": "object"
+    },
+    "z": {
+      "properties": {
+        "auditLog": {
+          "$ref": "#/$defs/h"
+        }
+      },
+      "required": [
+        "auditLog"
       ],
       "type": "object"
     }
@@ -1816,7 +1823,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/l"
+                "$ref": "#/$defs/m"
               },
               {
                 "not": {
@@ -1941,7 +1948,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/z"
           },
           {
             "properties": {
@@ -2026,7 +2033,7 @@
           "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
           "properties": {
             "tls": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/X"
             }
           }
         }
@@ -2291,7 +2298,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/T"
+        "$ref": "#/$defs/U"
       },
       "then": {
         "allOf": [
@@ -2333,7 +2340,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/z"
+        "$ref": "#/$defs/y"
       },
       "then": {
         "additionalProperties": {},
@@ -2478,11 +2485,11 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/G"
+              "$ref": "#/$defs/H"
             }
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/J"
           }
         ]
       },
@@ -2650,10 +2657,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/m"
           },
           {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/x"
           }
         ]
       },
@@ -2883,169 +2890,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/j"
-          },
-          {
-            "$ref": "#/$defs/i"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "ports": {
-                        "additionalProperties": {},
-                        "description": "Must match the GatewayClass's configured entrypoints",
-                        "properties": {
-                          "https": {
-                            "$ref": "#/$defs/C"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tls": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "secretName": {
-                            "not": {
-                              "type": "null"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "ports": {
-                        "description": "Must match the GatewayClass's configured entrypoints",
-                        "required": [
-                          "https"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tls": {
-                        "required": [
-                          "secretName"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "ports": {
-                        "additionalProperties": {},
-                        "description": "Must match the GatewayClass's configured entrypoints",
-                        "properties": {
-                          "https": {
-                            "not": {
-                              "type": "null"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tls": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "secretName": {
-                            "$ref": "#/$defs/1h"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/i"
           },
           {
@@ -3169,7 +3013,7 @@
                 "not": {
                   "properties": {
                     "letsEncrypt": {
-                      "$ref": "#/$defs/G"
+                      "$ref": "#/$defs/H"
                     }
                   },
                   "required": [
@@ -3181,7 +3025,7 @@
               {
                 "properties": {
                   "letsEncrypt": {
-                    "$ref": "#/$defs/I"
+                    "$ref": "#/$defs/J"
                   }
                 },
                 "required": [
@@ -3192,7 +3036,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           }
         ]
       },
@@ -3208,7 +3052,7 @@
                   "gateway": {
                     "properties": {
                       "gatewayClass": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/G"
                       }
                     },
                     "required": [
@@ -3300,6 +3144,779 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "noDefaultAdmin": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "noDefaultAdmin"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "noDefaultAdmin": {
+            "$ref": "#/$defs/p"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/N"
+          },
+          {
+            "properties": {
+              "certmanager": {
+                "properties": {
+                  "version": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "version"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "certmanager"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "certmanager": {
+                "additionalProperties": {},
+                "description": "Certmanager version compatibility",
+                "properties": {
+                  "version": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "certmanager": {
+                "additionalProperties": {},
+                "description": "Certmanager version compatibility",
+                "properties": {
+                  "version": {
+                    "pattern": "^v?(0*[0-9]{1,20})(\\.0*[0-9]{1,20})?(\\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "imagePullSecrets": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "imagePullSecrets"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "systemRegistryInheritsPullSecrets": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "systemRegistryInheritsPullSecrets"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "imagePullSecrets": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/$defs/18"
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "$ref": "#/$defs/18"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "auditLog": {
+                "$ref": "#/$defs/r"
+              }
+            },
+            "required": [
+              "auditLog"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/z"
+          },
+          {
+            "$ref": "#/$defs/T"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "auditLog": {
+            "additionalProperties": {},
+            "description": "Source: https://ranchermanager.docs.rancher.com/how-to-guides/advanced-user-guides/enable-api-audit-log",
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "description": "Image for collecting rancher audit logs.\nImportant: update build.yaml when this default image needs to be changed, then run `go generate`.",
+                "properties": {
+                  "registry": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/w"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "description": "Gateway API configuration",
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/j"
+          },
+          {
+            "$ref": "#/$defs/i"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "secretName": {
+                            "not": {
+                              "type": "null"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ports": {
+                        "description": "Must match the GatewayClass's configured entrypoints",
+                        "required": [
+                          "https"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ports": {
+                        "additionalProperties": {},
+                        "description": "Must match the GatewayClass's configured entrypoints",
+                        "properties": {
+                          "https": {
+                            "$ref": "#/$defs/C"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "required": [
+                          "secretName"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ports": {
+                        "additionalProperties": {},
+                        "description": "Must match the GatewayClass's configured entrypoints",
+                        "properties": {
+                          "https": {
+                            "not": {
+                              "type": "null"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "secretName": {
+                            "$ref": "#/$defs/1h"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "rancherImage": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "rancherImage"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/$defs/r"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "Rancher image configuration",
+            "properties": {
+              "registry": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/m"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "configurationSnippet": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "configurationSnippet"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/x"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
+            "properties": {
+              "configurationSnippet": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/j"
+          },
+          {
+            "$ref": "#/$defs/k"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "letsEncrypt": {
+                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
+                "required": [
+                  "email"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "letsEncrypt": {
+                "additionalProperties": {},
+                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
+                "properties": {
+                  "email": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/d"
+                      },
+                      {
+                        "$ref": "#/$defs/c"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/a"
+                          },
+                          {
+                            "$ref": "#/$defs/4"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/1"
+                          },
+                          {
+                            "$ref": "#/$defs/2"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          }
+                        ],
+                        "description": "Email is the email address to be associated with the ACME account.\nThis field is optional, but it is strongly recommended to be set.\nIt will be used to contact you in case of issues with your account or\ncertificates, including expiry notification emails.\nThis field may be updated after the account is initially registered.",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "letsEncrypt": {
+                "additionalProperties": {},
+                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
+                "properties": {
+                  "email": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/i"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "gateway": {
+                      "properties": {
+                        "gatewayClass": {
+                          "properties": {
+                            "ports": {}
+                          },
+                          "required": [
+                            "ports"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "gatewayClass"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "gateway"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "gateway": {
+                    "properties": {
+                      "gatewayClass": {
+                        "properties": {
+                          "ports": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ports"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "gatewayClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "gateway"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraObjects": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "type": [
+                  "null",
+                  "object"
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Create a dynamic manifests via values:\nBeware: There will be no validation on these resource manifests in `extraObjects` - they must be valid k8s resources.\nIf you encounter issues installing/upgrading rancher while using these, please investigate these first.\n- apiVersion: \"networking.k8s.io/v1\"\nkind: NetworkPolicy\nmetadata:\nname: allow-https-444-to-rancher\nnamespace: your-namespace  # Change to the appropriate namespace\nspec:\npodSelector:\nmatchLabels:\napp: rancher  # Selects pods labeled with \"app: rancher\"\npolicyTypes:\n- Ingress  # Controls inbound traffic to the selected pods\ningress:\n- ports:\n- protocol: TCP\nport: 444  # Allows only TCP traffic on port 444 (custom HTTPS port)\nSince no other ingress rules are defined, all other traffic is denied by default.\n- apiVersion: \"networking.k8s.io/v1\"\nkind: NetworkPolicy\nmetadata:\nname: rancher-deny-ingress\nnamespace: cattle-system\nspec:\npodSelector:\nmatchLabels:\napp: rancher\npolicyTypes:\n- Ingress"
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/z"
+          },
+          {
+            "$ref": "#/$defs/T"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "auditLog": {
+            "additionalProperties": {},
+            "description": "Source: https://ranchermanager.docs.rancher.com/how-to-guides/advanced-user-guides/enable-api-audit-log",
+            "properties": {
+              "image": {
+                "description": "Image for collecting rancher audit logs.\nImportant: update build.yaml when this default image needs to be changed, then run `go generate`.",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "startupProbe": {}
+              },
+              "required": [
+                "startupProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "startupProbe": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "startupProbe"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/k"
+          },
+          {
+            "$ref": "#/$defs/n"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "letsEncrypt": {
+                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "letsEncrypt": {
+                "additionalProperties": {},
+                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
+                "properties": {
+                  "environment": {
+                    "description": "email: none@example.com",
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -3627,31 +4244,6 @@
                   "gatewayClass": {
                     "additionalProperties": {},
                     "properties": {
-                      "ports": {
-                        "additionalProperties": {},
-                        "description": "Must match the GatewayClass's configured entrypoints",
-                        "properties": {
-                          "http": {
-                            "$ref": "#/$defs/C"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
                       "name": {
                         "allOf": [
                           {
@@ -3822,6 +4414,56 @@
                     "additionalProperties": {},
                     "properties": {
                       "ports": {
+                        "additionalProperties": {},
+                        "description": "Must match the GatewayClass's configured entrypoints",
+                        "properties": {
+                          "http": {
+                            "$ref": "#/$defs/C"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "additionalListeners": {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/S"
+                        },
+                        "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
+                        "items": {
+                          "$ref": "#/$defs/S"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration",
+                "properties": {
+                  "gatewayClass": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ports": {
                         "description": "Must match the GatewayClass's configured entrypoints",
                         "type": "object"
                       }
@@ -3947,116 +4589,6 @@
                 "type": "string"
               }
             }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "additionalListeners": {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/Y"
-                        },
-                        "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
-                        "items": {
-                          "$ref": "#/$defs/Y"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "noDefaultAdmin": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "noDefaultAdmin"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "noDefaultAdmin": {
-            "$ref": "#/$defs/p"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/N"
-          },
-          {
-            "properties": {
-              "certmanager": {
-                "properties": {
-                  "version": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "version"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "certmanager"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "certmanager": {
-                "additionalProperties": {},
-                "description": "Certmanager version compatibility",
-                "properties": {
-                  "version": {
-                    "type": [
-                      "null",
-                      "string"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "certmanager": {
-                "additionalProperties": {},
-                "description": "Certmanager version compatibility",
-                "properties": {
-                  "version": {
-                    "pattern": "^v?(0*[0-9]{1,20})(\\.0*[0-9]{1,20})?(\\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
-                    "type": "string"
-                  }
-                }
-              }
-            }
           }
         ]
       }
@@ -4064,533 +4596,8 @@
     {
       "if": {
         "allOf": [
-          {
-            "properties": {
-              "imagePullSecrets": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "imagePullSecrets"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "systemRegistryInheritsPullSecrets": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "systemRegistryInheritsPullSecrets"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "$ref": "#/$defs/18"
-                },
-                "type": "object"
-              },
-              {
-                "items": {
-                  "$ref": "#/$defs/18"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "auditLog": {
-                "$ref": "#/$defs/r"
-              }
-            },
-            "required": [
-              "auditLog"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/A"
-          },
-          {
-            "$ref": "#/$defs/S"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "auditLog": {
-            "additionalProperties": {},
-            "description": "Source: https://ranchermanager.docs.rancher.com/how-to-guides/advanced-user-guides/enable-api-audit-log",
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "description": "Image for collecting rancher audit logs.\nImportant: update build.yaml when this default image needs to be changed, then run `go generate`.",
-                "properties": {
-                  "registry": {
-                    "type": [
-                      "null",
-                      "string"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/w"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration",
-                "properties": {
-                  "gatewayClass": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "description": "Gateway API configuration",
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "properties": {
-                "rancherImage": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "rancherImage"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "$ref": "#/$defs/r"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "Rancher image configuration",
-            "properties": {
-              "registry": {
-                "type": [
-                  "null",
-                  "string"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/l"
-          },
-          {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "configurationSnippet": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "configurationSnippet"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
           {
             "$ref": "#/$defs/y"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
-            "properties": {
-              "configurationSnippet": {
-                "type": [
-                  "null",
-                  "string"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/j"
-          },
-          {
-            "$ref": "#/$defs/k"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "letsEncrypt": {
-                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
-                "required": [
-                  "email"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "letsEncrypt": {
-                "additionalProperties": {},
-                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
-                "properties": {
-                  "email": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/d"
-                      },
-                      {
-                        "$ref": "#/$defs/c"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/a"
-                          },
-                          {
-                            "$ref": "#/$defs/4"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/5"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/1"
-                          },
-                          {
-                            "$ref": "#/$defs/2"
-                          },
-                          {
-                            "$ref": "#/$defs/6"
-                          }
-                        ],
-                        "description": "Email is the email address to be associated with the ACME account.\nThis field is optional, but it is strongly recommended to be set.\nIt will be used to contact you in case of issues with your account or\ncertificates, including expiry notification emails.\nThis field may be updated after the account is initially registered.",
-                        "type": "string"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "letsEncrypt": {
-                "additionalProperties": {},
-                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
-                "properties": {
-                  "email": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/i"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "gateway": {
-                      "properties": {
-                        "gatewayClass": {
-                          "properties": {
-                            "ports": {}
-                          },
-                          "required": [
-                            "ports"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "gatewayClass"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "gateway"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "gateway": {
-                    "properties": {
-                      "gatewayClass": {
-                        "properties": {
-                          "ports": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "ports"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "gatewayClass"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "gateway"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "extraObjects": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": [
-                  "null",
-                  "object"
-                ]
-              },
-              "type": "object"
-            },
-            {
-              "items": {
-                "type": [
-                  "null",
-                  "object"
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "maximum": 0,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Create a dynamic manifests via values:\nBeware: There will be no validation on these resource manifests in `extraObjects` - they must be valid k8s resources.\nIf you encounter issues installing/upgrading rancher while using these, please investigate these first.\n- apiVersion: \"networking.k8s.io/v1\"\nkind: NetworkPolicy\nmetadata:\nname: allow-https-444-to-rancher\nnamespace: your-namespace  # Change to the appropriate namespace\nspec:\npodSelector:\nmatchLabels:\napp: rancher  # Selects pods labeled with \"app: rancher\"\npolicyTypes:\n- Ingress  # Controls inbound traffic to the selected pods\ningress:\n- ports:\n- protocol: TCP\nport: 444  # Allows only TCP traffic on port 444 (custom HTTPS port)\nSince no other ingress rules are defined, all other traffic is denied by default.\n- apiVersion: \"networking.k8s.io/v1\"\nkind: NetworkPolicy\nmetadata:\nname: rancher-deny-ingress\nnamespace: cattle-system\nspec:\npodSelector:\nmatchLabels:\napp: rancher\npolicyTypes:\n- Ingress"
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/A"
-          },
-          {
-            "$ref": "#/$defs/S"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "auditLog": {
-            "additionalProperties": {},
-            "description": "Source: https://ranchermanager.docs.rancher.com/how-to-guides/advanced-user-guides/enable-api-audit-log",
-            "properties": {
-              "image": {
-                "description": "Image for collecting rancher audit logs.\nImportant: update build.yaml when this default image needs to be changed, then run `go generate`.",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "startupProbe": {}
-              },
-              "required": [
-                "startupProbe"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "startupProbe": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "startupProbe"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/k"
-          },
-          {
-            "$ref": "#/$defs/m"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "letsEncrypt": {
-                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "letsEncrypt": {
-                "additionalProperties": {},
-                "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
-                "properties": {
-                  "environment": {
-                    "description": "email: none@example.com",
-                    "type": [
-                      "null",
-                      "string"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/z"
           },
           {
             "anyOf": [
@@ -4675,7 +4682,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/W"
+                    "$ref": "#/$defs/X"
                   }
                 }
               }
@@ -4707,7 +4714,7 @@
             "$ref": "#/$defs/13"
           },
           {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/y"
           }
         ]
       },
@@ -4763,7 +4770,7 @@
             "$ref": "#/$defs/P"
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           }
         ]
       },
@@ -4789,7 +4796,7 @@
             "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "anyOf": [
@@ -4926,7 +4933,7 @@
               {
                 "properties": {
                   "ingress": {
-                    "$ref": "#/$defs/K"
+                    "$ref": "#/$defs/G"
                   }
                 },
                 "required": [
@@ -4940,11 +4947,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/G"
+                  "$ref": "#/$defs/H"
                 }
               },
               {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/J"
               }
             ]
           }
@@ -4956,13 +4963,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/m"
           },
           {
             "$ref": "#/$defs/j"
           },
           {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/x"
           }
         ]
       },
@@ -5069,7 +5076,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/U"
           }
         ]
       },
@@ -5165,7 +5172,7 @@
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/x"
+                            "$ref": "#/$defs/A"
                           },
                           {
                             "$ref": "#/$defs/f"
@@ -5710,7 +5717,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/U"
+                        "$ref": "#/$defs/V"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -5766,7 +5773,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/H"
+                        "$ref": "#/$defs/I"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -5791,7 +5798,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/U"
+                        "$ref": "#/$defs/V"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -6026,7 +6033,7 @@
         "pullPolicy": {},
         "registry": {},
         "repository": {
-          "$ref": "#/$defs/J"
+          "$ref": "#/$defs/K"
         },
         "tag": {
           "description": "Defaults to .Chart.appVersion\nrancher/rancher image tag. https://hub.docker.com/r/rancher/rancher/tags/"
@@ -6049,7 +6056,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/K"
+                "$ref": "#/$defs/G"
               }
             ]
           },
@@ -6235,7 +6242,7 @@
           "properties": {
             "registry": {},
             "repository": {
-              "$ref": "#/$defs/J"
+              "$ref": "#/$defs/K"
             },
             "tag": {}
           }
@@ -6267,7 +6274,7 @@
           "properties": {
             "registry": {},
             "repository": {
-              "$ref": "#/$defs/J"
+              "$ref": "#/$defs/K"
             },
             "tag": {
               "description": "Optional: Image-specific pull policy override\npullPolicy: \"Always\""
@@ -6510,7 +6517,7 @@
               "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/n"
+              "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/e"

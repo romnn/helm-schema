@@ -2926,6 +2926,9 @@
               "maximum": 1000000,
               "minimum": 0,
               "type": "integer"
+            },
+            {
+              "type": "string"
             }
           ]
         }
@@ -21797,20 +21800,6 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "rules": {
-                    "additionalProperties": {
-                      "$ref": "#/$defs/3T"
-                    },
-                    "description": "gateway.hostnames -- Hostnames to match for routing traffic.\nExample:\n```yaml\n- trino.example.com\n- trino-prod.example.com\n```\ngateway.rules -- HTTPRoute rules for routing traffic to Trino.\nEach rule can use either the simplified `path` format for basic routing,\nor the full `matches` format for advanced use cases.\nSimple path-based routing example:\n```yaml\n- path:\ntype: PathPrefix\nvalue: /\nfilters:\n- type: RequestHeaderModifier\nrequestHeaderModifier:\nset:\n- name: X-Forwarded-Proto\nvalue: https\n```\nAdvanced matching example with headers:\n```yaml\n- matches:\n- path:\ntype: PathPrefix\nvalue: /ui\nheaders:\n- name: X-Custom-Header\nvalue: custom-value\nfilters:\n- type: RequestHeaderModifier\nrequestHeaderModifier:\nset:\n- name: X-Forwarded-Proto\nvalue: https\n```",
-                    "items": {
-                      "$ref": "#/$defs/3T"
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
                   "hostnames": {
                     "anyOf": [
                       {
@@ -21867,6 +21856,20 @@
                           "$ref": "#/$defs/providerShared8"
                         }
                       ]
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "rules": {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/3T"
+                    },
+                    "description": "gateway.hostnames -- Hostnames to match for routing traffic.\nExample:\n```yaml\n- trino.example.com\n- trino-prod.example.com\n```\ngateway.rules -- HTTPRoute rules for routing traffic to Trino.\nEach rule can use either the simplified `path` format for basic routing,\nor the full `matches` format for advanced use cases.\nSimple path-based routing example:\n```yaml\n- path:\ntype: PathPrefix\nvalue: /\nfilters:\n- type: RequestHeaderModifier\nrequestHeaderModifier:\nset:\n- name: X-Forwarded-Proto\nvalue: https\n```\nAdvanced matching example with headers:\n```yaml\n- matches:\n- path:\ntype: PathPrefix\nvalue: /ui\nheaders:\n- name: X-Custom-Header\nvalue: custom-value\nfilters:\n- type: RequestHeaderModifier\nrequestHeaderModifier:\nset:\n- name: X-Forwarded-Proto\nvalue: https\n```",
+                    "items": {
+                      "$ref": "#/$defs/3T"
                     }
                   }
                 }

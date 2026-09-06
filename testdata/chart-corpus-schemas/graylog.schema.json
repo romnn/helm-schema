@@ -267,7 +267,7 @@
     "19": {
       "properties": {
         "opensearch": {
-          "$ref": "#/$defs/1o"
+          "$ref": "#/$defs/1n"
         }
       },
       "required": [
@@ -890,12 +890,12 @@
       "properties": {
         "opensearch": {
           "properties": {
-            "extraVolumeMounts": {
+            "extraVolumes": {
               "type": "string"
             }
           },
           "required": [
-            "extraVolumeMounts"
+            "extraVolumes"
           ],
           "type": "object"
         }
@@ -909,12 +909,12 @@
       "properties": {
         "opensearch": {
           "properties": {
-            "extraVolumes": {
+            "extraVolumeMounts": {
               "type": "string"
             }
           },
           "required": [
-            "extraVolumes"
+            "extraVolumeMounts"
           ],
           "type": "object"
         }
@@ -1031,14 +1031,6 @@
       ]
     },
     "1n": {
-      "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
-      "format": "date-time",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "1o": {
       "properties": {
         "graylog": {
           "$ref": "#/$defs/36"
@@ -1048,6 +1040,14 @@
         "graylog"
       ],
       "type": "object"
+    },
+    "1o": {
+      "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "1p": {
       "properties": {
@@ -1616,7 +1616,7 @@
     "2O": {
       "properties": {
         "graylog": {
-          "$ref": "#/$defs/1g"
+          "$ref": "#/$defs/6k"
         }
       },
       "required": [
@@ -1625,6 +1625,17 @@
       "type": "object"
     },
     "2P": {
+      "properties": {
+        "graylog": {
+          "$ref": "#/$defs/1g"
+        }
+      },
+      "required": [
+        "graylog"
+      ],
+      "type": "object"
+    },
+    "2Q": {
       "not": {
         "properties": {
           "opensearch": {
@@ -1645,7 +1656,7 @@
         "type": "object"
       }
     },
-    "2Q": {
+    "2R": {
       "properties": {
         "opensearch": {
           "$ref": "#/$defs/6j"
@@ -1656,7 +1667,7 @@
       ],
       "type": "object"
     },
-    "2R": {
+    "2S": {
       "properties": {
         "opensearch": {
           "$ref": "#/$defs/1T"
@@ -1667,23 +1678,12 @@
       ],
       "type": "object"
     },
-    "2S": {
+    "2T": {
       "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
       "type": [
         "string",
         "null"
       ]
-    },
-    "2T": {
-      "properties": {
-        "graylog": {
-          "$ref": "#/$defs/6k"
-        }
-      },
-      "required": [
-        "graylog"
-      ],
-      "type": "object"
     },
     "2U": {
       "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
@@ -1822,7 +1822,7 @@
           "$ref": "#/$defs/2L"
         },
         "terminationGracePeriodSeconds": {
-          "$ref": "#/$defs/40"
+          "$ref": "#/$defs/3Z"
         },
         "timeoutSeconds": {
           "$ref": "#/$defs/5i"
@@ -1922,10 +1922,10 @@
           "$ref": "#/$defs/1p"
         },
         {
-          "$ref": "#/$defs/2Q"
+          "$ref": "#/$defs/2R"
         },
         {
-          "$ref": "#/$defs/2P"
+          "$ref": "#/$defs/2Q"
         },
         {
           "$ref": "#/$defs/5L"
@@ -2067,7 +2067,7 @@
           "$ref": "#/$defs/F"
         },
         {
-          "$ref": "#/$defs/4W"
+          "$ref": "#/$defs/4X"
         }
       ]
     },
@@ -2508,7 +2508,7 @@
               "x-kubernetes-map-type": "atomic"
             },
             "fieldRef": {
-              "$ref": "#/$defs/4O"
+              "$ref": "#/$defs/4P"
             },
             "resourceFieldRef": {
               "$ref": "#/$defs/4w"
@@ -2806,6 +2806,38 @@
       ]
     },
     "3E": {
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/21"
+              },
+              {
+                "$ref": "#/$defs/t"
+              },
+              {
+                "$ref": "#/$defs/1g"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "ports": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/4M"
+                },
+                "items": {
+                  "$ref": "#/$defs/4M"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "3F": {
       "additionalProperties": false,
       "description": "VolumeMount describes a mounting of a Volume within a container.",
       "properties": {
@@ -2853,38 +2885,6 @@
       "type": [
         "object",
         "null"
-      ]
-    },
-    "3F": {
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/21"
-              },
-              {
-                "$ref": "#/$defs/t"
-              },
-              {
-                "$ref": "#/$defs/1g"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "ports": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/4Q"
-                },
-                "items": {
-                  "$ref": "#/$defs/4Q"
-                }
-              }
-            }
-          }
-        }
       ]
     },
     "3G": {
@@ -2972,7 +2972,7 @@
       "description": "DownwardAPIVolumeFile represents information to create the file containing the pod field",
       "properties": {
         "fieldRef": {
-          "$ref": "#/$defs/4O"
+          "$ref": "#/$defs/4P"
         },
         "mode": {
           "description": "Optional: mode bits used to set permissions on this file, must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
@@ -3330,7 +3330,7 @@
           "$ref": "#/$defs/4G"
         },
         "creationTimestamp": {
-          "$ref": "#/$defs/1n"
+          "$ref": "#/$defs/1o"
         },
         "deletionGracePeriodSeconds": {
           "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -3341,7 +3341,7 @@
           ]
         },
         "deletionTimestamp": {
-          "$ref": "#/$defs/1n"
+          "$ref": "#/$defs/1o"
         },
         "finalizers": {
           "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -3421,7 +3421,7 @@
                 ]
               },
               "time": {
-                "$ref": "#/$defs/1n"
+                "$ref": "#/$defs/1o"
               }
             },
             "type": [
@@ -3568,16 +3568,6 @@
       ]
     },
     "3Y": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "$ref": "#/$defs/4i"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "3Z": {
       "additionalProperties": {},
       "properties": {
         "ports": {
@@ -3589,6 +3579,14 @@
           }
         }
       }
+    },
+    "3Z": {
+      "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
+      "format": "int64",
+      "type": [
+        "integer",
+        "null"
+      ]
     },
     "3a": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
@@ -4067,7 +4065,7 @@
               "$ref": "#/$defs/2I"
             },
             "runAsNonRoot": {
-              "$ref": "#/$defs/4M"
+              "$ref": "#/$defs/4N"
             },
             "runAsUser": {
               "$ref": "#/$defs/2E"
@@ -4159,7 +4157,7 @@
         "volumeMounts": {
           "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
           "items": {
-            "$ref": "#/$defs/3E"
+            "$ref": "#/$defs/3F"
           },
           "type": [
             "array",
@@ -4299,7 +4297,7 @@
     "3z": {
       "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
       "items": {
-        "$ref": "#/$defs/3E"
+        "$ref": "#/$defs/3F"
       },
       "type": "array",
       "x-kubernetes-patch-merge-key": "mountPath",
@@ -4339,14 +4337,6 @@
       "type": "object"
     },
     "40": {
-      "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
-      "format": "int64",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "41": {
       "allOf": [
         {
           "$ref": "#/$defs/2"
@@ -4359,7 +4349,7 @@
         }
       ]
     },
-    "42": {
+    "41": {
       "anyOf": [
         {
           "$ref": "#/$defs/9"
@@ -4385,7 +4375,7 @@
         }
       ]
     },
-    "43": {
+    "42": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/l"
@@ -4396,7 +4386,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "44": {
+    "43": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/l"
@@ -4407,7 +4397,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "45": {
+    "44": {
       "additionalProperties": false,
       "description": "secret defines the Secret containing data to use for the targets.",
       "properties": {
@@ -4418,7 +4408,7 @@
           "$ref": "#/$defs/2N"
         },
         "optional": {
-          "$ref": "#/$defs/7i"
+          "$ref": "#/$defs/7j"
         }
       },
       "required": [
@@ -4427,7 +4417,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "46": {
+    "45": {
       "not": {
         "allOf": [
           {
@@ -4441,7 +4431,7 @@
         ]
       }
     },
-    "47": {
+    "46": {
       "additionalProperties": false,
       "description": "configMap defines the ConfigMap containing data to use for the targets.",
       "properties": {
@@ -4462,6 +4452,16 @@
       ],
       "type": "object",
       "x-kubernetes-map-type": "atomic"
+    },
+    "47": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "$ref": "#/$defs/4i"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
     },
     "48": {
       "description": "A list of node selector requirements by node's labels.",
@@ -4759,13 +4759,28 @@
       "type": "string"
     },
     "4M": {
+      "additionalProperties": {},
+      "properties": {
+        "port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/4H"
+            }
+          ]
+        }
+      }
+    },
+    "4N": {
       "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "4N": {
+    "4O": {
       "anyOf": [
         {
           "$ref": "#/$defs/1"
@@ -4782,7 +4797,7 @@
         }
       ]
     },
-    "4O": {
+    "4P": {
       "additionalProperties": false,
       "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
       "properties": {
@@ -4807,7 +4822,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "4P": {
+    "4Q": {
       "anyOf": [
         {
           "not": {
@@ -4856,14 +4871,6 @@
         }
       ]
     },
-    "4Q": {
-      "additionalProperties": {},
-      "properties": {
-        "port": {
-          "$ref": "#/$defs/4H"
-        }
-      }
-    },
     "4R": {
       "anyOf": [
         {
@@ -4898,7 +4905,7 @@
             "graylog": {
               "properties": {
                 "plugins": {
-                  "$ref": "#/$defs/7q"
+                  "$ref": "#/$defs/7p"
                 }
               },
               "required": [
@@ -4934,7 +4941,7 @@
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/7a"
+                "$ref": "#/$defs/7b"
               },
               "type": "object"
             },
@@ -4943,7 +4950,7 @@
             },
             {
               "items": {
-                "$ref": "#/$defs/7a"
+                "$ref": "#/$defs/7b"
               },
               "type": "array"
             }
@@ -4960,6 +4967,34 @@
       "x-kubernetes-map-type": "atomic"
     },
     "4V": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "graylog": {
+                "$ref": "#/$defs/7l"
+              }
+            },
+            "required": [
+              "graylog"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "graylog": {
+              "$ref": "#/$defs/6S"
+            }
+          },
+          "required": [
+            "graylog"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "4W": {
       "not": {
         "properties": {
           "community-operator": {
@@ -4996,17 +5031,17 @@
         "type": "object"
       }
     },
-    "4W": {
+    "4X": {
       "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
       "type": "null"
     },
-    "4X": {
+    "4Y": {
       "anyOf": [
         {
           "not": {
             "properties": {
               "graylog": {
-                "$ref": "#/$defs/7w"
+                "$ref": "#/$defs/7v"
               }
             },
             "required": [
@@ -5028,7 +5063,7 @@
         }
       ]
     },
-    "4Y": {
+    "4Z": {
       "anyOf": [
         {
           "not": {
@@ -5047,34 +5082,6 @@
           "properties": {
             "graylog": {
               "$ref": "#/$defs/3o"
-            }
-          },
-          "required": [
-            "graylog"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "4Z": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "graylog": {
-                "$ref": "#/$defs/7R"
-              }
-            },
-            "required": [
-              "graylog"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "graylog": {
-              "$ref": "#/$defs/7D"
             }
           },
           "required": [
@@ -5223,10 +5230,10 @@
           "$ref": "#/$defs/5H"
         },
         "kind": {
-          "$ref": "#/$defs/7G"
+          "$ref": "#/$defs/7F"
         },
         "name": {
-          "$ref": "#/$defs/7H"
+          "$ref": "#/$defs/7G"
         },
         "namespace": {
           "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -5478,10 +5485,10 @@
           "$ref": "#/$defs/5H"
         },
         "kind": {
-          "$ref": "#/$defs/7G"
+          "$ref": "#/$defs/7F"
         },
         "name": {
-          "$ref": "#/$defs/7H"
+          "$ref": "#/$defs/7G"
         }
       },
       "required": [
@@ -5720,7 +5727,7 @@
       "additionalProperties": {},
       "properties": {
         "externalIPs": {
-          "$ref": "#/$defs/4N"
+          "$ref": "#/$defs/4O"
         }
       }
     },
@@ -5837,7 +5844,7 @@
           "not": {
             "properties": {
               "graylog": {
-                "$ref": "#/$defs/7S"
+                "$ref": "#/$defs/7R"
               }
             },
             "required": [
@@ -5849,7 +5856,7 @@
         {
           "properties": {
             "graylog": {
-              "$ref": "#/$defs/7E"
+              "$ref": "#/$defs/7C"
             }
           },
           "required": [
@@ -5862,9 +5869,37 @@
     "51": {
       "anyOf": [
         {
+          "not": {
+            "properties": {
+              "graylog": {
+                "$ref": "#/$defs/7S"
+              }
+            },
+            "required": [
+              "graylog"
+            ],
+            "type": "object"
+          }
+        },
+        {
           "properties": {
             "graylog": {
-              "$ref": "#/$defs/7C"
+              "$ref": "#/$defs/7D"
+            }
+          },
+          "required": [
+            "graylog"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "52": {
+      "anyOf": [
+        {
+          "properties": {
+            "graylog": {
+              "$ref": "#/$defs/7B"
             }
           },
           "required": [
@@ -5877,34 +5912,6 @@
             "properties": {
               "graylog": {
                 "$ref": "#/$defs/7Q"
-              }
-            },
-            "required": [
-              "graylog"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "52": {
-      "anyOf": [
-        {
-          "properties": {
-            "graylog": {
-              "$ref": "#/$defs/28"
-            }
-          },
-          "required": [
-            "graylog"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "graylog": {
-                "$ref": "#/$defs/3r"
               }
             },
             "required": [
@@ -6034,34 +6041,6 @@
       "type": "object"
     },
     "58": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "graylog": {
-                "$ref": "#/$defs/7l"
-              }
-            },
-            "required": [
-              "graylog"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "graylog": {
-              "$ref": "#/$defs/6S"
-            }
-          },
-          "required": [
-            "graylog"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "59": {
       "allOf": [
         {
           "if": {
@@ -6119,6 +6098,34 @@
                 }
               }
             ]
+          }
+        }
+      ]
+    },
+    "59": {
+      "anyOf": [
+        {
+          "properties": {
+            "graylog": {
+              "$ref": "#/$defs/28"
+            }
+          },
+          "required": [
+            "graylog"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "graylog": {
+                "$ref": "#/$defs/3r"
+              }
+            },
+            "required": [
+              "graylog"
+            ],
+            "type": "object"
           }
         }
       ]
@@ -6447,10 +6454,10 @@
               "$ref": "#/$defs/M"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/44"
+              "$ref": "#/$defs/43"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/43"
+              "$ref": "#/$defs/42"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/M"
@@ -6579,7 +6586,7 @@
         {
           "properties": {
             "graylog": {
-              "$ref": "#/$defs/7p"
+              "$ref": "#/$defs/7o"
             }
           },
           "required": [
@@ -6590,32 +6597,31 @@
       ]
     },
     "5c": {
-      "anyOf": [
-        {
+      "properties": {
+        "opensearch": {
           "properties": {
-            "graylog": {
-              "$ref": "#/$defs/24"
+            "securityConfig": {
+              "properties": {
+                "rolesMappingSecret": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "rolesMappingSecret"
+              ],
+              "type": "object"
             }
           },
           "required": [
-            "graylog"
+            "securityConfig"
           ],
           "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "graylog": {
-                "$ref": "#/$defs/3t"
-              }
-            },
-            "required": [
-              "graylog"
-            ],
-            "type": "object"
-          }
         }
-      ]
+      },
+      "required": [
+        "opensearch"
+      ],
+      "type": "object"
     },
     "5d": {
       "not": {
@@ -6830,6 +6836,34 @@
       "type": "object"
     },
     "5n": {
+      "anyOf": [
+        {
+          "properties": {
+            "graylog": {
+              "$ref": "#/$defs/24"
+            }
+          },
+          "required": [
+            "graylog"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "graylog": {
+                "$ref": "#/$defs/3t"
+              }
+            },
+            "required": [
+              "graylog"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "5o": {
       "properties": {
         "opensearch": {
           "$ref": "#/$defs/5C"
@@ -6840,12 +6874,12 @@
       ],
       "type": "object"
     },
-    "5o": {
+    "5p": {
       "anyOf": [
         {
           "properties": {
             "graylog": {
-              "$ref": "#/$defs/7u"
+              "$ref": "#/$defs/7t"
             }
           },
           "required": [
@@ -6874,17 +6908,17 @@
         }
       ]
     },
-    "5p": {
+    "5q": {
       "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
       "format": "int32",
       "type": "integer"
     },
-    "5q": {
+    "5r": {
       "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
       "format": "int32",
       "type": "null"
     },
-    "5r": {
+    "5s": {
       "properties": {
         "graylog": {
           "properties": {
@@ -6911,7 +6945,7 @@
       ],
       "type": "object"
     },
-    "5s": {
+    "5t": {
       "properties": {
         "opensearch": {
           "$ref": "#/$defs/5Q"
@@ -6922,7 +6956,7 @@
       ],
       "type": "object"
     },
-    "5t": {
+    "5u": {
       "anyOf": [
         {
           "description": "Members is the number of members in the replica set",
@@ -6933,7 +6967,7 @@
         }
       ]
     },
-    "5u": {
+    "5v": {
       "properties": {
         "opensearch": {
           "properties": {
@@ -6960,11 +6994,11 @@
       ],
       "type": "object"
     },
-    "5v": {
+    "5w": {
       "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
       "type": "null"
     },
-    "5w": {
+    "5x": {
       "properties": {
         "opensearch": {
           "properties": {
@@ -6976,33 +7010,6 @@
               },
               "required": [
                 "actionGroupsSecret"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "securityConfig"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "opensearch"
-      ],
-      "type": "object"
-    },
-    "5x": {
-      "properties": {
-        "opensearch": {
-          "properties": {
-            "securityConfig": {
-              "properties": {
-                "rolesMappingSecret": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "rolesMappingSecret"
               ],
               "type": "object"
             }
@@ -7106,7 +7113,7 @@
     "64": {
       "properties": {
         "gatewayApi": {
-          "$ref": "#/$defs/7b"
+          "$ref": "#/$defs/7c"
         }
       },
       "required": [
@@ -7882,16 +7889,16 @@
       "type": "string"
     },
     "70": {
-      "properties": {
-        "livenessProbe": {
-          "enum": [
-            null
-          ]
-        }
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "string"
+          }
+        ]
       },
-      "required": [
-        "livenessProbe"
-      ],
       "type": "object"
     },
     "71": {
@@ -7999,28 +8006,15 @@
       "type": "object"
     },
     "7A": {
-      "items": {
-        "anyOf": [
-          {
-            "type": "object"
-          },
-          {
-            "type": "string"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "7B": {
       "properties": {
-        "community": {}
+        "readinessProbe": {}
       },
       "required": [
-        "community"
+        "readinessProbe"
       ],
       "type": "object"
     },
-    "7C": {
+    "7B": {
       "properties": {
         "journal": {
           "enum": [
@@ -8033,7 +8027,7 @@
       ],
       "type": "object"
     },
-    "7D": {
+    "7C": {
       "properties": {
         "metrics": {
           "enum": [
@@ -8046,7 +8040,7 @@
       ],
       "type": "object"
     },
-    "7E": {
+    "7D": {
       "properties": {
         "options": {
           "enum": [
@@ -8059,7 +8053,7 @@
       ],
       "type": "object"
     },
-    "7F": {
+    "7E": {
       "properties": {
         "livenessProbe": {}
       },
@@ -8068,15 +8062,15 @@
       ],
       "type": "object"
     },
-    "7G": {
+    "7F": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "7H": {
+    "7G": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
     },
-    "7I": {
+    "7H": {
       "properties": {
         "master": {
           "enum": [
@@ -8089,7 +8083,7 @@
       ],
       "type": "object"
     },
-    "7J": {
+    "7I": {
       "properties": {
         "secret": {
           "enum": [
@@ -8102,7 +8096,7 @@
       ],
       "type": "object"
     },
-    "7K": {
+    "7J": {
       "properties": {
         "rootUsername": {}
       },
@@ -8111,12 +8105,21 @@
       ],
       "type": "object"
     },
-    "7L": {
+    "7K": {
       "properties": {
         "startupProbe": {}
       },
       "required": [
         "startupProbe"
+      ],
+      "type": "object"
+    },
+    "7L": {
+      "properties": {
+        "community": {}
+      },
+      "required": [
+        "community"
       ],
       "type": "object"
     },
@@ -8298,6 +8301,19 @@
       ]
     },
     "7a": {
+      "properties": {
+        "livenessProbe": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "livenessProbe"
+      ],
+      "type": "object"
+    },
+    "7b": {
       "additionalProperties": {},
       "properties": {
         "name": {},
@@ -8306,7 +8322,7 @@
       },
       "type": "object"
     },
-    "7b": {
+    "7c": {
       "properties": {
         "parentRefs": {
           "$ref": "#/$defs/t"
@@ -8317,7 +8333,7 @@
       ],
       "type": "object"
     },
-    "7c": {
+    "7d": {
       "properties": {
         "podDisruptionBudget": {}
       },
@@ -8326,7 +8342,7 @@
       ],
       "type": "object"
     },
-    "7d": {
+    "7e": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -8334,7 +8350,7 @@
         }
       }
     },
-    "7e": {
+    "7f": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -8342,7 +8358,7 @@
         }
       }
     },
-    "7f": {
+    "7g": {
       "properties": {
         "rootUsername": {
           "enum": [
@@ -8355,7 +8371,7 @@
       ],
       "type": "object"
     },
-    "7g": {
+    "7h": {
       "properties": {
         "startupProbe": {
           "enum": [
@@ -8368,7 +8384,7 @@
       ],
       "type": "object"
     },
-    "7h": {
+    "7i": {
       "properties": {
         "provisioner": {
           "enum": [
@@ -8381,22 +8397,9 @@
       ],
       "type": "object"
     },
-    "7i": {
+    "7j": {
       "description": "Specify whether the Secret or its key must be defined",
       "type": "boolean"
-    },
-    "7j": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "object"
-          },
-          {
-            "type": "string"
-          }
-        ]
-      },
-      "type": "object"
     },
     "7k": {
       "additionalProperties": false,
@@ -8406,10 +8409,10 @@
           "$ref": "#/$defs/M"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/44"
+          "$ref": "#/$defs/43"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/43"
+          "$ref": "#/$defs/42"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/M"
@@ -8465,15 +8468,6 @@
     },
     "7o": {
       "properties": {
-        "readinessProbe": {}
-      },
-      "required": [
-        "readinessProbe"
-      ],
-      "type": "object"
-    },
-    "7p": {
-      "properties": {
         "geoip": {
           "enum": [
             null
@@ -8485,7 +8479,7 @@
       ],
       "type": "object"
     },
-    "7q": {
+    "7p": {
       "properties": {
         "proxy": {
           "enum": [
@@ -8498,7 +8492,7 @@
       ],
       "type": "object"
     },
-    "7r": {
+    "7q": {
       "properties": {
         "input": {
           "enum": [
@@ -8511,7 +8505,7 @@
       ],
       "type": "object"
     },
-    "7s": {
+    "7r": {
       "properties": {
         "istio": {
           "enum": [
@@ -8524,7 +8518,7 @@
       ],
       "type": "object"
     },
-    "7t": {
+    "7s": {
       "properties": {
         "provisioner": {}
       },
@@ -8533,7 +8527,7 @@
       ],
       "type": "object"
     },
-    "7u": {
+    "7t": {
       "properties": {
         "init": {
           "enum": [
@@ -8546,7 +8540,7 @@
       ],
       "type": "object"
     },
-    "7v": {
+    "7u": {
       "properties": {
         "rbac": {
           "enum": [
@@ -8559,7 +8553,7 @@
       ],
       "type": "object"
     },
-    "7w": {
+    "7v": {
       "properties": {
         "opensearch": {}
       },
@@ -8568,14 +8562,14 @@
       ],
       "type": "object"
     },
-    "7x": {
+    "7w": {
       "additionalProperties": {},
       "properties": {
         "secretName": {}
       },
       "type": "object"
     },
-    "7y": {
+    "7x": {
       "properties": {
         "gatewayApi": {}
       },
@@ -8584,13 +8578,26 @@
       ],
       "type": "object"
     },
-    "7z": {
+    "7y": {
       "additionalProperties": {},
       "properties": {
         "gatewayApi": {
           "type": "object"
         }
       }
+    },
+    "7z": {
+      "items": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "type": "array"
     },
     "8": {
       "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
@@ -8964,7 +8971,7 @@
     },
     "O": {
       "not": {
-        "$ref": "#/$defs/2R"
+        "$ref": "#/$defs/2S"
       }
     },
     "P": {
@@ -9373,7 +9380,7 @@
           "$ref": "#/$defs/8"
         },
         {
-          "$ref": "#/$defs/4W"
+          "$ref": "#/$defs/4X"
         }
       ]
     },
@@ -9732,7 +9739,7 @@
           "$ref": "#/$defs/5"
         },
         {
-          "$ref": "#/$defs/5v"
+          "$ref": "#/$defs/5w"
         },
         {
           "$ref": "#/$defs/9"
@@ -10258,7 +10265,7 @@
                 "description": "Represents a Fibre Channel volume. Fibre Channel volumes can only be mounted as read/write once. Fibre Channel volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/2S"
+                    "$ref": "#/$defs/2T"
                   },
                   "lun": {
                     "description": "lun is Optional: FC target lun number",
@@ -10637,7 +10644,7 @@
                 "description": "Represents a Photon Controller persistent disk resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/2S"
+                    "$ref": "#/$defs/2T"
                   },
                   "pdID": {
                     "description": "pdID is the ID that identifies Photon Controller persistent disk",
@@ -11056,7 +11063,7 @@
                 "description": "Represents a StorageOS persistent volume resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/2S"
+                    "$ref": "#/$defs/2T"
                   },
                   "readOnly": {
                     "$ref": "#/$defs/38"
@@ -11199,10 +11206,10 @@
     "r": {
       "anyOf": [
         {
-          "$ref": "#/$defs/2Q"
+          "$ref": "#/$defs/2R"
         },
         {
-          "$ref": "#/$defs/2P"
+          "$ref": "#/$defs/2Q"
         }
       ]
     },
@@ -11476,7 +11483,7 @@
                 "not": {
                   "properties": {
                     "graylog": {
-                      "$ref": "#/$defs/7L"
+                      "$ref": "#/$defs/7K"
                     }
                   },
                   "required": [
@@ -11488,7 +11495,7 @@
               {
                 "properties": {
                   "graylog": {
-                    "$ref": "#/$defs/7g"
+                    "$ref": "#/$defs/7h"
                   }
                 },
                 "required": [
@@ -11530,7 +11537,7 @@
             }
           },
           {
-            "$ref": "#/$defs/7v"
+            "$ref": "#/$defs/7u"
           }
         ]
       },
@@ -11548,7 +11555,7 @@
                 "not": {
                   "properties": {
                     "graylog": {
-                      "$ref": "#/$defs/7t"
+                      "$ref": "#/$defs/7s"
                     }
                   },
                   "required": [
@@ -11560,7 +11567,7 @@
               {
                 "properties": {
                   "graylog": {
-                    "$ref": "#/$defs/7h"
+                    "$ref": "#/$defs/7i"
                   }
                 },
                 "required": [
@@ -11619,7 +11626,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/2T"
+        "$ref": "#/$defs/2O"
       },
       "then": {
         "allOf": [
@@ -11757,7 +11764,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1o"
+        "$ref": "#/$defs/1n"
       },
       "then": {
         "allOf": [
@@ -11990,7 +11997,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/46"
+                "$ref": "#/$defs/45"
               }
             ]
           },
@@ -12003,7 +12010,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/46"
+                "$ref": "#/$defs/45"
               }
             ]
           },
@@ -12193,7 +12200,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/51"
+            "$ref": "#/$defs/52"
           }
         ]
       },
@@ -12246,7 +12253,7 @@
                 "not": {
                   "properties": {
                     "graylog": {
-                      "$ref": "#/$defs/7o"
+                      "$ref": "#/$defs/7A"
                     }
                   },
                   "required": [
@@ -12422,7 +12429,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/4Z"
+            "$ref": "#/$defs/50"
           }
         ]
       },
@@ -12453,7 +12460,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/5r"
+        "$ref": "#/$defs/5s"
       },
       "then": {
         "additionalProperties": {},
@@ -12498,7 +12505,7 @@
               {
                 "properties": {
                   "graylog": {
-                    "$ref": "#/$defs/7f"
+                    "$ref": "#/$defs/7g"
                   }
                 },
                 "required": [
@@ -12510,7 +12517,7 @@
                 "not": {
                   "properties": {
                     "graylog": {
-                      "$ref": "#/$defs/7K"
+                      "$ref": "#/$defs/7J"
                     }
                   },
                   "required": [
@@ -12645,7 +12652,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2T"
+            "$ref": "#/$defs/2O"
           },
           {
             "properties": {
@@ -12752,7 +12759,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/41"
+            "$ref": "#/$defs/40"
           },
           {
             "$ref": "#/$defs/4m"
@@ -13263,10 +13270,10 @@
                                 "description": "ca defines the Certificate authority used when verifying server certificates.",
                                 "properties": {
                                   "configMap": {
-                                    "$ref": "#/$defs/47"
+                                    "$ref": "#/$defs/46"
                                   },
                                   "secret": {
-                                    "$ref": "#/$defs/45"
+                                    "$ref": "#/$defs/44"
                                   }
                                 },
                                 "type": "object"
@@ -13280,10 +13287,10 @@
                                 "description": "cert defines the Client certificate to present when doing client-authentication.",
                                 "properties": {
                                   "configMap": {
-                                    "$ref": "#/$defs/47"
+                                    "$ref": "#/$defs/46"
                                   },
                                   "secret": {
-                                    "$ref": "#/$defs/45"
+                                    "$ref": "#/$defs/44"
                                   }
                                 },
                                 "type": "object"
@@ -13311,7 +13318,7 @@
                                     "$ref": "#/$defs/2N"
                                   },
                                   "optional": {
-                                    "$ref": "#/$defs/7i"
+                                    "$ref": "#/$defs/7j"
                                   }
                                 },
                                 "required": [
@@ -13427,7 +13434,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/2O"
+        "$ref": "#/$defs/2P"
       },
       "then": {
         "allOf": [
@@ -13670,7 +13677,7 @@
                   "opensearch": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/58"
+                        "$ref": "#/$defs/4V"
                       },
                       {
                         "type": "object"
@@ -13711,7 +13718,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/50"
+                        "$ref": "#/$defs/51"
                       }
                     ]
                   }
@@ -13857,13 +13864,13 @@
               "replicas": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/5p"
+                    "$ref": "#/$defs/5q"
                   },
                   {
                     "$ref": "#/$defs/9"
                   },
                   {
-                    "$ref": "#/$defs/5q"
+                    "$ref": "#/$defs/5r"
                   },
                   {
                     "$ref": "#/$defs/7"
@@ -13892,7 +13899,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1d"
+                  "$ref": "#/$defs/1e"
                 }
               }
             ]
@@ -13904,7 +13911,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1d"
+                  "$ref": "#/$defs/1e"
                 }
               }
             ]
@@ -13944,7 +13951,7 @@
               "opensearch": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/7v"
+                    "$ref": "#/$defs/7u"
                   },
                   {
                     "type": "object"
@@ -14174,13 +14181,13 @@
                   "config": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/7j"
+                        "$ref": "#/$defs/70"
                       },
                       {
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/7A"
+                        "$ref": "#/$defs/7z"
                       }
                     ],
                     "description": "such as opensearch.yml and log4j2.properties"
@@ -14204,7 +14211,7 @@
                 "not": {
                   "properties": {
                     "graylog": {
-                      "$ref": "#/$defs/7y"
+                      "$ref": "#/$defs/7x"
                     }
                   },
                   "required": [
@@ -14513,7 +14520,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "members": {
-                        "$ref": "#/$defs/5t"
+                        "$ref": "#/$defs/5u"
                       }
                     }
                   }
@@ -14649,7 +14656,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/1e"
               },
               {
                 "$ref": "#/$defs/5W"
@@ -14662,7 +14669,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/1e"
               },
               {
                 "$ref": "#/$defs/5W"
@@ -14712,7 +14719,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/2T"
+            "$ref": "#/$defs/2O"
           },
           {
             "properties": {
@@ -14732,7 +14739,7 @@
             "$ref": "#/$defs/1Q"
           },
           {
-            "$ref": "#/$defs/1o"
+            "$ref": "#/$defs/1n"
           }
         ]
       },
@@ -14878,7 +14885,7 @@
                   "graylog": {
                     "properties": {
                       "service": {
-                        "$ref": "#/$defs/7I"
+                        "$ref": "#/$defs/7H"
                       }
                     },
                     "required": [
@@ -14953,7 +14960,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/5n"
+                "$ref": "#/$defs/5o"
               }
             ]
           },
@@ -14966,7 +14973,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/5n"
+                "$ref": "#/$defs/5o"
               }
             ]
           }
@@ -15215,7 +15222,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/2O"
+            "$ref": "#/$defs/2P"
           }
         ]
       },
@@ -15284,7 +15291,7 @@
                 "description": "Additional input ports for receiving logs from servers\nNote: Name must be in IANA_SVC_NAME (at most 15 characters, matching regex [a-z0-9]([a-z0-9-]*[a-z0-9])* and it must contains at least one letter [a-z], hyphens cannot be adjacent to other hyphens)\nNote: Array must be sorted by port order\ntcp:\nservice:\nname: your-tcp-service-name\ntype: LoadBalancer\nloadBalancerIP:\ntrafficDistribution:\nKubernetes Gateway API TCPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one TCPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: gelf   # optional: overrides default (port name) for all ports\nports:\n- name: gelf\nport: 12222\nudp:\nservice:\nname: your-udp-service-name\ntype: ClusterIP\ntrafficDistribution:\nKubernetes Gateway API UDPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one UDPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: syslog   # optional: overrides default (port name) for all ports\nports:\n- name: syslog\nport: 12222",
                 "properties": {
                   "tcp": {
-                    "$ref": "#/$defs/7z"
+                    "$ref": "#/$defs/7y"
                   }
                 }
               }
@@ -15350,7 +15357,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/2R"
+                "$ref": "#/$defs/2S"
               }
             ]
           },
@@ -15363,7 +15370,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/2R"
+                "$ref": "#/$defs/2S"
               }
             ]
           }
@@ -15540,7 +15547,7 @@
             }
           },
           {
-            "$ref": "#/$defs/1o"
+            "$ref": "#/$defs/1n"
           }
         ]
       },
@@ -16042,7 +16049,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/5c"
+            "$ref": "#/$defs/5n"
           }
         ]
       },
@@ -16088,7 +16095,7 @@
             }
           },
           {
-            "$ref": "#/$defs/1o"
+            "$ref": "#/$defs/1n"
           }
         ]
       },
@@ -16141,7 +16148,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1e"
+                  "$ref": "#/$defs/1d"
                 }
               }
             ]
@@ -16153,7 +16160,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1e"
+                  "$ref": "#/$defs/1d"
                 }
               }
             ]
@@ -16854,7 +16861,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/58"
+            "$ref": "#/$defs/4V"
           }
         ]
       },
@@ -16883,7 +16890,7 @@
                 "not": {
                   "properties": {
                     "graylog": {
-                      "$ref": "#/$defs/7c"
+                      "$ref": "#/$defs/7d"
                     }
                   },
                   "required": [
@@ -17034,13 +17041,13 @@
                           "data": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/7j"
+                                "$ref": "#/$defs/70"
                               },
                               {
                                 "type": "null"
                               },
                               {
-                                "$ref": "#/$defs/7A"
+                                "$ref": "#/$defs/7z"
                               }
                             ],
                             "description": "config.yml: |-\ninternal_users.yml: |-\nroles.yml: |-\nroles_mapping.yml: |-\naction_groups.yml: |-\ntenants.yml: |-"
@@ -17072,7 +17079,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/52"
+                        "$ref": "#/$defs/59"
                       }
                     ]
                   }
@@ -17110,7 +17117,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/4X"
+                        "$ref": "#/$defs/4Y"
                       }
                     ]
                   }
@@ -17221,7 +17228,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/5s"
+                "$ref": "#/$defs/5t"
               }
             ]
           },
@@ -17234,7 +17241,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/5s"
+                "$ref": "#/$defs/5t"
               }
             ]
           }
@@ -17623,7 +17630,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/4P"
+                "$ref": "#/$defs/4Q"
               }
             ]
           },
@@ -17633,7 +17640,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/4P"
+                "$ref": "#/$defs/4Q"
               }
             ]
           }
@@ -17668,7 +17675,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1e"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/3"
@@ -17678,7 +17685,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1e"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/2"
@@ -18054,7 +18061,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/5o"
+            "$ref": "#/$defs/5p"
           },
           {
             "anyOf": [
@@ -18152,7 +18159,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/50"
+            "$ref": "#/$defs/51"
           }
         ]
       },
@@ -18510,7 +18517,7 @@
                             "$ref": "#/$defs/2L"
                           },
                           "terminationGracePeriodSeconds": {
-                            "$ref": "#/$defs/40"
+                            "$ref": "#/$defs/3Z"
                           },
                           "timeoutSeconds": {
                             "$ref": "#/$defs/5i"
@@ -20031,7 +20038,7 @@
                                       "$ref": "#/$defs/48"
                                     },
                                     "matchFields": {
-                                      "$ref": "#/$defs/3Y"
+                                      "$ref": "#/$defs/47"
                                     }
                                   },
                                   "type": "object",
@@ -20071,7 +20078,7 @@
                                       "$ref": "#/$defs/48"
                                     },
                                     "matchFields": {
-                                      "$ref": "#/$defs/3Y"
+                                      "$ref": "#/$defs/47"
                                     }
                                   },
                                   "type": [
@@ -20134,11 +20141,11 @@
                 "properties": {
                   "secretMounts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/7d"
+                      "$ref": "#/$defs/7e"
                     },
                     "description": "A list of secrets and their paths to mount inside the pod\nThis is useful for mounting certificates for security and for mounting\nthe X-Pack license",
                     "items": {
-                      "$ref": "#/$defs/7d"
+                      "$ref": "#/$defs/7e"
                     }
                   }
                 }
@@ -21013,7 +21020,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/4Y"
+                        "$ref": "#/$defs/4Z"
                       }
                     ]
                   }
@@ -21089,7 +21096,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1e"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/5X"
@@ -21102,7 +21109,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1e"
+                "$ref": "#/$defs/1d"
               },
               {
                 "$ref": "#/$defs/5X"
@@ -21232,7 +21239,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/4Z"
+                        "$ref": "#/$defs/50"
                       }
                     ]
                   }
@@ -21412,7 +21419,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/52"
+            "$ref": "#/$defs/59"
           }
         ]
       },
@@ -21448,7 +21455,7 @@
               {
                 "properties": {
                   "graylog": {
-                    "$ref": "#/$defs/7s"
+                    "$ref": "#/$defs/7r"
                   }
                 },
                 "required": [
@@ -21499,7 +21506,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/1e"
               }
             ]
           },
@@ -21509,7 +21516,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/1d"
+                "$ref": "#/$defs/1e"
               }
             ]
           }
@@ -21579,7 +21586,7 @@
                 "not": {
                   "properties": {
                     "mongodb": {
-                      "$ref": "#/$defs/7B"
+                      "$ref": "#/$defs/7L"
                     }
                   },
                   "required": [
@@ -21778,13 +21785,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/7x"
+                          "$ref": "#/$defs/7w"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/7x"
+                          "$ref": "#/$defs/7w"
                         },
                         "type": "object"
                       },
@@ -21868,7 +21875,7 @@
               {
                 "properties": {
                   "graylog": {
-                    "$ref": "#/$defs/70"
+                    "$ref": "#/$defs/7a"
                   }
                 },
                 "required": [
@@ -21880,7 +21887,7 @@
                 "not": {
                   "properties": {
                     "graylog": {
-                      "$ref": "#/$defs/7F"
+                      "$ref": "#/$defs/7E"
                     }
                   },
                   "required": [
@@ -22210,7 +22217,7 @@
                 "$ref": "#/$defs/w"
               },
               {
-                "$ref": "#/$defs/5u"
+                "$ref": "#/$defs/5v"
               }
             ]
           },
@@ -22249,7 +22256,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/5x"
+                "$ref": "#/$defs/5c"
               },
               {
                 "$ref": "#/$defs/w"
@@ -22265,7 +22272,7 @@
                 "$ref": "#/$defs/w"
               },
               {
-                "$ref": "#/$defs/5u"
+                "$ref": "#/$defs/5v"
               }
             ]
           },
@@ -22298,25 +22305,12 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/5w"
-              },
-              {
-                "$ref": "#/$defs/2"
-              },
-              {
-                "$ref": "#/$defs/w"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/2"
-              },
-              {
                 "$ref": "#/$defs/5x"
               },
               {
+                "$ref": "#/$defs/2"
+              },
+              {
                 "$ref": "#/$defs/w"
               }
             ]
@@ -22324,7 +22318,20 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/5w"
+                "$ref": "#/$defs/2"
+              },
+              {
+                "$ref": "#/$defs/5c"
+              },
+              {
+                "$ref": "#/$defs/w"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/5x"
               },
               {
                 "$ref": "#/$defs/3"
@@ -22381,7 +22388,7 @@
               {
                 "properties": {
                   "graylog": {
-                    "$ref": "#/$defs/7r"
+                    "$ref": "#/$defs/7q"
                   }
                 },
                 "required": [
@@ -22497,7 +22504,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/5o"
+            "$ref": "#/$defs/5p"
           },
           {
             "$ref": "#/$defs/o"
@@ -23230,7 +23237,7 @@
                                 "$ref": "#/$defs/2I"
                               },
                               "runAsNonRoot": {
-                                "$ref": "#/$defs/4M"
+                                "$ref": "#/$defs/4N"
                               },
                               "runAsUser": {
                                 "$ref": "#/$defs/2E"
@@ -23548,7 +23555,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/5c"
+                        "$ref": "#/$defs/5n"
                       }
                     ]
                   }
@@ -23978,7 +23985,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/5r"
+            "$ref": "#/$defs/5s"
           },
           {
             "properties": {
@@ -24091,7 +24098,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/4Y"
+            "$ref": "#/$defs/4Z"
           }
         ]
       },
@@ -24446,7 +24453,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/51"
+                        "$ref": "#/$defs/52"
                       }
                     ]
                   }
@@ -24626,11 +24633,11 @@
                     "properties": {
                       "tls": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/7e"
+                          "$ref": "#/$defs/7f"
                         },
                         "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
                         "items": {
-                          "$ref": "#/$defs/7e"
+                          "$ref": "#/$defs/7f"
                         }
                       }
                     }
@@ -25025,7 +25032,7 @@
             "$ref": "#/$defs/o"
           },
           {
-            "$ref": "#/$defs/4X"
+            "$ref": "#/$defs/4Y"
           }
         ]
       },
@@ -25099,7 +25106,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/2O"
+            "$ref": "#/$defs/2P"
           }
         ]
       },
@@ -25288,7 +25295,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/41"
+            "$ref": "#/$defs/40"
           },
           {
             "$ref": "#/$defs/4m"
@@ -25407,7 +25414,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/4V"
+                "$ref": "#/$defs/4W"
               },
               {
                 "$ref": "#/$defs/U"
@@ -25420,7 +25427,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/4V"
+                "$ref": "#/$defs/4W"
               },
               {
                 "$ref": "#/$defs/P"
@@ -25614,7 +25621,7 @@
               {
                 "properties": {
                   "graylog": {
-                    "$ref": "#/$defs/7J"
+                    "$ref": "#/$defs/7I"
                   }
                 },
                 "required": [
@@ -25712,13 +25719,13 @@
                         "$ref": "#/$defs/1p"
                       },
                       {
-                        "$ref": "#/$defs/2Q"
+                        "$ref": "#/$defs/2R"
                       },
                       {
                         "$ref": "#/$defs/6v"
                       },
                       {
-                        "$ref": "#/$defs/2P"
+                        "$ref": "#/$defs/2Q"
                       },
                       {
                         "$ref": "#/$defs/1W"
@@ -25823,7 +25830,7 @@
                 "description": "Additional input ports for receiving logs from servers\nNote: Name must be in IANA_SVC_NAME (at most 15 characters, matching regex [a-z0-9]([a-z0-9-]*[a-z0-9])* and it must contains at least one letter [a-z], hyphens cannot be adjacent to other hyphens)\nNote: Array must be sorted by port order\ntcp:\nservice:\nname: your-tcp-service-name\ntype: LoadBalancer\nloadBalancerIP:\ntrafficDistribution:\nKubernetes Gateway API TCPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one TCPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: gelf   # optional: overrides default (port name) for all ports\nports:\n- name: gelf\nport: 12222\nudp:\nservice:\nname: your-udp-service-name\ntype: ClusterIP\ntrafficDistribution:\nKubernetes Gateway API UDPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one UDPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: syslog   # optional: overrides default (port name) for all ports\nports:\n- name: syslog\nport: 12222",
                 "properties": {
                   "udp": {
-                    "$ref": "#/$defs/7z"
+                    "$ref": "#/$defs/7y"
                   }
                 }
               }
@@ -26321,7 +26328,7 @@
               "description": "Additional input ports for receiving logs from servers\nNote: Name must be in IANA_SVC_NAME (at most 15 characters, matching regex [a-z0-9]([a-z0-9-]*[a-z0-9])* and it must contains at least one letter [a-z], hyphens cannot be adjacent to other hyphens)\nNote: Array must be sorted by port order\ntcp:\nservice:\nname: your-tcp-service-name\ntype: LoadBalancer\nloadBalancerIP:\ntrafficDistribution:\nKubernetes Gateway API TCPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one TCPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: gelf   # optional: overrides default (port name) for all ports\nports:\n- name: gelf\nport: 12222\nudp:\nservice:\nname: your-udp-service-name\ntype: ClusterIP\ntrafficDistribution:\nKubernetes Gateway API UDPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one UDPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: syslog   # optional: overrides default (port name) for all ports\nports:\n- name: syslog\nport: 12222",
               "properties": {
                 "tcp": {
-                  "$ref": "#/$defs/3F"
+                  "$ref": "#/$defs/3E"
                 }
               }
             }
@@ -26335,7 +26342,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/7c"
+                  "$ref": "#/$defs/7d"
                 }
               }
             ]
@@ -26372,7 +26379,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/7J"
+                    "$ref": "#/$defs/7I"
                   }
                 ]
               }
@@ -26513,7 +26520,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/7o"
+                  "$ref": "#/$defs/7A"
                 }
               }
             ]
@@ -26524,11 +26531,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/70"
+                "$ref": "#/$defs/7a"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/7F"
+                  "$ref": "#/$defs/7E"
                 }
               }
             ]
@@ -26641,7 +26648,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "tcp": {
-                            "$ref": "#/$defs/3Z"
+                            "$ref": "#/$defs/3Y"
                           }
                         }
                       },
@@ -26663,9 +26670,40 @@
         },
         {
           "if": {
+            "$ref": "#/$defs/6A"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "A service for Graylog web interface",
+                "properties": {
+                  "port": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "maximum": 4294967295,
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/7r"
+                "$ref": "#/$defs/7q"
               },
               {
                 "not": {
@@ -26716,7 +26754,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/7D"
+                "$ref": "#/$defs/7C"
               },
               {
                 "not": {
@@ -26726,34 +26764,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/6A"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "A service for Graylog web interface",
-                "properties": {
-                  "port": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
         },
         {
           "if": {
@@ -26776,7 +26786,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/7C"
+                "$ref": "#/$defs/7B"
               },
               {
                 "not": {
@@ -26839,7 +26849,7 @@
                     "allOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/7b"
+                          "$ref": "#/$defs/7c"
                         }
                       },
                       {
@@ -26972,7 +26982,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "udp": {
-                            "$ref": "#/$defs/3Z"
+                            "$ref": "#/$defs/3Y"
                           }
                         }
                       },
@@ -27000,7 +27010,7 @@
               "description": "Additional input ports for receiving logs from servers\nNote: Name must be in IANA_SVC_NAME (at most 15 characters, matching regex [a-z0-9]([a-z0-9-]*[a-z0-9])* and it must contains at least one letter [a-z], hyphens cannot be adjacent to other hyphens)\nNote: Array must be sorted by port order\ntcp:\nservice:\nname: your-tcp-service-name\ntype: LoadBalancer\nloadBalancerIP:\ntrafficDistribution:\nKubernetes Gateway API TCPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one TCPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: gelf   # optional: overrides default (port name) for all ports\nports:\n- name: gelf\nport: 12222\nudp:\nservice:\nname: your-udp-service-name\ntype: ClusterIP\ntrafficDistribution:\nKubernetes Gateway API UDPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one UDPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: syslog   # optional: overrides default (port name) for all ports\nports:\n- name: syslog\nport: 12222",
               "properties": {
                 "tcp": {
-                  "$ref": "#/$defs/59"
+                  "$ref": "#/$defs/58"
                 }
               }
             }
@@ -27085,20 +27095,6 @@
         {
           "additionalProperties": {},
           "properties": {
-            "input": {
-              "additionalProperties": {},
-              "description": "Additional input ports for receiving logs from servers\nNote: Name must be in IANA_SVC_NAME (at most 15 characters, matching regex [a-z0-9]([a-z0-9-]*[a-z0-9])* and it must contains at least one letter [a-z], hyphens cannot be adjacent to other hyphens)\nNote: Array must be sorted by port order\ntcp:\nservice:\nname: your-tcp-service-name\ntype: LoadBalancer\nloadBalancerIP:\ntrafficDistribution:\nKubernetes Gateway API TCPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one TCPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: gelf   # optional: overrides default (port name) for all ports\nports:\n- name: gelf\nport: 12222\nudp:\nservice:\nname: your-udp-service-name\ntype: ClusterIP\ntrafficDistribution:\nKubernetes Gateway API UDPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one UDPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: syslog   # optional: overrides default (port name) for all ports\nports:\n- name: syslog\nport: 12222",
-              "properties": {
-                "udp": {
-                  "$ref": "#/$defs/3F"
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
             "service": {
               "allOf": [
                 {
@@ -27125,7 +27121,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/7u"
+                "$ref": "#/$defs/7t"
               },
               {
                 "not": {
@@ -27141,32 +27137,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/1g"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "A service for Graylog web interface",
-                "properties": {
-                  "port": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "$ref": "#/$defs/4H"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
         },
         {
           "additionalProperties": {},
@@ -27597,7 +27567,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/7p"
+                "$ref": "#/$defs/7o"
               },
               {
                 "not": {
@@ -27680,11 +27650,11 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/7f"
+                    "$ref": "#/$defs/7g"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/7K"
+                      "$ref": "#/$defs/7J"
                     }
                   }
                 ]
@@ -27692,6 +27662,35 @@
             ]
           },
           "then": false
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/1g"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "A service for Graylog web interface",
+                "properties": {
+                  "port": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/4H"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
         },
         {
           "additionalProperties": {},
@@ -27775,7 +27774,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/7w"
+                  "$ref": "#/$defs/7v"
                 }
               },
               {
@@ -27831,15 +27830,29 @@
           "then": false
         },
         {
+          "additionalProperties": {},
+          "properties": {
+            "input": {
+              "additionalProperties": {},
+              "description": "Additional input ports for receiving logs from servers\nNote: Name must be in IANA_SVC_NAME (at most 15 characters, matching regex [a-z0-9]([a-z0-9-]*[a-z0-9])* and it must contains at least one letter [a-z], hyphens cannot be adjacent to other hyphens)\nNote: Array must be sorted by port order\ntcp:\nservice:\nname: your-tcp-service-name\ntype: LoadBalancer\nloadBalancerIP:\ntrafficDistribution:\nKubernetes Gateway API TCPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one TCPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: gelf   # optional: overrides default (port name) for all ports\nports:\n- name: gelf\nport: 12222\nudp:\nservice:\nname: your-udp-service-name\ntype: ClusterIP\ntrafficDistribution:\nKubernetes Gateway API UDPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one UDPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: syslog   # optional: overrides default (port name) for all ports\nports:\n- name: syslog\nport: 12222",
+              "properties": {
+                "udp": {
+                  "$ref": "#/$defs/3E"
+                }
+              }
+            }
+          }
+        },
+        {
           "if": {
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/7L"
+                  "$ref": "#/$defs/7K"
                 }
               },
               {
-                "$ref": "#/$defs/7g"
+                "$ref": "#/$defs/7h"
               }
             ]
           },
@@ -27864,7 +27877,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/7y"
+                  "$ref": "#/$defs/7x"
                 }
               },
               {
@@ -27888,7 +27901,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/7I"
+                        "$ref": "#/$defs/7H"
                       }
                     ]
                   },
@@ -27908,7 +27921,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/7E"
+                "$ref": "#/$defs/7D"
               }
             ]
           },
@@ -28272,7 +28285,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/7s"
+                "$ref": "#/$defs/7r"
               },
               {
                 "not": {
@@ -28435,7 +28448,7 @@
               "description": "Additional input ports for receiving logs from servers\nNote: Name must be in IANA_SVC_NAME (at most 15 characters, matching regex [a-z0-9]([a-z0-9-]*[a-z0-9])* and it must contains at least one letter [a-z], hyphens cannot be adjacent to other hyphens)\nNote: Array must be sorted by port order\ntcp:\nservice:\nname: your-tcp-service-name\ntype: LoadBalancer\nloadBalancerIP:\ntrafficDistribution:\nKubernetes Gateway API TCPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one TCPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: gelf   # optional: overrides default (port name) for all ports\nports:\n- name: gelf\nport: 12222\nudp:\nservice:\nname: your-udp-service-name\ntype: ClusterIP\ntrafficDistribution:\nKubernetes Gateway API UDPRoute (gateway.networking.k8s.io/v1alpha2)\nCreates one UDPRoute per port entry. Requires a Gateway with matching listeners.\nWhen enabled, consider using service.type: ClusterIP instead of LoadBalancer.\ngatewayApi:\nenabled: false\nparentRefs:\n- name: my-gateway\nnamespace: gateway-system\nsectionName: syslog   # optional: overrides default (port name) for all ports\nports:\n- name: syslog\nport: 12222",
               "properties": {
                 "udp": {
-                  "$ref": "#/$defs/59"
+                  "$ref": "#/$defs/58"
                 }
               }
             }
@@ -28579,7 +28592,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/7q"
+                        "$ref": "#/$defs/7p"
                       },
                       {
                         "not": {
@@ -28605,11 +28618,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/7h"
+                "$ref": "#/$defs/7i"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/7t"
+                  "$ref": "#/$defs/7s"
                 }
               }
             ]
@@ -28915,10 +28928,10 @@
                           "description": "PersistentVolumeClaimCondition contains details about state of pvc",
                           "properties": {
                             "lastProbeTime": {
-                              "$ref": "#/$defs/1n"
+                              "$ref": "#/$defs/1o"
                             },
                             "lastTransitionTime": {
-                              "$ref": "#/$defs/1n"
+                              "$ref": "#/$defs/1o"
                             },
                             "message": {
                               "description": "message is the human-readable message indicating details about last transition.",
@@ -29168,7 +29181,7 @@
                 "pullPolicy": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/5v"
+                      "$ref": "#/$defs/5w"
                     },
                     {
                       "$ref": "#/$defs/1"
@@ -29321,7 +29334,7 @@
               "$ref": "#/$defs/2p"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/42"
+              "$ref": "#/$defs/41"
             },
             "periodSeconds": {
               "$ref": "#/$defs/2x"
@@ -29721,7 +29734,7 @@
               "$ref": "#/$defs/2p"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/42"
+              "$ref": "#/$defs/41"
             },
             "periodSeconds": {
               "$ref": "#/$defs/2x"
@@ -29738,13 +29751,13 @@
         "replicas": {
           "anyOf": [
             {
-              "$ref": "#/$defs/5p"
+              "$ref": "#/$defs/5q"
             },
             {
               "$ref": "#/$defs/9"
             },
             {
-              "$ref": "#/$defs/5q"
+              "$ref": "#/$defs/5r"
             },
             {
               "$ref": "#/$defs/7"
@@ -29980,7 +29993,7 @@
             },
             "clusterIP": {},
             "externalIPs": {
-              "$ref": "#/$defs/4N"
+              "$ref": "#/$defs/4O"
             },
             "headless": {
               "additionalProperties": {},
@@ -30278,7 +30291,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/7B"
+                  "$ref": "#/$defs/7L"
                 }
               }
             ]
@@ -30300,7 +30313,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "replicas": {
-                            "$ref": "#/$defs/5t"
+                            "$ref": "#/$defs/5u"
                           }
                         }
                       },

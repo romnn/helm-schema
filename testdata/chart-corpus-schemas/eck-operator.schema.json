@@ -348,7 +348,7 @@
                   "$ref": "#/$defs/c"
                 },
                 {
-                  "$ref": "#/$defs/e"
+                  "$ref": "#/$defs/d"
                 },
                 {
                   "$ref": "#/$defs/b"
@@ -357,13 +357,13 @@
                   "$ref": "#/$defs/a"
                 },
                 {
+                  "$ref": "#/$defs/f"
+                },
+                {
                   "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/h"
-                },
-                {
-                  "$ref": "#/$defs/i"
                 },
                 {
                   "$ref": "#/$defs/8"
@@ -372,7 +372,7 @@
                   "$ref": "#/$defs/9"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/e"
                 }
               ],
               "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -796,7 +796,7 @@
           "$ref": "#/$defs/c"
         },
         {
-          "$ref": "#/$defs/e"
+          "$ref": "#/$defs/d"
         },
         {
           "$ref": "#/$defs/b"
@@ -805,13 +805,13 @@
           "$ref": "#/$defs/a"
         },
         {
+          "$ref": "#/$defs/f"
+        },
+        {
           "$ref": "#/$defs/g"
         },
         {
           "$ref": "#/$defs/h"
-        },
-        {
-          "$ref": "#/$defs/i"
         },
         {
           "$ref": "#/$defs/8"
@@ -820,7 +820,7 @@
           "$ref": "#/$defs/9"
         },
         {
-          "$ref": "#/$defs/f"
+          "$ref": "#/$defs/e"
         }
       ],
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -1154,7 +1154,7 @@
           "$ref": "#/$defs/c"
         },
         {
-          "$ref": "#/$defs/e"
+          "$ref": "#/$defs/d"
         },
         {
           "$ref": "#/$defs/b"
@@ -1163,13 +1163,13 @@
           "$ref": "#/$defs/a"
         },
         {
+          "$ref": "#/$defs/f"
+        },
+        {
           "$ref": "#/$defs/g"
         },
         {
           "$ref": "#/$defs/h"
-        },
-        {
-          "$ref": "#/$defs/i"
         },
         {
           "$ref": "#/$defs/8"
@@ -1178,7 +1178,7 @@
           "$ref": "#/$defs/9"
         },
         {
-          "$ref": "#/$defs/f"
+          "$ref": "#/$defs/e"
         }
       ],
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -1478,34 +1478,28 @@
       }
     },
     "d": {
-      "properties": {
-        "config": {
-          "$ref": "#/$defs/U"
-        }
-      },
-      "required": [
-        "config"
-      ],
-      "type": "object"
-    },
-    "e": {
       "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
-    "f": {
+    "e": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "g": {
+    "f": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "h": {
+    "g": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "h": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "helm-double-quoted-safe": {
@@ -1540,9 +1534,15 @@
       ]
     },
     "i": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/U"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
     },
     "j": {
       "properties": {
@@ -1754,7 +1754,7 @@
           "$ref": "#/$defs/c"
         },
         {
-          "$ref": "#/$defs/e"
+          "$ref": "#/$defs/d"
         },
         {
           "$ref": "#/$defs/b"
@@ -1763,13 +1763,13 @@
           "$ref": "#/$defs/a"
         },
         {
+          "$ref": "#/$defs/f"
+        },
+        {
           "$ref": "#/$defs/g"
         },
         {
           "$ref": "#/$defs/h"
-        },
-        {
-          "$ref": "#/$defs/i"
         },
         {
           "$ref": "#/$defs/8"
@@ -1778,7 +1778,7 @@
           "$ref": "#/$defs/9"
         },
         {
-          "$ref": "#/$defs/f"
+          "$ref": "#/$defs/e"
         }
       ],
       "type": "string"
@@ -1808,7 +1808,7 @@
                         "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/e"
+                        "$ref": "#/$defs/d"
                       },
                       {
                         "$ref": "#/$defs/b"
@@ -1817,13 +1817,13 @@
                         "$ref": "#/$defs/a"
                       },
                       {
+                        "$ref": "#/$defs/f"
+                      },
+                      {
                         "$ref": "#/$defs/g"
                       },
                       {
                         "$ref": "#/$defs/h"
-                      },
-                      {
-                        "$ref": "#/$defs/i"
                       },
                       {
                         "$ref": "#/$defs/8"
@@ -1832,7 +1832,7 @@
                         "$ref": "#/$defs/9"
                       },
                       {
-                        "$ref": "#/$defs/f"
+                        "$ref": "#/$defs/e"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -1856,7 +1856,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/k"
@@ -1969,7 +1969,7 @@
             "$ref": "#/$defs/1i"
           },
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/k"
@@ -2162,7 +2162,7 @@
             }
           },
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/k"
@@ -2471,7 +2471,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "anyOf": [
@@ -2514,7 +2514,7 @@
             }
           },
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           }
         ]
       },
@@ -2957,7 +2957,7 @@
             "$ref": "#/$defs/1s"
           },
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/1p"
@@ -3135,7 +3135,7 @@
             "$ref": "#/$defs/1s"
           },
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/k"
@@ -3163,7 +3163,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/d"
+        "$ref": "#/$defs/i"
       },
       "then": {
         "additionalProperties": {},
@@ -3483,7 +3483,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/v"
@@ -3525,7 +3525,7 @@
                 "$ref": "#/$defs/s"
               },
               {
-                "$ref": "#/$defs/d"
+                "$ref": "#/$defs/i"
               }
             ]
           },
@@ -3663,7 +3663,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/k"
@@ -3791,7 +3791,7 @@
             "$ref": "#/$defs/A"
           },
           {
-            "$ref": "#/$defs/d"
+            "$ref": "#/$defs/i"
           },
           {
             "$ref": "#/$defs/k"
@@ -4362,10 +4362,75 @@
                 "tls": {
                   "allOf": [
                     {
-                      "type": "object"
+                      "additionalProperties": {},
+                      "properties": {
+                        "certificateSecret": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/$defs/6"
+                            },
+                            {
+                              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                              "type": "null"
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/$defs/c"
+                                },
+                                {
+                                  "$ref": "#/$defs/d"
+                                },
+                                {
+                                  "$ref": "#/$defs/b"
+                                },
+                                {
+                                  "$ref": "#/$defs/a"
+                                },
+                                {
+                                  "$ref": "#/$defs/f"
+                                },
+                                {
+                                  "$ref": "#/$defs/g"
+                                },
+                                {
+                                  "$ref": "#/$defs/h"
+                                },
+                                {
+                                  "$ref": "#/$defs/8"
+                                },
+                                {
+                                  "$ref": "#/$defs/9"
+                                },
+                                {
+                                  "$ref": "#/$defs/e"
+                                }
+                              ],
+                              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                              "type": "string"
+                            },
+                            {
+                              "$ref": "#/$defs/1"
+                            },
+                            {
+                              "$ref": "#/$defs/4"
+                            },
+                            {
+                              "$ref": "#/$defs/7"
+                            },
+                            {
+                              "$ref": "#/$defs/5"
+                            },
+                            {
+                              "$ref": "#/$defs/3"
+                            }
+                          ],
+                          "description": "certificateSecret is the name of the tls secret containing the custom TLS certificate and key for the secure metrics endpoint.\n* This is an optional setting and is only required if you are using a custom TLS certificate. A self-signed certificate will be generated by default.\n* TLS secret key must be named tls.crt.\n* TLS key's secret key must be named tls.key.\n* It is assumed to be in the same namespace as the ServiceMonitor.\nexample: kubectl create secret tls eck-metrics-tls-certificate -n elastic-system \\\n--cert=/path/to/tls.crt --key=/path/to/tls.key"
+                        }
+                      }
                     },
                     {
-                      "additionalProperties": {}
+                      "type": "object"
                     }
                   ]
                 }
@@ -4495,7 +4560,7 @@
               "$ref": "#/$defs/c"
             },
             {
-              "$ref": "#/$defs/e"
+              "$ref": "#/$defs/d"
             },
             {
               "$ref": "#/$defs/b"
@@ -4504,13 +4569,13 @@
               "$ref": "#/$defs/a"
             },
             {
+              "$ref": "#/$defs/f"
+            },
+            {
               "$ref": "#/$defs/g"
             },
             {
               "$ref": "#/$defs/h"
-            },
-            {
-              "$ref": "#/$defs/i"
             },
             {
               "$ref": "#/$defs/8"
@@ -4519,7 +4584,7 @@
               "$ref": "#/$defs/9"
             },
             {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/e"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -4728,7 +4793,7 @@
                   "$ref": "#/$defs/c"
                 },
                 {
-                  "$ref": "#/$defs/e"
+                  "$ref": "#/$defs/d"
                 },
                 {
                   "$ref": "#/$defs/b"
@@ -4737,13 +4802,13 @@
                   "$ref": "#/$defs/a"
                 },
                 {
+                  "$ref": "#/$defs/f"
+                },
+                {
                   "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/h"
-                },
-                {
-                  "$ref": "#/$defs/i"
                 },
                 {
                   "$ref": "#/$defs/8"
@@ -4752,7 +4817,7 @@
                   "$ref": "#/$defs/9"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/e"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -5094,7 +5159,7 @@
               "$ref": "#/$defs/c"
             },
             {
-              "$ref": "#/$defs/e"
+              "$ref": "#/$defs/d"
             },
             {
               "$ref": "#/$defs/b"
@@ -5103,13 +5168,13 @@
               "$ref": "#/$defs/a"
             },
             {
+              "$ref": "#/$defs/f"
+            },
+            {
               "$ref": "#/$defs/g"
             },
             {
               "$ref": "#/$defs/h"
-            },
-            {
-              "$ref": "#/$defs/i"
             },
             {
               "$ref": "#/$defs/8"
@@ -5118,7 +5183,7 @@
               "$ref": "#/$defs/9"
             },
             {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/e"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -5539,7 +5604,7 @@
                   "$ref": "#/$defs/c"
                 },
                 {
-                  "$ref": "#/$defs/e"
+                  "$ref": "#/$defs/d"
                 },
                 {
                   "$ref": "#/$defs/b"
@@ -5548,13 +5613,13 @@
                   "$ref": "#/$defs/a"
                 },
                 {
+                  "$ref": "#/$defs/f"
+                },
+                {
                   "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/h"
-                },
-                {
-                  "$ref": "#/$defs/i"
                 },
                 {
                   "$ref": "#/$defs/8"
@@ -5563,7 +5628,7 @@
                   "$ref": "#/$defs/9"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/e"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -7469,7 +7534,7 @@
                             "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/e"
+                            "$ref": "#/$defs/d"
                           },
                           {
                             "$ref": "#/$defs/b"
@@ -7478,13 +7543,13 @@
                             "$ref": "#/$defs/a"
                           },
                           {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
                             "$ref": "#/$defs/g"
                           },
                           {
                             "$ref": "#/$defs/h"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
                           },
                           {
                             "$ref": "#/$defs/8"
@@ -7493,7 +7558,7 @@
                             "$ref": "#/$defs/9"
                           },
                           {
-                            "$ref": "#/$defs/f"
+                            "$ref": "#/$defs/e"
                           }
                         ],
                         "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
@@ -7527,7 +7592,7 @@
                             "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/e"
+                            "$ref": "#/$defs/d"
                           },
                           {
                             "$ref": "#/$defs/b"
@@ -7536,13 +7601,13 @@
                             "$ref": "#/$defs/a"
                           },
                           {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
                             "$ref": "#/$defs/g"
                           },
                           {
                             "$ref": "#/$defs/h"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
                           },
                           {
                             "$ref": "#/$defs/8"
@@ -7551,7 +7616,7 @@
                             "$ref": "#/$defs/9"
                           },
                           {
-                            "$ref": "#/$defs/f"
+                            "$ref": "#/$defs/e"
                           }
                         ],
                         "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
@@ -7671,7 +7736,7 @@
                         "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/e"
+                        "$ref": "#/$defs/d"
                       },
                       {
                         "$ref": "#/$defs/b"
@@ -7680,13 +7745,13 @@
                         "$ref": "#/$defs/a"
                       },
                       {
+                        "$ref": "#/$defs/f"
+                      },
+                      {
                         "$ref": "#/$defs/g"
                       },
                       {
                         "$ref": "#/$defs/h"
-                      },
-                      {
-                        "$ref": "#/$defs/i"
                       },
                       {
                         "$ref": "#/$defs/8"
@@ -7695,7 +7760,7 @@
                         "$ref": "#/$defs/9"
                       },
                       {
-                        "$ref": "#/$defs/f"
+                        "$ref": "#/$defs/e"
                       }
                     ],
                     "description": "`caBundle` is a PEM encoded CA bundle which will be used to validate the webhook's server certificate. If unspecified, system trust roots on the apiserver are used.",

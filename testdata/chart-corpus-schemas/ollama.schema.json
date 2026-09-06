@@ -6,13 +6,21 @@
       }
     },
     "10": {
+      "default": "Service",
+      "description": "Kind is the Kubernetes resource kind of the referent. For example\n\"Service\".\n\nDefaults to \"Service\" when not specified.\n\nExternalName services can refer to CNAME DNS records that may live\noutside of the cluster and as such are difficult to reason about in\nterms of conformance. They also may not be safe to forward to (see\nCVE-2021-25740 for more information). Implementations SHOULD NOT\nsupport ExternalName Services.\n\nSupport: Core (Services with a type other than ExternalName)\n\nSupport: Implementation-specific (Services with type ExternalName)",
+      "maxLength": 63,
+      "minLength": 1,
+      "pattern": "^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$",
+      "type": "string"
+    },
+    "11": {
       "description": "Namespace is the namespace of the backend. When unspecified, the local\nnamespace is inferred.\n\nNote that when a namespace different than the local namespace is specified,\na ReferenceGrant object is required in the referent namespace to allow that\nnamespace's owner to accept the reference. See the ReferenceGrant\ndocumentation for details.\n\nSupport: Core",
       "maxLength": 63,
       "minLength": 1,
       "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
       "type": "string"
     },
-    "11": {
+    "12": {
       "allOf": [
         {
           "$ref": "#/$defs/22"
@@ -21,13 +29,6 @@
           "$ref": "#/$defs/y"
         }
       ]
-    },
-    "12": {
-      "description": "Port specifies the destination port number to use for this resource.\nPort is required when the referent is a Kubernetes Service. In this\ncase, the port number is the service port number, not the target port.\nFor other resources, destination port might be derived from the referent\nresource or this field.",
-      "format": "int32",
-      "maximum": 65535,
-      "minimum": 1,
-      "type": "integer"
     },
     "13": {
       "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
@@ -912,16 +913,16 @@
                   "$ref": "#/$defs/O"
                 },
                 "kind": {
-                  "$ref": "#/$defs/Z"
+                  "$ref": "#/$defs/10"
                 },
                 "name": {
                   "$ref": "#/$defs/K"
                 },
                 "namespace": {
-                  "$ref": "#/$defs/10"
+                  "$ref": "#/$defs/11"
                 },
                 "port": {
-                  "$ref": "#/$defs/12"
+                  "$ref": "#/$defs/P"
                 }
               },
               "required": [
@@ -1054,16 +1055,16 @@
                   "$ref": "#/$defs/O"
                 },
                 "kind": {
-                  "$ref": "#/$defs/Z"
+                  "$ref": "#/$defs/10"
                 },
                 "name": {
                   "$ref": "#/$defs/K"
                 },
                 "namespace": {
-                  "$ref": "#/$defs/10"
+                  "$ref": "#/$defs/11"
                 },
                 "port": {
-                  "$ref": "#/$defs/12"
+                  "$ref": "#/$defs/P"
                 }
               },
               "required": [
@@ -1361,7 +1362,7 @@
             "$ref": "#/$defs/m"
           },
           {
-            "$ref": "#/$defs/W"
+            "$ref": "#/$defs/X"
           },
           {
             "$ref": "#/$defs/o"
@@ -1511,7 +1512,7 @@
           ]
         },
         "divisor": {
-          "$ref": "#/$defs/V"
+          "$ref": "#/$defs/W"
         },
         "resource": {
           "$ref": "#/$defs/1m"
@@ -2217,7 +2218,7 @@
         "hosts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/T"
+              "$ref": "#/$defs/U"
             },
             {
               "items": {},
@@ -2760,7 +2761,7 @@
     "3h": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced\nConfigMap will be projected into the volume as a file whose name is the\nkey and content is the value. If specified, the listed keys will be\nprojected into the specified paths, and unlisted keys will not be\npresent. If a key is specified which is not present in the ConfigMap,\nthe volume setup will error unless it is marked optional. Paths must be\nrelative and may not contain the '..' path or start with '..'.",
       "items": {
-        "$ref": "#/$defs/Y"
+        "$ref": "#/$defs/Z"
       },
       "type": "array",
       "x-kubernetes-list-type": "atomic"
@@ -2768,7 +2769,7 @@
     "3i": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
       "items": {
-        "$ref": "#/$defs/X"
+        "$ref": "#/$defs/Y"
       },
       "type": [
         "array",
@@ -2940,7 +2941,7 @@
               ]
             },
             "port": {
-              "$ref": "#/$defs/U"
+              "$ref": "#/$defs/V"
             },
             "scheme": {
               "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
@@ -2973,7 +2974,7 @@
               ]
             },
             "port": {
-              "$ref": "#/$defs/U"
+              "$ref": "#/$defs/V"
             }
           },
           "required": [
@@ -3541,6 +3542,13 @@
       "type": "string"
     },
     "P": {
+      "description": "Port specifies the destination port number to use for this resource.\nPort is required when the referent is a Kubernetes Service. In this\ncase, the port number is the service port number, not the target port.\nFor other resources, destination port might be derived from the referent\nresource or this field.",
+      "format": "int32",
+      "maximum": 65535,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "Q": {
       "anyOf": [
         {
           "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
@@ -3554,7 +3562,7 @@
         }
       ]
     },
-    "Q": {
+    "R": {
       "properties": {
         "ingress": {
           "$ref": "#/$defs/h"
@@ -3565,11 +3573,11 @@
       ],
       "type": "object"
     },
-    "R": {
+    "S": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "S": {
+    "T": {
       "not": {
         "properties": {
           "lifecycle": {
@@ -3582,11 +3590,11 @@
         "type": "object"
       }
     },
-    "T": {
+    "U": {
       "additionalProperties": {},
       "type": "object"
     },
-    "U": {
+    "V": {
       "oneOf": [
         {
           "$ref": "#/$defs/a"
@@ -3599,7 +3607,7 @@
         }
       ]
     },
-    "V": {
+    "W": {
       "oneOf": [
         {
           "$ref": "#/$defs/a"
@@ -3612,7 +3620,7 @@
         }
       ]
     },
-    "W": {
+    "X": {
       "anyOf": [
         {
           "not": {
@@ -3650,7 +3658,7 @@
         }
       ]
     },
-    "X": {
+    "Y": {
       "additionalProperties": false,
       "description": "Maps a string key to a path within a volume.",
       "properties": {
@@ -3680,7 +3688,7 @@
         "null"
       ]
     },
-    "Y": {
+    "Z": {
       "additionalProperties": false,
       "description": "Maps a string key to a path within a volume.",
       "properties": {
@@ -3703,14 +3711,6 @@
         "path"
       ],
       "type": "object"
-    },
-    "Z": {
-      "default": "Service",
-      "description": "Kind is the Kubernetes resource kind of the referent. For example\n\"Service\".\n\nDefaults to \"Service\" when not specified.\n\nExternalName services can refer to CNAME DNS records that may live\noutside of the cluster and as such are difficult to reason about in\nterms of conformance. They also may not be safe to forward to (see\nCVE-2021-25740 for more information). Implementations SHOULD NOT\nsupport ExternalName Services.\n\nSupport: Core (Services with a type other than ExternalName)\n\nSupport: Implementation-specific (Services with type ExternalName)",
-      "maxLength": 63,
-      "minLength": 1,
-      "pattern": "^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$",
-      "type": "string"
     },
     "a": {
       "type": [
@@ -4050,16 +4050,16 @@
                     "$ref": "#/$defs/O"
                   },
                   "kind": {
-                    "$ref": "#/$defs/Z"
+                    "$ref": "#/$defs/10"
                   },
                   "name": {
                     "$ref": "#/$defs/K"
                   },
                   "namespace": {
-                    "$ref": "#/$defs/10"
+                    "$ref": "#/$defs/11"
                   },
                   "port": {
-                    "$ref": "#/$defs/12"
+                    "$ref": "#/$defs/P"
                   },
                   "weight": {
                     "default": 1,
@@ -4343,7 +4343,7 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/11"
+                        "$ref": "#/$defs/12"
                       }
                     ],
                     "description": "Labels to add to the service"
@@ -4435,7 +4435,7 @@
                                         ]
                                       },
                                       "name": {
-                                        "$ref": "#/$defs/P"
+                                        "$ref": "#/$defs/Q"
                                       },
                                       "optional": {
                                         "$ref": "#/$defs/2W"
@@ -4542,7 +4542,7 @@
                                         ]
                                       },
                                       "name": {
-                                        "$ref": "#/$defs/P"
+                                        "$ref": "#/$defs/Q"
                                       },
                                       "optional": {
                                         "$ref": "#/$defs/2Y"
@@ -4590,7 +4590,7 @@
                                 "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                                 "properties": {
                                   "name": {
-                                    "$ref": "#/$defs/P"
+                                    "$ref": "#/$defs/Q"
                                   },
                                   "optional": {
                                     "$ref": "#/$defs/2N"
@@ -4620,7 +4620,7 @@
                                 "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                                 "properties": {
                                   "name": {
-                                    "$ref": "#/$defs/P"
+                                    "$ref": "#/$defs/Q"
                                   },
                                   "optional": {
                                     "$ref": "#/$defs/2P"
@@ -5428,7 +5428,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/R"
+                    "$ref": "#/$defs/S"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -5492,7 +5492,7 @@
               "hostPID": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/R"
+                    "$ref": "#/$defs/S"
                   },
                   {
                     "description": "Use the host's pid namespace. Optional: Default to false.",
@@ -5733,7 +5733,7 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/11"
+                        "$ref": "#/$defs/12"
                       }
                     ],
                     "description": "Labels to add to the deployment"
@@ -5751,7 +5751,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/11"
+                    "$ref": "#/$defs/12"
                   }
                 ],
                 "description": "Map of labels to add to the pods"
@@ -5772,7 +5772,7 @@
                     "type": "boolean"
                   },
                   {
-                    "$ref": "#/$defs/R"
+                    "$ref": "#/$defs/S"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -5881,7 +5881,7 @@
                 "$ref": "#/$defs/m"
               },
               {
-                "$ref": "#/$defs/W"
+                "$ref": "#/$defs/X"
               },
               {
                 "$ref": "#/$defs/o"
@@ -6959,7 +6959,7 @@
             "$ref": "#/$defs/H"
           },
           {
-            "$ref": "#/$defs/S"
+            "$ref": "#/$defs/T"
           },
           {
             "$ref": "#/$defs/q"
@@ -7826,7 +7826,7 @@
                               ]
                             },
                             "sizeLimit": {
-                              "$ref": "#/$defs/V"
+                              "$ref": "#/$defs/W"
                             }
                           },
                           "type": [
@@ -8124,7 +8124,7 @@
                                       "properties": {
                                         "limits": {
                                           "additionalProperties": {
-                                            "$ref": "#/$defs/V"
+                                            "$ref": "#/$defs/W"
                                           },
                                           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                           "type": [
@@ -8134,7 +8134,7 @@
                                         },
                                         "requests": {
                                           "additionalProperties": {
-                                            "$ref": "#/$defs/V"
+                                            "$ref": "#/$defs/W"
                                           },
                                           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                           "type": [
@@ -8728,7 +8728,7 @@
                                       "items": {
                                         "description": "items if unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                                         "items": {
-                                          "$ref": "#/$defs/X"
+                                          "$ref": "#/$defs/Y"
                                         },
                                         "type": [
                                           "array",
@@ -9007,7 +9007,7 @@
                             "items": {
                               "description": "items If unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                               "items": {
-                                "$ref": "#/$defs/X"
+                                "$ref": "#/$defs/Y"
                               },
                               "type": [
                                 "array",
@@ -9957,7 +9957,7 @@
                 "$ref": "#/$defs/17"
               },
               {
-                "$ref": "#/$defs/S"
+                "$ref": "#/$defs/T"
               },
               {
                 "$ref": "#/$defs/q"
@@ -10368,7 +10368,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/Q"
+              "$ref": "#/$defs/R"
             }
           },
           {
@@ -10664,6 +10664,42 @@
             "port"
           ],
           "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/E"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/1c"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "Configure Service",
+            "properties": {
+              "port": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/P"
+                  }
+                ],
+                "description": "Service port"
+              }
+            }
+          }
         }
       }
     },
@@ -11677,7 +11713,7 @@
                                       "items": {
                                         "description": "items if unspecified, each key-value pair in the Data field of the referenced\nSecret will be projected into the volume as a file whose name is the\nkey and content is the value. If specified, the listed keys will be\nprojected into the specified paths, and unlisted keys will not be\npresent. If a key is specified which is not present in the Secret,\nthe volume setup will error unless it is marked optional. Paths must be\nrelative and may not contain the '..' path or start with '..'.",
                                         "items": {
-                                          "$ref": "#/$defs/Y"
+                                          "$ref": "#/$defs/Z"
                                         },
                                         "type": "array",
                                         "x-kubernetes-list-type": "atomic"
@@ -11737,7 +11773,7 @@
                             "items": {
                               "description": "items If unspecified, each key-value pair in the Data field of the referenced\nSecret will be projected into the volume as a file whose name is the\nkey and content is the value. If specified, the listed keys will be\nprojected into the specified paths, and unlisted keys will not be\npresent. If a key is specified which is not present in the Secret,\nthe volume setup will error unless it is marked optional. Paths must be\nrelative and may not contain the '..' path or start with '..'.",
                               "items": {
-                                "$ref": "#/$defs/Y"
+                                "$ref": "#/$defs/Z"
                               },
                               "type": "array",
                               "x-kubernetes-list-type": "atomic"
@@ -12619,10 +12655,10 @@
                 "description": "Spec to control the desired behavior of rolling update.",
                 "properties": {
                   "maxSurge": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/V"
                   },
                   "maxUnavailable": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/V"
                   }
                 },
                 "type": [
@@ -12773,7 +12809,7 @@
               "limits": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/T"
+                    "$ref": "#/$defs/U"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -13132,7 +13168,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/W"
+                      "$ref": "#/$defs/X"
                     }
                   },
                   {
@@ -13173,38 +13209,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/E"
-          },
-          {
-            "not": {
-              "$ref": "#/$defs/1c"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "description": "Configure Service",
-            "properties": {
-              "port": {
-                "description": "Service port",
-                "format": "int32",
-                "maximum": 65535,
-                "minimum": 1,
-                "type": "integer"
-              }
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -13386,7 +13390,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/Q"
+        "$ref": "#/$defs/R"
       },
       "then": {
         "allOf": [
@@ -13515,7 +13519,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/S"
+                "$ref": "#/$defs/T"
               },
               {
                 "$ref": "#/$defs/18"
@@ -13589,7 +13593,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/R"
           },
           {
             "properties": {
@@ -13660,7 +13664,7 @@
               "limits": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/T"
+                    "$ref": "#/$defs/U"
                   },
                   {
                     "$ref": "#/$defs/1"
@@ -13701,7 +13705,7 @@
                 "$ref": "#/$defs/H"
               },
               {
-                "$ref": "#/$defs/S"
+                "$ref": "#/$defs/T"
               },
               {
                 "$ref": "#/$defs/q"
@@ -13942,7 +13946,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/R"
           },
           {
             "properties": {
@@ -14591,7 +14595,7 @@
     "extraObjects": {
       "anyOf": [
         {
-          "$ref": "#/$defs/T"
+          "$ref": "#/$defs/U"
         },
         {
           "items": {},
@@ -14612,155 +14616,6 @@
     "gateway": {
       "additionalProperties": {},
       "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/2O"
-              },
-              {
-                "$ref": "#/$defs/h"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "listener": {
-                        "properties": {
-                          "tls": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "listener"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "listener": {
-                          "properties": {
-                            "tls": {}
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "listener"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/h"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "$ref": "#/$defs/y"
-                      }
-                    ],
-                    "description": "Annotations to add to the Gateway"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "labels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "$ref": "#/$defs/y"
-                      }
-                    ],
-                    "description": "Labels to add to the Gateway"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "className": {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/k"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/j"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/l"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/i"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          }
-                        ],
-                        "description": "GatewayClassName used for this Gateway. This is the name of a\nGatewayClass resource.",
-                        "maxLength": 253,
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      {
-                        "const": ""
-                      }
-                    ],
-                    "description": "Name of an existing Gateway Class. Mandatory non-empty field"
-                  }
-                }
-              }
-            ]
-          }
-        },
         {
           "if": {
             "allOf": [
@@ -14909,13 +14764,170 @@
                     "description": "Configure the listener",
                     "properties": {
                       "port": {
-                        "description": "Listener network port. May depend on implementation (eg. Traefik)",
-                        "format": "int32",
-                        "maximum": 65535,
-                        "minimum": 1,
-                        "type": "integer"
+                        "anyOf": [
+                          {
+                            "description": "Port is the network port. Multiple listeners may use the\nsame port, subject to the Listener compatibility rules.\n\nSupport: Core",
+                            "format": "int32",
+                            "maximum": 65535,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Listener network port. May depend on implementation (eg. Traefik)"
                       }
                     }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/2O"
+              },
+              {
+                "$ref": "#/$defs/h"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "listener": {
+                        "properties": {
+                          "tls": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "listener"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "listener": {
+                          "properties": {
+                            "tls": {}
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "listener"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/h"
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/y"
+                      }
+                    ],
+                    "description": "Annotations to add to the Gateway"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "$ref": "#/$defs/y"
+                      }
+                    ],
+                    "description": "Labels to add to the Gateway"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "className": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/k"
+                          },
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/j"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/l"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/i"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          }
+                        ],
+                        "description": "GatewayClassName used for this Gateway. This is the name of a\nGatewayClass resource.",
+                        "maxLength": 253,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "const": ""
+                      }
+                    ],
+                    "description": "Name of an existing Gateway Class. Mandatory non-empty field"
                   }
                 }
               }
@@ -16208,7 +16220,7 @@
                   "automount": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/R"
+                        "$ref": "#/$defs/S"
                       },
                       {
                         "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",

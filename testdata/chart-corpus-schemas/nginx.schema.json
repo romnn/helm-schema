@@ -91,6 +91,13 @@
       "type": "array"
     },
     "16": {
+      "description": "Port specifies the destination port number to use for this resource.\nPort is required when the referent is a Kubernetes Service. In this\ncase, the port number is the service port number, not the target port.\nFor other resources, destination port might be derived from the referent\nresource or this field.",
+      "format": "int32",
+      "maximum": 65535,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "17": {
       "allOf": [
         {
           "$ref": "#/$defs/3w"
@@ -100,7 +107,7 @@
         }
       ]
     },
-    "17": {
+    "18": {
       "properties": {
         "cloneStaticSiteFromGit": {
           "$ref": "#/$defs/P"
@@ -111,7 +118,7 @@
       ],
       "type": "object"
     },
-    "18": {
+    "19": {
       "properties": {
         "global": {
           "properties": {
@@ -130,18 +137,18 @@
       ],
       "type": "object"
     },
-    "19": {
+    "1A": {
       "properties": {
-        "ingress": {
-          "$ref": "#/$defs/T"
+        "livenessProbe": {
+          "$ref": "#/$defs/2"
         }
       },
       "required": [
-        "ingress"
+        "livenessProbe"
       ],
       "type": "object"
     },
-    "1A": {
+    "1B": {
       "properties": {
         "startupProbe": {
           "$ref": "#/$defs/2"
@@ -152,7 +159,7 @@
       ],
       "type": "object"
     },
-    "1B": {
+    "1C": {
       "allOf": [
         {
           "required": [
@@ -165,7 +172,7 @@
         }
       ]
     },
-    "1C": {
+    "1D": {
       "allOf": [
         {
           "required": [
@@ -178,7 +185,7 @@
         }
       ]
     },
-    "1D": {
+    "1E": {
       "properties": {
         "image": {
           "properties": {
@@ -197,12 +204,12 @@
       ],
       "type": "object"
     },
-    "1E": {
+    "1F": {
       "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
       "format": "int32",
       "type": "integer"
     },
-    "1F": {
+    "1G": {
       "properties": {
         "allowExternal": {
           "$ref": "#/$defs/t"
@@ -213,18 +220,18 @@
       ],
       "type": "object"
     },
-    "1G": {
+    "1H": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
     },
-    "1H": {
+    "1I": {
       "description": "Name is the name of the referent.",
       "maxLength": 253,
       "minLength": 1,
       "type": "string"
     },
-    "1I": {
+    "1J": {
       "not": {
         "properties": {
           "affinity": {
@@ -237,7 +244,7 @@
         "type": "object"
       }
     },
-    "1J": {
+    "1K": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -248,7 +255,7 @@
       ],
       "type": "object"
     },
-    "1K": {
+    "1L": {
       "additionalProperties": {},
       "properties": {
         "certificate": {},
@@ -257,7 +264,7 @@
       },
       "type": "object"
     },
-    "1L": {
+    "1M": {
       "properties": {
         "commonLabels": {
           "type": "object"
@@ -268,7 +275,7 @@
       ],
       "type": "object"
     },
-    "1M": {
+    "1N": {
       "additionalProperties": {},
       "properties": {
         "name": {},
@@ -277,7 +284,7 @@
       },
       "type": "object"
     },
-    "1N": {
+    "1O": {
       "properties": {
         "certificate": {
           "type": "string"
@@ -288,7 +295,7 @@
       ],
       "type": "object"
     },
-    "1O": {
+    "1P": {
       "oneOf": [
         {
           "$ref": "#/$defs/3"
@@ -301,7 +308,7 @@
         }
       ]
     },
-    "1P": {
+    "1Q": {
       "properties": {
         "image": {}
       },
@@ -310,7 +317,7 @@
       ],
       "type": "object"
     },
-    "1Q": {
+    "1R": {
       "properties": {
         "image": {
           "enum": [
@@ -323,7 +330,7 @@
       ],
       "type": "object"
     },
-    "1R": {
+    "1S": {
       "properties": {
         "key": {
           "type": "string"
@@ -334,7 +341,7 @@
       ],
       "type": "object"
     },
-    "1S": {
+    "1T": {
       "additionalProperties": {},
       "properties": {
         "pathType": {
@@ -352,7 +359,7 @@
         }
       }
     },
-    "1T": {
+    "1U": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -390,7 +397,7 @@
         "null"
       ]
     },
-    "1U": {
+    "1V": {
       "additionalProperties": false,
       "description": "LifecycleHandler defines a specific action that should be taken in a lifecycle hook. One and only one of the fields, except TCPSocket must be specified.",
       "properties": {
@@ -427,7 +434,7 @@
         "null"
       ]
     },
-    "1V": {
+    "1W": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -464,7 +471,7 @@
         }
       }
     },
-    "1W": {
+    "1X": {
       "oneOf": [
         {
           "$ref": "#/$defs/2T"
@@ -474,7 +481,7 @@
         }
       ]
     },
-    "1X": {
+    "1Y": {
       "additionalProperties": {},
       "properties": {
         "path": {
@@ -483,7 +490,7 @@
               "$ref": "#/$defs/1"
             },
             {
-              "$ref": "#/$defs/1k"
+              "$ref": "#/$defs/1l"
             },
             {
               "$ref": "#/$defs/4"
@@ -500,7 +507,7 @@
         }
       }
     },
-    "1Y": {
+    "1Z": {
       "anyOf": [
         {
           "properties": {
@@ -546,7 +553,397 @@
         }
       ]
     },
-    "1Z": {
+    "1a": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/T"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "1b": {
+      "properties": {
+        "hostname": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "hostname"
+      ],
+      "type": "object"
+    },
+    "1c": {
+      "properties": {
+        "secrets": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "secrets"
+      ],
+      "type": "object"
+    },
+    "1d": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "1e": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
+    },
+    "1f": {
+      "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+      "items": {
+        "$ref": "#/$defs/3"
+      },
+      "type": "array"
+    },
+    "1g": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/v"
+        },
+        {
+          "$ref": "#/$defs/M"
+        }
+      ]
+    },
+    "1h": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/n"
+        },
+        {
+          "$ref": "#/$defs/L"
+        },
+        {
+          "$ref": "#/$defs/z"
+        }
+      ]
+    },
+    "1i": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+      "properties": {},
+      "type": "object"
+    },
+    "1j": {
+      "properties": {
+        "cloneStaticSiteFromGit": {
+          "$ref": "#/$defs/X"
+        }
+      },
+      "required": [
+        "cloneStaticSiteFromGit"
+      ],
+      "type": "object"
+    },
+    "1k": {
+      "anyOf": [
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "NodePort"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "service": {
+              "$ref": "#/$defs/4U"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "1l": {
+      "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+      "type": "null"
+    },
+    "1m": {
+      "properties": {
+        "metrics": {
+          "$ref": "#/$defs/4d"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "1n": {
+      "properties": {
+        "metrics": {
+          "$ref": "#/$defs/4k"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "1o": {
+      "properties": {
+        "podSecurityContext": {
+          "$ref": "#/$defs/2"
+        }
+      },
+      "required": [
+        "podSecurityContext"
+      ],
+      "type": "object"
+    },
+    "1p": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/52"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/55"
+          }
+        }
+      ]
+    },
+    "1q": {
+      "anyOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "metrics": {}
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "1r": {
+      "properties": {
+        "metrics": {
+          "$ref": "#/$defs/P"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "1s": {
+      "properties": {
+        "metrics": {
+          "properties": {
+            "fips": {
+              "properties": {
+                "golang": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "golang"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "fips"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "1t": {
+      "anyOf": [
+        {
+          "properties": {
+            "readinessProbe": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "readinessProbe"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "readinessProbe": {}
+            },
+            "required": [
+              "readinessProbe"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "1u": {
+      "anyOf": [
+        {
+          "properties": {
+            "livenessProbe": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "livenessProbe"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "livenessProbe": {}
+            },
+            "required": [
+              "livenessProbe"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "1v": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "startupProbe": {}
+            },
+            "required": [
+              "startupProbe"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "startupProbe": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "startupProbe"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "1w": {
+      "properties": {
+        "autoscaling": {
+          "$ref": "#/$defs/2"
+        }
+      },
+      "required": [
+        "autoscaling"
+      ],
+      "type": "object"
+    },
+    "1x": {
+      "properties": {
+        "healthIngress": {
+          "$ref": "#/$defs/T"
+        }
+      },
+      "required": [
+        "healthIngress"
+      ],
+      "type": "object"
+    },
+    "1y": {
+      "properties": {
+        "readinessProbe": {
+          "$ref": "#/$defs/2"
+        }
+      },
+      "required": [
+        "readinessProbe"
+      ],
+      "type": "object"
+    },
+    "1z": {
+      "not": {
+        "properties": {
+          "metrics": {
+            "$ref": "#/$defs/2P"
+          }
+        },
+        "required": [
+          "metrics"
+        ],
+        "type": "object"
+      }
+    },
+    "2": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "20": {
       "anyOf": [
         {
           "properties": {
@@ -592,403 +989,13 @@
         }
       ]
     },
-    "1a": {
-      "properties": {
-        "hostname": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "hostname"
-      ],
-      "type": "object"
-    },
-    "1b": {
-      "properties": {
-        "secrets": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "secrets"
-      ],
-      "type": "object"
-    },
-    "1c": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "1d": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
-    },
-    "1e": {
-      "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-      "items": {
-        "$ref": "#/$defs/3"
-      },
-      "type": "array"
-    },
-    "1f": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/v"
-        },
-        {
-          "$ref": "#/$defs/M"
-        }
-      ]
-    },
-    "1g": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/n"
-        },
-        {
-          "$ref": "#/$defs/L"
-        },
-        {
-          "$ref": "#/$defs/z"
-        }
-      ]
-    },
-    "1h": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "null"
-          },
-          {
-            "type": "string"
-          }
-        ]
-      },
-      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-      "properties": {},
-      "type": "object"
-    },
-    "1i": {
-      "properties": {
-        "cloneStaticSiteFromGit": {
-          "$ref": "#/$defs/X"
-        }
-      },
-      "required": [
-        "cloneStaticSiteFromGit"
-      ],
-      "type": "object"
-    },
-    "1j": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    "NodePort"
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/4U"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "1k": {
-      "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-      "type": "null"
-    },
-    "1l": {
-      "properties": {
-        "metrics": {
-          "$ref": "#/$defs/4d"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "1m": {
-      "properties": {
-        "metrics": {
-          "$ref": "#/$defs/4k"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "1n": {
-      "properties": {
-        "podSecurityContext": {
-          "$ref": "#/$defs/2"
-        }
-      },
-      "required": [
-        "podSecurityContext"
-      ],
-      "type": "object"
-    },
-    "1o": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/52"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/55"
-          }
-        }
-      ]
-    },
-    "1p": {
-      "anyOf": [
-        {
-          "properties": {
-            "metrics": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "metrics": {}
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "1q": {
-      "properties": {
-        "metrics": {
-          "$ref": "#/$defs/P"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "1r": {
-      "properties": {
-        "metrics": {
-          "properties": {
-            "fips": {
-              "properties": {
-                "golang": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "golang"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "fips"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "1s": {
-      "anyOf": [
-        {
-          "properties": {
-            "readinessProbe": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "readinessProbe"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "readinessProbe": {}
-            },
-            "required": [
-              "readinessProbe"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "1t": {
-      "anyOf": [
-        {
-          "properties": {
-            "livenessProbe": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "livenessProbe"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "livenessProbe": {}
-            },
-            "required": [
-              "livenessProbe"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "1u": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "startupProbe": {}
-            },
-            "required": [
-              "startupProbe"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "startupProbe": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "startupProbe"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "1v": {
-      "properties": {
-        "autoscaling": {
-          "$ref": "#/$defs/2"
-        }
-      },
-      "required": [
-        "autoscaling"
-      ],
-      "type": "object"
-    },
-    "1w": {
-      "properties": {
-        "healthIngress": {
-          "$ref": "#/$defs/T"
-        }
-      },
-      "required": [
-        "healthIngress"
-      ],
-      "type": "object"
-    },
-    "1x": {
-      "properties": {
-        "readinessProbe": {
-          "$ref": "#/$defs/2"
-        }
-      },
-      "required": [
-        "readinessProbe"
-      ],
-      "type": "object"
-    },
-    "1y": {
-      "not": {
-        "properties": {
-          "metrics": {
-            "$ref": "#/$defs/2P"
-          }
-        },
-        "required": [
-          "metrics"
-        ],
-        "type": "object"
-      }
-    },
-    "1z": {
-      "properties": {
-        "livenessProbe": {
-          "$ref": "#/$defs/2"
-        }
-      },
-      "required": [
-        "livenessProbe"
-      ],
-      "type": "object"
-    },
-    "2": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "20": {
+    "21": {
       "allOf": [
         {
           "$ref": "#/$defs/p"
         },
         {
-          "$ref": "#/$defs/19"
+          "$ref": "#/$defs/1a"
         },
         {
           "properties": {
@@ -1008,7 +1015,7 @@
         }
       ]
     },
-    "21": {
+    "22": {
       "additionalProperties": false,
       "description": "Maps a string key to a path within a volume.",
       "properties": {
@@ -1038,7 +1045,7 @@
         "null"
       ]
     },
-    "22": {
+    "23": {
       "default": "Service",
       "description": "Kind is the Kubernetes resource kind of the referent. For example\n\"Service\".\n\nDefaults to \"Service\" when not specified.\n\nExternalName services can refer to CNAME DNS records that may live\noutside of the cluster and as such are difficult to reason about in\nterms of conformance. They also may not be safe to forward to (see\nCVE-2021-25740 for more information). Implementations SHOULD NOT\nsupport ExternalName Services.\n\nSupport: Core (Services with a type other than ExternalName)\n\nSupport: Implementation-specific (Services with type ExternalName)",
       "maxLength": 63,
@@ -1046,7 +1053,7 @@
       "pattern": "^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$",
       "type": "string"
     },
-    "23": {
+    "24": {
       "allOf": [
         {
           "$ref": "#/$defs/A"
@@ -1068,11 +1075,11 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/1w"
+          "$ref": "#/$defs/1x"
         }
       ]
     },
-    "24": {
+    "25": {
       "anyOf": [
         {
           "not": {
@@ -1099,13 +1106,6 @@
           "type": "object"
         }
       ]
-    },
-    "25": {
-      "description": "Port specifies the destination port number to use for this resource.\nPort is required when the referent is a Kubernetes Service. In this\ncase, the port number is the service port number, not the target port.\nFor other resources, destination port might be derived from the referent\nresource or this field.",
-      "format": "int32",
-      "maximum": 65535,
-      "minimum": 1,
-      "type": "integer"
     },
     "26": {
       "anyOf": [
@@ -1173,7 +1173,7 @@
     "2C": {
       "properties": {
         "serviceAccount": {
-          "$ref": "#/$defs/1J"
+          "$ref": "#/$defs/1K"
         }
       },
       "required": [
@@ -1184,7 +1184,7 @@
     "2D": {
       "properties": {
         "ingress": {
-          "$ref": "#/$defs/1a"
+          "$ref": "#/$defs/1b"
         }
       },
       "required": [
@@ -1740,7 +1740,7 @@
       "description": "ContainerPort represents a network port in a single container.",
       "properties": {
         "containerPort": {
-          "$ref": "#/$defs/1E"
+          "$ref": "#/$defs/1F"
         },
         "hostIP": {
           "description": "What host IP to bind the external port to.",
@@ -1808,7 +1808,7 @@
             "$ref": "#/$defs/H"
           },
           {
-            "$ref": "#/$defs/1D"
+            "$ref": "#/$defs/1E"
           }
         ]
       }
@@ -1822,7 +1822,7 @@
     },
     "2c": {
       "additionalProperties": {
-        "$ref": "#/$defs/1O"
+        "$ref": "#/$defs/1P"
       },
       "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
       "type": [
@@ -1936,7 +1936,7 @@
     },
     "2h": {
       "additionalProperties": {
-        "$ref": "#/$defs/1O"
+        "$ref": "#/$defs/1P"
       },
       "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
       "type": [
@@ -2000,7 +2000,7 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/1a"
+          "$ref": "#/$defs/1b"
         }
       ]
     },
@@ -2008,7 +2008,7 @@
       "not": {
         "properties": {
           "networkPolicy": {
-            "$ref": "#/$defs/1F"
+            "$ref": "#/$defs/1G"
           }
         },
         "required": [
@@ -2021,11 +2021,11 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1Q"
+            "$ref": "#/$defs/1R"
           },
           {
             "not": {
-              "$ref": "#/$defs/1P"
+              "$ref": "#/$defs/1Q"
             }
           }
         ]
@@ -2090,7 +2090,7 @@
     "2u": {
       "properties": {
         "metrics": {
-          "$ref": "#/$defs/1D"
+          "$ref": "#/$defs/1E"
         }
       },
       "required": [
@@ -2185,7 +2185,7 @@
     "30": {
       "anyOf": [
         {
-          "$ref": "#/$defs/1h"
+          "$ref": "#/$defs/1i"
         },
         {
           "type": "null"
@@ -2246,7 +2246,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/1j"
+              "$ref": "#/$defs/1k"
             },
             {
               "$ref": "#/$defs/O"
@@ -2256,7 +2256,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/1j"
+              "$ref": "#/$defs/1k"
             },
             {
               "$ref": "#/$defs/K"
@@ -2276,7 +2276,7 @@
           "$ref": "#/$defs/p"
         },
         {
-          "$ref": "#/$defs/19"
+          "$ref": "#/$defs/1a"
         },
         {
           "$ref": "#/$defs/3R"
@@ -2292,7 +2292,7 @@
           "$ref": "#/$defs/X"
         },
         {
-          "$ref": "#/$defs/18"
+          "$ref": "#/$defs/19"
         },
         {
           "$ref": "#/$defs/P"
@@ -2557,7 +2557,7 @@
     "3O": {
       "properties": {
         "cloneStaticSiteFromGit": {
-          "$ref": "#/$defs/1D"
+          "$ref": "#/$defs/1E"
         }
       },
       "required": [
@@ -2596,7 +2596,7 @@
     "3R": {
       "anyOf": [
         {
-          "$ref": "#/$defs/19"
+          "$ref": "#/$defs/1a"
         },
         {
           "properties": {
@@ -2756,7 +2756,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/1b"
+              "$ref": "#/$defs/1c"
             }
           },
           {
@@ -2846,7 +2846,7 @@
           ]
         },
         "divisor": {
-          "$ref": "#/$defs/1O"
+          "$ref": "#/$defs/1P"
         },
         "resource": {
           "description": "Required: resource to select",
@@ -2936,16 +2936,16 @@
     "3j": {
       "anyOf": [
         {
-          "$ref": "#/$defs/17"
+          "$ref": "#/$defs/18"
         },
         {
           "$ref": "#/$defs/v"
         },
         {
-          "$ref": "#/$defs/1i"
+          "$ref": "#/$defs/1j"
         },
         {
-          "$ref": "#/$defs/18"
+          "$ref": "#/$defs/19"
         }
       ]
     },
@@ -2980,10 +2980,10 @@
           "$ref": "#/$defs/2v"
         },
         {
-          "$ref": "#/$defs/18"
+          "$ref": "#/$defs/19"
         },
         {
-          "$ref": "#/$defs/1q"
+          "$ref": "#/$defs/1r"
         }
       ]
     },
@@ -3021,10 +3021,10 @@
           "$ref": "#/$defs/v"
         },
         {
-          "$ref": "#/$defs/1r"
+          "$ref": "#/$defs/1s"
         },
         {
-          "$ref": "#/$defs/18"
+          "$ref": "#/$defs/19"
         },
         {
           "$ref": "#/$defs/2w"
@@ -3852,7 +3852,7 @@
     "4r": {
       "properties": {
         "healthIngress": {
-          "$ref": "#/$defs/1b"
+          "$ref": "#/$defs/1c"
         }
       },
       "required": [
@@ -3920,7 +3920,7 @@
     "4t": {
       "properties": {
         "ingress": {
-          "$ref": "#/$defs/1b"
+          "$ref": "#/$defs/1c"
         }
       },
       "required": [
@@ -3931,7 +3931,7 @@
     "4u": {
       "properties": {
         "pdb": {
-          "$ref": "#/$defs/1J"
+          "$ref": "#/$defs/1K"
         }
       },
       "required": [
@@ -4254,7 +4254,7 @@
     "5l": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
       "items": {
-        "$ref": "#/$defs/21"
+        "$ref": "#/$defs/22"
       },
       "type": [
         "array",
@@ -4513,7 +4513,7 @@
           ]
         },
         "windowsOptions": {
-          "$ref": "#/$defs/1T"
+          "$ref": "#/$defs/1U"
         }
       },
       "type": [
@@ -5091,7 +5091,7 @@
     },
     "M": {
       "not": {
-        "$ref": "#/$defs/18"
+        "$ref": "#/$defs/19"
       }
     },
     "N": {
@@ -5308,7 +5308,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/1d"
+            "$ref": "#/$defs/1e"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -5317,7 +5317,7 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/1d"
+            "$ref": "#/$defs/1e"
           },
           "type": "array"
         }
@@ -5387,7 +5387,7 @@
       "type": "object"
     },
     "providerSchema1": {
-      "$ref": "#/$defs/1W"
+      "$ref": "#/$defs/1X"
     },
     "providerShared3": {
       "items": {
@@ -5509,10 +5509,10 @@
             "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
             "properties": {
               "postStart": {
-                "$ref": "#/$defs/1U"
+                "$ref": "#/$defs/1V"
               },
               "preStop": {
-                "$ref": "#/$defs/1U"
+                "$ref": "#/$defs/1V"
               }
             },
             "type": [
@@ -5726,7 +5726,7 @@
                 "$ref": "#/$defs/33"
               },
               "windowsOptions": {
-                "$ref": "#/$defs/1T"
+                "$ref": "#/$defs/1U"
               }
             },
             "type": [
@@ -5944,7 +5944,7 @@
                 "type": "string"
               },
               "name": {
-                "$ref": "#/$defs/1H"
+                "$ref": "#/$defs/1I"
               }
             },
             "required": [
@@ -5966,16 +5966,16 @@
                     "$ref": "#/$defs/2i"
                   },
                   "kind": {
-                    "$ref": "#/$defs/22"
+                    "$ref": "#/$defs/23"
                   },
                   "name": {
-                    "$ref": "#/$defs/1H"
+                    "$ref": "#/$defs/1I"
                   },
                   "namespace": {
                     "$ref": "#/$defs/2b"
                   },
                   "port": {
-                    "$ref": "#/$defs/25"
+                    "$ref": "#/$defs/16"
                   }
                 },
                 "required": [
@@ -6108,16 +6108,16 @@
                     "$ref": "#/$defs/2i"
                   },
                   "kind": {
-                    "$ref": "#/$defs/22"
+                    "$ref": "#/$defs/23"
                   },
                   "name": {
-                    "$ref": "#/$defs/1H"
+                    "$ref": "#/$defs/1I"
                   },
                   "namespace": {
                     "$ref": "#/$defs/2b"
                   },
                   "port": {
-                    "$ref": "#/$defs/25"
+                    "$ref": "#/$defs/16"
                   }
                 },
                 "required": [
@@ -6650,145 +6650,6 @@
                     "anyOf": [
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1B"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "items": {
-                          "$ref": "#/$defs/1B"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/s"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "healthIngress": {
-                "additionalProperties": {},
-                "description": "Health Ingress parameters",
-                "properties": {
-                  "secrets": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "$ref": "#/$defs/1N"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/s"
-                      },
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/1N"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "healthIngress": {
-                "additionalProperties": {},
-                "description": "Health Ingress parameters",
-                "properties": {
-                  "secrets": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/1R"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/s"
-                      },
-                      {
-                        "items": {
-                          "$ref": "#/$defs/1R"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "healthIngress": {
-                "additionalProperties": {},
-                "description": "Health Ingress parameters",
-                "properties": {
-                  "secrets": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "$ref": "#/$defs/1K"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/s"
-                      },
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/1K"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "healthIngress": {
-                "additionalProperties": {},
-                "description": "Health Ingress parameters",
-                "properties": {
-                  "secrets": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/s"
-                      },
-                      {
-                        "additionalProperties": {
                           "$ref": "#/$defs/1C"
                         },
                         "type": "object"
@@ -6796,6 +6657,145 @@
                       {
                         "items": {
                           "$ref": "#/$defs/1C"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "healthIngress": {
+                "additionalProperties": {},
+                "description": "Health Ingress parameters",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "$ref": "#/$defs/1O"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/1O"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "healthIngress": {
+                "additionalProperties": {},
+                "description": "Health Ingress parameters",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/1S"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/$defs/1S"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "healthIngress": {
+                "additionalProperties": {},
+                "description": "Health Ingress parameters",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "$ref": "#/$defs/1L"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/1L"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "healthIngress": {
+                "additionalProperties": {},
+                "description": "Health Ingress parameters",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/1D"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/$defs/1D"
                         },
                         "type": "array"
                       },
@@ -6810,34 +6810,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/3d"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "description": "NGINX Service properties",
-            "properties": {
-              "ports": {
-                "additionalProperties": {},
-                "properties": {
-                  "http": {
-                    "description": "Service HTTP port",
-                    "format": "int32",
-                    "maximum": 65535,
-                    "minimum": 1,
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -6871,7 +6843,7 @@
                   "https": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1W"
+                        "$ref": "#/$defs/1X"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -6928,7 +6900,7 @@
             "$ref": "#/$defs/S"
           },
           {
-            "$ref": "#/$defs/1u"
+            "$ref": "#/$defs/1v"
           }
         ]
       },
@@ -6939,7 +6911,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/18"
             }
           },
           {
@@ -6955,7 +6927,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/1i"
+              "$ref": "#/$defs/1j"
             }
           }
         ]
@@ -7026,7 +6998,7 @@
               {
                 "properties": {
                   "metrics": {
-                    "$ref": "#/$defs/1Q"
+                    "$ref": "#/$defs/1R"
                   }
                 },
                 "required": [
@@ -7038,7 +7010,7 @@
                 "not": {
                   "properties": {
                     "metrics": {
-                      "$ref": "#/$defs/1P"
+                      "$ref": "#/$defs/1Q"
                     }
                   },
                   "required": [
@@ -7050,7 +7022,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1p"
+            "$ref": "#/$defs/1q"
           }
         ]
       },
@@ -7355,7 +7327,7 @@
                       "http": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/1G"
+                            "$ref": "#/$defs/1H"
                           },
                           {
                             "$ref": "#/$defs/o"
@@ -7477,7 +7449,7 @@
             "$ref": "#/$defs/Q"
           },
           {
-            "$ref": "#/$defs/1s"
+            "$ref": "#/$defs/1t"
           }
         ]
       },
@@ -7507,10 +7479,10 @@
             "$ref": "#/$defs/Q"
           },
           {
-            "$ref": "#/$defs/1s"
+            "$ref": "#/$defs/1t"
           },
           {
-            "$ref": "#/$defs/1x"
+            "$ref": "#/$defs/1y"
           }
         ]
       },
@@ -7523,7 +7495,7 @@
             "$ref": "#/$defs/p"
           },
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/1a"
           },
           {
             "not": {
@@ -7574,7 +7546,7 @@
             "$ref": "#/$defs/p"
           },
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/1a"
           }
         ]
       },
@@ -7831,7 +7803,7 @@
           "commonAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/1h"
+                "$ref": "#/$defs/1i"
               },
               {
                 "type": "null"
@@ -7872,14 +7844,14 @@
                 "$ref": "#/$defs/4q"
               },
               {
-                "$ref": "#/$defs/1I"
+                "$ref": "#/$defs/1J"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1I"
+                "$ref": "#/$defs/1J"
               },
               {
                 "properties": {
@@ -8104,11 +8076,11 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/1Q"
+                "$ref": "#/$defs/1R"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1P"
+                  "$ref": "#/$defs/1Q"
                 }
               }
             ]
@@ -8135,13 +8107,13 @@
                   },
                   {
                     "items": {
-                      "$ref": "#/$defs/1M"
+                      "$ref": "#/$defs/1N"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1M"
+                      "$ref": "#/$defs/1N"
                     },
                     "type": "object"
                   },
@@ -8163,7 +8135,7 @@
             "$ref": "#/$defs/9"
           },
           {
-            "$ref": "#/$defs/1r"
+            "$ref": "#/$defs/1s"
           },
           {
             "$ref": "#/$defs/3o"
@@ -8259,7 +8231,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/18"
             }
           },
           {
@@ -8278,7 +8250,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/1i"
+              "$ref": "#/$defs/1j"
             }
           },
           {
@@ -8359,7 +8331,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1l"
+                "$ref": "#/$defs/1m"
               },
               {
                 "$ref": "#/$defs/9"
@@ -8372,7 +8344,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1n"
+                "$ref": "#/$defs/1o"
               },
               {
                 "$ref": "#/$defs/2e"
@@ -8454,7 +8426,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/24"
           },
           {
             "allOf": [
@@ -8475,12 +8447,12 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/1w"
+                    "$ref": "#/$defs/1x"
                   }
                 ]
               },
               {
-                "$ref": "#/$defs/1w"
+                "$ref": "#/$defs/1x"
               }
             ]
           }
@@ -8596,7 +8568,7 @@
             "$ref": "#/$defs/R"
           },
           {
-            "$ref": "#/$defs/1z"
+            "$ref": "#/$defs/1A"
           }
         ]
       },
@@ -8663,7 +8635,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1n"
+        "$ref": "#/$defs/1o"
       },
       "then": {
         "additionalProperties": {},
@@ -8741,7 +8713,7 @@
               "hostname": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1d"
+                    "$ref": "#/$defs/1e"
                   },
                   {
                     "pattern": "\\{\\{",
@@ -8831,7 +8803,7 @@
                 "$ref": "#/$defs/9"
               },
               {
-                "$ref": "#/$defs/1m"
+                "$ref": "#/$defs/1n"
               },
               {
                 "not": {
@@ -8862,7 +8834,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1M"
               }
             ]
           },
@@ -8898,7 +8870,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1M"
               }
             ]
           },
@@ -8928,7 +8900,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1M"
               }
             ]
           }
@@ -8951,7 +8923,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1g"
+            "$ref": "#/$defs/1h"
           },
           {
             "properties": {
@@ -9106,7 +9078,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/23"
+        "$ref": "#/$defs/24"
       },
       "then": {
         "additionalProperties": {},
@@ -9251,7 +9223,7 @@
                             "$ref": "#/$defs/1"
                           },
                           {
-                            "$ref": "#/$defs/1e"
+                            "$ref": "#/$defs/1f"
                           },
                           {
                             "type": "null"
@@ -9455,7 +9427,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1p"
+        "$ref": "#/$defs/1q"
       },
       "then": false
     },
@@ -9486,7 +9458,7 @@
             "$ref": "#/$defs/A"
           },
           {
-            "$ref": "#/$defs/1w"
+            "$ref": "#/$defs/1x"
           }
         ]
       },
@@ -9509,13 +9481,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1n"
+            "$ref": "#/$defs/1o"
+          },
+          {
+            "$ref": "#/$defs/20"
           },
           {
             "$ref": "#/$defs/1Z"
-          },
-          {
-            "$ref": "#/$defs/1Y"
           }
         ]
       },
@@ -9577,7 +9549,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1I"
+        "$ref": "#/$defs/1J"
       },
       "then": {
         "allOf": [
@@ -9820,13 +9792,13 @@
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/1t"
+            "$ref": "#/$defs/1u"
           },
           {
             "$ref": "#/$defs/R"
           },
           {
-            "$ref": "#/$defs/1z"
+            "$ref": "#/$defs/1A"
           }
         ]
       },
@@ -9872,177 +9844,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/3v"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "backendTLSPolicy": {
-                "additionalProperties": {},
-                "description": "Gateway API BackendTLSPolicy parameters\nref: https://gateway-api.sigs.k8s.io/guides/tls/#upstream-tls",
-                "properties": {
-                  "hostname": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/h"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/k"
-                          },
-                          {
-                            "$ref": "#/$defs/j"
-                          },
-                          {
-                            "$ref": "#/$defs/l"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          }
-                        ],
-                        "description": "Hostname is used for two purposes in the connection between Gateways and\nbackends:\n\n1. Hostname MUST be used as the SNI to connect to the backend (RFC 6066).\n2. Hostname MUST be used for authentication and MUST match the certificate\n   served by the matching backend, unless SubjectAltNames is specified.\n3. If SubjectAltNames are specified, Hostname can be used for certificate selection\n   but MUST NOT be used for authentication. If you want to use the value\n   of the Hostname field for authentication, you MUST add it to the SubjectAltNames list.\n\nSupport: Core",
-                        "maxLength": 253,
-                        "minLength": 1,
-                        "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
-                        "type": "string"
-                      }
-                    ],
-                    "description": "SNI to connect to the backend, it must match the certificate served by the backend unless SubjectAltNames are specified.\nBy default, the FQDN of the backend service is used."
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "NGINX Service properties",
-                "properties": {
-                  "ports": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "https": {
-                        "description": "Service HTTPS port",
-                        "format": "int32",
-                        "maximum": 65535,
-                        "minimum": 1,
-                        "type": "integer"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "backendTLSPolicy": {
-                "additionalProperties": {},
-                "description": "Gateway API BackendTLSPolicy parameters\nref: https://gateway-api.sigs.k8s.io/guides/tls/#upstream-tls",
-                "properties": {
-                  "subjectAltNames": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "description": "SubjectAltNames contains one or more Subject Alternative Names.\nWhen specified the certificate served from the backend MUST\nhave at least one Subject Alternate Name matching one of the specified SubjectAltNames.\n\nSupport: Extended",
-                        "items": {
-                          "additionalProperties": false,
-                          "description": "SubjectAltName represents Subject Alternative Name.",
-                          "properties": {
-                            "hostname": {
-                              "description": "Hostname contains Subject Alternative Name specified in DNS name format.\nRequired when Type is set to Hostname, ignored otherwise.\n\nSupport: Core",
-                              "maxLength": 253,
-                              "minLength": 1,
-                              "pattern": "^(\\*\\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
-                              "type": "string"
-                            },
-                            "type": {
-                              "description": "Type determines the format of the Subject Alternative Name. Always required.\n\nSupport: Core",
-                              "enum": [
-                                "Hostname",
-                                "URI"
-                              ],
-                              "type": "string"
-                            },
-                            "uri": {
-                              "description": "URI contains Subject Alternative Name specified in a full URI format.\nIt MUST include both a scheme (e.g., \"http\" or \"ftp\") and a scheme-specific-part.\nCommon values include SPIFFE IDs like \"spiffe://mycluster.example.com/ns/myns/sa/svc1sa\".\nRequired when Type is set to URI, ignored otherwise.\n\nSupport: Core",
-                              "maxLength": 253,
-                              "minLength": 1,
-                              "pattern": "^(([^:/?#]+):)(//([^/?#]*))([^?#]*)(\\?([^#]*))?(#(.*))?",
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object",
-                          "x-kubernetes-validations": [
-                            {
-                              "message": "SubjectAltName element must contain Hostname, if Type is set to Hostname",
-                              "rule": "!(self.type == \"Hostname\" && (!has(self.hostname) || self.hostname == \"\"))"
-                            },
-                            {
-                              "message": "SubjectAltName element must not contain Hostname, if Type is not set to Hostname",
-                              "rule": "!(self.type != \"Hostname\" && has(self.hostname) && self.hostname != \"\")"
-                            },
-                            {
-                              "message": "SubjectAltName element must contain URI, if Type is set to URI",
-                              "rule": "!(self.type == \"URI\" && (!has(self.uri) || self.uri == \"\"))"
-                            },
-                            {
-                              "message": "SubjectAltName element must not contain URI, if Type is not set to URI",
-                              "rule": "!(self.type != \"URI\" && has(self.uri) && self.uri != \"\")"
-                            }
-                          ]
-                        },
-                        "maxItems": 5,
-                        "type": "array",
-                        "x-kubernetes-list-type": "atomic"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "List of Subject Alternative Names (SANs) to verify the backend certificate against."
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/20"
+            "$ref": "#/$defs/21"
           },
           {
             "$ref": "#/$defs/N"
@@ -10054,10 +9858,10 @@
             "$ref": "#/$defs/4e"
           },
           {
-            "$ref": "#/$defs/1v"
+            "$ref": "#/$defs/1w"
           },
           {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/24"
           },
           {
             "$ref": "#/$defs/4u"
@@ -10098,7 +9902,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/16"
+                "$ref": "#/$defs/17"
               }
             ],
             "description": "Add annotations to all the deployed resources"
@@ -10113,7 +9917,7 @@
             "$ref": "#/$defs/9"
           },
           {
-            "$ref": "#/$defs/1m"
+            "$ref": "#/$defs/1n"
           },
           {
             "$ref": "#/$defs/45"
@@ -10196,7 +10000,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1h"
+                    "$ref": "#/$defs/1i"
                   },
                   {
                     "type": "null"
@@ -10245,7 +10049,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1v"
+        "$ref": "#/$defs/1w"
       },
       "then": {
         "allOf": [
@@ -10283,7 +10087,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/17"
+            "$ref": "#/$defs/18"
           },
           {
             "$ref": "#/$defs/3j"
@@ -10440,6 +10244,178 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/3v"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "NGINX Service properties",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "https": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/16"
+                          }
+                        ],
+                        "description": "Service HTTPS port"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "backendTLSPolicy": {
+                "additionalProperties": {},
+                "description": "Gateway API BackendTLSPolicy parameters\nref: https://gateway-api.sigs.k8s.io/guides/tls/#upstream-tls",
+                "properties": {
+                  "hostname": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/k"
+                          },
+                          {
+                            "$ref": "#/$defs/j"
+                          },
+                          {
+                            "$ref": "#/$defs/l"
+                          },
+                          {
+                            "$ref": "#/$defs/b"
+                          },
+                          {
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          }
+                        ],
+                        "description": "Hostname is used for two purposes in the connection between Gateways and\nbackends:\n\n1. Hostname MUST be used as the SNI to connect to the backend (RFC 6066).\n2. Hostname MUST be used for authentication and MUST match the certificate\n   served by the matching backend, unless SubjectAltNames is specified.\n3. If SubjectAltNames are specified, Hostname can be used for certificate selection\n   but MUST NOT be used for authentication. If you want to use the value\n   of the Hostname field for authentication, you MUST add it to the SubjectAltNames list.\n\nSupport: Core",
+                        "maxLength": 253,
+                        "minLength": 1,
+                        "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "SNI to connect to the backend, it must match the certificate served by the backend unless SubjectAltNames are specified.\nBy default, the FQDN of the backend service is used."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "backendTLSPolicy": {
+                "additionalProperties": {},
+                "description": "Gateway API BackendTLSPolicy parameters\nref: https://gateway-api.sigs.k8s.io/guides/tls/#upstream-tls",
+                "properties": {
+                  "subjectAltNames": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/1"
+                      },
+                      {
+                        "description": "SubjectAltNames contains one or more Subject Alternative Names.\nWhen specified the certificate served from the backend MUST\nhave at least one Subject Alternate Name matching one of the specified SubjectAltNames.\n\nSupport: Extended",
+                        "items": {
+                          "additionalProperties": false,
+                          "description": "SubjectAltName represents Subject Alternative Name.",
+                          "properties": {
+                            "hostname": {
+                              "description": "Hostname contains Subject Alternative Name specified in DNS name format.\nRequired when Type is set to Hostname, ignored otherwise.\n\nSupport: Core",
+                              "maxLength": 253,
+                              "minLength": 1,
+                              "pattern": "^(\\*\\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+                              "type": "string"
+                            },
+                            "type": {
+                              "description": "Type determines the format of the Subject Alternative Name. Always required.\n\nSupport: Core",
+                              "enum": [
+                                "Hostname",
+                                "URI"
+                              ],
+                              "type": "string"
+                            },
+                            "uri": {
+                              "description": "URI contains Subject Alternative Name specified in a full URI format.\nIt MUST include both a scheme (e.g., \"http\" or \"ftp\") and a scheme-specific-part.\nCommon values include SPIFFE IDs like \"spiffe://mycluster.example.com/ns/myns/sa/svc1sa\".\nRequired when Type is set to URI, ignored otherwise.\n\nSupport: Core",
+                              "maxLength": 253,
+                              "minLength": 1,
+                              "pattern": "^(([^:/?#]+):)(//([^/?#]*))([^?#]*)(\\?([^#]*))?(#(.*))?",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object",
+                          "x-kubernetes-validations": [
+                            {
+                              "message": "SubjectAltName element must contain Hostname, if Type is set to Hostname",
+                              "rule": "!(self.type == \"Hostname\" && (!has(self.hostname) || self.hostname == \"\"))"
+                            },
+                            {
+                              "message": "SubjectAltName element must not contain Hostname, if Type is not set to Hostname",
+                              "rule": "!(self.type != \"Hostname\" && has(self.hostname) && self.hostname != \"\")"
+                            },
+                            {
+                              "message": "SubjectAltName element must contain URI, if Type is set to URI",
+                              "rule": "!(self.type == \"URI\" && (!has(self.uri) || self.uri == \"\"))"
+                            },
+                            {
+                              "message": "SubjectAltName element must not contain URI, if Type is not set to URI",
+                              "rule": "!(self.type != \"URI\" && has(self.uri) && self.uri != \"\")"
+                            }
+                          ]
+                        },
+                        "maxItems": 5,
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "List of Subject Alternative Names (SANs) to verify the backend certificate against."
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -10645,13 +10621,13 @@
                   },
                   {
                     "items": {
-                      "$ref": "#/$defs/1M"
+                      "$ref": "#/$defs/1N"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1M"
+                      "$ref": "#/$defs/1N"
                     },
                     "type": "object"
                   },
@@ -10690,7 +10666,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1n"
+                "$ref": "#/$defs/1o"
               },
               {
                 "$ref": "#/$defs/2f"
@@ -10700,7 +10676,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1l"
+                "$ref": "#/$defs/1m"
               },
               {
                 "$ref": "#/$defs/9"
@@ -10821,7 +10797,7 @@
                 "$ref": "#/$defs/9"
               },
               {
-                "$ref": "#/$defs/1m"
+                "$ref": "#/$defs/1n"
               }
             ]
           },
@@ -10859,10 +10835,10 @@
             }
           },
           {
-            "$ref": "#/$defs/1y"
+            "$ref": "#/$defs/1z"
           },
           {
-            "$ref": "#/$defs/1p"
+            "$ref": "#/$defs/1q"
           }
         ]
       },
@@ -10878,7 +10854,7 @@
             "$ref": "#/$defs/S"
           },
           {
-            "$ref": "#/$defs/1A"
+            "$ref": "#/$defs/1B"
           }
         ]
       },
@@ -11003,6 +10979,38 @@
             "properties": {
               "annotations": {
                 "$ref": "#/$defs/30"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/3d"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "NGINX Service properties",
+            "properties": {
+              "ports": {
+                "additionalProperties": {},
+                "properties": {
+                  "http": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/16"
+                      }
+                    ],
+                    "description": "Service HTTP port"
+                  }
+                }
               }
             }
           }
@@ -11206,7 +11214,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1l"
+            "$ref": "#/$defs/1m"
           },
           {
             "$ref": "#/$defs/9"
@@ -11241,7 +11249,7 @@
             "$ref": "#/$defs/m"
           },
           {
-            "$ref": "#/$defs/24"
+            "$ref": "#/$defs/25"
           }
         ]
       },
@@ -11254,10 +11262,10 @@
             "$ref": "#/$defs/U"
           },
           {
-            "$ref": "#/$defs/1Z"
+            "$ref": "#/$defs/20"
           },
           {
-            "$ref": "#/$defs/1Y"
+            "$ref": "#/$defs/1Z"
           }
         ]
       },
@@ -11472,7 +11480,7 @@
             "$ref": "#/$defs/A"
           },
           {
-            "$ref": "#/$defs/1v"
+            "$ref": "#/$defs/1w"
           },
           {
             "$ref": "#/$defs/4u"
@@ -11546,7 +11554,7 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/1K"
+                          "$ref": "#/$defs/1L"
                         },
                         "type": "array"
                       },
@@ -11555,7 +11563,7 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1K"
+                          "$ref": "#/$defs/1L"
                         },
                         "type": "object"
                       },
@@ -11580,7 +11588,7 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/1N"
+                          "$ref": "#/$defs/1O"
                         },
                         "type": "array"
                       },
@@ -11589,7 +11597,7 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1N"
+                          "$ref": "#/$defs/1O"
                         },
                         "type": "object"
                       },
@@ -11612,43 +11620,6 @@
                 "properties": {
                   "secrets": {
                     "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/1B"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "items": {
-                          "$ref": "#/$defs/1B"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/s"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: nginx.local-tls\nkey:\ncertificate:"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Configure the ingress resource that allows you to access the\nNGINX installation. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "secrets": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/s"
-                      },
                       {
                         "additionalProperties": {
                           "$ref": "#/$defs/1C"
@@ -11662,6 +11633,43 @@
                         "type": "array"
                       },
                       {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: nginx.local-tls\nkey:\ncertificate:"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure the ingress resource that allows you to access the\nNGINX installation. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/s"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/1D"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/$defs/1D"
+                        },
+                        "type": "array"
+                      },
+                      {
                         "type": "null"
                       }
                     ],
@@ -11682,7 +11690,7 @@
                     "anyOf": [
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1R"
+                          "$ref": "#/$defs/1S"
                         },
                         "type": "object"
                       },
@@ -11691,7 +11699,7 @@
                       },
                       {
                         "items": {
-                          "$ref": "#/$defs/1R"
+                          "$ref": "#/$defs/1S"
                         },
                         "type": "array"
                       },
@@ -11736,7 +11744,7 @@
             }
           },
           {
-            "$ref": "#/$defs/1D"
+            "$ref": "#/$defs/1E"
           }
         ]
       },
@@ -11772,7 +11780,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/20"
+            "$ref": "#/$defs/21"
           },
           {
             "$ref": "#/$defs/36"
@@ -11832,7 +11840,7 @@
             }
           },
           {
-            "$ref": "#/$defs/1L"
+            "$ref": "#/$defs/1M"
           }
         ]
       },
@@ -11927,10 +11935,10 @@
             "$ref": "#/$defs/3T"
           },
           {
-            "$ref": "#/$defs/1y"
+            "$ref": "#/$defs/1z"
           },
           {
-            "$ref": "#/$defs/1p"
+            "$ref": "#/$defs/1q"
           },
           {
             "not": {
@@ -11976,7 +11984,7 @@
             "$ref": "#/$defs/m"
           },
           {
-            "$ref": "#/$defs/24"
+            "$ref": "#/$defs/25"
           },
           {
             "$ref": "#/$defs/q"
@@ -12103,7 +12111,7 @@
               {
                 "properties": {
                   "cloneStaticSiteFromGit": {
-                    "$ref": "#/$defs/1Q"
+                    "$ref": "#/$defs/1R"
                   }
                 },
                 "required": [
@@ -12115,7 +12123,7 @@
                 "not": {
                   "properties": {
                     "cloneStaticSiteFromGit": {
-                      "$ref": "#/$defs/1P"
+                      "$ref": "#/$defs/1Q"
                     }
                   },
                   "required": [
@@ -12145,7 +12153,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/1g"
+            "$ref": "#/$defs/1h"
           }
         ]
       },
@@ -12172,7 +12180,7 @@
             "$ref": "#/$defs/3m"
           },
           {
-            "$ref": "#/$defs/1q"
+            "$ref": "#/$defs/1r"
           }
         ]
       },
@@ -12314,16 +12322,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1l"
+            "$ref": "#/$defs/1m"
           },
           {
             "$ref": "#/$defs/9"
           },
           {
-            "$ref": "#/$defs/1Z"
+            "$ref": "#/$defs/20"
           },
           {
-            "$ref": "#/$defs/1Y"
+            "$ref": "#/$defs/1Z"
           }
         ]
       },
@@ -12432,7 +12440,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1g"
+            "$ref": "#/$defs/1h"
           },
           {
             "not": {
@@ -12454,7 +12462,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/20"
+            "$ref": "#/$defs/21"
           },
           {
             "$ref": "#/$defs/3e"
@@ -12667,7 +12675,7 @@
             "$ref": "#/$defs/Q"
           },
           {
-            "$ref": "#/$defs/1x"
+            "$ref": "#/$defs/1y"
           }
         ]
       },
@@ -12847,7 +12855,7 @@
     {
       "if": {
         "not": {
-          "$ref": "#/$defs/1v"
+          "$ref": "#/$defs/1w"
         }
       },
       "then": {
@@ -12962,7 +12970,7 @@
                       "https": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/1G"
+                            "$ref": "#/$defs/1H"
                           },
                           {
                             "$ref": "#/$defs/o"
@@ -12995,7 +13003,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/1q"
+              "$ref": "#/$defs/1r"
             }
           },
           {
@@ -13102,7 +13110,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1I"
+            "$ref": "#/$defs/1J"
           }
         ]
       },
@@ -13216,10 +13224,10 @@
             "$ref": "#/$defs/S"
           },
           {
-            "$ref": "#/$defs/1u"
+            "$ref": "#/$defs/1v"
           },
           {
-            "$ref": "#/$defs/1A"
+            "$ref": "#/$defs/1B"
           }
         ]
       },
@@ -13311,7 +13319,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1g"
               },
               {
                 "$ref": "#/$defs/9"
@@ -13320,7 +13328,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/1r"
+                      "$ref": "#/$defs/1s"
                     },
                     {
                       "$ref": "#/$defs/2w"
@@ -13336,7 +13344,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1g"
               },
               {
                 "$ref": "#/$defs/9"
@@ -13348,7 +13356,7 @@
                       "$ref": "#/$defs/2v"
                     },
                     {
-                      "$ref": "#/$defs/1q"
+                      "$ref": "#/$defs/1r"
                     }
                   ]
                 }
@@ -13361,7 +13369,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1g"
               },
               {
                 "not": {
@@ -13383,16 +13391,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1g"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/17"
+                      "$ref": "#/$defs/18"
                     },
                     {
-                      "$ref": "#/$defs/1i"
+                      "$ref": "#/$defs/1j"
                     }
                   ]
                 }
@@ -13429,7 +13437,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1j"
+            "$ref": "#/$defs/1k"
           },
           {
             "$ref": "#/$defs/K"
@@ -13562,7 +13570,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/1e"
+                    "$ref": "#/$defs/1f"
                   },
                   {
                     "type": "null"
@@ -13646,7 +13654,7 @@
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/24"
+            "$ref": "#/$defs/25"
           }
         ]
       },
@@ -13702,7 +13710,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1g"
+            "$ref": "#/$defs/1h"
           },
           {
             "properties": {
@@ -13738,7 +13746,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/1r"
+              "$ref": "#/$defs/1s"
             }
           },
           {
@@ -13767,7 +13775,7 @@
           {
             "properties": {
               "healthIngress": {
-                "$ref": "#/$defs/1a"
+                "$ref": "#/$defs/1b"
               }
             },
             "required": [
@@ -13818,7 +13826,7 @@
             "$ref": "#/$defs/a"
           },
           {
-            "$ref": "#/$defs/1t"
+            "$ref": "#/$defs/1u"
           },
           {
             "$ref": "#/$defs/R"
@@ -13866,13 +13874,13 @@
                     "anyOf": [
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/1d"
+                          "$ref": "#/$defs/1e"
                         },
                         "type": "object"
                       },
                       {
                         "items": {
-                          "$ref": "#/$defs/1d"
+                          "$ref": "#/$defs/1e"
                         },
                         "type": "array"
                       },
@@ -13924,7 +13932,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1j"
+            "$ref": "#/$defs/1k"
           },
           {
             "$ref": "#/$defs/O"
@@ -13959,7 +13967,7 @@
             "$ref": "#/$defs/9"
           },
           {
-            "$ref": "#/$defs/1m"
+            "$ref": "#/$defs/1n"
           }
         ]
       },
@@ -14180,7 +14188,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1h"
+                    "$ref": "#/$defs/1i"
                   },
                   {
                     "type": "null"
@@ -14195,7 +14203,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1y"
+        "$ref": "#/$defs/1z"
       },
       "then": {
         "additionalProperties": {},
@@ -14275,7 +14283,7 @@
             "$ref": "#/$defs/9"
           },
           {
-            "$ref": "#/$defs/1y"
+            "$ref": "#/$defs/1z"
           }
         ]
       },
@@ -14477,7 +14485,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/1c"
+          "$ref": "#/$defs/1d"
         },
         {
           "type": "null"
@@ -14694,7 +14702,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1o"
+                "$ref": "#/$defs/1p"
               }
             ]
           },
@@ -14743,7 +14751,7 @@
                             "$ref": "#/$defs/1"
                           },
                           {
-                            "$ref": "#/$defs/1e"
+                            "$ref": "#/$defs/1f"
                           },
                           {
                             "type": "null"
@@ -14799,7 +14807,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/1o"
+            "$ref": "#/$defs/1p"
           },
           "then": false
         },
@@ -14837,7 +14845,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1o"
+                "$ref": "#/$defs/1p"
               },
               {
                 "not": {
@@ -14863,7 +14871,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1o"
+                "$ref": "#/$defs/1p"
               },
               {
                 "not": {
@@ -14983,7 +14991,7 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/16"
+          "$ref": "#/$defs/17"
         }
       ],
       "description": "Add annotations to all the deployed resources"
@@ -14997,7 +15005,7 @@
         "http": {
           "anyOf": [
             {
-              "$ref": "#/$defs/1E"
+              "$ref": "#/$defs/1F"
             },
             {
               "$ref": "#/$defs/o"
@@ -15011,7 +15019,7 @@
               "$ref": "#/$defs/1"
             },
             {
-              "$ref": "#/$defs/1E"
+              "$ref": "#/$defs/1F"
             },
             {
               "$ref": "#/$defs/o"
@@ -15109,7 +15117,7 @@
                   "command": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1e"
+                        "$ref": "#/$defs/1f"
                       },
                       {
                         "type": "null"
@@ -15146,7 +15154,7 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/1c"
+          "$ref": "#/$defs/1d"
         },
         {
           "type": "null"
@@ -15763,7 +15771,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/1O"
+                    "$ref": "#/$defs/1P"
                   }
                 },
                 "type": [
@@ -16630,7 +16638,7 @@
                             "items": {
                               "description": "items if unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                               "items": {
-                                "$ref": "#/$defs/21"
+                                "$ref": "#/$defs/22"
                               },
                               "type": [
                                 "array",
@@ -16909,7 +16917,7 @@
                   "items": {
                     "description": "items If unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                     "items": {
-                      "$ref": "#/$defs/21"
+                      "$ref": "#/$defs/22"
                     },
                     "type": [
                       "array",
@@ -17151,7 +17159,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/1k"
+                        "$ref": "#/$defs/1l"
                       },
                       {
                         "$ref": "#/$defs/4"
@@ -17293,11 +17301,11 @@
                 "properties": {
                   "extraHosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1X"
+                      "$ref": "#/$defs/1Y"
                     },
                     "description": "An array with additional hostname(s) to be covered with the ingress record\ne.g:\nextraHosts:\n- name: example.local\npath: /",
                     "items": {
-                      "$ref": "#/$defs/1X"
+                      "$ref": "#/$defs/1Y"
                     }
                   }
                 }
@@ -17310,11 +17318,11 @@
                 "properties": {
                   "extraHosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1S"
+                      "$ref": "#/$defs/1T"
                     },
                     "description": "An array with additional hostname(s) to be covered with the ingress record\ne.g:\nextraHosts:\n- name: example.local\npath: /",
                     "items": {
-                      "$ref": "#/$defs/1S"
+                      "$ref": "#/$defs/1T"
                     }
                   }
                 }
@@ -17332,7 +17340,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1b"
+                "$ref": "#/$defs/1c"
               }
             ]
           },
@@ -17341,11 +17349,11 @@
             "properties": {
               "secrets": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/1V"
+                  "$ref": "#/$defs/1W"
                 },
                 "description": "TLS Secret configuration\nIf you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nE.g.\nsecrets:\n- name: example.local-tls\nkey:\ncertificate:",
                 "items": {
-                  "$ref": "#/$defs/1V"
+                  "$ref": "#/$defs/1W"
                 }
               }
             }
@@ -17705,16 +17713,16 @@
                                     "$ref": "#/$defs/2i"
                                   },
                                   "kind": {
-                                    "$ref": "#/$defs/22"
+                                    "$ref": "#/$defs/23"
                                   },
                                   "name": {
-                                    "$ref": "#/$defs/1H"
+                                    "$ref": "#/$defs/1I"
                                   },
                                   "namespace": {
                                     "$ref": "#/$defs/2b"
                                   },
                                   "port": {
-                                    "$ref": "#/$defs/25"
+                                    "$ref": "#/$defs/16"
                                   },
                                   "weight": {
                                     "default": 1,
@@ -18013,7 +18021,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1b"
+                "$ref": "#/$defs/1c"
               }
             ]
           },
@@ -18022,11 +18030,11 @@
             "properties": {
               "secrets": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/1V"
+                  "$ref": "#/$defs/1W"
                 },
                 "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: nginx.local-tls\nkey:\ncertificate:",
                 "items": {
-                  "$ref": "#/$defs/1V"
+                  "$ref": "#/$defs/1W"
                 }
               }
             }
@@ -18095,11 +18103,11 @@
                 "properties": {
                   "extraHosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1X"
+                      "$ref": "#/$defs/1Y"
                     },
                     "description": "The list of additional hostnames to be covered with this ingress record.\nMost likely the hostname above will be enough, but in the event more hosts are needed, this is an array\nextraHosts:\n- name: nginx.local\npath: /",
                     "items": {
-                      "$ref": "#/$defs/1X"
+                      "$ref": "#/$defs/1Y"
                     }
                   }
                 }
@@ -18109,11 +18117,11 @@
                 "properties": {
                   "extraHosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1S"
+                      "$ref": "#/$defs/1T"
                     },
                     "description": "The list of additional hostnames to be covered with this ingress record.\nMost likely the hostname above will be enough, but in the event more hosts are needed, this is an array\nextraHosts:\n- name: nginx.local\npath: /",
                     "items": {
-                      "$ref": "#/$defs/1S"
+                      "$ref": "#/$defs/1T"
                     }
                   }
                 }
@@ -18165,7 +18173,7 @@
                     "$ref": "#/$defs/6"
                   },
                   {
-                    "$ref": "#/$defs/1k"
+                    "$ref": "#/$defs/1l"
                   },
                   {
                     "$ref": "#/$defs/4"
@@ -18195,7 +18203,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/1a"
+                      "$ref": "#/$defs/1b"
                     }
                   },
                   {
@@ -18287,7 +18295,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1a"
+                  "$ref": "#/$defs/1b"
                 }
               }
             ]
@@ -18307,7 +18315,7 @@
                     "$ref": "#/$defs/6"
                   },
                   {
-                    "$ref": "#/$defs/1k"
+                    "$ref": "#/$defs/1l"
                   },
                   {
                     "$ref": "#/$defs/4"
@@ -18412,16 +18420,16 @@
           "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
           "properties": {
             "postStart": {
-              "$ref": "#/$defs/1U"
+              "$ref": "#/$defs/1V"
             },
             "preStop": {
-              "$ref": "#/$defs/1U"
+              "$ref": "#/$defs/1V"
             }
           },
           "type": "object"
         },
         {
-          "$ref": "#/$defs/1c"
+          "$ref": "#/$defs/1d"
         },
         {
           "type": "null"
@@ -18856,10 +18864,10 @@
                 "$ref": "#/$defs/Q"
               },
               {
-                "$ref": "#/$defs/1s"
+                "$ref": "#/$defs/1t"
               },
               {
-                "$ref": "#/$defs/1x"
+                "$ref": "#/$defs/1y"
               }
             ]
           },
@@ -18875,7 +18883,7 @@
                 "$ref": "#/$defs/S"
               },
               {
-                "$ref": "#/$defs/1A"
+                "$ref": "#/$defs/1B"
               }
             ]
           },
@@ -19045,7 +19053,7 @@
                     ]
                   },
                   "windowsOptions": {
-                    "$ref": "#/$defs/1T"
+                    "$ref": "#/$defs/1U"
                   }
                 },
                 "type": [
@@ -19074,7 +19082,7 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/16"
+                        "$ref": "#/$defs/17"
                       }
                     ],
                     "description": "Additional annotations for NGINX Prometheus exporter pod(s)\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/\nContainer Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/"
@@ -19091,7 +19099,7 @@
                       "port": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/1G"
+                            "$ref": "#/$defs/1H"
                           },
                           {
                             "$ref": "#/$defs/o"
@@ -19119,7 +19127,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/16"
+                            "$ref": "#/$defs/17"
                           }
                         ],
                         "description": "[object] Annotations for the Prometheus exporter service"
@@ -19206,7 +19214,7 @@
                       "metrics": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/1E"
+                            "$ref": "#/$defs/1F"
                           },
                           {
                             "$ref": "#/$defs/o"
@@ -19291,7 +19299,7 @@
                 "$ref": "#/$defs/S"
               },
               {
-                "$ref": "#/$defs/1u"
+                "$ref": "#/$defs/1v"
               }
             ]
           },
@@ -19307,7 +19315,7 @@
                 "$ref": "#/$defs/Q"
               },
               {
-                "$ref": "#/$defs/1x"
+                "$ref": "#/$defs/1y"
               }
             ]
           },
@@ -19377,7 +19385,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1t"
+                "$ref": "#/$defs/1u"
               },
               {
                 "$ref": "#/$defs/R"
@@ -19399,7 +19407,7 @@
                 "$ref": "#/$defs/R"
               },
               {
-                "$ref": "#/$defs/1z"
+                "$ref": "#/$defs/1A"
               }
             ]
           },
@@ -19474,7 +19482,7 @@
                 "$ref": "#/$defs/Q"
               },
               {
-                "$ref": "#/$defs/1s"
+                "$ref": "#/$defs/1t"
               }
             ]
           },
@@ -19493,10 +19501,10 @@
                 "$ref": "#/$defs/S"
               },
               {
-                "$ref": "#/$defs/1u"
+                "$ref": "#/$defs/1v"
               },
               {
-                "$ref": "#/$defs/1A"
+                "$ref": "#/$defs/1B"
               }
             ]
           },
@@ -19547,13 +19555,13 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/1t"
+                "$ref": "#/$defs/1u"
               },
               {
                 "$ref": "#/$defs/R"
               },
               {
-                "$ref": "#/$defs/1z"
+                "$ref": "#/$defs/1A"
               }
             ]
           },
@@ -19756,7 +19764,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1F"
+                  "$ref": "#/$defs/1G"
                 }
               },
               {
@@ -19784,7 +19792,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1F"
+                  "$ref": "#/$defs/1G"
                 }
               },
               {
@@ -19835,7 +19843,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1F"
+                  "$ref": "#/$defs/1G"
                 }
               },
               {
@@ -20015,7 +20023,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/1c"
+          "$ref": "#/$defs/1d"
         },
         {
           "type": "null"
@@ -20031,7 +20039,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/1J"
+            "$ref": "#/$defs/1K"
           },
           "then": {
             "allOf": [
@@ -20041,7 +20049,7 @@
                   "maxUnavailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1W"
+                        "$ref": "#/$defs/1X"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -20057,7 +20065,7 @@
                   "minAvailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1W"
+                        "$ref": "#/$defs/1X"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -20112,13 +20120,13 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/1c"
+          "$ref": "#/$defs/1d"
         },
         {
           "type": "string"
         },
         {
-          "$ref": "#/$defs/16"
+          "$ref": "#/$defs/17"
         }
       ],
       "description": "Annotations for NGINX pods\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
@@ -20230,7 +20238,7 @@
                 ]
               },
               "windowsOptions": {
-                "$ref": "#/$defs/1T"
+                "$ref": "#/$defs/1U"
               }
             },
             "type": [
@@ -20807,7 +20815,7 @@
                     ]
                   },
                   "port": {
-                    "$ref": "#/$defs/1G"
+                    "$ref": "#/$defs/1H"
                   },
                   "protocol": {
                     "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
@@ -20957,7 +20965,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/1J"
+            "$ref": "#/$defs/1K"
           },
           "then": {
             "allOf": [

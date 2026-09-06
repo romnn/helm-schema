@@ -58873,60 +58873,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/kf"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "properties": {
-                  "port": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "$ref": "#/$defs/ti"
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "required": [
-                  "port"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "properties": {
-                  "port": {
-                    "$ref": "#/$defs/lx"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "$ref": "#/$defs/tL"
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/sX"
       },
       "then": false
@@ -86802,6 +86748,67 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/kf"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "port": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "port": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/lx"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "$ref": "#/$defs/ti"
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "required": [
+                  "port"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "$ref": "#/$defs/tL"
+          }
+        ]
       }
     },
     {

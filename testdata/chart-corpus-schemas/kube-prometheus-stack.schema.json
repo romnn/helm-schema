@@ -205884,10 +205884,757 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/4"
+            "allOf": [
+              {
+                "$ref": "#/$defs/20"
+              },
+              {
+                "$ref": "#/$defs/w9"
+              },
+              {
+                "$ref": "#/$defs/4"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "description": "Network Policy configuration",
+                "properties": {
+                  "gateway": {
+                    "additionalProperties": {},
+                    "description": "Gateway (formerly ingress controller) configuration",
+                    "properties": {
+                      "namespace": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/m"
+                          },
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "$ref": "#/$defs/p"
+                          },
+                          {
+                            "$ref": "#/$defs/l"
+                          },
+                          {
+                            "$ref": "#/$defs/q"
+                          },
+                          {
+                            "$ref": "#/$defs/o"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/3I"
+                          }
+                        ],
+                        "description": "Gateway namespace"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/VS"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Configuration for Alertmanager service",
+                "properties": {
+                  "sessionAffinityConfig": {
+                    "$ref": "#/$defs/RO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/yS"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Configuration for Alertmanager service",
+                "properties": {
+                  "nodePort": {
+                    "$ref": "#/$defs/Ll"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/7s"
           },
           "then": {
             "allOf": [
+              {
+                "$ref": "#/$defs/iI"
+              },
+              {
+                "$ref": "#/$defs/xx"
+              },
+              {
+                "$ref": "#/$defs/xU"
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "$ref": "#/$defs/fe"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "TLS configuration for Alertmanager Ingress\nSecret must be manually created in the namespace\n- secretName: alertmanager-general-tls\nhosts:\n- alertmanager.example.com"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/$defs/6s"
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
+                    "$ref": "#/$defs/sr"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/sr"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
+                    "$ref": "#/$defs/CL"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanagerSpec": {
+                "additionalProperties": {},
+                "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
+                "properties": {
+                  "podAntiAffinityTopologyKey": {
+                    "$ref": "#/$defs/uI"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/Um"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Configuration for Alertmanager service",
+                "properties": {
+                  "port": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/p"
+                      },
+                      {
+                        "$ref": "#/$defs/q"
+                      },
+                      {
+                        "$ref": "#/$defs/W"
+                      },
+                      {
+                        "$ref": "#/$defs/o"
+                      },
+                      {
+                        "$ref": "#/$defs/d9"
+                      },
+                      {
+                        "$ref": "#/$defs/d5"
+                      }
+                    ],
+                    "description": "Port for Alertmanager Service to listen on"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/r4"
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/20"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "gateway": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "gateway"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "gateway": {}
+                          },
+                          "required": [
+                            "gateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/4"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "$ref": "#/$defs/pV"
+        },
+        {
+          "$ref": "#/$defs/ui"
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/20"
+              },
+              {
+                "$ref": "#/$defs/4"
+              },
+              {
+                "$ref": "#/$defs/w8"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "description": "Network Policy configuration",
+                "properties": {
+                  "gateway": {
+                    "additionalProperties": {},
+                    "description": "Gateway (formerly ingress controller) configuration",
+                    "properties": {
+                      "podLabels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/ew"
+                          }
+                        ],
+                        "description": "Gateway pod labels\napp.kubernetes.io/name: ingress-nginx"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/4"
+              },
+              {
+                "properties": {
+                  "alertmanagerSpec": {
+                    "$ref": "#/$defs/tM"
+                  }
+                },
+                "required": [
+                  "alertmanagerSpec"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanagerSpec": {
+                "additionalProperties": {},
+                "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
+                "properties": {
+                  "enableServiceLinks": {
+                    "$ref": "#/$defs/zL"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/20"
+              },
+              {
+                "$ref": "#/$defs/4"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/El"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "egress": {}
+                          },
+                          "required": [
+                            "egress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "$ref": "#/$defs/UX"
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/4"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/hm"
+                }
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "secret": {
+                "additionalProperties": {},
+                "description": "Configuration for Alertmanager secret",
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/30"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/kR"
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/yk"
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "Configuration for Alertmanager service",
+                    "properties": {
+                      "ipDualStack": {
+                        "$ref": "#/$defs/7k"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "Configuration for Alertmanager service",
+                    "properties": {
+                      "ipDualStack": {
+                        "$ref": "#/$defs/aS"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/4"
+              },
+              {
+                "$ref": "#/$defs/Aq"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanagerSpec": {
+                "additionalProperties": {},
+                "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
+                "properties": {
+                  "image": {
+                    "additionalProperties": {},
+                    "description": "Image of Alertmanager",
+                    "properties": {
+                      "sha": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/m"
+                          },
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "$ref": "#/$defs/l"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/M"
+                              },
+                              {
+                                "$ref": "#/$defs/P"
+                              },
+                              {
+                                "$ref": "#/$defs/L"
+                              },
+                              {
+                                "$ref": "#/$defs/K"
+                              },
+                              {
+                                "$ref": "#/$defs/N"
+                              },
+                              {
+                                "$ref": "#/$defs/Q"
+                              },
+                              {
+                                "$ref": "#/$defs/O"
+                              },
+                              {
+                                "$ref": "#/$defs/I"
+                              },
+                              {
+                                "$ref": "#/$defs/J"
+                              },
+                              {
+                                "$ref": "#/$defs/R"
+                              }
+                            ],
+                            "description": "sha of Alertmanager container image to be deployed. Defaults to the value of `version`.\nSimilar to a tag, but the SHA explicitly deploys an immutable container image.\nVersion and Tag are ignored if SHA is set.\nDeprecated: use 'image' instead. The image digest can be specified as part of the image URL.",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/20"
+                  },
+                  {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
+                    "$ref": "#/$defs/OZ"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/20"
+                  },
+                  {
+                    "$ref": "#/$defs/w9"
+                  },
+                  {
+                    "$ref": "#/$defs/4"
+                  },
+                  {
+                    "$ref": "#/$defs/w8"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Configuration for Alertmanager service",
+                "properties": {
+                  "port": {
+                    "description": "Port for Alertmanager Service to listen on",
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/34"
+                      },
+                      {
+                        "$ref": "#/$defs/7H"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/V9"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "description": "Network Policy configuration",
+                "properties": {
+                  "egress": {
+                    "additionalProperties": {},
+                    "description": "Configure egress rules",
+                    "properties": {
+                      "rules": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/Ag"
+                          },
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Custom egress rules\n- to:\n- namespaceSelector: {}\npodSelector:\nmatchLabels:\nname: smtp-relay\nports:\n- port: 25\nprotocol: TCP"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/nL"
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "enableHttp2": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/1u"
+                          },
+                          {
+                            "$ref": "#/$defs/9y"
+                          }
+                        ],
+                        "description": "enableHttp2: Whether to enable HTTP2.\nSee https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "sampleLimit": {
+                        "$ref": "#/$defs/cg"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/z5"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "bearerTokenFile": {
+                        "$ref": "#/$defs/kf"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/uy"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "interval": {
+                        "$ref": "#/$defs/bX"
+                      }
+                    }
+                  }
+                }
+              },
               {
                 "additionalProperties": {},
                 "properties": {
@@ -205895,24 +206642,296 @@
                     "additionalProperties": {},
                     "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
                     "properties": {
-                      "minReadySeconds": {
+                      "portName": {
                         "anyOf": [
                           {
-                            "description": "minReadySeconds defines the minimum number of seconds for which a newly\ncreated pod should be ready without any of its container crashing for it\nto be considered available.\n\nIf unset, pods will be considered available as soon as they are ready.\n\nWhen the Alertmanager version is greater than or equal to v0.30.0, the\nduration is also used to delay the first flush of the aggregation\ngroups. This delay helps ensuring that all alerts have been resent by\nthe Prometheus instances to Alertmanager after a roll-out. It is\npossible to override this behavior passing a custom value via\n`.spec.additionalArgs`.",
-                            "format": "int32",
-                            "minimum": 0,
-                            "type": "integer"
+                            "$ref": "#/$defs/m"
                           },
                           {
-                            "$ref": "#/$defs/3"
+                            "$ref": "#/$defs/7C"
+                          },
+                          {
+                            "$ref": "#/$defs/l"
                           }
                         ],
-                        "description": "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to\nbe considered available. Defaults to 0 (pod will be considered available as soon as it is ready)."
+                        "description": "PortName to use for Alert Manager."
                       }
                     }
                   }
                 }
               },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/tQ"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "metricRelabelings": {
+                        "$ref": "#/$defs/bx"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/uC"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/vC"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "scheme": {
+                        "$ref": "#/$defs/oX"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/tB"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "labelLimit": {
+                        "$ref": "#/$defs/pP"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "labelValueLengthLimit": {
+                        "$ref": "#/$defs/pL"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "tlsConfig": {
+                        "$ref": "#/$defs/ix"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "relabelings": {
+                        "$ref": "#/$defs/iF"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/ut"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalLabels": {
+                        "$ref": "#/$defs/i4"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/uh"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "additionalEndpoints": {
+                        "$ref": "#/$defs/vB"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "targetLimit": {
+                        "$ref": "#/$defs/ci"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "labelNameLengthLimit": {
+                        "$ref": "#/$defs/pM"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
+                    "properties": {
+                      "proxyUrl": {
+                        "$ref": "#/$defs/fl"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/$defs/xK"
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/4"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/7N"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/gV"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/4"
+          },
+          "then": {
+            "allOf": [
               {
                 "additionalProperties": {},
                 "properties": {
@@ -206692,6 +207711,34 @@
                     "additionalProperties": {},
                     "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
                     "properties": {
+                      "terminationGracePeriodSeconds": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "description": "terminationGracePeriodSeconds defines the Optional duration in seconds the pod needs to terminate gracefully.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down) which may lead to data corruption.\n\nDefaults to 120 seconds.",
+                            "format": "int64",
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        ],
+                        "description": "Duration in seconds the pod needs to terminate gracefully.\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "alertmanagerSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
+                    "properties": {
                       "priorityClassName": {
                         "anyOf": [
                           {
@@ -206797,6 +207844,34 @@
               },
               {
                 "$ref": "#/$defs/rf"
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "alertmanagerSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
+                    "properties": {
+                      "minReadySeconds": {
+                        "anyOf": [
+                          {
+                            "description": "minReadySeconds defines the minimum number of seconds for which a newly\ncreated pod should be ready without any of its container crashing for it\nto be considered available.\n\nIf unset, pods will be considered available as soon as they are ready.\n\nWhen the Alertmanager version is greater than or equal to v0.30.0, the\nduration is also used to delay the first flush of the aggregation\ngroups. This delay helps ensuring that all alerts have been resent by\nthe Prometheus instances to Alertmanager after a roll-out. It is\npossible to override this behavior passing a custom value via\n`.spec.additionalArgs`.",
+                            "format": "int32",
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to\nbe considered available. Defaults to 0 (pod will be considered available as soon as it is ready)."
+                      }
+                    }
+                  }
+                }
               },
               {
                 "additionalProperties": {},
@@ -208166,31 +209241,6 @@
                     "additionalProperties": {},
                     "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
                     "properties": {
-                      "terminationGracePeriodSeconds": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "description": "terminationGracePeriodSeconds defines the Optional duration in seconds the pod needs to terminate gracefully.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down) which may lead to data corruption.\n\nDefaults to 120 seconds.",
-                            "format": "int64",
-                            "minimum": 0,
-                            "type": "integer"
-                          }
-                        ],
-                        "description": "Duration in seconds the pod needs to terminate gracefully.\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "alertmanagerSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
-                    "properties": {
                       "volumes": {
                         "anyOf": [
                           {
@@ -208213,1050 +209263,6 @@
               }
             ]
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/20"
-              },
-              {
-                "$ref": "#/$defs/w9"
-              },
-              {
-                "$ref": "#/$defs/4"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "networkPolicy": {
-                "additionalProperties": {},
-                "description": "Network Policy configuration",
-                "properties": {
-                  "gateway": {
-                    "additionalProperties": {},
-                    "description": "Gateway (formerly ingress controller) configuration",
-                    "properties": {
-                      "namespace": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/m"
-                          },
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "$ref": "#/$defs/p"
-                          },
-                          {
-                            "$ref": "#/$defs/l"
-                          },
-                          {
-                            "$ref": "#/$defs/q"
-                          },
-                          {
-                            "$ref": "#/$defs/o"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "$ref": "#/$defs/3I"
-                          }
-                        ],
-                        "description": "Gateway namespace"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/VS"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Configuration for Alertmanager service",
-                "properties": {
-                  "sessionAffinityConfig": {
-                    "$ref": "#/$defs/RO"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/yS"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Configuration for Alertmanager service",
-                "properties": {
-                  "nodePort": {
-                    "$ref": "#/$defs/Ll"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/7s"
-          },
-          "then": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/iI"
-              },
-              {
-                "$ref": "#/$defs/xx"
-              },
-              {
-                "$ref": "#/$defs/xU"
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "ingress": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tls": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "$ref": "#/$defs/fe"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "TLS configuration for Alertmanager Ingress\nSecret must be manually created in the namespace\n- secretName: alertmanager-general-tls\nhosts:\n- alertmanager.example.com"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/$defs/6s"
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/4"
-                  },
-                  {
-                    "$ref": "#/$defs/sr"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/sr"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/4"
-                  },
-                  {
-                    "$ref": "#/$defs/CL"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanagerSpec": {
-                "additionalProperties": {},
-                "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
-                "properties": {
-                  "podAntiAffinityTopologyKey": {
-                    "$ref": "#/$defs/uI"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/Um"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Configuration for Alertmanager service",
-                "properties": {
-                  "port": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/p"
-                      },
-                      {
-                        "$ref": "#/$defs/q"
-                      },
-                      {
-                        "$ref": "#/$defs/W"
-                      },
-                      {
-                        "$ref": "#/$defs/o"
-                      },
-                      {
-                        "$ref": "#/$defs/d9"
-                      },
-                      {
-                        "$ref": "#/$defs/d5"
-                      }
-                    ],
-                    "description": "Port for Alertmanager Service to listen on"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "$ref": "#/$defs/r4"
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/20"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "gateway": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "gateway"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "gateway": {}
-                          },
-                          "required": [
-                            "gateway"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/4"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "$ref": "#/$defs/pV"
-        },
-        {
-          "$ref": "#/$defs/ui"
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/20"
-              },
-              {
-                "$ref": "#/$defs/4"
-              },
-              {
-                "$ref": "#/$defs/w8"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "networkPolicy": {
-                "additionalProperties": {},
-                "description": "Network Policy configuration",
-                "properties": {
-                  "gateway": {
-                    "additionalProperties": {},
-                    "description": "Gateway (formerly ingress controller) configuration",
-                    "properties": {
-                      "podLabels": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "$ref": "#/$defs/ew"
-                          }
-                        ],
-                        "description": "Gateway pod labels\napp.kubernetes.io/name: ingress-nginx"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/4"
-              },
-              {
-                "properties": {
-                  "alertmanagerSpec": {
-                    "$ref": "#/$defs/tM"
-                  }
-                },
-                "required": [
-                  "alertmanagerSpec"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanagerSpec": {
-                "additionalProperties": {},
-                "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
-                "properties": {
-                  "enableServiceLinks": {
-                    "$ref": "#/$defs/zL"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/20"
-              },
-              {
-                "$ref": "#/$defs/4"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/El"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "egress": {}
-                          },
-                          "required": [
-                            "egress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "$ref": "#/$defs/UX"
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/4"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/hm"
-                }
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "secret": {
-                "additionalProperties": {},
-                "description": "Configuration for Alertmanager secret",
-                "properties": {
-                  "annotations": {
-                    "$ref": "#/$defs/30"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "$ref": "#/$defs/kR"
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/yk"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "description": "Configuration for Alertmanager service",
-                    "properties": {
-                      "ipDualStack": {
-                        "$ref": "#/$defs/7k"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "description": "Configuration for Alertmanager service",
-                    "properties": {
-                      "ipDualStack": {
-                        "$ref": "#/$defs/aS"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/4"
-              },
-              {
-                "$ref": "#/$defs/Aq"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanagerSpec": {
-                "additionalProperties": {},
-                "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
-                "properties": {
-                  "image": {
-                    "additionalProperties": {},
-                    "description": "Image of Alertmanager",
-                    "properties": {
-                      "sha": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/m"
-                          },
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "$ref": "#/$defs/l"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/M"
-                              },
-                              {
-                                "$ref": "#/$defs/P"
-                              },
-                              {
-                                "$ref": "#/$defs/L"
-                              },
-                              {
-                                "$ref": "#/$defs/K"
-                              },
-                              {
-                                "$ref": "#/$defs/N"
-                              },
-                              {
-                                "$ref": "#/$defs/Q"
-                              },
-                              {
-                                "$ref": "#/$defs/O"
-                              },
-                              {
-                                "$ref": "#/$defs/I"
-                              },
-                              {
-                                "$ref": "#/$defs/J"
-                              },
-                              {
-                                "$ref": "#/$defs/R"
-                              }
-                            ],
-                            "description": "sha of Alertmanager container image to be deployed. Defaults to the value of `version`.\nSimilar to a tag, but the SHA explicitly deploys an immutable container image.\nVersion and Tag are ignored if SHA is set.\nDeprecated: use 'image' instead. The image digest can be specified as part of the image URL.",
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/20"
-                  },
-                  {
-                    "$ref": "#/$defs/4"
-                  },
-                  {
-                    "$ref": "#/$defs/OZ"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/20"
-                  },
-                  {
-                    "$ref": "#/$defs/w9"
-                  },
-                  {
-                    "$ref": "#/$defs/4"
-                  },
-                  {
-                    "$ref": "#/$defs/w8"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Configuration for Alertmanager service",
-                "properties": {
-                  "port": {
-                    "description": "Port for Alertmanager Service to listen on",
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/34"
-                      },
-                      {
-                        "$ref": "#/$defs/7H"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/V9"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "networkPolicy": {
-                "additionalProperties": {},
-                "description": "Network Policy configuration",
-                "properties": {
-                  "egress": {
-                    "additionalProperties": {},
-                    "description": "Configure egress rules",
-                    "properties": {
-                      "rules": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/Ag"
-                          },
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Custom egress rules\n- to:\n- namespaceSelector: {}\npodSelector:\nmatchLabels:\nname: smtp-relay\nports:\n- port: 25\nprotocol: TCP"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/nL"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "enableHttp2": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/1u"
-                          },
-                          {
-                            "$ref": "#/$defs/9y"
-                          }
-                        ],
-                        "description": "enableHttp2: Whether to enable HTTP2.\nSee https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "sampleLimit": {
-                        "$ref": "#/$defs/cg"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/z5"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "bearerTokenFile": {
-                        "$ref": "#/$defs/kf"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/uy"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "interval": {
-                        "$ref": "#/$defs/bX"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "alertmanagerSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting alertmanagerSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#alertmanagerspec",
-                    "properties": {
-                      "portName": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/m"
-                          },
-                          {
-                            "$ref": "#/$defs/7C"
-                          },
-                          {
-                            "$ref": "#/$defs/l"
-                          }
-                        ],
-                        "description": "PortName to use for Alert Manager."
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/tQ"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "metricRelabelings": {
-                        "$ref": "#/$defs/bx"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/uC"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/vC"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "scheme": {
-                        "$ref": "#/$defs/oX"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/tB"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "labelLimit": {
-                        "$ref": "#/$defs/pP"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "labelValueLengthLimit": {
-                        "$ref": "#/$defs/pL"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "tlsConfig": {
-                        "$ref": "#/$defs/ix"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "relabelings": {
-                        "$ref": "#/$defs/iF"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/ut"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalLabels": {
-                        "$ref": "#/$defs/i4"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/uh"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "additionalEndpoints": {
-                        "$ref": "#/$defs/vB"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "targetLimit": {
-                        "$ref": "#/$defs/ci"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "labelNameLengthLimit": {
-                        "$ref": "#/$defs/pM"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "description": "Configuration for creating a ServiceMonitor for AlertManager",
-                    "properties": {
-                      "proxyUrl": {
-                        "$ref": "#/$defs/fl"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/$defs/xK"
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/4"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/7N"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/gV"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
         },
         {
           "if": {
@@ -244080,96 +244086,6 @@
         },
         {
           "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "thanosServiceMonitor": {}
-                      },
-                      "required": [
-                        "thanosServiceMonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "thanosServiceMonitor": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "thanosServiceMonitor"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/87"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/fW"
-              },
-              {
-                "$ref": "#/$defs/VQ"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "prometheusSpec": {
-                "additionalProperties": {},
-                "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
-                "properties": {
-                  "routePrefix": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/m"
-                      },
-                      {
-                        "$ref": "#/$defs/p"
-                      },
-                      {
-                        "$ref": "#/$defs/ez"
-                      },
-                      {
-                        "$ref": "#/$defs/l"
-                      },
-                      {
-                        "$ref": "#/$defs/fk"
-                      },
-                      {
-                        "$ref": "#/$defs/q"
-                      },
-                      {
-                        "$ref": "#/$defs/o"
-                      }
-                    ],
-                    "description": "Prefix used to register routes, overriding externalUrl route.\nUseful for proxies that rewrite URLs."
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "$ref": "#/$defs/xK"
-        },
-        {
-          "if": {
             "$ref": "#/$defs/4"
           },
           "then": {
@@ -244581,6 +244497,34 @@
                     "additionalProperties": {},
                     "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
                     "properties": {
+                      "maximumStartupDurationSeconds": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "description": "maximumStartupDurationSeconds defines the maximum time that the `prometheus` container's startup probe will wait before being considered failed. The startup probe will return success after the WAL replay is complete.\nIf set, the value should be greater than 60 (seconds). Otherwise it will be equal to 900 seconds (15 minutes).",
+                            "format": "int32",
+                            "minimum": 60,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Defines the maximum time that the `prometheus` container's startup probe\nwill wait before being considered failed. The startup probe will return\nsuccess after the WAL replay is complete. If set, the value should be\ngreater than 60 (seconds). Otherwise it will be equal to 900 seconds (15\nminutes)."
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheusSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
+                    "properties": {
                       "keepDroppedTargets": {
                         "anyOf": [
                           {
@@ -244810,6 +244754,34 @@
                           }
                         ],
                         "description": "Required for use in managed kubernetes clusters (such as AWS EKS) with custom CNI (such as calico),\nbecause control-plane managed by AWS cannot communicate with pods' IP CIDR and admission webhooks are not working\nUse the host's network namespace if true. Make sure to understand the security implications if you want to enable it.\nWhen hostNetwork is enabled, this will set dnsPolicy to ClusterFirstWithHostNet automatically."
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheusSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
+                    "properties": {
+                      "terminationGracePeriodSeconds": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "description": "terminationGracePeriodSeconds defines the optional duration in seconds the pod needs to terminate gracefully.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down) which may lead to data corruption.\n\nDefaults to 600 seconds.",
+                            "format": "int64",
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Duration in seconds the pod needs to terminate gracefully.\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
                       }
                     }
                   }
@@ -245511,31 +245483,6 @@
               },
               {
                 "$ref": "#/$defs/providerShared36"
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "prometheusSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
-                    "properties": {
-                      "terminationGracePeriodSeconds": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "description": "terminationGracePeriodSeconds defines the optional duration in seconds the pod needs to terminate gracefully.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down) which may lead to data corruption.\n\nDefaults to 600 seconds.",
-                            "format": "int64",
-                            "minimum": 0,
-                            "type": "integer"
-                          }
-                        ],
-                        "description": "Duration in seconds the pod needs to terminate gracefully.\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
-                      }
-                    }
-                  }
-                }
               },
               {
                 "additionalProperties": {},
@@ -246329,31 +246276,6 @@
                     "additionalProperties": {},
                     "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
                     "properties": {
-                      "maximumStartupDurationSeconds": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "description": "maximumStartupDurationSeconds defines the maximum time that the `prometheus` container's startup probe will wait before being considered failed. The startup probe will return success after the WAL replay is complete.\nIf set, the value should be greater than 60 (seconds). Otherwise it will be equal to 900 seconds (15 minutes).",
-                            "format": "int32",
-                            "minimum": 60,
-                            "type": "integer"
-                          }
-                        ],
-                        "description": "Defines the maximum time that the `prometheus` container's startup probe\nwill wait before being considered failed. The startup probe will return\nsuccess after the WAL replay is complete. If set, the value should be\ngreater than 60 (seconds). Otherwise it will be equal to 900 seconds (15\nminutes)."
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "prometheusSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
-                    "properties": {
                       "enforcedBodySizeLimit": {
                         "anyOf": [
                           {
@@ -246830,6 +246752,34 @@
                           }
                         ],
                         "description": "If nil, select own namespace. Namespaces to be selected for Probe discovery.\nExample which selects Probe in namespaces with label \"prometheus\" set to \"somelabel\"\nprobeNamespaceSelector:\nmatchLabels:\nprometheus: somelabel"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheusSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
+                    "properties": {
+                      "minReadySeconds": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "description": "minReadySeconds defines the minimum number of seconds for which a newly created Pod should be ready\nwithout any of its container crashing for it to be considered available.\n\nIf unset, pods will be considered available as soon as they are ready.",
+                            "format": "int32",
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to\nbe considered available. Defaults to 0 (pod will be considered available as soon as it is ready)."
                       }
                     }
                   }
@@ -247570,31 +247520,6 @@
                     "additionalProperties": {},
                     "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
                     "properties": {
-                      "minReadySeconds": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "description": "minReadySeconds defines the minimum number of seconds for which a newly created Pod should be ready\nwithout any of its container crashing for it to be considered available.\n\nIf unset, pods will be considered available as soon as they are ready.",
-                            "format": "int32",
-                            "minimum": 0,
-                            "type": "integer"
-                          }
-                        ],
-                        "description": "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to\nbe considered available. Defaults to 0 (pod will be considered available as soon as it is ready)."
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "prometheusSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
-                    "properties": {
                       "paused": {
                         "anyOf": [
                           {
@@ -247846,6 +247771,96 @@
               }
             ]
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "thanosServiceMonitor": {}
+                      },
+                      "required": [
+                        "thanosServiceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "thanosServiceMonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "thanosServiceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/87"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/fW"
+              },
+              {
+                "$ref": "#/$defs/VQ"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "prometheusSpec": {
+                "additionalProperties": {},
+                "description": "Settings affecting prometheusSpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#prometheusspec",
+                "properties": {
+                  "routePrefix": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/m"
+                      },
+                      {
+                        "$ref": "#/$defs/p"
+                      },
+                      {
+                        "$ref": "#/$defs/ez"
+                      },
+                      {
+                        "$ref": "#/$defs/l"
+                      },
+                      {
+                        "$ref": "#/$defs/fk"
+                      },
+                      {
+                        "$ref": "#/$defs/q"
+                      },
+                      {
+                        "$ref": "#/$defs/o"
+                      }
+                    ],
+                    "description": "Prefix used to register routes, overriding externalUrl route.\nUseful for proxies that rewrite URLs."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/xK"
         },
         {
           "if": {
@@ -258248,31 +258263,6 @@
                     "additionalProperties": {},
                     "description": "Settings affecting thanosRulerpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec",
                     "properties": {
-                      "terminationGracePeriodSeconds": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "description": "terminationGracePeriodSeconds defines the optional duration in seconds the pod needs to terminate gracefully.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down) which may lead to data corruption.\n\nDefaults to 120 seconds.",
-                            "format": "int64",
-                            "minimum": 0,
-                            "type": "integer"
-                          }
-                        ],
-                        "description": "Duration in seconds the pod needs to terminate gracefully.\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "thanosRulerSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting thanosRulerpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec",
-                    "properties": {
                       "additionalArgs": {
                         "anyOf": [
                           {
@@ -258314,6 +258304,34 @@
                           }
                         ],
                         "description": "Allows setting additional arguments for the ThanosRuler container\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosruler\n- name: remote-write.config\nvalue: |-\n\"remote_write\":\n- \"name\": \"receiver-0\"\n\"remote_timeout\": \"30s\"\n\"url\": \"http://thanos-receiver-0.thanos-receiver:8081/api/v1/receive\""
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "thanosRulerSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting thanosRulerpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec",
+                    "properties": {
+                      "minReadySeconds": {
+                        "anyOf": [
+                          {
+                            "description": "minReadySeconds defines the minimum number of seconds for which a newly created pod should be ready\nwithout any of its container crashing for it to be considered available.\n\nIf unset, pods will be considered available as soon as they are ready.",
+                            "format": "int32",
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Minimum number of seconds for which a newly created pod should be ready without any of its\ncontainers crashing/restarting for it to be considered available."
                       }
                     }
                   }
@@ -258520,6 +258538,34 @@
                             "$ref": "#/$defs/3"
                           }
                         ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "thanosRulerSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting thanosRulerpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec",
+                    "properties": {
+                      "ruleConcurrentEval": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "description": "ruleConcurrentEval defines how many rules can be evaluated concurrently.\nIt requires Thanos >= v0.37.0.",
+                            "format": "int32",
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Number of concurrent rule evaluations."
                       }
                     }
                   }
@@ -258831,6 +258877,34 @@
                 }
               },
               {
+                "additionalProperties": {},
+                "properties": {
+                  "thanosRulerSpec": {
+                    "additionalProperties": {},
+                    "description": "Settings affecting thanosRulerpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec",
+                    "properties": {
+                      "terminationGracePeriodSeconds": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/3"
+                          },
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "description": "terminationGracePeriodSeconds defines the optional duration in seconds the pod needs to terminate gracefully.\nValue must be non-negative integer. The value zero indicates stop immediately via\nthe kill signal (no opportunity to shut down) which may lead to data corruption.\n\nDefaults to 120 seconds.",
+                            "format": "int64",
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        ],
+                        "description": "Duration in seconds the pod needs to terminate gracefully.\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
+                      }
+                    }
+                  }
+                }
+              },
+              {
                 "$ref": "#/$defs/vO"
               },
               {
@@ -258936,31 +259010,6 @@
                         ]
                       }
                     ]
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "thanosRulerSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting thanosRulerpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec",
-                    "properties": {
-                      "minReadySeconds": {
-                        "anyOf": [
-                          {
-                            "description": "minReadySeconds defines the minimum number of seconds for which a newly created pod should be ready\nwithout any of its container crashing for it to be considered available.\n\nIf unset, pods will be considered available as soon as they are ready.",
-                            "format": "int32",
-                            "minimum": 0,
-                            "type": "integer"
-                          },
-                          {
-                            "$ref": "#/$defs/3"
-                          }
-                        ],
-                        "description": "Minimum number of seconds for which a newly created pod should be ready without any of its\ncontainers crashing/restarting for it to be considered available."
-                      }
-                    }
                   }
                 }
               },
@@ -259739,31 +259788,6 @@
                           }
                         ],
                         "description": "Labels by name to drop before sending to alertmanager\nMaps to the --alert.label-drop flag of thanos ruler."
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "thanosRulerSpec": {
-                    "additionalProperties": {},
-                    "description": "Settings affecting thanosRulerpec\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosrulerspec",
-                    "properties": {
-                      "ruleConcurrentEval": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/3"
-                          },
-                          {
-                            "description": "ruleConcurrentEval defines how many rules can be evaluated concurrently.\nIt requires Thanos >= v0.37.0.",
-                            "format": "int32",
-                            "minimum": 1,
-                            "type": "integer"
-                          }
-                        ],
-                        "description": "Number of concurrent rule evaluations."
                       }
                     }
                   }
