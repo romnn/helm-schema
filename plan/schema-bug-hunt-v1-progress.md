@@ -1552,3 +1552,49 @@ Next: resume F78 at the shared ordered scalar-program ownership seam; first run 
   requires pinned adjudication before adoption.
 
 Next: implement F69 through the non-ranged terminal-clause seam; first run `sed -n '465,720p' /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round4-cluster-b/crates/helm-schema-ir/src/contract_signal_builder/requirements.rs`.
+
+### Round 4 checkpoint — F69 awaits explicit unknown default alternatives
+
+- Status: **active prerequisite; not landed and not deferred**. The isolated F69
+  candidate fixes its direct witness and reduces the affected production files by
+  11 LOC, but the complete terminal route exposes an older abstract-interpretation
+  defect in `default`. No main-tree source, fixture or roster change was made.
+- Measured F69 result: full expected-schema equality and the activation matrix pass.
+  With the feature active, object and array render and validate; null, absence,
+  Boolean, number and string abort and are rejected. With the feature inactive the
+  scalar control remains accepted. The minimal chart was adjudicated with Helm
+  4.2.3 and Kubernetes 1.29.0.
+- Mechanism: non-ranged explicit fails now use the existing complete terminal
+  clause, and the competing per-conjunct requirement model is deleted. Ranged
+  member quantification remains separate. The post-`tpl` negative-pattern
+  compatibility case was repaired structurally at the typed terminal encoder;
+  four generator copies of the template-program candidate pattern share one core
+  constant. Positive transformed matching still abstains.
+- Validation correction: the existing `dig` test claimed a present-null
+  intermediate takes the fallback. Pinned Helm instead aborts with a nil-to-map
+  conversion error, while an absent intermediate uses the fallback and renders.
+  The candidate's rejection was correct, and the focused test now separates null
+  from absence. A destructured-range `len` difference was representation-only;
+  its full-schema expectation now carries equivalent document terminal clauses.
+- Blocking prerequisite: `eval_default` drops an unresolved fallback such as
+  `.Chart.AppVersion`, collapses the remaining primary to a raw path, and lets
+  `typeIs` claim exact raw-path semantics. That falsely rejects a null primary even
+  though Helm selects the string fallback. Abstaining in the decoder would also
+  lose the proved rejection of truthy non-string primaries. The sound prerequisite
+  is A1's single owned evaluated-value representation: retain an explicit unknown
+  alternative, preserve ordered selection, and derive type-test subsets from the
+  selected value. No terminal exception or eligibility rescue was kept.
+- Evidence: `round4-f69-evidence/handoff.md`, `candidate.diff` SHA-256
+  `6fa15df21d832e227bbc322dad89526ecc692536db771b0d3531ba1fb7734e9a`, and
+  `round4-f69-suite3.log`. The final library run intentionally exits 100 with
+  1,056/1,058 passing: exactly the existing default-selected-type case and its new
+  focused prerequisite red fail; five unrelated Cluster-B preparatory reds were
+  excluded. `cargo fmt --check` exits 0; `task tokei:core` exits 0 at 68,047
+  production Rust LOC. No dump, battery, performance run or final gates are
+  claimed for this retained candidate.
+- Resource hygiene: removed seven obsolete, regenerable pre-correction F77 source
+  snapshots and superseded dumps from the campaign temp root. Compact F77 review
+  and coverage evidence and every active D3/F78/F69 candidate remain. Root-volume
+  free space increased from 42 GiB to 49 GiB.
+
+Next: repair A1/default through explicit unknown ordered alternatives, then resume the retained F69 diff; first run `sed -n '22,195p' /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round4-cluster-b/crates/helm-schema-ir/src/expr_call_eval/collections.rs`.
