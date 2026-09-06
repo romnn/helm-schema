@@ -117,6 +117,46 @@ fn validate_helm_adjudication_coverage(coverage: &HelmAdjudicationCoverage) -> e
     Ok(())
 }
 
+fn validate_matched_helm_adjudication_coverage(
+    coverage: &HelmAdjudicationCoverage,
+) -> eyre::Result<()> {
+    validate_helm_adjudication_coverage(coverage)?;
+    eyre::ensure!(
+        coverage
+            .loosenings_with_uncertain_kubernetes_cases
+            .is_empty(),
+        "oracle-matched flips include uncertain Kubernetes outcomes: {:?}",
+        coverage.loosenings_with_uncertain_kubernetes_cases
+    );
+    Ok(())
+}
+
+#[test]
+fn matched_flip_validation_accepts_confirmed_outcomes() -> eyre::Result<()> {
+    let mut coverage = HelmAdjudicationCoverage::default();
+    for verdict in [
+        HelmFlipVerdict::TighteningMatchedHelmAbort,
+        HelmFlipVerdict::TighteningMatchedKubernetesRejection,
+        HelmFlipVerdict::LooseningMatchedKubernetesValidation,
+    ] {
+        coverage.record_verdict(verdict, "confirmed".to_string());
+        validate_matched_helm_adjudication_coverage(&coverage)?;
+    }
+    Ok(())
+}
+
+#[test]
+fn matched_flip_validation_rejects_uncertain_loosening() -> eyre::Result<()> {
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.record_verdict(
+        HelmFlipVerdict::LooseningWithUncertainKubernetes,
+        "uncertain".to_string(),
+    );
+    validate_helm_adjudication_coverage(&coverage)?;
+    assert!(validate_matched_helm_adjudication_coverage(&coverage).is_err());
+    Ok(())
+}
+
 fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
     eyre::ensure!(
         chart.base_emitted > 0,
@@ -1280,16 +1320,22 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         "Round 74 Helm adjudication failures:\n{}",
         helm_adjudication_failures.join("\n")
     );
-    validate_helm_adjudication_coverage(&report.helm_adjudication)?;
     eyre::ensure!(
         report.helm_adjudication.flips_adjudicated == flips.len(),
         "fixture flips were not all live-adjudicated: {report:?}"
     );
-    eyre::ensure!(
-        flips.len() == PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE,
-        "fixture acceptance flips differ from the pre-registered count:\n{}",
-        flips.join("\n")
-    );
+    // Correctness campaigns permit oracle-matched changes; preservation runs keep their count gate.
+    // Uncertain loosenings are not oracle matches, even when Helm renders.
+    if std::env::var_os("SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS").is_some() {
+        validate_matched_helm_adjudication_coverage(&report.helm_adjudication)?;
+    } else {
+        validate_helm_adjudication_coverage(&report.helm_adjudication)?;
+        eyre::ensure!(
+            flips.len() == PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE,
+            "fixture acceptance flips differ from the pre-registered count:\n{}",
+            flips.join("\n")
+        );
+    }
     eprintln!(
         "charts_checked={charts_checked} probes_checked={probes_checked} flips={}",
         flips.len()
