@@ -1393,3 +1393,32 @@ Next: complete F77's conservative bounded-numeric preimage and re-run its focuse
   F77 remains open; score remains 3/83 (3.6%).
 
 Next: correct F77 independent-contract host lowering and rerun the focused host tests; first run `jq '.properties.commonLabels' /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-dump.nOvNvC/helm-schema.cli.chart-corpus.bitnami-redis.schema.json`.
+
+### F78 partial checkpoint — concrete prerelease comparators
+
+- A bounded AST correction landed as `17d3e8ef`: when both operands are concrete
+  and the constraint is one prerelease comparator, evaluate the existing closed
+  comparison operator against semantic-version precedence. This fixes Helm's
+  `<1.0.0-rc.13` result for `0.9.0-alpha`; Cargo `VersionReq` incorrectly excludes
+  prereleases whose version core is not named in the requirement.
+- The exact Helm 4.2.3/Kubernetes 1.29.0 matrix covers all 36 cells for `<`, `<=`,
+  `>`, `>=`, `=` and `!=` over prerelease, stable and build-metadata operands.
+  Permanent table tests also retain stable bounds, wildcard/caret constraints and
+  supported loose spellings. AST plus IR passed 527/527 with zero skipped; final
+  formatting exited 0. The production delta is +49 Rust LOC.
+- Adversarial review found two real boundary mismatches before landing. Uppercase
+  `V` is invalid in Helm although Rust accepted it, and numeric prerelease
+  identifiers beyond `u64` use lexical fallback in Masterminds but arbitrary-size
+  numeric ordering in Rust. The final concrete leg accepts lowercase `v` only and
+  abstains on overflow on either operand; `u64::MAX` remains decidable. Red controls,
+  pinned Helm executions and the final hashes are in
+  `round3-f78.bQ1YHM/f78-groundwork/concrete-comparator-handoff.md`. Native Astra
+  high re-verification returned `CONVERGED`.
+- This is an explicitly partial, independently useful compiler checkpoint, not F78
+  closure. Exact ordered `split` transformation, newline-preserving suffix removal
+  and complementary comparison identity remain open. No F78 corpus dump, fixture
+  adoption, acceptance battery, performance floor or full final gates are claimed
+  yet; they will be batched after the remaining structural correction. Score stays
+  3/83 (3.6%).
+
+Next: finish F77's untyped descendant-carrier correction while F78's ordered transform design remains isolated; first run `tail -80 /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-correction-evidence/host-lowering-red.log`.
