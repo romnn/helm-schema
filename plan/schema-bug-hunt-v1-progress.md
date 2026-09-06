@@ -1251,3 +1251,60 @@ Next: implement F77 at the proved generator ownership seam while D3's bounded co
   it has not run while corrections remain open.
 
 Next: verify the bounded F77 and D3 review corrections, then advance converged candidates to final validation; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-review/astra-out.md`.
+
+### D3 performance correction and F77 hold
+
+- The final D3 corrective source passed 516 focused tests and a locked isolated
+  release build. The shared target then produced two invalid cross-checkout Rust
+  artifacts: one checkout compiled against a two-argument constructor while the
+  other saw the three-argument API. Both exit-101 runs are retained as invalid
+  cache evidence, not source failures. The shared 30 GiB debug directory was
+  removed as regenerable build output; source, dumps, reports and copied binaries
+  were preserved. T7 free space rose to 87 GiB. D3 and F77 now have separate
+  targets, incremental compilation disabled, and matching compiler/linker inputs.
+- The first Airflow performance attempt was invalid as a protocol measurement:
+  its online warm-up reached 3:39.91 CPU and a sampled 4.9 GiB footprint. It was
+  not an offline median and was stopped. An exact paired offline check then proved
+  the underlying candidate regression independently: warmed F74 runs used 5.95
+  and 5.73 CPU seconds; the corrected D3 candidate used 7.71 and 7.48. No median
+  or pass was inferred from the stopped warm-up.
+- First mechanism: `joined_rendered_output_arms` split each unchanged saved output
+  across both sides of every unrelated `if`, yielding two guarded copies per join.
+  A 24-condition regression failed on the first condition. The correction applies
+  the adjacent scalar-dispatch identity law to the complete `RenderedOutput` and
+  constructs reload environments only for changed/missing values. Distinct outputs
+  still use the precise branch merge. Focused red 101 to green 0; final IR 502 and
+  engine 15 passed; locked release passed. Paired Airflow returned to bounded
+  execution but remained about 30% slow, so the round still could not land.
+- Second mechanism: caller-name fragmentation made structurally name-independent
+  wrapper summaries miss across entry templates. A red cache test over 16 names
+  produced 16 outer summaries instead of one while preserving cold/cached semantic
+  equality. The correction recognizes only a sealed merge-semantic call with a
+  fresh dictionary destination and bare root source, transported into a literal
+  helper whose closure is independently proved not to observe caller name. It does
+  not strip nested carriers or normalize a name-sensitive key. Positive and five
+  abstention controls passed; final IR 504, engine 15 and locked release passed.
+  Airflow helper calls fell 4,005 to 3,728, but warmed CPU remained 7.32 and 7.21
+  versus baseline 5.70 and 5.67, still above the 6.237 rejection ceiling.
+- Clean traces now place the residual in exact file-template reuse. Candidate
+  analysis time is 4,300 ms versus 2,820 ms and helper calls 3,728 versus 1,820;
+  generator time improves and minification is unchanged. Airflow's ConfigMap body
+  executes under seven caller template names: F74 has two real executions and five
+  cache hits, while D3 executes all seven because the body contains dynamic `tpl`
+  and can structurally observe `Template.Name`. That body alone adds about 0.78
+  traced seconds and repeats its helper descendants. This is now a cache-dependency
+  design problem; removing `Template.Name` without proving the evaluated program
+  independent would be an unsound speed hack.
+- F77's qualified independent-contract and matched-flip corrections passed 638
+  generator tests plus focused red/green controls, but Fable identified a reachable
+  new false rejection at bounded numeric sinks. The existing scalar provider
+  preimage represents `integer, minimum: 1` as an exact input schema. Intersecting
+  it with a real raw-string obligation becomes impossible, rejecting valid string
+  `"4"`; merely adding a numeric-token string pattern would wrongly accept `"0"`
+  and omit valid YAML numeric spellings. F77 remains unlanded while a typed
+  partial-domain preimage design is evaluated. Evidence and alternatives are in
+  `round3-f77-correction-evidence/numeric-preimage-design.md`.
+- No corpus dump, fixture adoption, full gate battery, family closure or code commit
+  is claimed for either candidate. Score remains 3/83 (3.6%).
+
+Next: finish exact caller-context dependency caching and re-run the paired Airflow floor before any D3 dump; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/merge-proof-files.json`.
