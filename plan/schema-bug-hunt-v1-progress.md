@@ -1598,3 +1598,45 @@ Next: implement F69 through the non-ranged terminal-clause seam; first run `sed 
   free space increased from 42 GiB to 49 GiB.
 
 Next: repair A1/default through explicit unknown ordered alternatives, then resume the retained F69 diff; first run `sed -n '22,195p' /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round4-cluster-b/crates/helm-schema-ir/src/expr_call_eval/collections.rs`.
+
+### Round 4 checkpoint — F51 grouped argument evaluation
+
+- Status: **implementation checkpoint committed as `ae8b2aa3`; final validation
+  pending**. Acceptance baseline commit: `f245c1e9`. The change was integrated
+  through a repo-relative patch so the three overlapping F23/D3 files retained
+  their unrelated worktree hunks.
+- Contract: a direct field result reaches a strict map parameter as a valid nil
+  interface and aborts on missing or null input. Grouping the whole argument
+  passes Go's evaluated zero map instead, so missing and null render `false` but
+  concrete non-map values still abort. Grouping only a selector receiver is
+  nil-safe for that receiver; the final ungrouped member lookup remains direct
+  and aborts when the receiver exists but the leaf is missing or null.
+- Phase and design: the parser already retained `TemplateExpr::Parenthesized`.
+  Strict-operand evaluation erased it by deriving nil behavior from
+  `direct_values_path`, which intentionally deparenthesizes path identity. The
+  fix adds an exhaustive `ArgumentEvaluationMode` beside the function catalogue
+  and keeps identity and evaluation mode as distinct typed facts. Grouped
+  receivers carry their selected suffix depth so strict leaf captures are scoped
+  under a non-null receiver. The rejected design made path identity depend on
+  grouping and would have corrupted unrelated path consumers.
+- Focused evidence: pinned Helm 4.2.3 distinguishes bare/grouped absent, null,
+  object and string inputs; additional controls distinguish grouped receiver from
+  grouped whole selector and retain direct ranged-member `$member`/`$member.child`
+  nil behavior. Three generator tests assert full schema equality plus acceptance
+  matrices, with focused IR and catalogue tests underneath.
+- Validation so far: initial IR red exited 100. Six focused main-tree tests pass;
+  the isolated final IR/gen run passes 1,057/1,057. The first combined run exposed
+  one stale expectation that treated a direct ranged-dot map argument as
+  null-tolerant; pinned Helm aborts, so the expectation now uses
+  `SchemaTypeEvenNull`. `cargo fmt --check`, candidate diff check and
+  `task tokei:core` exit 0. Production Rust LOC is 68,148, +90 from the F77
+  baseline. No corpus dump, battery, performance result, roster movement or full
+  final gate is claimed yet.
+- Architecture verdict: **sound shape**. The typed mode is derived exhaustively
+  from parsed AST at the strict-consumer boundary and adds no source heuristic,
+  chart exception, path metadata map or alternative value representation.
+  Evidence and exact diff are in `round4-f51/{handoff.md,f51.diff,hashes.txt}`;
+  repo patch SHA-256 is
+  `d32302cbecbc1e23d8c732c9651fb35b474746ce0bf9137c93263491801c60ca`.
+
+Next: make one clean F51 dump and run the candidate battery against `f245c1e9`; first run `cargo build --release -p helm-schema-cli` after every concurrent build has stopped.
