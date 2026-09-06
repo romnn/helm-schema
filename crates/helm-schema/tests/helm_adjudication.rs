@@ -35,6 +35,139 @@ fn write_chart(root: &Path, name: &str, values: &str) -> eyre::Result<()> {
 }
 
 #[test]
+fn unchanged_unknown_resources_are_differential_evidence_only() -> eyre::Result<()> {
+    let root = tempfile::tempdir()?;
+    let cache = tempfile::tempdir()?;
+    write_chart(root.path(), "differential", "token: original\n")?;
+    fs::write(
+        root.path().join("templates/resource.yaml"),
+        indoc! {r"
+        apiVersion: example.test/v1
+        kind: Unknown
+        metadata:
+          name: sample
+        spec:
+          token: {{ .Values.token }}
+    "},
+    )?;
+    let chart = PinnedHelmChart::prepare(root.path())?;
+    let probe = chart.adjudicate(&json!({}))?;
+    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    assert!(matches!(
+        validator.validate(&probe.rendered.stdout)?,
+        KubernetesVerdict::Uncertain(_)
+    ));
+    let differential = validator.validate_differential(&chart, &probe.rendered.stdout)?;
+    assert!(
+        matches!(differential, KubernetesVerdict::UnchangedUnknown(_)),
+        "{differential:?}"
+    );
+    let changed = chart.adjudicate(&json!({"token": "changed"}))?;
+    assert!(matches!(
+        validator.validate_differential(&chart, &changed.rendered.stdout)?,
+        KubernetesVerdict::Uncertain(_)
+    ));
+    Ok(())
+}
+
+#[test]
+fn duplicate_unknown_identities_on_either_side_remain_uncertain() -> eyre::Result<()> {
+    let cache = tempfile::tempdir()?;
+    for (defaults, overlay) in [(1, 2), (2, 1), (2, 2)] {
+        let root = tempfile::tempdir()?;
+        write_chart(root.path(), "duplicates", &format!("copies: {defaults}\n"))?;
+        fs::write(
+            root.path().join("templates/resources.yaml"),
+            indoc! {r"
+            {{ range until (int .Values.copies) }}
+            ---
+            apiVersion: example.test/v1
+            kind: Unknown
+            metadata:
+              namespace: example
+              name: duplicate
+            {{ end }}
+        "},
+        )?;
+        let chart = PinnedHelmChart::prepare(root.path())?;
+        let probe = chart.adjudicate(&json!({"copies": overlay}))?;
+        let verdict = OfflineKubernetesValidator::new(cache.path())
+            .validate_differential(&chart, &probe.rendered.stdout)?;
+        assert!(
+            matches!(verdict, KubernetesVerdict::Uncertain(_)),
+            "{verdict:?}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn differential_matching_never_hides_known_invalid_resources() -> eyre::Result<()> {
+    let root = tempfile::tempdir()?;
+    let cache = tempfile::tempdir()?;
+    write_chart(root.path(), "invalid", "{}")?;
+    write_cached_schema(
+        cache.path(),
+        "configmap-v1.json",
+        &json!({
+            "type": "object", "properties": {
+                "apiVersion": {"const": "v1"}, "kind": {"const": "ConfigMap"},
+                "data": {"type": "object", "additionalProperties": {"type": "string"}}
+            }
+        }),
+    )?;
+    fs::write(
+        root.path().join("templates/resources.yaml"),
+        indoc! {r"
+        apiVersion: example.test/v1
+        kind: Unknown
+        metadata:
+          name: same
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: invalid
+        data:
+          token: true
+    "},
+    )?;
+    let chart = PinnedHelmChart::prepare(root.path())?;
+    let probe = chart.adjudicate(&json!({}))?;
+    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let absolute = validator.validate(&probe.rendered.stdout)?;
+    assert!(matches!(absolute, KubernetesVerdict::Invalid(_)));
+    sim_assert_eq!(have: validator.validate_differential(&chart, &probe.rendered.stdout)?, want: absolute);
+    Ok(())
+}
+
+#[test]
+fn nonresource_and_inexact_unknown_documents_cannot_be_matched() -> eyre::Result<()> {
+    let cache = tempfile::tempdir()?;
+    for template in [
+        "value: scalar\n",
+        indoc! {"
+            apiVersion: example.test/v1
+            kind: Unknown
+            metadata:
+              name: inexact
+            value: 9007199254740993
+        "},
+    ] {
+        let root = tempfile::tempdir()?;
+        write_chart(root.path(), "uncertain", "{}")?;
+        fs::write(root.path().join("templates/resource.yaml"), template)?;
+        let chart = PinnedHelmChart::prepare(root.path())?;
+        let probe = chart.adjudicate(&json!({}))?;
+        let mut validator = OfflineKubernetesValidator::new(cache.path());
+        let absolute = validator.validate(&probe.rendered.stdout)?;
+        assert!(matches!(absolute, KubernetesVerdict::Uncertain(_)));
+        sim_assert_eq!(have: validator.validate_differential(&chart, &probe.rendered.stdout)?, want: absolute);
+    }
+    Ok(())
+}
+
+#[test]
 fn coalescence_preserves_null_ownership_before_render_mutation() -> eyre::Result<()> {
     let root = tempfile::tempdir()?;
     write_chart(root.path(), "parent", "owned: 1\n")?;

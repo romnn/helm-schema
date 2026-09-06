@@ -1,5 +1,6 @@
 //! Adjudicates values against pinned Helm execution and offline Kubernetes schemas.
 
+use std::cell::OnceCell;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Read as _;
@@ -37,6 +38,7 @@ pub(crate) struct PinnedHelmChart {
     evidence_dir: PathBuf,
     render_chart: PathBuf,
     coalesce_chart: PathBuf,
+    control_documents: OnceCell<Result<Vec<Value>, String>>,
 }
 
 impl PinnedHelmChart {
@@ -88,6 +90,7 @@ impl PinnedHelmChart {
             evidence_dir,
             render_chart,
             coalesce_chart,
+            control_documents: OnceCell::new(),
         })
     }
 
@@ -108,6 +111,25 @@ impl PinnedHelmChart {
             .prefix("probe-")
             .tempdir_in(&self.evidence_dir)?
             .keep())
+    }
+
+    fn control_documents(&self) -> Result<&[Value], &str> {
+        self.control_documents
+            .get_or_init(|| {
+                let probe = self
+                    .adjudicate(&serde_json::json!({}))
+                    .map_err(|error| error.to_string())?;
+                if !probe.rendered.status.success() {
+                    return Err(format!(
+                        "control render failed; evidence={}",
+                        probe.evidence_dir.display()
+                    ));
+                }
+                OfflineKubernetesValidator::decode(&probe.rendered.stdout)
+                    .map_err(|error| error.to_string())
+            })
+            .as_deref()
+            .map_err(String::as_str)
     }
 }
 
@@ -342,8 +364,64 @@ fn copy_chart_archive(
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum KubernetesVerdict {
     Valid,
+    UnchangedUnknown(Vec<String>),
     Invalid(Vec<String>),
     Uncertain(Vec<String>),
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct ResourceIdentity {
+    api_version: String,
+    kind: String,
+    namespace: Option<String>,
+    name: String,
+}
+
+impl ResourceIdentity {
+    fn from_document(document: &Value) -> Option<Self> {
+        let metadata = document.get("metadata")?.as_object()?;
+        let namespace = match metadata.get("namespace") {
+            None => None,
+            Some(Value::String(value)) => Some(value.clone()),
+            Some(_) => return None,
+        };
+        let identity = Self {
+            api_version: document.get("apiVersion")?.as_str()?.to_string(),
+            kind: document.get("kind")?.as_str()?.to_string(),
+            namespace,
+            name: metadata.get("name")?.as_str()?.to_string(),
+        };
+        (!identity.api_version.is_empty() && !identity.kind.is_empty() && !identity.name.is_empty())
+            .then_some(identity)
+    }
+}
+
+fn index_resources(documents: &[Value]) -> BTreeMap<ResourceIdentity, Option<Value>> {
+    let mut index = BTreeMap::new();
+    let mut pending: Vec<_> = documents.iter().collect();
+    while let Some(document) = pending.pop() {
+        if let Some(identity) = ResourceIdentity::from_document(document) {
+            // A duplicate cannot be paired unambiguously, even when both copies are equal.
+            index
+                .entry(identity)
+                .and_modify(|entry| *entry = None)
+                .or_insert_with(|| Some(document.clone()));
+        }
+        if document.get("apiVersion").and_then(Value::as_str) == Some("v1")
+            && document.get("kind").and_then(Value::as_str) == Some("List")
+            && let Some(items) = document.get("items").and_then(Value::as_array)
+        {
+            pending.extend(items);
+        }
+    }
+    index
+}
+
+#[derive(Default)]
+struct ResourceEvidence {
+    invalid: Vec<String>,
+    uncertain: Vec<String>,
+    unchanged: Vec<String>,
 }
 
 pub(crate) struct OfflineKubernetesValidator {
@@ -363,26 +441,56 @@ impl OfflineKubernetesValidator {
 
     /// A proven violation is decisive even when another resource lacks a schema.
     pub(crate) fn validate(&mut self, rendered: &[u8]) -> eyre::Result<KubernetesVerdict> {
-        let mut invalid = Vec::new();
-        let mut uncertain = Vec::new();
-        for (index, document) in Self::decode(rendered)?.into_iter().enumerate() {
+        Ok(self.validate_documents(&Self::decode(rendered)?, &BTreeMap::new()))
+    }
+
+    fn validate_documents(
+        &mut self,
+        documents: &[Value],
+        unchanged: &BTreeMap<ResourceIdentity, Value>,
+    ) -> KubernetesVerdict {
+        let mut evidence = ResourceEvidence::default();
+        for (index, document) in documents.iter().enumerate() {
             if document.is_null() {
                 continue;
             }
             self.validate_document(
-                &document,
+                document,
                 &format!("document {index}"),
-                &mut invalid,
-                &mut uncertain,
+                unchanged,
+                &mut evidence,
             );
         }
-        Ok(if !invalid.is_empty() {
-            KubernetesVerdict::Invalid(invalid)
-        } else if !uncertain.is_empty() {
-            KubernetesVerdict::Uncertain(uncertain)
+        if !evidence.invalid.is_empty() {
+            KubernetesVerdict::Invalid(evidence.invalid)
+        } else if !evidence.uncertain.is_empty() {
+            KubernetesVerdict::Uncertain(evidence.uncertain)
+        } else if !evidence.unchanged.is_empty() {
+            KubernetesVerdict::UnchangedUnknown(evidence.unchanged)
         } else {
             KubernetesVerdict::Valid
-        })
+        }
+    }
+
+    pub(crate) fn validate_differential(
+        &mut self,
+        chart: &PinnedHelmChart,
+        rendered: &[u8],
+    ) -> eyre::Result<KubernetesVerdict> {
+        let Ok(control) = chart.control_documents() else {
+            return self.validate(rendered);
+        };
+        let documents = Self::decode(rendered)?;
+        let mut unchanged = BTreeMap::new();
+        let controls = index_resources(control);
+        for (identity, document) in index_resources(&documents) {
+            if let Some(document) = document
+                && controls.get(&identity).and_then(Option::as_ref) == Some(&document)
+            {
+                unchanged.insert(identity, document);
+            }
+        }
+        Ok(self.validate_documents(&documents, &unchanged))
     }
 
     fn decode(rendered: &[u8]) -> eyre::Result<Vec<Value>> {
@@ -427,27 +535,31 @@ impl OfflineKubernetesValidator {
         &mut self,
         document: &Value,
         location: &str,
-        invalid: &mut Vec<String>,
-        uncertain: &mut Vec<String>,
+        unchanged: &BTreeMap<ResourceIdentity, Value>,
+        evidence: &mut ResourceEvidence,
     ) {
         if let Some(error) = document.get("Error") {
-            uncertain.push(format!(
+            evidence.uncertain.push(format!(
                 "{location}: Helm fromYaml reported an error: {error}"
             ));
             return;
         }
         if has_inexact_number(document) {
-            uncertain.push(format!(
+            evidence.uncertain.push(format!(
                 "{location}: numeric magnitude exceeds Helm fromYaml's exact integer range"
             ));
             return;
         }
         let Some(api_version) = document.get("apiVersion").and_then(Value::as_str) else {
-            uncertain.push(format!("{location}: no concrete apiVersion"));
+            evidence
+                .uncertain
+                .push(format!("{location}: no concrete apiVersion"));
             return;
         };
         let Some(kind) = document.get("kind").and_then(Value::as_str) else {
-            uncertain.push(format!("{location}: no concrete kind"));
+            evidence
+                .uncertain
+                .push(format!("{location}: no concrete kind"));
             return;
         };
         if api_version == "v1"
@@ -458,8 +570,8 @@ impl OfflineKubernetesValidator {
                 self.validate_document(
                     item,
                     &format!("{location}/items/{index}"),
-                    invalid,
-                    uncertain,
+                    unchanged,
+                    evidence,
                 );
             }
         }
@@ -476,10 +588,21 @@ impl OfflineKubernetesValidator {
         match validator {
             Ok(validator) => {
                 for error in validator.iter_errors(document) {
-                    invalid.push(format!("{resource}: {}: {error}", error.instance_path()));
+                    evidence
+                        .invalid
+                        .push(format!("{resource}: {}: {error}", error.instance_path()));
                 }
             }
-            Err(error) => uncertain.push(format!("{resource}: {error}")),
+            Err(error) => {
+                let reason = format!("{resource}: {error}");
+                if ResourceIdentity::from_document(document)
+                    .is_some_and(|identity| unchanged.get(&identity) == Some(document))
+                {
+                    evidence.unchanged.push(reason);
+                } else {
+                    evidence.uncertain.push(reason);
+                }
+            }
         }
     }
 }

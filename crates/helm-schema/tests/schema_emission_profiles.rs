@@ -43,6 +43,7 @@ struct HelmAdjudicationCoverage {
     tightenings_matched_helm_abort: usize,
     tightenings_matched_kubernetes_rejection: usize,
     loosenings_matched_kubernetes_validation: usize,
+    loosenings_matched_unchanged_kubernetes_uncertainty_cases: Vec<String>,
     loosenings_with_uncertain_kubernetes_cases: Vec<String>,
     candidate_accepts_helm_aborts: usize,
     candidate_accepts_helm_abort_allowance: usize,
@@ -73,6 +74,11 @@ impl HelmAdjudicationCoverage {
                 self.loosenings_with_uncertain_kubernetes_cases.push(case);
                 true
             }
+            HelmFlipVerdict::LooseningMatchedUnchangedKubernetesUncertainty => {
+                self.loosenings_matched_unchanged_kubernetes_uncertainty_cases
+                    .push(case);
+                true
+            }
             HelmFlipVerdict::CandidateAcceptsHelmAborts => {
                 self.candidate_accepts_helm_aborts += 1;
                 self.candidate_accepts_helm_abort_cases.push(case);
@@ -94,6 +100,9 @@ fn validate_helm_adjudication_coverage(coverage: &HelmAdjudicationCoverage) -> e
             == coverage.tightenings_matched_helm_abort
                 + coverage.tightenings_matched_kubernetes_rejection
                 + coverage.loosenings_matched_kubernetes_validation
+                + coverage
+                    .loosenings_matched_unchanged_kubernetes_uncertainty_cases
+                    .len()
                 + coverage.loosenings_with_uncertain_kubernetes_cases.len()
                 + coverage.candidate_accepts_helm_abort_cases.len()
                 + coverage.candidate_accepts_kubernetes_rejection_cases.len(),
@@ -154,6 +163,21 @@ fn matched_flip_validation_rejects_uncertain_loosening() -> eyre::Result<()> {
     );
     validate_helm_adjudication_coverage(&coverage)?;
     assert!(validate_matched_helm_adjudication_coverage(&coverage).is_err());
+    Ok(())
+}
+
+#[test]
+fn differential_loosening_is_counted_without_claiming_full_validation() -> eyre::Result<()> {
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.record_verdict(
+        HelmFlipVerdict::LooseningMatchedUnchangedKubernetesUncertainty,
+        "unchanged unknown resource".to_string(),
+    );
+    validate_helm_adjudication_coverage(&coverage)?;
+    validate_matched_helm_adjudication_coverage(&coverage)?;
+    sim_assert_eq!(have: coverage.flips_adjudicated, want: 1);
+    sim_assert_eq!(have: coverage.loosenings_matched_kubernetes_validation, want: 0);
+    sim_assert_eq!(have: coverage.loosenings_matched_unchanged_kubernetes_uncertainty_cases, want: vec!["unchanged unknown resource".to_string()]);
     Ok(())
 }
 
@@ -300,6 +324,10 @@ fn helm_adjudication_records_each_outcome_once() {
             HelmFlipVerdict::LooseningWithUncertainKubernetes,
             Some(true),
         ),
+        (
+            HelmFlipVerdict::LooseningMatchedUnchangedKubernetesUncertainty,
+            Some(true),
+        ),
         (HelmFlipVerdict::CandidateAcceptsHelmAborts, Some(true)),
         (
             HelmFlipVerdict::CandidateAcceptsKubernetesRejects,
@@ -310,10 +338,11 @@ fn helm_adjudication_records_each_outcome_once() {
     }
     sim_assert_eq!(have: json!(coverage), want: json!({
         "enabled": false, "screening_is_exact": false, "screened_flips": 0,
-        "screened_flips_collapsed": 1, "flips_adjudicated": 6,
+        "screened_flips_collapsed": 1, "flips_adjudicated": 7,
         "tightenings_matched_helm_abort": 1, "tightenings_matched_kubernetes_rejection": 1,
         "loosenings_matched_kubernetes_validation": 1,
         "loosenings_with_uncertain_kubernetes_cases": ["case"],
+        "loosenings_matched_unchanged_kubernetes_uncertainty_cases": ["case"],
         "candidate_accepts_helm_aborts": 1, "candidate_accepts_helm_abort_allowance": 0,
         "candidate_accepts_helm_abort_cases": ["case"],
         "candidate_accepts_kubernetes_rejection_cases": ["case"]
@@ -1610,6 +1639,7 @@ enum HelmFlipVerdict {
     TighteningMatchedHelmAbort,
     TighteningMatchedKubernetesRejection,
     LooseningMatchedKubernetesValidation,
+    LooseningMatchedUnchangedKubernetesUncertainty,
     LooseningWithUncertainKubernetes,
     CandidateAcceptsHelmAborts,
     CandidateAcceptsKubernetesRejects,
@@ -1641,7 +1671,7 @@ fn adjudicate_round74_flip(
             Ok(HelmFlipVerdict::TighteningMatchedHelmAbort)
         }
     } else {
-        match kubernetes.validate(&probe.rendered.stdout)? {
+        match kubernetes.validate_differential(chart, &probe.rendered.stdout)? {
             KubernetesVerdict::Invalid(errors) => {
                 evidence
                     .as_object_mut()
@@ -1670,6 +1700,22 @@ fn adjudicate_round74_flip(
                 } else {
                     Err(
                         "tightening rejects a document Helm renders without a proved Kubernetes violation",
+                    )
+                }
+            }
+            KubernetesVerdict::UnchangedUnknown(reasons) => {
+                evidence
+                    .as_object_mut()
+                    .ok_or_eyre("schema evidence is not an object")?
+                    .insert(
+                        "unchanged_kubernetes_uncertainty".to_string(),
+                        json!(reasons),
+                    );
+                if after {
+                    Ok(HelmFlipVerdict::LooseningMatchedUnchangedKubernetesUncertainty)
+                } else {
+                    Err(
+                        "tightening rejects a rendered document without a proved Kubernetes violation",
                     )
                 }
             }
@@ -1760,6 +1806,10 @@ fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> ey
     );
     sim_assert_eq!(
         have: adjudicate_round74_flip(&chart, &json!({}), &accept_all, &mut missing)?,
+        want: HelmFlipVerdict::LooseningMatchedUnchangedKubernetesUncertainty,
+    );
+    sim_assert_eq!(
+        have: adjudicate_round74_flip(&chart, &json!({"name": "changed"}), &accept_all, &mut missing)?,
         want: HelmFlipVerdict::LooseningWithUncertainKubernetes,
     );
 
