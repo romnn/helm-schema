@@ -1308,3 +1308,40 @@ Next: verify the bounded F77 and D3 review corrections, then advance converged c
   is claimed for either candidate. Score remains 3/83 (3.6%).
 
 Next: finish exact caller-context dependency caching and re-run the paired Airflow floor before any D3 dump; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round2/merge-proof-files.json`.
+
+### D3 performance rejection closure
+
+- The exact interpreted-program trace confirmed the residual is not generator or
+  minifier work: helper analysis remains 3,728 calls versus 1,820 at F74. The
+  Airflow ConfigMap file body executes seven times under distinct caller names;
+  F74 executes it twice and serves five cache hits. Its five extra bodies account
+  for about 0.67 traced seconds and repeat roughly 152 nested helpers each.
+- Two compiler-grade cache designs were implemented and rejected under a
+  pre-registered stop rule. The first preserved captured-root provenance, used
+  typed full/name-erased key scopes and required exact interpreted-program
+  dependency certificates. Its 24 focused cache tests passed, but the real
+  ConfigMap still executed seven times and warmed Airflow CPU regressed to
+  7.68/7.91 seconds. The complete source is retained as
+  `round2/context-cache-attempt-rejected.DKgelF`.
+- A smaller direct-root version removed the captured-root representation and
+  retained the typed certificate only for direct callers. It added structural
+  range binder tracking and distinguished `Template.BasePath` from
+  `Template.Name`; six computed-target/name-transport controls passed. The real
+  ConfigMap still executed seven times, traced CPU was 8.12 seconds and helper
+  count remained 3,684. The complete source is retained as
+  `round2/direct-cache-attempt-rejected.OilgjD`.
+- Both attempts were removed with deterministic reverse patches. The active D3
+  checkout is byte-identical to `round2/review6-before-context-cache.fX7qFB`
+  across the complete tree (diff exit 0), retaining only the sound unchanged-output
+  identity and fresh-root merge proof. Post-rollback cache tests 21/21 and identity
+  test 1/1 pass. No rejected cache representation is present in active source.
+- D3/F23 remains active but cannot land at this checkpoint: its best warmed
+  Airflow CPU is 7.21/7.32 seconds versus baseline 5.67/5.70 and the 6.237 ceiling.
+  No final dump, battery, full gates, fixtures or code commit are claimed. The
+  detailed handoff is `round2/d3-performance-rejection-handoff.md`.
+- Scheduling decision: end the asymptotic D3 optimization loop and advance an
+  independent sound family. F77 now addresses the bounded numeric provider
+  preimage exposed by its reviewed strict-string conjunction; D3 source/evidence
+  remains resumable for a later architectural performance pass.
+
+Next: complete F77's conservative bounded-numeric preimage and re-run its focused review; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-correction-evidence/numeric-preimage-design.md`.
