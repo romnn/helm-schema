@@ -1345,3 +1345,51 @@ Next: finish exact caller-context dependency caching and re-run the paired Airfl
   remains resumable for a later architectural performance pass.
 
 Next: complete F77's conservative bounded-numeric preimage and re-run its focused review; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-correction-evidence/numeric-preimage-design.md`.
+
+### F77 candidate adjudication — numeric correction converged, host reach rejected
+
+- The bounded-numeric correction now keeps one ordinary projected schema tree and
+  propagates only a typed numeric-string-unknown bit. The Draft 7 boundary widens
+  the raw-string domain once; bounded native arms retain their provider constraints,
+  and ordinary `anyOf`/`oneOf` projection retains mapping-input cardinality. A
+  discarded side-channel design incorrectly treated an absent mapping projection
+  as false and accepted a map under `oneOf [bounded integer, string, {}]`; the
+  permanent regression failed with exit 101 before the simpler design deleted that
+  representation.
+- Scalar provider restriction is now the identity when an explicit, non-empty root
+  type proves the whole domain scalar. The preimage carries that parsed
+  `JsonSchemaType` into typeless junctor arms, so numeric bounds inherit only a
+  proved numeric parent. Standalone typeless bounds and a string parent do not
+  acquire numeric meaning. The focused suite has seven tests and the final generator
+  suite passed 645/645; formatting and LOC checks exited 0. The complete candidate
+  is +203 production Rust LOC versus F74 after the simpler design deleted 43 lines.
+- Review dossier: native Astra high found first the lost formatted-map sibling and
+  then the incomplete `oneOf` side channel; personal Fable independently confirmed
+  both the numeric-parent loss and the same cardinality defect. The final projected
+  tree was re-sealed in `round3-f77-correction-evidence/projected-final-handoff.md`;
+  native re-verification returned `CONVERGED`, and Fable's final report said the live
+  rewrite was the right minimal correction with re-sealing as the only remaining
+  action. No heuristic, union flattener, cap or chart-shaped rule was added.
+- The exact-source locked release exited 0 and was copied as
+  `round3-f77-evidence/helm-schema-projected-final`, SHA-256
+  `90ffb30feafec427fd618168de4d0bb5484ef50d73e4cf77b1b0884875246357`.
+  The one clean dump then passed 165/165 selected corpus, IR, generator and lean
+  checks (exit 0) at `round3-f77-dump.nOvNvC`.
+- The candidate-dump battery was non-vacuous: baseline `12c62e6e`, fresh dump,
+  Helm adjudication enabled, 719 screened flips and 709 adjudicated. It reported
+  197 Helm-abort matches, 512 pinned-Kubernetes rejection matches, zero candidate
+  accepts/Helm aborts and zero uncertain Kubernetes loosenings. It nevertheless
+  failed correctly with exit 100 on ten unregistered false rejections: three string
+  probes each for `bitnami-redis.commonLabels` and `mariadb.commonLabels`, plus three
+  string probes and one root-guard probe for `nack.jetstream.image`. Every document
+  renders and validates in Kubernetes.
+- Phase diagnosis: the independent descendant contract is sound, but
+  `conjoin_literal_path_schema` currently materializes its carrier by forcing every
+  traversed host to `type: object`. That deletes proven string alternatives at
+  serialization-owned hosts. The correction must condition descendant enforcement
+  on the existing object lane instead of turning that lane into an unconditional
+  parent requirement. This candidate does not land, no fixture is adopted, and the
+  release/dump become historical once that host-lowering correction changes source.
+  F77 remains open; score remains 3/83 (3.6%).
+
+Next: correct F77 independent-contract host lowering and rerun the focused host tests; first run `jq '.properties.commonLabels' /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-dump.nOvNvC/helm-schema.cli.chart-corpus.bitnami-redis.schema.json`.
