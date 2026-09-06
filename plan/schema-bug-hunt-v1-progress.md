@@ -1422,3 +1422,26 @@ Next: correct F77 independent-contract host lowering and rerun the focused host 
   3/83 (3.6%).
 
 Next: finish F77's untyped descendant-carrier correction while F78's ordered transform design remains isolated; first run `tail -80 /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-correction-evidence/host-lowering-red.log`.
+
+### F78 ordered-transform boundary — design established, no local patch
+
+- Two smaller semantic-boundary probes now fail before emission: exact first-segment
+  equality after `split "@"` is `Unknown` instead of a newline-safe source preimage,
+  and the Boolean result of complementary `<1.0.0-rc.13`/`>=1.0.0-rc.13`
+  comparisons is `Unknown` instead of exact true. These replace an earlier full
+  `ContractSchemaSignals` comparison that also measured unrelated optionality
+  metadata and therefore was not a valid focused regression.
+- A 12-cell pinned Helm matrix proves transform order is semantic. Trimming then
+  splitting `@x1.0.0` yields `1.0.0`; splitting then trimming yields the empty
+  string. The current unordered lexical-escape set cannot represent that fact, and
+  the existing `CutAtToken` regex uses dot semantics that do not consume newline
+  suffixes. Substituting either representation locally would be unsound.
+- The compiler-grade route is recorded in
+  `round3-f78.bQ1YHM/f78-groundwork/ordered-transform-design.md`: container and
+  helper outputs must own the existing ordered scalar program, split/map/index must
+  preserve it, and comparisons must normalize to a typed identity before member
+  conditions project to schema guards. A second sidecar or emission rescue path was
+  rejected because helper reconstruction would lose it again. No further production
+  file changed; the committed comparator hashes remain exact and F78 stays open.
+
+Next: complete F77/F79 differential adjudication, then use F78's shared scalar-program design for the next A2 round; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f78.bQ1YHM/f78-groundwork/ordered-transform-design.md`.
