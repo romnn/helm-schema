@@ -1445,3 +1445,75 @@ Next: finish F77's untyped descendant-carrier correction while F78's ordered tra
   file changed; the committed comparator hashes remain exact and F78 stays open.
 
 Next: complete F77/F79 differential adjudication, then use F78's shared scalar-program design for the next A2 round; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f78.bQ1YHM/f78-groundwork/ordered-transform-design.md`.
+
+### Round 3 closed — F77 independent descendant contracts
+
+- Status: **fixed**. Compiler commit `3db4fc44`, corpus fixtures `d171962e`.
+  The supporting differential-oracle extension landed separately as
+  `92ded84a`. Acceptance baseline commit: `12c62e6e`.
+- Contract: a literal descendant with an independently executing strict-string
+  or provider contract remains enforceable beneath a serialization-owned ancestor.
+  The contract constrains the ancestor's object lane without claiming every host
+  value is an object. Bounded numeric provider preimages preserve native bounds,
+  their normal projected `anyOf`/`oneOf` tree, and an explicit unknown raw-string
+  domain rather than intersecting to false.
+- Pre-registered witnesses all closed in the Helm-abort direction:
+  `kubernetes-event-exporter.image.repository=false`,
+  `phpmyadmin.image.repository=false`, `zookeeper.image.repository=false`, and
+  both `rabbitmqImage.repository=false` and
+  `credentialUpdaterImage.repository=false` in rabbitmq-cluster-operator.
+  Default controls continue to render and validate. These four intake fixtures
+  moved; no quarantine or known-default roster entry changed.
+- Measured movement: one clean combined F77/F78 dump changed 46 corpus schemas and
+  no IR, generator, lean, final-output or CLI-only fixture. The final battery was
+  non-vacuous: 715 screened and adjudicated flips, 197 matched Helm aborts, 509
+  matched pinned-Kubernetes rejections, nine matched loosenings with unchanged
+  unknown CRD documents, zero unresolved loosenings, zero candidate-accepts/Helm
+  aborts, and zero candidate-accepts/Kubernetes rejects. Coverage:
+  `round3-f77-evidence/differential-final-coverage.json`; dump:
+  `round3-f77-host-dump.ZkbuNJ`.
+- Deviations: the first battery failed on ten real false rejections because the
+  initial descendant carrier forced Redis/MariaDB `commonLabels` and NACK
+  `jetstream.image` string lanes to objects. The deletion-only correction uses
+  existing untyped property carriers; its red test exited 101 and 11 focused tests
+  passed. The second battery removed all ten failures but stopped on nine Datadog
+  loosenings whose only Kubernetes uncertainty was seven unchanged CRD documents
+  missing pinned schemas. A generic uncertainty allowance was rejected. The F79
+  extension instead matches only a unique `(apiVersion, kind, namespace, name)`
+  and exact Helm-decoded document in the chart's control render, records a distinct
+  non-valid verdict, and never justifies a tightening. Its red test exited 101 and
+  final integration profile passed 44/44. One same-process `cargo test` run exited
+  101 from seven color-eyre hook collisions plus two pre-update expectations; a
+  default-profile nextest retry exited 4 with zero selected tests. Both are invalid
+  harness invocations, superseded by the explicit integration profile. Forty-six
+  looped staging attempts were sandbox-denied; one direct scoped `git add` retry
+  succeeded without changing the selected file set.
+- Review dossier: numeric projected-tree evidence is in
+  `round3-f77-correction-evidence/{projected-final-handoff.md,numeric-projected-astra-out.md,numeric-final-claude-out.md}`;
+  host-lane evidence in
+  `round3-f77-correction-evidence/{host-lanes-handoff.md,host-lanes-astra-out.md,host-lanes-claude-out.md}`;
+  differential-oracle evidence in
+  `round3-f77-evidence/{differential-oracle-handoff.md,differential-oracle-astra-out.md,differential-oracle-claude-out.md}`.
+  Each Astra-high/Fable-5.1 pair converged after its concrete counterexamples were
+  folded back. The final host correction deletes three production lines and the
+  numeric correction deletes the rejected side-channel representation.
+- Performance floor: exact release SHA-256
+  `8ad214049539f3d05a5665fed6aaff5c3769d387d1dd0ecd421b82592aec176c`.
+  Offline CPU medians (three runs, identical schema/stdout/diagnostic hashes):
+  Datadog **8.07 s**, Airflow **5.70 s**, kube-prometheus-stack **7.59 s**,
+  all at or better than F74's 8.25/5.75/7.99 floor.
+- Final gates on the post-fixture candidate, each own exit: `cargo fmt --check` 0;
+  `task lint` 0; `task lint:fc` 0; `cargo nextest run --workspace` 0;
+  `task test:integration` 0; `task test:all` 0; CLI install 0; luup2
+  `check:local` 0; `task tokei:core` 0; frozen document 0; `git diff --check` 0.
+  An earlier final lint exited 201 on `unnested_or_patterns`; its feature-combination
+  child also exited 201 before the run was interrupted. The nested pattern fix is
+  semantic identity, `task lint` retry passed, and the complete gate sequence was
+  restarted from the final tree.
+- Final production Rust LOC: 68,058 on the combined F77/F78 tree. Roster sizes
+  remain 100 intake, 24 quarantined false rejections, and four known values
+  rejections. The contaminated-fixture list falls from nine to five:
+  `signoz-signoz`, `kube-prometheus-stack`, `prometheus`, `open-webui`, `datadog`.
+  Campaign score is now **4/83 (4.8%)** fixed or policy-decided.
+
+Next: resume F78 at the shared ordered scalar-program ownership seam; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f78.bQ1YHM/f78-groundwork/ordered-transform-design.md`.
