@@ -175,6 +175,16 @@ impl ForeignSchemaRestriction {
     }
 
     fn apply_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
+        if matches!(self, Self::Scalar)
+            && schema.type_variants().is_ok_and(|types| {
+                types.is_some_and(|types| {
+                    !types.is_empty() && types.into_iter().all(scalar_json_type)
+                })
+            })
+        {
+            // An explicit scalar domain makes this restriction an identity.
+            return Some(schema.into_value());
+        }
         if let Some((kind, variants)) = schema.first_union() {
             return if kind == "allOf" {
                 let restricted = variants

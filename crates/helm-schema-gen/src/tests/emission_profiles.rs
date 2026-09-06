@@ -174,6 +174,7 @@ fn member_projection_reports_ambiguous_descendant_insertion() {
         value_path: helm_schema_core::ValuesPath::parse("items.*"),
         path_segments: vec!["items".to_string(), "*".to_string()],
         schema: serde_json::json!({}),
+        independent_base_contract: None,
         structural_schema: serde_json::json!({
             "anyOf": [
                 {
@@ -198,6 +199,7 @@ fn member_projection_reports_ambiguous_descendant_insertion() {
         value_path: helm_schema_core::ValuesPath::parse("items.*.member"),
         path_segments: vec!["items".to_string(), "*".to_string(), "member".to_string()],
         schema: serde_json::json!({ "type": "string" }),
+        independent_base_contract: None,
         structural_schema: serde_json::json!({ "type": "string" }),
         values_yaml_schema: serde_json::json!({}),
         provider_schema_candidate: None,

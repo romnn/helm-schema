@@ -56,6 +56,7 @@ mod range_key_contracts;
 mod requirement_domain;
 mod resolve_policy;
 mod schema_node;
+mod serialized_descendant_contracts;
 mod shape_alternatives;
 mod string_transform_contracts;
 mod transform_position_matrix;

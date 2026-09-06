@@ -5,6 +5,7 @@ use super::{
     PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN, SchemaNode, Value, is_annotation_keyword,
     merge_schema_list, schema_allows_type, schema_type, union_schema_list,
 };
+use crate::schema_node::JsonSchemaType;
 
 /// Preimage of a provider slot observed through ONE separator-delimited
 /// segment of the raw string (tempo's `regexSplit ":" . -1 | last` port
@@ -37,8 +38,23 @@ pub(crate) fn split_segment_pattern(
     })
 }
 
+#[derive(Default)]
+struct ScalarPreimage {
+    projected: Value,
+    numeric_string_unknown: bool,
+}
+
 pub(super) fn plain_scalar_provider_preimage(schema: Value) -> Value {
-    plain_scalar_provider_preimage_with(schema)
+    let preimage = plain_scalar_provider_preimage_with(schema, None);
+    if preimage.numeric_string_unknown {
+        // Draft 7 numeric keywords cannot constrain a parsed string's value.
+        // Preserve the full projection of non-string inputs and abstain on
+        // strings only at the boundary, keeping oneOf cardinality intact.
+        tracing::debug!("Bounded numeric provider preimage retains an unknown string domain");
+        serde_json::json!({"anyOf": [preimage.projected, {"type": "string"}]})
+    } else {
+        preimage.projected
+    }
 }
 
 pub(super) fn stringified_plain_scalar_provider_preimage(schema: Value) -> Value {
@@ -54,46 +70,82 @@ pub(super) fn stringified_plain_scalar_provider_preimage(schema: Value) -> Value
     }
 }
 
-fn plain_scalar_provider_preimage_with(schema: Value) -> Value {
+fn plain_scalar_provider_preimage_with(
+    schema: Value,
+    parent_type: Option<JsonSchemaType>,
+) -> ScalarPreimage {
     let Some(object) = schema.as_object() else {
-        return schema;
+        return ScalarPreimage {
+            projected: schema,
+            ..Default::default()
+        };
     };
+    let effective_type = schema_type(&schema)
+        .and_then(JsonSchemaType::from_name)
+        .or(parent_type);
     if let Some(types) = object.get("type").and_then(Value::as_array) {
-        let variants = types
-            .iter()
-            .filter_map(Value::as_str)
-            .map(|schema_type| {
-                let mut variant = object.clone();
-                variant.insert("type".to_string(), Value::String(schema_type.to_string()));
-                plain_scalar_provider_preimage_with(Value::Object(variant))
-            })
-            .collect();
-        return union_schema_list(variants);
+        let mut variants = Vec::new();
+        let mut numeric_string_unknown = false;
+        for schema_type in types.iter().filter_map(Value::as_str) {
+            let mut variant = object.clone();
+            variant.insert("type".to_string(), Value::String(schema_type.to_string()));
+            let preimage =
+                plain_scalar_provider_preimage_with(Value::Object(variant), effective_type);
+            numeric_string_unknown |= preimage.numeric_string_unknown;
+            variants.push(preimage.projected);
+        }
+        return ScalarPreimage {
+            projected: union_schema_list(variants),
+            numeric_string_unknown,
+        };
+    }
+    if matches!(
+        effective_type,
+        Some(JsonSchemaType::Integer | JsonSchemaType::Number)
+    ) && [
+        "minimum",
+        "maximum",
+        "exclusiveMinimum",
+        "exclusiveMaximum",
+        "multipleOf",
+    ]
+    .iter()
+    .any(|keyword| object.contains_key(*keyword))
+    {
+        return ScalarPreimage {
+            projected: schema,
+            numeric_string_unknown: true,
+        };
     }
     for keyword in ["anyOf", "oneOf"] {
         if let Some(variants) = object.get(keyword).and_then(Value::as_array) {
+            let mut projected = Vec::with_capacity(variants.len());
+            let mut numeric_string_unknown = false;
+            for variant in variants {
+                let preimage = plain_scalar_provider_preimage_with(variant.clone(), effective_type);
+                numeric_string_unknown |= preimage.numeric_string_unknown;
+                projected.push(preimage.projected);
+            }
             let mut transformed = object.clone();
-            transformed.insert(
-                keyword.to_string(),
-                Value::Array(
-                    variants
-                        .iter()
-                        .cloned()
-                        .map(plain_scalar_provider_preimage_with)
-                        .collect(),
-                ),
-            );
-            return Value::Object(transformed);
+            transformed.insert(keyword.to_string(), Value::Array(projected));
+            return ScalarPreimage {
+                projected: Value::Object(transformed),
+                numeric_string_unknown,
+            };
         }
     }
 
-    match schema_type(&schema) {
+    let projected = match schema_type(&schema) {
         Some("integer") => scalar_number_preimage(schema, true),
         Some("number") => scalar_number_preimage(schema, false),
         Some("boolean") => scalar_boolean_preimage(schema),
         Some("string") => scalar_plain_string_preimage(schema),
         Some("null") => scalar_null_preimage(schema),
         _ => schema,
+    };
+    ScalarPreimage {
+        projected,
+        ..Default::default()
     }
 }
 
@@ -254,7 +306,7 @@ pub(crate) fn printf_string_formattable_mapping_schema() -> Value {
     })
 }
 
-pub(super) fn scalar_plain_string_preimage(schema: Value) -> Value {
+fn scalar_plain_string_preimage(schema: Value) -> Value {
     let mut exclusions = plain_scalar_structural_exclusions(true);
     let unconstrained_string = schema.as_object().is_some_and(|object| {
         [
@@ -324,22 +376,10 @@ pub(super) fn scalar_null_preimage(schema: Value) -> Value {
     union_schema_list(vec![schema, rendered_null_string])
 }
 
-pub(super) fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
+fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
     let Some(object) = schema.as_object() else {
         return schema;
     };
-    if [
-        "minimum",
-        "maximum",
-        "exclusiveMinimum",
-        "exclusiveMaximum",
-        "multipleOf",
-    ]
-    .iter()
-    .any(|keyword| object.contains_key(*keyword))
-    {
-        return schema;
-    }
     let string_schema = scalar_string_preimage(
         object,
         if integer {

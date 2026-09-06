@@ -35,6 +35,113 @@ fn conditional_schema_acceptance_memo_uses_complete_exact_keys() {
 }
 
 #[test]
+fn bounded_numeric_preimage_preserves_native_bounds_and_unknown_strings() -> eyre::Result<()> {
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
+    for bound in [
+        "minimum",
+        "maximum",
+        "exclusiveMinimum",
+        "exclusiveMaximum",
+        "multipleOf",
+    ] {
+        let original = serde_json::json!({"type": "integer", bound: 1});
+        let actual = ResolvePolicy::provider_schema_for_value_use(&original, &policy)
+            .ok_or_eyre("bounded numeric preimage")?;
+        sim_assert_eq!(have: actual, want: serde_json::json!({
+            "anyOf": [original, {"type": "string"}]
+        }));
+        let native = jsonschema::validator_for(&original)?;
+        let projected = jsonschema::validator_for(&actual)?;
+        for number in [0, 1, 4] {
+            sim_assert_eq!(have: projected.is_valid(&serde_json::json!(number)), want: native.is_valid(&serde_json::json!(number)));
+        }
+        for spelling in ["4", "+4", "04", "0x4", "4.0", "0"] {
+            assert!(projected.is_valid(&serde_json::json!(spelling)));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn bounded_numeric_preimage_preserves_native_one_of_exclusivity() -> eyre::Result<()> {
+    for (original, stringified, projected) in [
+        (
+            serde_json::json!({"oneOf": [
+                {"type": "integer", "minimum": 1}, {"type": "boolean"}
+            ]}),
+            false,
+            serde_json::json!({"oneOf": [
+                {"type": "integer", "minimum": 1},
+                {"anyOf": [
+                    {"type": "string", "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"},
+                    {"type": "boolean"}
+                ]}
+            ]}),
+        ),
+        (
+            serde_json::json!({"oneOf": [
+                {"type": "integer", "minimum": 1}, {"type": "integer", "maximum": 5}
+            ]}),
+            false,
+            serde_json::json!({"oneOf": [
+                {"type": "integer", "minimum": 1}, {"type": "integer", "maximum": 5}
+            ]}),
+        ),
+        // The stringified entry reaches the preimage without the separate
+        // scalar restriction that discards validation siblings of anyOf.
+        (
+            serde_json::json!({"type": "integer", "minimum": 1, "anyOf": [{"const": 4}, {"const": 7}]}),
+            true,
+            serde_json::json!({"type": "integer", "minimum": 1, "anyOf": [{"const": 4}, {"const": 7}]}),
+        ),
+        (
+            serde_json::json!({"type": ["integer", "null"], "minimum": 1}),
+            false,
+            serde_json::json!({"anyOf": [
+                {"type": "integer", "minimum": 1}, {"type": "null", "minimum": 1},
+                {"type": "string", "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$"},
+                {"type": "string", "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$"},
+                {"type": "string", "pattern": "^[ \\t]*(#.*)?$"}
+            ]}),
+        ),
+    ] {
+        let policy = ProviderValueUsePolicy::new(
+            ValueKind::Scalar,
+            stringified,
+            false,
+            BTreeSet::new(),
+            None,
+            BTreeMap::new(),
+        );
+        let actual = ResolvePolicy::provider_schema_for_value_use(&original, &policy)
+            .ok_or_eyre("bounded numeric composite preimage")?;
+        sim_assert_eq!(have: actual, want: serde_json::json!({
+            "anyOf": [projected, {"type": "string"}]
+        }));
+        let validator = jsonschema::validator_for(&actual)?;
+        assert!(validator.is_valid(&serde_json::json!("true")));
+        assert!(validator.is_valid(&serde_json::json!("4")));
+        let native = jsonschema::validator_for(&original)?;
+        for value in [
+            serde_json::json!(0),
+            serde_json::json!(4),
+            serde_json::json!(7),
+            serde_json::json!(true),
+        ] {
+            sim_assert_eq!(have: validator.is_valid(&value), want: native.is_valid(&value));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn common_plain_string_proof_respects_one_of_exclusivity() {
     assert!(schema_covers_strict_plain_scalar_string(
         &serde_json::json!({
@@ -60,6 +167,165 @@ fn common_plain_string_proof_respects_one_of_exclusivity() {
             "pattern": "^fixed$"
         })
     ));
+}
+
+fn expected_mapping_preimage() -> Value {
+    serde_json::json!({
+        "type": "object",
+        "propertyNames": {"type": "string", "allOf": [
+            {"not": {"pattern": ":[ \\t]|:$"}},
+            {"not": {"pattern": "[ \\t]#"}},
+            {"not": {"pattern": "[\\r\\n]"}}
+        ]},
+        "additionalProperties": {"anyOf": [
+            {"type": "boolean"}, {"type": "integer"}, {"type": "null"}, {"type": "number"},
+            {"type": "string", "allOf": [
+                {"not": {"pattern": ":[ \\t]|:$"}},
+                {"not": {"pattern": "[ \\t]#"}},
+                {"not": {"pattern": "[\\r\\n]"}}
+            ]},
+            {"type": "array", "maxItems": 0}, {"type": "object", "maxProperties": 0}
+        ]}
+    })
+}
+
+fn expected_plain_string_preimage() -> Value {
+    serde_json::json!({"anyOf": [
+        expected_mapping_preimage(),
+        {"type": "string", "allOf": [
+            {"not": {"pattern": "^[!&*#{}\\[\\],|>@`%]"}},
+            {"not": {"pattern": "^[-?:]([ \\t]|$)"}},
+            {"not": {"pattern": ":[ \\t]|:$"}},
+            {"not": {"pattern": "[ \\t]#"}},
+            {"not": {"pattern": "[\\r\\n]"}},
+            {"not": {"pattern": "^(|~|null|Null|NULL)$"}},
+            {"not": {"pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"}},
+            {"not": {"pattern": r"^([0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"}},
+            {"not": {"pattern": r"^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"}},
+            {"not": {"pattern": r"^([+-]?\.(inf|Inf|INF)|\.(nan|NaN|NAN))$"}}
+        ]},
+        {"type": "string", "allOf": [
+            {"pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"},
+            {"not": {"pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"}},
+            {"not": {"pattern": "^(null|Null|NULL)[ \\t]+#"}}
+        ]}
+    ]})
+}
+
+#[test]
+fn bounded_numeric_preimage_counts_typeless_siblings_for_mapping_inputs() -> eyre::Result<()> {
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
+    for (other, accepts_map) in [
+        (serde_json::json!({}), false),
+        (serde_json::json!(true), false),
+        (serde_json::json!(false), true),
+    ] {
+        let original = serde_json::json!({"oneOf": [
+            {"type": "integer", "minimum": 1}, {"type": "string"}, other
+        ]});
+        let actual = ResolvePolicy::provider_schema_for_value_use(&original, &policy)
+            .ok_or_eyre("complete non-string preimage")?;
+        let validator = jsonschema::validator_for(&actual)?;
+        sim_assert_eq!(have: validator.is_valid(&serde_json::json!({"a": "b"})), want: accepts_map);
+        sim_assert_eq!(have: actual, want: serde_json::json!({"anyOf": [
+            {"oneOf": [{"type": "integer", "minimum": 1}, expected_plain_string_preimage(), other]},
+            {"type": "string"}
+        ]}));
+    }
+    Ok(())
+}
+
+#[test]
+fn bounded_numeric_preimage_preserves_mapping_inputs_of_string_siblings() -> eyre::Result<()> {
+    let mut bounded_string = expected_plain_string_preimage();
+    bounded_string["anyOf"][1]["minimum"] = serde_json::json!(1);
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
+    for (original, projected) in [
+        (
+            serde_json::json!({"anyOf": [{"type": "integer", "minimum": 1}, {"type": "string"}]}),
+            serde_json::json!({"anyOf": [{"type": "integer", "minimum": 1}, expected_plain_string_preimage()]}),
+        ),
+        (
+            serde_json::json!({"oneOf": [{"type": "integer", "minimum": 1}, {"type": "string"}]}),
+            serde_json::json!({"oneOf": [{"type": "integer", "minimum": 1}, expected_plain_string_preimage()]}),
+        ),
+        (
+            serde_json::json!({"type": ["integer", "string"], "minimum": 1}),
+            serde_json::json!({"anyOf": [
+                bounded_string["anyOf"][0], bounded_string["anyOf"][1], bounded_string["anyOf"][2],
+                {"type": "integer", "minimum": 1}
+            ]}),
+        ),
+    ] {
+        let actual = ResolvePolicy::provider_schema_for_value_use(&original, &policy)
+            .ok_or_eyre("numeric/string preimage")?;
+        let validator = jsonschema::validator_for(&actual)?;
+        assert!(validator.is_valid(&serde_json::json!({"a": "b"})));
+        sim_assert_eq!(have: actual, want: serde_json::json!({
+            "anyOf": [projected, {"type": "string"}]
+        }));
+        let strict = crate::merge::intersect_schema_list(vec![
+            actual,
+            serde_json::json!({"type": "string"}),
+        ]);
+        let strict_validator = jsonschema::validator_for(&strict)?;
+        assert!(!strict_validator.is_valid(&serde_json::json!({"a": "b"})));
+        assert!(strict_validator.is_valid(&serde_json::json!("4")));
+    }
+    Ok(())
+}
+
+#[test]
+fn bounded_numeric_preimage_keeps_non_string_composition_exclusive() -> eyre::Result<()> {
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
+    let string = expected_plain_string_preimage();
+    for (original, projected, accepts_mapping) in [
+        (
+            serde_json::json!({"oneOf": [{"type": "integer", "minimum": 1}, {"type": "string"}, {"type": "string"}]}),
+            serde_json::json!({"oneOf": [{"type": "integer", "minimum": 1}, string, string]}),
+            false,
+        ),
+        (
+            serde_json::json!({"oneOf": [{"type": "integer", "minimum": 1}, {"anyOf": [{"type": "string"}, {"type": "string"}]}]}),
+            serde_json::json!({"oneOf": [{"type": "integer", "minimum": 1}, {"anyOf": [string, string]}]}),
+            true,
+        ),
+        (
+            serde_json::json!({"anyOf": [{"type": "integer", "minimum": 1}, {"oneOf": [{"type": "string"}, {"type": "string"}]}]}),
+            serde_json::json!({"anyOf": [{"type": "integer", "minimum": 1}, {"oneOf": [string, string]}]}),
+            false,
+        ),
+    ] {
+        let actual = ResolvePolicy::provider_schema_for_value_use(&original, &policy)
+            .ok_or_eyre("composed non-string preimage")?;
+        let validator = jsonschema::validator_for(&actual)?;
+        sim_assert_eq!(have: validator.is_valid(&serde_json::json!({"a": "b"})), want: accepts_mapping);
+        sim_assert_eq!(have: actual, want: serde_json::json!({
+            "anyOf": [projected, {"type": "string"}]
+        }));
+    }
+    Ok(())
 }
 
 #[test]
@@ -104,6 +370,40 @@ fn overlapping_nullable_one_of_rejects_plain_null_spellings() -> eyre::Result<()
         "a mapping still formats to an ordinary named-port string: {schema}"
     );
 
+    Ok(())
+}
+
+#[test]
+fn bounded_numeric_preimage_inherits_only_proven_numeric_parent_type() -> eyre::Result<()> {
+    let policy = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        false,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
+    let original = serde_json::json!({"type": "integer", "oneOf": [
+        {"minimum": 1, "maximum": 10}, {"minimum": 100}
+    ]});
+    let actual = ResolvePolicy::provider_schema_for_value_use(&original, &policy)
+        .ok_or_eyre("inherited numeric preimage")?;
+    let validator = jsonschema::validator_for(&actual)?;
+    assert!(validator.is_valid(&serde_json::json!("4")));
+    sim_assert_eq!(have: actual, want: serde_json::json!({
+        "anyOf": [original, {"type": "string"}]
+    }));
+    let native = jsonschema::validator_for(&original)?;
+    for value in [0, 4, 50, 101] {
+        sim_assert_eq!(have: validator.is_valid(&serde_json::json!(value)), want: native.is_valid(&serde_json::json!(value)));
+    }
+    let string_parent = serde_json::json!({"type": "string", "oneOf": [
+        {"minimum": 1, "maximum": 10}, {"minimum": 100}
+    ]});
+    let actual_string = ResolvePolicy::provider_schema_for_value_use(&string_parent, &policy)
+        .ok_or_eyre("string parent preimage")?;
+    sim_assert_eq!(have: actual_string, want: string_parent);
+    assert!(!jsonschema::validator_for(&actual_string)?.is_valid(&serde_json::json!("4")));
     Ok(())
 }
 

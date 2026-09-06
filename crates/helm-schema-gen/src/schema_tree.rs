@@ -58,6 +58,12 @@ impl SchemaDocument {
         insert_schema_at_parts(&mut self.root, &path_segments, schema)
     }
 
+    /// Conjoins an independent contract within each ancestor's object lane.
+    /// Existing ancestor constraints are retained.
+    pub(crate) fn conjoin_literal_path_schema(&mut self, path: &[String], schema: SchemaNode) {
+        conjoin_literal_path_schema(&mut self.root, path, schema);
+    }
+
     /// Opens the root `global` property. Helm shares `global` values across
     /// the whole chart tree, so parent and sibling charts consume keys the
     /// analyzed chart never reads; closing the namespace to this chart's
@@ -180,6 +186,77 @@ impl SchemaDocument {
     pub(crate) fn into_value(self) -> Value {
         self.root.into_value()
     }
+}
+
+fn conjoin_literal_path_schema(node: &mut SchemaNode, path: &[String], schema: SchemaNode) {
+    if node.is_false_schema() {
+        return;
+    }
+    let Some((head, tail)) = path.split_first() else {
+        let existing = std::mem::replace(node, SchemaNode::empty()).into_value();
+        *node = SchemaNode::foreign(crate::merge::intersect_schema_list(vec![
+            existing,
+            schema.into_value(),
+        ]));
+        return;
+    };
+    if node.is_empty_slot() || *node == SchemaNode::Typed(TypedSchemaNode::Boolean(true)) {
+        *node = SchemaNode::untyped_member_host();
+    }
+    match node {
+        SchemaNode::Object {
+            properties,
+            additional_properties,
+            ..
+        } if properties.contains_key(head)
+            || additional_properties.as_deref().is_none_or(|additional| {
+                additional.is_empty_schema()
+                    || *additional == SchemaNode::Typed(TypedSchemaNode::Boolean(true))
+            }) =>
+        {
+            let child = properties
+                .entry(head.clone())
+                .or_insert_with(SchemaNode::empty);
+            conjoin_literal_path_schema(child, tail, schema);
+            return;
+        }
+        SchemaNode::Typed(TypedSchemaNode::Keywords(keywords))
+            if keywords.reference.is_none()
+                && (keywords.schema_type.is_none()
+                    || keywords.schema_type
+                        == Some(SchemaTypeKeyword::Single(JsonSchemaType::Object)))
+                && (keywords
+                    .properties
+                    .as_ref()
+                    .is_some_and(|properties| properties.contains_key(head))
+                    || keywords
+                        .additional_properties
+                        .as_deref()
+                        .is_none_or(|additional| {
+                            additional.is_empty_schema()
+                                || *additional == SchemaNode::Typed(TypedSchemaNode::Boolean(true))
+                        })) =>
+        {
+            let child = keywords
+                .properties
+                .get_or_insert_with(BTreeMap::new)
+                .entry(head.clone())
+                .or_insert_with(SchemaNode::empty);
+            conjoin_literal_path_schema(child, tail, schema);
+            return;
+        }
+        SchemaNode::Empty
+        | SchemaNode::Object { .. }
+        | SchemaNode::Array { .. }
+        | SchemaNode::Typed(TypedSchemaNode::Boolean(_) | TypedSchemaNode::Keywords(_))
+        | SchemaNode::Foreign(_) => {}
+    }
+    // A closed, differently typed, or referenced host keeps its complete
+    // constraint. Inserting a named property into it could relax that contract.
+    let mut constraint = SchemaNode::untyped_member_host();
+    conjoin_literal_path_schema(&mut constraint, path, schema);
+    let existing = std::mem::replace(node, SchemaNode::empty());
+    *node = SchemaNode::all_of(vec![existing, constraint]);
 }
 
 fn canonicalize_constraint_at_parts(

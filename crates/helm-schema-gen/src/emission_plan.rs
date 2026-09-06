@@ -5,7 +5,7 @@ use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::ValuesSchemaInput;
-use crate::base_schema::{ConditionalTargetIndex, classify_base};
+use crate::base_schema::{BaseOwner, ConditionalTargetIndex, classify_base};
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
@@ -704,6 +704,10 @@ fn materialize_base_document(
         let Some(schema) = owner.schema(resolved_path) else {
             continue;
         };
+        if let BaseOwner::IndependentContract(contract) = owner {
+            document.conjoin_literal_path_schema(contract.literal_path(), schema);
+            continue;
+        }
         let materialized_member_schema = schema.clone();
         if owner.replaces() {
             insertion_abstentions +=

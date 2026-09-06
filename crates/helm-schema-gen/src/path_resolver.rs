@@ -27,11 +27,31 @@ pub(crate) struct ResolvedPathSchema {
     /// but does not prove that shape is required while every consumer is
     /// dormant.
     pub(crate) structural_schema: Value,
+    /// Independently executing consumers, without declaration or guard hints.
+    /// Wildcard contracts remain in their range-scoped requirement lane.
+    pub(crate) independent_base_contract: Option<IndependentBaseContract>,
     pub(crate) values_yaml_schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
     pub(crate) used_as_serialized: bool,
     pub(crate) used_as_pathless_fragment: bool,
     pub(crate) accepted_dependency_values_root_fragment: bool,
+}
+
+/// A literal-path contract qualified independently of declaration and guard hints.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct IndependentBaseContract {
+    literal_path: Vec<String>,
+    schema: Value,
+}
+
+impl IndependentBaseContract {
+    pub(crate) fn literal_path(&self) -> &[String] {
+        &self.literal_path
+    }
+
+    pub(crate) fn schema(&self) -> SchemaNode {
+        SchemaNode::foreign(self.schema.clone())
+    }
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -131,6 +151,8 @@ fn resolve_path_evidence(
     );
     let (structural_policy_inputs, _) =
         build_path_schema_inputs(value_path, evidence, None, false, provider_resolutions);
+    let independent_base_contract =
+        independent_base_contract(value_path, &structural_policy_inputs);
     let structural_schema = ResolvePolicy::resolve_schema_for_value_path(structural_policy_inputs);
     let mut schema = ResolvePolicy::resolve_schema_for_value_path(policy_inputs);
     if let Some(values_yaml_info) = values_yaml_info {
@@ -149,6 +171,7 @@ fn resolve_path_evidence(
         path_segments,
         schema,
         structural_schema,
+        independent_base_contract,
         values_yaml_schema: values_yaml_info
             .map(|path_info| path_info.schema.clone())
             .unwrap_or_else(empty_schema),
@@ -157,6 +180,47 @@ fn resolve_path_evidence(
         used_as_pathless_fragment,
         accepted_dependency_values_root_fragment,
     }
+}
+
+fn independent_base_contract(
+    value_path: &ValuesPath,
+    inputs: &ValuePathSchemaInputs,
+) -> Option<IndependentBaseContract> {
+    let literal_path = value_path
+        .segments()
+        .map(|segment| segment.literal().map(str::to_string))
+        .collect::<Option<Vec<_>>>()?;
+    let ValuePathSchemaInputs::Complete {
+        facts,
+        provider_schema,
+        ..
+    } = inputs;
+    let strict_string = facts.contract.has_non_self_guarded_string_contract;
+    if !strict_string && provider_schema.is_empty_schema() {
+        return None;
+    }
+    // Provider transformations resolve separately from the raw-string
+    // obligation: independent consumers intersect, while hints merge alternatives.
+    // Tested kinds and literal fallback hints do not qualify.
+    let provider_contract =
+        ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs::Complete {
+            facts: *facts,
+            provider_schema: provider_schema.clone(),
+            values_yaml_schema: SchemaNode::empty(),
+            guard_predicate_schema: SchemaNode::empty(),
+            type_hint_schema: SchemaNode::empty(),
+            guarded_type_hint_schema: SchemaNode::empty(),
+            fallback_type_hint_schema: SchemaNode::empty(),
+        });
+    let schema = if strict_string {
+        intersect_schema_list(vec![provider_contract, type_schema("string")])
+    } else {
+        provider_contract
+    };
+    (!is_empty_schema(&schema) && schema != Value::Bool(true)).then_some(IndependentBaseContract {
+        literal_path,
+        schema,
+    })
 }
 
 fn provider_schemas_for_path_evidence(

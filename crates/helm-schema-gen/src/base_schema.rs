@@ -3,12 +3,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::Value;
 
 use crate::overlay_lowering::{ConditionalBaseEffect, LoweredConjunct};
-use crate::path_resolver::ResolvedPathSchema;
+use crate::path_resolver::{IndependentBaseContract, ResolvedPathSchema};
 use crate::schema_model::is_fixed_object_schema;
 use crate::schema_node::SchemaNode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum BaseOwner {
+pub(crate) enum BaseOwner<'a> {
     /// Not a conditional target: the resolved schema verbatim.
     Resolved,
     /// A serialization transform owns the subtree because its sink exposes
@@ -21,11 +21,13 @@ pub(crate) enum BaseOwner {
     Empty,
     /// Pathless dependency root with guarded-only descendants.
     UnknownObject,
+    /// An independent contract conjoined beneath a serialization-owned ancestor.
+    IndependentContract(&'a IndependentBaseContract),
     /// A strict ancestor owns this subtree through replacement.
     OwnedByAncestor,
 }
 
-impl BaseOwner {
+impl BaseOwner<'_> {
     pub(crate) fn schema(self, resolved_path: &ResolvedPathSchema) -> Option<SchemaNode> {
         match self {
             Self::Resolved | Self::Serialized => {
@@ -36,47 +38,71 @@ impl BaseOwner {
             ))),
             Self::Empty => Some(SchemaNode::foreign(crate::schema_model::empty_schema())),
             Self::UnknownObject => Some(SchemaNode::unknown_object()),
+            Self::IndependentContract(contract) => Some(contract.schema()),
             Self::OwnedByAncestor => None,
         }
     }
 
     pub(crate) const fn replaces(self) -> bool {
-        matches!(
-            self,
-            Self::Serialized | Self::ResolvedUnclosed | Self::Empty
-        )
+        match self {
+            Self::Serialized | Self::ResolvedUnclosed | Self::Empty => true,
+            Self::Resolved
+            | Self::UnknownObject
+            | Self::OwnedByAncestor
+            | Self::IndependentContract(_) => false,
+        }
     }
 
     pub(crate) const fn owns_descendants(self) -> bool {
-        matches!(self, Self::Serialized)
+        match self {
+            Self::Serialized => true,
+            Self::Resolved
+            | Self::ResolvedUnclosed
+            | Self::Empty
+            | Self::UnknownObject
+            | Self::OwnedByAncestor
+            | Self::IndependentContract(_) => false,
+        }
     }
 
     pub(crate) const fn preserves_descendants(self) -> bool {
-        matches!(self, Self::ResolvedUnclosed)
+        match self {
+            Self::ResolvedUnclosed => true,
+            Self::Resolved
+            | Self::Serialized
+            | Self::Empty
+            | Self::UnknownObject
+            | Self::OwnedByAncestor
+            | Self::IndependentContract(_) => false,
+        }
     }
 }
 
-pub(crate) fn classify_base(
-    resolved_path: &ResolvedPathSchema,
+pub(crate) fn classify_base<'a>(
+    resolved_path: &'a ResolvedPathSchema,
     conditional_targets: &ConditionalTargetIndex,
     owning_ancestors: &BTreeSet<Vec<String>>,
     preserving_ancestors: &BTreeSet<Vec<String>>,
-) -> BaseOwner {
+) -> BaseOwner<'a> {
     let has_owning_ancestor = (1..resolved_path.path_segments.len()).any(|length| {
         resolved_path
             .path_segments
             .get(..length)
             .is_some_and(|path| owning_ancestors.contains(path))
     });
-    if has_owning_ancestor {
-        return BaseOwner::OwnedByAncestor;
-    }
     if conditional_targets.has_guarded_only_item_ancestor(&resolved_path.path_segments) {
         // Wildcard descendants of a guarded collection belong to that
         // collection's conditional lane. Inserting them into the base would
         // rebuild an unconditional object carrier and eliminate valid array
         // lanes. Literal descendants remain independent base evidence.
         return BaseOwner::OwnedByAncestor;
+    }
+    if has_owning_ancestor {
+        return if let Some(contract) = &resolved_path.independent_base_contract {
+            BaseOwner::IndependentContract(contract)
+        } else {
+            BaseOwner::OwnedByAncestor
+        };
     }
 
     let has_preserving_ancestor = (1..resolved_path.path_segments.len()).any(|length| {
