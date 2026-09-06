@@ -1764,3 +1764,53 @@ Next: converge the decision-owner generator regressions, freeze a correction-onl
   boundary and justify any additional code by deleting runtime rediscovery.
 
 Next: reproduce the adjacent/deeper shell, equal-indent sequence and dynamic-key witnesses with Helm, then correct the source-plan open-stack model; first run the focused `fragment_golden` cases in `/private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round4-f17` with `CARGO_TARGET_DIR=/Volumes/T7/dev/helm-schema-bughunt-cache.srGPpP/f17-target`.
+
+### Round 4 isolated checkpoint — F78/A1 evaluated-value ownership
+
+- Status: **zero isolated reds; frozen but not integrated or family-closed**.
+  Candidate: `round3-f78.bQ1YHM`. F51's binding decision owner lands first;
+  this candidate then ports by absorption, not by preserving parallel value
+  owners.
+- Phase and invariant: evaluated scalar semantics and their structural source
+  travel as one owned `AbstractValue`. `Computed` owns its scalar program and
+  source; explicit `Alternatives` preserve every chart branch. Consumers query
+  borrowed owned branches for truth, predicates, provider metadata and strict
+  identity. Unknown alternatives widen locally and do not erase known siblings.
+  The old cloned scalar-dispatch/source projections are removed from migrated
+  phase boundaries.
+- Structural results: stringified equality, falsy reassignment, helper lexical
+  replacement, checksum/opaque formatting and post-`tpl` pattern semantics now
+  derive from the owned scalar program. Coalesce has its own first-truthy
+  dispatch with an explicit all-falsy result. Serialization follows retained
+  structural sources for computed containers. Branch-owned merge-layer
+  identities preserve Airflow wildcard liveness at the collection while
+  keeping provider payloads on the exact wildcard member path.
+- Regression correction: an initial post-`tpl` transfer widened structural
+  helper payloads and regressed eight non-target consumers. It was withdrawn.
+  The retained rule tags only scalar program identities; broad `derived_text`
+  metadata never backfills typed templated ownership. A later Airflow liveness
+  change regressed direct per-set range ownership and was narrowed to
+  branch-owned alternatives only. Both correction sets are included in the
+  final full runs.
+- Verification on the frozen isolated tree: full IR 411/411; full generator
+  629/629; ownership focus 4/4; coalesce focus 1/1; Airflow target and direct
+  control set 3/3; `cargo fmt --check` exit 0. No source or expected-schema red
+  remains in the isolated candidate.
+- Performance shape: singleton computed values remain O(1) borrowed. Explicit
+  alternatives use one DFS/materialization with each scalar program cloned
+  once; predicate, metadata and comparable-kind hot queries use borrowed scalar
+  branches. `FragmentSummary` caches the remaining boundary projection once,
+  and that transient cache must be deleted during F51 absorption rather than
+  becoming a second owner.
+- Evidence: `f78-groundwork/evaluated-value-ownership-checkpoint.md` in the
+  candidate, SHA-256
+  `aae758d139da4580a8349c6c67bfa5d6f2383b090a264d1bb7d2d84c9449a6f6`;
+  `f78-groundwork/ownership-final-hashes.txt`, SHA-256
+  `ac21f0433260bf3d4e594de8092f122be4c458644f7cb07cd2bb1bfc0fb31a87`.
+  The preserved IR snapshot delta is 40 files, +2,892/-929; the exact hash
+  inventory covers 48 files.
+- LOC: 69,731 production Rust LOC in isolation, +1,921 from the recorded F74
+  base. No main-tree integration, deep review, release build, dump, battery,
+  fixture adoption, performance floor or final gates are claimed.
+
+Next: finish and land F51's decision owner, then port F78 by moving `Computed`/`Alternatives` into decision leaves and deleting the transient projections; first read `round3-f78.bQ1YHM/f78-groundwork/evaluated-value-ownership-checkpoint.md` beside the final F51 architecture handoff.
