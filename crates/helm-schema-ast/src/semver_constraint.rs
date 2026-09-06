@@ -12,9 +12,10 @@
 
 use std::fmt::Write as _;
 
+use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
 use nom::character::complete::{char, digit1, space0};
-use nom::combinator::{all_consuming, opt, recognize};
+use nom::combinator::{all_consuming, map_res, opt, recognize, value};
 use nom::multi::many0;
 use nom::sequence::{delimited, pair, preceded};
 use semver::{Version, VersionReq};
@@ -22,6 +23,8 @@ use semver::{Version, VersionReq};
 /// The comparison operator of a single bounded comparator constraint.
 #[derive(Clone, Copy)]
 enum ComparisonOp {
+    Eq,
+    Ne,
     Lt,
     Le,
     Gt,
@@ -152,6 +155,34 @@ pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Opt
     if let Some(pattern) = semver_constraint_match_pattern(constraint) {
         return Some(regex::Regex::new(&pattern).ok()?.is_match(version));
     }
+    if let Ok((_, (op, bound))) =
+        all_consuming(delimited(space0, concrete_comparator, space0))(constraint)
+        && !bound.pre.is_empty()
+    {
+        let version = Version::parse(version.strip_prefix('v').unwrap_or(version)).ok()?;
+        // Masterminds treats overflowing numeric prerelease identifiers as
+        // text, while Rust's semver crate keeps arbitrary-precision ordering.
+        if [&bound, &version].into_iter().any(|value| {
+            value.pre.as_str().split('.').any(|identifier| {
+                !identifier.is_empty()
+                    && identifier.bytes().all(|byte| byte.is_ascii_digit())
+                    && identifier.parse::<u64>().is_err()
+            })
+        }) {
+            return None;
+        }
+        let order = version.cmp_precedence(&bound);
+        // A prerelease comparator opts every version core into Helm's ordering.
+        // Cargo requirements instead exclude prereleases on other cores.
+        return Some(match op {
+            ComparisonOp::Eq => order.is_eq(),
+            ComparisonOp::Ne => !order.is_eq(),
+            ComparisonOp::Lt => order.is_lt(),
+            ComparisonOp::Le => !order.is_gt(),
+            ComparisonOp::Gt => order.is_gt(),
+            ComparisonOp::Ge => !order.is_lt(),
+        });
+    }
     let requirement = VersionReq::parse(constraint).ok().or_else(|| {
         let (_, normalized) =
             all_consuming(delimited(space0, masterminds_loose_caret, space0))(constraint).ok()?;
@@ -159,6 +190,29 @@ pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Opt
     })?;
     let version = Version::parse(version.strip_prefix(['v', 'V']).unwrap_or(version)).ok()?;
     Some(requirement.matches(&version))
+}
+
+fn concrete_comparator(input: &str) -> nom::IResult<&str, (ComparisonOp, Version)> {
+    pair(
+        alt((
+            value(ComparisonOp::Ge, tag(">=")),
+            value(ComparisonOp::Le, tag("<=")),
+            value(ComparisonOp::Ne, tag("!=")),
+            value(ComparisonOp::Gt, tag(">")),
+            value(ComparisonOp::Lt, tag("<")),
+            value(ComparisonOp::Eq, tag("=")),
+        )),
+        preceded(
+            space0,
+            map_res(
+                preceded(
+                    opt(char('v')),
+                    take_while1(|character: char| !character.is_whitespace()),
+                ),
+                Version::parse,
+            ),
+        ),
+    )(input)
 }
 
 fn masterminds_loose_caret(input: &str) -> nom::IResult<&str, String> {

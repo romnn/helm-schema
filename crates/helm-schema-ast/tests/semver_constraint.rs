@@ -216,6 +216,90 @@ fn concrete_policy_versions_support_caret_constraints() {
     }
 }
 
+#[test]
+fn concrete_prerelease_comparators_include_other_version_cores() {
+    // Helm's prerelease bounds use version ordering across every core.
+    // Build metadata leaves equality and ordering unchanged.
+    let versions = [
+        "0.9.0-alpha",
+        "1.0.0-rc.12",
+        "1.0.0-rc.13",
+        "1.0.0-rc.13+build.1",
+        "1.0.0",
+        "1.1.0-alpha",
+    ];
+    for (operator, expected) in [
+        ("<", [true, true, false, false, false, false]),
+        ("<=", [true, true, true, true, false, false]),
+        (">", [false, false, false, false, true, true]),
+        (">=", [false, false, true, true, true, true]),
+        ("=", [false, false, true, true, false, false]),
+        ("!=", [true, true, false, false, true, true]),
+    ] {
+        let constraint = format!("{operator}1.0.0-rc.13");
+        for (version, want) in versions.into_iter().zip(expected) {
+            sim_assert_eq!(
+                have: semver_constraint_matches_version(&constraint, version),
+                want: Some(want),
+                "constraint={constraint} version={version}",
+            );
+        }
+    }
+
+    // Stable bounds still exclude prereleases, and loose version spellings
+    // retain their existing exact pattern evaluation.
+    for (constraint, version, want) in [
+        (">=1.0.0", "1.1.0-alpha", false),
+        ("<1.0.0", "0.9.0-alpha", false),
+        ("^1.0.0", "1.1.0-alpha", false),
+        ("1.*", "1.1.0-alpha", false),
+        (">=1.0.0-0", "01.1.0-beta", true),
+        ("<1.0.0-1", "v0.9-beta", true),
+    ] {
+        sim_assert_eq!(
+            have: semver_constraint_matches_version(constraint, version),
+            want: Some(want),
+            "constraint={constraint} version={version}",
+        );
+    }
+}
+
+#[test]
+fn concrete_prerelease_comparators_abstain_outside_shared_version_ordering() {
+    for (constraint, version, want) in [
+        (">=1.0.0-rc.13", "V1.0.0", None),
+        (">=1.0.0-rc.13", "v1.0.0", Some(true)),
+        (">=1.0.0-0", "V1.0.0", Some(false)),
+        (">=1.0.0-0", "v1.0.0", Some(true)),
+        (
+            ">1.0.0-99999999999999999999",
+            "1.0.0-100000000000000000000",
+            None,
+        ),
+        (
+            ">1.0.0-18446744073709551614",
+            "1.0.0-18446744073709551615",
+            Some(true),
+        ),
+        (
+            ">1.0.0-18446744073709551615",
+            "1.0.0-18446744073709551616",
+            None,
+        ),
+        (
+            "<1.0.0-18446744073709551616",
+            "1.0.0-18446744073709551615",
+            None,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: semver_constraint_matches_version(constraint, version),
+            want: want,
+            "constraint={constraint} version={version}",
+        );
+    }
+}
+
 /// The prerelease-floor idioms (`>=X-0`, `<X-D`) match exactly the versions
 /// Sprig's `semverCompare` accepts; every row below is differential-verified
 /// against `helm template` renderings of the same call.
