@@ -1517,3 +1517,38 @@ Next: complete F77/F79 differential adjudication, then use F78's shared scalar-p
   Campaign score is now **4/83 (4.8%)** fixed or policy-decided.
 
 Next: resume F78 at the shared ordered scalar-program ownership seam; first run `cat /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f78.bQ1YHM/f78-groundwork/ordered-transform-design.md`.
+
+## Round 4 pre-registration — Cluster B split, F69 first
+
+- Status: pre-registered in isolated committed-HEAD snapshot
+  `round4-cluster-b`; no production or main-tree change yet. Acceptance baseline:
+  `75c02357` (F77 closed). The cluster table's six families were rechecked before
+  assuming one implementation mechanism.
+- Ordering deviation: F78's first ownership regression is now focused and red, but
+  `ScalarValueDispatch` lacks unknown-arm structural provenance. A wrapper around
+  the old shape and dispatch would preserve the parallel model, so no speculative
+  F78 patch was kept. F69 instead has a phase-local typed fix through the existing
+  terminal-clause artifact and proceeds while the F78 ownership seam receives an
+  architecture review.
+- Cluster-B discovery: eight real-chart disagreements reproduce with Helm 4.2.3 and
+  Kubernetes 1.29.0. Six focused tests fail and the direct-coalesce semantic control
+  passes. The evidence separates five mechanisms: F69 terminal-predicate lowering;
+  F17 branch-effect absorption; F27/F50 ordered selection; F51 grouped argument
+  evaluation; F15 list/string validation transfer. A blanket union patch is rejected.
+  Full evidence: `round4-cluster-b/handoff.md`.
+- F69 contract: under `clustermesh.config.enabled`, `clusters` must be present and
+  either object or array. Null, absence, Boolean, number and string execute the
+  helper's explicit `fail`; when activation is false the constraint is dormant.
+  The existing non-ranged lowering independently negates each fail-test conjunct
+  and conjoins the results, collapsing object/array to null. The ranged-member lane
+  already uses the correct De Morgan sum. The chosen design sends the retained
+  complete fail predicate through the existing terminal-clause artifact and deletes
+  the competing non-ranged conjunct-extraction model; wildcard member quantification
+  remains separate.
+- Pre-registered movement: Cilium `clusters=[]` and `{}` loosen from reject to
+  accept and Helm renders; null-deleted `clusters` tightens from accept to reject
+  and Helm aborts. Long-frozen Cilium is in no intake/quarantine roster. No other
+  fixture is expected to move from this isolated mechanism; every additional cell
+  requires pinned adjudication before adoption.
+
+Next: implement F69 through the non-ranged terminal-clause seam; first run `sed -n '465,720p' /private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round4-cluster-b/crates/helm-schema-ir/src/contract_signal_builder/requirements.rs`.
