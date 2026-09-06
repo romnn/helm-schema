@@ -15,8 +15,8 @@ use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_wi
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 
 use crate::function_semantics::{
-    CollectionShape, OutputSemantics, PredicateSemantics, ProvenanceBehavior, function_semantics,
-    strict_collection_item_pattern,
+    ArgumentEvaluationMode, CollectionShape, OutputSemantics, PredicateSemantics,
+    ProvenanceBehavior, function_semantics, strict_collection_item_pattern,
 };
 
 mod collections;
@@ -47,9 +47,9 @@ use serialization::{
 use strict_operands::{
     push_fail_capture, record_collection_item_kind_result, record_length_bearing_operand,
     record_length_bearing_result, record_operand_presence_result,
-    record_raw_range_key_string_consumer_paths, record_strict_kind_operands,
-    record_strict_kind_result, record_strict_parser_invocation, record_string_call_consumers,
-    record_string_consumer_effects, record_string_transform_effects,
+    record_raw_range_key_string_consumer_paths, record_strict_kind_argument_result,
+    record_strict_kind_operands, record_strict_kind_result, record_strict_parser_invocation,
+    record_string_call_consumers, record_string_consumer_effects, record_string_transform_effects,
     string_invocation_operand_facts,
 };
 use traversal::{eval_dig, eval_index};
@@ -113,17 +113,6 @@ pub(crate) const INTENTIONAL_DISPATCH_EXCEPTIONS: &[&str] = &[
 /// Reports whether a name may reach a dispatcher special-form arm.
 pub(crate) fn has_catalog_or_dispatch_exception(function: &str) -> bool {
     function_semantics(function).is_known() || INTENTIONAL_DISPATCH_EXCEPTIONS.contains(&function)
-}
-
-/// Reports whether a sequence operand retains direct field-access nil behavior.
-///
-/// Go appends a pipeline result as an evaluated final argument, so a piped
-/// operand is never a direct access even when the pipeline primary was one.
-pub(crate) const fn sequence_operand_direct_access(
-    had_piped_operand: bool,
-    is_direct_values_path: bool,
-) -> bool {
-    !had_piped_operand && is_direct_values_path
 }
 
 pub(crate) fn eval_call_with_helper_calls(
@@ -322,16 +311,13 @@ fn eval_sequence_invocation(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let had_piped = piped.is_some();
-    let (operand, is_direct_values_path) = if let Some(piped) = piped {
-        (piped.result, piped.is_direct_values_path)
+    let (operand, argument) = if let Some(piped) = piped {
+        (piped.result, None)
     } else {
         let Some(arg) = args.first() else {
             return EvalResult::none();
         };
-        (
-            eval_expr_with_helper_calls(arg, env, resolver),
-            direct_values_path(arg).is_some(),
-        )
+        (eval_expr_with_helper_calls(arg, env, resolver), Some(arg))
     };
     let mut result = match function {
         "first" => eval_first_result(operand.clone()),
@@ -351,9 +337,19 @@ fn eval_sequence_invocation(
         // non-nil kind copies, so the operand carries a presence claim and no kind claim at all.
         record_operand_presence_result(&operand, &mut result.effects);
     } else {
-        let direct_access = sequence_operand_direct_access(had_piped, is_direct_values_path);
-        let nil_aborts = function_semantics(function).nil_aborts(direct_access);
-        record_strict_kind_result(&operand, "array", nil_aborts, &mut result.effects);
+        if let Some(argument) = argument {
+            record_strict_kind_argument_result(
+                function,
+                argument,
+                &operand,
+                "array",
+                &mut result.effects,
+            );
+        } else {
+            let nil_aborts =
+                function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated);
+            record_strict_kind_result(&operand, "array", nil_aborts, &mut result.effects);
+        }
     }
     result
 }
@@ -382,12 +378,7 @@ fn eval_direct_invocation(
             let operand = eval_expr_with_helper_calls(target, env, resolver);
             let mut effects = operand.effects.clone();
             effects.merge(eval_expr_with_helper_calls(key, env, resolver).effects);
-            record_strict_kind_result(
-                &operand,
-                "object",
-                function_semantics(function).nil_aborts(direct_values_path(target).is_some()),
-                &mut effects,
-            );
+            record_strict_kind_argument_result(function, target, &operand, "object", &mut effects);
             EvalResult::with_effects(operand.value, effects)
         }
         "default" if matches!(args, [_, _]) => {
@@ -506,7 +497,7 @@ fn eval_direct_invocation(
                 record_strict_kind_result(
                     operand,
                     "string",
-                    function_semantics(function).nil_aborts(false),
+                    function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                     &mut effects,
                 );
             }
@@ -514,7 +505,7 @@ fn eval_direct_invocation(
                 record_strict_kind_result(
                     operand,
                     "array",
-                    function_semantics(function).nil_aborts(false),
+                    function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                     &mut effects,
                 );
                 record_collection_item_kind_result(
@@ -528,7 +519,7 @@ fn eval_direct_invocation(
                 record_strict_kind_result(
                     operand,
                     "integer",
-                    function_semantics(function).nil_aborts(false),
+                    function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                     &mut effects,
                 );
             }
@@ -683,10 +674,11 @@ fn eval_direct_invocation(
                 AbstractValue::widened(effects.output_paths.clone()),
                 effects,
             );
-            record_strict_kind_result(
+            record_strict_kind_argument_result(
+                function,
+                subject_expr,
                 &subject,
                 "object",
-                function_semantics(function).nil_aborts(direct_values_path(subject_expr).is_some()),
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -736,10 +728,11 @@ fn eval_direct_invocation(
             };
             let operand = eval_expr_with_helper_calls(arg, env, resolver);
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
-            record_strict_kind_result(
+            record_strict_kind_argument_result(
+                function,
+                arg,
                 &operand,
                 "object",
-                function_semantics(function).nil_aborts(direct_values_path(arg).is_some()),
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -986,7 +979,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &piped_operand,
                 "object",
-                function_semantics(function).nil_aborts(false),
+                function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                 &mut result.effects,
             );
             record_strict_kind_operands(
@@ -1005,7 +998,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &operand,
                 "array",
-                function_semantics(function).nil_aborts(false),
+                function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                 &mut result.effects,
             );
             merge_arg_effects(args, env, resolver, &mut result.effects);
@@ -1208,7 +1201,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &piped_operand,
                 "array",
-                function_semantics(function).nil_aborts(false),
+                function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                 &mut result.effects,
             );
             record_strict_kind_operands(
@@ -1227,7 +1220,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &piped_operand,
                 "array",
-                function_semantics(function).nil_aborts(false),
+                function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -1242,7 +1235,7 @@ fn eval_piped_invocation(
             record_strict_kind_result(
                 &operand,
                 "object",
-                function_semantics(function).nil_aborts(false),
+                function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated),
                 &mut result.effects,
             );
             record_total_conversion_effects(

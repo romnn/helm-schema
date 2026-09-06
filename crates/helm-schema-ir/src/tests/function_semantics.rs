@@ -1,15 +1,13 @@
 use std::collections::BTreeSet;
 
+use helm_schema_ast::TemplateExpr;
 use test_util::prelude::sim_assert_eq;
 
-use crate::expr_call_eval::{
-    INTENTIONAL_DISPATCH_EXCEPTIONS, has_catalog_or_dispatch_exception,
-    sequence_operand_direct_access,
-};
+use crate::expr_call_eval::{INTENTIONAL_DISPATCH_EXCEPTIONS, has_catalog_or_dispatch_exception};
 use crate::function_semantics::{
-    CollectionShape, NilBehavior, OutputSemantics, PredicateSemantics, ProvenanceBehavior,
-    StringOperands, function_semantics, strict_collection_item_pattern,
-    strict_parser_operand_pattern,
+    ArgumentEvaluationMode, CollectionShape, NilBehavior, OutputSemantics, PredicateSemantics,
+    ProvenanceBehavior, StringOperands, argument_evaluation_mode, function_semantics,
+    strict_collection_item_pattern, strict_parser_operand_pattern,
 };
 
 const KNOWN_FUNCTIONS: &[&str] = &[
@@ -146,18 +144,29 @@ fn dispatcher_special_forms_are_catalogued_or_intentional_exceptions() {
 }
 
 #[test]
-fn piped_sequence_operands_are_never_direct_accesses() {
+fn argument_evaluation_mode_preserves_grouping() {
+    let field = TemplateExpr::Field(vec!["Values".to_string(), "subject".to_string()]);
     sim_assert_eq!(
-        have: sequence_operand_direct_access(false, true),
-        want: true
+        have: argument_evaluation_mode(&field),
+        want: ArgumentEvaluationMode::DirectLookup
+    );
+    let selector = TemplateExpr::Selector {
+        operand: Box::new(TemplateExpr::Parenthesized(Box::new(field.clone()))),
+        path: vec!["child".to_string()],
+    };
+    sim_assert_eq!(
+        have: argument_evaluation_mode(&selector),
+        want: ArgumentEvaluationMode::GroupedReceiverLookup {
+            selected_segments: 1
+        }
     );
     sim_assert_eq!(
-        have: sequence_operand_direct_access(false, false),
-        want: false
+        have: argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(field))),
+        want: ArgumentEvaluationMode::Evaluated
     );
     sim_assert_eq!(
-        have: sequence_operand_direct_access(true, true),
-        want: false
+        have: argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(selector))),
+        want: ArgumentEvaluationMode::Evaluated
     );
 }
 

@@ -63,7 +63,7 @@ fn helper_range_break_scopes_later_provider_candidates() {
                     ))]
                     && matches!(
                         implication.requirements.as_slice(),
-                        [helm_schema_core::FailValueRequirement::SchemaType(schema_type)]
+                        [helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(schema_type)]
                             if schema_type == "object"
                     )
             })

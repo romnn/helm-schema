@@ -11,7 +11,10 @@ use helm_schema_core::{Predicate, ValuesPath};
 
 use super::serialization::record_total_conversion_effects;
 use super::value_facts::{identity_range_key_paths, identity_value_paths};
-use crate::function_semantics::{function_semantics, strict_parser_operand_pattern};
+use crate::function_semantics::{
+    ArgumentEvaluationMode, argument_evaluation_mode, function_semantics,
+    strict_parser_operand_pattern,
+};
 
 pub(super) fn record_string_transform_effects(
     function: &str,
@@ -597,17 +600,27 @@ pub(super) fn record_strict_kind_operands(
 ) {
     for arg in args {
         let operand = eval_expr_with_helper_calls(arg, env, resolver);
-        // `direct_values_path` resolves against an EMPTY environment, so it
-        // answers exactly the question the map-parameter class asks: a
-        // spelling it names is a field read that hands the parameter a nil
-        // interface, while a pipeline result, a call result, and a
-        // `:=`-bound local all reach it invalid instead. A with-scoped dot
-        // member does abort at runtime but cannot resolve here, so it
-        // abstains.
-        let nil_aborts = function_semantics(function)
-            .nil_aborts(crate::expr_eval::direct_values_path(arg).is_some());
-        record_strict_kind_result(&operand, schema_type, nil_aborts, effects);
+        record_strict_kind_argument_result(function, arg, &operand, schema_type, effects);
     }
+}
+
+pub(super) fn record_strict_kind_argument_result(
+    function: &str,
+    arg: &TemplateExpr,
+    operand: &EvalResult,
+    schema_type: &str,
+    effects: &mut Effects,
+) {
+    let evaluation_mode = argument_evaluation_mode(arg);
+    let nil_aborts = function_semantics(function).nil_aborts(evaluation_mode);
+    let receiver_guard = grouped_receiver_guard(evaluation_mode, operand);
+    record_strict_kind_result_under(
+        operand,
+        schema_type,
+        nil_aborts,
+        receiver_guard.as_slice(),
+        effects,
+    );
 }
 
 pub(super) fn record_strict_kind_result(
@@ -616,8 +629,19 @@ pub(super) fn record_strict_kind_result(
     nil_aborts: bool,
     effects: &mut Effects,
 ) {
+    record_strict_kind_result_under(operand, schema_type, nil_aborts, &[], effects);
+}
+
+fn record_strict_kind_result_under(
+    operand: &EvalResult,
+    schema_type: &str,
+    nil_aborts: bool,
+    outer_predicates: &[Predicate],
+    effects: &mut Effects,
+) {
     for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            conjunction.extend(outer_predicates.iter().cloned());
             conjunction.extend(shadow.iter().cloned());
             push_value_type_capture(
                 conjunction,
@@ -629,8 +653,31 @@ pub(super) fn record_strict_kind_result(
         }
     }
     if nil_aborts {
-        record_operand_presence_result(operand, effects);
+        record_operand_presence_result_under(operand, outer_predicates, effects);
     }
+}
+
+fn grouped_receiver_guard(
+    evaluation_mode: ArgumentEvaluationMode,
+    operand: &EvalResult,
+) -> Vec<Predicate> {
+    let ArgumentEvaluationMode::GroupedReceiverLookup { selected_segments } = evaluation_mode
+    else {
+        return Vec::new();
+    };
+    let Some(AbstractValue::ValuesPath(path)) = &operand.value else {
+        return Vec::new();
+    };
+    let segments = path.segments().cloned().collect::<Vec<_>>();
+    let Some(receiver_segments) = segments.get(..segments.len().saturating_sub(selected_segments))
+    else {
+        return Vec::new();
+    };
+    if receiver_segments.is_empty() {
+        return Vec::new();
+    }
+    let receiver = ValuesPath::from_segments(receiver_segments.iter().cloned());
+    vec![Predicate::from(crate::Guard::Absent { path: receiver }).negated()]
 }
 
 /// Records that a NIL operand aborts the call wherever it executes: the
@@ -641,6 +688,14 @@ pub(super) fn record_strict_kind_result(
 /// aborts. The function catalog's `nil_aborts` facet decides which positions
 /// carry the claim.
 pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut Effects) {
+    record_operand_presence_result_under(operand, &[], effects);
+}
+
+fn record_operand_presence_result_under(
+    operand: &EvalResult,
+    outer_predicates: &[Predicate],
+    effects: &mut Effects,
+) {
     // Only an operand that IS one raw values path carries the claim, the
     // same rule the string lane applies: a derived operand (a merge, a
     // `default` chain, a helper's rendered text) hands the call whatever the
@@ -658,7 +713,8 @@ pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut
         return;
     }
     let encoded_path = path.encode();
-    for conjunction in strict_operand_selection_conjunctions(operand, &encoded_path) {
+    for mut conjunction in strict_operand_selection_conjunctions(operand, &encoded_path) {
+        conjunction.extend(outer_predicates.iter().cloned());
         let capture = crate::eval_effect::FailCapture {
             conjunction,
             ranged: crate::range_modes::RangeModes::default(),

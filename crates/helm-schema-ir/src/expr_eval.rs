@@ -40,6 +40,10 @@ pub(crate) fn eval_expr(expr: &TemplateExpr, env: &EvalEnv) -> EvalResult {
     eval_expr_with_helper_calls(expr, env, &mut resolver)
 }
 
+/// Resolves raw values identity independently of argument evaluation mode.
+///
+/// Grouping remains transparent here because it changes how the same value reaches a parameter,
+/// not which values path supplied it.
 pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
     if !matches!(
         expr.deparen(),

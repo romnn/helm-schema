@@ -36,6 +36,52 @@ fn direct_values_path_expr(action: &str) -> Option<String> {
     direct_values_path(&single_expr(action))
 }
 
+#[test]
+fn grouped_map_argument_preserves_nil_conversion_boundary() {
+    let bare = eval_expr(
+        &single_expr(r#"hasKey .Values.subject "key""#),
+        &EvalEnv::default(),
+    );
+    let grouped = eval_expr(
+        &single_expr(r#"hasKey (.Values.subject) "key""#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: bare
+            .effects
+            .observed_facts
+            .captures
+            .into_iter()
+            .map(|capture| capture.kind)
+            .collect::<BTreeSet<_>>(),
+        want: BTreeSet::from([
+            crate::eval_effect::CaptureKind::ValueType {
+                path: capture_path("subject"),
+                schema_type: "object".to_string(),
+                null_aborts: true,
+            },
+            crate::eval_effect::CaptureKind::AbsenceAborts {
+                path: capture_path("subject"),
+            },
+        ]),
+    );
+    sim_assert_eq!(
+        have: grouped
+            .effects
+            .observed_facts
+            .captures
+            .into_iter()
+            .map(|capture| capture.kind)
+            .collect::<BTreeSet<_>>(),
+        want: BTreeSet::from([crate::eval_effect::CaptureKind::ValueType {
+            path: capture_path("subject"),
+            schema_type: "object".to_string(),
+            null_aborts: false,
+        }]),
+    );
+}
+
 fn dict(entries: &[(&str, AbstractValue)]) -> AbstractValue {
     AbstractValue::Dict(
         entries

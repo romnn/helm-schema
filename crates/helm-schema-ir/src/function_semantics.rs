@@ -23,6 +23,44 @@ pub(crate) enum NilBehavior {
     DirectAccessAborts,
 }
 
+/// How Go evaluates an expression before passing it to a function parameter.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ArgumentEvaluationMode {
+    /// A field result reaches the parameter without pipeline unwrapping.
+    DirectLookup,
+    /// A selector's receiver is unwrapped before its final direct lookup.
+    GroupedReceiverLookup { selected_segments: usize },
+    /// A grouped, piped, bound, literal, or computed value reaches the parameter after evaluation.
+    Evaluated,
+}
+
+/// Returns the parameter evaluation mode encoded by the parsed expression shape.
+#[must_use]
+pub(crate) fn argument_evaluation_mode(expr: &TemplateExpr) -> ArgumentEvaluationMode {
+    match expr {
+        TemplateExpr::Field(_) => ArgumentEvaluationMode::DirectLookup,
+        TemplateExpr::Selector { operand, path }
+            if matches!(operand.as_ref(), TemplateExpr::Parenthesized(_)) =>
+        {
+            ArgumentEvaluationMode::GroupedReceiverLookup {
+                selected_segments: path.len(),
+            }
+        }
+        TemplateExpr::Selector { operand, .. } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {
+            ArgumentEvaluationMode::DirectLookup
+        }
+        TemplateExpr::Literal(_)
+        | TemplateExpr::Variable(_)
+        | TemplateExpr::Call { .. }
+        | TemplateExpr::Pipeline(_)
+        | TemplateExpr::Parenthesized(_)
+        | TemplateExpr::Selector { .. }
+        | TemplateExpr::VariableDefinition { .. }
+        | TemplateExpr::Assignment { .. }
+        | TemplateExpr::Unknown(_) => ArgumentEvaluationMode::Evaluated,
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum OutputSemantics {
     Opaque,
@@ -261,7 +299,7 @@ impl FunctionSemantics {
 
     /// Reports whether a nil operand aborts at a strict-kind position.
     ///
-    /// `direct_access` says how nil reaches the parameter, which decides one whole class of
+    /// `evaluation_mode` says how nil reaches the parameter, which decides one whole class of
     /// these functions.
     /// A missing key read as a field (`.Values.x`, or a `range` member variable, which comes
     /// straight from `MapIndex`) arrives as a valid `interface{}` holding nil.
@@ -288,11 +326,13 @@ impl FunctionSemantics {
     /// `len` declares `interface{}` yet rejects nil, while `join` declares `[]interface{}` yet
     /// renders empty text for it.
     #[must_use]
-    pub(crate) const fn nil_aborts(self, direct_access: bool) -> bool {
+    pub(crate) const fn nil_aborts(self, evaluation_mode: ArgumentEvaluationMode) -> bool {
         match self.nil_behavior {
             NilBehavior::Tolerates => false,
             NilBehavior::AlwaysAborts => true,
-            NilBehavior::DirectAccessAborts => direct_access,
+            NilBehavior::DirectAccessAborts => {
+                !matches!(evaluation_mode, ArgumentEvaluationMode::Evaluated)
+            }
         }
     }
 
